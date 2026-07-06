@@ -1,0 +1,57 @@
+.hero {
+  position: relative;
+  height: 70vh;
+  overflow: hidden;
+}
+
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 1;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  color: #fff;
+  padding: 15vh 20px 0;
+}
+
+.hero-headline {
+  font-family: 'GT Esti Pro Display', sans-serif;
+  font-weight: 700;
+  font-size: clamp(40px, 5vw, 72px);
+  line-height: 1.1;
+  letter-spacing: -1.5px;
+  margin: 0;
+  color: #fff;
+}
+
+.hero-tagline {
+  font-family: 'GT Esti Pro Display', sans-serif;
+  font-weight: 300;
+  font-size: clamp(16px, 2vw, 20px);
+  line-height: 1.5;
+  margin-top: 8px;
+  color: rgba(255, 255, 255, 0.9);
+  max-width: 500px;
+}
+
+@media (max-width: 768px) {
+  .hero-headline {
+    font-size: 32px;
+    letter-spacing: -1px;
+  }
+
+  .hero-tagline {
+    font-size: 15px;
+    margin-top: 6px;
+  }
+}

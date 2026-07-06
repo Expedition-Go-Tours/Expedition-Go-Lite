@@ -1,0 +1,39 @@
+.recommend-section {
+  padding: 40px 0;
+  background: #fff;
+}
+
+.recommend-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 32px;
+  position: relative;
+}
+
+.recommend-carousel {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 4px;
+}
+
+.recommend-carousel::-webkit-scrollbar {
+  display: none;
+}
+
+.recommend-carousel {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@media (max-width: 768px) {
+  .recommend-section {
+    padding: 24px 0;
+  }
+
+  .recommend-container {
+    padding: 0 16px;
+  }
+}

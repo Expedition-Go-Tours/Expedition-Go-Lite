@@ -1,0 +1,245 @@
+.signup-overlay {
+  position: fixed;
+  inset: 0;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 500;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.signup-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 40px 32px 32px;
+  width: 100%;
+  max-width: 420px;
+  position: relative;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.15);
+  max-height: 95vh;
+  overflow-y: auto;
+}
+
+.signup-close {
+  display: none;
+}
+
+.signup-logo {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.signup-logo img {
+  height: 48px;
+  width: auto;
+}
+
+.signup-heading {
+  font-family: 'GT Esti Pro Display', sans-serif;
+  font-weight: 700;
+  font-size: 24px;
+  color: #1a1a1a;
+  text-align: center;
+  margin: 0 0 4px;
+}
+
+.signup-subtitle {
+  font-family: 'Raleway', sans-serif;
+  font-size: 14px;
+  color: #888;
+  text-align: center;
+  margin: 0 0 24px;
+}
+
+.signup-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.signup-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.signup-label {
+  font-family: 'Raleway', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+}
+
+.signup-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.signup-forgot {
+  font-family: 'Raleway', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.signup-forgot:hover {
+  text-decoration: underline;
+}
+
+.signup-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  font-family: 'Raleway', sans-serif;
+  font-size: 14px;
+  color: #333;
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.signup-input:focus {
+  border-color: var(--primary);
+}
+
+.signup-input::placeholder {
+  color: #aaa;
+}
+
+.signup-password-wrap {
+  position: relative;
+}
+
+.signup-password-input {
+  padding-right: 56px;
+}
+
+.signup-password-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-family: 'Raleway', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.signup-btn {
+  width: 100%;
+  padding: 14px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-family: 'GT Esti Pro Display', sans-serif;
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-top: 4px;
+}
+
+.signup-btn:hover {
+  background: var(--primary-hover);
+}
+
+.signup-divider {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 20px 0;
+  font-family: 'Raleway', sans-serif;
+  font-size: 13px;
+  color: #999;
+}
+
+.signup-divider::before,
+.signup-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #e0e0e0;
+}
+
+.signup-google-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  background: #fff;
+  font-family: 'Raleway', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.signup-google-btn:hover {
+  background: #f9f9f9;
+  border-color: #ccc;
+}
+
+.signup-footer {
+  text-align: center;
+  font-family: 'Raleway', sans-serif;
+  font-size: 13px;
+  color: #888;
+  margin: 20px 0 0;
+}
+
+.signup-footer-link {
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.signup-footer-link:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+.signup-back {
+  position: fixed;
+  top: 24px;
+  left: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f5f5;
+  border: none;
+  color: #333;
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  transition: background 0.2s;
+  z-index: 510;
+}
+
+.signup-back:hover {
+  background: #e5e5e5;
+}
+
+.signup-card {
+    padding: 32px 24px 24px;
+    border-radius: 12px;
+  }
+
+  .signup-heading {
+    font-size: 20px;
+  }
+}

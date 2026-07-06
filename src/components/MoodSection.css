@@ -1,0 +1,184 @@
+.mood-section {
+  padding: 24px 0;
+  background: #fff;
+}
+
+.mood-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 32px;
+}
+
+.mood-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.mood-title {
+  font-family: 'GT Esti Pro Display', sans-serif;
+  font-weight: 700;
+  font-size: clamp(22px, 3vw, 32px);
+  color: #1a1a1a;
+  margin: 0;
+  line-height: 1.15;
+}
+
+.mood-arrows {
+  display: flex;
+  gap: 8px;
+}
+
+.mood-arrow {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid #ddd;
+  background: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  transition: all 0.2s;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.mood-arrow:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.mood-carousel {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 4px;
+}
+
+.mood-carousel::-webkit-scrollbar {
+  display: none;
+}
+
+.mood-carousel {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.mood-card {
+  flex: 0 0 280px;
+  width: 280px;
+  position: relative;
+  height: 188px;
+  border-radius: 22px;
+  border: none;
+  cursor: pointer;
+  overflow: hidden;
+  scroll-snap-align: start;
+  background-size: cover;
+  background-position: center;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.mood-tag {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  background: rgba(23, 146, 55, 0.9);
+  color: #fff;
+  font-family: 'Raleway', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 999px;
+  backdrop-filter: blur(4px);
+  z-index: 2;
+}
+
+.mood-count {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #333;
+  font-family: 'Raleway', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 999px;
+  backdrop-filter: blur(4px);
+  z-index: 2;
+}
+
+.mood-gradient {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.12) 50%, transparent 100%);
+  z-index: 1;
+}
+
+.mood-footer {
+  position: relative;
+  z-index: 2;
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px 20px;
+}
+
+.mood-card-title {
+  font-family: 'GT Esti Pro Display', sans-serif;
+  font-weight: 700;
+  font-size: 22px;
+  color: #fff;
+  margin: 0;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  line-height: 1.1;
+}
+
+.mood-arrow-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #fff;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+
+.mood-card:hover .mood-arrow-btn {
+  transform: scale(1.1);
+}
+
+@media (max-width: 768px) {
+  .mood-section {
+    padding: 16px 0;
+  }
+
+  .mood-container {
+    padding: 0 16px;
+  }
+
+  .mood-card {
+    flex: 0 0 200px;
+    height: 155px;
+  }
+
+  .mood-arrows {
+    display: none;
+  }
+
+  .mood-card-title {
+    font-size: 18px;
+  }
+}
