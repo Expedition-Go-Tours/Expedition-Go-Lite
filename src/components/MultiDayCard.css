@@ -1,4 +1,4 @@
-.tour-card {
+.multiday-card {
   display: flex;
   flex-direction: column;
   border-radius: 12px;
@@ -9,14 +9,13 @@
   text-decoration: none;
   color: inherit;
   height: 100%;
-  transition: box-shadow 0.3s;
 }
 
-.tour-card:hover {
+.multiday-card:hover {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
-.tour-card-image {
+.multiday-card-image {
   position: relative;
   height: 180px;
   overflow: hidden;
@@ -24,19 +23,18 @@
   flex-shrink: 0;
 }
 
-.tour-card-image img {
+.multiday-card-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center;
   transition: transform 0.5s;
 }
 
-.tour-card:hover .tour-card-image img {
+.multiday-card:hover .multiday-card-image img {
   transform: scale(1.05);
 }
 
-.tour-card-image-fade {
+.multiday-card-image-fade {
   position: absolute;
   inset: 0;
   background: linear-gradient(to top, rgba(0, 0, 0, 0.3) 0%, transparent 60%);
@@ -44,39 +42,27 @@
   z-index: 1;
 }
 
-.tour-card-duration {
+.multiday-card-days {
   position: absolute;
-  top: 8px;
-  left: 8px;
-  background: rgba(0, 0, 0, 0.7);
+  top: 10px;
+  left: 10px;
+  background: var(--primary);
   color: #fff;
   font-family: 'Raleway', sans-serif;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
-  padding: 3px 7px;
-  border-radius: 5px;
+  padding: 4px 10px;
+  border-radius: 6px;
   z-index: 2;
   line-height: 1.3;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
 }
 
-.tour-card-discount {
+.multiday-card-wishlist {
   position: absolute;
-  bottom: 8px;
-  left: 8px;
-  background: #ef4444;
-  color: #fff;
-  font-family: 'Raleway', sans-serif;
-  font-size: 9px;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 4px;
-  z-index: 2;
-}
-
-.tour-card-wishlist {
-  position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 10px;
+  right: 10px;
   width: 28px;
   height: 28px;
   border-radius: 50%;
@@ -93,11 +79,11 @@
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
 
-.tour-card-wishlist:hover {
+.multiday-card-wishlist:hover {
   transform: scale(1.1);
 }
 
-.tour-card-body {
+.multiday-card-body {
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -105,7 +91,7 @@
   flex: 1;
 }
 
-.tour-card-location {
+.multiday-card-location {
   display: flex;
   align-items: center;
   gap: 3px;
@@ -115,12 +101,12 @@
   font-family: 'Raleway', sans-serif;
 }
 
-.tour-card-location svg {
+.multiday-card-location svg {
   flex-shrink: 0;
   color: #9ca3af;
 }
 
-.tour-card-title {
+.multiday-card-title {
   font-family: 'Raleway', sans-serif;
   font-weight: 600;
   font-size: 15px;
@@ -133,17 +119,38 @@
   overflow: hidden;
 }
 
-.tour-card-features {
+.multiday-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.multiday-card-accommodation {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   font-size: 12px;
   font-weight: 500;
   color: #374151;
+  font-family: 'Raleway', sans-serif;
+}
+
+.multiday-card-accommodation svg {
+  flex-shrink: 0;
+  color: #9ca3af;
+}
+
+.multiday-card-highlights {
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b7280;
   font-family: 'Raleway', sans-serif;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.tour-card-bottom {
+.multiday-card-bottom {
   margin-top: auto;
   display: flex;
   align-items: flex-end;
@@ -152,78 +159,60 @@
   padding-top: 4px;
 }
 
-.tour-card-rating {
+.multiday-card-rating {
   display: flex;
   align-items: center;
   gap: 3px;
 }
 
-.tour-card-rating-value {
+.multiday-card-rating-value {
   font-family: 'Raleway', sans-serif;
   font-weight: 700;
   font-size: 14px;
   color: #111827;
 }
 
-.tour-card-rating-reviews {
+.multiday-card-rating-reviews {
   font-size: 12px;
   color: #6b7280;
   font-family: 'Raleway', sans-serif;
 }
 
-.tour-card-price {
+.multiday-card-price {
   display: flex;
   align-items: baseline;
   gap: 3px;
   flex-shrink: 0;
 }
 
-.tour-card-from {
+.multiday-card-from {
   font-size: 11px;
   font-weight: 600;
   color: #6b7280;
   font-family: 'Raleway', sans-serif;
 }
 
-.tour-card-price-value {
+.multiday-card-price-value {
   font-family: 'Raleway', sans-serif;
   font-weight: 700;
   font-size: 16px;
   color: #111827;
 }
 
-@media (max-width: 1024px) {
-  .tour-card-image {
-    height: 140px;
-  }
-
-  .tour-card-body {
-    padding: 10px;
-  }
-
-  .tour-card-title {
-    font-size: 13px;
-  }
-
-  .tour-card-price-value {
-    font-size: 15px;
-  }
-}
-
 @media (max-width: 768px) {
-  .tour-card-image {
+  .multiday-card-image {
     height: 170px;
   }
 
-  .tour-card-body {
+  .multiday-card-body {
     padding: 12px;
   }
 
-  .tour-card-title {
+  .multiday-card-title {
     font-size: 14px;
   }
 
-  .tour-card-price-value {
+  .multiday-card-price-value {
     font-size: 16px;
   }
 }

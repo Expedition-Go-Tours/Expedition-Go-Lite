@@ -1,0 +1,309 @@
+.reviews-section {
+  padding: 48px 0;
+  background: #fff;
+}
+
+.reviews-container {
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 0 32px;
+}
+
+.reviews-viewport {
+  max-width: calc(295px * 5 + 16px * 4);
+  margin: 0 auto;
+}
+
+.tripadvisor-logo-img {
+  height: 20px;
+  width: auto;
+  display: block;
+}
+
+.tripadvisor-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: #f8f8f8;
+  border-radius: 8px;
+  margin-bottom: 0;
+}
+
+.tripadvisor-text {
+  font-family: 'Raleway', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: #888;
+}
+
+.reviews-clip {
+  overflow: hidden;
+}
+
+.reviews-carousel {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  align-items: stretch;
+  padding: 4px 0 8px;
+}
+
+.reviews-carousel::-webkit-scrollbar {
+  display: none;
+}
+
+.reviews-carousel {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.review-card-wrap {
+  width: 295px;
+  min-width: 295px;
+  flex-shrink: 0;
+  display: flex;
+  align-self: stretch;
+  scroll-snap-align: start;
+}
+
+.review-card-wrap > * {
+  width: 100%;
+}
+
+.review-card {
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  padding: 22px;
+  height: 100%;
+  min-height: 300px;
+}
+
+.review-card-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.review-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  font-family: 'Raleway', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.review-avatar--lg {
+  width: 48px;
+  height: 48px;
+  font-size: 16px;
+}
+
+.review-name-row {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.review-name {
+  font-family: 'Raleway', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.review-stars {
+  display: flex;
+  gap: 2px;
+}
+
+.review-date {
+  font-family: 'Raleway', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  color: #9ca3af;
+  margin-top: 4px;
+  margin-left: 52px;
+}
+
+.review-text {
+  font-family: 'Raleway', sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  color: #374151;
+  line-height: 1.55;
+  margin: 12px 0 0;
+  flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 8;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.review-readmore {
+  background: none;
+  border: none;
+  padding: 6px 0 0;
+  font-family: 'Raleway', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary);
+  cursor: pointer;
+  text-align: left;
+  transition: color 0.2s;
+  align-self: flex-start;
+}
+
+.review-readmore:hover {
+  color: var(--primary-hover);
+}
+
+.review-location {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: 'Raleway', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7280;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.review-location svg {
+  flex-shrink: 0;
+  color: #9ca3af;
+}
+
+/* Modal */
+.review-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 600;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.review-modal-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 28px;
+  max-width: 480px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.2);
+}
+
+.review-modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: #f5f5f5;
+  color: #666;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.review-modal-close:hover {
+  background: #e5e5e5;
+  color: #333;
+}
+
+.review-modal-top {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.review-modal-name {
+  font-family: 'Raleway', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 4px;
+}
+
+.review-modal-date {
+  font-family: 'Raleway', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: #9ca3af;
+  margin-top: 4px;
+}
+
+.review-modal-text {
+  font-family: 'Raleway', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  color: #374151;
+  line-height: 1.65;
+  margin: 0;
+}
+
+.review-modal-location {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: 'Raleway', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid #f0f0f0;
+}
+
+@media (max-width: 768px) {
+  .reviews-section {
+    padding: 30px 0;
+  }
+
+  .reviews-container {
+    padding: 0 16px;
+  }
+
+  .reviews-viewport {
+    max-width: 100%;
+  }
+
+  .reviews-carousel {
+    gap: 12px;
+  }
+
+  .review-card-wrap {
+    width: 280px;
+    min-width: 280px;
+  }
+}

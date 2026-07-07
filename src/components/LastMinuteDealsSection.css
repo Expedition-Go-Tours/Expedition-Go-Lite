@@ -1,25 +1,25 @@
-.recommend-section {
+.lastminute-section {
   padding: 48px 0;
   background: #fff;
 }
 
-.recommend-container {
+.lastminute-container {
   max-width: 100%;
   margin: 0 auto;
   padding: 0 32px;
   position: relative;
 }
 
-.carousel-viewport {
+.lastminute-viewport {
   max-width: calc(295px * 5 + 16px * 4);
   margin: 0 auto;
 }
 
-.carousel-clip {
+.lastminute-clip {
   overflow: hidden;
 }
 
-.recommend-carousel {
+.lastminute-carousel {
   display: flex;
   gap: 16px;
   overflow-x: auto;
@@ -29,16 +29,16 @@
   padding: 4px 0 8px;
 }
 
-.recommend-carousel::-webkit-scrollbar {
+.lastminute-carousel::-webkit-scrollbar {
   display: none;
 }
 
-.recommend-carousel {
+.lastminute-carousel {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
 
-.carousel-card-wrap {
+.lastminute-card-wrap {
   width: 295px;
   min-width: 295px;
   flex-shrink: 0;
@@ -47,32 +47,32 @@
   scroll-snap-align: start;
 }
 
-.carousel-card-wrap > * {
+.lastminute-card-wrap > * {
   width: 100%;
 }
 
 @media (max-width: 768px) {
-  .recommend-section {
+  .lastminute-section {
     padding: 30px 0;
   }
 
-  .recommend-container {
+  .lastminute-container {
     padding: 0 16px;
   }
 
-  .carousel-viewport {
+  .lastminute-viewport {
     max-width: 100%;
   }
 
-  .carousel-clip {
+  .lastminute-clip {
     max-width: 100%;
   }
 
-  .recommend-carousel {
+  .lastminute-carousel {
     gap: 12px;
   }
 
-  .carousel-card-wrap {
+  .lastminute-card-wrap {
     width: 280px;
     min-width: 280px;
   }

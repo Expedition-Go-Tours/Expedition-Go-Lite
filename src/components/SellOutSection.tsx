@@ -1,18 +1,18 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
 import SectionHeading from './SectionHeading'
 import TourCard from './TourCard'
-import { recommendedTours } from './data'
-import './RecommendSection.css'
+import { sellOutTours } from './data'
+import './SellOutSection.css'
 
 const CARD_WIDTH = 295
 const GAP = 16
 const PAGE_WIDTH = (CARD_WIDTH + GAP) * 3
 
-export default function RecommendSection() {
+export default function SellOutSection() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
-  const items = recommendedTours
+  const items = sellOutTours
 
   const updateArrows = useCallback(() => {
     const el = scrollRef.current
@@ -39,22 +39,22 @@ export default function RecommendSection() {
   }, [updateArrows])
 
   return (
-    <section className="recommend-section">
-      <div className="recommend-container">
-        <div className="carousel-viewport">
+    <section className="sellout-section">
+      <div className="sellout-container">
+        <div className="sellout-viewport">
           <SectionHeading
-            title="Recommended for you"
+            title="Likely to Sell Out"
             viewAllLink="/tours"
             onScrollLeft={() => scroll('left')}
             onScrollRight={() => scroll('right')}
             disableLeft={!canScrollLeft}
             disableRight={!canScrollRight}
           />
-          <div className="carousel-clip">
-            <div className="recommend-carousel" ref={scrollRef}>
+          <div className="sellout-clip">
+            <div className="sellout-carousel" ref={scrollRef}>
             {items.map((tour, i) => (
-              <div key={`${tour.title}-${i}`} className="carousel-card-wrap">
-                <TourCard {...tour} />
+              <div key={`${tour.title}-${i}`} className="sellout-card-wrap">
+                <TourCard {...tour} discount={tour.discount} />
               </div>
             ))}
             </div>

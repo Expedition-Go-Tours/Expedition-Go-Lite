@@ -1,25 +1,25 @@
-.recommend-section {
+.daytours-section {
   padding: 48px 0;
   background: #fff;
 }
 
-.recommend-container {
+.daytours-container {
   max-width: 100%;
   margin: 0 auto;
   padding: 0 32px;
   position: relative;
 }
 
-.carousel-viewport {
+.daytours-viewport {
   max-width: calc(295px * 5 + 16px * 4);
   margin: 0 auto;
 }
 
-.carousel-clip {
+.daytours-clip {
   overflow: hidden;
 }
 
-.recommend-carousel {
+.daytours-carousel {
   display: flex;
   gap: 16px;
   overflow-x: auto;
@@ -29,16 +29,16 @@
   padding: 4px 0 8px;
 }
 
-.recommend-carousel::-webkit-scrollbar {
+.daytours-carousel::-webkit-scrollbar {
   display: none;
 }
 
-.recommend-carousel {
+.daytours-carousel {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
 
-.carousel-card-wrap {
+.daytours-card-wrap {
   width: 295px;
   min-width: 295px;
   flex-shrink: 0;
@@ -47,32 +47,32 @@
   scroll-snap-align: start;
 }
 
-.carousel-card-wrap > * {
+.daytours-card-wrap > * {
   width: 100%;
 }
 
 @media (max-width: 768px) {
-  .recommend-section {
+  .daytours-section {
     padding: 30px 0;
   }
 
-  .recommend-container {
+  .daytours-container {
     padding: 0 16px;
   }
 
-  .carousel-viewport {
+  .daytours-viewport {
     max-width: 100%;
   }
 
-  .carousel-clip {
+  .daytours-clip {
     max-width: 100%;
   }
 
-  .recommend-carousel {
+  .daytours-carousel {
     gap: 12px;
   }
 
-  .carousel-card-wrap {
+  .daytours-card-wrap {
     width: 280px;
     min-width: 280px;
   }

@@ -1,18 +1,18 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
 import SectionHeading from './SectionHeading'
 import TourCard from './TourCard'
-import { recommendedTours } from './data'
-import './RecommendSection.css'
+import { topRatedTours } from './data'
+import './TopRatedSection.css'
 
 const CARD_WIDTH = 295
 const GAP = 16
 const PAGE_WIDTH = (CARD_WIDTH + GAP) * 3
 
-export default function RecommendSection() {
+export default function TopRatedSection() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
-  const items = recommendedTours
+  const items = topRatedTours
 
   const updateArrows = useCallback(() => {
     const el = scrollRef.current
@@ -39,21 +39,21 @@ export default function RecommendSection() {
   }, [updateArrows])
 
   return (
-    <section className="recommend-section">
-      <div className="recommend-container">
-        <div className="carousel-viewport">
+    <section className="toprated-section">
+      <div className="toprated-container">
+        <div className="toprated-viewport">
           <SectionHeading
-            title="Recommended for you"
+            title="Top Rated by Travellers"
             viewAllLink="/tours"
             onScrollLeft={() => scroll('left')}
             onScrollRight={() => scroll('right')}
             disableLeft={!canScrollLeft}
             disableRight={!canScrollRight}
           />
-          <div className="carousel-clip">
-            <div className="recommend-carousel" ref={scrollRef}>
+          <div className="toprated-clip">
+            <div className="toprated-carousel" ref={scrollRef}>
             {items.map((tour, i) => (
-              <div key={`${tour.title}-${i}`} className="carousel-card-wrap">
+              <div key={`${tour.title}-${i}`} className="toprated-card-wrap">
                 <TourCard {...tour} />
               </div>
             ))}

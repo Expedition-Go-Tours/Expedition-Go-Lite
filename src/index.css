@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 @font-face {
   font-family: 'GT Esti Pro Display';
   src: url('./assets/fonts/GT Eesti Pro Display/gteestiprodisplay_bold.otf') format('opentype');

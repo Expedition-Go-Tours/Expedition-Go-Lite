@@ -1,18 +1,18 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
 import SectionHeading from './SectionHeading'
 import TourCard from './TourCard'
-import { recommendedTours } from './data'
-import './RecommendSection.css'
+import { dayTours } from './data'
+import './DayToursSection.css'
 
 const CARD_WIDTH = 295
 const GAP = 16
 const PAGE_WIDTH = (CARD_WIDTH + GAP) * 3
 
-export default function RecommendSection() {
+export default function DayToursSection() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
-  const items = recommendedTours
+  const items = dayTours
 
   const updateArrows = useCallback(() => {
     const el = scrollRef.current
@@ -39,21 +39,21 @@ export default function RecommendSection() {
   }, [updateArrows])
 
   return (
-    <section className="recommend-section">
-      <div className="recommend-container">
-        <div className="carousel-viewport">
+    <section className="daytours-section">
+      <div className="daytours-container">
+        <div className="daytours-viewport">
           <SectionHeading
-            title="Recommended for you"
+            title="Day Tours"
             viewAllLink="/tours"
             onScrollLeft={() => scroll('left')}
             onScrollRight={() => scroll('right')}
             disableLeft={!canScrollLeft}
             disableRight={!canScrollRight}
           />
-          <div className="carousel-clip">
-            <div className="recommend-carousel" ref={scrollRef}>
+          <div className="daytours-clip">
+            <div className="daytours-carousel" ref={scrollRef}>
             {items.map((tour, i) => (
-              <div key={`${tour.title}-${i}`} className="carousel-card-wrap">
+              <div key={`${tour.title}-${i}`} className="daytours-card-wrap">
                 <TourCard {...tour} />
               </div>
             ))}

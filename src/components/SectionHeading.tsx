@@ -6,6 +6,8 @@ interface SectionHeadingProps {
   viewAllLink?: string
   onScrollLeft?: () => void
   onScrollRight?: () => void
+  disableLeft?: boolean
+  disableRight?: boolean
 }
 
 export default function SectionHeading({
@@ -14,6 +16,8 @@ export default function SectionHeading({
   viewAllLink,
   onScrollLeft,
   onScrollRight,
+  disableLeft,
+  disableRight,
 }: SectionHeadingProps) {
   return (
     <div className="section-heading">
@@ -27,12 +31,12 @@ export default function SectionHeading({
         )}
         {(onScrollLeft || onScrollRight) && (
           <div className="section-arrows">
-            <button className="section-arrow" onClick={onScrollLeft} aria-label="Scroll left">
+            <button className={`section-arrow${disableLeft ? ' muted' : ''}`} onClick={onScrollLeft} aria-label="Scroll left" disabled={disableLeft}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="15 18 9 12 15 6" />
               </svg>
             </button>
-            <button className="section-arrow" onClick={onScrollRight} aria-label="Scroll right">
+            <button className={`section-arrow${disableRight ? ' muted' : ''}`} onClick={onScrollRight} aria-label="Scroll right" disabled={disableRight}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="9 18 15 12 9 6" />
               </svg>

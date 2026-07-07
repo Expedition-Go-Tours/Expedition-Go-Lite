@@ -1,6 +1,6 @@
 .section-heading {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
   margin-bottom: 20px;
   gap: 16px;
@@ -14,7 +14,7 @@
 .section-title {
   font-family: 'GT Esti Pro Display', sans-serif;
   font-weight: 700;
-  font-size: clamp(22px, 3vw, 32px);
+  font-size: clamp(24px, 2.2vw, 32px);
   color: #1a1a1a;
   margin: 0;
   line-height: 1.2;
@@ -58,6 +58,14 @@
   color: var(--primary);
 }
 
+.section-arrow.muted {
+  opacity: 0.35;
+  cursor: default;
+  pointer-events: none;
+  border-color: #e5e4e7;
+  color: #bbb;
+}
+
 .section-view-all {
   font-family: 'Raleway', sans-serif;
   font-size: 14px;
@@ -74,8 +82,8 @@
 
 @media (max-width: 768px) {
   .section-heading {
-    flex-direction: column;
-    align-items: flex-start;
+    flex-direction: row;
+    align-items: center;
   }
 
   .section-arrows {

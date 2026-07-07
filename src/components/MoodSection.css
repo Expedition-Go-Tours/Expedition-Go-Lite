@@ -1,10 +1,10 @@
 .mood-section {
-  padding: 24px 0;
+  padding: 48px 0;
   background: #fff;
 }
 
 .mood-container {
-  max-width: 1280px;
+  max-width: 100%;
   margin: 0 auto;
   padding: 0 32px;
 }
@@ -13,13 +13,13 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 14px;
+  margin-bottom: 20px;
 }
 
 .mood-title {
   font-family: 'GT Esti Pro Display', sans-serif;
   font-weight: 700;
-  font-size: clamp(22px, 3vw, 32px);
+  font-size: clamp(24px, 2.2vw, 32px);
   color: #1a1a1a;
   margin: 0;
   line-height: 1.15;
@@ -50,12 +50,30 @@
   color: var(--primary);
 }
 
+.mood-arrow.muted {
+  opacity: 0.35;
+  cursor: default;
+  pointer-events: none;
+  border-color: #e5e4e7;
+  color: #bbb;
+}
+
+.mood-viewport {
+  max-width: calc(295px * 5 + 16px * 4);
+  margin: 0 auto;
+}
+
+.mood-clip {
+  overflow: hidden;
+}
+
 .mood-carousel {
   display: flex;
   gap: 16px;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
+  align-items: stretch;
   padding-bottom: 4px;
 }
 
@@ -68,21 +86,31 @@
   scrollbar-width: none;
 }
 
+.mood-card-wrap {
+  width: 295px;
+  min-width: 295px;
+  flex-shrink: 0;
+  display: flex;
+  align-self: stretch;
+  scroll-snap-align: start;
+}
+
+.mood-card-wrap > * {
+  width: 100%;
+}
+
 .mood-card {
-  flex: 0 0 280px;
-  width: 280px;
   position: relative;
-  height: 188px;
   border-radius: 22px;
   border: none;
   cursor: pointer;
   overflow: hidden;
-  scroll-snap-align: start;
   background-size: cover;
   background-position: center;
   padding: 0;
   display: flex;
   flex-direction: column;
+  height: 210px;
 }
 
 .mood-tag {
@@ -162,16 +190,32 @@
 
 @media (max-width: 768px) {
   .mood-section {
-    padding: 16px 0;
+    padding: 30px 0;
   }
 
   .mood-container {
     padding: 0 16px;
   }
 
+  .mood-viewport {
+    max-width: 100%;
+  }
+
+  .mood-clip {
+    max-width: 100%;
+  }
+
+  .mood-carousel {
+    gap: 12px;
+  }
+
+  .mood-card-wrap {
+    width: 260px;
+    min-width: 260px;
+  }
+
   .mood-card {
-    flex: 0 0 200px;
-    height: 155px;
+    height: 185px;
   }
 
   .mood-arrows {

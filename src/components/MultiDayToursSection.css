@@ -1,25 +1,25 @@
-.recommend-section {
+.multiday-section {
   padding: 48px 0;
   background: #fff;
 }
 
-.recommend-container {
+.multiday-container {
   max-width: 100%;
   margin: 0 auto;
   padding: 0 32px;
   position: relative;
 }
 
-.carousel-viewport {
+.multiday-viewport {
   max-width: calc(295px * 5 + 16px * 4);
   margin: 0 auto;
 }
 
-.carousel-clip {
+.multiday-clip {
   overflow: hidden;
 }
 
-.recommend-carousel {
+.multiday-carousel {
   display: flex;
   gap: 16px;
   overflow-x: auto;
@@ -29,16 +29,16 @@
   padding: 4px 0 8px;
 }
 
-.recommend-carousel::-webkit-scrollbar {
+.multiday-carousel::-webkit-scrollbar {
   display: none;
 }
 
-.recommend-carousel {
+.multiday-carousel {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
 
-.carousel-card-wrap {
+.multiday-card-wrap {
   width: 295px;
   min-width: 295px;
   flex-shrink: 0;
@@ -47,32 +47,32 @@
   scroll-snap-align: start;
 }
 
-.carousel-card-wrap > * {
+.multiday-card-wrap > * {
   width: 100%;
 }
 
 @media (max-width: 768px) {
-  .recommend-section {
+  .multiday-section {
     padding: 30px 0;
   }
 
-  .recommend-container {
+  .multiday-container {
     padding: 0 16px;
   }
 
-  .carousel-viewport {
+  .multiday-viewport {
     max-width: 100%;
   }
 
-  .carousel-clip {
+  .multiday-clip {
     max-width: 100%;
   }
 
-  .recommend-carousel {
+  .multiday-carousel {
     gap: 12px;
   }
 
-  .carousel-card-wrap {
+  .multiday-card-wrap {
     width: 280px;
     min-width: 280px;
   }
