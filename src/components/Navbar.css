@@ -230,15 +230,15 @@ body.hero--search-sticky .navbar-compact-search {
 }
 
 .nav-dropdown {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
+  position: fixed;
+  top: 72px;
+  right: 48px;
   background: #fff;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
   min-width: 180px;
   overflow: hidden;
-  z-index: 200;
+  z-index: 999;
 }
 
 .nav-dropdown-header {

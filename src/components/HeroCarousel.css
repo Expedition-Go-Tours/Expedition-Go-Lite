@@ -18,3 +18,7 @@
 .carousel-slide.active {
   opacity: 1;
 }
+
+.carousel-slide.shift-down {
+  object-position: center 20%;
+}

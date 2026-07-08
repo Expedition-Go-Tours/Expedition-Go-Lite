@@ -11,10 +11,10 @@ interface AuthFormProps {
 }
 
 const sliderImages = [
-  "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=900&auto=format&fit=crop&q=60",
-  "https://images.unsplash.com/photo-1504051771394-dd2e66b2e08f?w=900&auto=format&fit=crop&q=60",
-  "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=900&auto=format&fit=crop&q=60",
-  "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=900&auto=format&fit=crop&q=60",
+  '/images/Image01.webp',
+  '/images/Image02_.webp',
+  '/images/Image03.webp',
+  '/images/Image04.webp',
 ];
 
 const containerVariants = {
@@ -86,14 +86,14 @@ function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () => void }) {
       <motion.form variants={itemVariants} className="space-y-6" onSubmit={(e) => e.preventDefault()}>
         <div className="space-y-2">
           <Label htmlFor="signin-email" className="text-foreground">Email</Label>
-          <Input id="signin-email" type="email" placeholder="m@example.com" required />
+          <Input id="signin-email" type="email" placeholder="m@example.com" required className="bg-white" />
         </div>
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label htmlFor="signin-password" className="text-foreground">Password</Label>
             <a href="#" className="text-sm font-medium text-primary hover:underline">Forgot password?</a>
           </div>
-          <Input id="signin-password" type="password" required />
+          <Input id="signin-password" type="password" required className="bg-white" />
         </div>
         <Button type="submit" className="w-full">Sign In</Button>
       </motion.form>
@@ -140,15 +140,15 @@ function SignUpForm({ onSwitchToSignIn }: { onSwitchToSignIn: () => void }) {
       <motion.form variants={itemVariants} className="space-y-5" onSubmit={(e) => e.preventDefault()}>
         <div className="space-y-2">
           <Label htmlFor="signup-name" className="text-foreground">Full Name</Label>
-          <Input id="signup-name" type="text" placeholder="Enter your full name" required />
+          <Input id="signup-name" type="text" placeholder="Enter your full name" required className="bg-white" />
         </div>
         <div className="space-y-2">
           <Label htmlFor="signup-email" className="text-foreground">Email</Label>
-          <Input id="signup-email" type="email" placeholder="m@example.com" required />
+          <Input id="signup-email" type="email" placeholder="m@example.com" required className="bg-white" />
         </div>
         <div className="space-y-2">
           <Label htmlFor="signup-password" className="text-foreground">Password</Label>
-          <Input id="signup-password" type="password" placeholder="Create a password" required />
+          <Input id="signup-password" type="password" placeholder="Create a password" required className="bg-white" />
         </div>
         <Button type="submit" className="w-full">Sign Up</Button>
       </motion.form>

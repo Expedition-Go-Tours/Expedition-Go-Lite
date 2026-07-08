@@ -141,7 +141,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
                     Sign In / Sign Up
                   </div>
                   {navLinks.map((link) => (
-                    <a key={link.label} href={link.href} className="nav-dropdown-item">
+                    <a key={link.label} href="#" className="nav-dropdown-item" onClick={(e) => e.preventDefault()}>
                       {link.icon === 'compass' && (
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <circle cx="12" cy="12" r="10" />

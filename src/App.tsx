@@ -12,8 +12,10 @@ import SellOutSection from './components/SellOutSection'
 import LastMinuteDealsSection from './components/LastMinuteDealsSection'
 import CustomReviewsSection from './components/CustomReviewsSection'
 import PartnersSection from './components/PartnersSection'
-import Footer from './components/Footer'
+import WhyBookSection from './components/WhyBookSection'
+import NewsletterSection from './components/NewsletterSection'
 import FeedbackSection from './components/FeedbackSection'
+import Footer from './components/Footer'
 import AuthForm from './components/AuthForm'
 
 function App() {
@@ -54,6 +56,8 @@ function App() {
           <CustomReviewsSection />
           <PartnersSection />
           <FeedbackSection />
+          <WhyBookSection />
+          <NewsletterSection />
           <Footer />
         </motion.div>
       )}

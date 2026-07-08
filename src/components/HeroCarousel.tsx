@@ -2,11 +2,11 @@ import { useEffect, useCallback } from 'react'
 import './HeroCarousel.css'
 
 const images = [
+  new URL('../assets/images/Image01.webp', import.meta.url).href,
+  new URL('../assets/images/IMG_3538.webp', import.meta.url).href,
   new URL('../assets/images/QuadBiking.webp', import.meta.url).href,
   new URL('../assets/images/painting.webp', import.meta.url).href,
-  new URL('../assets/images/newlaidywhyte.webp', import.meta.url).href,
-  new URL('../assets/images/Laughter.webp', import.meta.url).href,
-  new URL('../assets/images/kuturedance.webp', import.meta.url).href,
+  new URL('../assets/images/Image04.webp', import.meta.url).href,
 ]
 
 interface HeroCarouselProps {
@@ -31,7 +31,7 @@ export default function HeroCarousel({ activeIndex, onIndexChange }: HeroCarouse
           key={src}
           src={src}
           alt=""
-          className={`carousel-slide${i === activeIndex ? ' active' : ''}`}
+          className={`carousel-slide${i === activeIndex ? ' active' : ''}${i === 4 ? ' shift-down' : ''}`}
           draggable={false}
         />
       ))}
