@@ -1,14 +1,19 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import SectionHeading from './SectionHeading'
-import TripAdvisorLogo from './TripAdvisorLogo'
-import { reviews } from './data'
-import type { Review } from './data'
+import trippyLogo from '../assets/icons/trippy.png'
 import './CustomReviewsSection.css'
 
 const CARD_WIDTH = 295
 const GAP = 16
-const PAGE_WIDTH = (CARD_WIDTH + GAP) * 3
+
+interface Review {
+  name: string
+  avatar: string
+  rating: number
+  date: string
+  text: string
+}
 
 function Stars({ count }: { count: number }) {
   return (
@@ -27,7 +32,13 @@ function ReviewCard({ review, onReadMore }: { review: Review; onReadMore: () => 
     <div className="review-card-wrap">
       <div className="review-card">
         <div className="review-card-top">
-          <div className="review-avatar">{review.avatar}</div>
+          <div className="review-avatar">
+            {review.avatar ? (
+              <img src={review.avatar} alt={review.name} className="review-avatar-img" />
+            ) : (
+              review.name.charAt(0).toUpperCase()
+            )}
+          </div>
           <div className="review-name-row">
             <span className="review-name">{review.name}</span>
             <Stars count={review.rating} />
@@ -36,13 +47,6 @@ function ReviewCard({ review, onReadMore }: { review: Review; onReadMore: () => 
         <div className="review-date">{review.date}</div>
         <p className="review-text">{review.text}</p>
         <button className="review-readmore" onClick={onReadMore}>Read more</button>
-        <div className="review-location">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-            <circle cx="12" cy="10" r="3" />
-          </svg>
-          {review.location}
-        </div>
       </div>
     </div>
   )
@@ -73,7 +77,13 @@ function ReviewModal({ review, onClose }: { review: Review; onClose: () => void 
           </svg>
         </button>
         <div className="review-modal-top">
-          <div className="review-avatar review-avatar--lg">{review.avatar}</div>
+          <div className="review-avatar review-avatar--lg">
+            {review.avatar ? (
+              <img src={review.avatar} alt={review.name} className="review-avatar-img" />
+            ) : (
+              review.name.charAt(0).toUpperCase()
+            )}
+          </div>
           <div>
             <div className="review-modal-name">{review.name}</div>
             <Stars count={review.rating} />
@@ -81,16 +91,34 @@ function ReviewModal({ review, onClose }: { review: Review; onClose: () => void 
           </div>
         </div>
         <p className="review-modal-text">{review.text}</p>
-        <div className="review-modal-location">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-            <circle cx="12" cy="10" r="3" />
-          </svg>
-          {review.location}
-        </div>
       </motion.div>
     </motion.div>
   )
+}
+
+function extractReviewsFromDOM(): Review[] {
+  const cards = document.querySelectorAll('.es-review-background-container')
+  const reviews: Review[] = []
+
+  cards.forEach((card) => {
+    const nameEl = card.querySelector('.es-review-author-name')
+    const textEl = card.querySelector('.es-text-shortener')
+    const dateEl = card.querySelector('.es-review-info-date')
+    const imgEl = card.querySelector('.es-avatar-image') as HTMLImageElement
+    const ratingEls = card.querySelectorAll('.es-rating-item-filled')
+
+    const name = nameEl?.textContent?.trim() || ''
+    const text = textEl?.textContent?.trim() || ''
+    const date = dateEl?.textContent?.trim() || ''
+    const rating = Math.min(ratingEls.length, 5)
+    const avatar = imgEl?.src || ''
+
+    if (name && text) {
+      reviews.push({ name, avatar, rating, date, text })
+    }
+  })
+
+  return reviews
 }
 
 export default function CustomReviewsSection() {
@@ -98,7 +126,37 @@ export default function CustomReviewsSection() {
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
   const [selectedReview, setSelectedReview] = useState<Review | null>(null)
-  const items = reviews
+  const [reviews, setReviews] = useState<Review[]>([])
+  const [loaded, setLoaded] = useState(false)
+
+  useEffect(() => {
+    if (loaded) return
+
+    const tryExtract = () => {
+      const cards = document.querySelectorAll('.es-review-background-container')
+      if (cards.length > 0) {
+        const extracted = extractReviewsFromDOM()
+        if (extracted.length > 0) {
+          setReviews(extracted)
+          setLoaded(true)
+          observer?.disconnect()
+          clearTimeout(fallback)
+          return true
+        }
+      }
+      return false
+    }
+
+    const observer = new MutationObserver(() => { tryExtract() })
+    observer.observe(document.body, { childList: true, subtree: true })
+
+    const fallback = setTimeout(tryExtract, 10000)
+
+    return () => {
+      observer.disconnect()
+      clearTimeout(fallback)
+    }
+  }, [loaded])
 
   const updateArrows = useCallback(() => {
     const el = scrollRef.current
@@ -108,11 +166,23 @@ export default function CustomReviewsSection() {
     setCanScrollRight(el.scrollLeft < maxScroll - 2)
   }, [])
 
+  const scrollToIndex = useCallback((index: number) => {
+    const el = scrollRef.current
+    if (!el) return
+    const cardStep = CARD_WIDTH + GAP
+    el.scrollTo({ left: index * cardStep, behavior: 'smooth' })
+  }, [])
+
   const scroll = (direction: 'left' | 'right') => {
     const el = scrollRef.current
     if (!el) return
-    const delta = direction === 'left' ? -PAGE_WIDTH : PAGE_WIDTH
-    el.scrollBy({ left: delta, behavior: 'smooth' })
+    const cardStep = CARD_WIDTH + GAP
+    const currentIndex = Math.round(el.scrollLeft / cardStep)
+    const maxIndex = Math.ceil(el.scrollWidth / cardStep) - 1
+    const targetIndex = direction === 'left'
+      ? Math.max(0, currentIndex - 3)
+      : Math.min(currentIndex + 3, maxIndex)
+    scrollToIndex(targetIndex)
   }
 
   useEffect(() => {
@@ -122,7 +192,7 @@ export default function CustomReviewsSection() {
     const onScroll = () => updateArrows()
     el.addEventListener('scroll', onScroll, { passive: true })
     return () => el.removeEventListener('scroll', onScroll)
-  }, [updateArrows])
+  }, [updateArrows, loaded])
 
   return (
     <section className="reviews-section">
@@ -130,22 +200,34 @@ export default function CustomReviewsSection() {
         <div className="reviews-viewport">
           <SectionHeading
             title="Reviews from Tripadvisor"
+            viewAllLink="https://www.tripadvisor.co.uk/Attraction_Review-g293797-d24155300-Reviews-Expedition_Go_Tours_Ltd-Accra_Greater_Accra.html"
             onScrollLeft={() => scroll('left')}
             onScrollRight={() => scroll('right')}
             disableLeft={!canScrollLeft}
             disableRight={!canScrollRight}
           />
-          <div className="tripadvisor-bar">
-            <TripAdvisorLogo />
-            <span className="tripadvisor-text">Powered by Tripadvisor</span>
+
+          <div className="reviews-elfsight" data-extracted={loaded ? 'true' : 'false'}>
+            <div className="elfsight-app-81f18ebc-8702-4317-b46f-6de7cfe86fa7" data-elfsight-app-lazy></div>
           </div>
-          <div className="reviews-clip">
-            <div className="reviews-carousel" ref={scrollRef}>
-              {items.map((review, i) => (
-                <ReviewCard key={`${review.name}-${i}`} review={review} onReadMore={() => setSelectedReview(review)} />
-              ))}
-            </div>
-          </div>
+
+          {loaded && (
+            <>
+              <div className="reviews-hero">
+                <img src={trippyLogo} alt="Tripadvisor" className="reviews-hero-img" />
+              </div>
+              <div className="reviews-clip">
+                <div className="reviews-carousel" ref={scrollRef}>
+                  {reviews.map((review, i) => (
+                    <ReviewCard key={`${review.name}-${i}`} review={review} onReadMore={() => setSelectedReview(review)} />
+                  ))}
+                </div>
+              </div>
+              <div className="tripadvisor-bar">
+                <span className="tripadvisor-text">Powered by Tripadvisor</span>
+              </div>
+            </>
+          )}
         </div>
       </div>
 

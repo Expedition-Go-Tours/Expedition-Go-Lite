@@ -28,15 +28,40 @@
   padding: 12px 16px;
   background: #f8f8f8;
   border-radius: 8px;
-  margin-bottom: 0;
+  margin-top: 20px;
 }
 
 .tripadvisor-text {
   font-family: 'Raleway', sans-serif;
-  font-size: 12px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 700;
   color: #888;
 }
+
+.reviews-hero {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.reviews-hero-img {
+  height: 44px;
+  width: auto;
+}
+
+.reviews-elfsight {
+  margin-top: 20px;
+}
+
+.reviews-elfsight[data-extracted="true"] {
+  display: none;
+}
+
+.reviews-elfsight .elfsight-app-81f18ebc-8702-4317-b46f-6de7cfe86fa7 {
+  width: 100%;
+}
+
+/* ========== CAROUSEL ========== */
 
 .reviews-clip {
   overflow: hidden;
@@ -60,6 +85,8 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* ========== REVIEW CARD ========== */
 
 .review-card-wrap {
   width: 295px;
@@ -105,6 +132,13 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+.review-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .review-avatar--lg {
@@ -176,25 +210,8 @@
   color: var(--primary-hover);
 }
 
-.review-location {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-family: 'Raleway', sans-serif;
-  font-size: 11px;
-  font-weight: 600;
-  color: #6b7280;
-  margin-top: 12px;
-  padding-top: 10px;
-  border-top: 1px solid #f0f0f0;
-}
+/* ========== MODAL ========== */
 
-.review-location svg {
-  flex-shrink: 0;
-  color: #9ca3af;
-}
-
-/* Modal */
 .review-modal-overlay {
   position: fixed;
   inset: 0;
@@ -272,17 +289,104 @@
   margin: 0;
 }
 
-.review-modal-location {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-family: 'Raleway', sans-serif;
-  font-size: 12px;
-  font-weight: 600;
-  color: #6b7280;
-  margin-top: 16px;
-  padding-top: 14px;
-  border-top: 1px solid #f0f0f0;
+/* ========== ELFSIGHT OVERRIDES ========== */
+
+.reviews-elfsight .es-widget-title-container,
+.reviews-elfsight .es-header-component-top {
+  display: none !important;
+}
+
+.reviews-elfsight .es-review-background-container {
+  border-radius: 12px !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+  padding: 22px !important;
+  min-height: 300px !important;
+  background: #fff !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.reviews-elfsight .es-review-author-block-container {
+  padding: 0 !important;
+}
+
+.reviews-elfsight .es-avatar-image {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+}
+
+.reviews-elfsight .es-review-author-name {
+  font-family: 'Raleway', sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  color: #111827 !important;
+  line-height: 1.3 !important;
+}
+
+.reviews-elfsight .es-verified-badge {
+  display: none !important;
+}
+
+.reviews-elfsight .es-review-info-source-container {
+  display: none !important;
+}
+
+.reviews-elfsight .es-review-info-date {
+  font-family: 'Raleway', sans-serif !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  color: #9ca3af !important;
+  margin-top: 4px !important;
+}
+
+.reviews-elfsight .es-review-content-title {
+  display: none !important;
+}
+
+.reviews-elfsight .es-review-content-text-container {
+  font-family: 'Raleway', sans-serif !important;
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  color: #374151 !important;
+  line-height: 1.55 !important;
+  margin-top: 12px !important;
+  flex: 1 !important;
+}
+
+.reviews-elfsight .es-text-shortener-control {
+  background: none !important;
+  border: none !important;
+  padding: 6px 0 0 !important;
+  font-family: 'Raleway', sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: var(--primary) !important;
+  cursor: pointer !important;
+  text-align: left !important;
+  display: inline-block !important;
+}
+
+.reviews-elfsight .es-text-shortener-control:hover {
+  color: var(--primary-hover) !important;
+}
+
+.reviews-elfsight .es-rating-item-filled svg path {
+  fill: #179237 !important;
+}
+
+.reviews-elfsight .es-rating-item-unfilled svg path {
+  fill: #ddd !important;
+}
+
+.reviews-elfsight .es-review-container {
+  padding: 4px !important;
+}
+
+.reviews-elfsight .es-header-write-review-button-container {
+  display: none !important;
 }
 
 @media (max-width: 768px) {
