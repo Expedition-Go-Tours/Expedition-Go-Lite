@@ -13,6 +13,7 @@ import nextSrc from '../assets/icons/NEXT.png'
 import peSrc from '../assets/icons/PE.png'
 import tqSrc from '../assets/icons/TQ.png'
 import marriotSrc from '../assets/icons/MARRIOT.png'
+import viatorSrc from '../assets/icons/viator.png'
 
 const logos = [
   { src: trippySrc, alt: 'Tripadvisor' },
@@ -29,6 +30,7 @@ const logos = [
   { src: peSrc, alt: 'PE', tall: true },
   { src: tqSrc, alt: 'TQ' },
   { src: marriotSrc, alt: 'Marriot' },
+  { src: viatorSrc, alt: 'Viator' },
 ]
 
 export default function PartnersSection() {
