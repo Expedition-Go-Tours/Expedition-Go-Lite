@@ -32,7 +32,16 @@
   display: flex;
   align-items: center;
   width: max-content;
-  will-change: transform;
+  animation: partners-scroll 40s linear infinite;
+}
+
+@keyframes partners-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
 }
 
 .partner-logo-wrap {
@@ -67,6 +76,15 @@
   max-height: 100%;
   object-fit: contain;
   display: block;
+}
+
+.partner-logo-card--tall {
+  padding: 6px 16px;
+}
+
+.partner-logo-card--tall img {
+  max-height: 130%;
+  transform: scale(1.2);
 }
 
 @media (max-width: 768px) {
