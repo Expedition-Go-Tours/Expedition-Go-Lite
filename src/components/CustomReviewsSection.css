@@ -14,40 +14,90 @@
   margin: 0 auto;
 }
 
-.tripadvisor-logo-img {
-  height: 20px;
-  width: auto;
-  display: block;
-}
+/* ===== Rating Banner ===== */
 
-.tripadvisor-bar {
+.reviews-rating-bar {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px 16px;
-  background: #f8f8f8;
-  border-radius: 8px;
-  margin-top: 20px;
+  justify-content: space-between;
+  background: #f5f5f5;
+  border-radius: 12px;
+  padding: 16px 24px;
+  margin-bottom: 24px;
+  gap: 16px;
 }
 
-.tripadvisor-text {
+.reviews-rating-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.reviews-rating-logo {
+  height: 40px;
+  width: auto;
+  flex-shrink: 0;
+}
+
+.reviews-rating-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.reviews-rating-label {
+  font-family: 'Raleway', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.2;
+}
+
+.reviews-rating-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.reviews-rating-score {
+  font-family: 'GT Esti Pro Display', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1;
+}
+
+.reviews-rating-stars {
+  display: flex;
+  gap: 2px;
+}
+
+.reviews-rating-count {
+  font-family: 'Raleway', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: #9ca3af;
+}
+
+.reviews-rating-button {
   font-family: 'Raleway', sans-serif;
   font-size: 14px;
-  font-weight: 700;
-  color: #888;
+  font-weight: 600;
+  color: #fff;
+  background: #0e8b25;
+  padding: 10px 22px;
+  border-radius: 24px;
+  text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.2s;
 }
 
-.reviews-hero {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 24px;
+.reviews-rating-button:hover {
+  background: #0d7a20;
 }
 
-.reviews-hero-img {
-  height: 44px;
-  width: auto;
-}
+/* ===== Elfsight Widget (hidden during extraction) ===== */
 
 .reviews-elfsight {
   margin-top: 20px;
@@ -57,11 +107,7 @@
   display: none;
 }
 
-.reviews-elfsight .elfsight-app-81f18ebc-8702-4317-b46f-6de7cfe86fa7 {
-  width: 100%;
-}
-
-/* ========== CAROUSEL ========== */
+/* ===== Carousel ===== */
 
 .reviews-clip {
   overflow: hidden;
@@ -86,7 +132,7 @@
   scrollbar-width: none;
 }
 
-/* ========== REVIEW CARD ========== */
+/* ===== Review Card ===== */
 
 .review-card-wrap {
   width: 295px;
@@ -210,7 +256,7 @@
   color: var(--primary-hover);
 }
 
-/* ========== MODAL ========== */
+/* ===== Modal ===== */
 
 .review-modal-overlay {
   position: fixed;
@@ -289,104 +335,21 @@
   margin: 0;
 }
 
-/* ========== ELFSIGHT OVERRIDES ========== */
+/* ===== Powered by Tripadvisor ===== */
 
-.reviews-elfsight .es-widget-title-container,
-.reviews-elfsight .es-header-component-top {
-  display: none !important;
+.tripadvisor-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  margin-top: 20px;
 }
 
-.reviews-elfsight .es-review-background-container {
-  border-radius: 12px !important;
-  border: 1px solid rgba(0, 0, 0, 0.06) !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
-  padding: 22px !important;
-  min-height: 300px !important;
-  background: #fff !important;
-  display: flex !important;
-  flex-direction: column !important;
-}
-
-.reviews-elfsight .es-review-author-block-container {
-  padding: 0 !important;
-}
-
-.reviews-elfsight .es-avatar-image {
-  width: 40px !important;
-  height: 40px !important;
-  border-radius: 50% !important;
-  object-fit: cover !important;
-}
-
-.reviews-elfsight .es-review-author-name {
-  font-family: 'Raleway', sans-serif !important;
-  font-size: 14px !important;
-  font-weight: 700 !important;
-  color: #111827 !important;
-  line-height: 1.3 !important;
-}
-
-.reviews-elfsight .es-verified-badge {
-  display: none !important;
-}
-
-.reviews-elfsight .es-review-info-source-container {
-  display: none !important;
-}
-
-.reviews-elfsight .es-review-info-date {
-  font-family: 'Raleway', sans-serif !important;
-  font-size: 11px !important;
-  font-weight: 500 !important;
-  color: #9ca3af !important;
-  margin-top: 4px !important;
-}
-
-.reviews-elfsight .es-review-content-title {
-  display: none !important;
-}
-
-.reviews-elfsight .es-review-content-text-container {
-  font-family: 'Raleway', sans-serif !important;
-  font-size: 13px !important;
-  font-weight: 400 !important;
-  color: #374151 !important;
-  line-height: 1.55 !important;
-  margin-top: 12px !important;
-  flex: 1 !important;
-}
-
-.reviews-elfsight .es-text-shortener-control {
-  background: none !important;
-  border: none !important;
-  padding: 6px 0 0 !important;
-  font-family: 'Raleway', sans-serif !important;
-  font-size: 12px !important;
-  font-weight: 600 !important;
-  color: var(--primary) !important;
-  cursor: pointer !important;
-  text-align: left !important;
-  display: inline-block !important;
-}
-
-.reviews-elfsight .es-text-shortener-control:hover {
-  color: var(--primary-hover) !important;
-}
-
-.reviews-elfsight .es-rating-item-filled svg path {
-  fill: #179237 !important;
-}
-
-.reviews-elfsight .es-rating-item-unfilled svg path {
-  fill: #ddd !important;
-}
-
-.reviews-elfsight .es-review-container {
-  padding: 4px !important;
-}
-
-.reviews-elfsight .es-header-write-review-button-container {
-  display: none !important;
+.tripadvisor-text {
+  font-family: 'Raleway', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #888;
 }
 
 @media (max-width: 768px) {
@@ -400,6 +363,21 @@
 
   .reviews-viewport {
     max-width: 100%;
+  }
+
+  .reviews-rating-bar {
+    flex-direction: column;
+    text-align: center;
+    padding: 16px;
+  }
+
+  .reviews-rating-bar-left {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .reviews-rating-row {
+    justify-content: center;
   }
 
   .reviews-carousel {

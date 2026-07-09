@@ -15,6 +15,7 @@ import PartnersSection from './components/PartnersSection'
 import WhyBookSection from './components/WhyBookSection'
 import NewsletterSection from './components/NewsletterSection'
 import FeedbackSection from './components/FeedbackSection'
+import TravelStoriesSection from './components/TravelStoriesSection'
 import Footer from './components/Footer'
 import AuthForm from './components/AuthForm'
 
@@ -57,6 +58,7 @@ function App() {
           <PartnersSection />
           <FeedbackSection />
           <WhyBookSection />
+          <TravelStoriesSection />
           <NewsletterSection />
           <Footer />
         </motion.div>

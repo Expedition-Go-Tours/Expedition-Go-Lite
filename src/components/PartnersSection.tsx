@@ -8,7 +8,11 @@ import paypalSrc from '../assets/icons/paypal.png'
 import bokunSrc from '../assets/icons/bokun.png'
 import gtaSrc from '../assets/icons/GTA.png'
 import tourhubSrc from '../assets/icons/tourhub.png'
-import sssSrc from '../assets/icons/SSS.png'
+import stripeSrc from '../assets/icons/STRIPE.png'
+import nextSrc from '../assets/icons/NEXT.png'
+import peSrc from '../assets/icons/PE.png'
+import tqSrc from '../assets/icons/TQ.png'
+import marriotSrc from '../assets/icons/MARRIOT.png'
 
 const logos = [
   { src: trippySrc, alt: 'Tripadvisor' },
@@ -20,7 +24,11 @@ const logos = [
   { src: bokunSrc, alt: 'Bokun', tall: true },
   { src: gtaSrc, alt: 'GTA' },
   { src: tourhubSrc, alt: 'TourHub', tall: true },
-  { src: sssSrc, alt: 'SSS' },
+  { src: stripeSrc, alt: 'Stripe', tall: true },
+  { src: nextSrc, alt: 'NEXT', tall: true },
+  { src: peSrc, alt: 'PE', tall: true },
+  { src: tqSrc, alt: 'TQ' },
+  { src: marriotSrc, alt: 'Marriot' },
 ]
 
 export default function PartnersSection() {

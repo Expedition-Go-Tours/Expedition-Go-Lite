@@ -59,15 +59,15 @@ function ReviewModal({ review, onClose }: { review: Review; onClose: () => void 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.2 }}
+      transition={{ duration: 0.25, ease: 'easeInOut' }}
       onClick={onClose}
     >
       <motion.div
         className="review-modal-card"
-        initial={{ opacity: 0, scale: 0.92, y: 30 }}
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.92, y: 30 }}
-        transition={{ type: 'spring', stiffness: 350, damping: 28 }}
+        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 30, mass: 0.8 }}
         onClick={(e) => e.stopPropagation()}
       >
         <button className="review-modal-close" onClick={onClose} aria-label="Close">
@@ -131,26 +131,39 @@ export default function CustomReviewsSection() {
 
   useEffect(() => {
     if (loaded) return
+    let scrolled = false
+
+    const extractAll = () => {
+      const extracted = extractReviewsFromDOM()
+      if (extracted.length > 0) {
+        setReviews(extracted)
+        setLoaded(true)
+        observer?.disconnect()
+        clearTimeout(fallback)
+        return true
+      }
+      return false
+    }
 
     const tryExtract = () => {
       const cards = document.querySelectorAll('.es-review-background-container')
-      if (cards.length > 0) {
-        const extracted = extractReviewsFromDOM()
-        if (extracted.length > 0) {
-          setReviews(extracted)
-          setLoaded(true)
-          observer?.disconnect()
-          clearTimeout(fallback)
-          return true
-        }
+      if (cards.length === 0) return
+
+      if (!scrolled) {
+        scrolled = true
+        const nextBtn = document.querySelector<HTMLElement>('.es-carousel-arrow-control-container-next')
+        nextBtn?.click()
+        setTimeout(extractAll, 600)
       }
-      return false
     }
 
     const observer = new MutationObserver(() => { tryExtract() })
     observer.observe(document.body, { childList: true, subtree: true })
 
-    const fallback = setTimeout(tryExtract, 10000)
+    const fallback = setTimeout(() => {
+      scrolled = true
+      extractAll()
+    }, 3000)
 
     return () => {
       observer.disconnect()
@@ -188,10 +201,13 @@ export default function CustomReviewsSection() {
   useEffect(() => {
     const el = scrollRef.current
     if (!el) return
-    updateArrows()
+    const raf = requestAnimationFrame(() => updateArrows())
     const onScroll = () => updateArrows()
     el.addEventListener('scroll', onScroll, { passive: true })
-    return () => el.removeEventListener('scroll', onScroll)
+    return () => {
+      cancelAnimationFrame(raf)
+      el.removeEventListener('scroll', onScroll)
+    }
   }, [updateArrows, loaded])
 
   return (
@@ -207,15 +223,40 @@ export default function CustomReviewsSection() {
             disableRight={!canScrollRight}
           />
 
+          <div className="reviews-rating-bar">
+            <div className="reviews-rating-bar-left">
+              <img src={trippyLogo} alt="Tripadvisor" className="reviews-rating-logo" />
+              <div className="reviews-rating-info">
+                <span className="reviews-rating-label">Tripadvisor Reviews</span>
+                <div className="reviews-rating-row">
+                  <span className="reviews-rating-score">4.9</span>
+                  <div className="reviews-rating-stars">
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <svg key={i} width="16" height="16" viewBox="0 0 24 24" fill="#179237" stroke="#179237" strokeWidth="1">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                      </svg>
+                    ))}
+                  </div>
+                  <span className="reviews-rating-count">(898)</span>
+                </div>
+              </div>
+            </div>
+            <a
+              href="https://www.tripadvisor.co.uk/Attraction_Review-g293797-d24155300-Reviews-Expedition_Go_Tours_Ltd-Accra_Greater_Accra.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="reviews-rating-button"
+            >
+              Review us on Tripadvisor
+            </a>
+          </div>
+
           <div className="reviews-elfsight" data-extracted={loaded ? 'true' : 'false'}>
             <div className="elfsight-app-81f18ebc-8702-4317-b46f-6de7cfe86fa7" data-elfsight-app-lazy></div>
           </div>
 
           {loaded && (
             <>
-              <div className="reviews-hero">
-                <img src={trippyLogo} alt="Tripadvisor" className="reviews-hero-img" />
-              </div>
               <div className="reviews-clip">
                 <div className="reviews-carousel" ref={scrollRef}>
                   {reviews.map((review, i) => (

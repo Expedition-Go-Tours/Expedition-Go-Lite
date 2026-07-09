@@ -1,0 +1,95 @@
+import { useRef, useState, useEffect, useCallback } from 'react'
+import SectionHeading from './SectionHeading'
+import { travelStories } from './data'
+import type { TravelStory } from './data'
+import './TravelStoriesSection.css'
+
+const CARD_WIDTH = 295
+const GAP = 16
+
+function StoryCard({ story }: { story: TravelStory }) {
+  return (
+    <div className="story-card-wrap">
+      <a href={story.link} className="story-card" target="_blank" rel="noopener noreferrer">
+        <div className="story-card-image">
+          <img src={story.image} alt={story.title} loading="lazy" />
+        </div>
+        <div className="story-card-body">
+          <div className="story-card-meta">
+            <span className="story-card-date">{story.date}</span>
+            <span className="story-card-author">{story.author}</span>
+          </div>
+          <h3 className="story-card-title">{story.title}</h3>
+          <p className="story-card-excerpt">{story.excerpt}</p>
+          <span className="story-card-link">Read more</span>
+        </div>
+      </a>
+    </div>
+  )
+}
+
+export default function TravelStoriesSection() {
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const [canScrollLeft, setCanScrollLeft] = useState(false)
+  const [canScrollRight, setCanScrollRight] = useState(true)
+
+  const updateArrows = useCallback(() => {
+    const el = scrollRef.current
+    if (!el) return
+    const maxScroll = el.scrollWidth - el.clientWidth
+    setCanScrollLeft(el.scrollLeft > 2)
+    setCanScrollRight(el.scrollLeft < maxScroll - 2)
+  }, [])
+
+  const scrollToIndex = useCallback((index: number) => {
+    const el = scrollRef.current
+    if (!el) return
+    const cardStep = CARD_WIDTH + GAP
+    el.scrollTo({ left: index * cardStep, behavior: 'smooth' })
+  }, [])
+
+  const scroll = (direction: 'left' | 'right') => {
+    const el = scrollRef.current
+    if (!el) return
+    const cardStep = CARD_WIDTH + GAP
+    const currentIndex = Math.round(el.scrollLeft / cardStep)
+    const maxIndex = Math.ceil(el.scrollWidth / cardStep) - 1
+    const targetIndex = direction === 'left'
+      ? Math.max(0, currentIndex - 2)
+      : Math.min(currentIndex + 2, maxIndex)
+    scrollToIndex(targetIndex)
+  }
+
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    updateArrows()
+    const onScroll = () => updateArrows()
+    el.addEventListener('scroll', onScroll, { passive: true })
+    return () => el.removeEventListener('scroll', onScroll)
+  }, [updateArrows])
+
+  return (
+    <section className="stories-section">
+      <div className="stories-container">
+        <div className="stories-viewport">
+          <SectionHeading
+            title="Travel Stories & News"
+            viewAllLink="#"
+            onScrollLeft={() => scroll('left')}
+            onScrollRight={() => scroll('right')}
+            disableLeft={!canScrollLeft}
+            disableRight={!canScrollRight}
+          />
+          <div className="stories-clip">
+            <div className="stories-carousel" ref={scrollRef}>
+              {travelStories.map((story, i) => (
+                <StoryCard key={`${story.title}-${i}`} story={story} />
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
