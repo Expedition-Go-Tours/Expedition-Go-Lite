@@ -224,15 +224,15 @@ export async function registerWithEmail(name: string, email: string, password: s
   return user
 }
 
-export async function signInWithGoogle(): Promise<boolean> {
+export async function signInWithGoogle(): Promise<{ redirected?: boolean } | AuthUser> {
   if (isBackend) {
     const origin = window.location.origin
     window.location.href = `${API_BASE}/auth/google?state=${encodeURIComponent(origin)}`
-    return false
+    return { redirected: true }
   }
 
   await new Promise((r) => setTimeout(r, 1200))
-  const user = {
+  const user: AuthUser = {
     id: 'mock-google-' + Date.now(),
     email: 'user@gmail.com',
     name: 'Google User',
@@ -240,7 +240,7 @@ export async function signInWithGoogle(): Promise<boolean> {
   }
   storeAuth({ accessToken: null, refreshToken: null, user })
   notifyAuthStateChange(user)
-  return true
+  return user
 }
 
 export async function signOutUser() {
