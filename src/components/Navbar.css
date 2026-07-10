@@ -530,6 +530,18 @@ body.hero--search-sticky .navbar-compact-search {
   color: #e53e3e;
 }
 
+.nav-mobile-signingout {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  font-family: 'Raleway', sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  color: #e53e3e;
+  border-radius: 8px;
+}
+
 .nav-mobile-divider {
   height: 1px;
   background: #eee;

@@ -18,10 +18,13 @@ import NewsletterSection from './components/NewsletterSection'
 import TravelStoriesSection from './components/TravelStoriesSection'
 import Footer from './components/Footer'
 import AuthForm from './components/AuthForm'
+import Dashboard from './components/Dashboard'
 import { subscribeToAuthState, handleGoogleCallback, type AuthUser } from './lib/auth'
 
+type PageView = 'home' | 'signin' | 'signup' | 'dashboard'
+
 function App() {
-  const [authPage, setAuthPage] = useState<'signin' | 'signup' | null>(null)
+  const [currentPage, setCurrentPage] = useState<PageView>('home')
   const [user, setUser] = useState<AuthUser | null>(null)
 
   useEffect(() => {
@@ -33,11 +36,15 @@ function App() {
     handleGoogleCallback()
   }, [])
 
+  const handleOpenAuth = (mode: 'signin' | 'signup') => setCurrentPage(mode)
+  const handleOpenDashboard = () => setCurrentPage('dashboard')
+  const handleGoHome = () => setCurrentPage('home')
+
   return (
     <>
       <Toaster position="top-center" />
       <AnimatePresence mode="wait">
-        {authPage ? (
+        {currentPage === 'signin' || currentPage === 'signup' ? (
           <motion.div
             key="auth"
             initial={{ opacity: 0, y: 20 }}
@@ -46,10 +53,20 @@ function App() {
             transition={{ duration: 0.25, ease: 'easeInOut' }}
           >
             <AuthForm
-              initialMode={authPage}
-              onBack={() => setAuthPage(null)}
-              onAuthSuccess={() => setAuthPage(null)}
+              initialMode={currentPage}
+              onBack={handleGoHome}
+              onAuthSuccess={handleGoHome}
             />
+          </motion.div>
+        ) : currentPage === 'dashboard' ? (
+          <motion.div
+            key="dashboard"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25, ease: 'easeInOut' }}
+          >
+            <Dashboard onBack={handleGoHome} />
           </motion.div>
         ) : (
           <motion.div
@@ -58,7 +75,7 @@ function App() {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.25, ease: 'easeInOut' }}
           >
-            <Navbar onOpenAuth={(mode) => setAuthPage(mode)} />
+            <Navbar onOpenAuth={handleOpenAuth} onOpenDashboard={handleOpenDashboard} />
             <Hero />
             <MoodSection />
             <RecommendSection />
