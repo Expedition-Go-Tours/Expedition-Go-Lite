@@ -89,12 +89,13 @@ function SignInForm({ onSwitchToSignUp, onAuthSuccess }: { onSwitchToSignUp: () 
   const handleGoogle = async () => {
     setGoogleLoading(true)
     try {
-      await signInWithGoogle()
-      toast.success('Signed in successfully')
-      onAuthSuccess?.()
+      const completed = await signInWithGoogle()
+      if (completed) {
+        toast.success('Signed in successfully')
+        onAuthSuccess?.()
+      }
     } catch (err: any) {
       toast.error(err.message || 'Google sign in failed')
-    } finally {
       setGoogleLoading(false)
     }
   }

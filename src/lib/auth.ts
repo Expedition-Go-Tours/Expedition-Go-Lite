@@ -224,11 +224,11 @@ export async function registerWithEmail(name: string, email: string, password: s
   return user
 }
 
-export async function signInWithGoogle(): Promise<void> {
+export async function signInWithGoogle(): Promise<boolean> {
   if (isBackend) {
     const origin = window.location.origin
     window.location.href = `${API_BASE}/auth/google?state=${encodeURIComponent(origin)}`
-    return
+    return false
   }
 
   await new Promise((r) => setTimeout(r, 1200))
@@ -240,6 +240,7 @@ export async function signInWithGoogle(): Promise<void> {
   }
   storeAuth({ accessToken: null, refreshToken: null, user })
   notifyAuthStateChange(user)
+  return true
 }
 
 export async function signOutUser() {
