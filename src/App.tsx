@@ -19,16 +19,15 @@ import TravelStoriesSection from './components/TravelStoriesSection'
 import Footer from './components/Footer'
 import AuthForm from './components/AuthForm'
 import Dashboard from './components/Dashboard'
-import { subscribeToAuthState, handleGoogleCallback, type AuthUser } from './lib/auth'
+import { subscribeToAuthState, handleGoogleCallback } from './lib/auth'
 
 type PageView = 'home' | 'signin' | 'signup' | 'dashboard'
 
 function App() {
   const [currentPage, setCurrentPage] = useState<PageView>('home')
-  const [user, setUser] = useState<AuthUser | null>(null)
 
   useEffect(() => {
-    const unsub = subscribeToAuthState((u) => setUser(u))
+    const unsub = subscribeToAuthState(() => {})
     return () => { unsub.then((fn) => fn()) }
   }, [])
 
