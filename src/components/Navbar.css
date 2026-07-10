@@ -43,7 +43,7 @@
 }
 
 .nav-logo-img {
-  height: 40px;
+  height: 120px;
   width: auto;
   display: block;
 }
@@ -205,6 +205,9 @@ body.hero--search-sticky .navbar-compact-search {
 /* Avatar dropdown */
 .nav-avatar-wrapper {
   position: relative;
+  height: 22px;
+  display: flex;
+  align-items: center;
 }
 
 .nav-avatar-btn {
@@ -224,9 +227,11 @@ body.hero--search-sticky .navbar-compact-search {
 }
 
 .nav-avatar-img {
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
   display: block;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
 .nav-dropdown {
@@ -239,6 +244,32 @@ body.hero--search-sticky .navbar-compact-search {
   min-width: 180px;
   overflow: hidden;
   z-index: 999;
+}
+
+.nav-dropdown-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.nav-dropdown-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.nav-dropdown-email {
+  font-family: 'Raleway', sans-serif;
+  font-size: 13px;
+  color: #666;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .nav-dropdown-header {
@@ -282,8 +313,63 @@ body.hero--search-sticky .navbar-compact-search {
   color: var(--primary);
 }
 
+.nav-dropdown-signout {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  font-family: 'Raleway', sans-serif;
+  font-size: 14px;
+  color: #e53e3e;
+  text-decoration: none;
+  cursor: pointer;
+  border-top: 1px solid #eee;
+  transition: background 0.2s;
+}
+
+.nav-dropdown-signout:hover {
+  background: #f5f5f5;
+  color: #e53e3e;
+}
+
+.nav-dropdown-signout svg {
+  flex-shrink: 0;
+  color: #e53e3e;
+}
+
+.nav-dropdown-signout:hover svg {
+  color: #e53e3e;
+}
+
 .nav-dropdown-item:hover svg {
   color: var(--primary);
+}
+
+/* Signing Out state inside dropdown */
+.nav-dropdown-signingout {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  font-family: 'Raleway', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #e53e3e;
+  border-top: 1px solid #eee;
+}
+
+.nav-spinner-sm {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #fbb5b5;
+  border-top-color: #e53e3e;
+  border-radius: 50%;
+  animation: nav-spin 0.6s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes nav-spin {
+  to { transform: rotate(360deg); }
 }
 
 /* Mobile overlay */
@@ -378,6 +464,72 @@ body.hero--search-sticky .navbar-compact-search {
   background: #f0faf3;
 }
 
+.nav-mobile-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: #f9f9f9;
+}
+
+.nav-mobile-user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.nav-mobile-user-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.nav-mobile-user-name {
+  font-family: 'Raleway', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nav-mobile-user-email {
+  font-family: 'Raleway', sans-serif;
+  font-size: 12px;
+  color: #888;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nav-mobile-signout {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  font-family: 'Raleway', sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  color: #e53e3e;
+  text-decoration: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.nav-mobile-signout:hover {
+  background: #fef2f2;
+}
+
+.nav-mobile-signout svg {
+  flex-shrink: 0;
+  color: #e53e3e;
+}
+
 .nav-mobile-divider {
   height: 1px;
   background: #eee;
@@ -449,6 +601,6 @@ body.hero--search-sticky .navbar-compact-search {
 
 @media (max-width: 768px) {
   .nav-logo-img {
-    height: 32px;
+    height: 90px;
   }
 }

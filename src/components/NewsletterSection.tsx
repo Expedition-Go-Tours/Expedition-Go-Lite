@@ -8,7 +8,7 @@ export default function NewsletterSection() {
         <div className="newsletter-viewport">
           <div className="newsletter-card">
         <div className="newsletter-image">
-          <img src={heroSrc} alt="Kwame Nkrumah Memorial Park" />
+          <img src={heroSrc} alt="Kwame Nkrumah Memorial Park" loading="lazy" />
         </div>
         <div className="newsletter-content">
           <h2 className="newsletter-heading">Adventure is calling — answer it</h2>

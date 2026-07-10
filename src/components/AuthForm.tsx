@@ -1,14 +1,31 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { toast } from "sonner";
 import { ImageSlider } from "@/components/ui/image-slider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import compyBg from '../assets/icons/compyIcon.png'
+import { signInWithGoogle, signInWithEmail, registerWithEmail } from '../lib/auth'
 
 interface AuthFormProps {
   initialMode?: "signin" | "signup";
   onBack?: () => void;
+  onAuthSuccess?: () => void;
 }
+
+const styles = `
+.auth-spinner-sm {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #ccc;
+  border-top-color: #333;
+  border-radius: 50%;
+  animation: auth-spin 0.6s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes auth-spin { to { transform: rotate(360deg); } }
+`
 
 const sliderImages = [
   '/images/Image01.webp',
@@ -45,16 +62,49 @@ function GoogleG() {
   );
 }
 
-function GoogleButton() {
+function GoogleButton({ onClick, loading }: { onClick?: () => void; loading?: boolean }) {
   return (
-    <Button variant="outline" className="w-full gap-2">
-      <GoogleG />
-      <span className="font-medium">Google</span>
+    <Button variant="outline" className="w-full gap-2" onClick={onClick} disabled={loading}>
+      {loading ? (
+        <>
+          <div className="auth-spinner-sm" />
+          <span className="font-medium">Connecting...</span>
+        </>
+      ) : (
+        <>
+          <GoogleG />
+          <span className="font-medium">Google</span>
+        </>
+      )}
     </Button>
   );
 }
 
-function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () => void }) {
+function SignInForm({ onSwitchToSignUp, onAuthSuccess }: { onSwitchToSignUp: () => void; onAuthSuccess?: () => void }) {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
+
+  const handleGoogle = () => {
+    setGoogleLoading(true)
+    setTimeout(() => signInWithGoogle(), 150)
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    try {
+      await signInWithEmail(email, password)
+      toast.success('Signed in successfully')
+      onAuthSuccess?.()
+    } catch (err: any) {
+      toast.error(err.message || 'Sign in failed')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <motion.div
       className="w-full max-w-sm"
@@ -71,7 +121,7 @@ function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () => void }) {
       </motion.p>
 
       <motion.div variants={itemVariants} className="mb-6">
-        <GoogleButton />
+        <GoogleButton onClick={handleGoogle} loading={googleLoading} />
       </motion.div>
 
       <motion.div variants={itemVariants} className="relative mb-6">
@@ -79,23 +129,25 @@ function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () => void }) {
           <span className="w-full border-t border-border" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
+          <span className="px-2 text-muted-foreground">Or continue with</span>
         </div>
       </motion.div>
 
-      <motion.form variants={itemVariants} className="space-y-6" onSubmit={(e) => e.preventDefault()}>
+      <motion.form variants={itemVariants} className="space-y-6" onSubmit={handleSubmit}>
         <div className="space-y-2">
           <Label htmlFor="signin-email" className="text-foreground">Email</Label>
-          <Input id="signin-email" type="email" placeholder="m@example.com" required className="bg-white" />
+          <Input id="signin-email" type="email" placeholder="m@example.com" required className="bg-white" value={email} onChange={(e) => setEmail(e.target.value)} />
         </div>
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label htmlFor="signin-password" className="text-foreground">Password</Label>
             <a href="#" className="text-sm font-medium text-primary hover:underline">Forgot password?</a>
           </div>
-          <Input id="signin-password" type="password" required className="bg-white" />
+          <Input id="signin-password" type="password" required className="bg-white" value={password} onChange={(e) => setPassword(e.target.value)} />
         </div>
-        <Button type="submit" className="w-full">Sign In</Button>
+        <Button type="submit" className="w-full" disabled={loading}>
+          {loading ? 'Signing In...' : 'Sign In'}
+        </Button>
       </motion.form>
 
       <motion.p variants={itemVariants} className="text-center text-sm text-muted-foreground mt-8">
@@ -108,7 +160,32 @@ function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () => void }) {
   );
 }
 
-function SignUpForm({ onSwitchToSignIn }: { onSwitchToSignIn: () => void }) {
+function SignUpForm({ onSwitchToSignIn, onAuthSuccess }: { onSwitchToSignIn: () => void; onAuthSuccess?: () => void }) {
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
+
+  const handleGoogle = () => {
+    setGoogleLoading(true)
+    setTimeout(() => signInWithGoogle(), 150)
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    try {
+      await registerWithEmail(name, email, password)
+      toast.success('Account created successfully')
+      onAuthSuccess?.()
+    } catch (err: any) {
+      toast.error(err.message || 'Registration failed')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <motion.div
       className="w-full max-w-sm"
@@ -125,7 +202,7 @@ function SignUpForm({ onSwitchToSignIn }: { onSwitchToSignIn: () => void }) {
       </motion.p>
 
       <motion.div variants={itemVariants} className="mb-6">
-        <GoogleButton />
+        <GoogleButton onClick={handleGoogle} loading={googleLoading} />
       </motion.div>
 
       <motion.div variants={itemVariants} className="relative mb-6">
@@ -133,24 +210,26 @@ function SignUpForm({ onSwitchToSignIn }: { onSwitchToSignIn: () => void }) {
           <span className="w-full border-t border-border" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
+          <span className="px-2 text-muted-foreground">Or continue with</span>
         </div>
       </motion.div>
 
-      <motion.form variants={itemVariants} className="space-y-5" onSubmit={(e) => e.preventDefault()}>
+      <motion.form variants={itemVariants} className="space-y-5" onSubmit={handleSubmit}>
         <div className="space-y-2">
           <Label htmlFor="signup-name" className="text-foreground">Full Name</Label>
-          <Input id="signup-name" type="text" placeholder="Enter your full name" required className="bg-white" />
+          <Input id="signup-name" type="text" placeholder="Enter your full name" required className="bg-white" value={name} onChange={(e) => setName(e.target.value)} />
         </div>
         <div className="space-y-2">
           <Label htmlFor="signup-email" className="text-foreground">Email</Label>
-          <Input id="signup-email" type="email" placeholder="m@example.com" required className="bg-white" />
+          <Input id="signup-email" type="email" placeholder="m@example.com" required className="bg-white" value={email} onChange={(e) => setEmail(e.target.value)} />
         </div>
         <div className="space-y-2">
           <Label htmlFor="signup-password" className="text-foreground">Password</Label>
-          <Input id="signup-password" type="password" placeholder="Create a password" required className="bg-white" />
+          <Input id="signup-password" type="password" placeholder="Create a password" required className="bg-white" value={password} onChange={(e) => setPassword(e.target.value)} />
         </div>
-        <Button type="submit" className="w-full">Sign Up</Button>
+        <Button type="submit" className="w-full" disabled={loading}>
+          {loading ? 'Creating Account...' : 'Sign Up'}
+        </Button>
       </motion.form>
 
       <motion.p variants={itemVariants} className="text-center text-sm text-muted-foreground mt-8">
@@ -163,12 +242,19 @@ function SignUpForm({ onSwitchToSignIn }: { onSwitchToSignIn: () => void }) {
   );
 }
 
-export default function AuthForm({ initialMode = "signin", onBack }: AuthFormProps) {
+export default function AuthForm({ initialMode = "signin", onBack, onAuthSuccess }: AuthFormProps) {
   const [mode, setMode] = useState<"signin" | "signup">(initialMode);
 
   return (
-    <div className="min-h-screen w-full bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-5xl min-h-[600px] grid grid-cols-1 lg:grid-cols-2 rounded-2xl overflow-hidden shadow-2xl border border-border bg-card relative">
+    <>
+      <style>{styles}</style>
+    <div className="min-h-screen w-full flex items-center justify-center p-4 relative">
+      <div
+        className="absolute inset-0 bg-cover bg-center lg:hidden"
+        style={{ backgroundImage: `url(${compyBg})` }}
+      />
+
+      <div className="w-full max-w-5xl min-h-[600px] grid grid-cols-1 lg:grid-cols-2 rounded-2xl overflow-hidden shadow-2xl border border-border relative bg-white/80 backdrop-blur-xl lg:bg-card lg:backdrop-blur-none">
         {onBack && (
           <button
             onClick={onBack}
@@ -189,13 +275,14 @@ export default function AuthForm({ initialMode = "signin", onBack }: AuthFormPro
         <div className="w-full flex flex-col items-center justify-center p-8 md:p-12">
           <AnimatePresence mode="wait">
             {mode === "signin" ? (
-              <SignInForm onSwitchToSignUp={() => setMode("signup")} />
+              <SignInForm onSwitchToSignUp={() => setMode("signup")} onAuthSuccess={onAuthSuccess} />
             ) : (
-              <SignUpForm onSwitchToSignIn={() => setMode("signin")} />
+              <SignUpForm onSwitchToSignIn={() => setMode("signin")} onAuthSuccess={onAuthSuccess} />
             )}
           </AnimatePresence>
         </div>
       </div>
     </div>
+    </>
   );
 }

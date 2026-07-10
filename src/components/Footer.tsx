@@ -54,11 +54,11 @@ export default function Footer() {
         <div className="footer-bottom">
           <p className="footer-copyright">2022 -2026 All rights reserved | Expedition-Go Tours LTD | Accra-Ghana</p>
           <div className="footer-payments">
-            <img src={visaSrc} alt="Visa" className="footer-payment footer-payment--visa" />
-            <img src={mastercardSrc} alt="Mastercard" className="footer-payment" />
-            <img src={discoverSrc} alt="Discover" className="footer-payment" />
-            <img src={paypalSrc} alt="PayPal" className="footer-payment" />
-            <img src={jcbSrc} alt="JCB" className="footer-payment" />
+            <img src={visaSrc} alt="Visa" className="footer-payment footer-payment--visa" loading="lazy" />
+            <img src={mastercardSrc} alt="Mastercard" className="footer-payment" loading="lazy" />
+            <img src={discoverSrc} alt="Discover" className="footer-payment" loading="lazy" />
+            <img src={paypalSrc} alt="PayPal" className="footer-payment" loading="lazy" />
+            <img src={jcbSrc} alt="JCB" className="footer-payment" loading="lazy" />
           </div>
         </div>
       </div>

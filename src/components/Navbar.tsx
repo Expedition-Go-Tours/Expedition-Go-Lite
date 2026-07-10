@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import logoSrc from '../assets/new_comp_pic.png'
+import { toast } from 'sonner'
+import logoSrc from '../assets/expo_trans.png'
 import userSrc from '../assets/icons/User Circle.png'
+import { subscribeToAuthState, signOutUser, getStoredAuthUser, type AuthUser } from '../lib/auth'
 import './Navbar.css'
 
 interface NavbarProps {
@@ -9,10 +11,17 @@ interface NavbarProps {
 }
 
 export default function Navbar({ onOpenAuth }: NavbarProps) {
+  const [user, setUser] = useState<AuthUser | null>(getStoredAuthUser)
   const [searchBarSticky, setSearchBarSticky] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [signingOut, setSigningOut] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const unsub = subscribeToAuthState((u) => setUser(u))
+    return () => { unsub.then((fn) => fn()) }
+  }, [])
 
   useEffect(() => {
     let cleanup: (() => void) | null = null
@@ -129,17 +138,30 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
           <div className="nav-icon-item" onClick={() => setDropdownOpen(!dropdownOpen)}>
             <div className="nav-avatar-wrapper" ref={dropdownRef}>
               <button className="nav-avatar-btn" onClick={(e) => { e.stopPropagation(); setDropdownOpen(!dropdownOpen) }} aria-label="Profile menu">
-                <img src={userSrc} alt="Profile" className="nav-avatar-img" />
+                <img src={user?.photoURL || userSrc} alt="Profile" className="nav-avatar-img" onError={(e) => { (e.target as HTMLImageElement).src = userSrc }} />
               </button>
               {dropdownOpen && (
                 <div className="nav-dropdown">
-                  <div className="nav-dropdown-header" onClick={() => { setDropdownOpen(false); onOpenAuth?.('signup') }}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="8" r="4" />
-                      <path d="M20 21a8 8 0 1 0-16 0" />
-                    </svg>
-                    Sign In / Sign Up
-                  </div>
+                  {user ? (
+                    <div className="nav-dropdown-user">
+                      <img
+                        src={user.photoURL || userSrc}
+                        alt=""
+                        className="nav-dropdown-avatar"
+                        onError={(e) => { (e.target as HTMLImageElement).src = userSrc }}
+                      />
+                      <span className="nav-dropdown-email">{user.email}</span>
+                    </div>
+                  ) : (
+                    <div className="nav-dropdown-header" onClick={() => { setDropdownOpen(false); onOpenAuth?.('signup') }}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="8" r="4" />
+                        <path d="M20 21a8 8 0 1 0-16 0" />
+                      </svg>
+                      Sign In / Sign Up
+                    </div>
+                  )}
+
                   {navLinks.map((link) => (
                     <a key={link.label} href="#" className="nav-dropdown-item" onClick={(e) => e.preventDefault()}>
                       {link.icon === 'compass' && (
@@ -164,10 +186,35 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
                       {link.label}
                     </a>
                   ))}
+
+                  {user && (
+                    signingOut ? (
+                      <div className="nav-dropdown-signingout">
+                        <div className="nav-spinner-sm" />
+                        Signing Out
+                      </div>
+                    ) : (
+                      <div className="nav-dropdown-signout" onClick={async (e) => {
+                        e.stopPropagation()
+                        setSigningOut(true)
+                        await signOutUser()
+                        setSigningOut(false)
+                        setDropdownOpen(false)
+                        toast.success('Successfully signed out')
+                      }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                          <polyline points="16 17 21 12 16 7" />
+                          <line x1="21" y1="12" x2="9" y2="12" />
+                        </svg>
+                        Sign Out
+                      </div>
+                    )
+                  )}
                 </div>
               )}
             </div>
-            <span className="nav-icon-label">Profile</span>
+            <span className="nav-icon-label">{user?.name || 'Profile'}</span>
           </div>
         </div>
         <button className="nav-hamburger" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-label="Toggle menu">
@@ -212,6 +259,23 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
                 <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
             </button>
+            {user ? (
+              <div className="nav-mobile-user">
+                <img src={user.photoURL || userSrc} alt="" className="nav-mobile-user-avatar" onError={(e) => { (e.target as HTMLImageElement).src = userSrc }} />
+                <div className="nav-mobile-user-info">
+                  <span className="nav-mobile-user-name">{user.name}</span>
+                  <span className="nav-mobile-user-email">{user.email}</span>
+                </div>
+              </div>
+            ) : (
+              <a href="#" className="nav-mobile-link">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="8" r="4" />
+                  <path d="M20 21a8 8 0 1 0-16 0" />
+                </svg>
+                Profile
+              </a>
+            )}
             <a href="#" className="nav-mobile-link">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
@@ -225,13 +289,6 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
               </svg>
               Wishlist
-            </a>
-            <a href="#" className="nav-mobile-link">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="8" r="4" />
-                <path d="M20 21a8 8 0 1 0-16 0" />
-              </svg>
-              Profile
             </a>
             <div className="nav-mobile-divider" />
             <a href="#" className="nav-mobile-link">
@@ -257,13 +314,34 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
               Contact
             </a>
             <div className="nav-mobile-divider" />
-            <div className="nav-mobile-sign" onClick={() => { setMobileMenuOpen(false); onOpenAuth?.('signup') }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="8" r="4" />
-                <path d="M20 21a8 8 0 1 0-16 0" />
-              </svg>
-              Sign In / Sign Up
-            </div>
+            {user ? (
+              <div className="nav-mobile-signout" onClick={async () => {
+                setSigningOut(true)
+                await signOutUser()
+                setSigningOut(false)
+                setMobileMenuOpen(false)
+                toast.success('Successfully signed out', {
+                  position: 'top-center',
+                  autoClose: 3000,
+                  hideProgressBar: true,
+                })
+              }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                  <polyline points="16 17 21 12 16 7" />
+                  <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
+                Sign Out
+              </div>
+            ) : (
+              <div className="nav-mobile-sign" onClick={() => { setMobileMenuOpen(false); onOpenAuth?.('signup') }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="8" r="4" />
+                  <path d="M20 21a8 8 0 1 0-16 0" />
+                </svg>
+                Sign In / Sign Up
+              </div>
+            )}
             </motion.div>
           </motion.div>
         )}
