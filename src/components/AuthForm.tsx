@@ -86,9 +86,17 @@ function SignInForm({ onSwitchToSignUp, onAuthSuccess }: { onSwitchToSignUp: () 
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
 
-  const handleGoogle = () => {
+  const handleGoogle = async () => {
     setGoogleLoading(true)
-    setTimeout(() => signInWithGoogle(), 150)
+    try {
+      await signInWithGoogle()
+      toast.success('Signed in successfully')
+      onAuthSuccess?.()
+    } catch (err: any) {
+      toast.error(err.message || 'Google sign in failed')
+    } finally {
+      setGoogleLoading(false)
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -167,9 +175,17 @@ function SignUpForm({ onSwitchToSignIn, onAuthSuccess }: { onSwitchToSignIn: () 
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
 
-  const handleGoogle = () => {
+  const handleGoogle = async () => {
     setGoogleLoading(true)
-    setTimeout(() => signInWithGoogle(), 150)
+    try {
+      await signInWithGoogle()
+      toast.success('Signed up successfully')
+      onAuthSuccess?.()
+    } catch (err: any) {
+      toast.error(err.message || 'Google sign up failed')
+    } finally {
+      setGoogleLoading(false)
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
