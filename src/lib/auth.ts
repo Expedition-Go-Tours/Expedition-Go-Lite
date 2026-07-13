@@ -344,6 +344,18 @@ export async function refreshStoredUserFromBackend(): Promise<AuthUser | null> {
   return null
 }
 
+function decodeJwtPayload(token: string): Record<string, unknown> | null {
+  try {
+    const parts = token.split('.')
+    if (parts.length !== 3) return null
+    const payload = parts[1]
+    const decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'))
+    return JSON.parse(decodeURIComponent(decoded.split('').map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')))
+  } catch {
+    return null
+  }
+}
+
 export async function handleGoogleCallback(): Promise<void> {
   const params = new URLSearchParams(window.location.search)
   const accessToken = params.get('accessToken')
@@ -358,7 +370,13 @@ export async function handleGoogleCallback(): Promise<void> {
     storeAuth({ accessToken, refreshToken, user })
     notifyAuthStateChange(user)
   } catch {
-    /* user will be fetched on next page load */
+    const payload = decodeJwtPayload(accessToken)
+    const userId = payload?.userId || payload?.id || payload?.sub
+    const fallbackUser: AuthUser = userId
+      ? { id: String(userId), email: payload?.email ? String(payload.email) : undefined, name: payload?.name ? String(payload.name) : undefined }
+      : {}
+    storeAuth({ accessToken, refreshToken, user: fallbackUser })
+    notifyAuthStateChange(fallbackUser)
   }
 
   window.history.replaceState({}, '', window.location.origin)
