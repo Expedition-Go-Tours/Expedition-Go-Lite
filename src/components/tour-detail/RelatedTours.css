@@ -1,0 +1,122 @@
+/* Related Tours - Mobile First */
+.related-tours {
+  padding: 32px 16px;
+  background: #f9f9f9;
+}
+
+.related-tours-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.related-tours-title {
+  font-family: var(--font-heading);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-h, #08060d);
+  margin: 0;
+}
+
+.related-tours-nav {
+  display: none;
+  gap: 8px;
+}
+
+.related-tours-nav-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--border, #e5e4e7);
+  background: #fff;
+  color: var(--text, #6b6375);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.related-tours-nav-btn:hover {
+  background: var(--primary, #179237);
+  color: #fff;
+  border-color: var(--primary, #179237);
+}
+
+.related-tours-container {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding-bottom: 8px;
+}
+
+.related-tours-container::-webkit-scrollbar {
+  display: none;
+}
+
+.related-tour-card-wrapper {
+  flex: 0 0 280px;
+  scroll-snap-align: start;
+}
+
+/* Tablet - 768px+ */
+@media (min-width: 768px) {
+  .related-tours {
+    padding: 48px 24px;
+  }
+
+  .related-tours-title {
+    font-size: 28px;
+  }
+
+  .related-tours-nav {
+    display: flex;
+  }
+
+  .related-tours-container {
+    gap: 20px;
+  }
+
+  .related-tour-card-wrapper {
+    flex: 0 0 calc(50% - 10px);
+  }
+}
+
+/* Desktop - 1024px+ */
+@media (min-width: 1024px) {
+  .related-tours {
+    padding: 64px 40px;
+  }
+
+  .related-tours-title {
+    font-size: 32px;
+  }
+
+  .related-tours-container {
+    gap: 24px;
+  }
+
+  .related-tour-card-wrapper {
+    flex: 0 0 calc(33.333% - 16px);
+  }
+}
+
+/* Large Desktop - 1400px+ */
+@media (min-width: 1400px) {
+  .related-tours {
+    padding: 80px 60px;
+  }
+
+  .related-tours-title {
+    font-size: 36px;
+  }
+
+  .related-tour-card-wrapper {
+    flex: 0 0 calc(25% - 18px);
+  }
+}

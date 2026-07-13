@@ -4,7 +4,7 @@ export const mockTourDetail: TourDetail = {
   id: '1',
   slug: 'western-blt-from-san-francisco',
   title: 'Western Blt From San Francisco',
-  location: 'New York, United States',
+  location: 'Accra, Greater Accra Region',
   price: 300,
   currency: 'USD',
   duration: '2 days',

@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import './TourCard.css'
 import type { Tour } from './data'
@@ -23,8 +24,18 @@ export default function TourCard({ title, duration, features, price, rating, rev
     }
   }
 
+  // Generate a slug from the title for the URL
+  const generateSlug = (title: string): string => {
+    return title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+  }
+
+  const tourSlug = generateSlug(title)
+
   return (
-    <a href="#" className="tour-card">
+    <Link to={`/tour/${tourSlug}`} className="tour-card">
       <div className="tour-card-image">
         <img src={image} alt={title} loading="lazy" />
         <div className="tour-card-image-fade" />
@@ -60,6 +71,6 @@ export default function TourCard({ title, duration, features, price, rating, rev
           </div>
         </div>
       </div>
-    </a>
+    </Link>
   )
 }

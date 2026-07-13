@@ -1,5 +1,8 @@
+import { useEffect } from 'react'
 // import { useParams } from 'react-router-dom'
-import { mockTourDetail } from '../../data/mockTourDetail'
+import { mockTourDetail, mockReviews, mockReviewStats } from '../../data/mockTourDetail'
+import { recommendedTours } from '../data'
+import Navbar from '../Navbar'
 import TourImageGallery from './TourImageGallery'
 import TourHeader from './TourHeader'
 import Breadcrumb from './Breadcrumb'
@@ -11,6 +14,9 @@ import TourInfo from './TourInfo'
 import TourFAQ from './TourFAQ'
 import TourLocationMap from './TourLocationMap'
 import BookingWidget from './BookingWidget'
+import ReviewSummary from './ReviewSummary'
+import ReviewList from './ReviewList'
+import RelatedTours from './RelatedTours'
 import './TourDetailPage.css'
 
 export default function TourDetailPage() {
@@ -19,6 +25,21 @@ export default function TourDetailPage() {
   // In production, fetch tour data based on tourId
   // For now, using mock data
   const tour = mockTourDetail
+  const reviews = mockReviews
+  const reviewStats = mockReviewStats
+  const relatedTours = recommendedTours.slice(0, 6) // Show 6 related tours
+
+  // Set dynamic page title
+  useEffect(() => {
+    if (tour) {
+      document.title = `${tour.title} | Expedition-Go`
+    }
+    
+    // Cleanup: Reset to default title when component unmounts
+    return () => {
+      document.title = 'Expedition-Go - Discover Amazing Tours'
+    }
+  }, [tour])
 
   if (!tour) {
     return (
@@ -30,7 +51,9 @@ export default function TourDetailPage() {
   }
 
   return (
-    <div className="tour-detail-page">
+    <>
+      <Navbar />
+      <div className="tour-detail-page">
       <Breadcrumb tour={tour} />
       
       <div className="tour-detail-container">
@@ -68,6 +91,13 @@ export default function TourDetailPage() {
               location={tour.location}
               title={tour.title}
             />
+
+            {/* Reviews Section */}
+            <section id="reviews" className="tour-reviews-section">
+              <h2 className="section-title">Guest Reviews</h2>
+              <ReviewSummary stats={reviewStats} />
+              <ReviewList reviews={reviews} />
+            </section>
           </div>
           
           <aside className="tour-detail-sidebar">
@@ -77,6 +107,10 @@ export default function TourDetailPage() {
           </aside>
         </div>
       </div>
-    </div>
+
+      {/* Related Tours */}
+      <RelatedTours tours={relatedTours} />
+      </div>
+    </>
   )
 }

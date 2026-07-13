@@ -5,6 +5,7 @@
   width: 100%;
   background: #f8f9fb;
   min-height: 100vh;
+  padding-top: 64px; /* Account for fixed navbar */
 }
 
 .tour-detail-container {
@@ -122,5 +123,43 @@
   .tour-detail-sidebar {
     width: 400px;
     min-width: 400px;
+  }
+}
+
+/* Reviews Section */
+.tour-reviews-section {
+  margin-top: 48px;
+  padding: 24px 16px;
+  background: #f9f9f9;
+  border-radius: 12px;
+}
+
+.tour-reviews-section .section-title {
+  font-family: var(--font-heading);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-h, #08060d);
+  margin: 0 0 24px 0;
+}
+
+/* Tablet - 768px+ */
+@media (min-width: 768px) {
+  .tour-reviews-section {
+    padding: 32px 24px;
+  }
+
+  .tour-reviews-section .section-title {
+    font-size: 28px;
+  }
+}
+
+/* Desktop - 1024px+ */
+@media (min-width: 1024px) {
+  .tour-reviews-section {
+    padding: 40px 32px;
+  }
+
+  .tour-reviews-section .section-title {
+    font-size: 32px;
   }
 }

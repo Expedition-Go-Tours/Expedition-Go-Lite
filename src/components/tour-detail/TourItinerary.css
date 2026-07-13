@@ -188,17 +188,9 @@
   border-radius: 20px;
 }
 
-/* Connector Line */
+/* Connector Line - REMOVED */
+/* The timeline connector has been removed per user request */
 .itinerary-connector {
-  position: absolute;
-  left: 30px;
-  top: 70px;
-  bottom: 0;
-  width: 2px;
-  background: linear-gradient(to bottom, var(--primary) 0%, rgba(23, 146, 55, 0.2) 100%);
-}
-
-.itinerary-day:last-child .itinerary-connector {
   display: none;
 }
 
@@ -254,8 +246,7 @@
   }
 
   .itinerary-connector {
-    left: 40px;
-    top: 75px;
+    display: none;
   }
 }
 
