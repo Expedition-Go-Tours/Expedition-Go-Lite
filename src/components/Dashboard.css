@@ -2,7 +2,7 @@
   display: flex;
   min-height: 100vh;
   font-family: var(--font-body);
-  --dash-accent: #69c982;
+  --dash-accent: #02624f;
 }
 
 /* ===== SIDEBAR ===== */
@@ -476,7 +476,7 @@
 .dashboard-main button[class*="bg-primary"]:hover,
 .dashboard-main .bg-primary:hover,
 .dashboard-section-action button:hover {
-  background: #55b870;
+  background: #01513f;
 }
 
 .dashboard-avatar-btn {
@@ -486,7 +486,7 @@
 }
 
 .dashboard-avatar-btn:hover {
-  background: #55b870 !important;
+  background: #01513f !important;
 }
 
 /* ===== MOBILE TOP BAR ===== */
@@ -662,11 +662,13 @@
     margin-left: 0;
     margin-top: 56px;
     min-height: calc(100vh - 56px);
+    overflow-x: hidden;
   }
 
   .sidebar-expanded .dashboard-main {
     margin-left: 0;
     margin-top: 56px;
+    overflow-x: hidden;
   }
 
   .dashboard-content {

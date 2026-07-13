@@ -126,16 +126,23 @@ export async function getAuthToken(): Promise<string | null> {
   return accessToken || null
 }
 
+/**
+ * Wait for an authentication token to become available
+ * @param maxMs - Maximum time to wait in milliseconds (default: 5000)
+ * @returns The authentication token if available, null otherwise
+ */
 export async function waitForAuthToken(maxMs = 5000): Promise<string | null> {
-  const start = Date.now()
-  const interval = 250
+  const start = Date.now() // Record the start time
+  const interval = 250 // Check every 250ms
 
+  // Loop until maxMs has elapsed
   while (Date.now() - start < maxMs) {
-    const { accessToken } = getStoredAuth()
-    if (accessToken) return accessToken
-    await new Promise((resolve) => setTimeout(resolve, interval))
+    const { accessToken } = getStoredAuth() // Get stored authentication
+    if (accessToken) return accessToken // Return token if available
+    await new Promise((resolve) => setTimeout(resolve, interval)) // Wait before next check
   }
 
+  // Final check after maxMs has elapsed
   const { accessToken } = getStoredAuth()
   return accessToken || null
 }

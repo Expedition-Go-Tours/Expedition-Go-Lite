@@ -1,17 +1,34 @@
+import { toast } from 'sonner'
 import type { MultiDayTour } from './data'
 import './MultiDayCard.css'
+import { useWishlist, toWishlistItem } from '../context/WishlistContext'
 
 interface MultiDayCardProps extends MultiDayTour {}
 
 export default function MultiDayCard({ title, days, accommodation, highlights, price, rating, reviews, location, image }: MultiDayCardProps) {
+  const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist()
+  const item = toWishlistItem({ title, days, accommodation, highlights, price, rating: String(rating), reviews, location, image } as unknown as MultiDayTour)
+  const inWishlist = isInWishlist(item.id)
+
+  const handleWishlist = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (inWishlist) {
+      removeFromWishlist(item.id)
+    } else {
+      addToWishlist(item)
+      toast.success('Added to wishlist')
+    }
+  }
+
   return (
     <a href="#" className="multiday-card">
       <div className="multiday-card-image">
         <img src={image} alt={title} loading="lazy" />
         <div className="multiday-card-image-fade" />
         <span className="multiday-card-days">{days}</span>
-        <button className="multiday-card-wishlist" onClick={(e) => { e.preventDefault(); e.stopPropagation() }} aria-label="Add to wishlist">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <button className="multiday-card-wishlist" onClick={handleWishlist} aria-label={inWishlist ? 'Remove from wishlist' : 'Add to wishlist'}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill={inWishlist ? '#ef4444' : 'none'} stroke={inWishlist ? '#ef4444' : 'currentColor'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
           </svg>
         </button>

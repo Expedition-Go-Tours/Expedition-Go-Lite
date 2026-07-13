@@ -198,6 +198,15 @@ body.hero--search-sticky .navbar-compact-search {
   align-items: center;
 }
 
+/* Profile item: more gap between avatar and name */
+.nav-icon-item:has(.nav-avatar-wrapper) {
+  gap: 6px;
+}
+
+.nav-icon-item:has(.nav-avatar-wrapper) .nav-avatar-wrapper {
+  margin-top: -4px;
+}
+
 .nav-icons svg {
   transition: color 0.2s;
 }

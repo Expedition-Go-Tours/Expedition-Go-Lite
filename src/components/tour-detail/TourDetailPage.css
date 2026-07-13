@@ -1,0 +1,126 @@
+/* ===== TOUR DETAIL PAGE - MOBILE FIRST ===== */
+
+/* Container */
+.tour-detail-page {
+  width: 100%;
+  background: #f8f9fb;
+  min-height: 100vh;
+}
+
+.tour-detail-container {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Content Layout - Mobile First */
+.tour-detail-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Main Content */
+.tour-detail-main {
+  width: 100%;
+  padding: 0;
+  background: #fff;
+}
+
+/* Sidebar - Hidden on mobile, shown as fixed bottom bar */
+.tour-detail-sidebar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: #fff;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+  padding: 12px 16px;
+}
+
+/* Error State */
+.tour-detail-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.tour-detail-error h2 {
+  font-family: var(--font-heading);
+  font-size: 24px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 12px;
+}
+
+.tour-detail-error p {
+  font-family: var(--font-body);
+  font-size: 16px;
+  color: #6b7280;
+}
+
+/* ===== TABLET VIEW (768px+) ===== */
+@media (min-width: 768px) {
+  .tour-detail-content {
+    padding: 0 24px;
+  }
+
+  .tour-detail-main {
+    padding: 0;
+  }
+
+  /* Sidebar becomes sticky sidebar */
+  .tour-detail-sidebar {
+    position: relative;
+    box-shadow: none;
+    padding: 0;
+    background: transparent;
+  }
+}
+
+/* ===== DESKTOP VIEW (1024px+) ===== */
+@media (min-width: 1024px) {
+  .tour-detail-content {
+    flex-direction: row;
+    gap: 32px;
+    padding: 0 40px 40px;
+    align-items: flex-start;
+  }
+
+  .tour-detail-main {
+    flex: 1;
+    max-width: calc(100% - 400px);
+  }
+
+  .tour-detail-sidebar {
+    position: sticky;
+    top: 100px;
+    width: 380px;
+    min-width: 380px;
+    flex-shrink: 0;
+  }
+}
+
+/* ===== LARGE DESKTOP (1400px+) ===== */
+@media (min-width: 1400px) {
+  .tour-detail-content {
+    gap: 48px;
+    padding: 0 60px 60px;
+  }
+
+  .tour-detail-main {
+    max-width: calc(100% - 420px);
+  }
+
+  .tour-detail-sidebar {
+    width: 400px;
+    min-width: 400px;
+  }
+}

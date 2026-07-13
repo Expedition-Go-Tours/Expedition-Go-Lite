@@ -6,16 +6,19 @@ import userSrc from '../assets/icons/User Circle.png'
 import { signOutUser, getStoredAuthUser, type AuthUser } from '../lib/auth'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
+import BookingHistory from './BookingHistory'
+import Wishlist from './Wishlist'
 import './Dashboard.css'
 
 interface DashboardProps {
   onBack: () => void
+  initialMenu?: string
 }
 
-export default function Dashboard({ onBack }: DashboardProps) {
+export default function Dashboard({ onBack, initialMenu }: DashboardProps) {
   const user: AuthUser | null = getStoredAuthUser()
 
-  const [activeMenu, setActiveMenu] = useState('settings')
+  const [activeMenu, setActiveMenu] = useState(initialMenu || 'settings')
   const [signingOut, setSigningOut] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [sidebarExpanded, setSidebarExpanded] = useState(false)
@@ -253,10 +256,16 @@ export default function Dashboard({ onBack }: DashboardProps) {
 
       <main className="dashboard-main">
         <div className="dashboard-content">
-          <h1 className="dashboard-title">Account Setting</h1>
+          <h1 className="dashboard-title">
+            {activeMenu === 'bookings' 
+              ? 'Booking History' 
+              : activeMenu === 'wishlist' 
+              ? 'My Wishlist' 
+              : 'Account Setting'}
+          </h1>
 
-          {/* Personal Information */}
-          <section className="dashboard-section">
+          {activeMenu === 'settings' && (
+            <section className="dashboard-section">
             <h2 className="dashboard-section-title">PERSONAL INFORMATION</h2>
             <div className="dashboard-grid">
               <div className="dashboard-grid-left">
@@ -315,10 +324,20 @@ export default function Dashboard({ onBack }: DashboardProps) {
               </div>
             </div>
           </section>
+          )}
 
-          {/* Location */}
-          <section className="dashboard-section">
-            <h2 className="dashboard-section-title">LOCATION</h2>
+          {activeMenu === 'bookings' && (
+            <BookingHistory />
+          )}
+
+          {activeMenu === 'wishlist' && (
+            <Wishlist />
+          )}
+
+          {activeMenu === 'settings' && (
+            <>
+            <section className="dashboard-section">
+              <h2 className="dashboard-section-title">LOCATION</h2>
             <div className="dashboard-grid dashboard-grid-3col">
               <div className="dashboard-field">
                 <label className="dashboard-label">Home Airport</label>
@@ -350,7 +369,6 @@ export default function Dashboard({ onBack }: DashboardProps) {
             </div>
           </section>
 
-          {/* Change Password */}
           <section className="dashboard-section">
             <h2 className="dashboard-section-title">CHANGE PASSWORD</h2>
             <div className="dashboard-grid dashboard-grid-3col">
@@ -371,6 +389,8 @@ export default function Dashboard({ onBack }: DashboardProps) {
               <Button onClick={handleChangePassword}>CHANGE PASSWORD</Button>
             </div>
           </section>
+          </>
+          )}
         </div>
       </main>
     </div>
