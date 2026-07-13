@@ -1,0 +1,81 @@
+/* ===== TOUR HIGHLIGHTS - MOBILE FIRST ===== */
+
+.tour-highlights {
+  padding: 24px 16px;
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+}
+
+.tour-highlights-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.tour-highlight-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.6;
+  color: #1a1a1a;
+}
+
+.tour-highlight-icon {
+  flex-shrink: 0;
+  color: var(--primary);
+  margin-top: 2px;
+}
+
+/* ===== TABLET VIEW (768px+) ===== */
+@media (min-width: 768px) {
+  .tour-highlights {
+    padding: 32px 24px;
+  }
+
+  .tour-highlights-list {
+    gap: 16px;
+  }
+
+  .tour-highlight-item {
+    font-size: 16px;
+    gap: 14px;
+  }
+
+  .tour-highlight-icon {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+/* ===== DESKTOP VIEW (1024px+) ===== */
+@media (min-width: 1024px) {
+  .tour-highlights {
+    padding: 40px 32px;
+  }
+
+  .tour-highlights-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px 24px;
+  }
+
+  .tour-highlight-item {
+    font-size: 17px;
+  }
+}
+
+/* ===== LARGE DESKTOP (1400px+) ===== */
+@media (min-width: 1400px) {
+  .tour-highlights {
+    padding: 48px 40px;
+  }
+
+  .tour-highlights-list {
+    gap: 20px 32px;
+  }
+}
