@@ -226,6 +226,7 @@ export async function registerWithEmail(name: string, email: string, password: s
 
 export async function signInWithGoogle(): Promise<{ redirected?: boolean } | AuthUser> {
   if (isBackend) {
+    await new Promise((r) => setTimeout(r, 600))
     const origin = window.location.origin
     window.location.href = `${API_BASE}/auth/google?state=${encodeURIComponent(origin)}`
     return { redirected: true }

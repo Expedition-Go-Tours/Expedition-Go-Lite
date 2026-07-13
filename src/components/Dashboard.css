@@ -282,8 +282,7 @@
 }
 
 .dashboard-content {
-  max-width: 1200px;
-  padding: 40px 48px 40px 40px;
+  padding: 40px 24px 40px 40px;
 }
 
 .dashboard-title {

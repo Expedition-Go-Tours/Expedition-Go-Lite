@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { flushSync } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import { ImageSlider } from "@/components/ui/image-slider";
@@ -87,7 +88,9 @@ function SignInForm({ onSwitchToSignUp, onAuthSuccess }: { onSwitchToSignUp: () 
   const [googleLoading, setGoogleLoading] = useState(false)
 
   const handleGoogle = async () => {
-    setGoogleLoading(true)
+    flushSync(() => {
+      setGoogleLoading(true)
+    })
     try {
       setAuthReturnTo('/')
 
@@ -182,7 +185,9 @@ function SignUpForm({ onSwitchToSignIn, onAuthSuccess }: { onSwitchToSignIn: () 
   const [googleLoading, setGoogleLoading] = useState(false)
 
   const handleGoogle = async () => {
-    setGoogleLoading(true)
+    flushSync(() => {
+      setGoogleLoading(true)
+    })
     try {
       setAuthReturnTo('/')
 
