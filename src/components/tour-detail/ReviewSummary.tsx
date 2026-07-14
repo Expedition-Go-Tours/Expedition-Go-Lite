@@ -30,8 +30,8 @@ export default function ReviewSummary({ stats }: ReviewSummaryProps) {
             <Star
               key={star}
               size={20}
-              fill={star <= Math.round(average) ? '#69c982' : 'none'}
-              stroke={star <= Math.round(average) ? '#69c982' : '#e5e4e7'}
+              fill={star <= Math.round(average) ? '#179237' : 'none'}
+              stroke={star <= Math.round(average) ? '#179237' : '#e5e4e7'}
             />
           ))}
         </div>

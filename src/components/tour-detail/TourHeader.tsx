@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { toast } from 'sonner'
 import { useWishlist } from '../../context/WishlistContext'
 import './TourHeader.css'
 
@@ -39,6 +40,7 @@ export default function TourHeader({
         reviewCount,
         addedDate: new Date().toISOString(),
       })
+      toast.success('Added to wishlist')
     }
     setTimeout(() => setIsAnimating(false), 300)
   }

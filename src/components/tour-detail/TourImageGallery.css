@@ -1,132 +1,243 @@
 /* ===== TOUR IMAGE GALLERY - MOBILE FIRST ===== */
 
 .tour-image-gallery {
-  width: 100%;
-  background: #000;
-}
-
-/* Main Image - Mobile */
-.tour-gallery-main {
   position: relative;
   width: 100%;
-  height: 280px;
+  border-radius: 8px;
   overflow: hidden;
-  cursor: pointer;
 }
 
-.tour-main-image {
+/* ===== MOBILE CAROUSEL ===== */
+.tour-gallery-carousel {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  aspect-ratio: 16 / 10;
+  background: #111;
+}
+
+.tour-gallery-carousel::-webkit-scrollbar {
+  display: none;
+}
+
+.tour-gallery-carousel-item {
+  flex: 0 0 100%;
+  scroll-snap-align: start;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  background: #111;
+}
+
+.tour-gallery-carousel-item img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-/* Video Button */
-.tour-video-btn {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 64px;
-  height: 64px;
+/* Carousel dots */
+.tour-gallery-carousel-dots {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 0 12px;
+  background: #fff;
+}
+
+.tour-gallery-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
   border: none;
-  background: transparent;
+  background: #d1d5db;
   cursor: pointer;
-  transition: transform 0.2s ease;
-  z-index: 2;
+  padding: 0;
+  transition: all 0.3s ease;
 }
 
-.tour-video-btn:hover {
-  transform: translate(-50%, -50%) scale(1.1);
+.tour-gallery-dot.active {
+  width: 20px;
+  border-radius: 4px;
+  background: #179237;
 }
 
-/* Gallery Grid - Hidden on mobile */
-.tour-gallery-grid {
+/* ===== DESKTOP GRID - hidden on mobile ===== */
+.tour-gallery-desktop {
+  display: none;
+}
+
+/* Image counter badge - hidden on mobile */
+.tour-gallery-counter {
   display: none;
 }
 
 /* ===== TABLET VIEW (768px+) ===== */
 @media (min-width: 768px) {
-  .tour-gallery-main {
-    height: 400px;
+  .tour-gallery-carousel {
+    aspect-ratio: 16 / 8;
   }
 
-  .tour-gallery-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 4px;
-    background: #000;
+  .tour-gallery-carousel-dots {
+    gap: 8px;
+    padding: 12px 0 16px;
   }
 
-  .tour-gallery-item {
-    position: relative;
-    height: 200px;
-    overflow: hidden;
-    cursor: pointer;
+  .tour-gallery-dot {
+    width: 7px;
+    height: 7px;
   }
 
-  .tour-gallery-item img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.3s ease;
-  }
-
-  .tour-gallery-item:hover img {
-    transform: scale(1.05);
-  }
-
-  .tour-gallery-overlay {
-    position: absolute;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.6);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #fff;
-    font-family: var(--font-heading);
-    font-size: 18px;
-    font-weight: 600;
+  .tour-gallery-dot.active {
+    width: 24px;
   }
 }
 
 /* ===== DESKTOP VIEW (1024px+) ===== */
 @media (min-width: 1024px) {
   .tour-image-gallery {
+    border-radius: 12px;
+  }
+
+  /* Hide carousel on desktop */
+  .tour-gallery-carousel {
+    display: none;
+  }
+
+  .tour-gallery-carousel-dots {
+    display: none;
+  }
+
+  /* Show desktop grid */
+  .tour-gallery-desktop {
     display: grid;
-    grid-template-columns: 60% 40%;
-    gap: 8px;
-    height: 500px;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 6px;
+    height: 460px;
     border-radius: 12px;
     overflow: hidden;
-    margin: 0 40px;
   }
 
   .tour-gallery-main {
+    position: relative;
     height: 100%;
+    overflow: hidden;
+    cursor: pointer;
+    background: #111;
+  }
+
+  .tour-gallery-main::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.08) 100%);
+    pointer-events: none;
+  }
+
+  .tour-main-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .tour-gallery-main:hover .tour-main-image {
+    transform: scale(1.04);
   }
 
   .tour-gallery-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-template-rows: 1fr 1fr;
-    gap: 8px;
+    gap: 6px;
     height: 100%;
   }
 
   .tour-gallery-item {
+    position: relative;
     height: 100%;
+    overflow: hidden;
+    cursor: pointer;
+    background: #111;
   }
 
-  .tour-video-btn {
-    width: 80px;
-    height: 80px;
+  .tour-gallery-item::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0);
+    transition: background 0.3s ease;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .tour-gallery-item:hover::after {
+    background: rgba(0,0,0,0.18);
+  }
+
+  .tour-gallery-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .tour-gallery-item:hover img {
+    transform: scale(1.06);
+  }
+
+  /* Show counter on desktop */
+  .tour-gallery-counter {
+    display: flex;
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-family: var(--font-body);
+    letter-spacing: 0.3px;
+    align-items: center;
+    gap: 6px;
+    z-index: 1;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+
+  .tour-gallery-counter:hover {
+    background: rgba(0,0,0,0.65);
+  }
+
+  .tour-gallery-counter svg {
+    width: 16px;
+    height: 16px;
   }
 }
 
 /* ===== LARGE DESKTOP (1400px+) ===== */
 @media (min-width: 1400px) {
-  .tour-image-gallery {
-    height: 600px;
-    margin: 0 60px;
+  .tour-gallery-desktop {
+    height: 520px;
+    gap: 8px;
+    border-radius: 14px;
+  }
+
+  .tour-gallery-grid {
+    gap: 8px;
+  }
+}
+
+/* ===== EXTRA LARGE DESKTOP (1600px+) ===== */
+@media (min-width: 1600px) {
+  .tour-gallery-desktop {
+    height: 560px;
   }
 }

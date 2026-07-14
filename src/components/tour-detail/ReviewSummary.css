@@ -3,10 +3,7 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
-  padding: 24px;
-  background: #fff;
-  border-radius: 12px;
-  border: 1px solid var(--border, #e5e4e7);
+  margin-bottom: 32px;
 }
 
 /* Score Section */
@@ -66,7 +63,7 @@
 
 .review-breakdown-bar {
   height: 100%;
-  background: var(--dash-accent, #69c982);
+  background: #179237;
   border-radius: 4px;
   transition: width 0.3s ease;
 }
@@ -84,7 +81,6 @@
     flex-direction: row;
     align-items: flex-start;
     gap: 32px;
-    padding: 32px;
   }
 
   .review-summary-score {

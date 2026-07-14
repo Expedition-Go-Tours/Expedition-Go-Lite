@@ -1,6 +1,7 @@
-﻿import { useState } from 'react'
+﻿import { useState, useRef, useEffect } from 'react'
 import type { TourDetail } from '../../lib/tourTypes'
 import { Button } from '../ui/button'
+import { CalendarPicker } from '../ui/apple-calendar-picker'
 import './BookingWidget.css'
 
 interface BookingWidgetProps {
@@ -12,6 +13,21 @@ export default function BookingWidget({ tour }: BookingWidgetProps) {
   const [children, setChildren] = useState(0)
   const [infants, setInfants] = useState(0)
   const [showGuestSelector, setShowGuestSelector] = useState(false)
+  const [showCalendar, setShowCalendar] = useState(false)
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+  const guestRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (guestRef.current && !guestRef.current.contains(e.target as Node)) {
+        setShowGuestSelector(false)
+      }
+    }
+    if (showGuestSelector) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [showGuestSelector])
 
   const totalGuests = adults + children + infants
   const totalPrice = tour.price * (adults + children * 0.5) // Children half price, infants free
@@ -37,7 +53,7 @@ export default function BookingWidget({ tour }: BookingWidgetProps) {
         <div className="booking-mobile-price">
           <span className="booking-mobile-from">From</span>
           <span className="booking-mobile-amount">${tour.price}</span>
-          <span className="booking-mobile-per">per person</span>
+          <span className="booking-mobile-per">/person</span>
         </div>
         <Button className="booking-mobile-btn">
           Check Availability
@@ -51,8 +67,8 @@ export default function BookingWidget({ tour }: BookingWidgetProps) {
             <div className="booking-price-main">
               <span className="booking-price-from">From</span>
               <span className="booking-price-amount">${tour.price}</span>
+              <span className="booking-price-per">/person</span>
             </div>
-            <span className="booking-price-per">per person</span>
           </div>
 
           <div className="booking-form">
@@ -66,15 +82,22 @@ export default function BookingWidget({ tour }: BookingWidgetProps) {
                 </svg>
                 Select Date
               </label>
-              <button className="booking-input">
-                <span>Choose a date</span>
+              <button className="booking-input" onClick={() => setShowCalendar(true)}>
+                <span>{selectedDate ? selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Choose a date'}</span>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <polyline points="6 9 12 15 18 9" />
                 </svg>
               </button>
+              <CalendarPicker
+                isOpen={showCalendar}
+                onClose={() => setShowCalendar(false)}
+                onDateSelect={(date) => setSelectedDate(date)}
+                selectedDate={selectedDate}
+              />
             </div>
 
-            <div className="booking-field">
+            {/* Guest field */}
+            <div className="booking-field" ref={guestRef}>
               <label className="booking-label">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -93,7 +116,6 @@ export default function BookingWidget({ tour }: BookingWidgetProps) {
                   <polyline points="6 9 12 15 18 9" />
                 </svg>
               </button>
-
               {showGuestSelector && (
                 <div className="guest-selector-dropdown">
                   <div className="guest-type">
@@ -211,6 +233,7 @@ export default function BookingWidget({ tour }: BookingWidgetProps) {
           </div>
         </div>
       </div>
+
     </>
   )
 }

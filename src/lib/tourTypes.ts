@@ -1,5 +1,18 @@
 // Tour Detail Page Type Definitions
 
+export interface TourGuide {
+  name: string
+  memberSince: string
+  avatar: string
+}
+
+export interface ContactInfo {
+  email: string
+  website: string
+  phone: string
+  fax?: string
+}
+
 export interface TourDetail {
   id: string
   slug: string
@@ -28,6 +41,8 @@ export interface TourDetail {
   maxAge?: number
   pickupIncluded?: boolean
   cancellationPolicy?: string
+  guide?: TourGuide
+  contact?: ContactInfo
 }
 
 export interface ItineraryDay {

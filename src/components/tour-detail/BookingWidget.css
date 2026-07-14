@@ -11,8 +11,8 @@
 
 .booking-mobile-price {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: baseline;
+  gap: 6px;
 }
 
 .booking-mobile-from {
@@ -41,6 +41,7 @@
   font-weight: 600 !important;
   padding: 14px 24px !important;
   flex-shrink: 0;
+  border-radius: 50px !important;
 }
 
 /* Desktop Sidebar - Hidden on Mobile */
@@ -305,7 +306,7 @@
     font-weight: 600 !important;
     padding: 14px 24px !important;
     font-size: 16px !important;
-    border-radius: 8px !important;
+    border-radius: 50px !important;
     transition: all 0.2s ease !important;
   }
 

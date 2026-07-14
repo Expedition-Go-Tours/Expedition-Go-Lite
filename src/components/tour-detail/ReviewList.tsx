@@ -50,7 +50,17 @@ export default function ReviewList({ reviews }: ReviewListProps) {
                   {review.author.split(' ').map(n => n[0]).join('').substring(0, 2)}
                 </div>
                 <div className="review-author-details">
-                  <div className="review-author-name">{review.author}</div>
+                  <div className="review-author-name">
+                    {review.author}
+                    {review.verified && (
+                      <span className="review-verified-badge">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#179237" strokeWidth="2.5">
+                          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                          <polyline points="22 4 12 14.01 9 11.01" />
+                        </svg>
+                      </span>
+                    )}
+                  </div>
                   <div className="review-date">{new Date(review.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long' })}</div>
                 </div>
               </div>
@@ -59,8 +69,8 @@ export default function ReviewList({ reviews }: ReviewListProps) {
                   <Star
                     key={star}
                     size={16}
-                    fill={star <= review.rating ? '#69c982' : 'none'}
-                    stroke={star <= review.rating ? '#69c982' : '#e5e4e7'}
+                    fill={star <= review.rating ? '#179237' : 'none'}
+                    stroke={star <= review.rating ? '#179237' : '#e5e4e7'}
                   />
                 ))}
               </div>
@@ -79,16 +89,6 @@ export default function ReviewList({ reviews }: ReviewListProps) {
               >
                 {isExpanded ? 'Show less' : 'Read more'}
               </button>
-            )}
-
-            {review.verified && (
-              <div className="review-verified">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                  <polyline points="22 4 12 14.01 9 11.01" />
-                </svg>
-                Verified Purchase
-              </div>
             )}
 
             {review.helpful && review.helpful > 0 && (

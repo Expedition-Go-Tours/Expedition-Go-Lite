@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Toaster } from 'sonner'
 import Navbar from './components/Navbar'
@@ -52,6 +52,7 @@ function HomePage({ onOpenAuth, onOpenDashboard, onOpenWishlist, onOpenBookings 
 function AppContent() {
   const [currentPage, setCurrentPage] = useState<PageView>('home')
   const [dashboardMenu, setDashboardMenu] = useState<string | undefined>()
+  const navigate = useNavigate()
 
   useEffect(() => {
     const unsub = subscribeToAuthState(() => {})
@@ -62,16 +63,22 @@ function AppContent() {
     handleGoogleCallback()
   }, [])
 
-  const handleOpenAuth = (mode: 'signin' | 'signup') => setCurrentPage(mode)
+  const handleOpenAuth = (mode: 'signin' | 'signup') => {
+    navigate('/')
+    setCurrentPage(mode)
+  }
   const handleOpenDashboard = () => {
+    navigate('/')
     setDashboardMenu(undefined)
     setCurrentPage('dashboard')
   }
   const handleOpenWishlist = () => {
+    navigate('/')
     setDashboardMenu('wishlist')
     setCurrentPage('dashboard')
   }
   const handleOpenBookings = () => {
+    navigate('/')
     setDashboardMenu('bookings')
     setCurrentPage('dashboard')
   }
@@ -81,7 +88,14 @@ function AppContent() {
     <>
       <Toaster position="top-center" duration={2500} closeButton />
       <Routes>
-        <Route path="/tour/:tourId" element={<TourDetailPage />} />
+        <Route path="/tour/:tourId" element={
+          <TourDetailPage
+            onOpenAuth={handleOpenAuth}
+            onOpenDashboard={handleOpenDashboard}
+            onOpenWishlist={handleOpenWishlist}
+            onOpenBookings={handleOpenBookings}
+          />
+        } />
         <Route path="/*" element={
           <AnimatePresence mode="wait">
             {currentPage === 'signin' || currentPage === 'signup' ? (

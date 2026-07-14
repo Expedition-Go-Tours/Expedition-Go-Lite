@@ -36,12 +36,11 @@
   position: relative;
   text-decoration: none;
   border: 2px solid var(--border);
-  transition: all 0.3s ease;
+  transition: border-color 0.3s ease;
 }
 
 .map-link:hover {
-  border-color: var(--primary);
-  box-shadow: 0 4px 12px rgba(23, 146, 55, 0.15);
+  border-color: var(--border);
 }
 
 .map-placeholder {
@@ -54,22 +53,11 @@
   justify-content: center;
   gap: 12px;
   position: relative;
-  transition: all 0.3s ease;
-}
-
-.map-link:hover .map-placeholder {
-  background: linear-gradient(135deg, rgba(23, 146, 55, 0.05) 0%, rgba(23, 146, 55, 0.1) 100%);
 }
 
 .map-icon {
   color: var(--primary);
   opacity: 0.6;
-  transition: all 0.3s ease;
-}
-
-.map-link:hover .map-icon {
-  opacity: 1;
-  transform: scale(1.1);
 }
 
 .map-overlay-text {

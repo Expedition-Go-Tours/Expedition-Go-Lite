@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { toast } from 'sonner'
 import logoSrc from '../assets/expo_trans.png'
@@ -14,6 +15,7 @@ interface NavbarProps {
 }
 
 export default function Navbar({ onOpenAuth, onOpenDashboard, onOpenWishlist, onOpenBookings }: NavbarProps) {
+  const navigate = useNavigate()
   const [user, setUser] = useState<AuthUser | null>(getStoredAuthUser)
   const [searchBarSticky, setSearchBarSticky] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
@@ -93,7 +95,7 @@ export default function Navbar({ onOpenAuth, onOpenDashboard, onOpenWishlist, on
     <nav className={`navbar${searchBarSticky ? ' scrolled' : ''}`}>
       <div className="nav-left">
         <div className="nav-logo">
-          <a href="#" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }) }}>
+          <a href="/" onClick={(e) => { e.preventDefault(); navigate('/') }}>
             <img src={logoSrc} alt="Expedition-GO" className="nav-logo-img" />
           </a>
         </div>

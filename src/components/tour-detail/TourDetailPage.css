@@ -97,27 +97,34 @@
 
   .tour-detail-main {
     flex: 1;
-    max-width: calc(100% - 400px);
+    min-width: 0;
+    width: auto;
+    max-width: calc(100% - 412px);
   }
 
   .tour-detail-sidebar {
     position: sticky;
-    top: 100px;
+    top: 80px;
+    align-self: flex-start;
     width: 380px;
     min-width: 380px;
     flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    z-index: 1;
   }
 }
 
 /* ===== LARGE DESKTOP (1400px+) ===== */
 @media (min-width: 1400px) {
   .tour-detail-content {
-    gap: 48px;
+    gap: 40px;
     padding: 0 60px 60px;
   }
 
   .tour-detail-main {
-    max-width: calc(100% - 420px);
+    max-width: calc(100% - 440px);
   }
 
   .tour-detail-sidebar {
@@ -130,8 +137,8 @@
 .tour-reviews-section {
   margin-top: 48px;
   padding: 24px 16px;
-  background: #f9f9f9;
-  border-radius: 12px;
+  background: #fff;
+  border-bottom: 1px solid var(--border);
 }
 
 .tour-reviews-section .section-title {

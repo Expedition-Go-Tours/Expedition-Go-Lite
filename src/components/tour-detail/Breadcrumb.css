@@ -17,12 +17,12 @@
 .breadcrumb-list {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   list-style: none;
   margin: 0;
   padding: 0;
   white-space: nowrap;
-  min-width: max-content;
 }
 
 .breadcrumb-item {
@@ -52,9 +52,6 @@
 .breadcrumb-current {
   color: #1a1a1a;
   font-weight: 600;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 200px;
 }
 
 /* ===== TABLET VIEW (768px+) ===== */
@@ -65,10 +62,6 @@
 
   .breadcrumb-item {
     font-size: 14px;
-  }
-
-  .breadcrumb-current {
-    max-width: 300px;
   }
 }
 
@@ -81,19 +74,11 @@
   .breadcrumb-item {
     font-size: 15px;
   }
-
-  .breadcrumb-current {
-    max-width: 400px;
-  }
 }
 
 /* ===== LARGE DESKTOP (1400px+) ===== */
 @media (min-width: 1400px) {
   .breadcrumb {
     padding: 20px 60px;
-  }
-
-  .breadcrumb-current {
-    max-width: none;
   }
 }
