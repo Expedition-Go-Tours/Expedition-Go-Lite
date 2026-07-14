@@ -74,10 +74,10 @@ export default function TourDetailPage({ onOpenAuth, onOpenDashboard, onOpenWish
 
   useEffect(() => {
     if (tour) {
-      document.title = `${tour.title} | Expedition-Go`
+      document.title = `${tour.title} | Expedition-Go Tours`
     }
     return () => {
-      document.title = 'Expedition-Go - Discover Amazing Tours'
+      document.title = 'Expedition-Go Tours - Discover Amazing Tours'
     }
   }, [tour])
 

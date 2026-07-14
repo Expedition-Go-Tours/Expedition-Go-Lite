@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom'
 import { MapPin, Star, Heart } from 'lucide-react'
 import { toast } from 'sonner'
 import { useWishlist, toWishlistItem } from '../../context/WishlistContext'
@@ -44,7 +43,7 @@ export default function SimilarTourCard({
   const tourSlug = generateSlug(title)
 
   return (
-    <Link to={`/tour/${tourSlug}`} className="similar-tour-card">
+    <a href={`/tour/${tourSlug}`} target="_blank" rel="noopener noreferrer" className="similar-tour-card">
       <div className="similar-tour-image">
         <img src={image} alt={title} loading="lazy" />
         <div className="similar-tour-overlay" />
@@ -75,7 +74,7 @@ export default function SimilarTourCard({
 
         <div className="similar-tour-footer">
           <div className="similar-tour-rating">
-            <Star size={14} fill="#FFA800" stroke="#FFA800" strokeWidth={1} />
+            <Star size={14} fill="#179237" stroke="#179237" strokeWidth={1} />
             <span className="similar-tour-rating-value">{rating}</span>
             <span className="similar-tour-rating-count">({reviews})</span>
           </div>
@@ -86,6 +85,6 @@ export default function SimilarTourCard({
           </div>
         </div>
       </div>
-    </Link>
+    </a>
   )
 }

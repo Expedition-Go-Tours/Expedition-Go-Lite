@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import './TourCard.css'
 import type { Tour } from './data'
@@ -35,7 +34,7 @@ export default function TourCard({ title, duration, features, price, rating, rev
   const tourSlug = generateSlug(title)
 
   return (
-    <Link to={`/tour/${tourSlug}`} className="tour-card">
+    <a href={`/tour/${tourSlug}`} target="_blank" rel="noopener noreferrer" className="tour-card">
       <div className="tour-card-image">
         <img src={image} alt={title} loading="lazy" />
         <div className="tour-card-image-fade" />
@@ -71,6 +70,6 @@ export default function TourCard({ title, duration, features, price, rating, rev
           </div>
         </div>
       </div>
-    </Link>
+    </a>
   )
 }
