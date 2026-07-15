@@ -98,7 +98,6 @@ body:has(.tour-detail-page) .navbar-compact-search {
   border: 2px solid #e2e8f0;
   background: #fff;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-  overflow: hidden;
 }
 
 .navbar-search-inner {
@@ -158,6 +157,19 @@ body:has(.tour-detail-page) .navbar-compact-search {
 
 .navbar-search-btn:hover {
   background: var(--primary-hover);
+}
+
+/* Navbar search dropdown */
+.navbar-search-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  z-index: 1000;
+  padding: 6px 0;
 }
 
 /* Right - icons */
@@ -639,5 +651,10 @@ body:has(.tour-detail-page) .navbar-compact-search {
 @media (max-width: 768px) {
   .nav-logo-img {
     height: 90px;
+  }
+
+  .navbar-search-dropdown {
+    max-height: 40vh;
+    overflow-y: auto;
   }
 }

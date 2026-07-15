@@ -43,8 +43,6 @@
 }
 
 .wishlist-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  transform: translateY(-2px);
 }
 
 .wishlist-card.removing {
@@ -82,7 +80,7 @@
   border-radius: 50%;
   border: none;
   background: rgba(255, 255, 255, 0.95);
-  color: #ef4444;
+  color: #179237;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -93,7 +91,7 @@
 }
 
 .wishlist-remove-btn:hover {
-  background: #ef4444;
+  background: #179237;
   color: #fff;
   transform: scale(1.1);
 }
@@ -168,7 +166,6 @@
   align-items: center;
   justify-content: space-between;
   padding-top: 12px;
-  border-top: 1px solid #f3f4f6;
 }
 
 .wishlist-card-rating {
@@ -180,7 +177,7 @@
 }
 
 .wishlist-card-rating svg {
-  color: #fbbf24;
+  color: #179237;
   flex-shrink: 0;
 }
 
@@ -220,7 +217,6 @@
   justify-content: space-between;
   gap: 12px;
   padding-top: 14px;
-  border-top: 1px solid #f3f4f6;
   margin-top: auto;
 }
 

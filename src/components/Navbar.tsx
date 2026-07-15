@@ -1,10 +1,11 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { toast } from 'sonner'
 import logoSrc from '../assets/expo_trans.png'
 import userSrc from '../assets/icons/User Circle.png'
 import { subscribeToAuthState, signOutUser, getStoredAuthUser, type AuthUser } from '../lib/auth'
+import { useSearchAutocomplete, type SearchSuggestion } from '../hooks/useSearchAutocomplete'
 import './Navbar.css'
 
 interface NavbarProps {
@@ -22,6 +23,12 @@ export default function Navbar({ onOpenAuth, onOpenDashboard, onOpenWishlist, on
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [signingOut, setSigningOut] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const [navSearchValue, setNavSearchValue] = useState('')
+  const [showNavDropdown, setShowNavDropdown] = useState(false)
+  const [navHighlightedIndex, setNavHighlightedIndex] = useState(-1)
+  const navSearchRef = useRef<HTMLDivElement>(null)
+  const navInputRef = useRef<HTMLInputElement>(null)
+  const navSuggestions = useSearchAutocomplete(navSearchValue)
 
   useEffect(() => {
     const unsub = subscribeToAuthState((u) => setUser(u))
@@ -74,10 +81,93 @@ export default function Navbar({ onOpenAuth, onOpenDashboard, onOpenWishlist, on
     }
   }, [])
 
+  const navigateToSuggestion = useCallback((suggestion: SearchSuggestion) => {
+    setShowNavDropdown(false)
+    setNavSearchValue('')
+    setNavHighlightedIndex(-1)
+    if (suggestion.type === 'tour' && suggestion.slug) {
+      navigate(`/tour/${suggestion.slug}`)
+    }
+  }, [navigate])
+
+  const navigateToBestMatch = useCallback(() => {
+    setShowNavDropdown(false)
+    setNavSearchValue('')
+    setNavHighlightedIndex(-1)
+    const q = navSearchValue.trim().toLowerCase()
+    if (!q) return
+    for (const s of navSuggestions) {
+      if (s.type === 'tour' && s.slug) {
+        navigate(`/tour/${s.slug}`)
+        return
+      }
+    }
+  }, [navSearchValue, navSuggestions, navigate])
+
+  const handleNavKeyDown = (e: React.KeyboardEvent) => {
+    if (!showNavDropdown) {
+      if (e.key === 'ArrowDown' && navSuggestions.length > 0) {
+        e.preventDefault()
+        setShowNavDropdown(true)
+        setNavHighlightedIndex(0)
+      }
+      return
+    }
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault()
+        setNavHighlightedIndex(prev =>
+          prev < navSuggestions.length - 1 ? prev + 1 : 0
+        )
+        break
+      case 'ArrowUp':
+        e.preventDefault()
+        setNavHighlightedIndex(prev =>
+          prev > 0 ? prev - 1 : navSuggestions.length - 1
+        )
+        break
+      case 'Enter':
+        e.preventDefault()
+        if (navHighlightedIndex >= 0 && navHighlightedIndex < navSuggestions.length) {
+          navigateToSuggestion(navSuggestions[navHighlightedIndex])
+        } else {
+          navigateToBestMatch()
+        }
+        break
+      case 'Tab':
+        if (navHighlightedIndex >= 0 && navHighlightedIndex < navSuggestions.length) {
+          e.preventDefault()
+          navigateToSuggestion(navSuggestions[navHighlightedIndex])
+        } else {
+          setShowNavDropdown(false)
+        }
+        break
+      case 'Escape':
+        e.preventDefault()
+        setShowNavDropdown(false)
+        setNavHighlightedIndex(-1)
+        navInputRef.current?.blur()
+        break
+    }
+  }
+
+  useEffect(() => {
+    if (navSuggestions.length > 0 && navSearchValue.trim().length >= 2) {
+      setShowNavDropdown(true)
+      setNavHighlightedIndex(-1)
+    } else {
+      setShowNavDropdown(false)
+      setNavHighlightedIndex(-1)
+    }
+  }, [navSuggestions, navSearchValue])
+
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setDropdownOpen(false)
+      }
+      if (navSearchRef.current && !navSearchRef.current.contains(e.target as Node)) {
+        setShowNavDropdown(false)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
@@ -102,8 +192,15 @@ export default function Navbar({ onOpenAuth, onOpenDashboard, onOpenWishlist, on
       </div>
 
       <div className="nav-center">
-        <div className="navbar-compact-search">
-          <form className="navbar-search-form" onSubmit={(e) => e.preventDefault()}>
+        <div className="navbar-compact-search" ref={navSearchRef}>
+          <form className="navbar-search-form" onSubmit={(e) => {
+            e.preventDefault()
+            if (navHighlightedIndex >= 0 && navHighlightedIndex < navSuggestions.length) {
+              navigateToSuggestion(navSuggestions[navHighlightedIndex])
+            } else {
+              navigateToBestMatch()
+            }
+          }}>
             <div className="navbar-search-inner">
               <svg className="navbar-search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="11" cy="11" r="8" />
@@ -111,10 +208,19 @@ export default function Navbar({ onOpenAuth, onOpenDashboard, onOpenWishlist, on
               </svg>
               <div className="navbar-search-input-inner">
                 <input
+                  ref={navInputRef}
                   type="text"
                   className="navbar-search-input"
                   placeholder="Where are you going?"
                   autoComplete="off"
+                  value={navSearchValue}
+                  onChange={(e) => setNavSearchValue(e.target.value)}
+                  onKeyDown={handleNavKeyDown}
+                  onFocus={() => {
+                    if (navSuggestions.length > 0 && navSearchValue.trim().length >= 2) {
+                      setShowNavDropdown(true)
+                    }
+                  }}
                 />
               </div>
             </div>
@@ -122,6 +228,61 @@ export default function Navbar({ onOpenAuth, onOpenDashboard, onOpenWishlist, on
               <button type="submit" className="navbar-search-btn">Search</button>
             </div>
           </form>
+
+          {showNavDropdown && navSuggestions.length > 0 && (
+            <div className="navbar-search-dropdown">
+              {navSuggestions.map((suggestion, idx) => {
+                const isHighlighted = idx === navHighlightedIndex
+                const showDestHeader = suggestion.type === 'destination' && (idx === 0 || navSuggestions[idx - 1]?.type !== 'destination')
+                const showTourHeader = suggestion.type === 'tour' && (idx === 0 || navSuggestions[idx - 1]?.type !== 'tour')
+
+                return (
+                  <div key={suggestion.id}>
+                    {showDestHeader && (
+                      <div className="search-dropdown-section">Destinations</div>
+                    )}
+                    {showTourHeader && (
+                      <div className="search-dropdown-section">Tours &amp; Experiences</div>
+                    )}
+                    <div
+                      className={`search-suggestion${isHighlighted ? ' highlighted' : ''}`}
+                      onMouseDown={(e) => {
+                        e.preventDefault()
+                        navigateToSuggestion(suggestion)
+                      }}
+                      onMouseEnter={() => setNavHighlightedIndex(idx)}
+                    >
+                      {suggestion.type === 'destination' ? (
+                        <>
+                          <div className="search-suggestion-icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                              <circle cx="12" cy="10" r="3" />
+                            </svg>
+                          </div>
+                          <div className="search-suggestion-text">
+                            <span className="search-suggestion-title">{suggestion.title}</span>
+                            <span className="search-suggestion-sub">{suggestion.subtitle}</span>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="search-suggestion-img">
+                            <img src={suggestion.image} alt="" loading="lazy" />
+                          </div>
+                          <div className="search-suggestion-text">
+                            <span className="search-suggestion-title">{suggestion.title}</span>
+                            <span className="search-suggestion-sub">{suggestion.subtitle}</span>
+                          </div>
+                          <span className="search-suggestion-price">{suggestion.price}</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
       </div>
 

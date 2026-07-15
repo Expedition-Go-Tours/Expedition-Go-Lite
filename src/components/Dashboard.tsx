@@ -123,7 +123,7 @@ export default function Dashboard({ onBack, initialMenu }: DashboardProps) {
 
   const SidebarContent = (
     <div className="dashboard-sidebar-inner">
-      <div className="dashboard-logo">
+      <div className="dashboard-logo" onClick={onBack} style={{ cursor: 'pointer' }}>
         <img src={logoSrc} alt="Expedition-GO" className="dashboard-logo-img" />
       </div>
 
