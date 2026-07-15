@@ -195,7 +195,7 @@
 .multiday-card-price-value {
   font-family: 'Raleway', sans-serif;
   font-weight: 700;
-  font-size: 16px;
+  font-size: 20px;
   color: #111827;
 }
 
@@ -213,6 +213,6 @@
   }
 
   .multiday-card-price-value {
-    font-size: 16px;
+    font-size: 20px;
   }
 }

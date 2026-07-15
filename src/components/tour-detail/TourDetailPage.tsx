@@ -6,6 +6,7 @@ import {
   sellOutTours, lastMinuteDeals, multiDayTours
 } from '../data'
 import Navbar from '../Navbar'
+import { useContinuePlanning, toContinuePlanningItem } from '../../context/ContinuePlanningContext'
 
 import TourImageGallery from './TourImageGallery'
 import TourHeader from './TourHeader'
@@ -39,6 +40,7 @@ function toSlug(title: string): string {
 
 export default function TourDetailPage({ onOpenAuth, onOpenDashboard, onOpenWishlist, onOpenBookings }: TourDetailPageProps) {
   const { tourId } = useParams<{ tourId: string }>()
+  const { addToContinuePlanning } = useContinuePlanning()
 
   const allTours = [
     ...recommendedTours, ...dayTours, ...topRatedTours,
@@ -76,10 +78,13 @@ export default function TourDetailPage({ onOpenAuth, onOpenDashboard, onOpenWish
     if (tour) {
       document.title = `${tour.title} | Expedition-Go Tours`
     }
+    if (matchedTour) {
+      addToContinuePlanning(toContinuePlanningItem(matchedTour as any))
+    }
     return () => {
       document.title = 'Expedition-Go Tours - Discover Amazing Tours'
     }
-  }, [tour])
+  }, [tour, matchedTour, addToContinuePlanning])
 
   if (!tour) {
     return (

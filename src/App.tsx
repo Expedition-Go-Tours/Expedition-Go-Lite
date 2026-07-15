@@ -22,6 +22,8 @@ import AuthForm from './components/AuthForm'
 import Dashboard from './components/Dashboard'
 import TourDetailPage from './components/tour-detail/TourDetailPage'
 import { WishlistProvider } from './context/WishlistContext'
+import { ContinuePlanningProvider } from './context/ContinuePlanningContext'
+import ContinuePlanningSection from './components/ContinuePlanningSection'
 import { subscribeToAuthState, handleGoogleCallback } from './lib/auth'
 
 type PageView = 'home' | 'signin' | 'signup' | 'dashboard'
@@ -31,6 +33,7 @@ function HomePage({ onOpenAuth, onOpenDashboard, onOpenWishlist, onOpenBookings 
     <>
       <Navbar onOpenAuth={onOpenAuth} onOpenDashboard={onOpenDashboard} onOpenWishlist={onOpenWishlist} onOpenBookings={onOpenBookings} />
       <Hero />
+      <ContinuePlanningSection />
       <MoodSection />
       <RecommendSection />
       <PopularLocations />
@@ -148,7 +151,9 @@ function App() {
   return (
     <BrowserRouter>
       <WishlistProvider>
-        <AppContent />
+        <ContinuePlanningProvider>
+          <AppContent />
+        </ContinuePlanningProvider>
       </WishlistProvider>
     </BrowserRouter>
   )

@@ -21,8 +21,14 @@ export default function MultiDayCard({ title, days, accommodation, highlights, p
     }
   }
 
+  const generateSlug = (t: string): string => {
+    return t.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+  }
+
+  const tourSlug = generateSlug(title)
+
   return (
-    <a href="#" className="multiday-card">
+    <a href={`/tour/${tourSlug}`} className="multiday-card">
       <div className="multiday-card-image">
         <img src={image} alt={title} loading="lazy" />
         <div className="multiday-card-image-fade" />
