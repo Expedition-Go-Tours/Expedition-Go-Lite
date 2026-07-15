@@ -9,6 +9,7 @@ export interface Tour {
   location: string
   image: string
   discount?: string
+  languages?: string[]
 }
 
 const recommendedTours: Tour[] = [
@@ -22,6 +23,7 @@ const recommendedTours: Tour[] = [
     reviews: 21,
     location: 'Accra, Ghana',
     image: 'https://images.unsplash.com/photo-1612878010854-1250dfc1a109?w=400&q=80',
+    languages: ['English', 'French'],
   },
   {
     title: 'Kakum National Park Canopy Walk & Rainforest Adventure',
@@ -55,6 +57,7 @@ const recommendedTours: Tour[] = [
     reviews: 28,
     location: 'Accra, Ghana',
     image: 'https://images.unsplash.com/photo-1582268611958-ebfd161ef9cf?w=400&q=80',
+    languages: ['English', 'Twi'],
   },
   {
     title: 'Mole National Park Wildlife Safari & Lodge Stay',
@@ -66,6 +69,7 @@ const recommendedTours: Tour[] = [
     reviews: 17,
     location: 'Northern Region, Ghana',
     image: 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=400&q=80',
+    languages: ['English', 'French', 'German'],
   },
   {
     title: 'Boti Falls Waterfall Hike & Eastern Region Tour',
@@ -194,6 +198,7 @@ const dayTours: Tour[] = [
     reviews: 56,
     location: 'Accra, Ghana',
     image: 'https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=400&q=80',
+    languages: ['English', 'Spanish'],
   },
   {
     title: 'Cape Coast Castles & Heritage Day Tour',
@@ -306,6 +311,7 @@ export interface MultiDayTour {
   reviews: number
   location: string
   image: string
+  languages?: string[]
 }
 
 const multiDayTours: MultiDayTour[] = [
@@ -319,6 +325,7 @@ const multiDayTours: MultiDayTour[] = [
     reviews: 28,
     location: 'Northern Region, Ghana',
     image: 'https://images.unsplash.com/photo-1549366021-9f761d450615?w=400&q=80',
+    languages: ['English', 'French'],
   },
   {
     title: 'Coastal Heritage & Beaches Journey',
@@ -341,6 +348,7 @@ const multiDayTours: MultiDayTour[] = [
     reviews: 22,
     location: 'Kumasi, Ghana',
     image: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=400&q=80',
+    languages: ['English', 'Twi'],
   },
   {
     title: 'Volta Region Waterfalls & Nature Trek',
@@ -432,6 +440,7 @@ const topRatedTours: Tour[] = [
     reviews: 320,
     location: 'Kakum, Ghana',
     image: 'https://images.unsplash.com/photo-1516426122078-c23e76319801?w=400&q=80',
+    languages: ['English', 'French', 'Spanish'],
   },
   {
     title: 'Mole National Park Wildlife Safari',
@@ -930,6 +939,72 @@ const travelStories: TravelStory[] = [
     date: 'March 22, 2026',
     link: '#',
   },
+]
+
+export interface TourWithMeta extends Tour {
+  section: string
+  tourType: 'day' | 'multi-day'
+}
+
+export const allTours: TourWithMeta[] = [
+  ...recommendedTours.map(t => ({ ...t, section: 'Recommended' as const, tourType: 'day' as const, languages: t.languages || ['English'] })),
+  ...dayTours.map(t => ({ ...t, section: 'Day Tours' as const, tourType: 'day' as const, languages: t.languages || ['English'] })),
+  ...topRatedTours.map(t => ({ ...t, section: 'Top Rated' as const, tourType: 'day' as const, languages: t.languages || ['English'] })),
+  ...sellOutTours.map(t => ({ ...t, section: 'Sell Out' as const, tourType: 'day' as const, languages: t.languages || ['English'] })),
+  ...lastMinuteDeals.map(t => ({ ...t, section: 'Last Minute Deals' as const, tourType: 'day' as const, languages: t.languages || ['English'] })),
+  ...multiDayTours.map(t => ({
+    ...t,
+    category: '',
+    duration: t.days,
+    features: t.highlights,
+    section: 'Multi-Day Tours' as const,
+    tourType: 'multi-day' as const,
+    languages: t.languages || ['English'],
+  })),
+]
+
+export function parsePrice(price: string): number {
+  return parseInt(price.replace(/[$,]/g, ''), 10)
+}
+
+export function parseCategory(raw: string): string {
+  const parts = raw.split('·')
+  return parts.length > 1 ? parts[1].trim() : raw
+}
+
+export function getDurationLabel(tour: TourWithMeta): string {
+  if (tour.tourType === 'multi-day') {
+    return (tour as any).days || tour.duration
+  }
+  return tour.duration
+}
+
+export function getDurationHours(tour: TourWithMeta): number {
+  const dur = getDurationLabel(tour)
+  if (tour.tourType === 'multi-day') {
+    const num = parseInt(dur)
+    return isNaN(num) ? 0 : num * 24
+  }
+  const num = parseInt(dur)
+  if (!isNaN(num)) return num
+  if (dur === 'Half day') return 4
+  if (dur === 'Full day') return 8
+  return 0
+}
+
+export const durationBuckets = [
+  { value: 'under-4', label: '< 4 hours', match: (h: number) => h > 0 && h < 4 },
+  { value: '4-6', label: '4–6 hours', match: (h: number) => h >= 4 && h <= 6 },
+  { value: 'full-day', label: 'Full Day (6+)', match: (h: number) => h > 6 && h < 24 },
+  { value: '2-3-days', label: '2–3 Days', match: (h: number) => h >= 48 && h <= 72 },
+  { value: '4-plus-days', label: '4+ Days', match: (h: number) => h > 72 },
+]
+
+export const priceRanges = [
+  { value: 'under-50', label: 'Under $50', match: (p: number) => p < 50 },
+  { value: '50-100', label: '$50 – $100', match: (p: number) => p >= 50 && p <= 100 },
+  { value: '100-200', label: '$100 – $200', match: (p: number) => p > 100 && p <= 200 },
+  { value: 'over-200', label: '$200+', match: (p: number) => p > 200 },
 ]
 
 export { recommendedTours, destinations, dayTours, multiDayTours, topRatedTours, sellOutTours, lastMinuteDeals, reviews, travelStories }

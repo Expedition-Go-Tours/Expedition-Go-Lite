@@ -1,0 +1,214 @@
+.all-tours-page {
+  width: 100%;
+  min-height: 100vh;
+  background: #f8f9fb;
+  padding-top: 64px;
+}
+
+.all-tours-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 32px 40px 60px;
+}
+
+.all-tours-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.all-tours-title {
+  font-family: var(--font-heading);
+  font-size: 32px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+.all-tours-count {
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: #6b7280;
+  margin: 4px 0 0;
+}
+
+.all-tours-clear {
+  background: none;
+  border: none;
+  color: #179237;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 8px 0;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.all-tours-clear:hover {
+  color: #137a2e;
+}
+
+/* Filters */
+.all-tours-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 32px;
+  padding: 20px;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  overflow-x: auto;
+}
+
+/* Grid */
+.all-tours-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+}
+
+/* Load More */
+.all-tours-load-more {
+  display: flex;
+  justify-content: center;
+  padding: 40px 0 0;
+}
+
+.all-tours-load-btn {
+  background: transparent;
+  border: 2px solid #179237;
+  color: #179237;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 700;
+  padding: 14px 40px;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.all-tours-load-btn:hover {
+  background: #179237;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(23, 146, 55, 0.2);
+}
+
+.all-tours-load-btn:active {
+  transform: scale(0.97);
+}
+
+/* Empty State */
+.all-tours-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 24px;
+  text-align: center;
+  color: #9ca3af;
+  grid-column: 1 / -1;
+}
+
+.all-tours-empty svg {
+  margin-bottom: 16px;
+  color: #d1d5db;
+}
+
+.all-tours-empty h3 {
+  font-family: var(--font-heading);
+  font-size: 20px;
+  font-weight: 600;
+  color: #4b5563;
+  margin: 0 0 8px;
+}
+
+.all-tours-empty p {
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: #9ca3af;
+  margin: 0 0 24px;
+}
+
+.all-tours-clear-btn {
+  background: #f3f4f6;
+  border: none;
+  color: #4b5563;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.all-tours-clear-btn:hover {
+  background: #e5e7eb;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 1200px) {
+  .all-tours-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 1024px) {
+  .all-tours-container {
+    padding: 24px 24px 40px;
+  }
+
+  .all-tours-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+
+  .all-tours-title {
+    font-size: 28px;
+  }
+}
+
+@media (max-width: 768px) {
+  .all-tours-container {
+    padding: 20px 16px 32px;
+  }
+
+  .all-tours-header {
+    flex-direction: column;
+    margin-bottom: 20px;
+  }
+
+  .all-tours-title {
+    font-size: 24px;
+  }
+
+  .all-tours-filters {
+    padding: 14px;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  .all-tours-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  .all-tours-load-btn {
+    width: 100%;
+    padding: 12px 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .all-tours-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .all-tours-title {
+    font-size: 22px;
+  }
+}

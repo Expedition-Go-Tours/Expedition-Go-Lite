@@ -14,9 +14,10 @@
   transition: background 0.3s, color 0.3s, box-shadow 0.3s;
 }
 
-/* Tour detail page: always show white background and dark text */
+/* Tour detail and all tours pages: always show white background and dark text */
 .tour-detail-page ~ .navbar,
-body:has(.tour-detail-page) .navbar {
+body:has(.tour-detail-page) .navbar,
+body:has(.all-tours-page) .navbar {
   background: #fff;
   color: #333;
   box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
@@ -81,8 +82,9 @@ body.hero--search-sticky .navbar-compact-search {
   pointer-events: auto;
 }
 
-/* Always show search bar on tour detail pages */
-body:has(.tour-detail-page) .navbar-compact-search {
+/* Always show search bar on tour detail and all tours pages */
+body:has(.tour-detail-page) .navbar-compact-search,
+body:has(.all-tours-page) .navbar-compact-search {
   opacity: 1;
   transform: translateY(0) scale(1);
   pointer-events: auto;
@@ -610,33 +612,40 @@ body:has(.tour-detail-page) .navbar-compact-search {
     display: none;
   }
 
-  body.hero--search-sticky .nav-center {
+  body.hero--search-sticky .nav-center,
+  body:has(.all-tours-page) .nav-center {
     display: flex;
     margin: 0;
   }
 
-  body.hero--search-sticky .navbar-compact-search {
+  body.hero--search-sticky .navbar-compact-search,
+  body:has(.all-tours-page) .navbar-compact-search {
     flex: 1;
     max-width: none;
   }
 
-  body.hero--search-sticky .navbar-search-form {
+  body.hero--search-sticky .navbar-search-form,
+  body:has(.all-tours-page) .navbar-search-form {
     max-width: none;
   }
 
-  body.hero--search-sticky .nav-left {
+  body.hero--search-sticky .nav-left,
+  body:has(.all-tours-page) .nav-left {
     display: none;
   }
 
-  body.hero--search-sticky .nav-icons {
+  body.hero--search-sticky .nav-icons,
+  body:has(.all-tours-page) .nav-icons {
     display: none;
   }
 
-  body.hero--search-sticky .nav-hamburger {
+  body.hero--search-sticky .nav-hamburger,
+  body:has(.all-tours-page) .nav-hamburger {
     display: none;
   }
 
-  body.hero--search-sticky .navbar {
+  body.hero--search-sticky .navbar,
+  body:has(.all-tours-page) .navbar {
     background: #fff;
     color: #333;
     box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);

@@ -21,6 +21,7 @@ import Footer from './components/Footer'
 import AuthForm from './components/AuthForm'
 import Dashboard from './components/Dashboard'
 import TourDetailPage from './components/tour-detail/TourDetailPage'
+import AllToursPage from './components/AllToursPage'
 import { WishlistProvider } from './context/WishlistContext'
 import { ContinuePlanningProvider } from './context/ContinuePlanningContext'
 import ContinuePlanningSection from './components/ContinuePlanningSection'
@@ -93,6 +94,14 @@ function AppContent() {
       <Routes>
         <Route path="/tour/:tourId" element={
           <TourDetailPage
+            onOpenAuth={handleOpenAuth}
+            onOpenDashboard={handleOpenDashboard}
+            onOpenWishlist={handleOpenWishlist}
+            onOpenBookings={handleOpenBookings}
+          />
+        } />
+        <Route path="/tours" element={
+          <AllToursPage
             onOpenAuth={handleOpenAuth}
             onOpenDashboard={handleOpenDashboard}
             onOpenWishlist={handleOpenWishlist}
