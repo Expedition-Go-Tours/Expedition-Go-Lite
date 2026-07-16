@@ -61,7 +61,7 @@
 
 @media (min-width: 1280px) {
   .reviews-layout {
-    grid-template-columns: minmax(0, 1fr) 370px;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -117,7 +117,7 @@
 
 .reviews-breakdown-row {
   display: grid;
-  grid-template-columns: 70px minmax(0, 1fr) 42px;
+  grid-template-columns: 80px minmax(0, 1fr) 48px;
   align-items: center;
   gap: 16px;
   border: none;
@@ -126,7 +126,7 @@
   border-radius: 8px;
   cursor: pointer;
   text-align: left;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
   color: #020617;
   transition: background 0.15s;
@@ -144,6 +144,7 @@
 
 .reviews-breakdown-label {
   white-space: nowrap;
+  font-size: 16px;
 }
 
 .reviews-breakdown-bar {
@@ -162,6 +163,7 @@
 
 .reviews-breakdown-count {
   text-align: right;
+  font-size: 16px;
 }
 
 /* Search */
@@ -372,83 +374,6 @@
 
 .reviews-load-more:disabled {
   opacity: 0.5;
-}
-
-/* Traveler Photos Sidebar */
-.reviews-photos-sidebar {
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
-  background: #fff;
-  padding: 16px;
-  box-shadow: 0 2px 18px rgba(15, 23, 42, 0.08);
-  height: fit-content;
-}
-
-.reviews-photos-title {
-  font-size: 16px;
-  font-weight: 900;
-  color: #020617;
-  margin: 0;
-}
-
-@media (min-width: 640px) {
-  .reviews-photos-title {
-    font-size: 18px;
-  }
-}
-
-@media (min-width: 1024px) {
-  .reviews-photos-title {
-    font-size: 20px;
-  }
-}
-
-.reviews-photos-subtitle {
-  margin-top: 4px;
-  font-size: 12px;
-  line-height: 1.25;
-  color: rgba(22, 101, 52, 0.7);
-}
-
-.reviews-photos-empty {
-  margin-top: 16px;
-  border-radius: 8px;
-  border: 1px dashed #e2e8f0;
-  background: #f8fafc;
-  padding: 24px 12px;
-  text-align: center;
-  font-size: 12px;
-  line-height: 1.25;
-  color: #475569;
-}
-
-.reviews-photos-grid {
-  margin-top: 16px;
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-}
-
-.reviews-photo-item {
-  overflow: hidden;
-  border-radius: 8px;
-}
-
-.reviews-photo-img {
-  width: 100%;
-  aspect-ratio: 1 / 1;
-  object-fit: cover;
-}
-
-.reviews-photo-reviewer {
-  margin: 4px 0 0;
-  font-size: 10px;
-  font-weight: 600;
-  color: #475569;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  padding: 0 2px;
 }
 
 /* Q&A */

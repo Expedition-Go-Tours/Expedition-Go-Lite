@@ -290,17 +290,6 @@ export default function TourDetailPage({ onOpenAuth, onOpenDashboard, onOpenWish
     })
   }, [allReviewCards, reviewSearchQuery, reviewStarFilter])
 
-  const travelerPhotos = useMemo(
-    () => allReviewCards.flatMap((r) =>
-      (r as any).photos?.map((url: string, i: number) => ({
-        key: `${r.id}-p-${i}`,
-        url,
-        reviewer: r.name,
-      })) || []
-    ),
-    [allReviewCards]
-  )
-
   const reviewBreakdown = useMemo(() => {
     const labels = [
       { label: '5 stars', stars: 5 },
@@ -475,7 +464,6 @@ export default function TourDetailPage({ onOpenAuth, onOpenDashboard, onOpenWish
                       reviewCount={selectedTourReviews}
                       reviewBreakdown={reviewBreakdown}
                       reviews={filteredReviewCards}
-                      travelerPhotos={travelerPhotos}
                       hasMore={hasMoreReviews}
                       loadingMore={loadingMoreReviews}
                       onLoadMore={loadMoreReviews}

@@ -26,7 +26,6 @@ interface ReviewsSectionProps {
   reviewCount: number
   reviewBreakdown: { label: string; stars: number; count: number; percentage: number }[]
   reviews: Review[]
-  travelerPhotos: { key: string; url: string; reviewer: string }[]
   hasMore: boolean
   loadingMore: boolean
   onLoadMore: () => void
@@ -44,7 +43,6 @@ export default function ReviewsSection({
   reviewCount,
   reviewBreakdown,
   reviews,
-  travelerPhotos,
   hasMore,
   loadingMore,
   onLoadMore,
@@ -212,27 +210,6 @@ export default function ReviewsSection({
             )}
           </div>
 
-          {/* Traveler Photos Sidebar */}
-          <aside className="reviews-photos-sidebar">
-            <h3 className="reviews-photos-title">Traveler photos</h3>
-            <p className="reviews-photos-subtitle">
-              Only photos travelers attach when they write a review are shown here.
-            </p>
-            {travelerPhotos.length === 0 ? (
-              <p className="reviews-photos-empty">
-                No traveler photos yet. Write a review and add photos there.
-              </p>
-            ) : (
-              <div className="reviews-photos-grid">
-                {travelerPhotos.map((item) => (
-                  <div key={item.key} className="reviews-photo-item">
-                    <img src={item.url} alt={`Photo from ${item.reviewer}`} className="reviews-photo-img" />
-                    <p className="reviews-photo-reviewer">{item.reviewer}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </aside>
         </div>
       </section>
 

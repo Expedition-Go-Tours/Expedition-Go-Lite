@@ -1,3 +1,5 @@
+/* ===== ALL TOURS PAGE ===== */
+
 .all-tours-page {
   width: 100%;
   min-height: 100vh;
@@ -11,6 +13,19 @@
   padding: 32px 40px 60px;
 }
 
+@media (max-width: 1024px) {
+  .all-tours-container {
+    padding: 24px 24px 40px;
+  }
+}
+
+@media (max-width: 768px) {
+  .all-tours-container {
+    padding: 20px 16px 32px;
+  }
+}
+
+/* Header */
 .all-tours-header {
   display: flex;
   align-items: flex-start;
@@ -19,16 +34,39 @@
   margin-bottom: 24px;
 }
 
+@media (max-width: 768px) {
+  .all-tours-header {
+    flex-direction: column;
+    margin-bottom: 20px;
+  }
+}
+
 .all-tours-title {
-  font-family: var(--font-heading);
   font-size: 32px;
   font-weight: 700;
   color: #1a1a1a;
   margin: 0;
 }
 
+@media (max-width: 1024px) {
+  .all-tours-title {
+    font-size: 28px;
+  }
+}
+
+@media (max-width: 768px) {
+  .all-tours-title {
+    font-size: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .all-tours-title {
+    font-size: 22px;
+  }
+}
+
 .all-tours-count {
-  font-family: var(--font-body);
   font-size: 15px;
   color: #6b7280;
   margin: 4px 0 0;
@@ -38,40 +76,223 @@
   background: none;
   border: none;
   color: #179237;
-  font-family: var(--font-body);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   padding: 8px 0;
   white-space: nowrap;
   flex-shrink: 0;
+  font-family: var(--font-body);
 }
 
 .all-tours-clear:hover {
   color: #137a2e;
 }
 
-/* Filters */
-.all-tours-filters {
+/* ===== FILTER BAR ===== */
+
+.filter-bar {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  align-items: center;
+  gap: 8px;
   margin-bottom: 32px;
-  padding: 20px;
+  padding: 12px 16px;
   background: #fff;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  overflow-x: auto;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  position: relative;
 }
 
-/* Grid */
+@media (max-width: 768px) {
+  .filter-bar {
+    padding: 10px 12px;
+    margin-bottom: 24px;
+    gap: 6px;
+  }
+}
+
+/* Filters Drawer Button */
+.filter-drawer-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 8px 16px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 999px;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+  cursor: pointer;
+  transition: border-color 0.15s;
+  font-family: var(--font-body);
+  white-space: nowrap;
+}
+
+.filter-drawer-btn:hover {
+  border-color: #179237;
+}
+
+.filter-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #179237;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+@media (max-width: 768px) {
+  .filter-drawer-btn {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+}
+
+/* Chevron Arrows */
+.filter-arrow {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #334155;
+  cursor: pointer;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: opacity 0.2s, border-color 0.15s;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.filter-arrow.visible {
+  display: flex;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.filter-arrow:hover {
+  border-color: #179237;
+  color: #179237;
+}
+
+@media (max-width: 1024px) {
+  .filter-arrow {
+    display: none !important;
+  }
+}
+
+/* Pills Scroll Container */
+.filter-pills-scroll {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding: 2px 0;
+  flex: 1;
+}
+
+.filter-pills-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* Individual Pill */
+.filter-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  padding: 7px 14px;
+  border: none;
+  border-radius: 999px;
+  background: #f1f4f9;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+  font-family: var(--font-body);
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.filter-pill:hover {
+  background: #e2e8f0;
+}
+
+.filter-pill:active {
+  transform: scale(0.95);
+}
+
+.filter-pill.active {
+  background: #179237;
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(23, 146, 55, 0.2);
+}
+
+.filter-pill.active:hover {
+  background: #15803d;
+}
+
+.filter-pill-x {
+  margin-left: 2px;
+}
+
+@media (max-width: 768px) {
+  .filter-pill {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+}
+
+/* ===== TOURS GRID ===== */
+
 .all-tours-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 24px;
 }
 
-/* Load More */
+@media (max-width: 1200px) {
+  .all-tours-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 1024px) {
+  .all-tours-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .all-tours-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .all-tours-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ===== LOAD MORE ===== */
+
 .all-tours-load-more {
   display: flex;
   justify-content: center;
@@ -82,13 +303,13 @@
   background: transparent;
   border: 2px solid #179237;
   color: #179237;
-  font-family: var(--font-body);
   font-size: 15px;
   font-weight: 700;
   padding: 14px 40px;
   border-radius: 50px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  font-family: var(--font-body);
 }
 
 .all-tours-load-btn:hover {
@@ -101,7 +322,15 @@
   transform: scale(0.97);
 }
 
-/* Empty State */
+@media (max-width: 768px) {
+  .all-tours-load-btn {
+    width: 100%;
+    padding: 12px 24px;
+  }
+}
+
+/* ===== EMPTY STATE ===== */
+
 .all-tours-empty {
   display: flex;
   flex-direction: column;
@@ -119,7 +348,6 @@
 }
 
 .all-tours-empty h3 {
-  font-family: var(--font-heading);
   font-size: 20px;
   font-weight: 600;
   color: #4b5563;
@@ -127,7 +355,6 @@
 }
 
 .all-tours-empty p {
-  font-family: var(--font-body);
   font-size: 15px;
   color: #9ca3af;
   margin: 0 0 24px;
@@ -137,78 +364,166 @@
   background: #f3f4f6;
   border: none;
   color: #4b5563;
-  font-family: var(--font-body);
   font-size: 14px;
   font-weight: 600;
   padding: 10px 24px;
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background 0.15s;
+  font-family: var(--font-body);
 }
 
 .all-tours-clear-btn:hover {
   background: #e5e7eb;
 }
 
-/* ===== RESPONSIVE ===== */
-@media (max-width: 1200px) {
-  .all-tours-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
+/* ===== FILTERS DRAWER ===== */
+
+.filter-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0, 0, 0, 0.4);
 }
 
-@media (max-width: 1024px) {
-  .all-tours-container {
-    padding: 24px 24px 40px;
-  }
-
-  .all-tours-grid {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
-  }
-
-  .all-tours-title {
-    font-size: 28px;
-  }
+.filter-drawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 360px;
+  max-width: 90vw;
+  z-index: 201;
+  background: #fff;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.12);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
-@media (max-width: 768px) {
-  .all-tours-container {
-    padding: 20px 16px 32px;
-  }
-
-  .all-tours-header {
-    flex-direction: column;
-    margin-bottom: 20px;
-  }
-
-  .all-tours-title {
-    font-size: 24px;
-  }
-
-  .all-tours-filters {
-    padding: 14px;
-    gap: 10px;
-    margin-bottom: 24px;
-  }
-
-  .all-tours-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
-  }
-
-  .all-tours-load-btn {
-    width: 100%;
-    padding: 12px 24px;
-  }
+.filter-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid #f1f5f9;
 }
 
-@media (max-width: 480px) {
-  .all-tours-grid {
-    grid-template-columns: 1fr;
-  }
+.filter-drawer-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
 
-  .all-tours-title {
-    font-size: 22px;
-  }
+.filter-drawer-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: #f1f5f9;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  color: #475569;
+  transition: background 0.15s;
+}
+
+.filter-drawer-close:hover {
+  background: #e2e8f0;
+}
+
+.filter-drawer-clear {
+  margin: 12px 24px;
+  padding: 8px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  color: #179237;
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: border-color 0.15s;
+}
+
+.filter-drawer-clear:hover {
+  border-color: #179237;
+}
+
+.filter-drawer-sections {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 24px 32px;
+}
+
+.filter-drawer-section {
+  margin-bottom: 24px;
+}
+
+.filter-drawer-section:last-child {
+  margin-bottom: 0;
+}
+
+.filter-drawer-section-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.filter-drawer-options {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.filter-drawer-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #334155;
+  text-align: left;
+  transition: background 0.15s;
+  font-family: var(--font-body);
+}
+
+.filter-drawer-option:hover {
+  background: #f8fafc;
+}
+
+.filter-drawer-option.active {
+  color: #179237;
+  font-weight: 600;
+}
+
+.filter-drawer-check {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 1.5px solid #cbd5e1;
+  background: #fff;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.filter-drawer-check.checked {
+  background: #179237;
+  border-color: #179237;
+}
+
+.filter-drawer-single-indicator {
+  margin-left: auto;
+  color: #179237;
 }

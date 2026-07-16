@@ -79,6 +79,9 @@
   .review-sidebar-col {
     width: 340px;
     padding-right: 40px;
+    position: sticky;
+    top: calc(var(--navbar-offset, 64px) + 24px);
+    align-self: flex-start;
   }
 }
 
@@ -520,22 +523,53 @@
   align-items: flex-start;
   gap: 12px;
   cursor: pointer;
+  position: relative;
+  padding-left: 32px;
 }
 
 .review-certify-checkbox {
-  margin-top: 2px;
-  width: 20px;
-  height: 20px;
-  border-radius: 4px;
-  border: 1px solid #cbd5e1;
-  accent-color: #16a34a;
-  flex-shrink: 0;
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
 }
 
 .review-certify-text {
   font-size: 13px;
   line-height: 1.5;
   color: #475569;
+}
+
+.review-certify::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 1px;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 1.5px solid #cbd5e1;
+  background: #fff;
+  flex-shrink: 0;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.review-certify:has(input:checked)::before {
+  background: #179237;
+  border-color: #179237;
+}
+
+.review-certify:has(input:checked)::after {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 6px;
+  width: 10px;
+  height: 6px;
+  border-left: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+  transform: rotate(-45deg);
 }
 
 /* Submit */

@@ -28,24 +28,26 @@ export default function ReviewTourCard({
         {displayImage && <img src={displayImage} alt={title} />}
       </div>
       <div className="review-tour-card-body">
-        <div className="review-tour-card-rating">
-          <Star className="review-tour-card-star" size={14} fill="currentColor" />
-          <span>{Number(rating).toFixed(1)}</span>
-        </div>
         <h3 className="review-tour-card-title">{title}</h3>
-        <div className="review-tour-card-supplier">
-          {supplierLogo && (
-            <img src={supplierLogo} alt="" className="review-tour-card-supplier-logo" />
-          )}
-          <span>{supplierName}</span>
+        <div className="review-tour-card-supplier-row">
+          <div className="review-tour-card-supplier">
+            {supplierLogo && (
+              <img src={supplierLogo} alt="" className="review-tour-card-supplier-logo" />
+            )}
+            <span>{supplierName}</span>
+          </div>
+          <div className="review-tour-card-rating">
+            <Star className="review-tour-card-star" size={16} fill="currentColor" />
+            <span>{Number(rating).toFixed(1)}</span>
+          </div>
         </div>
         <div className="review-tour-card-meta">
           <span className="review-tour-card-meta-item">
-            <MapPin size={14} />
+            <MapPin size={16} />
             {location}
           </span>
           <span className="review-tour-card-meta-item">
-            <Clock size={14} />
+            <Clock size={16} />
             {duration}
           </span>
         </div>

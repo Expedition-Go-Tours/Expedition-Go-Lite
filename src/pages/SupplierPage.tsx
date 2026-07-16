@@ -14,7 +14,7 @@ import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import './SupplierPage.css'
 
-const PAGE_SIZE = 12
+const PAGE_SIZE = 8
 
 const TRUST_BADGES = [
   { icon: Shield, title: 'Trusted Local Operator', desc: 'Verified & vetted' },
