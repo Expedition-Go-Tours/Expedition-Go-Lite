@@ -1,7 +1,7 @@
 .tour-card {
   display: flex;
   flex-direction: column;
-  border-radius: 12px;
+  border-radius: 16px;
   overflow: hidden;
   background: #fff;
   border: 1px solid rgba(0, 0, 0, 0.06);
@@ -9,11 +9,11 @@
   text-decoration: none;
   color: inherit;
   height: 100%;
-  transition: box-shadow 0.3s;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
 .tour-card:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  /* image pop handled by child img */
 }
 
 .tour-card-image {
@@ -33,7 +33,7 @@
 }
 
 .tour-card:hover .tour-card-image img {
-  transform: scale(1.05);
+  transform: scale(1.1);
 }
 
 .tour-card-image-fade {

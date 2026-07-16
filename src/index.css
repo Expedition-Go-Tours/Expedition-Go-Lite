@@ -93,3 +93,97 @@ body {
   margin: 0;
   min-height: 100svh;
 }
+
+/* ContactCard Component Styles */
+.contact-card {
+  background: #ffffff;
+  border: 1px solid #e5e4e7;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  width: 100%;
+  max-width: 300px;
+}
+
+.contact-card-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 20px;
+  font-family: var(--font-heading);
+}
+
+.contact-card-methods {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.contact-method {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: background-color 0.2s ease;
+}
+
+.contact-method:hover {
+  background: #f9fafb;
+}
+
+.contact-method-static {
+  cursor: default;
+}
+
+.contact-method-static:hover {
+  background: transparent;
+}
+
+.contact-method-icon {
+  color: #179237;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.contact-method-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.contact-method-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 4px;
+  font-family: var(--font-heading);
+}
+
+.contact-method-value {
+  font-size: 14px;
+  color: #6b6375;
+  word-break: break-word;
+  line-height: 1.5;
+}
+
+/* Responsive adjustments for ContactCard */
+@media (max-width: 1023px) {
+  .contact-card {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 639px) {
+  .contact-card {
+    padding: 20px;
+  }
+  
+  .contact-card-title {
+    font-size: 18px;
+  }
+}

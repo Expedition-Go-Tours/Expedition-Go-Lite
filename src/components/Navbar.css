@@ -616,23 +616,17 @@ body:has(.review-page) .navbar-compact-search {
     display: none;
   }
 
-  body.hero--search-sticky .nav-center,
-  body:has(.all-tours-page) .nav-center,
-  body:has(.supplier-page) .nav-center {
+  body.hero--search-sticky .nav-center {
     display: flex;
     margin: 0;
   }
 
-  body.hero--search-sticky .navbar-compact-search,
-  body:has(.all-tours-page) .navbar-compact-search,
-  body:has(.supplier-page) .navbar-compact-search {
+  body.hero--search-sticky .navbar-compact-search {
     flex: 1;
     max-width: none;
   }
 
-  body.hero--search-sticky .navbar-search-form,
-  body:has(.all-tours-page) .navbar-search-form,
-  body:has(.supplier-page) .navbar-search-form {
+  body.hero--search-sticky .navbar-search-form {
     max-width: none;
   }
 
