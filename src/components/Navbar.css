@@ -630,8 +630,7 @@ body:has(.review-page) .navbar-compact-search {
     max-width: none;
   }
 
-  body.hero--search-sticky .nav-left,
-  body:has(.all-tours-page) .nav-left {
+  body.hero--search-sticky .nav-left {
     display: none;
   }
 
@@ -640,8 +639,7 @@ body:has(.review-page) .navbar-compact-search {
     display: none;
   }
 
-  body.hero--search-sticky .nav-hamburger,
-  body:has(.all-tours-page) .nav-hamburger {
+  body.hero--search-sticky .nav-hamburger {
     display: none;
   }
 
