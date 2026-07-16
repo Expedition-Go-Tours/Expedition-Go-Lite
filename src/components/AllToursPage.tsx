@@ -210,6 +210,7 @@ export default function AllToursPage({ onOpenAuth, onOpenDashboard, onOpenWishli
         </div>
 
         {/* Filter Bar */}
+        <div className="filter-bar-sticky">
         <div className="filter-bar">
           <button className="filter-drawer-btn" onClick={() => setDrawerOpen(true)}>
             Filters
@@ -250,6 +251,7 @@ export default function AllToursPage({ onOpenAuth, onOpenDashboard, onOpenWishli
           >
             <ChevronRight size={20} />
           </button>
+        </div>
         </div>
 
         {/* Tour Grid */}

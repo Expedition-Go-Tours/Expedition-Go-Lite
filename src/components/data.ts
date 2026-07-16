@@ -132,6 +132,7 @@ export interface Destination {
   title: string
   tours: string
   image: string
+  region: string
 }
 
 const destinations: Destination[] = [
@@ -139,51 +140,61 @@ const destinations: Destination[] = [
     title: 'Accra',
     tours: '120+ Tours',
     image: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=600&q=80',
+    region: 'Greater Accra',
   },
   {
     title: 'Cape Coast',
     tours: '80+ Tours',
     image: 'https://images.unsplash.com/photo-1528127269322-539801943592?w=600&q=80',
+    region: 'Central Region',
   },
   {
     title: 'Kakum National Park',
     tours: '45+ Tours',
     image: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=600&q=80',
+    region: 'Central Region',
   },
   {
     title: 'Kumasi',
     tours: '70+ Tours',
     image: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=600&q=80',
+    region: 'Ashanti Region',
   },
   {
     title: 'Elmina',
     tours: '55+ Tours',
     image: 'https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=600&q=80',
+    region: 'Central Region',
   },
   {
     title: 'Mole National Park',
     tours: '30+ Tours',
     image: 'https://images.unsplash.com/photo-1549366021-9f761d450615?w=600&q=80',
+    region: 'Northern Region',
   },
   {
     title: 'Wli Waterfalls',
     tours: '25+ Tours',
     image: 'https://images.unsplash.com/photo-1432405972618-c60b0225b8f9?w=600&q=80',
+    region: 'Volta Region',
   },
   {
     title: 'Ada Foah',
     tours: '30+ Tours',
     image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&q=80',
+    region: 'Greater Accra',
   },
   {
     title: 'Busua Beach',
     tours: '22+ Tours',
     image: 'https://images.unsplash.com/photo-1500375592092-40eb2168fd21?w=600&q=80',
+    region: 'Western Region',
   },
   {
     title: 'Shai Hills Reserve',
     tours: '20+ Tours',
     image: 'https://images.unsplash.com/photo-1472396961693-142e6e269027?w=600&q=80',
+    region: 'Greater Accra',
   },
 ]
 

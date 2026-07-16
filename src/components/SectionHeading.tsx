@@ -4,6 +4,7 @@ interface SectionHeadingProps {
   title: string
   subtitle?: string
   viewAllLink?: string
+  onViewAllClick?: () => void
   onScrollLeft?: () => void
   onScrollRight?: () => void
   disableLeft?: boolean
@@ -14,6 +15,7 @@ export default function SectionHeading({
   title,
   subtitle,
   viewAllLink,
+  onViewAllClick,
   onScrollLeft,
   onScrollRight,
   disableLeft,
@@ -25,10 +27,13 @@ export default function SectionHeading({
         <h2 className="section-title">{title}</h2>
         {subtitle && <p className="section-subtitle">{subtitle}</p>}
       </div>
-      {viewAllLink || onScrollLeft || onScrollRight ? (
+      {viewAllLink || onScrollLeft || onScrollRight || onViewAllClick ? (
         <div className="section-heading-actions">
           {viewAllLink && (
             <a href={viewAllLink} className="section-view-all">View all</a>
+          )}
+          {onViewAllClick && (
+            <button className="section-view-all" onClick={onViewAllClick}>View all</button>
           )}
           {(onScrollLeft || onScrollRight) && (
             <div className="section-arrows">

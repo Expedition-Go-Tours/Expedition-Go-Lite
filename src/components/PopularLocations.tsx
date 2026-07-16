@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
 import SectionHeading from './SectionHeading'
 import PopularLocationCard from './PopularLocationCard'
+import DestinationsModal from './DestinationsModal'
 import { destinations } from './data'
 import './PopularLocations.css'
 
@@ -12,6 +13,7 @@ export default function PopularLocations() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
+  const [isModalOpen, setIsModalOpen] = useState(false)
   const items = destinations
 
   const updateArrows = useCallback(() => {
@@ -44,7 +46,7 @@ export default function PopularLocations() {
         <div className="location-viewport">
           <SectionHeading
             title="Popular Locations"
-            viewAllLink="/tours?category=destinations"
+            onViewAllClick={() => setIsModalOpen(true)}
             onScrollLeft={() => scroll('left')}
             onScrollRight={() => scroll('right')}
             disableLeft={!canScrollLeft}
@@ -61,6 +63,8 @@ export default function PopularLocations() {
           </div>
         </div>
       </div>
+
+      <DestinationsModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </section>
   )
 }
