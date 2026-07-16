@@ -218,11 +218,14 @@
   .continue-planning-card-wrap {
     width: 320px;
     min-width: 320px;
+    display: flex;
+    align-items: stretch;
   }
 
   .continue-planning-card {
     flex-direction: column;
     height: auto;
+    flex: 1;
   }
 
   .cp-card-image {
@@ -230,10 +233,12 @@
     height: 180px;
     border-radius: 0;
     margin: 0;
+    flex-shrink: 0;
   }
 
   .cp-card-body {
     padding: 14px 16px;
+    flex: 1;
   }
 
   .cp-card-title {

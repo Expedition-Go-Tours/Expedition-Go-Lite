@@ -22,6 +22,8 @@ import AuthForm from './components/AuthForm'
 import Dashboard from './components/Dashboard'
 import TourDetailPage from './components/tour-detail/TourDetailPage'
 import AllToursPage from './components/AllToursPage'
+import ReviewExperiencePage from './pages/ReviewExperiencePage'
+import SupplierPage from './pages/SupplierPage'
 import { WishlistProvider } from './context/WishlistContext'
 import { ContinuePlanningProvider } from './context/ContinuePlanningContext'
 import ContinuePlanningSection from './components/ContinuePlanningSection'
@@ -107,6 +109,12 @@ function AppContent() {
             onOpenWishlist={handleOpenWishlist}
             onOpenBookings={handleOpenBookings}
           />
+        } />
+        <Route path="/review/:tourTitle" element={
+          <ReviewExperiencePage />
+        } />
+        <Route path="/supplier/:supplierName" element={
+          <SupplierPage />
         } />
         <Route path="/*" element={
           <AnimatePresence mode="wait">

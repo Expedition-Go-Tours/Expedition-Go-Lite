@@ -1,6 +1,6 @@
-/* Related Tours - Mobile First */
+/* Related Tours */
 .related-tours {
-  padding: 40px 16px;
+  padding: 40px 0;
   background: #fff;
 }
 
@@ -9,9 +9,6 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 28px;
-  max-width: 1400px;
-  margin-left: auto;
-  margin-right: auto;
 }
 
 .related-tours-title {
@@ -23,8 +20,14 @@
 }
 
 .related-tours-nav {
-  display: flex;
+  display: none;
   gap: 8px;
+}
+
+@media (min-width: 1024px) {
+  .related-tours-nav {
+    display: flex;
+  }
 }
 
 .related-tours-nav-btn {
@@ -55,9 +58,6 @@
   scrollbar-width: none;
   -ms-overflow-style: none;
   padding-bottom: 8px;
-  max-width: 1400px;
-  margin-left: auto;
-  margin-right: auto;
 }
 
 .related-tours-container::-webkit-scrollbar {
@@ -79,10 +79,10 @@
   gap: 5px;
 }
 
-/* Tablet - 768px+ */
+/* Tablet */
 @media (min-width: 768px) {
   .related-tours {
-    padding: 56px 24px;
+    padding: 56px 0;
   }
 
   .related-tours-title {
@@ -102,10 +102,10 @@
   }
 }
 
-/* Desktop - 1024px+ */
+/* Desktop */
 @media (min-width: 1024px) {
   .related-tours {
-    padding: 72px 40px;
+    padding: 72px 0;
   }
 
   .related-tours-title {
@@ -130,10 +130,10 @@
   }
 }
 
-/* Large Desktop - 1400px+ */
+/* Large Desktop */
 @media (min-width: 1400px) {
   .related-tours {
-    padding: 80px 60px;
+    padding: 80px 0;
   }
 
   .related-tours-title {

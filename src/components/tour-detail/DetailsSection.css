@@ -1,0 +1,159 @@
+.details-section {
+  padding-bottom: 24px;
+}
+
+.details-section-title {
+  font-size: 18px;
+  font-weight: 900;
+  color: #0f172a;
+  margin: 0 0 16px;
+}
+
+@media (min-width: 640px) {
+  .details-section-title {
+    font-size: 20px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .details-section-title {
+    font-size: 24px;
+  }
+}
+
+.details-section-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.details-accordion-trigger {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 900;
+  color: #0f172a;
+  text-align: left;
+  font-family: var(--font-body);
+}
+
+@media (min-width: 640px) {
+  .details-accordion-trigger {
+    font-size: 18px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .details-accordion-trigger {
+    font-size: 20px;
+  }
+}
+
+.details-accordion-trigger svg {
+  color: #166534;
+  flex-shrink: 0;
+}
+
+.details-accordion-content {
+  overflow: hidden;
+}
+
+.details-accordion-body {
+  padding-bottom: 20px;
+}
+
+/* Included / Excluded */
+.details-included-excluded {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.details-subsection-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 12px;
+}
+
+@media (min-width: 640px) {
+  .details-subsection-title {
+    font-size: 18px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .details-subsection-title {
+    font-size: 20px;
+  }
+}
+
+.details-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.details-list-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: rgba(0, 43, 17, 0.85);
+}
+
+@media (min-width: 640px) {
+  .details-list-item {
+    font-size: 16px;
+  }
+}
+
+.details-check-icon {
+  margin-top: 2px;
+  flex-shrink: 0;
+  color: #16a34a;
+}
+
+.details-x-icon {
+  margin-top: 2px;
+  flex-shrink: 0;
+  color: #ef4444;
+}
+
+.details-empty {
+  font-size: 14px;
+  line-height: 1.75;
+  color: rgba(0, 43, 17, 0.8);
+}
+
+/* Text content */
+.details-text {
+  font-size: 14px;
+  line-height: 1.75;
+  color: rgba(0, 43, 17, 0.8);
+}
+
+@media (min-width: 640px) {
+  .details-text {
+    font-size: 16px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .details-text {
+    font-size: 18px;
+  }
+}
+
+.details-mt-1 {
+  margin-top: 4px;
+}

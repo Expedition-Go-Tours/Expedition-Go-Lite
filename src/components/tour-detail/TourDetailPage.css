@@ -1,45 +1,155 @@
-/* ===== TOUR DETAIL PAGE - MOBILE FIRST ===== */
+/* ===== TOUR DETAIL PAGE ===== */
 
-/* Container */
 .tour-detail-page {
   width: 100%;
-  background: #f8f9fb;
+  background: #fff;
   min-height: 100vh;
-  padding-top: 64px; /* Account for fixed navbar */
+  padding-top: 64px;
 }
 
 .tour-detail-container {
   width: 100%;
-  max-width: 1400px;
+  max-width: 1520px;
   margin: 0 auto;
+  padding: 24px 16px;
 }
 
-/* Content Layout - Mobile First */
+@media (min-width: 640px) {
+  .tour-detail-container {
+    padding: 32px 24px 0;
+  }
+}
+
+@media (min-width: 1024px) {
+  .tour-detail-container {
+    padding: 32px 32px 0;
+  }
+}
+
+/* Content Layout */
 .tour-detail-content {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  width: 100%;
-  max-width: 100%;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px 32px;
+  padding-bottom: 40px;
 }
 
-/* Main Content */
+@media (min-width: 1024px) {
+  .tour-detail-content {
+    grid-template-columns: 1fr 380px;
+  }
+}
+
+@media (min-width: 1400px) {
+  .tour-detail-content {
+    grid-template-columns: 1fr 400px;
+  }
+}
+
+/* Main Content (header + gallery) */
 .tour-detail-main {
   width: 100%;
-  padding: 0;
   background: #fff;
 }
 
-/* Sidebar - Hidden on mobile, shown as fixed bottom bar */
+@media (min-width: 1024px) {
+  .tour-detail-main {
+    grid-column: 1;
+    grid-row: 1;
+    min-width: 0;
+  }
+}
+
+/* Sidebar - after gallery on mobile, right of header+gallery on desktop */
 .tour-detail-sidebar {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 100;
+  width: 100%;
+}
+
+@media (min-width: 1024px) {
+  .tour-detail-sidebar {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    position: sticky;
+    top: 100px;
+    align-self: start;
+    width: auto;
+    min-width: 0;
+  }
+}
+
+/* Bottom section (tabs + content) */
+.tour-detail-bottom {
+  width: 100%;
+  min-width: 0;
+}
+
+@media (min-width: 1024px) {
+  .tour-detail-bottom {
+    grid-column: 1;
+    grid-row: 2;
+  }
+}
+
+@media (min-width: 1400px) {
+  .tour-detail-sidebar {
+    width: 400px;
+    min-width: 400px;
+  }
+}
+
+/* Header Row - title left, write review right */
+.tour-detail-header-row {
+  margin-bottom: 12px;
+}
+
+.tour-detail-header-row .tour-header-new {
+  margin-bottom: 0;
+}
+
+.tour-detail-write-review-btn {
+  width: 100%;
+  margin-top: 12px;
+  border: 1px solid #166534;
+  border-radius: 9999px;
   background: #fff;
-  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
-  padding: 12px 16px;
+  padding: 12px 20px;
+  font-size: 15px;
+  font-weight: 900;
+  color: #166534;
+  cursor: pointer;
+  transition: background 0.15s;
+  font-family: var(--font-body);
+  text-align: center;
+}
+
+@media (min-width: 1024px) {
+  .tour-detail-write-review-btn {
+    width: auto;
+    margin-top: 0;
+    padding: 12px 24px;
+    font-size: 16px;
+  }
+
+  .tour-detail-header-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .tour-detail-header-row .tour-header-new {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+.tour-detail-write-review-btn:hover {
+  background: rgba(22, 101, 52, 0.05);
+}
+
+/* Tab Content Area */
+.tour-detail-tab-content {
+  min-width: 0;
 }
 
 /* Error State */
@@ -67,106 +177,259 @@
   color: #6b7280;
 }
 
-/* ===== TABLET VIEW (768px+) ===== */
-@media (min-width: 768px) {
-  .tour-detail-content {
-    padding: 0 24px;
-  }
-
-  .tour-detail-main {
-    padding: 0;
-  }
-
-  /* Sidebar becomes sticky sidebar */
-  .tour-detail-sidebar {
-    position: relative;
-    box-shadow: none;
-    padding: 0;
-    background: transparent;
-  }
+/* Dialog Overlay */
+.dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
 }
 
-/* ===== DESKTOP VIEW (1024px+) ===== */
-@media (min-width: 1024px) {
-  .tour-detail-content {
-    flex-direction: row;
-    gap: 32px;
-    padding: 0 40px 40px;
-    align-items: flex-start;
-  }
-
-  .tour-detail-main {
-    flex: 1;
-    min-width: 0;
-    width: auto;
-    max-width: calc(100% - 412px);
-  }
-
-  .tour-detail-sidebar {
-    position: sticky;
-    top: 80px;
-    align-self: flex-start;
-    width: 380px;
-    min-width: 380px;
-    flex-shrink: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    z-index: 1;
-  }
-}
-
-/* ===== LARGE DESKTOP (1400px+) ===== */
-@media (min-width: 1400px) {
-  .tour-detail-content {
-    gap: 40px;
-    padding: 0 60px 60px;
-  }
-
-  .tour-detail-main {
-    max-width: calc(100% - 440px);
-  }
-
-  .tour-detail-sidebar {
-    width: 400px;
-    min-width: 400px;
-  }
-}
-
-/* Reviews Section */
-.tour-reviews-section {
-  margin-top: 48px;
-  padding: 24px 16px;
+.dialog-content {
   background: #fff;
-  border-bottom: 1px solid var(--border);
+  border-radius: 16px;
+  max-width: 560px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
 }
 
-.tour-reviews-section .section-title {
-  font-family: var(--font-heading);
-  font-size: 24px;
+.dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 0;
+}
+
+.dialog-title {
+  font-size: 20px;
+  font-weight: 900;
+  color: #166534;
+  margin: 0;
+  padding-right: 32px;
+}
+
+.dialog-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: #f1f5f9;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.dialog-body {
+  padding: 16px 24px 24px;
+}
+
+/* Review Detail */
+.review-detail-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #16a34a;
+  display: grid;
+  place-items: center;
+  font-size: 14px;
   font-weight: 700;
-  color: var(--text-h, #08060d);
-  margin: 0 0 24px 0;
+  color: #fff;
+  margin-bottom: 8px;
 }
 
-/* Tablet - 768px+ */
-@media (min-width: 768px) {
-  .tour-reviews-section {
-    padding: 32px 24px;
-  }
-
-  .tour-reviews-section .section-title {
-    font-size: 28px;
-  }
+.review-detail-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
 }
 
-/* Desktop - 1024px+ */
-@media (min-width: 1024px) {
-  .tour-reviews-section {
-    padding: 40px 32px;
-  }
+.review-detail-date {
+  font-size: 12px;
+  color: #94a3b8;
+  margin: 2px 0 8px;
+}
 
-  .tour-reviews-section .section-title {
-    font-size: 32px;
-  }
+.review-detail-stars {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 12px;
+}
+
+.review-detail-stars .star {
+  color: #16a34a;
+}
+
+.review-detail-stars .star.filled {
+  fill: currentColor;
+}
+
+.review-detail-text {
+  font-size: 14px;
+  line-height: 1.75;
+  color: #475569;
+  margin: 0;
+}
+
+/* Reply Dialog */
+.reply-target {
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: rgba(240, 253, 244, 0.45);
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.reply-target-asker {
+  font-size: 14px;
+  font-weight: 900;
+  color: #0f172a;
+  margin: 0 0 8px;
+}
+
+.reply-target-question {
+  font-size: 14px;
+  line-height: 1.5;
+  color: rgba(22, 101, 52, 0.85);
+  margin: 0;
+}
+
+.reply-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.reply-label {
+  font-size: 14px;
+  font-weight: 900;
+  color: #0f172a;
+}
+
+.reply-textarea {
+  width: 100%;
+  min-height: 120px;
+  border-radius: 12px;
+  border: 1px solid #cbd5e1;
+  padding: 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  resize: vertical;
+  outline: none;
+  font-family: var(--font-body);
+}
+
+.reply-textarea:focus {
+  border-color: #166534;
+  box-shadow: 0 0 0 3px rgba(22, 101, 52, 0.1);
+}
+
+.reply-confirmation {
+  border-radius: 8px;
+  background: #f0fdf4;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #166534;
+  margin: 0;
+}
+
+.reply-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.reply-cancel {
+  border-radius: 9999px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #166534;
+  cursor: pointer;
+  font-family: var(--font-body);
+}
+
+.reply-submit {
+  border-radius: 9999px;
+  border: none;
+  background: #1a4530;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 900;
+  color: #fff;
+  cursor: pointer;
+  font-family: var(--font-body);
+}
+
+.reply-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.reply-submit:hover:not(:disabled) {
+  background: #163b29;
+}
+
+/* Write Review Dialog */
+.write-review-info {
+  font-size: 14px;
+  line-height: 1.5;
+  color: rgba(22, 101, 52, 0.8);
+  margin: 0 0 20px;
+}
+
+.write-review-form-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.write-review-field label {
+  display: block;
+  font-size: 14px;
+  font-weight: 900;
+  color: #0f172a;
+  margin-bottom: 8px;
+}
+
+.write-review-stars {
+  display: flex;
+  gap: 4px;
+}
+
+.write-review-star-btn {
+  border: none;
+  background: none;
+  padding: 2px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.write-review-textarea {
+  width: 100%;
+  min-height: 120px;
+  border-radius: 12px;
+  border: 1px solid #cbd5e1;
+  padding: 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  resize: vertical;
+  outline: none;
+  font-family: var(--font-body);
+}
+
+.write-review-textarea:focus {
+  border-color: #166534;
+  box-shadow: 0 0 0 3px rgba(22, 101, 52, 0.1);
 }

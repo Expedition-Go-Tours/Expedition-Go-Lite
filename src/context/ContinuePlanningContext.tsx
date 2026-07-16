@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react'
 import type { Tour, MultiDayTour } from '../components/data'
 
 export interface ContinuePlanningItem {
@@ -66,6 +66,8 @@ function loadStorage(): ContinuePlanningItem[] {
 
 export function ContinuePlanningProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<ContinuePlanningItem[]>(loadStorage)
+  const itemsRef = useRef(items)
+  itemsRef.current = items
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
@@ -88,8 +90,8 @@ export function ContinuePlanningProvider({ children }: { children: ReactNode }) 
   }, [])
 
   const isInContinuePlanning = useCallback((id: string) => {
-    return items.some(i => i.id === id)
-  }, [items])
+    return itemsRef.current.some(i => i.id === id)
+  }, [])
 
   return (
     <ContinuePlanningContext.Provider

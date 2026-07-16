@@ -1,0 +1,26 @@
+import './MobileStickyBar.css'
+
+interface MobileStickyBarProps {
+  show: boolean
+  priceFormatted: string
+  onCheckAvailability: () => void
+}
+
+export default function MobileStickyBar({ show, priceFormatted, onCheckAvailability }: MobileStickyBarProps) {
+  return (
+    <div className={`mobile-sticky-bar ${show ? 'visible' : ''}`}>
+      <div className="mobile-sticky-bar-price">
+        <span className="mobile-sticky-bar-from">From</span>
+        <span className="mobile-sticky-bar-amount">{priceFormatted}</span>
+        <span className="mobile-sticky-bar-per">per adult</span>
+      </div>
+      <button
+        type="button"
+        onClick={onCheckAvailability}
+        className="mobile-sticky-bar-btn"
+      >
+        Check availability
+      </button>
+    </div>
+  )
+}
