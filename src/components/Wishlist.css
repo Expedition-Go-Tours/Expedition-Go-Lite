@@ -285,6 +285,46 @@
   position: relative;
 }
 
+/* Animated empty-state icon */
+.empty-icon-wrap {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.empty-halo {
+  position: absolute;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(105, 201, 130, 0.35) 0%, rgba(105, 201, 130, 0) 70%);
+  pointer-events: none;
+}
+
+.empty-halo-2 {
+  width: 76px;
+  height: 76px;
+}
+
+.empty-heart {
+  position: relative;
+  z-index: 3;
+  color: var(--dash-accent);
+  filter: drop-shadow(0 6px 14px rgba(105, 201, 130, 0.35));
+}
+
+.empty-sparkle {
+  position: absolute;
+  color: var(--dash-accent);
+  pointer-events: none;
+  z-index: 3;
+}
+
 .empty-title {
   font-family: var(--font-heading);
   font-weight: 600;
@@ -422,10 +462,12 @@
 
   .wishlist-card-rating {
     font-size: 13px;
+    gap: 3px;
   }
 
   .rating-count {
     font-size: 12px;
+    margin-left: 3px;
   }
 
   .price-label {

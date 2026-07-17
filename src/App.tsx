@@ -19,17 +19,19 @@ import NewsletterSection from './components/NewsletterSection'
 import TravelStoriesSection from './components/TravelStoriesSection'
 import Footer from './components/Footer'
 import AuthForm from './components/AuthForm'
-import Dashboard from './components/Dashboard'
+import DashboardLayout from './components/dashboard/DashboardLayout'
 import TourDetailPage from './components/tour-detail/TourDetailPage'
 import AllToursPage from './components/AllToursPage'
+import AllStoriesPage from './components/AllStoriesPage'
 import ReviewExperiencePage from './pages/ReviewExperiencePage'
 import SupplierPage from './pages/SupplierPage'
 import { WishlistProvider } from './context/WishlistContext'
 import { ContinuePlanningProvider } from './context/ContinuePlanningContext'
 import ContinuePlanningSection from './components/ContinuePlanningSection'
+import SupportChatWidget from './components/SupportChatWidget'
 import { subscribeToAuthState, handleGoogleCallback } from './lib/auth'
 
-type PageView = 'home' | 'signin' | 'signup' | 'dashboard'
+type PageView = 'home' | 'signin' | 'signup'
 
 function HomePage({ onOpenAuth, onOpenDashboard, onOpenWishlist, onOpenBookings }: any) {
   return (
@@ -57,7 +59,6 @@ function HomePage({ onOpenAuth, onOpenDashboard, onOpenWishlist, onOpenBookings 
 
 function AppContent() {
   const [currentPage, setCurrentPage] = useState<PageView>('home')
-  const [dashboardMenu, setDashboardMenu] = useState<string | undefined>()
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -74,26 +75,22 @@ function AppContent() {
     setCurrentPage(mode)
   }
   const handleOpenDashboard = () => {
-    navigate('/')
-    setDashboardMenu(undefined)
-    setCurrentPage('dashboard')
+    navigate('/dashboard')
   }
   const handleOpenWishlist = () => {
-    navigate('/')
-    setDashboardMenu('wishlist')
-    setCurrentPage('dashboard')
+    navigate('/dashboard/wishlist')
   }
   const handleOpenBookings = () => {
-    navigate('/')
-    setDashboardMenu('bookings')
-    setCurrentPage('dashboard')
+    navigate('/dashboard/bookings')
   }
   const handleGoHome = () => setCurrentPage('home')
 
   return (
     <>
       <Toaster position="top-center" duration={2500} closeButton />
+      <SupportChatWidget />
       <Routes>
+        <Route path="/dashboard/*" element={<DashboardLayout />} />
         <Route path="/tour/:tourId" element={
           <TourDetailPage
             onOpenAuth={handleOpenAuth}
@@ -116,6 +113,7 @@ function AppContent() {
         <Route path="/supplier/:supplierName" element={
           <SupplierPage />
         } />
+        <Route path="/stories" element={<AllStoriesPage />} />
         <Route path="/*" element={
           <AnimatePresence mode="wait">
             {currentPage === 'signin' || currentPage === 'signup' ? (
@@ -131,16 +129,6 @@ function AppContent() {
                   onBack={handleGoHome}
                   onAuthSuccess={handleGoHome}
                 />
-              </motion.div>
-            ) : currentPage === 'dashboard' ? (
-              <motion.div
-                key="dashboard"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.25, ease: 'easeInOut' }}
-              >
-                <Dashboard onBack={handleGoHome} initialMenu={dashboardMenu} />
               </motion.div>
             ) : (
               <motion.div

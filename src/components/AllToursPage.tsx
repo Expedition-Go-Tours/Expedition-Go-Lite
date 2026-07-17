@@ -1,6 +1,7 @@
-import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
+import { useState, useMemo, useEffect, useRef, useCallback, type ReactNode } from 'react'
+import { useSearchParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronLeft, ChevronRight, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, X, Star, ArrowLeft } from 'lucide-react'
 import {
   allTours,
   parsePrice,
@@ -14,6 +15,9 @@ import TourCard from './TourCard'
 import MultiDayCard from './MultiDayCard'
 import './AllToursPage.css'
 
+const PRICE_MIN = Math.min(...allTours.map(t => parsePrice(t.price)))
+const PRICE_MAX = Math.max(...allTours.map(t => parsePrice(t.price)))
+
 const PAGE_SIZE = 12
 
 const SORT_OPTIONS = [
@@ -24,14 +28,26 @@ const SORT_OPTIONS = [
 ] as const
 
 const RATING_OPTIONS = [
-  { value: '4', label: '4+' },
-  { value: '4.5', label: '4.5+' },
+  { value: '5', label: '5' },
+  { value: '4', label: '4' },
+  { value: '3', label: '3' },
+  { value: '2', label: '2' },
+  { value: '1', label: '1' },
 ] as const
 
 const TOUR_TYPE_OPTIONS = [
   { value: 'day', label: 'Day Tours' },
   { value: 'multi-day', label: 'Multi-Day' },
 ] as const
+
+const SECTION_TITLES: Record<string, string> = {
+  'Recommended': 'Recommended For You',
+  'Day Tours': 'Day Tours',
+  'Multi-Day Tours': 'Multi-Day Tours',
+  'Top Rated': 'Top Rated by Travellers',
+  'Sell Out': 'Likely to Sell Out',
+  'Last Minute Deals': 'Last Minute Deals',
+}
 
 interface AllToursPageProps {
   onOpenAuth?: (mode: 'signin' | 'signup') => void
@@ -41,12 +57,17 @@ interface AllToursPageProps {
 }
 
 export default function AllToursPage({ onOpenAuth, onOpenDashboard, onOpenWishlist, onOpenBookings }: AllToursPageProps) {
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const sectionParam = searchParams.get('section') || '';
   const [tourTypes, setTourTypes] = useState<string[]>([])
   const [sections, setSections] = useState<string[]>([])
   const [destinations, setDestinations] = useState<string[]>([])
   const [categories, setCategories] = useState<string[]>([])
   const [durationFilter, setDurationFilter] = useState<string[]>([])
   const [priceFilter, setPriceFilter] = useState<string[]>([])
+  const [priceSliderMin, setPriceSliderMin] = useState(PRICE_MIN)
+  const [priceSliderMax, setPriceSliderMax] = useState(PRICE_MAX)
   const [languageFilter, setLanguageFilter] = useState<string[]>([])
   const [ratingFilter, setRatingFilter] = useState<string[]>([])
   const [sortBy, setSortBy] = useState<string[]>(['recommended'])
@@ -127,8 +148,11 @@ export default function AllToursPage({ onOpenAuth, onOpenDashboard, onOpenWishli
     if (filterOptions.languages.some(l => l.value === value)) { handleMulti(setLanguageFilter)(value); return }
   }
 
+  const pageTitle = SECTION_TITLES[sectionParam] || 'All Tours'
+
   const filteredTours = useMemo(() => {
     let result = [...allTours]
+    if (sectionParam) result = result.filter(t => t.section === sectionParam)
     if (tourTypes.length > 0) result = result.filter(t => tourTypes.includes(t.tourType))
     if (sections.length > 0) result = result.filter(t => sections.includes(t.section))
     if (destinations.length > 0) result = result.filter(t => destinations.includes(t.location))
@@ -151,6 +175,12 @@ export default function AllToursPage({ onOpenAuth, onOpenDashboard, onOpenWishli
         })
       })
     }
+    if (priceSliderMin > PRICE_MIN || priceSliderMax < PRICE_MAX) {
+      result = result.filter(t => {
+        const price = parsePrice(t.price)
+        return price >= priceSliderMin && price <= priceSliderMax
+      })
+    }
     if (languageFilter.length > 0) {
       result = result.filter(t => {
         const langs = t.languages || ['English']
@@ -168,9 +198,9 @@ export default function AllToursPage({ onOpenAuth, onOpenDashboard, onOpenWishli
     else if (sortKey === 'price-low') result.sort((a, b) => parsePrice(a.price) - parsePrice(b.price))
     else if (sortKey === 'price-high') result.sort((a, b) => parsePrice(b.price) - parsePrice(a.price))
     return result
-  }, [tourTypes, sections, destinations, categories, durationFilter, priceFilter, languageFilter, ratingFilter, sortBy])
+  }, [sectionParam, tourTypes, sections, destinations, categories, durationFilter, priceFilter, priceSliderMin, priceSliderMax, languageFilter, ratingFilter, sortBy])
 
-  useEffect(() => { setVisibleCount(PAGE_SIZE) }, [tourTypes, sections, destinations, categories, durationFilter, priceFilter, languageFilter, ratingFilter, sortBy])
+  useEffect(() => { setVisibleCount(PAGE_SIZE) }, [sectionParam, tourTypes, sections, destinations, categories, durationFilter, priceFilter, priceSliderMin, priceSliderMax, languageFilter, ratingFilter, sortBy])
 
   const visibleTours = filteredTours.slice(0, visibleCount)
   const hasMore = visibleCount < filteredTours.length
@@ -184,11 +214,14 @@ export default function AllToursPage({ onOpenAuth, onOpenDashboard, onOpenWishli
   const clearAll = () => {
     setTourTypes([]); setSections([]); setDestinations([]); setCategories([])
     setDurationFilter([]); setPriceFilter([]); setLanguageFilter([]); setRatingFilter([])
+    setPriceSliderMin(PRICE_MIN); setPriceSliderMax(PRICE_MAX)
     setSortBy(['recommended'])
   }
 
+  const priceSliderActive = priceSliderMin > PRICE_MIN || priceSliderMax < PRICE_MAX
   const activeFilterCount = tourTypes.length + sections.length + destinations.length + categories.length +
-    durationFilter.length + priceFilter.length + languageFilter.length + ratingFilter.length
+    durationFilter.length + priceFilter.length + languageFilter.length + ratingFilter.length +
+    (priceSliderActive ? 1 : 0)
 
   return (
     <div className="all-tours-page">
@@ -200,9 +233,20 @@ export default function AllToursPage({ onOpenAuth, onOpenDashboard, onOpenWishli
       />
       <div className="all-tours-container">
         <div className="all-tours-header">
-          <div>
-            <h1 className="all-tours-title">All Tours</h1>
-            <p className="all-tours-count">{filteredTours.length} tour{filteredTours.length !== 1 ? 's' : ''} found</p>
+          <div className="all-tours-header-left">
+            {sectionParam && (
+              <button
+                onClick={() => navigate('/')}
+                className="all-tours-back-btn"
+                aria-label="Back to homepage"
+              >
+                <ArrowLeft size={20} />
+              </button>
+            )}
+            <div>
+              <h1 className="all-tours-title">{pageTitle}</h1>
+              <p className="all-tours-count">{filteredTours.length} tour{filteredTours.length !== 1 ? 's' : ''} found</p>
+            </div>
           </div>
           {activeFilterCount > 0 && (
             <button className="all-tours-clear" onClick={clearAll}>Clear all filters</button>
@@ -213,6 +257,9 @@ export default function AllToursPage({ onOpenAuth, onOpenDashboard, onOpenWishli
         <div className="filter-bar-sticky">
         <div className="filter-bar">
           <button className="filter-drawer-btn" onClick={() => setDrawerOpen(true)}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6, flexShrink: 0 }}>
+              <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+            </svg>
             Filters
             {activeFilterCount > 0 && <span className="filter-count-badge">{activeFilterCount}</span>}
           </button>
@@ -227,6 +274,16 @@ export default function AllToursPage({ onOpenAuth, onOpenDashboard, onOpenWishli
           </button>
 
           <div ref={scrollRef} className="filter-pills-scroll" onScroll={updateArrows}>
+            {sectionParam && (
+              <button
+                type="button"
+                className="filter-pill active"
+                onClick={() => navigate('/tours')}
+              >
+                {SECTION_TITLES[sectionParam] || sectionParam}
+                <X size={12} className="filter-pill-x" />
+              </button>
+            )}
             {allPillOptions.map((pill) => {
               const active = isPillActive(pill.value)
               return (
@@ -344,19 +401,64 @@ export default function AllToursPage({ onOpenAuth, onOpenDashboard, onOpenWishli
                 </button>
               </div>
               {activeFilterCount > 0 && (
-                <button className="filter-drawer-clear" onClick={() => { clearAll(); setDrawerOpen(false) }}>
+                <button className="filter-drawer-clear" onClick={() => { clearAll(); }}>
                   Clear all filters ({activeFilterCount})
                 </button>
               )}
 
-              <div className="filter-drawer-sections">
+               <div className="filter-drawer-sections">
+                <div className="filter-drawer-section">
+                  <h3 className="filter-drawer-section-title">Price Range</h3>
+                  <div className="price-slider-container">
+                    <div className="price-slider-values">
+                      <span className="price-slider-value">${priceSliderMin}</span>
+                      <span className="price-slider-sep">–</span>
+                      <span className="price-slider-value">${priceSliderMax}</span>
+                    </div>
+                    <div className="price-slider-track">
+                      <div className="price-slider-fill" style={{
+                        left: `${((priceSliderMin - PRICE_MIN) / (PRICE_MAX - PRICE_MIN)) * 100}%`,
+                        right: `${100 - ((priceSliderMax - PRICE_MIN) / (PRICE_MAX - PRICE_MIN)) * 100}%`,
+                      }} />
+                      <input
+                        type="range"
+                        min={PRICE_MIN}
+                        max={PRICE_MAX}
+                        value={priceSliderMin}
+                        onChange={(e) => {
+                          const val = Number(e.target.value)
+                          setPriceSliderMin(Math.min(val, priceSliderMax - 5))
+                        }}
+                        className="price-slider-input price-slider-input-min"
+                      />
+                      <input
+                        type="range"
+                        min={PRICE_MIN}
+                        max={PRICE_MAX}
+                        value={priceSliderMax}
+                        onChange={(e) => {
+                          const val = Number(e.target.value)
+                          setPriceSliderMax(Math.max(val, priceSliderMin + 5))
+                        }}
+                        className="price-slider-input price-slider-input-max"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <FilterSection title="Rating" options={[...RATING_OPTIONS]} selected={ratingFilter} onChange={handleMulti(setRatingFilter)} renderLabel={(opt) => (
+                  <span className="filter-rating-label">
+                    <span className="filter-rating-number">{opt.label}</span>
+                    {Array.from({ length: Number(opt.value) }, (_, i) => (
+                      <Star key={i} size={14} className="filter-star-icon" />
+                    ))}
+                  </span>
+                )} />
                 <FilterSection title="Type" options={[...TOUR_TYPE_OPTIONS]} selected={tourTypes} onChange={handleMulti(setTourTypes)} />
                 <FilterSection title="Duration" options={durationBuckets.map(b => ({ value: b.value, label: b.label }))} selected={durationFilter} onChange={handleMulti(setDurationFilter)} />
                 <FilterSection title="Price" options={priceRanges.map(r => ({ value: r.value, label: r.label }))} selected={priceFilter} onChange={handleMulti(setPriceFilter)} />
                 <FilterSection title="Destination" options={filterOptions.destinations} selected={destinations} onChange={handleMulti(setDestinations)} />
                 <FilterSection title="Category" options={filterOptions.categories} selected={categories} onChange={handleMulti(setCategories)} />
                 <FilterSection title="Language" options={filterOptions.languages} selected={languageFilter} onChange={handleMulti(setLanguageFilter)} />
-                <FilterSection title="Rating" options={[...RATING_OPTIONS]} selected={ratingFilter} onChange={handleMulti(setRatingFilter)} />
                 <FilterSection title="Sort" options={[...SORT_OPTIONS]} selected={sortBy} onChange={handleSingle(setSortBy)} single />
               </div>
             </motion.div>
@@ -373,12 +475,14 @@ function FilterSection({
   selected,
   onChange,
   single,
+  renderLabel,
 }: {
   title: string
   options: { value: string; label: string }[]
   selected: string[]
   onChange: (value: string) => void
   single?: boolean
+  renderLabel?: (opt: { value: string; label: string }) => ReactNode
 }) {
   return (
     <div className="filter-drawer-section">
@@ -396,7 +500,7 @@ function FilterSection({
               <span className={`filter-drawer-check ${isActive ? 'checked' : ''}`}>
                 {isActive && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>}
               </span>
-              <span>{opt.label}</span>
+              <span>{renderLabel ? renderLabel(opt) : opt.label}</span>
               {single && isActive && <span className="filter-drawer-single-indicator">•</span>}
             </button>
           )

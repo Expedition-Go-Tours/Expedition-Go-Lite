@@ -44,7 +44,7 @@ export default function RecommendSection() {
         <div className="carousel-viewport">
           <SectionHeading
             title="Recommended for you"
-            viewAllLink="/tours"
+            viewAllLink="/tours?section=Recommended"
             onScrollLeft={() => scroll('left')}
             onScrollRight={() => scroll('right')}
             disableLeft={!canScrollLeft}

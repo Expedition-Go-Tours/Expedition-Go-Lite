@@ -211,8 +211,8 @@ export default function TourDetailPage({ onOpenAuth, onOpenDashboard, onOpenWish
         price: tour.price,
         duration: tour.duration,
         imageUrl: mergedImages[0] || '',
-        rating: selectedTourRating,
-        reviewCount: selectedTourReviews,
+        rating: Number(selectedTourRating) || 0,
+        reviewCount: Number(selectedTourReviews) || 0,
         addedDate: new Date().toISOString(),
       })
       toast.success('Added to wishlist')

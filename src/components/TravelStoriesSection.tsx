@@ -75,7 +75,7 @@ export default function TravelStoriesSection() {
         <div className="stories-viewport">
           <SectionHeading
             title="Travel Stories & News"
-            viewAllLink="#"
+            viewAllLink="/stories"
             onScrollLeft={() => scroll('left')}
             onScrollRight={() => scroll('right')}
             disableLeft={!canScrollLeft}

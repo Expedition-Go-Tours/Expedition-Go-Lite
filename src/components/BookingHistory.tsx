@@ -1,9 +1,24 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { X, MapPin, Calendar, Users, Ticket, CreditCard, Mail, Phone, Info } from 'lucide-react'
 import { Button } from './ui/button'
 import './BookingHistory.css'
 
 type BookingStatus = 'All' | 'Pending' | 'Completed' | 'Incomplete' | 'Cancelled' | 'Cancelling'
+
+interface Customer {
+  firstName: string
+  lastName: string
+  email: string
+  phone: string
+  addressLine1: string
+  addressLine2?: string
+  city: string
+  region?: string
+  postalCode: string
+  country: string
+  specialRequirements?: string
+}
 
 interface Booking {
   id: string
@@ -15,6 +30,7 @@ interface Booking {
   location: string
   participants: number
   price: number
+  customer: Customer
 }
 
 const mockBookings: Booking[] = [
@@ -27,7 +43,17 @@ const mockBookings: Booking[] = [
     imageUrl: 'https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?w=400',
     location: 'Cape Coast, Ghana',
     participants: 2,
-    price: 240
+    price: 240,
+    customer: {
+      firstName: 'Richard',
+      lastName: 'Boachie',
+      email: 'qwabs94@gmail.com',
+      phone: '0596613749',
+      addressLine1: 'The Lords Temple Road, Roman Ridge',
+      city: 'Roman Ridge',
+      postalCode: '00233',
+      country: 'Ghana',
+    }
   },
   {
     id: '2',
@@ -38,7 +64,20 @@ const mockBookings: Booking[] = [
     imageUrl: 'https://images.unsplash.com/photo-1516426122078-c23e76319801?w=400',
     location: 'Mole, Ghana',
     participants: 4,
-    price: 1000
+    price: 1000,
+    customer: {
+      firstName: 'Ama',
+      lastName: 'Mensah',
+      email: 'ama.mensah@example.com',
+      phone: '0244123456',
+      addressLine1: '12 Independence Ave',
+      addressLine2: 'Apartment 4B',
+      city: 'Accra',
+      region: 'Greater Accra',
+      postalCode: 'GA-145',
+      country: 'Ghana',
+      specialRequirements: 'Vegetarian meals for 2 guests',
+    }
   },
   {
     id: '3',
@@ -49,14 +88,40 @@ const mockBookings: Booking[] = [
     imageUrl: 'https://images.unsplash.com/photo-1523805009345-7448845a9e53?w=400',
     location: 'Kumasi, Ghana',
     participants: 3,
-    price: 255
+    price: 255,
+    customer: {
+      firstName: 'Kwame',
+      lastName: 'Asante',
+      email: 'kwame.asante@example.com',
+      phone: '0201987654',
+      addressLine1: '5 Prempeh II Street',
+      city: 'Kumasi',
+      region: 'Ashanti',
+      postalCode: 'AK-039',
+      country: 'Ghana',
+    }
   }
 ]
 
 export default function BookingHistory() {
   const [activeTab, setActiveTab] = useState<BookingStatus>('All')
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
+  const [modalTab, setModalTab] = useState<'tour' | 'customer'>('tour')
+
+  const openBooking = (booking: Booking) => {
+    setModalTab('tour')
+    setSelectedBooking(booking)
+  }
 
   const tabs: BookingStatus[] = ['All', 'Pending', 'Completed', 'Incomplete', 'Cancelled', 'Cancelling']
+
+  // Lock background scroll while the details modal is open
+  useEffect(() => {
+    if (!selectedBooking) return
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = previousOverflow }
+  }, [selectedBooking])
 
   const getStatusColor = (status: BookingStatus): string => {
     switch (status) {
@@ -102,13 +167,13 @@ export default function BookingHistory() {
       </div>
 
       <div className="booking-content">
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="popLayout">
           <motion.div
             key={activeTab}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -12 }}
-            transition={{ duration: 0.35, ease: 'easeInOut' }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25, ease: 'easeInOut' }}
           >
         {filteredBookings.length === 0 ? (
           <div 
@@ -261,7 +326,7 @@ export default function BookingHistory() {
                   </div>
 
                   <div className="booking-item-footer">
-                    <Button size="sm" className="booking-view-btn">
+                    <Button size="sm" className="booking-view-btn" onClick={() => openBooking(booking)}>
                       View Details
                     </Button>
                   </div>
@@ -273,6 +338,198 @@ export default function BookingHistory() {
           </motion.div>
         </AnimatePresence>
       </div>
+
+      {/* Booking Details Modal */}
+      <AnimatePresence>
+        {selectedBooking && (
+          <motion.div
+            className="booking-modal-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2, ease: 'easeInOut' }}
+            onClick={() => setSelectedBooking(null)}
+          >
+            <motion.div
+              className="booking-modal"
+              initial={{ opacity: 0, y: 40, scale: 0.92 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 30, scale: 0.95 }}
+              transition={{
+                type: 'spring',
+                stiffness: 320,
+                damping: 30,
+                mass: 0.9,
+                opacity: { duration: 0.2, ease: 'easeOut' },
+                exit: { type: 'tween', duration: 0.22, ease: [0.4, 0, 1, 1] },
+              }}
+              onClick={(e) => e.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Booking details"
+            >
+              <button
+                className="booking-modal-close"
+                onClick={() => setSelectedBooking(null)}
+                aria-label="Close details"
+              >
+                <X size={18} />
+              </button>
+
+              {/* Hero image */}
+              <div className="booking-modal-hero">
+                <img src={selectedBooking.imageUrl} alt={selectedBooking.title} />
+                <div className="booking-modal-hero-overlay" />
+                <span className={`booking-status-badge booking-modal-status ${getStatusColor(selectedBooking.status)}`}>
+                  {selectedBooking.status}
+                </span>
+                <div className="booking-modal-hero-text">
+                  <h3 className="booking-modal-title">{selectedBooking.title}</h3>
+                  <div className="booking-modal-location">
+                    <MapPin size={15} />
+                    <span>{selectedBooking.location}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Tabs */}
+              <div className="booking-modal-tabs">
+                <button
+                  className={`booking-modal-tab ${modalTab === 'tour' ? 'active' : ''}`}
+                  onClick={() => setModalTab('tour')}
+                >
+                  Tour Details
+                  {modalTab === 'tour' && (
+                    <motion.span layoutId="booking-modal-tab-indicator" className="booking-modal-tab-indicator" />
+                  )}
+                </button>
+                <button
+                  className={`booking-modal-tab ${modalTab === 'customer' ? 'active' : ''}`}
+                  onClick={() => setModalTab('customer')}
+                >
+                  Customer Details
+                  {modalTab === 'customer' && (
+                    <motion.span layoutId="booking-modal-tab-indicator" className="booking-modal-tab-indicator" />
+                  )}
+                </button>
+              </div>
+
+              {/* Tab panels */}
+              <div className="booking-modal-body">
+                <AnimatePresence mode="wait">
+                  {modalTab === 'tour' ? (
+                    <motion.div
+                      key="tour"
+                      initial={{ opacity: 0, x: 16 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -16 }}
+                      transition={{ duration: 0.22, ease: 'easeInOut' }}
+                      className="booking-modal-grid"
+                    >
+                      <div className="booking-modal-detail">
+                        <div className="booking-modal-detail-icon"><Ticket size={16} /></div>
+                        <div>
+                          <span className="booking-modal-detail-label">Confirmation</span>
+                          <span className="booking-modal-detail-value">{selectedBooking.confirmationCode}</span>
+                        </div>
+                      </div>
+                      <div className="booking-modal-detail">
+                        <div className="booking-modal-detail-icon"><Calendar size={16} /></div>
+                        <div>
+                          <span className="booking-modal-detail-label">Date</span>
+                          <span className="booking-modal-detail-value">
+                            {new Date(selectedBooking.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="booking-modal-detail">
+                        <div className="booking-modal-detail-icon"><MapPin size={16} /></div>
+                        <div>
+                          <span className="booking-modal-detail-label">Location</span>
+                          <span className="booking-modal-detail-value">{selectedBooking.location}</span>
+                        </div>
+                      </div>
+                      <div className="booking-modal-detail">
+                        <div className="booking-modal-detail-icon"><Users size={16} /></div>
+                        <div>
+                          <span className="booking-modal-detail-label">Participants</span>
+                          <span className="booking-modal-detail-value">
+                            {selectedBooking.participants} {selectedBooking.participants === 1 ? 'Person' : 'People'}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="booking-modal-detail">
+                        <div className="booking-modal-detail-icon"><CreditCard size={16} /></div>
+                        <div>
+                          <span className="booking-modal-detail-label">Total Paid</span>
+                          <span className="booking-modal-detail-value booking-modal-price">${selectedBooking.price}</span>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="customer"
+                      initial={{ opacity: 0, x: 16 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -16 }}
+                      transition={{ duration: 0.22, ease: 'easeInOut' }}
+                      className="booking-modal-customer"
+                    >
+                      <div className="booking-modal-customer-head">
+                        <div className="booking-modal-avatar">
+                          {selectedBooking.customer.firstName.charAt(0)}{selectedBooking.customer.lastName.charAt(0)}
+                        </div>
+                        <div>
+                          <span className="booking-modal-customer-name">
+                            {selectedBooking.customer.firstName} {selectedBooking.customer.lastName}
+                          </span>
+                          <span className="booking-modal-customer-sub">Lead traveler</span>
+                        </div>
+                      </div>
+
+                      <div className="booking-modal-customer-list">
+                        <div className="booking-modal-customer-row">
+                          <Mail size={15} />
+                          <span>{selectedBooking.customer.email}</span>
+                        </div>
+                        <div className="booking-modal-customer-row">
+                          <Phone size={15} />
+                          <span>{selectedBooking.customer.phone}</span>
+                        </div>
+                        <div className="booking-modal-customer-row">
+                          <MapPin size={15} />
+                          <span>
+                            {[
+                              selectedBooking.customer.addressLine1,
+                              selectedBooking.customer.addressLine2,
+                              selectedBooking.customer.city,
+                              selectedBooking.customer.region,
+                              selectedBooking.customer.postalCode,
+                              selectedBooking.customer.country,
+                            ].filter(Boolean).join(', ')}
+                          </span>
+                        </div>
+                        {selectedBooking.customer.specialRequirements && (
+                          <div className="booking-modal-customer-row">
+                            <Info size={15} />
+                            <span>{selectedBooking.customer.specialRequirements}</span>
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              <div className="booking-modal-footer">
+                <Button className="booking-modal-close-btn" onClick={() => setSelectedBooking(null)}>
+                  Close
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

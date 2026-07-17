@@ -21,6 +21,8 @@ export default function ReviewTourCard({
   duration,
 }: ReviewTourCardProps) {
   const displayImage = images[0] || ''
+  const numericRating = Number(rating)
+  const ratingLabel = Number.isFinite(numericRating) ? numericRating.toFixed(1) : '—'
 
   return (
     <div className="review-tour-card">
@@ -30,26 +32,30 @@ export default function ReviewTourCard({
       <div className="review-tour-card-body">
         <h3 className="review-tour-card-title">{title}</h3>
         <div className="review-tour-card-supplier-row">
+          <div className="review-tour-card-rating">
+            <Star className="review-tour-card-star" size={16} fill="currentColor" />
+            <span>{ratingLabel}</span>
+          </div>
           <div className="review-tour-card-supplier">
             {supplierLogo && (
               <img src={supplierLogo} alt="" className="review-tour-card-supplier-logo" />
             )}
             <span>{supplierName}</span>
           </div>
-          <div className="review-tour-card-rating">
-            <Star className="review-tour-card-star" size={16} fill="currentColor" />
-            <span>{Number(rating).toFixed(1)}</span>
-          </div>
         </div>
         <div className="review-tour-card-meta">
-          <span className="review-tour-card-meta-item">
-            <MapPin size={16} />
-            {location}
-          </span>
-          <span className="review-tour-card-meta-item">
-            <Clock size={16} />
-            {duration}
-          </span>
+          {location && (
+            <span className="review-tour-card-meta-item">
+              <MapPin size={16} />
+              {location}
+            </span>
+          )}
+          {duration && (
+            <span className="review-tour-card-meta-item">
+              <Clock size={16} />
+              {duration}
+            </span>
+          )}
         </div>
       </div>
     </div>

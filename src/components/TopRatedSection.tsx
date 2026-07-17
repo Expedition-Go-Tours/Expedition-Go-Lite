@@ -44,7 +44,7 @@ export default function TopRatedSection() {
         <div className="toprated-viewport">
           <SectionHeading
             title="Top Rated by Travellers"
-            viewAllLink="/tours"
+            viewAllLink="/tours?section=Top Rated"
             onScrollLeft={() => scroll('left')}
             onScrollRight={() => scroll('right')}
             disableLeft={!canScrollLeft}

@@ -44,7 +44,7 @@ export default function MultiDayToursSection() {
         <div className="multiday-viewport">
           <SectionHeading
             title="Multi-Day Tours"
-            viewAllLink="/tours"
+            viewAllLink="/tours?section=Multi-Day Tours"
             onScrollLeft={() => scroll('left')}
             onScrollRight={() => scroll('right')}
             disableLeft={!canScrollLeft}

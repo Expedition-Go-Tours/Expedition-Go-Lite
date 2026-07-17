@@ -44,7 +44,7 @@ export default function DayToursSection() {
         <div className="daytours-viewport">
           <SectionHeading
             title="Day Tours"
-            viewAllLink="/tours"
+            viewAllLink="/tours?section=Day Tours"
             onScrollLeft={() => scroll('left')}
             onScrollRight={() => scroll('right')}
             disableLeft={!canScrollLeft}
