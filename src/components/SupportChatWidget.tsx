@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -127,11 +127,7 @@ export default function SupportChatWidget() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{
-              duration: 0.25,
-              ease: "easeInOut",
-              exit: { duration: 0.4, ease: [0.4, 0, 0.2, 1] },
-            }}
+            transition={{ duration: 0.2 }}
             onClick={closeWidget}
           >
             <motion.div
@@ -139,14 +135,9 @@ export default function SupportChatWidget() {
               initial={isMobile ? { y: "100%" } : { opacity: 0, y: 16, scale: 0.96 }}
               animate={isMobile ? { y: 0 } : { opacity: 1, y: 0, scale: 1 }}
               exit={isMobile ? { y: "100%" } : { opacity: 0, y: 24, scale: 0.94 }}
-              transition={
-                isMobile
-                  ? { type: "tween", duration: 0.34, ease: [0.4, 0, 0.2, 1] }
-                  : {
-                      duration: 0.28,
-                      ease: [0.16, 1, 0.3, 1],
-                      exit: { duration: 0.4, ease: [0.4, 0, 0.2, 1] },
-                    }
+              transition={isMobile
+                ? { type: "tween", duration: 0.34, ease: [0.4, 0, 0.2, 1] }
+                : { duration: 0.28, ease: [0.16, 1, 0.3, 1] }
               }
               onClick={(e) => e.stopPropagation()}
             >

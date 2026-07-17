@@ -361,7 +361,6 @@ export default function BookingHistory() {
                 damping: 30,
                 mass: 0.9,
                 opacity: { duration: 0.2, ease: 'easeOut' },
-                exit: { type: 'tween', duration: 0.22, ease: [0.4, 0, 1, 1] },
               }}
               onClick={(e) => e.stopPropagation()}
               role="dialog"

@@ -8,7 +8,6 @@ import {
 import { toast } from "sonner";
 import { useSidebarStore } from "@/stores/sidebarStore";
 import { getStoredAuthUser, signOutUser } from "@/lib/auth";
-import userSrc from "@/assets/icons/User Circle.png";
 import BookingHistory from "@/components/BookingHistory";
 import Wishlist from "@/components/Wishlist";
 import SettingsPage from "./SettingsPage";

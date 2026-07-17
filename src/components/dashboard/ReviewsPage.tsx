@@ -13,10 +13,6 @@ function getDraftKey(tourTitle: string) {
   return `${REVIEW_DRAFT_PREFIX}${encodeURIComponent(tourTitle || "unknown-tour")}`;
 }
 
-function toSlug(title: string) {
-  return title.toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-}
-
 function getTimeLeft(submittedAt: string): string | null {
   const elapsed = Date.now() - new Date(submittedAt).getTime();
   const remaining = EDIT_WINDOW_MS - elapsed;
@@ -83,11 +79,10 @@ export default function ReviewsPage() {
   const navigate = useNavigate();
   const [reviews, setReviews] = useState<Review[]>(mockReviews);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [now, setNow] = useState(Date.now());
+  const [, forceUpdate] = useState(0);
 
   useEffect(() => {
-    setNow(Date.now());
-    const timer = setInterval(() => setNow(Date.now()), 1000);
+    const timer = setInterval(() => forceUpdate((c) => c + 1), 1000);
     return () => clearInterval(timer);
   }, []);
 

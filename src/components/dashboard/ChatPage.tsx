@@ -74,8 +74,8 @@ export default function ChatPage() {
   const [mobileView, setMobileView] = useState<"list" | "chat">("list");
   const [search, setSearch] = useState("");
   const [typingChatId, setTypingChatId] = useState<string | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const mobileMessagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null!);
+  const mobileMessagesEndRef = useRef<HTMLDivElement>(null!);
   const replyTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   const activeConversation = conversations.find((c) => c.id === activeChat);
