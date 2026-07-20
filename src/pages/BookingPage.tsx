@@ -3,8 +3,8 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import {
-  Check, ChevronRight, ArrowLeft, MapPin, CalendarDays, Users,
-  Phone, MessageSquare, ShieldCheck, CreditCard, Star, Clock, Globe, HelpCircle,
+  Check, ArrowLeft, MapPin, CalendarDays, Users,
+  Phone, MessageSquare, ShieldCheck, Star, Clock, Globe,
 } from 'lucide-react'
 import logoSrc from '../assets/expo_trans.png'
 import Footer from '../components/Footer'

@@ -48,6 +48,7 @@ export function FieldLabel({ children, required, tooltip }: { children: React.Re
 interface TextInputProps {
   value: string
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+  onBlur?: () => void
   placeholder?: string
   type?: string
   valid?: boolean
@@ -56,13 +57,14 @@ interface TextInputProps {
   error?: string
 }
 
-export function TextInput({ value, onChange, placeholder, type = 'text', valid, disabled, maxLength, error }: TextInputProps) {
+export function TextInput({ value, onChange, onBlur, placeholder, type = 'text', valid, disabled, maxLength, error }: TextInputProps) {
   return (
     <div className="relative">
       <input
         type={type}
         value={value}
         onChange={onChange}
+        onBlur={onBlur}
         disabled={disabled}
         placeholder={placeholder}
         maxLength={maxLength}

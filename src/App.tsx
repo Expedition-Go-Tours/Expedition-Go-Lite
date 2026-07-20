@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Toaster } from 'sonner'
 import Navbar from './components/Navbar'
