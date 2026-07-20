@@ -196,7 +196,7 @@ function Sidebar() {
         </div>
 
         {/* Collapse button */}
-        <div className={`shrink-0 ${isCollapsed ? "px-2 pt-4 pb-4" : "px-4 pt-3 pb-4"}`}>
+        <div className={`shrink-0 hidden lg:block ${isCollapsed ? "px-2 pt-4 pb-4" : "px-4 pt-3 pb-4"}`}>
           <button
             onClick={toggle}
             className={`flex items-center w-full rounded-lg text-sm font-medium transition-all duration-200 text-white/40 hover:text-white hover:bg-white/10
@@ -217,7 +217,7 @@ function Sidebar() {
       <AnimatePresence>
         {isMobileOpen && (
           <motion.div
-            className="fixed inset-0 bg-black/30 z-45 lg:hidden"
+            className="fixed inset-0 bg-black/30 z-[45] lg:hidden"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

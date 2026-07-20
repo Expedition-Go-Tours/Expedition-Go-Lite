@@ -188,6 +188,15 @@ export default function TourDetailPage({ onOpenAuth, onOpenDashboard, onOpenWish
   const [supplierInfoOpen, setSupplierInfoOpen] = useState(false)
   const [hasMoreReviews, setHasMoreReviews] = useState(false)
   const [loadingMoreReviews, setLoadingMoreReviews] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 768px)')
+    setIsMobile(mq.matches)
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
 
   useEffect(() => {
     setActiveTab('overview')
@@ -202,7 +211,7 @@ export default function TourDetailPage({ onOpenAuth, onOpenDashboard, onOpenWish
   const handleWishlistToggle = () => {
     if (isFavorited) {
       removeFromWishlist(selectedTourTitle)
-      toast.success('Removed from wishlist')
+      if (!isMobile) toast.success('Removed from wishlist')
     } else {
       addToWishlist({
         id: selectedTourTitle,

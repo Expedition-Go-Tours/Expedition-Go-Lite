@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   MessageCircle, X, Send, ChevronLeft, ChevronRight,
-  Phone, Mail, Clock, Headphones,
+  Phone, Mail, Clock, Headphones, CheckCheck,
 } from "lucide-react";
 import "./SupportChatWidget.css";
 
@@ -40,8 +40,34 @@ export default function SupportChatWidget() {
   const [input, setInput] = useState("");
   const [unread] = useState(2);
   const [isMobile, setIsMobile] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const replyTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  const autoReplies = [
+    "Thanks for reaching out! Let me look into that for you.",
+    "Got it — one moment while I check.",
+    "Happy to help! Could you share a bit more detail?",
+    "Sure thing! I'll sort this out for you right away.",
+    "Great question! Here's what I can tell you...",
+    "Noted! Is there anything else I can help with?",
+  ];
+
+  const followUpReplies = [
+    "Is there anything else I can help you with?",
+    "Let me know if that works for you!",
+    "Feel free to ask if you have more questions.",
+    "I'm here if you need anything else. 😊",
+    "Hope that helps!",
+  ];
+
+  // Clean up pending reply timers on unmount
+  useEffect(() => {
+    return () => {
+      replyTimers.current.forEach(clearTimeout);
+    };
+  }, []);
 
   // Track the mobile breakpoint (matches the full-screen popup CSS at 480px)
   useEffect(() => {
@@ -85,6 +111,50 @@ export default function SupportChatWidget() {
 
     setMessages((prev) => [...prev, newMessage]);
     setInput("");
+
+    // Pick the reply up front so the typing time can scale with its length
+    const reply = autoReplies[Math.floor(Math.random() * autoReplies.length)];
+    const readDelay = 400 + Math.random() * 500; // 0.4s - 0.9s before "typing"
+    const typingDuration = Math.min(
+      4200,
+      Math.max(900, reply.length * 45 + Math.random() * 400)
+    );
+
+    const pushOtherMessage = (text: string) => {
+      const replyMessage: Message = {
+        id: `m-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        text,
+        sender: "other",
+        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      };
+      setMessages((prev) => [...prev, replyMessage]);
+    };
+
+    const typingTimer = setTimeout(() => setIsTyping(true), readDelay);
+    const replyTimer = setTimeout(() => {
+      setIsTyping(false);
+      pushOtherMessage(reply);
+
+      // ~40% of the time, send a short follow-up second message
+      if (Math.random() < 0.4) {
+        const followUp = followUpReplies[Math.floor(Math.random() * followUpReplies.length)];
+        const followUpTypingDelay = 500 + Math.random() * 400;
+        const followUpTypingDuration = Math.min(
+          3000,
+          Math.max(800, followUp.length * 45 + Math.random() * 300)
+        );
+
+        const followUpTypingTimer = setTimeout(() => setIsTyping(true), followUpTypingDelay);
+        const followUpReplyTimer = setTimeout(() => {
+          setIsTyping(false);
+          pushOtherMessage(followUp);
+        }, followUpTypingDelay + followUpTypingDuration);
+
+        replyTimers.current.push(followUpTypingTimer, followUpReplyTimer);
+      }
+    }, readDelay + typingDuration);
+
+    replyTimers.current.push(typingTimer, replyTimer);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -98,7 +168,7 @@ export default function SupportChatWidget() {
     if (view === "chat") {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
-  }, [messages, view]);
+  }, [messages, view, isTyping]);
 
   if (!isPublicPage) return null;
 
@@ -110,13 +180,15 @@ export default function SupportChatWidget() {
         className={`support-chat-btn ${isOpen ? "hidden" : ""}`}
         aria-label="Open chat"
       >
-        <span className="support-chat-btn-inner">
-          <MessageCircle className="support-chat-btn-icon" />
-          {unread > 0 && (
-            <span className="support-chat-badge">{unread > 99 ? "99+" : unread}</span>
-          )}
+        <span className="support-chat-btn-content">
+          <span className="support-chat-btn-inner">
+            <MessageCircle className="support-chat-btn-icon" />
+          </span>
+          <span className="support-chat-btn-text">Need help?</span>
         </span>
-        <span className="support-chat-btn-text">Need help?</span>
+        {unread > 0 && (
+          <span className="support-chat-badge">{unread > 99 ? "99+" : unread}</span>
+        )}
       </button>
 
       {/* Popup */}
@@ -320,12 +392,44 @@ export default function SupportChatWidget() {
                               {isLastInGroup && (
                                 <p className={`support-chat-msg-time ${msg.sender === "user" ? "own" : "other"}`}>
                                   {msg.time}
+                                  {msg.sender === "user" && (
+                                    <CheckCheck size={14} className="support-chat-msg-tick" />
+                                  )}
                                 </p>
                               )}
                             </div>
                           </div>
                         );
                       })}
+
+                      <AnimatePresence>
+                        {isTyping && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 8, scale: 0.98 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 4, scale: 0.98 }}
+                            transition={{ duration: 0.18, ease: "easeOut" }}
+                            className="support-chat-msg other mt-2"
+                          >
+                            <div className="support-chat-bubble other rounded-lg rounded-bl-sm support-chat-typing">
+                              {[0, 1, 2].map((i) => (
+                                <motion.span
+                                  key={i}
+                                  className="support-chat-typing-dot"
+                                  animate={{ y: [0, -4, 0], opacity: [0.4, 1, 0.4] }}
+                                  transition={{
+                                    duration: 0.9,
+                                    repeat: Infinity,
+                                    ease: "easeInOut",
+                                    delay: i * 0.15,
+                                  }}
+                                />
+                              ))}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+
                       <div ref={messagesEndRef} />
                     </div>
 

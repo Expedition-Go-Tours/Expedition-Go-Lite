@@ -2,10 +2,12 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { toast } from 'sonner'
+import { Clock, X } from 'lucide-react'
 import logoSrc from '../assets/expo_trans.png'
 import userSrc from '../assets/icons/User Circle.png'
 import { subscribeToAuthState, signOutUser, getStoredAuthUser, type AuthUser } from '../lib/auth'
 import { useSearchAutocomplete, type SearchSuggestion } from '../hooks/useSearchAutocomplete'
+import { useRecentSearches } from '../hooks/useRecentSearches'
 import './Navbar.css'
 
 interface NavbarProps {
@@ -26,9 +28,11 @@ export default function Navbar({ onOpenAuth, onOpenDashboard, onOpenWishlist, on
   const [navSearchValue, setNavSearchValue] = useState('')
   const [showNavDropdown, setShowNavDropdown] = useState(false)
   const [navHighlightedIndex, setNavHighlightedIndex] = useState(-1)
+  const [navIsFocused, setNavIsFocused] = useState(false)
   const navSearchRef = useRef<HTMLDivElement>(null)
   const navInputRef = useRef<HTMLInputElement>(null)
   const navSuggestions = useSearchAutocomplete(navSearchValue)
+  const { recentSearches, addSearch, removeSearch, clearAll } = useRecentSearches()
 
   useEffect(() => {
     const unsub = subscribeToAuthState((u) => setUser(u))
@@ -82,11 +86,25 @@ export default function Navbar({ onOpenAuth, onOpenDashboard, onOpenWishlist, on
   }, [])
 
   const navigateToSuggestion = useCallback((suggestion: SearchSuggestion) => {
+    if (suggestion.type === 'tour' && suggestion.slug) {
+      addSearch({ slug: suggestion.slug, title: suggestion.title, type: 'tour' })
+    }
     setShowNavDropdown(false)
     setNavSearchValue('')
     setNavHighlightedIndex(-1)
     if (suggestion.type === 'tour' && suggestion.slug) {
       navigate(`/tour/${suggestion.slug}`)
+    }
+  }, [navigate, addSearch])
+
+  const navigateToRecent = useCallback((item: { slug: string; title: string; type: 'destination' | 'tour' }) => {
+    setShowNavDropdown(false)
+    setNavSearchValue('')
+    setNavHighlightedIndex(-1)
+    setNavIsFocused(false)
+    navInputRef.current?.blur()
+    if (item.type === 'tour' && item.slug) {
+      navigate(`/tour/${item.slug}`)
     }
   }, [navigate])
 
@@ -98,11 +116,12 @@ export default function Navbar({ onOpenAuth, onOpenDashboard, onOpenWishlist, on
     if (!q) return
     for (const s of navSuggestions) {
       if (s.type === 'tour' && s.slug) {
+        addSearch({ slug: s.slug, title: s.title, type: 'tour' })
         navigate(`/tour/${s.slug}`)
         return
       }
     }
-  }, [navSearchValue, navSuggestions, navigate])
+  }, [navSearchValue, navSuggestions, navigate, addSearch])
 
   const handleNavKeyDown = (e: React.KeyboardEvent) => {
     if (!showNavDropdown) {
@@ -217,9 +236,13 @@ export default function Navbar({ onOpenAuth, onOpenDashboard, onOpenWishlist, on
                   onChange={(e) => setNavSearchValue(e.target.value)}
                   onKeyDown={handleNavKeyDown}
                   onFocus={() => {
+                    setNavIsFocused(true)
                     if (navSuggestions.length > 0 && navSearchValue.trim().length >= 2) {
                       setShowNavDropdown(true)
                     }
+                  }}
+                  onBlur={() => {
+                    setTimeout(() => setNavIsFocused(false), 200)
                   }}
                 />
               </div>
@@ -229,60 +252,103 @@ export default function Navbar({ onOpenAuth, onOpenDashboard, onOpenWishlist, on
             </div>
           </form>
 
-          {showNavDropdown && navSuggestions.length > 0 && (
+          {(navIsFocused && recentSearches.length > 0) || (showNavDropdown && navSuggestions.length > 0) ? (
             <div className="navbar-search-dropdown">
-              {navSuggestions.map((suggestion, idx) => {
-                const isHighlighted = idx === navHighlightedIndex
-                const showDestHeader = suggestion.type === 'destination' && (idx === 0 || navSuggestions[idx - 1]?.type !== 'destination')
-                const showTourHeader = suggestion.type === 'tour' && (idx === 0 || navSuggestions[idx - 1]?.type !== 'tour')
-
-                return (
-                  <div key={suggestion.id}>
-                    {showDestHeader && (
-                      <div className="search-dropdown-section">Destinations</div>
-                    )}
-                    {showTourHeader && (
-                      <div className="search-dropdown-section">Tours &amp; Experiences</div>
-                    )}
+              {navIsFocused && recentSearches.length > 0 && (
+                <>
+                  <div className="search-dropdown-section">Recent Searches</div>
+                  {recentSearches.map((item) => (
                     <div
-                      className={`search-suggestion${isHighlighted ? ' highlighted' : ''}`}
+                      key={item.slug}
+                      className="search-recent-item"
                       onMouseDown={(e) => {
                         e.preventDefault()
-                        navigateToSuggestion(suggestion)
+                        navigateToRecent(item)
                       }}
-                      onMouseEnter={() => setNavHighlightedIndex(idx)}
                     >
-                      {suggestion.type === 'destination' ? (
-                        <>
-                          <div className="search-suggestion-icon">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                              <circle cx="12" cy="10" r="3" />
-                            </svg>
-                          </div>
-                          <div className="search-suggestion-text">
-                            <span className="search-suggestion-title">{suggestion.title}</span>
-                            <span className="search-suggestion-sub">{suggestion.subtitle}</span>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <div className="search-suggestion-img">
-                            <img src={suggestion.image} alt="" loading="lazy" />
-                          </div>
-                          <div className="search-suggestion-text">
-                            <span className="search-suggestion-title">{suggestion.title}</span>
-                            <span className="search-suggestion-sub">{suggestion.subtitle}</span>
-                          </div>
-                          <span className="search-suggestion-price">{suggestion.price}</span>
-                        </>
-                      )}
+                      <div className="search-suggestion-icon">
+                        <Clock size={16} />
+                      </div>
+                      <div className="search-suggestion-text">
+                        <span className="search-suggestion-title">{item.title}</span>
+                        <span className="search-suggestion-sub">{item.type === 'destination' ? 'Destination' : 'Tour'}</span>
+                      </div>
+                      <button
+                        type="button"
+                        className="search-recent-remove"
+                        onMouseDown={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          removeSearch(item.slug)
+                        }}
+                        aria-label="Remove from recent searches"
+                      >
+                        <X size={14} />
+                      </button>
                     </div>
+                  ))}
+                  <div className="search-recent-clear" onMouseDown={(e) => { e.preventDefault(); clearAll() }}>
+                    Clear recent searches
                   </div>
-                )
-              })}
+                  {showNavDropdown && navSuggestions.length > 0 && <div className="search-recent-divider" />}
+                </>
+              )}
+              {showNavDropdown && navSuggestions.length > 0 && (
+                <>
+                  {navSuggestions.map((suggestion, idx) => {
+                    const isHighlighted = idx === navHighlightedIndex
+                    const showDestHeader = suggestion.type === 'destination' && (idx === 0 || navSuggestions[idx - 1]?.type !== 'destination')
+                    const showTourHeader = suggestion.type === 'tour' && (idx === 0 || navSuggestions[idx - 1]?.type !== 'tour')
+
+                    return (
+                      <div key={suggestion.id}>
+                        {showDestHeader && (
+                          <div className="search-dropdown-section">Destinations</div>
+                        )}
+                        {showTourHeader && (
+                          <div className="search-dropdown-section">Tours &amp; Experiences</div>
+                        )}
+                        <div
+                          className={`search-suggestion${isHighlighted ? ' highlighted' : ''}`}
+                          onMouseDown={(e) => {
+                            e.preventDefault()
+                            navigateToSuggestion(suggestion)
+                          }}
+                          onMouseEnter={() => setNavHighlightedIndex(idx)}
+                        >
+                          {suggestion.type === 'destination' ? (
+                            <>
+                              <div className="search-suggestion-icon">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                                  <circle cx="12" cy="10" r="3" />
+                                </svg>
+                              </div>
+                              <div className="search-suggestion-text">
+                                <span className="search-suggestion-title">{suggestion.title}</span>
+                                <span className="search-suggestion-sub">{suggestion.subtitle}</span>
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <div className="search-suggestion-img">
+                                <img src={suggestion.image} alt="" loading="lazy" />
+                              </div>
+                              <div className="search-suggestion-text">
+                                <span className="search-suggestion-title">{suggestion.title}</span>
+                                <span className="search-suggestion-sub">{suggestion.subtitle}</span>
+                              </div>
+                              <span className="search-suggestion-price">{suggestion.price}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </>
+              )}
             </div>
-          )}
+          ) : null}
         </div>
       </div>
 
@@ -295,7 +361,7 @@ export default function Navbar({ onOpenAuth, onOpenDashboard, onOpenWishlist, on
             </svg>
             <span className="nav-icon-label">Tours</span>
           </a>
-          <a href="#" className="nav-icon-item" onClick={(e) => { e.preventDefault(); onOpenWishlist?.() }}>
+          <a href="#" className="nav-icon-item" onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate('/dashboard/wishlist') }}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
             </svg>
@@ -335,13 +401,13 @@ export default function Navbar({ onOpenAuth, onOpenDashboard, onOpenWishlist, on
                       className="nav-dropdown-item"
                       onClick={(e) => {
                         e.preventDefault()
+                        e.stopPropagation()
+                        setDropdownOpen(false)
                         if (link.label === 'Dashboard') {
-                          setDropdownOpen(false)
-                          onOpenDashboard?.()
+                          navigate('/dashboard')
                         }
                         if (link.label === 'Bookings') {
-                          setDropdownOpen(false)
-                          onOpenBookings?.()
+                          navigate('/dashboard/bookings')
                         }
                       }}
                     >
@@ -473,7 +539,7 @@ export default function Navbar({ onOpenAuth, onOpenDashboard, onOpenWishlist, on
               </svg>
               Tours
             </a>
-            <a href="#" className="nav-mobile-link" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); onOpenWishlist?.() }}>
+            <a href="#" className="nav-mobile-link" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMobileMenuOpen(false); navigate('/dashboard/wishlist') }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
               </svg>
@@ -481,7 +547,7 @@ export default function Navbar({ onOpenAuth, onOpenDashboard, onOpenWishlist, on
             </a>
             <div className="nav-mobile-divider" />
             {user && (
-              <a href="#" className="nav-mobile-link" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); onOpenBookings?.() }}>
+              <a href="#" className="nav-mobile-link" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMobileMenuOpen(false); navigate('/dashboard/bookings') }}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
                   <line x1="3" y1="6" x2="21" y2="6" />
@@ -491,7 +557,7 @@ export default function Navbar({ onOpenAuth, onOpenDashboard, onOpenWishlist, on
               </a>
             )}
             {user && (
-              <a href="#" className="nav-mobile-link" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); onOpenDashboard?.() }}>
+              <a href="#" className="nav-mobile-link" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMobileMenuOpen(false); navigate('/dashboard') }}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="3" y="3" width="7" height="7" />
                   <rect x="14" y="3" width="7" height="7" />
@@ -502,7 +568,7 @@ export default function Navbar({ onOpenAuth, onOpenDashboard, onOpenWishlist, on
               </a>
             )}
 
-            <a href="#" className="nav-mobile-link">
+            <a href="#" className="nav-mobile-link" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMobileMenuOpen(false); }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10" />
                 <line x1="12" y1="16" x2="12" y2="12" />
@@ -510,7 +576,7 @@ export default function Navbar({ onOpenAuth, onOpenDashboard, onOpenWishlist, on
               </svg>
               About
             </a>
-            <a href="#" className="nav-mobile-link">
+            <a href="#" className="nav-mobile-link" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMobileMenuOpen(false); }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
                 <polyline points="22,6 12,13 2,6" />

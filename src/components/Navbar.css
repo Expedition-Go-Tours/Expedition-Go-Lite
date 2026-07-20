@@ -178,6 +178,66 @@ body:has(.review-page) .navbar-compact-search {
   padding: 6px 0;
 }
 
+/* Recent Searches in Navbar */
+.navbar-search-dropdown .search-recent-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: background 0.15s;
+  min-height: 48px;
+}
+
+.navbar-search-dropdown .search-recent-item:hover {
+  background: #f8fafc;
+}
+
+.navbar-search-dropdown .search-recent-remove {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  color: #9ca3af;
+  transition: background 0.15s, color 0.15s;
+  opacity: 0;
+}
+
+.navbar-search-dropdown .search-recent-item:hover .search-recent-remove {
+  opacity: 1;
+}
+
+.navbar-search-dropdown .search-recent-remove:hover {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.navbar-search-dropdown .search-recent-clear {
+  padding: 8px 16px 10px;
+  font-family: 'Raleway', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: #166534;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.navbar-search-dropdown .search-recent-clear:hover {
+  color: #14532d;
+  text-decoration: underline;
+}
+
+.navbar-search-dropdown .search-recent-divider {
+  height: 1px;
+  background: #e2e8f0;
+  margin: 2px 0;
+}
+
 /* Right - icons */
 .nav-right {
   display: flex;

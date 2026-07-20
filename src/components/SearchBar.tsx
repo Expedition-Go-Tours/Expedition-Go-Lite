@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Clock, X } from 'lucide-react'
 import { useSearchAutocomplete, type SearchSuggestion } from '../hooks/useSearchAutocomplete'
+import { useRecentSearches } from '../hooks/useRecentSearches'
 import './SearchBar.css'
 
 export default function SearchBar() {
@@ -8,16 +10,32 @@ export default function SearchBar() {
   const [inputValue, setInputValue] = useState('')
   const [showDropdown, setShowDropdown] = useState(false)
   const [highlightedIndex, setHighlightedIndex] = useState(-1)
+  const [isFocused, setIsFocused] = useState(false)
   const suggestions = useSearchAutocomplete(inputValue)
+  const { recentSearches, addSearch, removeSearch, clearAll } = useRecentSearches()
   const containerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
   const navigateToSuggestion = useCallback((suggestion: SearchSuggestion) => {
+    if (suggestion.type === 'tour' && suggestion.slug) {
+      addSearch({ slug: suggestion.slug, title: suggestion.title, type: 'tour' })
+    }
     setShowDropdown(false)
     setInputValue('')
     setHighlightedIndex(-1)
     if (suggestion.type === 'tour' && suggestion.slug) {
       navigate(`/tour/${suggestion.slug}`)
+    }
+  }, [navigate, addSearch])
+
+  const navigateToRecent = useCallback((item: { slug: string; title: string; type: 'destination' | 'tour' }) => {
+    setShowDropdown(false)
+    setInputValue('')
+    setHighlightedIndex(-1)
+    setIsFocused(false)
+    inputRef.current?.blur()
+    if (item.type === 'tour' && item.slug) {
+      navigate(`/tour/${item.slug}`)
     }
   }, [navigate])
 
@@ -31,11 +49,12 @@ export default function SearchBar() {
 
     for (const s of suggestions) {
       if (s.type === 'tour' && s.slug) {
+        addSearch({ slug: s.slug, title: s.title, type: 'tour' })
         navigate(`/tour/${s.slug}`)
         return
       }
     }
-  }, [inputValue, suggestions, navigate])
+  }, [inputValue, suggestions, navigate, addSearch])
 
   useEffect(() => {
     if (suggestions.length > 0 && inputValue.trim().length >= 2) {
@@ -138,9 +157,13 @@ export default function SearchBar() {
                 onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
                 onFocus={() => {
+                  setIsFocused(true)
                   if (suggestions.length > 0 && inputValue.trim().length >= 2) {
                     setShowDropdown(true)
                   }
+                }}
+                onBlur={() => {
+                  setTimeout(() => setIsFocused(false), 200)
                 }}
               />
             </div>
@@ -150,60 +173,103 @@ export default function SearchBar() {
           </div>
         </div>
 
-        {showDropdown && suggestions.length > 0 && (
+        {(isFocused && recentSearches.length > 0) || (showDropdown && suggestions.length > 0) ? (
           <div className="search-dropdown">
-            {suggestions.map((suggestion, idx) => {
-              const isHighlighted = idx === highlightedIndex
-              const showDestHeader = suggestion.type === 'destination' && (idx === 0 || suggestions[idx - 1]?.type !== 'destination')
-              const showTourHeader = suggestion.type === 'tour' && (idx === 0 || suggestions[idx - 1]?.type !== 'tour')
-
-              return (
-                <div key={suggestion.id}>
-                  {showDestHeader && (
-                    <div className="search-dropdown-section">Destinations</div>
-                  )}
-                  {showTourHeader && (
-                    <div className="search-dropdown-section">Tours &amp; Experiences</div>
-                  )}
+            {isFocused && recentSearches.length > 0 && (
+              <>
+                <div className="search-dropdown-section">Recent Searches</div>
+                {recentSearches.map((item) => (
                   <div
-                    className={`search-suggestion${isHighlighted ? ' highlighted' : ''}`}
+                    key={item.slug}
+                    className="search-recent-item"
                     onMouseDown={(e) => {
                       e.preventDefault()
-                      navigateToSuggestion(suggestion)
+                      navigateToRecent(item)
                     }}
-                    onMouseEnter={() => setHighlightedIndex(idx)}
                   >
-                    {suggestion.type === 'destination' ? (
-                      <>
-                        <div className="search-suggestion-icon">
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                            <circle cx="12" cy="10" r="3" />
-                          </svg>
-                        </div>
-                        <div className="search-suggestion-text">
-                          <span className="search-suggestion-title">{suggestion.title}</span>
-                          <span className="search-suggestion-sub">{suggestion.subtitle}</span>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="search-suggestion-img">
-                          <img src={suggestion.image} alt="" loading="lazy" />
-                        </div>
-                        <div className="search-suggestion-text">
-                          <span className="search-suggestion-title">{suggestion.title}</span>
-                          <span className="search-suggestion-sub">{suggestion.subtitle}</span>
-                        </div>
-                        <span className="search-suggestion-price">{suggestion.price}</span>
-                      </>
-                    )}
+                    <div className="search-suggestion-icon">
+                      <Clock size={16} />
+                    </div>
+                    <div className="search-suggestion-text">
+                      <span className="search-suggestion-title">{item.title}</span>
+                      <span className="search-suggestion-sub">{item.type === 'destination' ? 'Destination' : 'Tour'}</span>
+                    </div>
+                    <button
+                      type="button"
+                      className="search-recent-remove"
+                      onMouseDown={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        removeSearch(item.slug)
+                      }}
+                      aria-label="Remove from recent searches"
+                    >
+                      <X size={14} />
+                    </button>
                   </div>
+                ))}
+                <div className="search-recent-clear" onMouseDown={(e) => { e.preventDefault(); clearAll() }}>
+                  Clear recent searches
                 </div>
-              )
-            })}
+                {showDropdown && suggestions.length > 0 && <div className="search-recent-divider" />}
+              </>
+            )}
+            {showDropdown && suggestions.length > 0 && (
+              <>
+                {suggestions.map((suggestion, idx) => {
+                  const isHighlighted = idx === highlightedIndex
+                  const showDestHeader = suggestion.type === 'destination' && (idx === 0 || suggestions[idx - 1]?.type !== 'destination')
+                  const showTourHeader = suggestion.type === 'tour' && (idx === 0 || suggestions[idx - 1]?.type !== 'tour')
+
+                  return (
+                    <div key={suggestion.id}>
+                      {showDestHeader && (
+                        <div className="search-dropdown-section">Destinations</div>
+                      )}
+                      {showTourHeader && (
+                        <div className="search-dropdown-section">Tours &amp; Experiences</div>
+                      )}
+                      <div
+                        className={`search-suggestion${isHighlighted ? ' highlighted' : ''}`}
+                        onMouseDown={(e) => {
+                          e.preventDefault()
+                          navigateToSuggestion(suggestion)
+                        }}
+                        onMouseEnter={() => setHighlightedIndex(idx)}
+                      >
+                        {suggestion.type === 'destination' ? (
+                          <>
+                            <div className="search-suggestion-icon">
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                                <circle cx="12" cy="10" r="3" />
+                              </svg>
+                            </div>
+                            <div className="search-suggestion-text">
+                              <span className="search-suggestion-title">{suggestion.title}</span>
+                              <span className="search-suggestion-sub">{suggestion.subtitle}</span>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="search-suggestion-img">
+                              <img src={suggestion.image} alt="" loading="lazy" />
+                            </div>
+                            <div className="search-suggestion-text">
+                              <span className="search-suggestion-title">{suggestion.title}</span>
+                              <span className="search-suggestion-sub">{suggestion.subtitle}</span>
+                            </div>
+                            <span className="search-suggestion-price">{suggestion.price}</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </>
+            )}
           </div>
-        )}
+        ) : null}
       </form>
     </div>
   )

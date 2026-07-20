@@ -85,7 +85,7 @@ export function useSearchAutocomplete(inputValue: string) {
       return a.title.length - b.title.length
     })
 
-    return results.slice(0, 8)
+    return results.slice(0, 5)
   }, [debounced])
 
   return suggestions

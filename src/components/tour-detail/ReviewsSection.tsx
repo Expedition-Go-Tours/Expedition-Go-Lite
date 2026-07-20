@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Star } from 'lucide-react'
 import './ReviewsSection.css'
@@ -55,6 +56,15 @@ export default function ReviewsSection({
   onSearchQueryChange,
 }: ReviewsSectionProps) {
   const ratingDots = Array.from({ length: 5 })
+  const [expandedReviews, setExpandedReviews] = useState<Set<string>>(new Set())
+  const toggleExpand = (id: string) => {
+    setExpandedReviews((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
 
   return (
     <motion.div
@@ -154,7 +164,20 @@ export default function ReviewsSection({
                       ))}
                     </div>
                     {review.title && <p className="review-card-title">{review.title}</p>}
-                    <p className="review-card-text">{review.text}</p>
+                    <div className={`review-card-text-wrap${!expandedReviews.has(review.id) ? ' collapsed' : ' expanded'}`}>
+                      <p className={`review-card-text${!expandedReviews.has(review.id) ? ' truncated' : ''}`}>
+                        {review.text}
+                      </p>
+                    </div>
+                    {review.text.length > 150 && (
+                      <button
+                        type="button"
+                        onClick={() => toggleExpand(review.id)}
+                        className="review-card-toggle"
+                      >
+                        {expandedReviews.has(review.id) ? 'See less' : 'See more'}
+                      </button>
+                    )}
                     {(review.valueForMoneyRating || review.guideRating || review.meetingRating) && (
                       <div className="review-card-subratings">
                         {review.valueForMoneyRating && <span>Value: {review.valueForMoneyRating}/5</span>}

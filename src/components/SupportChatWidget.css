@@ -17,8 +17,18 @@
   box-shadow: 0 4px 16px rgba(23, 146, 55, 0.3);
   transition: width 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
   width: 56px;
-  overflow: hidden;
+  overflow: visible;
   padding: 0;
+}
+
+/* Clips only the expanding text/icon, leaving the badge free to sit on the rim */
+.support-chat-btn-content {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 999px;
 }
 
 .support-chat-btn:hover {
@@ -52,8 +62,8 @@
 
 .support-chat-badge {
   position: absolute;
-  top: 6px;
-  right: 6px;
+  top: 0;
+  left: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -509,8 +519,10 @@
 .support-chat-messages {
   flex: 1;
   overflow-y: auto;
-  padding: 12px 14px;
-  background: #f9fafb;
+  padding: 14px 14px;
+  background-color: #efeae2;
+  background-image: radial-gradient(rgba(0, 0, 0, 0.035) 1px, transparent 1px);
+  background-size: 22px 22px;
 }
 
 .support-chat-messages::-webkit-scrollbar {
@@ -536,33 +548,39 @@
 
 .support-chat-bubble {
   max-width: 80%;
-  padding: 8px 13px;
-  font-size: 13px;
-  line-height: 1.45;
+  padding: 6px 9px;
+  font-size: 14px;
+  line-height: 19px;
+  box-shadow: 0 1px 0.5px rgba(0, 0, 0, 0.13);
 }
 
 .support-chat-bubble.own {
-  background: #179237;
-  color: #fff;
+  background: #d9fdd3;
+  color: #111b21;
 }
 
 .support-chat-bubble.other {
   background: #fff;
-  color: #111827;
-  border: 1px solid #e5e7eb;
+  color: #111b21;
 }
 
 .support-chat-msg-time {
-  font-size: 9px;
-  margin-top: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 3px;
+  font-size: 11px;
+  margin-top: 2px;
 }
 
-.support-chat-msg-time.own {
-  color: rgba(255, 255, 255, 0.65);
-}
-
+.support-chat-msg-time.own,
 .support-chat-msg-time.other {
-  color: #9ca3af;
+  color: #667781;
+}
+
+.support-chat-msg-tick {
+  color: #53bdeb;
+  flex-shrink: 0;
 }
 
 /* Input */
@@ -651,4 +669,19 @@
   .support-chat-header {
     border-radius: 0;
   }
+}
+
+/* Typing indicator */
+.support-chat-typing {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 12px;
+}
+
+.support-chat-typing-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #9ca3af;
 }
