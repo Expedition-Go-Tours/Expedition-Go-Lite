@@ -37,9 +37,6 @@ import './TourDetailPage.css'
 
 interface TourDetailPageProps {
   onOpenAuth?: (mode: 'signin' | 'signup') => void
-  onOpenDashboard?: () => void
-  onOpenWishlist?: () => void
-  onOpenBookings?: () => void
 }
 
 const TOUR_DETAIL_TABS = [
@@ -107,7 +104,7 @@ function toSlug(title: string): string {
   return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 }
 
-export default function TourDetailPage({ onOpenAuth, onOpenDashboard, onOpenWishlist, onOpenBookings }: TourDetailPageProps) {
+export default function TourDetailPage({ onOpenAuth }: TourDetailPageProps) {
   const { tourId } = useParams<{ tourId: string }>()
   const navigate = useNavigate()
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist()
@@ -385,12 +382,7 @@ export default function TourDetailPage({ onOpenAuth, onOpenDashboard, onOpenWish
 
   return (
     <>
-      <Navbar
-        onOpenAuth={onOpenAuth}
-        onOpenDashboard={onOpenDashboard}
-        onOpenWishlist={onOpenWishlist}
-        onOpenBookings={onOpenBookings}
-      />
+      <Navbar onOpenAuth={onOpenAuth} />
 
       <div className="tour-detail-page">
         <div className="tour-detail-container">

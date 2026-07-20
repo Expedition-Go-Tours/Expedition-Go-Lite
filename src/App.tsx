@@ -33,10 +33,10 @@ import { subscribeToAuthState, handleGoogleCallback } from './lib/auth'
 
 type PageView = 'home' | 'signin' | 'signup'
 
-function HomePage({ onOpenAuth, onOpenDashboard, onOpenWishlist, onOpenBookings }: any) {
+function HomePage({ onOpenAuth }: any) {
   return (
     <>
-      <Navbar onOpenAuth={onOpenAuth} onOpenDashboard={onOpenDashboard} onOpenWishlist={onOpenWishlist} onOpenBookings={onOpenBookings} />
+      <Navbar onOpenAuth={onOpenAuth} />
       <Hero />
       <ContinuePlanningSection />
       <MoodSection />
@@ -74,15 +74,6 @@ function AppContent() {
     navigate('/')
     setCurrentPage(mode)
   }
-  const handleOpenDashboard = () => {
-    navigate('/dashboard')
-  }
-  const handleOpenWishlist = () => {
-    navigate('/dashboard/wishlist')
-  }
-  const handleOpenBookings = () => {
-    navigate('/dashboard/bookings')
-  }
   const handleGoHome = () => setCurrentPage('home')
 
   return (
@@ -92,20 +83,10 @@ function AppContent() {
       <Routes>
         <Route path="/dashboard/*" element={<DashboardLayout />} />
         <Route path="/tour/:tourId" element={
-          <TourDetailPage
-            onOpenAuth={handleOpenAuth}
-            onOpenDashboard={handleOpenDashboard}
-            onOpenWishlist={handleOpenWishlist}
-            onOpenBookings={handleOpenBookings}
-          />
+          <TourDetailPage onOpenAuth={handleOpenAuth} />
         } />
         <Route path="/tours" element={
-          <AllToursPage
-            onOpenAuth={handleOpenAuth}
-            onOpenDashboard={handleOpenDashboard}
-            onOpenWishlist={handleOpenWishlist}
-            onOpenBookings={handleOpenBookings}
-          />
+          <AllToursPage onOpenAuth={handleOpenAuth} />
         } />
         <Route path="/review/:tourTitle" element={
           <ReviewExperiencePage />
@@ -137,12 +118,7 @@ function AppContent() {
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.25, ease: 'easeInOut' }}
               >
-                <HomePage 
-                  onOpenAuth={handleOpenAuth}
-                  onOpenDashboard={handleOpenDashboard}
-                  onOpenWishlist={handleOpenWishlist}
-                  onOpenBookings={handleOpenBookings}
-                />
+                <HomePage onOpenAuth={handleOpenAuth} />
               </motion.div>
             )}
           </AnimatePresence>

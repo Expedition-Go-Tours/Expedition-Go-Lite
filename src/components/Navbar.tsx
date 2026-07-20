@@ -12,12 +12,9 @@ import './Navbar.css'
 
 interface NavbarProps {
   onOpenAuth?: (mode: 'signin' | 'signup') => void
-  onOpenDashboard?: () => void
-  onOpenWishlist?: () => void
-  onOpenBookings?: () => void
 }
 
-export default function Navbar({ onOpenAuth, onOpenDashboard, onOpenWishlist, onOpenBookings }: NavbarProps) {
+export default function Navbar({ onOpenAuth }: NavbarProps) {
   const navigate = useNavigate()
   const [user, setUser] = useState<AuthUser | null>(getStoredAuthUser)
   const [searchBarSticky, setSearchBarSticky] = useState(false)

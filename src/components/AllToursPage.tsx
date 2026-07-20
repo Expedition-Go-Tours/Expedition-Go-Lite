@@ -51,12 +51,9 @@ const SECTION_TITLES: Record<string, string> = {
 
 interface AllToursPageProps {
   onOpenAuth?: (mode: 'signin' | 'signup') => void
-  onOpenDashboard?: () => void
-  onOpenWishlist?: () => void
-  onOpenBookings?: () => void
 }
 
-export default function AllToursPage({ onOpenAuth, onOpenDashboard, onOpenWishlist, onOpenBookings }: AllToursPageProps) {
+export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const sectionParam = searchParams.get('section') || '';
@@ -225,12 +222,7 @@ export default function AllToursPage({ onOpenAuth, onOpenDashboard, onOpenWishli
 
   return (
     <div className="all-tours-page">
-      <Navbar
-        onOpenAuth={onOpenAuth}
-        onOpenDashboard={onOpenDashboard}
-        onOpenWishlist={onOpenWishlist}
-        onOpenBookings={onOpenBookings}
-      />
+      <Navbar onOpenAuth={onOpenAuth} />
       <div className="all-tours-container">
         <div className="all-tours-header">
           <div className="all-tours-header-left">
