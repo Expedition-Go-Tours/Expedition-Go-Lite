@@ -1,4 +1,5 @@
 ﻿import { useState, useRef, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import type { TourDetail } from '../../lib/tourTypes'
 import { Button } from '../ui/button'
 import { CalendarPicker } from '../ui/apple-calendar-picker'
@@ -18,6 +19,7 @@ const dropdownVariants = {
 }
 
 export default function BookingWidget({ tour }: BookingWidgetProps) {
+  const navigate = useNavigate()
   const [adults, setAdults] = useState(2)
   const [seniors, setSeniors] = useState(0)
   const [youths, setYouths] = useState(0)
@@ -92,6 +94,40 @@ export default function BookingWidget({ tour }: BookingWidgetProps) {
   }, [selectedDate])
 
   const handleCheckAvailability = useCallback(() => {
+    if (isAvailable) {
+      const travelersLabel = [
+        adults > 0 && `${adults} ${adults === 1 ? 'adult' : 'adults'}`,
+        seniors > 0 && `${seniors} ${seniors === 1 ? 'senior' : 'seniors'}`,
+        youths > 0 && `${youths} ${youths === 1 ? 'youth' : 'youths'}`,
+        children > 0 && `${children} ${children === 1 ? 'child' : 'children'}`,
+        infants > 0 && `${infants} ${infants === 1 ? 'infant' : 'infants'}`,
+      ].filter(Boolean).join(', ')
+
+      const dateLabel = selectedDate
+        ? selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+        : ''
+
+      navigate('/booking', {
+        state: {
+          tour: {
+            title: tour.title,
+            image: tour.images?.[0] || '',
+            provider: 'Expedition GO Tours',
+            rating: tour.rating,
+            reviews: tour.reviewCount,
+            date: dateLabel,
+            time: '9:00 AM',
+            duration: tour.duration,
+            travelers: travelersLabel,
+            price: totalPrice,
+            cancellation: tour.cancellationPolicy || 'Free cancellation up to 24 hours before',
+            language: tour.languages?.[0] || 'English',
+          },
+        },
+      })
+      return
+    }
+
     if (!selectedDate) {
       toast.error('Please select a date first')
       return
@@ -102,7 +138,7 @@ export default function BookingWidget({ tour }: BookingWidgetProps) {
       setIsAvailable(true)
       toast.success('Date is available!')
     }, 1500)
-  }, [selectedDate])
+  }, [selectedDate, isAvailable, tour, adults, seniors, youths, children, infants, totalPrice, navigate])
 
   const handleApplyPromo = () => {
     const code = promoCode.trim()

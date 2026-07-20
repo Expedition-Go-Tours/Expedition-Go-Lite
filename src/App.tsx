@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Toaster } from 'sonner'
 import Navbar from './components/Navbar'
@@ -25,6 +25,7 @@ import AllToursPage from './components/AllToursPage'
 import AllStoriesPage from './components/AllStoriesPage'
 import ReviewExperiencePage from './pages/ReviewExperiencePage'
 import SupplierPage from './pages/SupplierPage'
+import BookingPage from './pages/BookingPage'
 import { WishlistProvider } from './context/WishlistContext'
 import { ContinuePlanningProvider } from './context/ContinuePlanningContext'
 import ContinuePlanningSection from './components/ContinuePlanningSection'
@@ -93,6 +94,15 @@ function AppContent() {
         } />
         <Route path="/supplier/:supplierName" element={
           <SupplierPage />
+        } />
+        <Route path="/booking" element={
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25, ease: 'easeOut' }}
+          >
+            <BookingPage />
+          </motion.div>
         } />
         <Route path="/stories" element={<AllStoriesPage />} />
         <Route path="/*" element={
