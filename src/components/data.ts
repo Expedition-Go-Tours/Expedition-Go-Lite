@@ -952,6 +952,15 @@ const travelStories: TravelStory[] = [
   },
 ]
 
+export function storySlug(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/['’]/g, '')
+    .replace(/&/g, 'and')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+}
+
 export interface TourWithMeta extends Tour {
   section: string
   tourType: 'day' | 'multi-day'

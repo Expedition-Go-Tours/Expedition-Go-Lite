@@ -1,6 +1,7 @@
-import { useNavigate } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
-import { travelStories } from './data'
+import { useState, useMemo } from 'react'
+import { useNavigate, Link } from 'react-router-dom'
+import { ArrowLeft, Search } from 'lucide-react'
+import { travelStories, storySlug } from './data'
 import type { TravelStory } from './data'
 import Navbar from './Navbar'
 import Footer from './Footer'
@@ -9,7 +10,7 @@ import './AllStoriesPage.css'
 function StoryCard({ story }: { story: TravelStory }) {
   return (
     <div className="story-card-wrap">
-      <a href={story.link} className="story-card" target="_blank" rel="noopener noreferrer">
+      <Link to={`/stories/${storySlug(story.title)}`} className="story-card">
         <div className="story-card-image">
           <img src={story.image} alt={story.title} loading="lazy" />
         </div>
@@ -22,13 +23,25 @@ function StoryCard({ story }: { story: TravelStory }) {
           <p className="story-card-excerpt">{story.excerpt}</p>
           <span className="story-card-link">Read more</span>
         </div>
-      </a>
+      </Link>
     </div>
   )
 }
 
 export default function AllStoriesPage() {
   const navigate = useNavigate()
+  const [searchQuery, setSearchQuery] = useState('')
+
+  const filteredStories = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase()
+    if (!q) return travelStories
+    return travelStories.filter(
+      (s) =>
+        s.title.toLowerCase().includes(q) ||
+        s.excerpt.toLowerCase().includes(q) ||
+        s.author.toLowerCase().includes(q)
+    )
+  }, [searchQuery])
 
   return (
     <div className="all-stories-page">
@@ -42,17 +55,27 @@ export default function AllStoriesPage() {
           <p className="all-stories-subtitle">
             Discover inspiring stories, travel tips, and updates from Expedition-Go
           </p>
+          <div className="all-stories-search">
+            <Search size={18} className="all-stories-search-icon" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search stories..."
+              className="all-stories-search-input"
+            />
+          </div>
         </div>
       </div>
       <div className="all-stories-container">
         <div className="all-stories-grid">
-          {travelStories.map((story, i) => (
+          {filteredStories.map((story, i) => (
             <StoryCard key={`${story.title}-${i}`} story={story} />
           ))}
         </div>
-        {travelStories.length === 0 && (
+        {filteredStories.length === 0 && (
           <div className="all-stories-empty">
-            <p>No stories yet. Check back soon!</p>
+            <p>No stories match your search. Try a different keyword.</p>
           </div>
         )}
       </div>

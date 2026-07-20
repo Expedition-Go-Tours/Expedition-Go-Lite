@@ -14,12 +14,14 @@
   transition: background 0.3s, color 0.3s, box-shadow 0.3s;
 }
 
-/* Tour detail, all tours, supplier, and review pages: always show white background and dark text */
+/* Tour detail, all tours, supplier, review, stories, and story-detail pages: always show white background and dark text */
 .tour-detail-page ~ .navbar,
 body:has(.tour-detail-page) .navbar,
 body:has(.all-tours-page) .navbar,
 body:has(.supplier-page) .navbar,
-body:has(.review-page) .navbar {
+body:has(.review-page) .navbar,
+body:has(.all-stories-page) .navbar,
+body:has(.story-detail) .navbar {
   background: #fff;
   color: #333;
   box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
@@ -84,11 +86,13 @@ body.hero--search-sticky .navbar-compact-search {
   pointer-events: auto;
 }
 
-/* Always show search bar on tour detail, all tours, supplier, and review pages */
+/* Always show search bar on tour detail, all tours, supplier, review, stories, and story-detail pages */
 body:has(.tour-detail-page) .navbar-compact-search,
 body:has(.all-tours-page) .navbar-compact-search,
 body:has(.supplier-page) .navbar-compact-search,
-body:has(.review-page) .navbar-compact-search {
+body:has(.review-page) .navbar-compact-search,
+body:has(.all-stories-page) .navbar-compact-search,
+body:has(.story-detail) .navbar-compact-search {
   opacity: 1;
   transform: translateY(0) scale(1);
   pointer-events: auto;

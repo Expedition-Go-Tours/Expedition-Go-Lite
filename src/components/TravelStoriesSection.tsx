@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
+import { Link } from 'react-router-dom'
 import SectionHeading from './SectionHeading'
-import { travelStories } from './data'
+import { travelStories, storySlug } from './data'
 import type { TravelStory } from './data'
 import './TravelStoriesSection.css'
 
@@ -10,7 +11,7 @@ const GAP = 16
 function StoryCard({ story }: { story: TravelStory }) {
   return (
     <div className="story-card-wrap">
-      <a href={story.link} className="story-card" target="_blank" rel="noopener noreferrer">
+      <Link to={`/stories/${storySlug(story.title)}`} className="story-card">
         <div className="story-card-image">
           <img src={story.image} alt={story.title} loading="lazy" />
         </div>
@@ -23,7 +24,7 @@ function StoryCard({ story }: { story: TravelStory }) {
           <p className="story-card-excerpt">{story.excerpt}</p>
           <span className="story-card-link">Read more</span>
         </div>
-      </a>
+      </Link>
     </div>
   )
 }

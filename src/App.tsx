@@ -23,6 +23,7 @@ import DashboardLayout from './components/dashboard/DashboardLayout'
 import TourDetailPage from './components/tour-detail/TourDetailPage'
 import AllToursPage from './components/AllToursPage'
 import AllStoriesPage from './components/AllStoriesPage'
+import StoryDetailPage from './components/StoryDetailPage'
 import ReviewExperiencePage from './pages/ReviewExperiencePage'
 import SupplierPage from './pages/SupplierPage'
 import BookingPage from './pages/BookingPage'
@@ -105,6 +106,7 @@ function AppContent() {
           </motion.div>
         } />
         <Route path="/stories" element={<AllStoriesPage />} />
+        <Route path="/stories/:slug" element={<StoryDetailPage />} />
         <Route path="/*" element={
           <AnimatePresence mode="wait">
             {currentPage === 'signin' || currentPage === 'signup' ? (

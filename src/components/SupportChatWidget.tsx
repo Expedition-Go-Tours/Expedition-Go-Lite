@@ -81,13 +81,13 @@ export default function SupportChatWidget() {
   // Lock background scroll while the chat is open so the page behind the
   // full-screen overlay doesn't scroll.
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || !isMobile) return;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = previousOverflow;
     };
-  }, [isOpen]);
+  }, [isOpen, isMobile]);
 
   const openWidget = () => {
     setIsOpen(true);
