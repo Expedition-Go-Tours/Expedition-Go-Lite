@@ -13,7 +13,7 @@ export default function RelatedTours({ tours }: RelatedToursProps) {
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollContainerRef.current) {
-      const scrollAmount = 350 // Approximate card width + gap
+      const scrollAmount = 350
       const newScrollLeft =
         scrollContainerRef.current.scrollLeft +
         (direction === 'left' ? -scrollAmount : scrollAmount)

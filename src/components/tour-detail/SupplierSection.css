@@ -208,36 +208,6 @@
   margin: 0;
 }
 
-.supplier-tours-arrows {
-  display: none;
-  gap: 8px;
-}
-
-@media (min-width: 1024px) {
-  .supplier-tours-arrows {
-    display: flex;
-  }
-}
-
-.supplier-tours-arrow {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: 1px solid #e2e8f0;
-  background: #fff;
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-  color: #64748b;
-  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
-  transition: border-color 0.15s, color 0.15s, opacity 0.2s;
-}
-
-.supplier-tours-arrow:hover {
-  border-color: #166534;
-  color: #166534;
-}
-
 .supplier-tours-scroll-wrapper {
   position: relative;
 }

@@ -205,26 +205,6 @@ export default function SupplierSection({
           <div className="supplier-tours">
             <div className="supplier-tours-header">
               <h3 className="supplier-tours-title">Tours by this supplier</h3>
-              <div className="supplier-tours-arrows">
-                <button
-                  type="button"
-                  onClick={() => scrollBy(-1)}
-                  className="supplier-tours-arrow"
-                  style={{ opacity: showLeftArrow ? 1 : 0, pointerEvents: showLeftArrow ? 'auto' : 'none' }}
-                  aria-label="Scroll left"
-                >
-                  <ChevronLeft size={18} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => scrollBy(1)}
-                  className="supplier-tours-arrow"
-                  style={{ opacity: showRightArrow ? 1 : 0, pointerEvents: showRightArrow ? 'auto' : 'none' }}
-                  aria-label="Scroll right"
-                >
-                  <ChevronRight size={18} />
-                </button>
-              </div>
             </div>
             <div className="supplier-tours-scroll-wrapper">
               <button
