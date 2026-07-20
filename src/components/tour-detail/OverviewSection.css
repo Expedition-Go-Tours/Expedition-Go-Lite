@@ -210,8 +210,6 @@
   padding-bottom: 8px;
   scrollbar-width: none;
   -ms-overflow-style: none;
-  -webkit-overflow-scrolling: touch;
-  touch-action: pan-x;
 }
 
 .overview-travellers-scroll::-webkit-scrollbar {
