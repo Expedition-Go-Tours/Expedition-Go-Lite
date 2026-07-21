@@ -4,34 +4,21 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Toaster } from 'sonner'
 import Navbar from './components/Navbar'
 import Hero from './components/Hero'
-import MoodSection from './components/MoodSection'
-import RecommendSection from './components/RecommendSection'
-import PopularLocations from './components/PopularLocations'
-import DayToursSection from './components/DayToursSection'
-import MultiDayToursSection from './components/MultiDayToursSection'
-import TopRatedSection from './components/TopRatedSection'
-import SellOutSection from './components/SellOutSection'
-import LastMinuteDealsSection from './components/LastMinuteDealsSection'
-import CustomReviewsSection from './components/CustomReviewsSection'
-import PartnersSection from './components/PartnersSection'
-import WhyBookSection from './components/WhyBookSection'
-import NewsletterSection from './components/NewsletterSection'
-import TravelStoriesSection from './components/TravelStoriesSection'
-import Footer from './components/Footer'
 import AuthForm from './components/AuthForm'
 import DashboardLayout from './components/dashboard/DashboardLayout'
 import TourDetailPage from './components/tour-detail/TourDetailPage'
 import AllToursPage from './components/AllToursPage'
 import AllStoriesPage from './components/AllStoriesPage'
 import StoryDetailPage from './components/StoryDetailPage'
+import SplashScreen from './components/SplashScreen'
 import ReviewExperiencePage from './pages/ReviewExperiencePage'
 import SupplierPage from './pages/SupplierPage'
 import BookingPage from './pages/BookingPage'
 import { WishlistProvider } from './context/WishlistContext'
 import { ContinuePlanningProvider } from './context/ContinuePlanningContext'
-import ContinuePlanningSection from './components/ContinuePlanningSection'
 import SupportChatWidget from './components/SupportChatWidget'
 import { subscribeToAuthState, handleGoogleCallback } from './lib/auth'
+import LazySection from './components/LazySection'
 
 type PageView = 'home' | 'signin' | 'signup'
 
@@ -40,27 +27,46 @@ function HomePage({ onOpenAuth }: any) {
     <>
       <Navbar onOpenAuth={onOpenAuth} />
       <Hero />
-      <ContinuePlanningSection />
-      <MoodSection />
-      <RecommendSection />
-      <PopularLocations />
-      <DayToursSection />
-      <MultiDayToursSection />
-      <TopRatedSection />
-      <SellOutSection />
-      <LastMinuteDealsSection />
-      <CustomReviewsSection />
-      <PartnersSection />
-      <WhyBookSection />
-      <TravelStoriesSection />
-      <NewsletterSection />
-      <Footer />
+      <LazySection load={() => import('./components/ContinuePlanningSection')} />
+      <LazySection load={() => import('./components/MoodSection')} />
+      <LazySection load={() => import('./components/RecommendSection')} />
+      <LazySection load={() => import('./components/PopularLocations')} />
+      <LazySection load={() => import('./components/DayToursSection')} />
+      <LazySection load={() => import('./components/MultiDayToursSection')} />
+      <LazySection load={() => import('./components/TopRatedSection')} />
+      <LazySection load={() => import('./components/SellOutSection')} />
+      <LazySection load={() => import('./components/LastMinuteDealsSection')} />
+      <LazySection load={() => import('./components/CustomReviewsSection')} />
+      <LazySection load={() => import('./components/PartnersSection')} />
+      <LazySection load={() => import('./components/WhyBookSection')} />
+      <LazySection load={() => import('./components/TravelStoriesSection')} />
+      <LazySection load={() => import('./components/NewsletterSection')} />
+      <LazySection load={() => import('./components/Footer')} />
     </>
   )
 }
 
 function AppContent() {
   const [currentPage, setCurrentPage] = useState<PageView>('home')
+  const [showSplash, setShowSplash] = useState(() => {
+    // Show only on the first entrance of a browser session — not on later
+    // navigations/reloads (e.g. opening a tour card).
+    try {
+      return !sessionStorage.getItem('eg_splash_seen')
+    } catch {
+      return true
+    }
+  })
+
+  useEffect(() => {
+    if (showSplash) {
+      try {
+        sessionStorage.setItem('eg_splash_seen', '1')
+      } catch {
+        /* ignore */
+      }
+    }
+  }, [showSplash])
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -80,6 +86,19 @@ function AppContent() {
 
   return (
     <>
+      <AnimatePresence>
+        {showSplash && (
+          <motion.div
+            key="splash"
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4, ease: 'easeInOut' }}
+            style={{ position: 'fixed', inset: 0, zIndex: 9999 }}
+          >
+            <SplashScreen onFinish={() => setShowSplash(false)} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <Toaster position="top-center" duration={2500} closeButton />
       <SupportChatWidget />
       <Routes>
