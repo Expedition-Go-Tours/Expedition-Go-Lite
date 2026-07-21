@@ -1,0 +1,112 @@
+{
+  "auth": {
+    "alreadyHaveAccount": "Already have an account?",
+    "createAccount": "Create Account",
+    "emailAddress": "Email Address",
+    "fullName": "Full Name",
+    "google": "Continue with Google",
+    "needNewAccount": "Need a new account?",
+    "orContinueWith": "or continue with",
+    "password": "Password",
+    "register": "Register",
+    "registerDesc": "Create your account to start booking",
+    "signedOut": "Successfully signed out",
+    "signIn": "Sign In",
+    "signInDesc": "Welcome back! Sign in to continue",
+    "welcomeBack": "Welcome Back"
+  },
+  "booking": {
+    "promoCode": "Promo Code",
+    "travelers": "Travelers"
+  },
+  "common": {
+    "back": "Back",
+    "destinations": "Destinations",
+    "duration": "Duration",
+    "from": "From",
+    "rating": "Rating"
+  },
+  "features": {
+    "whyBookHeading": "Why Book With Us",
+    "whyBookPaymentsDesc": "Secure payments with multiple payment options",
+    "whyBookPaymentsTitle": "Secure Payments",
+    "whyBookReviewsDesc": "Real reviews from verified travelers",
+    "whyBookReviewsTitle": "Verified Reviews",
+    "whyBookSupportDesc": "24/7 customer support for all your needs",
+    "whyBookSupportTitle": "24/7 Support",
+    "whyBookVerifiedDesc": "All tours are carefully vetted for quality",
+    "whyBookVerifiedTitle": "Verified Tours"
+  },
+  "footer": {
+    "aboutUs": "About Us",
+    "cancellationHelp": "Cancellation Help",
+    "company": "Company",
+    "contact": "Contact",
+    "contactUs": "Contact Us",
+    "copyright": "© 2026 Expedition GO. All rights reserved.",
+    "faq": "FAQ",
+    "helpCentre": "Help Centre",
+    "home": "Home",
+    "privacyPolicy": "Privacy Policy",
+    "support": "Support",
+    "termsConditions": "Terms & Conditions"
+  },
+  "hero": {
+    "destination": "Destination",
+    "destinationPlaceholder": "Where are you going?",
+    "search": "Search",
+    "subtitle": "Discover extraordinary tours & experiences worldwide",
+    "title": "Explore the Extraordinary"
+  },
+  "nav": {
+    "bookings": "Bookings",
+    "currency": "Currency",
+    "language": "Language",
+    "profile": "Profile",
+    "signingOut": "Signing Out",
+    "signInSignUp": "Sign In / Sign Up",
+    "signOut": "Sign Out",
+    "wishlist": "Wishlist"
+  },
+  "newsletter": {
+    "description": "Subscribe to receive exclusive deals and travel inspiration",
+    "emailPlaceholder": "Enter your email",
+    "privacyLink": "We respect your privacy. Unsubscribe at any time.",
+    "signUp": "Sign Up",
+    "title": "Stay in the Know"
+  },
+  "sections": {
+    "allToursTitle": "Tours",
+    "destinations": "Destinations",
+    "lastMinuteDeals": "Last Minute Deals",
+    "likelyToSellOut": "Likely To Sell Out",
+    "pickupTitle": "Pickup Included",
+    "recommendedTitle": "Recommended For You",
+    "topRatedTitle": "Top Rated Tours",
+    "viewAll": "View All"
+  },
+  "tourDetail": {
+    "aboutTour": "About This Tour",
+    "bookNow": "Book Now",
+    "freeCancellation": "Free cancellation up to 24 hours before",
+    "highlights": "Highlights",
+    "itinerary": "Itinerary",
+    "liveGuide": "Live Guide",
+    "needFurtherAssistance": "Need further assistance?",
+    "perAdultShort": "per adult",
+    "pickupIncluded": "Pickup Included",
+    "reservePayLater": "Reserve now & pay later",
+    "seeLess": "See less",
+    "seeMore": "See more",
+    "selectDate": "Select a date",
+    "similarExperiences": "Similar Experiences",
+    "startChat": "Start a Chat"
+  },
+  "wishlist": {
+    "empty": "Your wishlist is empty",
+    "emptyDesc": "Start adding tours you love to your wishlist",
+    "exploreTours": "Explore Tours",
+    "tourSaved": "tour saved",
+    "toursSaved": "tours saved"
+  }
+}

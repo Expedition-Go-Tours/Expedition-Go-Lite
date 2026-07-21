@@ -1,0 +1,112 @@
+{
+  "auth": {
+    "alreadyHaveAccount": "Vous avez déjà un compte ?",
+    "createAccount": "Créer un Compte",
+    "emailAddress": "Adresse Email",
+    "fullName": "Nom Complet",
+    "google": "Continuer avec Google",
+    "needNewAccount": "Besoin d'un nouveau compte ?",
+    "orContinueWith": "ou continuer avec",
+    "password": "Mot de Passe",
+    "register": "S'inscrire",
+    "registerDesc": "Créez votre compte pour commencer à réserver",
+    "signedOut": "Déconnexion réussie",
+    "signIn": "Se Connecter",
+    "signInDesc": "Bon retour ! Connectez-vous pour continuer",
+    "welcomeBack": "Bon Retour"
+  },
+  "booking": {
+    "promoCode": "Code Promo",
+    "travelers": "Voyageurs"
+  },
+  "common": {
+    "back": "Retour",
+    "destinations": "Destinations",
+    "duration": "Durée",
+    "from": "À partir de",
+    "rating": "Évaluation"
+  },
+  "features": {
+    "whyBookHeading": "Pourquoi Réserver Avec Nous",
+    "whyBookPaymentsDesc": "Paiements sécurisés avec plusieurs options",
+    "whyBookPaymentsTitle": "Paiements Sécurisés",
+    "whyBookReviewsDesc": "Vrais avis de voyageurs vérifiés",
+    "whyBookReviewsTitle": "Avis Vérifiés",
+    "whyBookSupportDesc": "Support client 24h/24 pour tous vos besoins",
+    "whyBookSupportTitle": "Support 24h/24",
+    "whyBookVerifiedDesc": "Tous les circuits sont soigneusement sélectionnés",
+    "whyBookVerifiedTitle": "Circuits Vérifiés"
+  },
+  "footer": {
+    "aboutUs": "À Propos de Nous",
+    "cancellationHelp": "Aide Annulation",
+    "company": "Entreprise",
+    "contact": "Contact",
+    "contactUs": "Contactez-Nous",
+    "copyright": "© 2026 Expedition GO. Tous droits réservés.",
+    "faq": "FAQ",
+    "helpCentre": "Centre d'Aide",
+    "home": "Accueil",
+    "privacyPolicy": "Politique de Confidentialité",
+    "support": "Support",
+    "termsConditions": "Conditions Générales"
+  },
+  "hero": {
+    "destination": "Destination",
+    "destinationPlaceholder": "Où allez-vous ?",
+    "search": "Rechercher",
+    "subtitle": "Découvrez des circuits et expériences extraordinaires dans le monde entier",
+    "title": "Explorez l'Extraordinaire"
+  },
+  "nav": {
+    "bookings": "Réservations",
+    "currency": "Devise",
+    "language": "Langue",
+    "profile": "Profil",
+    "signingOut": "Déconnexion",
+    "signInSignUp": "Connexion / Inscription",
+    "signOut": "Déconnexion",
+    "wishlist": "Favoris"
+  },
+  "newsletter": {
+    "description": "Abonnez-vous pour recevoir des offres exclusives et de l'inspiration voyage",
+    "emailPlaceholder": "Entrez votre email",
+    "privacyLink": "Nous respectons votre vie privée. Désabonnez-vous à tout moment.",
+    "signUp": "S'abonner",
+    "title": "Restez Informé"
+  },
+  "sections": {
+    "allToursTitle": "Circuits",
+    "destinations": "Destinations",
+    "lastMinuteDeals": "Offres de Dernière Minute",
+    "likelyToSellOut": "Risque de Rupture",
+    "pickupTitle": "Prise en Charge Incluse",
+    "recommendedTitle": "Recommandé pour Vous",
+    "topRatedTitle": "Circuits les Mieux Notés",
+    "viewAll": "Voir Tout"
+  },
+  "tourDetail": {
+    "aboutTour": "À Propos de Ce Circuit",
+    "bookNow": "Réserver Maintenant",
+    "freeCancellation": "Annulation gratuite jusqu'à 24h avant",
+    "highlights": "Points Forts",
+    "itinerary": "Itinéraire",
+    "liveGuide": "Guide en Direct",
+    "needFurtherAssistance": "Besoin d'aide supplémentaire ?",
+    "perAdultShort": "par adulte",
+    "pickupIncluded": "Prise en Charge Incluse",
+    "reservePayLater": "Réservez maintenant et payez plus tard",
+    "seeLess": "Voir moins",
+    "seeMore": "Voir plus",
+    "selectDate": "Sélectionnez une date",
+    "similarExperiences": "Expériences Similaires",
+    "startChat": "Démarrer un Chat"
+  },
+  "wishlist": {
+    "empty": "Votre liste de favoris est vide",
+    "emptyDesc": "Commencez à ajouter des circuits que vous aimez à votre liste",
+    "exploreTours": "Explorer les Circuits",
+    "tourSaved": "circuit enregistré",
+    "toursSaved": "circuits enregistrés"
+  }
+}

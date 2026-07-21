@@ -1,0 +1,112 @@
+{
+  "auth": {
+    "alreadyHaveAccount": "Heb je al een account?",
+    "createAccount": "Account Aanmaken",
+    "emailAddress": "E-mailadres",
+    "fullName": "Volledige Naam",
+    "google": "Doorgaan met Google",
+    "needNewAccount": "Nieuw account nodig?",
+    "orContinueWith": "of ga verder met",
+    "password": "Wachtwoord",
+    "register": "Registreren",
+    "registerDesc": "Maak je account aan om te beginnen met boeken",
+    "signedOut": "Succesvol uitgelogd",
+    "signIn": "Inloggen",
+    "signInDesc": "Welkom terug! Log in om verder te gaan",
+    "welcomeBack": "Welkom Terug"
+  },
+  "booking": {
+    "promoCode": "Promotiecode",
+    "travelers": "Reizigers"
+  },
+  "common": {
+    "back": "Terug",
+    "destinations": "Bestemmingen",
+    "duration": "Duur",
+    "from": "Vanaf",
+    "rating": "Beoordeling"
+  },
+  "features": {
+    "whyBookHeading": "Waarom Bij Ons Boeken",
+    "whyBookPaymentsDesc": "Veilige betalingen met meerdere betaalopties",
+    "whyBookPaymentsTitle": "Veilige Betalingen",
+    "whyBookReviewsDesc": "Echte beoordelingen van geverifieerde reizigers",
+    "whyBookReviewsTitle": "Geverifieerde Beoordelingen",
+    "whyBookSupportDesc": "24/7 klantenservice voor al je vragen",
+    "whyBookSupportTitle": "24/7 Ondersteuning",
+    "whyBookVerifiedDesc": "Alle tours zijn zorgvuldig gecontroleerd op kwaliteit",
+    "whyBookVerifiedTitle": "Geverifieerde Tours"
+  },
+  "footer": {
+    "aboutUs": "Over Ons",
+    "cancellationHelp": "Annuleringshulp",
+    "company": "Bedrijf",
+    "contact": "Contact",
+    "contactUs": "Neem Contact Op",
+    "copyright": "© 2026 Expedition GO. Alle rechten voorbehouden.",
+    "faq": "FAQ",
+    "helpCentre": "Helpcentrum",
+    "home": "Home",
+    "privacyPolicy": "Privacybeleid",
+    "support": "Ondersteuning",
+    "termsConditions": "Algemene Voorwaarden"
+  },
+  "hero": {
+    "destination": "Bestemming",
+    "destinationPlaceholder": "Waar ga je naartoe?",
+    "search": "Zoeken",
+    "subtitle": "Ontdek buitengewone tours en ervaringen wereldwijd",
+    "title": "Ontdek het Buitengewone"
+  },
+  "nav": {
+    "bookings": "Boekingen",
+    "currency": "Valuta",
+    "language": "Taal",
+    "profile": "Profiel",
+    "signingOut": "Uitloggen",
+    "signInSignUp": "Inloggen / Registreren",
+    "signOut": "Uitloggen",
+    "wishlist": "Verlanglijst"
+  },
+  "newsletter": {
+    "description": "Abonneer je voor exclusieve aanbiedingen en reisinspiratie",
+    "emailPlaceholder": "Voer je e-mail in",
+    "privacyLink": "We respecteren je privacy. Altijd opzegbaar.",
+    "signUp": "Aanmelden",
+    "title": "Blijf op de Hoogte"
+  },
+  "sections": {
+    "allToursTitle": "Tours",
+    "destinations": "Bestemmingen",
+    "lastMinuteDeals": "Last Minute Aanbiedingen",
+    "likelyToSellOut": "Waarschijnlijk Uitverkocht",
+    "pickupTitle": "Ophalen Inbegrepen",
+    "recommendedTitle": "Aanbevolen voor Jou",
+    "topRatedTitle": "Best Beoordeelde Tours",
+    "viewAll": "Alles Bekijken"
+  },
+  "tourDetail": {
+    "aboutTour": "Over Deze Tour",
+    "bookNow": "Nu Boeken",
+    "freeCancellation": "Gratis annuleren tot 24 uur van tevoren",
+    "highlights": "Hoogtepunten",
+    "itinerary": "Reisroute",
+    "liveGuide": "Live Gids",
+    "needFurtherAssistance": "Heb je verdere hulp nodig?",
+    "perAdultShort": "per volwassene",
+    "pickupIncluded": "Ophalen Inbegrepen",
+    "reservePayLater": "Nu reserveren & later betalen",
+    "seeLess": "Minder weergeven",
+    "seeMore": "Meer weergeven",
+    "selectDate": "Selecteer een datum",
+    "similarExperiences": "Vergelijkbare Ervaringen",
+    "startChat": "Start een Chat"
+  },
+  "wishlist": {
+    "empty": "Je verlanglijst is leeg",
+    "emptyDesc": "Begin met het toevoegen van tours die je leuk vindt",
+    "exploreTours": "Ontdek Tours",
+    "tourSaved": "tour opgeslagen",
+    "toursSaved": "tours opgeslagen"
+  }
+}

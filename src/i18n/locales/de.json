@@ -1,0 +1,112 @@
+{
+  "auth": {
+    "alreadyHaveAccount": "Hast du bereits ein Konto?",
+    "createAccount": "Konto Erstellen",
+    "emailAddress": "E-Mail-Adresse",
+    "fullName": "Vollständiger Name",
+    "google": "Mit Google fortfahren",
+    "needNewAccount": "Brauchst du ein neues Konto?",
+    "orContinueWith": "oder fortfahren mit",
+    "password": "Passwort",
+    "register": "Registrieren",
+    "registerDesc": "Erstelle dein Konto, um mit der Buchung zu beginnen",
+    "signedOut": "Erfolgreich abgemeldet",
+    "signIn": "Anmelden",
+    "signInDesc": "Willkommen zurück! Melde dich an, um fortzufahren",
+    "welcomeBack": "Willkommen Zurück"
+  },
+  "booking": {
+    "promoCode": "Aktionscode",
+    "travelers": "Reisende"
+  },
+  "common": {
+    "back": "Zurück",
+    "destinations": "Reiseziele",
+    "duration": "Dauer",
+    "from": "Ab",
+    "rating": "Bewertung"
+  },
+  "features": {
+    "whyBookHeading": "Warum Bei Uns Buchen",
+    "whyBookPaymentsDesc": "Sichere Zahlungen mit mehreren Zahlungsoptionen",
+    "whyBookPaymentsTitle": "Sichere Zahlungen",
+    "whyBookReviewsDesc": "Echte Bewertungen von verifizierten Reisenden",
+    "whyBookReviewsTitle": "Verifizierte Bewertungen",
+    "whyBookSupportDesc": "24/7 Kundensupport für alle deine Anliegen",
+    "whyBookSupportTitle": "24/7 Support",
+    "whyBookVerifiedDesc": "Alle Touren werden sorgfältig geprüft",
+    "whyBookVerifiedTitle": "Verifizierte Touren"
+  },
+  "footer": {
+    "aboutUs": "Über Uns",
+    "cancellationHelp": "Stornierungshilfe",
+    "company": "Unternehmen",
+    "contact": "Kontakt",
+    "contactUs": "Kontaktiere Uns",
+    "copyright": "© 2026 Expedition GO. Alle Rechte vorbehalten.",
+    "faq": "FAQ",
+    "helpCentre": "Hilfecenter",
+    "home": "Startseite",
+    "privacyPolicy": "Datenschutz",
+    "support": "Support",
+    "termsConditions": "AGB"
+  },
+  "hero": {
+    "destination": "Reiseziel",
+    "destinationPlaceholder": "Wohin geht es?",
+    "search": "Suchen",
+    "subtitle": "Entdecke außergewöhnliche Touren und Erlebnisse weltweit",
+    "title": "Entdecke das Außergewöhnliche"
+  },
+  "nav": {
+    "bookings": "Buchungen",
+    "currency": "Währung",
+    "language": "Sprache",
+    "profile": "Profil",
+    "signingOut": "Abmelden",
+    "signInSignUp": "Anmelden / Registrieren",
+    "signOut": "Abmelden",
+    "wishlist": "Merkliste"
+  },
+  "newsletter": {
+    "description": "Abonniere, um exklusive Angebote und Reiseinspiration zu erhalten",
+    "emailPlaceholder": "Gib deine E-Mail ein",
+    "privacyLink": "Wir respektieren deine Privatsphäre. Jederzeit kündbar.",
+    "signUp": "Anmelden",
+    "title": "Bleib auf dem Laufenden"
+  },
+  "sections": {
+    "allToursTitle": "Touren",
+    "destinations": "Reiseziele",
+    "lastMinuteDeals": "Last-Minute-Angebote",
+    "likelyToSellOut": "Voraussichtlich Ausverkauft",
+    "pickupTitle": "Abholung Inklusive",
+    "recommendedTitle": "Für Dich Empfohlen",
+    "topRatedTitle": "Top-Bewertete Touren",
+    "viewAll": "Alle Anzeigen"
+  },
+  "tourDetail": {
+    "aboutTour": "Über Diese Tour",
+    "bookNow": "Jetzt Buchen",
+    "freeCancellation": "Kostenlose Stornierung bis 24 Stunden vorher",
+    "highlights": "Höhepunkte",
+    "itinerary": "Reiseverlauf",
+    "liveGuide": "Live-Reiseleiter",
+    "needFurtherAssistance": "Brauchst du weitere Hilfe?",
+    "perAdultShort": "pro Erwachsener",
+    "pickupIncluded": "Abholung Inklusive",
+    "reservePayLater": "Jetzt reservieren & später bezahlen",
+    "seeLess": "Weniger anzeigen",
+    "seeMore": "Mehr anzeigen",
+    "selectDate": "Wähle ein Datum",
+    "similarExperiences": "Ähnliche Erlebnisse",
+    "startChat": "Chat starten"
+  },
+  "wishlist": {
+    "empty": "Deine Merkliste ist leer",
+    "emptyDesc": "Füge Touren, die dir gefallen, zu deiner Merkliste hinzu",
+    "exploreTours": "Touren Entdecken",
+    "tourSaved": "Tour gespeichert",
+    "toursSaved": "Touren gespeichert"
+  }
+}
