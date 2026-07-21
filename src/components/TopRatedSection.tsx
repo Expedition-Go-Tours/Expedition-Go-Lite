@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import SectionHeading from './SectionHeading'
 import TourCard from './TourCard'
 import { topRatedTours } from './data'
@@ -9,6 +10,7 @@ const GAP = 16
 const PAGE_WIDTH = (CARD_WIDTH + GAP) * 3
 
 export default function TopRatedSection() {
+  const { t } = useTranslation()
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
@@ -43,7 +45,7 @@ export default function TopRatedSection() {
       <div className="toprated-container">
         <div className="toprated-viewport">
           <SectionHeading
-            title="Top Rated by Travellers"
+            title={t('sections.topRatedTitle')}
             viewAllLink="/tours?section=Top Rated"
             onScrollLeft={() => scroll('left')}
             onScrollRight={() => scroll('right')}

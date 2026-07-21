@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import SectionHeading from './SectionHeading'
 import TourCard from './TourCard'
 import { sellOutTours } from './data'
@@ -9,6 +10,7 @@ const GAP = 16
 const PAGE_WIDTH = (CARD_WIDTH + GAP) * 3
 
 export default function SellOutSection() {
+  const { t } = useTranslation()
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
@@ -43,7 +45,7 @@ export default function SellOutSection() {
       <div className="sellout-container">
         <div className="sellout-viewport">
           <SectionHeading
-            title="Likely to Sell Out"
+            title={t('sections.likelyToSellOut')}
             viewAllLink="/tours?section=Sell Out"
             onScrollLeft={() => scroll('left')}
             onScrollRight={() => scroll('right')}

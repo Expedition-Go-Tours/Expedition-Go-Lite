@@ -12,28 +12,6 @@
   position: relative;
 }
 
-.all-stories-back-btn {
-  position: absolute;
-  top: 24px;
-  left: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border: none;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.2);
-  color: #fff;
-  cursor: pointer;
-  transition: background 0.15s, transform 0.15s;
-}
-
-.all-stories-back-btn:hover {
-  background: rgba(255, 255, 255, 0.35);
-  transform: scale(1.05);
-}
-
 .all-stories-hero-content {
   max-width: 640px;
   margin: 0 auto;
@@ -89,6 +67,71 @@
 
 .all-stories-search-input:focus {
   background: rgba(255, 255, 255, 0.3);
+}
+
+/* Autocomplete dropdown */
+.all-stories-autocomplete {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+  z-index: 50;
+}
+
+.all-stories-autocomplete-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.all-stories-autocomplete-item.highlighted {
+  background: rgba(23, 146, 55, 0.08);
+}
+
+.all-stories-autocomplete-item:hover {
+  background: rgba(23, 146, 55, 0.06);
+}
+
+.all-stories-autocomplete-img {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.all-stories-autocomplete-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.all-stories-autocomplete-title {
+  font-family: 'Raleway', sans-serif;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #1a1a1a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.all-stories-autocomplete-sub {
+  font-family: 'Raleway', sans-serif;
+  font-size: 11.5px;
+  color: #9ca3af;
+}
+
+.all-stories-autocomplete-item.highlighted .all-stories-autocomplete-title {
+  color: #179237;
 }
 
 @media (max-width: 640px) {
@@ -167,12 +210,9 @@
   overflow: hidden;
   height: 100%;
   text-decoration: none;
-  transition: box-shadow 0.25s ease, transform 0.25s ease;
 }
 
 .all-stories-grid .story-card:hover {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-  transform: translateY(-3px);
 }
 
 .all-stories-grid .story-card-image {
@@ -263,6 +303,4 @@
   align-self: flex-start;
 }
 
-.all-stories-grid .story-card:hover .story-card-link {
-  color: var(--primary-hover);
-}
+

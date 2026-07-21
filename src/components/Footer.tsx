@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import './Footer.css'
 import visaSrc from '../assets/icons/visa.svg'
 import mastercardSrc from '../assets/icons/mastercard.svg'
@@ -6,28 +7,29 @@ import jcbSrc from '../assets/icons/jcblogo.svg'
 import discoverSrc from '../assets/icons/discover.png'
 
 export default function Footer() {
+  const { t } = useTranslation()
   return (
     <footer className="footer">
       <div className="footer-container">
         <div className="footer-grid">
           <div className="footer-col">
-            <h4 className="footer-heading">Support</h4>
-            <a href="#" className="footer-link" onClick={(e) => e.preventDefault()}>Get in touch</a>
-            <a href="#" className="footer-link" onClick={(e) => e.preventDefault()}>Help Center</a>
-            <a href="#" className="footer-link" onClick={(e) => e.preventDefault()}>Cancellation options</a>
+            <h4 className="footer-heading">{t('footer.support')}</h4>
+            <a href="#" className="footer-link" onClick={(e) => e.preventDefault()}>{t('footer.contactUs')}</a>
+            <a href="#" className="footer-link" onClick={(e) => e.preventDefault()}>{t('footer.helpCentre')}</a>
+            <a href="#" className="footer-link" onClick={(e) => e.preventDefault()}>{t('footer.cancellationHelp')}</a>
           </div>
           <div className="footer-col">
-            <h4 className="footer-heading">Company</h4>
-            <a href="#" className="footer-link" onClick={(e) => e.preventDefault()}>Home</a>
+            <h4 className="footer-heading">{t('footer.company')}</h4>
+            <a href="#" className="footer-link" onClick={(e) => e.preventDefault()}>{t('footer.home')}</a>
             <a href="#" className="footer-link" onClick={(e) => e.preventDefault()}>Blog</a>
-            <a href="#" className="footer-link" onClick={(e) => e.preventDefault()}>Privacy policy</a>
-            <a href="#" className="footer-link" onClick={(e) => e.preventDefault()}>Terms of service</a>
+            <a href="#" className="footer-link" onClick={(e) => e.preventDefault()}>{t('footer.privacyPolicy')}</a>
+            <a href="#" className="footer-link" onClick={(e) => e.preventDefault()}>{t('footer.termsConditions')}</a>
           </div>
           <div className="footer-col">
-            <h4 className="footer-heading">Contact</h4>
-            <a href="#" className="footer-link" onClick={(e) => e.preventDefault()}>About</a>
+            <h4 className="footer-heading">{t('footer.contact')}</h4>
+            <a href="#" className="footer-link" onClick={(e) => e.preventDefault()}>{t('footer.aboutUs')}</a>
             <a href="#" className="footer-link" onClick={(e) => e.preventDefault()}>Partnerships</a>
-            <a href="#" className="footer-link" onClick={(e) => e.preventDefault()}>FAQ</a>
+            <a href="#" className="footer-link" onClick={(e) => e.preventDefault()}>{t('footer.faq')}</a>
           </div>
           <div className="footer-col">
             <h4 className="footer-heading">Connect with us</h4>
@@ -52,7 +54,7 @@ export default function Footer() {
         </div>
         <div className="footer-divider" />
         <div className="footer-bottom">
-          <p className="footer-copyright">2022 -2026 All rights reserved | Expedition-Go Tours LTD | Accra-Ghana</p>
+          <p className="footer-copyright">{t('footer.copyright')}</p>
           <div className="footer-payments">
             <img src={visaSrc} alt="Visa" className="footer-payment footer-payment--visa" loading="lazy" />
             <img src={mastercardSrc} alt="Mastercard" className="footer-payment" loading="lazy" />

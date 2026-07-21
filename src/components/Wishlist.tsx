@@ -1,9 +1,11 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from './ui/button'
 import { useWishlist } from '../context/WishlistContext'
+import { useTranslation } from 'react-i18next'
 import './Wishlist.css'
 
 export default function Wishlist() {
+  const { t } = useTranslation()
   const { wishlist: wishlistItems, removeFromWishlist } = useWishlist()
 
   const handleRemove = (id: string) => {
@@ -92,7 +94,7 @@ export default function Wishlist() {
               visible: { opacity: 1, y: 0 },
             }}
           >
-            Your Wishlist is Empty
+            {t('wishlist.empty')}
           </motion.h3>
           <motion.p
             className="empty-text"
@@ -101,7 +103,7 @@ export default function Wishlist() {
               visible: { opacity: 1, y: 0 },
             }}
           >
-            Save your favorite tours and experiences to your wishlist for easy access later
+            {t('wishlist.emptyDesc')}
           </motion.p>
           <motion.div
             variants={{
@@ -110,7 +112,7 @@ export default function Wishlist() {
             }}
           >
             <Button onClick={() => window.location.href = '/'} className="empty-cta">
-              Explore Tours
+              {t('wishlist.exploreTours')}
             </Button>
           </motion.div>
         </motion.div>
@@ -121,7 +123,7 @@ export default function Wishlist() {
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
               </svg>
-              <span>{wishlistItems.length} {wishlistItems.length === 1 ? 'Item' : 'Items'} Saved</span>
+              <span>{wishlistItems.length} {wishlistItems.length === 1 ? t('wishlist.tourSaved') : t('wishlist.toursSaved')}</span>
             </div>
           </div>
 
@@ -176,7 +178,7 @@ export default function Wishlist() {
                       </div>
 
                       <div className="wishlist-card-price">
-                        <span className="price-label">From</span>
+                        <span className="price-label">{t('common.from')}</span>
                         <span className="price-value">${item.price}</span>
                       </div>
                     </div>
@@ -190,7 +192,7 @@ export default function Wishlist() {
                         className="wishlist-book-btn"
                         size="sm"
                       >
-                        Book Now
+                        {t('tourDetail.bookNow')}
                       </Button>
                     </div>
                   </div>

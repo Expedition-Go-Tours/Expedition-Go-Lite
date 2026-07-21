@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChevronDown, ChevronUp, Star, Check, ChevronLeft, ChevronRight,
@@ -37,6 +38,7 @@ export default function OverviewSection({
   onTabChange,
   onReviewReadMore,
 }: OverviewSectionProps) {
+  const { t } = useTranslation()
   const [fullDescriptionExpanded, setFullDescriptionExpanded] = useState(true)
   const [highlightsOpen, setHighlightsOpen] = useState(true)
   const travellersLovedRef = useRef<HTMLDivElement>(null)
@@ -116,7 +118,7 @@ export default function OverviewSection({
               onClick={() => setFullDescriptionExpanded((v) => !v)}
               className="overview-description-toggle"
             >
-              {fullDescriptionExpanded ? 'See less' : 'See more'}
+              {fullDescriptionExpanded ? t('tourDetail.seeLess') : t('tourDetail.seeMore')}
             </button>
           )}
         </div>
@@ -221,7 +223,7 @@ export default function OverviewSection({
             className="overview-accordion-trigger"
             aria-expanded={highlightsOpen}
           >
-            <span>Highlights</span>
+            <span>{t('tourDetail.highlights')}</span>
             {highlightsOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
           </button>
           <AnimatePresence initial={false}>

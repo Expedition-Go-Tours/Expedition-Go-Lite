@@ -1,4 +1,5 @@
 import { useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import SimilarTourCard from './SimilarTourCard'
 import type { Tour } from '../data'
@@ -9,6 +10,7 @@ interface RelatedToursProps {
 }
 
 export default function RelatedTours({ tours }: RelatedToursProps) {
+  const { t } = useTranslation()
   const scrollContainerRef = useRef<HTMLDivElement>(null)
 
   const scroll = (direction: 'left' | 'right') => {
@@ -30,7 +32,7 @@ export default function RelatedTours({ tours }: RelatedToursProps) {
   return (
     <section className="related-tours">
       <div className="related-tours-header">
-        <h2 className="related-tours-title">Similar Experiences</h2>
+        <h2 className="related-tours-title">{t('tourDetail.similarExperiences')}</h2>
         <div className="related-tours-nav">
           <button
             className="related-tours-nav-btn"

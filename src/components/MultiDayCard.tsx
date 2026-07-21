@@ -1,11 +1,14 @@
 import { toast } from 'sonner'
-import type { MultiDayTour } from './data'
+import { useTranslation } from 'react-i18next'
+import { parsePrice, type MultiDayTour } from './data'
 import './MultiDayCard.css'
 import { useWishlist, toWishlistItem } from '../context/WishlistContext'
+import FormattedPrice from './FormattedPrice'
 
 interface MultiDayCardProps extends MultiDayTour {}
 
 export default function MultiDayCard({ title, days, accommodation, highlights, price, rating, reviews, location, image }: MultiDayCardProps) {
+  const { t } = useTranslation()
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist()
   const item = toWishlistItem({ title, days, accommodation, highlights, price, rating: String(rating), reviews, location, image } as unknown as MultiDayTour)
   const inWishlist = isInWishlist(item.id)
@@ -67,8 +70,10 @@ export default function MultiDayCard({ title, days, accommodation, highlights, p
             <span className="multiday-card-rating-reviews">({reviews})</span>
           </div>
           <div className="multiday-card-price">
-            <span className="multiday-card-from">From </span>
-            <span className="multiday-card-price-value">{price}</span>
+            <span className="multiday-card-from">{t('common.from')} </span>
+            <span className="multiday-card-price-value">
+              <FormattedPrice usdPrice={parsePrice(price)} />
+            </span>
           </div>
         </div>
       </div>

@@ -464,13 +464,6 @@
   border: 1px solid var(--sd-line);
   background: var(--sd-surface);
   text-decoration: none;
-  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
-}
-
-.story-related-card:hover {
-  transform: translateY(-6px);
-  border-color: rgba(23, 146, 55, 0.4);
-  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12), 0 0 24px rgba(23, 146, 55, 0.12);
 }
 
 .story-related-image {
@@ -525,7 +518,6 @@
   transition: color 0.2s ease, gap 0.2s ease;
 }
 
-.story-related-card:hover .story-related-link { color: var(--sd-green-deep); gap: 8px; }
 
 /* ---------------- Not found ---------------- */
 .story-notfound {

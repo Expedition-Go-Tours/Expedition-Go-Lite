@@ -14,6 +14,8 @@ import Footer from '../Footer'
 import { useContinuePlanning, toContinuePlanningItem } from '../../context/ContinuePlanningContext'
 import { useWishlist } from '../../context/WishlistContext'
 import { toast } from 'sonner'
+import { useCurrency } from '../../contexts/CurrencyContext'
+import { useTranslation } from 'react-i18next'
 
 import TourImageGallery from './TourImageGallery'
 import TourHeader from './TourHeader'
@@ -39,28 +41,11 @@ interface TourDetailPageProps {
   onOpenAuth?: (mode: 'signin' | 'signup') => void
 }
 
-const TOUR_DETAIL_TABS = [
-  { key: 'overview', label: 'Overview' },
-  { key: 'details', label: 'Details' },
-  { key: 'itinerary', label: 'Itinerary' },
-  { key: 'reviews', label: 'Reviews' },
-  { key: 'supplier', label: 'Supplier' },
-]
-
 const EXTERNAL_FALLBACK_IMAGES = [
   'https://ecotourghana.com/img/n10.jpg',
   'https://grassroottours.com/wp-content/uploads/2019/04/IMG_5843-370x260.jpg',
   'https://images.squarespace-cdn.com/content/v1/65cfd1369377d32bcd0051fa/1713964352006-GG68CSEC76Z06G1JZBFQ/Accra+City+Tour-+Sheeda+Travel+Tribe.jpg',
   'https://images.squarespace-cdn.com/content/v1/65cfd1369377d32bcd0051fa/f0eaf879-3685-41fb-ba88-5fbab02dda4a/Travel+to+Ghana-+Sheeda+Travel+Tribe.jpg',
-]
-
-const OVERVIEW_HIGHLIGHTS_DEFAULT: { icon: React.ComponentType<{ className?: string; strokeWidth?: number }>; title: string; desc: string | null }[] = [
-  { icon: CalendarCheck, title: 'Free cancellation', desc: 'Cancel up to 24 hours in advance for a full refund' },
-  { icon: Clock, title: 'Duration Flexible', desc: 'Check availability to see starting times' },
-  { icon: Users, title: 'Live tour guide', desc: 'English' },
-  { icon: CreditCard, title: 'Reserve now & pay later', desc: 'Keep your travel plans flexible — book your spot and pay nothing today.' },
-  { icon: UserCheck, title: 'Skip the line through a separate entrance', desc: null },
-  { icon: Bus, title: 'Pickup included', desc: 'Check availability for details' },
 ]
 
 const DESCRIPTION_STEPS = [
@@ -105,6 +90,14 @@ function toSlug(title: string): string {
 }
 
 export default function TourDetailPage({ onOpenAuth }: TourDetailPageProps) {
+  const { t } = useTranslation()
+  const tourDetailTabs = useMemo(() => [
+    { key: 'overview', label: t('tourDetail.aboutTour') },
+    { key: 'details', label: 'Details' },
+    { key: 'itinerary', label: 'Itinerary' },
+    { key: 'reviews', label: 'Reviews' },
+    { key: 'supplier', label: 'Supplier' },
+  ], [t])
   const { tourId } = useParams<{ tourId: string }>()
   const navigate = useNavigate()
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist()
@@ -307,12 +300,20 @@ export default function TourDetailPage({ onOpenAuth }: TourDetailPageProps) {
     return labels.map((item) => ({ ...item, count: 0, percentage: 0 }))
   }, [])
 
+  const { formatPrice: currencyFormatPrice } = useCurrency()
   const convertPrice = (price: number) => ({
-    formatted: `$${price.toLocaleString()}`,
+    formatted: currencyFormatPrice(price),
     value: price,
   })
 
-  const overviewHighlightsGrid = OVERVIEW_HIGHLIGHTS_DEFAULT
+  const overviewHighlightsGrid = useMemo(() => [
+    { icon: CalendarCheck, title: t('tourDetail.freeCancellation'), desc: 'Cancel up to 24 hours in advance for a full refund' },
+    { icon: Clock, title: 'Duration Flexible', desc: 'Check availability to see starting times' },
+    { icon: Users, title: t('tourDetail.liveGuide'), desc: 'English' },
+    { icon: CreditCard, title: t('tourDetail.reservePayLater'), desc: 'Keep your travel plans flexible — book your spot and pay nothing today.' },
+    { icon: UserCheck, title: 'Skip the line through a separate entrance', desc: null },
+    { icon: Bus, title: t('tourDetail.pickupIncluded'), desc: 'Check availability for details' },
+  ], [t])
 
   const descriptionSteps = DESCRIPTION_STEPS
   const highlights = tour.highlights || []
@@ -421,7 +422,7 @@ export default function TourDetailPage({ onOpenAuth }: TourDetailPageProps) {
             <div className="tour-detail-bottom">
               {/* Tab Navigation */}
               <TourDetailTabs
-                tabs={TOUR_DETAIL_TABS}
+                tabs={tourDetailTabs}
                 activeTab={activeTab}
                 onTabChange={setActiveTab}
               />

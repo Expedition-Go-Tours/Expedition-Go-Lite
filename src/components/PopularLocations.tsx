@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import SectionHeading from './SectionHeading'
 import PopularLocationCard from './PopularLocationCard'
 import DestinationsModal from './DestinationsModal'
@@ -10,6 +11,7 @@ const GAP = 16
 const PAGE_WIDTH = (CARD_WIDTH + GAP) * 3
 
 export default function PopularLocations() {
+  const { t } = useTranslation()
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
@@ -45,7 +47,7 @@ export default function PopularLocations() {
       <div className="popular-locations-container">
         <div className="location-viewport">
           <SectionHeading
-            title="Popular Locations"
+            title={t('sections.destinations')}
             onViewAllClick={() => setIsModalOpen(true)}
             onScrollLeft={() => scroll('left')}
             onScrollRight={() => scroll('right')}

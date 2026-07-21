@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { Star } from 'lucide-react'
 import './ReviewsSection.css'
@@ -55,6 +56,7 @@ export default function ReviewsSection({
   searchQuery,
   onSearchQueryChange,
 }: ReviewsSectionProps) {
+  const { t } = useTranslation()
   const ratingDots = Array.from({ length: 5 })
   const [expandedReviews, setExpandedReviews] = useState<Set<string>>(new Set())
   const toggleExpand = (id: string) => {
@@ -175,7 +177,7 @@ export default function ReviewsSection({
                         onClick={() => toggleExpand(review.id)}
                         className="review-card-toggle"
                       >
-                        {expandedReviews.has(review.id) ? 'See less' : 'See more'}
+                        {expandedReviews.has(review.id) ? t('tourDetail.seeLess') : t('tourDetail.seeMore')}
                       </button>
                     )}
                     {(review.valueForMoneyRating || review.guideRating || review.meetingRating) && (

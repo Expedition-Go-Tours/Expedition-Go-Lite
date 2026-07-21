@@ -1,28 +1,6 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import './WhyBookSection.css'
-
-const features = [
-  {
-    title: 'Verified operators',
-    text: 'Experiences are reviewed before listing so travellers can book with confidence.',
-    icon: 'check',
-  },
-  {
-    title: 'Simple payments',
-    text: 'Clear prices, secure checkout and instant booking details for selected tours.',
-    icon: 'card',
-  },
-  {
-    title: 'Traveller reviews',
-    text: 'Ratings and feedback help guests compare experiences before choosing.',
-    icon: 'star',
-  },
-  {
-    title: 'Travel support',
-    text: 'Help before, during and after the experience from a local African team.',
-    icon: 'chat',
-  },
-]
 
 function FeatureIcon({ type }: { type: string }) {
   if (type === 'check') {
@@ -59,6 +37,13 @@ function FeatureIcon({ type }: { type: string }) {
 }
 
 export default function WhyBookSection() {
+  const { t } = useTranslation()
+  const features = [
+    { title: t('features.whyBookVerifiedTitle'), text: t('features.whyBookVerifiedDesc'), icon: 'check' },
+    { title: t('features.whyBookPaymentsTitle'), text: t('features.whyBookPaymentsDesc'), icon: 'card' },
+    { title: t('features.whyBookReviewsTitle'), text: t('features.whyBookReviewsDesc'), icon: 'star' },
+    { title: t('features.whyBookSupportTitle'), text: t('features.whyBookSupportDesc'), icon: 'chat' },
+  ]
   const [activeDot, setActiveDot] = useState(0)
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -72,7 +57,7 @@ export default function WhyBookSection() {
     <section className="whybook-section">
       <div className="whybook-container">
         <div className="whybook-viewport">
-          <h2 className="whybook-heading">Why Book With Us</h2>
+          <h2 className="whybook-heading">{t('features.whyBookHeading')}</h2>
         <div className="whybook-grid" onScroll={handleScroll}>
           {features.map((f) => (
             <div key={f.title} className="whybook-card">

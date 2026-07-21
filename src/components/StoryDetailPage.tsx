@@ -248,7 +248,6 @@ function StoryDetailPage() {
                 <div className="story-highlights">
                   <div className="story-highlights-glow" />
                   <h3 className="story-highlights-title">
-                    <Sparkles size={16} />
                     Highlights
                   </h3>
                   <ul>

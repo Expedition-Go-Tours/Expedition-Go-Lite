@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronDown, ChevronUp, Check, X } from 'lucide-react'
 import './DetailsSection.css'
@@ -14,6 +15,7 @@ interface DetailsSectionProps {
 }
 
 export default function DetailsSection({ sections }: DetailsSectionProps) {
+  const { t } = useTranslation()
   const [expanded, setExpanded] = useState<Record<string, boolean>>({ included: true })
 
   const toggle = (key: string) => {
@@ -29,7 +31,7 @@ export default function DetailsSection({ sections }: DetailsSectionProps) {
       transition={{ duration: 0.2, ease: 'easeOut' }}
       className="details-section"
     >
-      <h2 className="details-section-title">Details</h2>
+      <h2 className="details-section-title">{t('tourDetail.aboutTour')}</h2>
       <div className="details-section-list">
         {sections.map((section) => {
           const isOpen = !!expanded[section.key]

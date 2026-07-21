@@ -10,6 +10,7 @@ import {
   durationBuckets,
   priceRanges,
 } from './data'
+import { useTranslation } from 'react-i18next'
 import Navbar from './Navbar'
 import TourCard from './TourCard'
 import MultiDayCard from './MultiDayCard'
@@ -19,13 +20,6 @@ const PRICE_MIN = Math.min(...allTours.map(t => parsePrice(t.price)))
 const PRICE_MAX = Math.max(...allTours.map(t => parsePrice(t.price)))
 
 const PAGE_SIZE = 12
-
-const SORT_OPTIONS = [
-  { value: 'recommended', label: 'Recommended' },
-  { value: 'top-rated', label: 'Top Rated' },
-  { value: 'price-low', label: 'Price: Low – High' },
-  { value: 'price-high', label: 'Price: High – Low' },
-] as const
 
 const RATING_OPTIONS = [
   { value: '5', label: '5' },
@@ -54,6 +48,13 @@ interface AllToursPageProps {
 }
 
 export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
+  const { t } = useTranslation()
+  const sortOptions = useMemo(() => [
+    { value: 'recommended', label: t('sections.recommendedTitle') },
+    { value: 'top-rated', label: t('sections.topRatedTitle') },
+    { value: 'price-low', label: 'Price: Low – High' },
+    { value: 'price-high', label: 'Price: High – Low' },
+  ] as const, [t])
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const sectionParam = searchParams.get('section') || '';
@@ -145,7 +146,7 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
     if (filterOptions.languages.some(l => l.value === value)) { handleMulti(setLanguageFilter)(value); return }
   }
 
-  const pageTitle = SECTION_TITLES[sectionParam] || 'All Tours'
+  const pageTitle = SECTION_TITLES[sectionParam] || t('sections.allToursTitle')
 
   const filteredTours = useMemo(() => {
     let result = [...allTours]
@@ -437,7 +438,7 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
                     </div>
                   </div>
                 </div>
-                <FilterSection title="Rating" options={[...RATING_OPTIONS]} selected={ratingFilter} onChange={handleMulti(setRatingFilter)} renderLabel={(opt) => (
+                <FilterSection title={t('common.rating')} options={[...RATING_OPTIONS]} selected={ratingFilter} onChange={handleMulti(setRatingFilter)} renderLabel={(opt) => (
                   <span className="filter-rating-label">
                     <span className="filter-rating-number">{opt.label}</span>
                     {Array.from({ length: Number(opt.value) }, (_, i) => (
@@ -446,12 +447,12 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
                   </span>
                 )} />
                 <FilterSection title="Type" options={[...TOUR_TYPE_OPTIONS]} selected={tourTypes} onChange={handleMulti(setTourTypes)} />
-                <FilterSection title="Duration" options={durationBuckets.map(b => ({ value: b.value, label: b.label }))} selected={durationFilter} onChange={handleMulti(setDurationFilter)} />
+                <FilterSection title={t('common.duration')} options={durationBuckets.map(b => ({ value: b.value, label: b.label }))} selected={durationFilter} onChange={handleMulti(setDurationFilter)} />
                 <FilterSection title="Price" options={priceRanges.map(r => ({ value: r.value, label: r.label }))} selected={priceFilter} onChange={handleMulti(setPriceFilter)} />
-                <FilterSection title="Destination" options={filterOptions.destinations} selected={destinations} onChange={handleMulti(setDestinations)} />
+                <FilterSection title={t('hero.destination')} options={filterOptions.destinations} selected={destinations} onChange={handleMulti(setDestinations)} />
                 <FilterSection title="Category" options={filterOptions.categories} selected={categories} onChange={handleMulti(setCategories)} />
-                <FilterSection title="Language" options={filterOptions.languages} selected={languageFilter} onChange={handleMulti(setLanguageFilter)} />
-                <FilterSection title="Sort" options={[...SORT_OPTIONS]} selected={sortBy} onChange={handleSingle(setSortBy)} single />
+                <FilterSection title={t('nav.language')} options={filterOptions.languages} selected={languageFilter} onChange={handleMulti(setLanguageFilter)} />
+                <FilterSection title="Sort" options={[...sortOptions]} selected={sortBy} onChange={handleSingle(setSortBy)} single />
               </div>
             </motion.div>
           </>

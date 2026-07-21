@@ -2,7 +2,9 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { toast } from 'sonner'
-import { Clock, X } from 'lucide-react'
+import { Clock, X, Globe, ChevronDown } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import { useCurrency, availableCurrencies } from '../contexts/CurrencyContext'
 import logoSrc from '../assets/expo_trans.png'
 import userSrc from '../assets/icons/User Circle.png'
 import { subscribeToAuthState, signOutUser, getStoredAuthUser, type AuthUser } from '../lib/auth'
@@ -21,7 +23,12 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [signingOut, setSigningOut] = useState(false)
+  const [globeOpen, setGlobeOpen] = useState(false)
+  const [currencyAccordionOpen, setCurrencyAccordionOpen] = useState(false)
+  const globeRef = useRef<HTMLDivElement>(null)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const { t } = useTranslation()
+  const { currency, setCurrency: setAppCurrency } = useCurrency()
   const [navSearchValue, setNavSearchValue] = useState('')
   const [showNavDropdown, setShowNavDropdown] = useState(false)
   const [navHighlightedIndex, setNavHighlightedIndex] = useState(-1)
@@ -182,6 +189,9 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setDropdownOpen(false)
       }
+      if (globeRef.current && !globeRef.current.contains(e.target as Node)) {
+        setGlobeOpen(false)
+      }
       if (navSearchRef.current && !navSearchRef.current.contains(e.target as Node)) {
         setShowNavDropdown(false)
       }
@@ -227,7 +237,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
                   ref={navInputRef}
                   type="text"
                   className="navbar-search-input"
-                  placeholder="Where are you going?"
+                  placeholder={t('hero.destinationPlaceholder')}
                   autoComplete="off"
                   value={navSearchValue}
                   onChange={(e) => setNavSearchValue(e.target.value)}
@@ -245,7 +255,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
               </div>
             </div>
             <div className="navbar-search-btn-wrap">
-              <button type="submit" className="navbar-search-btn">Search</button>
+              <button type="submit" className="navbar-search-btn">{t('hero.search')}</button>
             </div>
           </form>
 
@@ -300,7 +310,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
                     return (
                       <div key={suggestion.id}>
                         {showDestHeader && (
-                          <div className="search-dropdown-section">Destinations</div>
+                          <div className="search-dropdown-section">{t('common.destinations')}</div>
                         )}
                         {showTourHeader && (
                           <div className="search-dropdown-section">Tours &amp; Experiences</div>
@@ -350,24 +360,49 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
       </div>
 
       <div className="nav-right">
+        <div className="nav-icon-item nav-globe-trigger" ref={globeRef} onClick={() => setGlobeOpen(!globeOpen)}>
+          <Globe size={20} />
+          <span className="nav-icon-label">{currency.code}</span>
+          {globeOpen && (
+            <div className="nav-globe-dropdown">
+              <div className="nav-globe-section">
+                <span className="nav-globe-section-label">{t('nav.currency')}</span>
+                <div className="nav-globe-options">
+                  {availableCurrencies.map((c) => (
+                    <button
+                      key={c.code}
+                      className={`nav-globe-option${currency.code === c.code ? ' active' : ''}`}
+                      onClick={() => { setAppCurrency(c.code); setGlobeOpen(false) }}
+                    >
+                      <span className="nav-globe-currency-symbol">{c.symbol}</span>
+                      <span>{c.code}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
         <div className="nav-icons">
           <a href="/tours" className="nav-icon-item" onClick={(e) => { e.preventDefault(); navigate('/tours') }}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10" />
               <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
             </svg>
-            <span className="nav-icon-label">Tours</span>
+            <span className="nav-icon-label">{t('sections.allToursTitle')}</span>
           </a>
+
           <a href="#" className="nav-icon-item" onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate('/dashboard/wishlist') }}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
             </svg>
-            <span className="nav-icon-label">Wishlist</span>
+            <span className="nav-icon-label">{t('nav.wishlist')}</span>
           </a>
           <div className="nav-icon-item" onClick={() => setDropdownOpen(!dropdownOpen)}>
             <div className="nav-avatar-wrapper" ref={dropdownRef}>
-              <button className="nav-avatar-btn" onClick={(e) => { e.stopPropagation(); setDropdownOpen(!dropdownOpen) }} aria-label="Profile menu">
-                <img src={user?.photoURL || userSrc} alt="Profile" className="nav-avatar-img" onError={(e) => { (e.target as HTMLImageElement).src = userSrc }} />
+              <button className="nav-avatar-btn" onClick={(e) => { e.stopPropagation(); setDropdownOpen(!dropdownOpen) }} aria-label={t('nav.profile')}>
+                <img src={user?.photoURL || userSrc} alt={t('nav.profile')} className="nav-avatar-img" onError={(e) => { (e.target as HTMLImageElement).src = userSrc }} />
               </button>
               {dropdownOpen && (
                 <div className="nav-dropdown">
@@ -387,7 +422,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
                         <circle cx="12" cy="8" r="4" />
                         <path d="M20 21a8 8 0 1 0-16 0" />
                       </svg>
-                      Sign In / Sign Up
+                      {t('nav.signInSignUp')}
                     </div>
                   )}
 
@@ -444,7 +479,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
                     signingOut ? (
                       <div className="nav-dropdown-signingout">
                         <div className="nav-spinner-sm" />
-                        Signing Out
+                        {t('nav.signingOut')}
                       </div>
                     ) : (
                       <div className="nav-dropdown-signout" onClick={async (e) => {
@@ -453,21 +488,21 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
                         await signOutUser()
                         setSigningOut(false)
                         setDropdownOpen(false)
-                        toast.success('Successfully signed out')
+                        toast.success(t('auth.signedOut'))
                       }}>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
                           <polyline points="16 17 21 12 16 7" />
                           <line x1="21" y1="12" x2="9" y2="12" />
                         </svg>
-                        Sign Out
+                        {t('nav.signOut')}
                       </div>
                     )
                   )}
                 </div>
               )}
             </div>
-            <span className="nav-icon-label">{user?.name || 'Profile'}</span>
+            <span className="nav-icon-label">{user?.name || t('nav.profile')}</span>
           </div>
         </div>
         <button className="nav-hamburger" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-label="Toggle menu">
@@ -526,7 +561,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
                   <circle cx="12" cy="8" r="4" />
                   <path d="M20 21a8 8 0 1 0-16 0" />
                 </svg>
-                Profile
+                {t('nav.profile')}
               </a>
             )}
             <a href="/tours" className="nav-mobile-link" onClick={(e) => { e.preventDefault(); setMobileMenuOpen(false); navigate('/tours') }}>
@@ -534,14 +569,38 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
                 <circle cx="12" cy="12" r="10" />
                 <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
               </svg>
-              Tours
+              {t('sections.allToursTitle')}
             </a>
             <a href="#" className="nav-mobile-link" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMobileMenuOpen(false); navigate('/dashboard/wishlist') }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
               </svg>
-              Wishlist
+              {t('nav.wishlist')}
             </a>
+            <div className="nav-mobile-divider" />
+            <div className="nav-mobile-accordion">
+              <button
+                className={`nav-mobile-accordion-header${currencyAccordionOpen ? ' open' : ''}`}
+                onClick={() => setCurrencyAccordionOpen(!currencyAccordionOpen)}
+              >
+                <span>{t('nav.currency')}</span>
+                <ChevronDown size={16} className="nav-mobile-accordion-chevron" />
+              </button>
+              <div className={`nav-mobile-accordion-content${currencyAccordionOpen ? ' open' : ''}`}>
+                <div className="nav-mobile-flags">
+                  {availableCurrencies.map((c) => (
+                    <button
+                      key={c.code}
+                      className={`nav-mobile-flag-btn${currency.code === c.code ? ' active' : ''}`}
+                      onClick={() => setAppCurrency(c.code)}
+                    >
+                      <span className="nav-currency-option-symbol">{c.symbol}</span>
+                      <span>{c.code}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
             <div className="nav-mobile-divider" />
             {user && (
               <a href="#" className="nav-mobile-link" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMobileMenuOpen(false); navigate('/dashboard/bookings') }}>
@@ -550,7 +609,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
                   <line x1="3" y1="6" x2="21" y2="6" />
                   <path d="M16 10a4 4 0 0 1-8 0" />
                 </svg>
-                Bookings
+                {t('nav.bookings')}
               </a>
             )}
             {user && (
@@ -585,7 +644,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
               signingOut ? (
                 <div className="nav-mobile-signingout">
                   <div className="nav-spinner-sm" />
-                  Signing Out
+                  {t('nav.signingOut')}
                 </div>
               ) : (
                 <div className="nav-mobile-signout" onClick={async () => {
@@ -593,7 +652,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
                   await signOutUser()
                   setSigningOut(false)
                   setMobileMenuOpen(false)
-                  toast.success('Successfully signed out', {
+                  toast.success(t('auth.signedOut'), {
                     position: 'top-center',
                     duration: 3000,
                   })
@@ -603,7 +662,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
                     <polyline points="16 17 21 12 16 7" />
                     <line x1="21" y1="12" x2="9" y2="12" />
                   </svg>
-                  Sign Out
+                  {t('nav.signOut')}
                 </div>
               )
             ) : (
@@ -612,7 +671,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
                   <circle cx="12" cy="8" r="4" />
                   <path d="M20 21a8 8 0 1 0-16 0" />
                 </svg>
-                Sign In / Sign Up
+                {t('nav.signInSignUp')}
               </div>
             )}
             </motion.div>

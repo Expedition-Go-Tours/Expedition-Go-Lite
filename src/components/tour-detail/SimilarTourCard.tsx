@@ -1,7 +1,9 @@
 import { MapPin, Star, Heart } from 'lucide-react'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 import { useWishlist, toWishlistItem } from '../../context/WishlistContext'
-import type { Tour } from '../data'
+import { parsePrice, type Tour } from '../data'
+import FormattedPrice from '../FormattedPrice'
 import './SimilarTourCard.css'
 
 interface SimilarTourCardProps extends Tour {
@@ -18,6 +20,7 @@ export default function SimilarTourCard({
   location, 
   image 
 }: SimilarTourCardProps) {
+  const { t } = useTranslation()
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist()
   const item = toWishlistItem({ title, duration, features, price, rating: String(rating), reviews, location, image } as Tour)
   const inWishlist = isInWishlist(item.id)
@@ -80,8 +83,10 @@ export default function SimilarTourCard({
           </div>
 
           <div className="similar-tour-price">
-            <span className="similar-tour-price-label">From</span>
-            <span className="similar-tour-price-value">{price}</span>
+            <span className="similar-tour-price-label">{t('common.from')}</span>
+            <span className="similar-tour-price-value">
+              <FormattedPrice usdPrice={parsePrice(price)} />
+            </span>
           </div>
         </div>
       </div>

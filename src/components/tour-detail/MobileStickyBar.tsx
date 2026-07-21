@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import './MobileStickyBar.css'
 
 interface MobileStickyBarProps {
@@ -7,12 +8,13 @@ interface MobileStickyBarProps {
 }
 
 export default function MobileStickyBar({ show, priceFormatted, onCheckAvailability }: MobileStickyBarProps) {
+  const { t } = useTranslation()
   return (
     <div className={`mobile-sticky-bar ${show ? 'visible' : ''}`}>
       <div className="mobile-sticky-bar-price">
-        <span className="mobile-sticky-bar-from">From</span>
+        <span className="mobile-sticky-bar-from">{t('common.from')}</span>
         <span className="mobile-sticky-bar-amount">{priceFormatted}</span>
-        <span className="mobile-sticky-bar-per">per adult</span>
+        <span className="mobile-sticky-bar-per">{t('tourDetail.perAdultShort')}</span>
       </div>
       <button
         type="button"

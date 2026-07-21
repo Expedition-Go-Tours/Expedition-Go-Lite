@@ -1,13 +1,16 @@
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 import './TourCard.css'
-import type { Tour } from './data'
+import { parsePrice, type Tour } from './data'
 import { useWishlist, toWishlistItem } from '../context/WishlistContext'
+import FormattedPrice from './FormattedPrice'
 
 interface TourCardProps extends Tour {
   discount?: string
 }
 
 export default function TourCard({ title, duration, features, price, rating, reviews, location, image, discount }: TourCardProps) {
+  const { t } = useTranslation()
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist()
   const item = toWishlistItem({ title, duration, features, price, rating: String(rating), reviews, location, image } as Tour)
   const inWishlist = isInWishlist(item.id)
@@ -65,8 +68,10 @@ export default function TourCard({ title, duration, features, price, rating, rev
             <span className="tour-card-rating-reviews">({reviews})</span>
           </div>
           <div className="tour-card-price">
-            <span className="tour-card-from">From </span>
-            <span className="tour-card-price-value">{price}</span>
+            <span className="tour-card-from">{t('common.from')} </span>
+            <span className="tour-card-price-value">
+              <FormattedPrice usdPrice={parsePrice(price)} />
+            </span>
           </div>
         </div>
       </div>

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import compyBg from '../assets/icons/compyIcon.png'
 import { signInWithGoogle, signInWithEmail, registerWithEmail, setAuthReturnTo, clearAuthReturnTo } from '../lib/auth'
+import { useTranslation } from 'react-i18next'
 
 interface AuthFormProps {
   initialMode?: "signin" | "signup";
@@ -64,6 +65,7 @@ function GoogleG() {
 }
 
 function GoogleButton({ onClick, loading }: { onClick?: () => void; loading?: boolean }) {
+  const { t } = useTranslation()
   return (
     <Button variant="outline" className="w-full gap-2" onClick={onClick} disabled={loading}>
       {loading ? (
@@ -74,7 +76,7 @@ function GoogleButton({ onClick, loading }: { onClick?: () => void; loading?: bo
       ) : (
         <>
           <GoogleG />
-          <span className="font-medium">Google</span>
+          <span className="font-medium">{t('auth.google')}</span>
         </>
       )}
     </Button>
@@ -82,6 +84,7 @@ function GoogleButton({ onClick, loading }: { onClick?: () => void; loading?: bo
 }
 
 function SignInForm({ onSwitchToSignUp, onAuthSuccess }: { onSwitchToSignUp: () => void; onAuthSuccess?: () => void }) {
+  const { t } = useTranslation()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -131,10 +134,10 @@ function SignInForm({ onSwitchToSignUp, onAuthSuccess }: { onSwitchToSignUp: () 
       key="signin"
     >
       <motion.h1 variants={itemVariants} className="text-3xl font-bold tracking-tight mb-2 font-heading text-foreground">
-        Welcome Back
+        {t('auth.welcomeBack')}
       </motion.h1>
       <motion.p variants={itemVariants} className="text-muted-foreground mb-8">
-        Enter your credentials to access your account.
+        {t('auth.signInDesc')}
       </motion.p>
 
       <motion.div variants={itemVariants} className="mb-6">
@@ -146,31 +149,31 @@ function SignInForm({ onSwitchToSignUp, onAuthSuccess }: { onSwitchToSignUp: () 
           <span className="w-full border-t border-border" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="px-2 text-muted-foreground">Or continue with</span>
+          <span className="px-2 text-muted-foreground">{t('auth.orContinueWith')}</span>
         </div>
       </motion.div>
 
       <motion.form variants={itemVariants} className="space-y-6" onSubmit={handleSubmit}>
         <div className="space-y-2">
-          <Label htmlFor="signin-email" className="text-foreground">Email</Label>
+          <Label htmlFor="signin-email" className="text-foreground">{t('auth.emailAddress')}</Label>
           <Input id="signin-email" type="email" placeholder="m@example.com" required className="bg-white" value={email} onChange={(e) => setEmail(e.target.value)} />
         </div>
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <Label htmlFor="signin-password" className="text-foreground">Password</Label>
+            <Label htmlFor="signin-password" className="text-foreground">{t('auth.password')}</Label>
             <a href="#" className="text-sm font-medium text-primary hover:underline">Forgot password?</a>
           </div>
           <Input id="signin-password" type="password" required className="bg-white" value={password} onChange={(e) => setPassword(e.target.value)} />
         </div>
         <Button type="submit" className="w-full" disabled={loading}>
-          {loading ? 'Signing In...' : 'Sign In'}
+          {t('auth.signIn')}
         </Button>
       </motion.form>
 
       <motion.p variants={itemVariants} className="text-center text-sm text-muted-foreground mt-8">
-        Don&apos;t have an account?{" "}
+        {t('auth.needNewAccount')}{" "}
         <a href="#" className="font-medium text-primary hover:underline" onClick={(e) => { e.preventDefault(); onSwitchToSignUp() }}>
-          Sign up
+          {t('auth.register')}
         </a>
       </motion.p>
     </motion.div>
@@ -178,6 +181,7 @@ function SignInForm({ onSwitchToSignUp, onAuthSuccess }: { onSwitchToSignUp: () 
 }
 
 function SignUpForm({ onSwitchToSignIn, onAuthSuccess }: { onSwitchToSignIn: () => void; onAuthSuccess?: () => void }) {
+  const { t } = useTranslation()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -228,10 +232,10 @@ function SignUpForm({ onSwitchToSignIn, onAuthSuccess }: { onSwitchToSignIn: () 
       key="signup"
     >
       <motion.h1 variants={itemVariants} className="text-3xl font-bold tracking-tight mb-2 font-heading text-foreground">
-        Create Account
+        {t('auth.createAccount')}
       </motion.h1>
       <motion.p variants={itemVariants} className="text-muted-foreground mb-8">
-        Join us and start exploring amazing tours.
+        {t('auth.registerDesc')}
       </motion.p>
 
       <motion.div variants={itemVariants} className="mb-6">
@@ -243,32 +247,32 @@ function SignUpForm({ onSwitchToSignIn, onAuthSuccess }: { onSwitchToSignIn: () 
           <span className="w-full border-t border-border" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="px-2 text-muted-foreground">Or continue with</span>
+          <span className="px-2 text-muted-foreground">{t('auth.orContinueWith')}</span>
         </div>
       </motion.div>
 
       <motion.form variants={itemVariants} className="space-y-5" onSubmit={handleSubmit}>
         <div className="space-y-2">
-          <Label htmlFor="signup-name" className="text-foreground">Full Name</Label>
+          <Label htmlFor="signup-name" className="text-foreground">{t('auth.fullName')}</Label>
           <Input id="signup-name" type="text" placeholder="Enter your full name" required className="bg-white" value={name} onChange={(e) => setName(e.target.value)} />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="signup-email" className="text-foreground">Email</Label>
+          <Label htmlFor="signup-email" className="text-foreground">{t('auth.emailAddress')}</Label>
           <Input id="signup-email" type="email" placeholder="m@example.com" required className="bg-white" value={email} onChange={(e) => setEmail(e.target.value)} />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="signup-password" className="text-foreground">Password</Label>
+          <Label htmlFor="signup-password" className="text-foreground">{t('auth.password')}</Label>
           <Input id="signup-password" type="password" placeholder="Create a password" required className="bg-white" value={password} onChange={(e) => setPassword(e.target.value)} />
         </div>
         <Button type="submit" className="w-full" disabled={loading}>
-          {loading ? 'Creating Account...' : 'Sign Up'}
+          {t('auth.register')}
         </Button>
       </motion.form>
 
       <motion.p variants={itemVariants} className="text-center text-sm text-muted-foreground mt-8">
-        Already have an account?{" "}
+        {t('auth.alreadyHaveAccount')}{" "}
         <a href="#" className="font-medium text-primary hover:underline" onClick={(e) => { e.preventDefault(); onSwitchToSignIn() }}>
-          Sign in
+          {t('auth.signIn')}
         </a>
       </motion.p>
     </motion.div>
@@ -276,6 +280,7 @@ function SignUpForm({ onSwitchToSignIn, onAuthSuccess }: { onSwitchToSignIn: () 
 }
 
 export default function AuthForm({ initialMode = "signin", onBack, onAuthSuccess }: AuthFormProps) {
+  const { t } = useTranslation()
   const [mode, setMode] = useState<"signin" | "signup">(initialMode);
 
   return (
@@ -292,7 +297,7 @@ export default function AuthForm({ initialMode = "signin", onBack, onAuthSuccess
           <button
             onClick={onBack}
             className="absolute top-4 left-4 z-10 w-9 h-9 rounded-full bg-white/90 flex items-center justify-center shadow hover:bg-white transition-colors"
-            aria-label="Back"
+            aria-label={t('common.back')}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="19" y1="12" x2="5" y2="12" />

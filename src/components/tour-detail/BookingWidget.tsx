@@ -1,4 +1,5 @@
 ﻿import { useState, useRef, useEffect, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import type { TourDetail } from '../../lib/tourTypes'
 import { Button } from '../ui/button'
@@ -19,6 +20,7 @@ const dropdownVariants = {
 }
 
 export default function BookingWidget({ tour }: BookingWidgetProps) {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [adults, setAdults] = useState(2)
   const [seniors, setSeniors] = useState(0)
@@ -166,14 +168,14 @@ export default function BookingWidget({ tour }: BookingWidgetProps) {
 
   const selectedDateLabel = selectedDate
     ? selectedDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
-    : 'Select date'
+    : t('tourDetail.selectDate')
 
   return (
     <div className="booking-widget-desktop">
       <div className="booking-widget-card">
         <div className="booking-price-section">
           <div className="booking-price-main">
-            <span className="booking-price-from">From</span>
+            <span className="booking-price-from">{t('common.from')}</span>
             <span className="booking-price-amount">${tour.price}</span>
             <span className="booking-price-per">/person</span>
           </div>
@@ -184,7 +186,7 @@ export default function BookingWidget({ tour }: BookingWidgetProps) {
           <div className="booking-field" ref={calendarRef}>
             <label className="booking-label">
               <CalendarDays size={18} />
-              Select Date
+              {t('tourDetail.selectDate')}
             </label>
             <button
               type="button"
@@ -223,7 +225,7 @@ export default function BookingWidget({ tour }: BookingWidgetProps) {
           <div className="booking-field" ref={guestRef}>
             <label className="booking-label">
               <Users size={18} />
-              Travelers
+              {t('booking.travelers')}
             </label>
             <button
               type="button"
@@ -298,7 +300,7 @@ export default function BookingWidget({ tour }: BookingWidgetProps) {
                   setPromoApplied(false)
                   setPromoError('')
                 }}
-                placeholder="Promo code"
+                placeholder={t('booking.promoCode')}
                 maxLength={8}
                 className="booking-promo-input"
               />
@@ -328,16 +330,16 @@ export default function BookingWidget({ tour }: BookingWidgetProps) {
                 Checking...
               </span>
             ) : (
-              isAvailable ? 'Book Now' : 'Check availability'
+              t('tourDetail.bookNow')
             )}
           </Button>
 
           {/* Assistance */}
           <div className="booking-assistance">
-            <p className="booking-assistance-title">Need further assistance?</p>
+            <p className="booking-assistance-title">{t('tourDetail.needFurtherAssistance')}</p>
             <button type="button" className="booking-assistance-btn">
               <MessageSquare size={16} />
-              Start chat
+              {t('tourDetail.startChat')}
             </button>
           </div>
         </div>
@@ -347,7 +349,7 @@ export default function BookingWidget({ tour }: BookingWidgetProps) {
             <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
             <polyline points="22 4 12 14.01 9 11.01" />
           </svg>
-          <span>Free cancellation up to 24 hours before</span>
+          <span>{t('tourDetail.freeCancellation')}</span>
         </div>
       </div>
     </div>

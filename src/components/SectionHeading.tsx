@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import './SectionHeading.css'
 
 interface SectionHeadingProps {
@@ -21,6 +22,8 @@ export default function SectionHeading({
   disableLeft,
   disableRight,
 }: SectionHeadingProps) {
+  const { t } = useTranslation()
+
   return (
     <div className="section-heading">
       <div className="section-heading-text">
@@ -30,10 +33,10 @@ export default function SectionHeading({
       {viewAllLink || onScrollLeft || onScrollRight || onViewAllClick ? (
         <div className="section-heading-actions">
           {viewAllLink && (
-            <a href={viewAllLink} className="section-view-all">View all</a>
+            <a href={viewAllLink} className="section-view-all">{t('sections.viewAll')}</a>
           )}
           {onViewAllClick && (
-            <button className="section-view-all" onClick={onViewAllClick}>View all</button>
+            <button className="section-view-all" onClick={onViewAllClick}>{t('sections.viewAll')}</button>
           )}
           {(onScrollLeft || onScrollRight) && (
             <div className="section-arrows">

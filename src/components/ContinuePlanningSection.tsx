@@ -1,7 +1,9 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import SectionHeading from './SectionHeading'
 import { useContinuePlanning } from '../context/ContinuePlanningContext'
+import FormattedPrice from './FormattedPrice'
 import './ContinuePlanningSection.css'
 
 const CARD_WIDTH = 440
@@ -38,6 +40,7 @@ function StarRating({ rating }: { rating: number }) {
 }
 
 export default function ContinuePlanningSection() {
+  const { t } = useTranslation()
   const { continuePlanning } = useContinuePlanning()
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
@@ -79,7 +82,7 @@ export default function ContinuePlanningSection() {
       <div className="continue-planning-container">
         <div className="continue-planning-viewport">
           <SectionHeading
-            title="Continue planning your trip"
+            title={t('sections.pickupTitle')}
             onScrollLeft={() => scroll('left')}
             onScrollRight={() => scroll('right')}
             disableLeft={!canScrollLeft}
@@ -107,8 +110,10 @@ export default function ContinuePlanningSection() {
                         <span className="cp-card-rating-count">({item.reviewCount})</span>
                       </div>
                       <div className="cp-card-price-row">
-                        <span className="cp-card-from">From </span>
-                        <span className="cp-card-price">${item.price}</span>
+                        <span className="cp-card-from">{t('common.from')} </span>
+                        <span className="cp-card-price">
+                          <FormattedPrice usdPrice={item.price} />
+                        </span>
                       </div>
                     </div>
                   </div>

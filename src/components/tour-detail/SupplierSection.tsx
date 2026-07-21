@@ -1,4 +1,5 @@
 import { useRef, useCallback, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Star, ChevronDown, ChevronRight, ChevronLeft, Phone, Mail, Globe, MapPin, Heart } from 'lucide-react'
@@ -56,6 +57,7 @@ export default function SupplierSection({
   isInWishlist,
   formatPrice,
 }: SupplierSectionProps) {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const displayRating = rating != null ? rating.toFixed(1) : null
   const websiteHref = website
@@ -261,7 +263,7 @@ export default function SupplierSection({
                             </span>
                           </div>
                           <div className="supplier-tour-card-price">
-                            <span className="supplier-tour-card-from">from</span>
+                            <span className="supplier-tour-card-from">{t('common.from')}</span>
                             <span className="supplier-tour-card-amount">
                               {formatPrice(tour.price).formatted}
                             </span>

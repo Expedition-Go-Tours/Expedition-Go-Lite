@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import SectionHeading from './SectionHeading'
 import TourCard from './TourCard'
 import { lastMinuteDeals } from './data'
@@ -9,6 +10,7 @@ const GAP = 16
 const PAGE_WIDTH = (CARD_WIDTH + GAP) * 3
 
 export default function LastMinuteDealsSection() {
+  const { t } = useTranslation()
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
@@ -43,7 +45,7 @@ export default function LastMinuteDealsSection() {
       <div className="lastminute-container">
         <div className="lastminute-viewport">
           <SectionHeading
-            title="Last Minute Deals"
+            title={t('sections.lastMinuteDeals')}
             viewAllLink="/tours?section=Last Minute Deals"
             onScrollLeft={() => scroll('left')}
             onScrollRight={() => scroll('right')}
