@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, MapPin, Calendar, Users, Ticket, CreditCard, Mail, Phone, Info } from 'lucide-react'
-import { Button } from './ui/button'
+import { Button } from '../components/ui/button'
 import './BookingHistory.css'
 
 type BookingStatus = 'All' | 'Pending' | 'Completed' | 'Incomplete' | 'Cancelled' | 'Cancelling'

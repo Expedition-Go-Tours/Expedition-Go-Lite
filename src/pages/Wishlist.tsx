@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion'
-import { Button } from './ui/button'
+import { Button } from '../components/ui/button'
 import { useWishlist } from '../context/WishlistContext'
 import { useTranslation } from 'react-i18next'
 import './Wishlist.css'

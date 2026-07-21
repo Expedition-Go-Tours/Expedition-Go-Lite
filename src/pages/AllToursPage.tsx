@@ -9,11 +9,11 @@ import {
   getDurationHours,
   durationBuckets,
   priceRanges,
-} from './data'
+} from '../components/data'
 import { useTranslation } from 'react-i18next'
-import Navbar from './Navbar'
-import TourCard from './TourCard'
-import MultiDayCard from './MultiDayCard'
+import Navbar from '../components/Navbar'
+import TourCard from '../components/TourCard'
+import MultiDayCard from '../components/MultiDayCard'
 import './AllToursPage.css'
 
 const PRICE_MIN = Math.min(...allTours.map(t => parsePrice(t.price)))

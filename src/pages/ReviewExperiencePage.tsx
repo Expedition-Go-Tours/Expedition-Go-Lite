@@ -7,7 +7,7 @@ import { motion } from 'framer-motion'
 import { toast } from 'sonner'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
-import ReviewTourCard from '../components/tour-detail/ReviewTourCard'
+import ReviewTourCard from '../pages/tour-detail/ReviewTourCard'
 import { CalendarPicker } from '../components/ui/apple-calendar-picker'
 import './ReviewExperiencePage.css'
 

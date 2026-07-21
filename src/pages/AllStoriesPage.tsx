@@ -1,12 +1,12 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { Search } from 'lucide-react'
-import { travelStories, storySlug } from './data'
-import type { TravelStory } from './data'
+import { travelStories, storySlug } from '../components/data'
+import type { TravelStory } from '../components/data'
 import { useStorySearchAutocomplete } from '../hooks/useStorySearchAutocomplete'
 import type { StorySuggestion } from '../hooks/useStorySearchAutocomplete'
-import Navbar from './Navbar'
-import Footer from './Footer'
+import Navbar from '../components/Navbar'
+import Footer from '../components/Footer'
 import './AllStoriesPage.css'
 
 function StoryCard({ story }: { story: TravelStory }) {

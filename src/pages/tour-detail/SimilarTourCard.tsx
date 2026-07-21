@@ -2,8 +2,8 @@ import { MapPin, Star, Heart } from 'lucide-react'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
 import { useWishlist, toWishlistItem } from '../../context/WishlistContext'
-import { parsePrice, type Tour } from '../data'
-import FormattedPrice from '../FormattedPrice'
+import { parsePrice, type Tour } from '../../components/data'
+import FormattedPrice from '../../components/FormattedPrice'
 import './SimilarTourCard.css'
 
 interface SimilarTourCardProps extends Tour {

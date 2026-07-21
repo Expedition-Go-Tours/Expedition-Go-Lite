@@ -8,9 +8,9 @@ import { mockTourDetail, mockReviews } from '../../data/mockTourDetail'
 import {
   recommendedTours, dayTours, topRatedTours,
   sellOutTours, lastMinuteDeals, multiDayTours,
-} from '../data'
-import Navbar from '../Navbar'
-import Footer from '../Footer'
+} from '../../components/data'
+import Navbar from '../../components/Navbar'
+import Footer from '../../components/Footer'
 import { useContinuePlanning, toContinuePlanningItem } from '../../context/ContinuePlanningContext'
 import { useWishlist } from '../../context/WishlistContext'
 import { toast } from 'sonner'

@@ -2,7 +2,7 @@ import { useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import SimilarTourCard from './SimilarTourCard'
-import type { Tour } from '../data'
+import type { Tour } from '../../components/data'
 import './RelatedTours.css'
 
 interface RelatedToursProps {
