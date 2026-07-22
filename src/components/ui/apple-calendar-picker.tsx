@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion'
 
 const ChevronLeftIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -37,11 +38,14 @@ interface CalendarPickerProps {
 }
 
 export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate }: CalendarPickerProps) => {
-  const today = selectedDate || new Date()
-  const [currentYear, setCurrentYear] = useState(today.getFullYear())
-  const [currentMonth, setCurrentMonth] = useState(today.getMonth())
-  const [selectedDay, setSelectedDay] = useState(today.getDate())
+  const todayRef = useRef(new Date())
+  const today = todayRef.current
+  const defaultDate = selectedDate || today
+  const [currentYear, setCurrentYear] = useState(defaultDate.getFullYear())
+  const [currentMonth, setCurrentMonth] = useState(defaultDate.getMonth())
+  const [selectedDay, setSelectedDay] = useState(defaultDate.getDate())
   const [showDropdown, setShowDropdown] = useState(false)
+  const [direction, setDirection] = useState(0)
   const calendarRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -62,6 +66,7 @@ export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate }: 
   const firstDayIndex = getFirstDayOfMonth(currentYear, currentMonth)
 
   const prevMonth = () => {
+    setDirection(-1)
     if (currentMonth === 0) {
       setCurrentMonth(11)
       setCurrentYear(currentYear - 1)
@@ -71,6 +76,7 @@ export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate }: 
   }
 
   const nextMonth = () => {
+    setDirection(1)
     if (currentMonth === 11) {
       setCurrentMonth(0)
       setCurrentYear(currentYear + 1)
@@ -91,20 +97,34 @@ export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate }: 
       days.push(<div key={`empty-${i}`} className="w-9 h-9" />)
     }
     for (let day = 1; day <= daysInMonth; day++) {
-      const isSelected = day === selectedDay
-      days.push(
-        <button
-          key={`day-${day}`}
-          onClick={() => handleSelectDay(day)}
-          className={`w-9 h-9 text-[15px] font-medium rounded-full flex items-center justify-center transition-all focus:outline-none ${
-            isSelected
-              ? 'bg-[#179237] text-white font-semibold shadow-md scale-105 z-10'
-              : 'text-[#179237] hover:bg-black/5'
-          }`}
-        >
-          {day}
-        </button>
-      )
+      const date = new Date(currentYear, currentMonth, day)
+      const isPast = date.setHours(0,0,0,0) < todayRef.current.setHours(0,0,0,0)
+      const isSelected = day === selectedDay && !isPast
+
+      if (isPast) {
+        days.push(
+          <div
+            key={`day-${day}`}
+            className="w-9 h-9 text-[15px] font-medium rounded-full flex items-center justify-center text-gray-300 cursor-not-allowed"
+          >
+            {day}
+          </div>
+        )
+      } else {
+        days.push(
+          <button
+            key={`day-${day}`}
+            onClick={() => handleSelectDay(day)}
+            className={`w-9 h-9 text-[15px] font-medium rounded-full flex items-center justify-center transition-all focus:outline-none ${
+              isSelected
+                ? 'bg-[#179237] text-white font-semibold shadow-md scale-105 z-10'
+                : 'text-[#179237] hover:bg-black/5'
+            }`}
+          >
+            {day}
+          </button>
+        )
+      }
     }
     return days
   }
@@ -143,9 +163,26 @@ export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate }: 
       </div>
 
       {/* Days Grid + Month/Year Dropdown */}
-      <div className="relative h-[216px] mb-4">
-        <div className="grid grid-cols-7 gap-y-1 justify-items-center absolute w-full z-10">
-          {renderDays()}
+      <div className="relative h-[240px] mb-4">
+        <div className="absolute w-full z-10">
+          <AnimatePresence mode="wait" custom={direction}>
+            <motion.div
+              key={`${currentYear}-${currentMonth}`}
+              custom={direction}
+              variants={{
+                enter: (dir: number) => ({ x: dir * 40, opacity: 0 }),
+                center: { x: 0, opacity: 1 },
+                exit: (dir: number) => ({ x: dir * -40, opacity: 0 }),
+              }}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+              className="grid grid-cols-7 gap-y-1 justify-items-center"
+            >
+              {renderDays()}
+            </motion.div>
+          </AnimatePresence>
         </div>
 
         {showDropdown && (

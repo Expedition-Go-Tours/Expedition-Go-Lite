@@ -363,25 +363,36 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
         <div className="nav-icon-item nav-globe-trigger" ref={globeRef} onClick={() => setGlobeOpen(!globeOpen)}>
           <Globe size={20} />
           <span className="nav-icon-label">{currency.code}</span>
-          {globeOpen && (
-            <div className="nav-globe-dropdown">
-              <div className="nav-globe-section">
-                <span className="nav-globe-section-label">{t('nav.currency')}</span>
-                <div className="nav-globe-options">
+          <AnimatePresence>
+            {globeOpen && (
+              <motion.div
+                className="nav-globe-dropdown"
+                initial={{ opacity: 0, y: -6, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -6, scale: 0.97 }}
+                transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
+              >
+                <div className="nav-globe-header">
+                  <span>{t('nav.currency')}</span>
+                </div>
+                <div className="nav-globe-list">
                   {availableCurrencies.map((c) => (
                     <button
                       key={c.code}
-                      className={`nav-globe-option${currency.code === c.code ? ' active' : ''}`}
+                      className={`nav-globe-item${currency.code === c.code ? ' active' : ''}`}
                       onClick={() => { setAppCurrency(c.code); setGlobeOpen(false) }}
                     >
-                      <span className="nav-globe-currency-symbol">{c.symbol}</span>
-                      <span>{c.code}</span>
+                      <span className="nav-globe-item-symbol">{c.symbol}</span>
+                      <div className="nav-globe-item-info">
+                        <span className="nav-globe-item-code">{c.code}</span>
+                        <span className="nav-globe-item-label">{c.label}</span>
+                      </div>
                     </button>
                   ))}
                 </div>
-              </div>
-            </div>
-          )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         <div className="nav-icons">
@@ -587,15 +598,18 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
                 <ChevronDown size={16} className="nav-mobile-accordion-chevron" />
               </button>
               <div className={`nav-mobile-accordion-content${currencyAccordionOpen ? ' open' : ''}`}>
-                <div className="nav-mobile-flags">
+                <div className="nav-mobile-currency-list">
                   {availableCurrencies.map((c) => (
                     <button
                       key={c.code}
-                      className={`nav-mobile-flag-btn${currency.code === c.code ? ' active' : ''}`}
+                      className={`nav-mobile-currency-item${currency.code === c.code ? ' active' : ''}`}
                       onClick={() => setAppCurrency(c.code)}
                     >
-                      <span className="nav-currency-option-symbol">{c.symbol}</span>
-                      <span>{c.code}</span>
+                      <span className="nav-mobile-currency-symbol">{c.symbol}</span>
+                      <div className="nav-mobile-currency-info">
+                        <span className="nav-mobile-currency-code">{c.code}</span>
+                        <span className="nav-mobile-currency-label">{c.label}</span>
+                      </div>
                     </button>
                   ))}
                 </div>

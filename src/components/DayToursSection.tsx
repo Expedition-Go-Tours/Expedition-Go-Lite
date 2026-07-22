@@ -6,7 +6,6 @@ import './DayToursSection.css'
 
 const CARD_WIDTH = 295
 const GAP = 16
-const PAGE_WIDTH = (CARD_WIDTH + GAP) * 3
 
 export default function DayToursSection() {
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -25,8 +24,13 @@ export default function DayToursSection() {
   const scroll = (direction: 'left' | 'right') => {
     const el = scrollRef.current
     if (!el) return
-    const delta = direction === 'left' ? -PAGE_WIDTH : PAGE_WIDTH
-    el.scrollBy({ left: delta, behavior: 'smooth' })
+    const cardStep = CARD_WIDTH + GAP
+    const currentIndex = Math.round(el.scrollLeft / cardStep)
+    const maxIndex = Math.ceil(el.scrollWidth / cardStep) - 1
+    const targetIndex = direction === 'left'
+      ? Math.max(0, currentIndex - 3)
+      : Math.min(currentIndex + 3, maxIndex)
+    el.scrollTo({ left: targetIndex * cardStep, behavior: 'smooth' })
   }
 
   useEffect(() => {
@@ -52,11 +56,11 @@ export default function DayToursSection() {
           />
           <div className="daytours-clip">
             <div className="daytours-carousel" ref={scrollRef}>
-            {items.map((tour, i) => (
-              <div key={`${tour.title}-${i}`} className="daytours-card-wrap">
-                <TourCard {...tour} />
-              </div>
-            ))}
+              {items.map((tour, i) => (
+                <div key={`${tour.title}-${i}`} className="daytours-card-wrap">
+                  <TourCard {...tour} />
+                </div>
+              ))}
             </div>
           </div>
         </div>

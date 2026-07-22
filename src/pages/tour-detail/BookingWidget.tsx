@@ -329,8 +329,10 @@ export default function BookingWidget({ tour }: BookingWidgetProps) {
                 </svg>
                 Checking...
               </span>
-            ) : (
+            ) : isAvailable ? (
               t('tourDetail.bookNow')
+            ) : (
+              t('tourDetail.checkAvailability')
             )}
           </Button>
 

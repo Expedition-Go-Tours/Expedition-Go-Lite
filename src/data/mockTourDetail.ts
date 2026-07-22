@@ -13,11 +13,11 @@ export const mockTourDetail: TourDetail = {
   rating: 5,
   reviewCount: 3,
   images: [
-    'https://images.unsplash.com/photo-1523805009345-7448845a9e53?w=800',
-    'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=800',
-    'https://images.unsplash.com/photo-1580651315530-69c8e0026377?w=800',
-    'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800',
-    'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800',
+    '/images/tours/accra/1.webp',
+    '/images/tours/accra/2.webp',
+    '/images/tours/accra/3.webp',
+    '/images/tours/accra/4.webp',
+    '/images/tours/accra/5.webp',
   ],
   videoUrl: 'https://www.youtube.com/watch?v=AmZ0WrEaf34',
   description: `Eum eu sumo albucius perfecto, commodo torquatos consequuntur pro ut, id posse splendide ius. Cu nisl putent omittantur usu, mutat atomorum ex pro, ius nibh nonumy id. Nam at eius dissentias disputando, molestie mnesarchum complectitur per te. In commune pericula mediocritatem per. Cu audiam dolorum appareat per, id habeo suavitate argumentum vel. Te his eros ludus tibique.

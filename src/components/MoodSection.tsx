@@ -32,8 +32,13 @@ export default function MoodSection() {
   const scroll = (direction: 'left' | 'right') => {
     const el = scrollRef.current
     if (!el) return
-    const delta = direction === 'left' ? -(CARD_WIDTH + GAP) * 3 : (CARD_WIDTH + GAP) * 3
-    el.scrollBy({ left: delta, behavior: 'smooth' })
+    const cardStep = CARD_WIDTH + GAP
+    const currentIndex = Math.round(el.scrollLeft / cardStep)
+    const maxIndex = Math.ceil(el.scrollWidth / cardStep) - 1
+    const targetIndex = direction === 'left'
+      ? Math.max(0, currentIndex - 3)
+      : Math.min(currentIndex + 3, maxIndex)
+    el.scrollTo({ left: targetIndex * cardStep, behavior: 'smooth' })
   }
 
   useEffect(() => {
@@ -67,26 +72,26 @@ export default function MoodSection() {
 
           <div className="mood-clip">
             <div className="mood-carousel" ref={scrollRef}>
-              {items.map((cat, i) => (
-                <div key={`${cat.id}-${i}`} className="mood-card-wrap">
-                  <button
-                    className="mood-card"
-                    style={{ backgroundImage: `url(${cat.image})` }}
-                  >
-                    <span className="mood-tag">{cat.tag}</span>
-                    <span className="mood-count">{cat.count} tours</span>
-                    <div className="mood-gradient" />
-                    <div className="mood-footer">
-                      <h3 className="mood-card-title">{cat.title}</h3>
-                      <div className="mood-arrow-btn">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="9 18 15 12 9 6" />
-                        </svg>
+                {items.map((cat, i) => (
+                  <div key={`${cat.id}-${i}`} className="mood-card-wrap">
+                    <button
+                      className="mood-card"
+                      style={{ backgroundImage: `url(${cat.image})` }}
+                    >
+                      <span className="mood-tag">{cat.tag}</span>
+                      <span className="mood-count">{cat.count} tours</span>
+                      <div className="mood-gradient" />
+                      <div className="mood-footer">
+                        <h3 className="mood-card-title">{cat.title}</h3>
+                        <div className="mood-arrow-btn">
+                          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="9 18 15 12 9 6" />
+                          </svg>
+                        </div>
                       </div>
-                    </div>
-                  </button>
-                </div>
-              ))}
+                    </button>
+                  </div>
+                ))}
             </div>
           </div>
         </div>

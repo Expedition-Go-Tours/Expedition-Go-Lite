@@ -84,9 +84,9 @@ export default function TravelStoriesSection() {
           />
           <div className="stories-clip">
             <div className="stories-carousel" ref={scrollRef}>
-              {travelStories.map((story, i) => (
-                <StoryCard key={`${story.title}-${i}`} story={story} />
-              ))}
+                {travelStories.map((story, i) => (
+                  <StoryCard key={`${story.title}-${i}`} story={story} />
+                ))}
             </div>
           </div>
         </div>

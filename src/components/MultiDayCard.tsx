@@ -1,15 +1,29 @@
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
 import { parsePrice, type MultiDayTour } from './data'
 import './MultiDayCard.css'
 import { useWishlist, toWishlistItem } from '../context/WishlistContext'
+import { getTourImage } from '../lib/tourImages'
 import FormattedPrice from './FormattedPrice'
+
+function hashStr(s: string): number {
+  let hash = 0
+  for (let i = 0; i < s.length; i++) {
+    hash = ((hash << 5) - hash) + s.charCodeAt(i)
+    hash |= 0
+  }
+  return Math.abs(hash)
+}
 
 interface MultiDayCardProps extends MultiDayTour {}
 
 export default function MultiDayCard({ title, days, accommodation, highlights, price, rating, reviews, location, image }: MultiDayCardProps) {
   const { t } = useTranslation()
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist()
+  const fallback = getTourImage(location, (hashStr(title) % 6) + 1)
+  const [src, setSrc] = useState(image)
   const item = toWishlistItem({ title, days, accommodation, highlights, price, rating: String(rating), reviews, location, image } as unknown as MultiDayTour)
   const inWishlist = isInWishlist(item.id)
 
@@ -31,9 +45,9 @@ export default function MultiDayCard({ title, days, accommodation, highlights, p
   const tourSlug = generateSlug(title)
 
   return (
-    <a href={`/tour/${tourSlug}`} className="multiday-card">
+    <Link to={`/tour/${tourSlug}`} className="multiday-card">
       <div className="multiday-card-image">
-        <img src={image} alt={title} loading="lazy" />
+        <img src={src} alt={title} loading="lazy" onError={() => setSrc(fallback)} />
         <div className="multiday-card-image-fade" />
         <span className="multiday-card-days">{days}</span>
         <button className="multiday-card-wishlist" onClick={handleWishlist} aria-label={inWishlist ? 'Remove from wishlist' : 'Add to wishlist'}>
@@ -77,6 +91,6 @@ export default function MultiDayCard({ title, days, accommodation, highlights, p
           </div>
         </div>
       </div>
-    </a>
+    </Link>
   )
 }

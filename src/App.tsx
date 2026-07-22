@@ -11,6 +11,22 @@ import AllToursPage from './pages/AllToursPage'
 import AllStoriesPage from './pages/AllStoriesPage'
 import StoryDetailPage from './pages/StoryDetailPage'
 import SplashScreen from './components/SplashScreen'
+import ContinuePlanningSection from './components/ContinuePlanningSection'
+import MoodSection from './components/MoodSection'
+import RecommendSection from './components/RecommendSection'
+import PopularLocations from './components/PopularLocations'
+import DayToursSection from './components/DayToursSection'
+import MultiDayToursSection from './components/MultiDayToursSection'
+import TopRatedSection from './components/TopRatedSection'
+import SellOutSection from './components/SellOutSection'
+import LastMinuteDealsSection from './components/LastMinuteDealsSection'
+import CustomReviewsSection from './components/CustomReviewsSection'
+import PartnersSection from './components/PartnersSection'
+import WhyBookSection from './components/WhyBookSection'
+import TravelStoriesSection from './components/TravelStoriesSection'
+import NewsletterSection from './components/NewsletterSection'
+import Footer from './components/Footer'
+import MountOnView from './components/MountOnView'
 import ReviewExperiencePage from './pages/ReviewExperiencePage'
 import SupplierPage from './pages/SupplierPage'
 import BookingPage from './pages/BookingPage'
@@ -18,7 +34,7 @@ import { WishlistProvider } from './context/WishlistContext'
 import { ContinuePlanningProvider } from './context/ContinuePlanningContext'
 import SupportChatWidget from './components/SupportChatWidget'
 import { subscribeToAuthState, handleGoogleCallback } from './lib/auth'
-import LazySection from './components/LazySection'
+
 
 type PageView = 'home' | 'signin' | 'signup'
 
@@ -27,21 +43,21 @@ function HomePage({ onOpenAuth }: any) {
     <>
       <Navbar onOpenAuth={onOpenAuth} />
       <Hero />
-      <LazySection load={() => import('./components/ContinuePlanningSection')} />
-      <LazySection load={() => import('./components/MoodSection')} />
-      <LazySection load={() => import('./components/RecommendSection')} />
-      <LazySection load={() => import('./components/PopularLocations')} />
-      <LazySection load={() => import('./components/DayToursSection')} />
-      <LazySection load={() => import('./components/MultiDayToursSection')} />
-      <LazySection load={() => import('./components/TopRatedSection')} />
-      <LazySection load={() => import('./components/SellOutSection')} />
-      <LazySection load={() => import('./components/LastMinuteDealsSection')} />
-      <LazySection load={() => import('./components/CustomReviewsSection')} />
-      <LazySection load={() => import('./components/PartnersSection')} />
-      <LazySection load={() => import('./components/WhyBookSection')} />
-      <LazySection load={() => import('./components/TravelStoriesSection')} />
-      <LazySection load={() => import('./components/NewsletterSection')} />
-      <LazySection load={() => import('./components/Footer')} />
+      <ContinuePlanningSection />
+      <MoodSection />
+      <RecommendSection />
+      <PopularLocations />
+      <MountOnView><DayToursSection /></MountOnView>
+      <MountOnView><MultiDayToursSection /></MountOnView>
+      <MountOnView><TopRatedSection /></MountOnView>
+      <MountOnView><SellOutSection /></MountOnView>
+      <MountOnView><LastMinuteDealsSection /></MountOnView>
+      <MountOnView><CustomReviewsSection /></MountOnView>
+      <MountOnView><PartnersSection /></MountOnView>
+      <MountOnView><WhyBookSection /></MountOnView>
+      <MountOnView><TravelStoriesSection /></MountOnView>
+      <MountOnView><NewsletterSection /></MountOnView>
+      <Footer />
     </>
   )
 }

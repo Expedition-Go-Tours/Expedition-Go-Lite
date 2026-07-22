@@ -1,19 +1,38 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '../components/ui/button'
-import { useWishlist } from '../context/WishlistContext'
+import { useWishlist, type WishlistItem } from '../context/WishlistContext'
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router-dom'
 import './Wishlist.css'
 
 export default function Wishlist() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const { wishlist: wishlistItems, removeFromWishlist } = useWishlist()
 
   const handleRemove = (id: string) => {
     removeFromWishlist(id)
   }
 
-  const handleBookNow = (_id: string) => {
-    // Navigate to booking page or open booking modal
+  const handleBookNow = (item: WishlistItem) => {
+    navigate('/booking', {
+      state: {
+        tour: {
+          title: item.title,
+          image: item.imageUrl,
+          provider: 'Expedition GO Tours',
+          rating: item.rating,
+          reviews: item.reviewCount,
+          date: 'Select date',
+          time: '9:00 AM',
+          duration: item.duration,
+          travelers: '1 adult',
+          price: item.price,
+          cancellation: 'Free cancellation up to 24 hours before',
+          language: 'English',
+        },
+      },
+    })
   }
 
   return (
@@ -188,7 +207,7 @@ export default function Wishlist() {
                         Added {new Date(item.addedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                       </span>
                       <Button
-                        onClick={() => handleBookNow(item.id)}
+                        onClick={() => handleBookNow(item)}
                         className="wishlist-book-btn"
                         size="sm"
                       >

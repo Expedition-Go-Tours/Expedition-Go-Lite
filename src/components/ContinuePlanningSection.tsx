@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import SectionHeading from './SectionHeading'
 import { useContinuePlanning } from '../context/ContinuePlanningContext'
 import FormattedPrice from './FormattedPrice'
+import { getTourImage } from '../lib/tourImages'
 import './ContinuePlanningSection.css'
 
 const CARD_WIDTH = 440
@@ -12,6 +13,15 @@ const PAGE_WIDTH = (CARD_WIDTH + GAP) * 3
 
 function toSlug(title: string): string {
   return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+}
+
+function hashStr(s: string): number {
+  let hash = 0
+  for (let i = 0; i < s.length; i++) {
+    hash = ((hash << 5) - hash) + s.charCodeAt(i)
+    hash |= 0
+  }
+  return Math.abs(hash)
 }
 
 function StarRating({ rating }: { rating: number }) {
@@ -58,8 +68,13 @@ export default function ContinuePlanningSection() {
   const scroll = (direction: 'left' | 'right') => {
     const el = scrollRef.current
     if (!el) return
-    const delta = direction === 'left' ? -PAGE_WIDTH : PAGE_WIDTH
-    el.scrollBy({ left: delta, behavior: 'smooth' })
+    const cardStep = CARD_WIDTH + GAP
+    const currentIndex = Math.round(el.scrollLeft / cardStep)
+    const maxIndex = Math.ceil(el.scrollWidth / cardStep) - 1
+    const targetIndex = direction === 'left'
+      ? Math.max(0, currentIndex - 3)
+      : Math.min(currentIndex + 3, maxIndex)
+    el.scrollTo({ left: targetIndex * cardStep, behavior: 'smooth' })
   }
 
   useEffect(() => {
@@ -97,7 +112,17 @@ export default function ContinuePlanningSection() {
                     onClick={() => navigate(`/tour/${toSlug(item.title)}`)}
                   >
                     <div className="cp-card-image">
-                      <img src={item.imageUrl} alt={item.title} loading="lazy" />
+                      <img
+                        src={item.imageUrl}
+                        alt={item.title}
+                        loading="lazy"
+                        onError={(e) => {
+                          if (!e.currentTarget.dataset.fellback) {
+                            e.currentTarget.dataset.fellback = '1'
+                            e.currentTarget.src = getTourImage(item.location, (hashStr(item.title) % 6) + 1)
+                          }
+                        }}
+                      />
                     </div>
                     <div className="cp-card-body">
                       <h3 className="cp-card-title">{item.title}</h3>
