@@ -61,12 +61,12 @@ const containerVariants = {
 
 const itemVariants = {
   hidden: { opacity: 0, y: 16 },
-  visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 100, damping: 20 } },
+  visible: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 100, damping: 20 } },
 }
 
 const stepContentVariants = {
   hidden: { opacity: 0, y: 12 },
-  visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 120, damping: 18 } },
+  visible: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 120, damping: 18 } },
   exit: { opacity: 0, y: -8, transition: { duration: 0.12 } },
 }
 
@@ -118,12 +118,12 @@ function HoldTimer() {
 
 /* ─── Step wrapper ─── */
 
-function StepCard({ children, isActive }: { children: React.ReactNode; isActive: boolean }) {
+function StepCard({ children }: { children: React.ReactNode }) {
   return (
     <motion.div
       layout
       className="overflow-hidden rounded-[1.75rem] border border-slate-200/40 bg-white shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)]"
-      transition={{ type: 'spring', stiffness: 120, damping: 18 }}
+      transition={{ type: 'spring' as const, stiffness: 120, damping: 18 }}
     >
       {children}
     </motion.div>
@@ -153,7 +153,7 @@ function ContactDetailsStep({
       : undefined
 
   return (
-    <StepCard isActive={isActive}>
+    <StepCard>
       <div className="border-b border-slate-100/60 px-7 py-6 sm:px-9">
         <div className="flex items-start gap-4">
           <StepBadge number={1} active={isActive} completed={isCompleted} />
@@ -312,7 +312,7 @@ function ActivityDetailsStep({
   )
 
   return (
-    <StepCard isActive={isActive}>
+    <StepCard>
       <div className="border-b border-slate-100/60 px-7 py-6 sm:px-9">
         <div className="flex items-start gap-4">
           <StepBadge number={2} active={isActive} completed={isCompleted} />
@@ -439,7 +439,7 @@ function PaymentDetailsStep({
   )
 
   return (
-    <StepCard isActive={isActive}>
+    <StepCard>
       <div className="border-b border-slate-100/60 px-7 py-6 sm:px-9">
         <div className="flex items-start gap-4">
           <StepBadge number={3} active={isActive} completed={isCompleted} />
@@ -654,7 +654,7 @@ function BookingSidebar({
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ type: 'spring', stiffness: 100, damping: 20 }}
+          transition={{ type: 'spring' as const, stiffness: 100, damping: 20 }}
           className="rounded-[1.75rem] border border-slate-200/40 bg-white p-5 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)]"
         >
           <p className="text-xs font-semibold text-slate-400 mb-3 uppercase tracking-wide">Contact Details</p>
@@ -673,7 +673,7 @@ function BookingSidebar({
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ type: 'spring', stiffness: 100, damping: 20 }}
+          transition={{ type: 'spring' as const, stiffness: 100, damping: 20 }}
           className="rounded-[1.75rem] border border-slate-200/40 bg-white p-5 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)]"
         >
           <p className="text-xs font-semibold text-slate-400 mb-3 uppercase tracking-wide">Lead Traveler</p>
@@ -690,7 +690,7 @@ function BookingSidebar({
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ type: 'spring', stiffness: 100, damping: 20 }}
+          transition={{ type: 'spring' as const, stiffness: 100, damping: 20 }}
           className="rounded-[1.75rem] border border-slate-200/40 bg-white p-5 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)]"
         >
           <p className="mb-3 text-sm font-semibold text-slate-800">Promo Code</p>
@@ -716,7 +716,7 @@ function BookingSidebar({
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ type: 'spring', stiffness: 100, damping: 20 }}
+          transition={{ type: 'spring' as const, stiffness: 100, damping: 20 }}
           className="rounded-[1.75rem] border border-slate-200/40 bg-white p-5 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)]"
         >
           <div className="flex items-center justify-between">

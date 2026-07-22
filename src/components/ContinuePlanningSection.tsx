@@ -9,7 +9,6 @@ import './ContinuePlanningSection.css'
 
 const CARD_WIDTH = 440
 const GAP = 16
-const PAGE_WIDTH = (CARD_WIDTH + GAP) * 3
 
 function toSlug(title: string): string {
   return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
