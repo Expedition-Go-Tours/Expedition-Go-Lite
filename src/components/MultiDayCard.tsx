@@ -1,14 +1,14 @@
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
-import { parsePrice, type MultiDayTour } from './data'
+import { parsePrice, getTourSlug, type MultiDayTour } from './data'
 import './MultiDayCard.css'
 import { useWishlist, toWishlistItem } from '../context/WishlistContext'
 import FormattedPrice from './FormattedPrice'
 
 interface MultiDayCardProps extends MultiDayTour {}
 
-export default function MultiDayCard({ title, days, accommodation, highlights, price, rating, reviews, location, image }: MultiDayCardProps) {
+export default function MultiDayCard({ title, days, accommodation, highlights, price, rating, reviews, location, image, source, externalUrl }: MultiDayCardProps) {
   const { t } = useTranslation()
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist()
   const item = toWishlistItem({ title, days, accommodation, highlights, price, rating: String(rating), reviews, location, image } as unknown as MultiDayTour)
@@ -25,15 +25,25 @@ export default function MultiDayCard({ title, days, accommodation, highlights, p
     }
   }
 
-  const generateSlug = (t: string): string => {
-    return t.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
-  }
+  const isExternal = !!externalUrl
+  const tourSlug = getTourSlug(title)
 
-  const tourSlug = generateSlug(title)
+  const CardLink = isExternal
+    ? ({ children, className }: { children: React.ReactNode; className?: string }) => (
+        <a href={externalUrl} target="_blank" rel="noopener noreferrer" className={className}>{children}</a>
+      )
+    : ({ children, className }: { children: React.ReactNode; className?: string }) => (
+        <Link to={`/tour/${tourSlug}`} target="_blank" rel="noopener noreferrer" className={className}>{children}</Link>
+      )
 
   return (
-    <Link to={`/tour/${tourSlug}`} target="_blank" rel="noopener noreferrer" className="multiday-card">
+    <CardLink className="multiday-card">
       <div className="multiday-card-image">
+        {source === 'travio-africa' && (
+          <div className="source-badge">
+            <img src="/travio_logo.png" alt="Travio Africa" />
+          </div>
+        )}
         <img src={image} alt={title} loading="lazy" />
         <div className="multiday-card-image-fade" />
         <span className="multiday-card-days">{days}</span>
@@ -78,6 +88,7 @@ export default function MultiDayCard({ title, days, accommodation, highlights, p
           </div>
         </div>
       </div>
-    </Link>
+    </CardLink>
   )
 }
+

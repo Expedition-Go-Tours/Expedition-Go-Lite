@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Toaster } from 'sonner'
 import Navbar from './components/Navbar'
@@ -98,6 +98,8 @@ function AppContent() {
     setCurrentPage(mode)
   }
   const handleGoHome = () => setCurrentPage('home')
+  const location = useLocation()
+  const hideNav = location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/booking')
 
   return (
     <>
@@ -115,7 +117,7 @@ function AppContent() {
       </AnimatePresence>
 
       <Toaster position="top-center" duration={2500} closeButton />
-      <Navbar onOpenAuth={handleOpenAuth} />
+      {!hideNav && <Navbar onOpenAuth={handleOpenAuth} />}
       <SupportChatWidget />
       <Routes>
         <Route path="/dashboard/*" element={<DashboardLayout />} />

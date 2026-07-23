@@ -10,6 +10,12 @@ export interface Tour {
   image: string
   discount?: string
   languages?: string[]
+  source?: 'expedition-go' | 'travio-africa'
+  externalUrl?: string
+}
+
+export function getTourSlug(title: string): string {
+  return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 }
 
 const recommendedTours: Tour[] = [
@@ -310,6 +316,34 @@ const dayTours: Tour[] = [
     location: 'Ada Foah, Ghana',
     image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400&q=80',
   },
+  {
+    title: 'Accra Street Food & Nightlife Tour',
+    category: 'Accra · Food',
+    duration: '4 hours',
+    features: 'Tastings · Guide · Drinks',
+    price: '$45',
+    rating: '4.8',
+    reviews: 23,
+    location: 'Accra, Ghana',
+    image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&q=80',
+    languages: ['English'],
+    source: 'travio-africa',
+    externalUrl: 'https://travioafrica.com/tour/accra-street-food',
+  },
+  {
+    title: 'Boti Falls & Aburi Botanical Gardens Day Trip',
+    category: 'Eastern · Nature',
+    duration: '7 hours',
+    features: 'Guide · Lunch · Entry fees',
+    price: '$55',
+    rating: '4.7',
+    reviews: 18,
+    location: 'Eastern Region, Ghana',
+    image: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&q=80',
+    languages: ['English'],
+    source: 'travio-africa',
+    externalUrl: 'https://travioafrica.com/tour/boti-falls-aburi',
+  },
 ]
 
 export interface MultiDayTour {
@@ -323,6 +357,8 @@ export interface MultiDayTour {
   location: string
   image: string
   languages?: string[]
+  source?: 'expedition-go' | 'travio-africa'
+  externalUrl?: string
 }
 
 const multiDayTours: MultiDayTour[] = [
@@ -438,6 +474,32 @@ const multiDayTours: MultiDayTour[] = [
     location: 'Central Region, Ghana',
     image: 'https://images.unsplash.com/photo-1516426122078-c23e76319801?w=400&q=80',
   },
+  {
+    title: 'Ghana Discovery: Coast, Culture & Wildlife',
+    days: '7 days',
+    accommodation: 'Hotels & Lodges',
+    highlights: 'Cape Coast · Kakum · Kumasi · Mole Park',
+    price: '$950',
+    rating: '4.9',
+    reviews: 45,
+    location: 'Ghana',
+    image: 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=400&q=80',
+    source: 'travio-africa',
+    externalUrl: 'https://travioafrica.com/tour/ghana-discovery',
+  },
+  {
+    title: 'Eastern Region Waterfalls & Mountain Hike',
+    days: '3 days',
+    accommodation: 'Eco Lodge',
+    highlights: 'Boti Falls · Akwapim Ridge · Tetteh Quarshie',
+    price: '$280',
+    rating: '4.7',
+    reviews: 22,
+    location: 'Eastern Region, Ghana',
+    image: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=400&q=80',
+    source: 'travio-africa',
+    externalUrl: 'https://travioafrica.com/tour/eastern-waterfalls',
+  },
 ]
 
 const topRatedTours: Tour[] = [
@@ -551,6 +613,20 @@ const topRatedTours: Tour[] = [
     reviews: 310,
     location: 'Accra, Ghana',
     image: 'https://images.unsplash.com/photo-1591843336309-cbfcbad9b118?w=400&q=80',
+  },
+  {
+    title: 'Cape Coast Castle & Kakum National Park Premium Tour',
+    category: 'Cape Coast · Premium',
+    duration: 'Full day',
+    features: 'Guide · Lunch · Entry fees · Transport',
+    price: '$85',
+    rating: '4.9',
+    reviews: 56,
+    location: 'Cape Coast, Ghana',
+    image: 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?w=400&q=80',
+    languages: ['English'],
+    source: 'travio-africa',
+    externalUrl: 'https://travioafrica.com/tour/cape-coast-premium',
   },
 ]
 
@@ -800,6 +876,79 @@ const lastMinuteDeals: Tour[] = [
   },
 ]
 
+const travioTours: Tour[] = [
+  {
+    title: 'Accra City Highlights & Local Market Tour',
+    category: 'Accra · Guided tour',
+    duration: '4 hours',
+    features: 'Guide · Tastings · Hotel pickup',
+    price: '$65',
+    rating: '4.7',
+    reviews: 34,
+    location: 'Accra, Ghana',
+    image: 'https://images.unsplash.com/photo-1590868169155-f1a0c43106ef?w=400&q=80',
+    languages: ['English'],
+    source: 'travio-africa',
+    externalUrl: 'https://travioafrica.com/tour/accra-city-highlights',
+  },
+  {
+    title: 'Kumasi Cultural Walk & Ashanti Heritage Tour',
+    category: 'Kumasi · Cultural',
+    duration: '6 hours',
+    features: 'Guide · Entry fees · Lunch',
+    price: '$55',
+    rating: '4.9',
+    reviews: 28,
+    location: 'Kumasi, Ghana',
+    image: 'https://images.unsplash.com/photo-1516426122078-c23e76319801?w=400&q=80',
+    languages: ['English', 'French'],
+    source: 'travio-africa',
+    externalUrl: 'https://travioafrica.com/tour/kumasi-cultural-walk',
+  },
+  {
+    title: 'Mole National Park Safari & Wildlife Experience',
+    category: 'Northern · Safari',
+    duration: '2 days',
+    features: 'Guide · Accommodation · Meals',
+    price: '$180',
+    rating: '4.8',
+    reviews: 19,
+    location: 'Northern Region, Ghana',
+    image: 'https://images.unsplash.com/photo-1549366021-9f761d450615?w=400&q=80',
+    languages: ['English'],
+    source: 'travio-africa',
+    externalUrl: 'https://travioafrica.com/tour/mole-national-park',
+  },
+  {
+    title: 'Ada Foah Water Sports & Boat Cruise',
+    category: 'Greater Accra · Adventure',
+    duration: 'Full day',
+    features: 'Lunch · Drinks · Equipment',
+    price: '$75',
+    rating: '4.6',
+    reviews: 42,
+    location: 'Ada Foah, Ghana',
+    image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400&q=80',
+    languages: ['English'],
+    source: 'travio-africa',
+    externalUrl: 'https://travioafrica.com/tour/ada-foah-cruise',
+  },
+  {
+    title: 'Volta Region Waterfalls & Scenic Hike',
+    category: 'Volta · Nature',
+    duration: '8 hours',
+    features: 'Guide · Lunch · Park fees',
+    price: '$60',
+    rating: '4.7',
+    reviews: 15,
+    location: 'Volta Region, Ghana',
+    image: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&q=80',
+    languages: ['English', 'French'],
+    source: 'travio-africa',
+    externalUrl: 'https://travioafrica.com/tour/volta-waterfalls',
+  },
+]
+
 export interface Review {
   name: string
   avatar: string
@@ -1027,4 +1176,4 @@ export const priceRanges = [
   { value: 'over-200', label: '$200+', match: (p: number) => p > 200 },
 ]
 
-export { recommendedTours, destinations, dayTours, multiDayTours, topRatedTours, sellOutTours, lastMinuteDeals, reviews, travelStories }
+export { recommendedTours, destinations, dayTours, multiDayTours, topRatedTours, sellOutTours, lastMinuteDeals, travioTours, reviews, travelStories }

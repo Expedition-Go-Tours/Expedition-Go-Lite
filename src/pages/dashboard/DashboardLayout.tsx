@@ -80,7 +80,7 @@ function Sidebar() {
           <div className={`${isCollapsed ? "flex flex-col items-center gap-2" : "flex flex-col items-center gap-1.5"}`}>
             <div className={`rounded-full overflow-hidden bg-white/15 ring-2 ring-white/20 shrink-0 flex items-center justify-center ${isCollapsed ? "w-10 h-10" : "w-[52px] h-[52px]"}`}>
               {user?.photoURL ? (
-                <img src={user.photoURL} alt="" className="w-full h-full object-cover" />
+                <img src={user.photoURL} alt="" className="w-full h-full object-cover object-center" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
               ) : (
                 <span className="text-lg font-bold text-white">
                   {(user?.name || "U").charAt(0).toUpperCase()}

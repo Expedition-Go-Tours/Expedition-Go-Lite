@@ -3,7 +3,7 @@ import { MapPin, Star, Heart } from 'lucide-react'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
 import { useWishlist, toWishlistItem } from '../../context/WishlistContext'
-import { parsePrice, type Tour } from '../../components/data'
+import { parsePrice, getTourSlug, type Tour } from '../../components/data'
 import FormattedPrice from '../../components/FormattedPrice'
 import './SimilarTourCard.css'
 
@@ -19,7 +19,9 @@ export default function SimilarTourCard({
   rating, 
   reviews, 
   location, 
-  image 
+  image,
+  source,
+  externalUrl,
 }: SimilarTourCardProps) {
   const { t } = useTranslation()
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist()
@@ -37,18 +39,25 @@ export default function SimilarTourCard({
     }
   }
 
-  const generateSlug = (title: string): string => {
-    return title
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '')
-  }
+  const isExternal = !!externalUrl
+  const tourSlug = getTourSlug(title)
 
-  const tourSlug = generateSlug(title)
+  const CardLink = isExternal
+    ? ({ children, className }: { children: React.ReactNode; className?: string }) => (
+        <a href={externalUrl} target="_blank" rel="noopener noreferrer" className={className}>{children}</a>
+      )
+    : ({ children, className }: { children: React.ReactNode; className?: string }) => (
+        <Link to={`/tour/${tourSlug}`} target="_blank" rel="noopener noreferrer" className={className}>{children}</Link>
+      )
 
   return (
-    <Link to={`/tour/${tourSlug}`} target="_blank" rel="noopener noreferrer" className="similar-tour-card">
+    <CardLink className="similar-tour-card">
       <div className="similar-tour-image">
+        {source === 'travio-africa' && (
+          <div className="source-badge">
+            <img src="/travio_logo.png" alt="Travio Africa" />
+          </div>
+        )}
         <img src={image} alt={title} loading="lazy" />
         <div className="similar-tour-overlay" />
         <button 
@@ -91,6 +100,6 @@ export default function SimilarTourCard({
           </div>
         </div>
       </div>
-    </Link>
+    </CardLink>
   )
 }
