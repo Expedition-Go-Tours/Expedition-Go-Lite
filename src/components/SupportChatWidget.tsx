@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import {
   MessageCircle, X, Send, ChevronLeft, ChevronRight,
   Phone, Mail, Clock, Headphones, CheckCheck,
@@ -31,6 +32,7 @@ const SUPPORT_HOURS = [
 ];
 
 export default function SupportChatWidget() {
+  const { t } = useTranslation();
   const location = useLocation();
   const isPublicPage = !location.pathname.startsWith("/dashboard") && !location.pathname.startsWith("/review");
 
@@ -178,13 +180,13 @@ export default function SupportChatWidget() {
       <button
         onClick={openWidget}
         className={`support-chat-btn ${isOpen ? "hidden" : ""}`}
-        aria-label="Open chat"
+        aria-label={t('supportChat.openChat')}
       >
         <span className="support-chat-btn-content">
           <span className="support-chat-btn-inner">
             <MessageCircle className="support-chat-btn-icon" />
           </span>
-          <span className="support-chat-btn-text">Need help?</span>
+          <span className="support-chat-btn-text">{t('supportChat.needHelp')}</span>
         </span>
         {unread > 0 && (
           <span className="support-chat-badge">{unread > 99 ? "99+" : unread}</span>
@@ -228,15 +230,15 @@ export default function SupportChatWidget() {
                     <Headphones size={16} />
                   </div>
                   <div className="support-chat-header-info">
-                    <p className="support-chat-header-title">Admin Support</p>
+                    <p className="support-chat-header-title">{t('supportChat.adminSupport')}</p>
                     <p className="support-chat-header-sub">
                       {view === "chat" ? (
                         <span className="support-chat-online">
                           <span className="support-chat-online-dot" />
-                          Online
+                          {t('supportChat.online')}
                         </span>
                       ) : (
-                        "Typically replies in minutes"
+                        t('supportChat.typicalReply')
                       )}
                     </p>
                   </div>
@@ -261,9 +263,9 @@ export default function SupportChatWidget() {
                       <div className="support-chat-welcome-icon">
                         <MessageCircle size={28} />
                       </div>
-                      <h3 className="support-chat-welcome-title">Hi! Welcome to Expedition Go</h3>
+                      <h3 className="support-chat-welcome-title">{t('supportChat.welcomeTitle')}</h3>
                       <p className="support-chat-welcome-text">
-                        We're here to help. Choose an option below or send us a message.
+                        {t('supportChat.welcomeText')}
                       </p>
                       <div className="support-chat-options">
                         <button
@@ -274,8 +276,8 @@ export default function SupportChatWidget() {
                             <Phone size={16} />
                           </div>
                           <div className="support-chat-option-text">
-                            <p className="support-chat-option-title">Contact Us</p>
-                            <p className="support-chat-option-sub">Call or email our support team</p>
+                            <p className="support-chat-option-title">{t('supportChat.contactUs')}</p>
+                            <p className="support-chat-option-sub">{t('supportChat.contactUsSub')}</p>
                           </div>
                           <ChevronRight size={16} className="support-chat-option-arrow" />
                         </button>
@@ -287,8 +289,8 @@ export default function SupportChatWidget() {
                             <MessageCircle size={16} />
                           </div>
                           <div className="support-chat-option-text">
-                            <p className="support-chat-option-title">Chat with us</p>
-                            <p className="support-chat-option-sub">Send a message in real-time</p>
+                            <p className="support-chat-option-title">{t('supportChat.chatWithUs')}</p>
+                            <p className="support-chat-option-sub">{t('supportChat.chatWithUsSub')}</p>
                           </div>
                           <ChevronRight size={16} className="support-chat-option-arrow" />
                         </button>
@@ -311,9 +313,9 @@ export default function SupportChatWidget() {
                         <div className="support-chat-contact-icon">
                           <Headphones size={24} />
                         </div>
-                        <h3 className="support-chat-contact-title">Get in Touch</h3>
+                        <h3 className="support-chat-contact-title">{t('supportChat.getInTouch')}</h3>
                         <p className="support-chat-contact-text">
-                          We aim to respond within 2 hours during business hours
+                          {t('supportChat.getInTouchSub')}
                         </p>
                       </div>
                       <a href={`tel:${SUPPORT_PHONE.replace(/\s/g, "")}`} className="support-chat-contact-item">
@@ -321,25 +323,25 @@ export default function SupportChatWidget() {
                           <Phone size={15} />
                         </div>
                         <div className="support-chat-contact-item-text">
-                          <p className="support-chat-contact-item-label">Call us</p>
+                          <p className="support-chat-contact-item-label">{t('supportChat.callUs')}</p>
                           <p className="support-chat-contact-item-value">{SUPPORT_PHONE}</p>
                         </div>
-                        <span className="support-chat-contact-item-action">Call</span>
+                        <span className="support-chat-contact-item-action">{t('supportChat.call')}</span>
                       </a>
                       <a href={`mailto:${SUPPORT_EMAIL}`} className="support-chat-contact-item">
                         <div className="support-chat-contact-item-icon email">
                           <Mail size={15} />
                         </div>
                         <div className="support-chat-contact-item-text">
-                          <p className="support-chat-contact-item-label">Email us</p>
+                          <p className="support-chat-contact-item-label">{t('supportChat.emailUs')}</p>
                           <p className="support-chat-contact-item-value">{SUPPORT_EMAIL}</p>
                         </div>
-                        <span className="support-chat-contact-item-action">Email</span>
+                        <span className="support-chat-contact-item-action">{t('supportChat.email')}</span>
                       </a>
                       <div className="support-chat-hours">
                         <div className="support-chat-hours-header">
                           <Clock size={14} />
-                          <span>Business Hours</span>
+                          <span>{t('supportChat.businessHours')}</span>
                         </div>
                         {SUPPORT_HOURS.map((item) => (
                           <div key={item.label} className="support-chat-hours-row">
@@ -439,7 +441,7 @@ export default function SupportChatWidget() {
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={handleKeyDown}
-                        placeholder="Type a message..."
+                        placeholder={t('supportChat.typeMessage')}
                         rows={1}
                         className="support-chat-input"
                       />

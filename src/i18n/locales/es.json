@@ -21,10 +21,23 @@
   },
   "common": {
     "back": "Atrás",
+    "close": "Cerrar",
     "destinations": "Destinos",
     "duration": "Duración",
     "from": "Desde",
-    "rating": "Valoración"
+    "rating": "Valoración",
+    "scrollLeft": "Desplazar a la izquierda",
+    "scrollRight": "Desplazar a la derecha"
+  },
+  "destinations": {
+    "allRegions": "Todas las regiones",
+    "destination": "destino",
+    "destinations": "destinos",
+    "explore": "Explorar",
+    "noResults": "Ningún destino ghanés coincide con tu búsqueda.",
+    "popular": "Destinos populares",
+    "subtitle": "Descubre destinos increíbles en todo el país",
+    "title": "Explorar Ghana"
   },
   "features": {
     "whyBookHeading": "Por Qué Reservar Con Nosotros",
@@ -37,16 +50,26 @@
     "whyBookVerifiedDesc": "Todos los tours son cuidadosamente evaluados",
     "whyBookVerifiedTitle": "Tours Verificados"
   },
+  "feedback": {
+    "no": "No",
+    "question": "¿Fueron útiles estas recomendaciones?",
+    "thanks": "¡Gracias por tu comentario!",
+    "title": "¿Cuál es tu opinión?",
+    "yes": "Sí"
+  },
   "footer": {
     "aboutUs": "Sobre Nosotros",
+    "blog": "Blog",
     "cancellationHelp": "Ayuda de Cancelación",
     "company": "Empresa",
+    "connectWithUs": "Conéctate con nosotros",
     "contact": "Contacto",
     "contactUs": "Contáctanos",
     "copyright": "© 2026 Expedition GO. Todos los derechos reservados.",
     "faq": "Preguntas Frecuentes",
     "helpCentre": "Centro de Ayuda",
     "home": "Inicio",
+    "partnerships": "Asociaciones",
     "privacyPolicy": "Política de Privacidad",
     "support": "Soporte",
     "termsConditions": "Términos y Condiciones"
@@ -58,8 +81,15 @@
     "subtitle": "Descubre tours y experiencias extraordinarias en todo el mundo",
     "title": "Explora lo Extraordinario"
   },
+  "mood": {
+    "title": "¿Qué quieres hacer?",
+    "tours": "tours"
+  },
   "nav": {
+    "about": "Acerca de",
     "bookings": "Reservas",
+    "contact": "Contacto",
+    "dashboard": "Panel",
     "currency": "Moneda",
     "language": "Idioma",
     "profile": "Perfil",
@@ -70,21 +100,70 @@
   },
   "newsletter": {
     "description": "Suscríbete para recibir ofertas exclusivas e inspiración de viaje",
+    "disclaimer": "Al registrarte, aceptas recibir correos promocionales sobre actividades y consejos de viaje. Puedes cancelar la suscripción o retirar tu consentimiento en cualquier momento. Para más información, lee nuestra",
     "emailPlaceholder": "Ingresa tu correo",
+    "imageAlt": "Parque Conmemorativo Kwame Nkrumah",
     "privacyLink": "Respetamos tu privacidad. Puedes cancelar la suscripción en cualquier momento.",
     "signUp": "Suscribirse",
     "title": "Mantente Informado"
   },
+  "partners": {
+    "heading": "Empresas con las que trabajamos"
+  },
+  "search": {
+    "clearRecent": "Borrar búsquedas recientes",
+    "destination": "Destino",
+    "recentSearches": "Búsquedas recientes",
+    "removeRecent": "Eliminar de búsquedas recientes",
+    "tour": "Tour",
+    "toursAndExperiences": "Tours y Experiencias"
+  },
   "sections": {
     "allToursTitle": "Tours",
+    "continuePlanning": "Continuar Planificando",
+    "dayTours": "Tours de Día",
     "destinations": "Destinos",
     "lastMinuteDeals": "Ofertas de Última Hora",
     "likelyToSellOut": "Probablemente se Agoten",
-    "continuePlanning": "Continuar Planificando",
+    "multiDayTours": "Tours de Varios Días",
     "pickupTitle": "Recogida Incluida",
+    "poweredByTripadvisor": "Impulsado por Tripadvisor",
     "recommendedTitle": "Recomendado para Ti",
+    "reviews": "Reseñas",
     "topRatedTitle": "Tours Mejor Valorados",
+    "travelStories": "Historias y Noticias de Viajes",
     "viewAll": "Ver Todos"
+  },
+  "splash": {
+    "alt": "Expedition-Go Tours Limited",
+    "fallback": "EG",
+    "tagline": "Tu Puerta de Entrada a África",
+    "word1": "EXPEDITION-GO",
+    "word2": "TOURS",
+    "word3": "LIMITED"
+  },
+  "stories": {
+    "readMore": "Leer más"
+  },
+  "supportChat": {
+    "adminSupport": "Soporte Administrativo",
+    "businessHours": "Horario Laboral",
+    "call": "Llamar",
+    "callUs": "Llámanos",
+    "chatWithUs": "Chatea con nosotros",
+    "chatWithUsSub": "Envía un mensaje en tiempo real",
+    "contactUs": "Contáctanos",
+    "contactUsSub": "Llama o envía un correo a nuestro equipo de soporte",
+    "email": "Correo",
+    "emailUs": "Envíanos un correo",
+    "getInTouch": "Ponte en contacto",
+    "getInTouchSub": "Nuestro objetivo es responder en un plazo de 2 horas durante el horario laboral",
+    "needHelp": "¿Necesitas ayuda?",
+    "online": "En línea",
+    "openChat": "Abrir chat",
+    "typeMessage": "Escribe un mensaje...",
+    "welcomeText": "Estamos aquí para ayudar. Elige una opción a continuación o envíanos un mensaje.",
+    "welcomeTitle": "¡Hola! Bienvenido a Expedition Go"
   },
   "tourDetail": {
     "aboutTour": "Acerca de Este Tour",

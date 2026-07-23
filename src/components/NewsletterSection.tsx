@@ -11,7 +11,7 @@ export default function NewsletterSection() {
         <div className="newsletter-viewport">
           <div className="newsletter-card">
         <div className="newsletter-image">
-          <img src={heroSrc} alt="Kwame Nkrumah Memorial Park" loading="lazy" />
+          <img src={heroSrc} alt={t('newsletter.imageAlt')} loading="lazy" />
         </div>
         <div className="newsletter-content">
           <h2 className="newsletter-heading">{t('newsletter.title')}</h2>
@@ -31,7 +31,7 @@ export default function NewsletterSection() {
             </div>
           </form>
           <p className="newsletter-disclaimer">
-            By signing up, you agree to receive promotional emails on activities and insider tips. You can unsubscribe or withdraw your consent at any time. For more information, read our <a href="#" className="newsletter-link">{t('newsletter.privacyLink')}</a>.
+            {t('newsletter.disclaimer')} <a href="#" className="newsletter-link">{t('newsletter.privacyLink')}</a>.
           </p>
         </div>
           </div>

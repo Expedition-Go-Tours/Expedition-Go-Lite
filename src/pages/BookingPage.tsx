@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react'
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
@@ -12,6 +12,7 @@ import StepBadge from '../components/booking/StepBadge'
 import { FieldLabel, TextInput, SelectInput } from '../components/booking/FormFields'
 import ChangeBookingModal from '../components/booking/ChangeBookingModal'
 import BookingConfirmationDialog from '../components/booking/BookingConfirmationDialog'
+import ExpiredHoldModal from '../components/booking/ExpiredHoldModal'
 
 /* ─── Constants ─── */
 
@@ -98,14 +99,46 @@ function MobileSummaryCard({ tour, onChangeClick }: { tour: typeof DEMO_TOUR; on
 
 /* ─── Hold Timer ─── */
 
-function HoldTimer() {
-  const [seconds, setSeconds] = useState(4 * 60 + 22)
+function HoldTimer({ onExpire, lastActivityAt, isExpired }: { onExpire: () => void; lastActivityAt: React.MutableRefObject<number>; isExpired: boolean }) {
+  const [seconds, setSeconds] = useState(25 * 60)
+  const hasExpired = useRef(false)
+
   useEffect(() => {
-    const interval = setInterval(() => setSeconds((s) => Math.max(0, s - 1)), 1000)
+    const interval = setInterval(() => {
+      const now = Date.now()
+      if (now - lastActivityAt.current < 30_000) {
+        setSeconds(25 * 60)
+        hasExpired.current = false
+        return
+      }
+      setSeconds((s) => {
+        if (s <= 1) {
+          if (!hasExpired.current) {
+            hasExpired.current = true
+            onExpire()
+          }
+          return 0
+        }
+        return s - 1
+      })
+    }, 1000)
     return () => clearInterval(interval)
-  }, [])
+  }, [onExpire, lastActivityAt])
+
   const m = Math.floor(seconds / 60)
   const s = seconds % 60
+
+  if (isExpired) {
+    return (
+      <motion.div variants={itemVariants} className="flex items-center gap-2.5 rounded-[1.25rem] bg-rose-50 px-5 py-3.5 text-sm font-semibold text-rose-700 shadow-sm">
+        <span className="flex size-8 items-center justify-center rounded-full bg-rose-100 text-rose-500">
+          <Clock className="size-4" />
+        </span>
+        <span>Hold expired</span>
+      </motion.div>
+    )
+  }
+
   return (
     <motion.div variants={itemVariants} className="flex items-center gap-2.5 rounded-[1.25rem] bg-emerald-50 px-5 py-3.5 text-sm font-semibold text-emerald-800 shadow-sm">
       <span className="flex size-8 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
@@ -122,7 +155,7 @@ function StepCard({ children }: { children: React.ReactNode }) {
   return (
     <motion.div
       layout
-      className="overflow-hidden rounded-[1.75rem] border border-slate-200/40 bg-white shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)]"
+      className="rounded-[1.75rem] border border-slate-200/40 bg-white shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)]"
       transition={{ type: 'spring' as const, stiffness: 120, damping: 18 }}
     >
       {children}
@@ -133,7 +166,7 @@ function StepCard({ children }: { children: React.ReactNode }) {
 /* ─── Step 1 – Contact Details ─── */
 
 function ContactDetailsStep({
-  data, onChange, onNext, valid, step, setStep,
+  data, onChange, onNext, valid, step, setStep, disabled,
 }: {
   data: { firstName: string; lastName: string; email: string; countryCode: string; phone: string }
   onChange: (key: string, value: string | boolean) => void
@@ -141,6 +174,7 @@ function ContactDetailsStep({
   valid: { firstName: boolean; lastName: boolean; email: boolean; phone: boolean; all: boolean }
   step: number
   setStep: (s: number) => void
+  disabled?: boolean
 }) {
   const isActive = step === 1
   const isCompleted = step > 1
@@ -206,6 +240,7 @@ function ContactDetailsStep({
                 value={data.email}
                 onChange={(e) => onChange('email', e.target.value)}
                 onBlur={() => handleBlur('email')}
+                placeholder="e.g. richard@example.com"
                 valid={valid.email}
                 error={touched.email && !valid.email ? 'Please enter a valid email address' : undefined}
               />
@@ -220,6 +255,7 @@ function ContactDetailsStep({
                   value={data.phone}
                   onChange={(e) => onChange('phone', e.target.value.replace(/\D/g, ''))}
                   onBlur={() => handleBlur('phone')}
+                  placeholder="e.g. 024 123 4567"
                   valid={valid.phone}
                   error={error('phone', 'phone number')}
                 />
@@ -235,15 +271,15 @@ function ContactDetailsStep({
             <div className="flex justify-end pt-2">
               <motion.button
                 onClick={onNext}
-                disabled={!valid.all}
+                disabled={!valid.all || disabled}
                 whileTap={{ scale: 0.97 }}
                 className={`inline-flex items-center gap-2 rounded-full px-8 py-3 text-sm font-semibold shadow-sm transition ${
-                  valid.all
+                  valid.all && !disabled
                     ? 'bg-emerald-600 text-white hover:brightness-110 cursor-pointer'
                     : 'cursor-not-allowed bg-slate-200 text-white'
                 }`}
               >
-                Next
+                {disabled ? 'Hold Expired' : 'Next'}
               </motion.button>
             </div>
           </motion.div>
@@ -273,7 +309,7 @@ function ContactDetailsStep({
 /* ─── Step 2 – Activity Details ─── */
 
 function ActivityDetailsStep({
-  data, onChange, tour, onNext, valid, step, setStep,
+  data, onChange, tour, onNext, valid, step, setStep, disabled,
 }: {
   data: { leadFirstName: string; leadLastName: string }
   onChange: (key: string, value: string) => void
@@ -282,6 +318,7 @@ function ActivityDetailsStep({
   valid: { leadFirstName: boolean; leadLastName: boolean; all: boolean }
   step: number
   setStep: (s: number) => void
+  disabled?: boolean
 }) {
   const isActive = step === 2
   const isCompleted = step > 2
@@ -343,6 +380,7 @@ function ActivityDetailsStep({
                     value={data.leadFirstName}
                     onChange={(e) => onChange('leadFirstName', e.target.value)}
                     onBlur={() => handleBlur('leadFirstName')}
+                    placeholder="e.g. Richard"
                     valid={valid.leadFirstName}
                     error={error('leadFirstName', 'lead traveler first name')}
                   />
@@ -353,6 +391,7 @@ function ActivityDetailsStep({
                     value={data.leadLastName}
                     onChange={(e) => onChange('leadLastName', e.target.value)}
                     onBlur={() => handleBlur('leadLastName')}
+                    placeholder="e.g. Boochie"
                     valid={valid.leadLastName}
                     error={error('leadLastName', 'lead traveler last name')}
                   />
@@ -379,15 +418,15 @@ function ActivityDetailsStep({
             <div className="flex justify-end pt-2">
               <motion.button
                 onClick={onNext}
-                disabled={!valid.all}
+                disabled={!valid.all || disabled}
                 whileTap={{ scale: 0.97 }}
                 className={`inline-flex items-center gap-2 rounded-full px-8 py-3 text-sm font-semibold shadow-sm transition ${
-                  valid.all
+                  valid.all && !disabled
                     ? 'bg-emerald-600 text-white hover:brightness-110 cursor-pointer'
                     : 'cursor-not-allowed bg-slate-200 text-white'
                 }`}
               >
-                Next
+                {disabled ? 'Hold Expired' : 'Next'}
               </motion.button>
             </div>
           </motion.div>
@@ -417,7 +456,7 @@ function ActivityDetailsStep({
 /* ─── Step 3 – Payment Details ─── */
 
 function PaymentDetailsStep({
-  data, onChange, tour, onBook, step, setStep,
+  data, onChange, tour, onBook, step, setStep, disabled,
 }: {
   data: { paymentTiming: string; paymentMethod: string }
   onChange: (key: string, value: string) => void
@@ -425,6 +464,7 @@ function PaymentDetailsStep({
   onBook: () => void
   step: number
   setStep: (s: number) => void
+  disabled?: boolean
 }) {
   const isActive = step === 3
   const isCompleted = step > 3
@@ -529,19 +569,24 @@ function PaymentDetailsStep({
 
             <motion.button
               onClick={onBook}
+              disabled={disabled}
               whileTap={{ scale: 0.97 }}
-              className="w-full rounded-full bg-emerald-600 py-3.5 text-sm font-bold text-white shadow-sm transition hover:brightness-110"
+              className={`w-full rounded-full py-3.5 text-sm font-bold text-white shadow-sm transition ${
+                disabled
+                  ? 'cursor-not-allowed bg-slate-300'
+                  : 'bg-emerald-600 hover:brightness-110'
+              }`}
             >
               <AnimatePresence mode="wait" initial={false}>
                 <motion.span
-                  key={buttonLabel}
+                  key={disabled ? 'expired' : buttonLabel}
                   initial={{ opacity: 0, y: -4 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 4 }}
                   transition={{ duration: 0.15, ease: 'easeOut' }}
                   className="inline-block"
                 >
-                  {buttonLabel}
+                  {disabled ? 'Hold Expired' : buttonLabel}
                 </motion.span>
               </AnimatePresence>
             </motion.button>
@@ -755,6 +800,8 @@ function BookingSidebar({
 
 /* ─── Main Page ─── */
 
+const STORAGE_KEY = 'booking_draft'
+
 export default function BookingPage() {
   const location = useLocation()
   const navigate = useNavigate()
@@ -777,6 +824,37 @@ export default function BookingPage() {
     date: string; travelers: number; tour: { title: string; image: string; rating: number; reviews: number; duration: string }
   } | null>(null)
 
+  const [isExpired, setIsExpired] = useState(false)
+  const [showExpiredModal, setShowExpiredModal] = useState(false)
+  const lastActivityAt = useRef(Date.now())
+  const hasLoadedDraft = useRef(false)
+
+  /* Restore draft from localStorage on mount */
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY)
+      if (saved) {
+        const draft = JSON.parse(saved)
+        if (draft.contact) setContact(draft.contact)
+        if (draft.activity) setActivity(draft.activity)
+        if (draft.payment) setPayment(draft.payment)
+      }
+    } catch { /* ignore */ }
+    hasLoadedDraft.current = true
+  }, [])
+
+  /* Save draft to localStorage on field changes */
+  useEffect(() => {
+    if (!hasLoadedDraft.current) return
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ contact, activity, payment }))
+    } catch { /* ignore */ }
+  }, [contact, activity, payment])
+
+  const clearDraft = () => {
+    try { localStorage.removeItem(STORAGE_KEY) } catch { /* ignore */ }
+  }
+
   /* Validation */
   const contactValid = useMemo(() => ({
     firstName: contact.firstName.trim().length > 1,
@@ -793,9 +871,37 @@ export default function BookingPage() {
     all: activity.leadFirstName.trim().length > 1 && activity.leadLastName.trim().length > 1,
   }), [activity])
 
-  const handleContactChange = (key: string, value: string | boolean) => setContact((prev) => ({ ...prev, [key]: value }))
-  const handleActivityChange = (key: string, value: string) => setActivity((prev) => ({ ...prev, [key]: value }))
-  const handlePaymentChange = (key: string, value: string) => setPayment((prev) => ({ ...prev, [key]: value }))
+  const trackActivity = () => { lastActivityAt.current = Date.now() }
+
+  const handleContactChange = (key: string, value: string | boolean) => {
+    trackActivity()
+    setContact((prev) => ({ ...prev, [key]: value }))
+  }
+  const handleActivityChange = (key: string, value: string) => {
+    trackActivity()
+    setActivity((prev) => ({ ...prev, [key]: value }))
+  }
+  const handlePaymentChange = (key: string, value: string) => {
+    trackActivity()
+    setPayment((prev) => ({ ...prev, [key]: value }))
+  }
+
+  const handleExpire = () => {
+    setIsExpired(true)
+    setShowExpiredModal(true)
+  }
+
+  const handleRehold = () => {
+    lastActivityAt.current = Date.now()
+    setIsExpired(false)
+    setShowExpiredModal(false)
+    trackActivity()
+  }
+
+  const handleSaveAndLeave = () => {
+    clearDraft()
+    navigate('/')
+  }
 
   const handleBook = async () => {
     if (payment.paymentTiming === 'now') {
@@ -809,6 +915,8 @@ export default function BookingPage() {
     }
     console.log('Booking payload:', payload)
     toast.success('Booking confirmed!')
+
+    clearDraft()
 
     setBookingConfirmation({
       tour: { title: tour.title, image: tour.image, rating: tour.rating, reviews: tour.reviews, duration: tour.duration },
@@ -836,9 +944,9 @@ export default function BookingPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-white">
-      <div className="flex items-center justify-between px-4 sm:px-6 lg:px-8 pt-5">
+      <div className="flex items-center justify-center sm:justify-between px-4 sm:px-6 lg:px-8 pt-5">
         <a href="/" className="inline-flex items-center gap-2">
-          <img src={logoSrc} alt="Expedition-GO" style={{ height: 110 }} className="w-auto" />
+          <img src={logoSrc} alt="Expedition-GO" className="h-[140px] w-auto sm:h-[110px]" />
         </a>
       </div>
 
@@ -847,10 +955,10 @@ export default function BookingPage() {
           <motion.button
             onClick={() => navigate(-1)}
             whileTap={{ scale: 0.97 }}
-            className="group mb-6 inline-flex items-center gap-2 rounded-full border border-slate-200/60 bg-white px-5 py-2 text-sm font-medium text-slate-400 shadow-sm transition hover:border-emerald-200 hover:text-emerald-600"
+            className="mb-6 inline-flex items-center justify-center rounded-full border border-slate-200/60 bg-white text-slate-400 shadow-sm transition hover:border-emerald-200 hover:text-emerald-600 sm:gap-2 sm:px-5 sm:py-2 sm:text-sm sm:font-medium size-10 sm:size-auto"
           >
             <ArrowLeft className="size-4 transition group-hover:-translate-x-0.5" />
-            Back
+            <span className="hidden sm:inline">Back</span>
           </motion.button>
 
           <div className="rounded-[2.5rem] bg-[#f9fafb] p-4 sm:p-6 lg:p-8">
@@ -859,7 +967,8 @@ export default function BookingPage() {
             initial="hidden"
             animate="visible"
           >
-            <div className="mb-6 md:hidden">
+            <div className="mb-6 space-y-3 md:hidden">
+              <HoldTimer onExpire={handleExpire} lastActivityAt={lastActivityAt} isExpired={isExpired} />
               <MobileSummaryCard tour={activeTour} onChangeClick={() => setIsChangeModalOpen(true)} />
             </div>
 
@@ -872,6 +981,7 @@ export default function BookingPage() {
                   valid={contactValid}
                   step={step}
                   setStep={setStep}
+                  disabled={isExpired}
                 />
                 <ActivityDetailsStep
                   data={activity}
@@ -881,6 +991,7 @@ export default function BookingPage() {
                   valid={activityValid}
                   step={step}
                   setStep={setStep}
+                  disabled={isExpired}
                 />
                 <PaymentDetailsStep
                   data={payment}
@@ -889,12 +1000,13 @@ export default function BookingPage() {
                   onBook={handleBook}
                   step={step}
                   setStep={setStep}
+                  disabled={isExpired}
                 />
               </div>
 
               <aside className="hidden md:block">
                 <div className="sticky top-28 space-y-4">
-                  <HoldTimer />
+                  <HoldTimer onExpire={handleExpire} lastActivityAt={lastActivityAt} isExpired={isExpired} />
                   <BookingSidebar
                     tour={activeTour}
                     promoCode={promoCode}
@@ -927,6 +1039,16 @@ export default function BookingPage() {
       </AnimatePresence>
 
       <BookingConfirmationDialog data={bookingConfirmation} onClose={() => setBookingConfirmation(null)} />
+
+      <AnimatePresence>
+        {showExpiredModal && (
+          <ExpiredHoldModal
+            contact={contact}
+            onRehold={handleRehold}
+            onSaveAndLeave={handleSaveAndLeave}
+          />
+        )}
+      </AnimatePresence>
 
       <Footer />
     </div>

@@ -7,6 +7,7 @@ import { CalendarPicker } from '../../components/ui/apple-calendar-picker'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CalendarDays, Users, Minus, Plus, MessageSquare } from 'lucide-react'
 import { toast } from 'sonner'
+import { useCurrency } from '../../contexts/CurrencyContext'
 import './BookingWidget.css'
 
 interface BookingWidgetProps {
@@ -21,6 +22,7 @@ const dropdownVariants = {
 
 export default function BookingWidget({ tour }: BookingWidgetProps) {
   const { t } = useTranslation()
+  const { currency, convertPrice } = useCurrency()
   const navigate = useNavigate()
   const [adults, setAdults] = useState(2)
   const [seniors, setSeniors] = useState(0)
@@ -159,11 +161,11 @@ export default function BookingWidget({ tour }: BookingWidgetProps) {
   }
 
   const travelerOptions = [
-    { label: 'Adults', age: 'Age 18 - 60', price: `$${adultPrice}`, count: adults, key: 'adults' },
-    { label: 'Seniors', age: 'Age 61 - 80', price: `$${seniorPrice}`, count: seniors, key: 'seniors' },
-    { label: 'Youths', age: 'Age 15 - 17', price: `$${youthPrice}`, count: youths, key: 'youths' },
-    { label: 'Children', age: 'Age 4 - 14', price: `$${childPrice}`, count: children, key: 'children' },
-    { label: 'Infants', age: 'Age 1 - 3', price: infantPrice > 0 ? `$${infantPrice}` : 'Free', count: infants, key: 'infants' },
+    { label: 'Adults', age: 'Age 18 - 60', price: `${currency.symbol}${adultPrice}`, count: adults, key: 'adults' },
+    { label: 'Seniors', age: 'Age 61 - 80', price: `${currency.symbol}${seniorPrice}`, count: seniors, key: 'seniors' },
+    { label: 'Youths', age: 'Age 15 - 17', price: `${currency.symbol}${youthPrice}`, count: youths, key: 'youths' },
+    { label: 'Children', age: 'Age 4 - 14', price: `${currency.symbol}${childPrice}`, count: children, key: 'children' },
+    { label: 'Infants', age: 'Age 1 - 3', price: infantPrice > 0 ? `${currency.symbol}${infantPrice}` : 'Free', count: infants, key: 'infants' },
   ]
 
   const selectedDateLabel = selectedDate
@@ -176,7 +178,7 @@ export default function BookingWidget({ tour }: BookingWidgetProps) {
         <div className="booking-price-section">
           <div className="booking-price-main">
             <span className="booking-price-from">{t('common.from')}</span>
-            <span className="booking-price-amount">${tour.price}</span>
+            <span className="booking-price-amount">{currency.symbol}{Math.round(convertPrice(tour.price))}</span>
             <span className="booking-price-per">/person</span>
           </div>
         </div>
@@ -286,7 +288,7 @@ export default function BookingWidget({ tour }: BookingWidgetProps) {
           {/* Total */}
           <div className="booking-total">
             <span>Total ({totalTravelers} {totalTravelers === 1 ? 'traveler' : 'travelers'})</span>
-            <span className="booking-total-amount">${totalPrice.toFixed(2)}</span>
+            <span className="booking-total-amount">{currency.symbol}{Math.round(convertPrice(totalPrice))}</span>
           </div>
 
           {/* Promo code */}

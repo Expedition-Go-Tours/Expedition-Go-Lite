@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import './MoodSection.css'
 
 const CARD_WIDTH = 295
@@ -16,6 +17,7 @@ const MOOD_CATEGORIES = [
 ]
 
 export default function MoodSection() {
+  const { t } = useTranslation()
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
@@ -55,14 +57,14 @@ export default function MoodSection() {
       <div className="mood-container">
         <div className="mood-viewport">
           <div className="mood-header">
-            <h2 className="mood-title">What do you want to do?</h2>
+            <h2 className="mood-title">{t('mood.title')}</h2>
             <div className="mood-arrows">
-              <button className={`mood-arrow${!canScrollLeft ? ' muted' : ''}`} onClick={() => scroll('left')} aria-label="Scroll left" disabled={!canScrollLeft}>
+              <button className={`mood-arrow${!canScrollLeft ? ' muted' : ''}`} onClick={() => scroll('left')} aria-label={t('common.scrollLeft')} disabled={!canScrollLeft}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="15 18 9 12 15 6" />
                 </svg>
               </button>
-              <button className={`mood-arrow${!canScrollRight ? ' muted' : ''}`} onClick={() => scroll('right')} aria-label="Scroll right" disabled={!canScrollRight}>
+              <button className={`mood-arrow${!canScrollRight ? ' muted' : ''}`} onClick={() => scroll('right')} aria-label={t('common.scrollRight')} disabled={!canScrollRight}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="9 18 15 12 9 6" />
                 </svg>
@@ -79,7 +81,7 @@ export default function MoodSection() {
                       style={{ backgroundImage: `url(${cat.image})` }}
                     >
                       <span className="mood-tag">{cat.tag}</span>
-                      <span className="mood-count">{cat.count} tours</span>
+                      <span className="mood-count">{cat.count} {t('mood.tours')}</span>
                       <div className="mood-gradient" />
                       <div className="mood-footer">
                         <h3 className="mood-card-title">{cat.title}</h3>

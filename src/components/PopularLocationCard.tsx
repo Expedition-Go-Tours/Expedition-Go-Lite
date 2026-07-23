@@ -1,19 +1,16 @@
 import { useState } from 'react'
 import './PopularLocationCard.css'
 import type { Destination } from './data'
-import { getDestinationImage } from '../lib/tourImages'
 
 interface PopularLocationCardProps extends Destination {}
 
 export default function PopularLocationCard({ title, tours, image }: PopularLocationCardProps) {
-  const fallback = getDestinationImage(title)
-  const [src, setSrc] = useState(image)
   const [liked, setLiked] = useState(false)
 
   return (
     <a href="#" className="popular-location-card">
       <div className="popular-location-image">
-        <img src={src} alt={title} loading="lazy" onError={() => setSrc(fallback)} />
+        <img src={image} alt={title} loading="lazy" />
         <div className="popular-location-gradient" />
         <button
           className={`popular-location-heart${liked ? ' liked' : ''}`}

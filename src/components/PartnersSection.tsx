@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import './PartnersSection.css'
 import trippySrc from '../assets/icons/trippy.png'
 import bookingSrc from '../assets/icons/booking-com.png'
@@ -34,11 +35,12 @@ const logos = [
 ]
 
 export default function PartnersSection() {
+  const { t } = useTranslation()
   return (
     <section className="partners-section">
       <div className="partners-container">
         <div className="partners-viewport">
-          <h2 className="partners-heading">Companies We Work With</h2>
+          <h2 className="partners-heading">{t('partners.heading')}</h2>
           <div className="partners-track-wrap">
             <div className="partners-track">
               {[...logos, ...logos].map((logo, i) => (

@@ -9,7 +9,6 @@ import {
   recommendedTours, dayTours, topRatedTours,
   sellOutTours, lastMinuteDeals, multiDayTours,
 } from '../../components/data'
-import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer'
 import { useContinuePlanning, toContinuePlanningItem } from '../../context/ContinuePlanningContext'
 import { useWishlist } from '../../context/WishlistContext'
@@ -36,10 +35,6 @@ import ReviewsSection from './ReviewsSection'
 import SupplierSection from './SupplierSection'
 
 import './TourDetailPage.css'
-
-interface TourDetailPageProps {
-  onOpenAuth?: (mode: 'signin' | 'signup') => void
-}
 
 const EXTERNAL_FALLBACK_IMAGES = [
   'https://ecotourghana.com/img/n10.jpg',
@@ -89,7 +84,7 @@ function toSlug(title: string): string {
   return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 }
 
-export default function TourDetailPage({ onOpenAuth }: TourDetailPageProps) {
+export default function TourDetailPage() {
   const { t } = useTranslation()
   const tourDetailTabs = useMemo(() => [
     { key: 'overview', label: t('tourDetail.aboutTour') },
@@ -383,8 +378,6 @@ export default function TourDetailPage({ onOpenAuth }: TourDetailPageProps) {
 
   return (
     <>
-      <Navbar onOpenAuth={onOpenAuth} />
-
       <div className="tour-detail-page">
         <div className="tour-detail-container">
           <div className="tour-detail-content">

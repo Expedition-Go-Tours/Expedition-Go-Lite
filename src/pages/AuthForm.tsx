@@ -30,10 +30,10 @@ const styles = `
 `
 
 const sliderImages = [
-  '/images/Image01.webp',
-  '/images/Image02_.webp',
-  '/images/Image03.webp',
-  '/images/Image04.webp',
+  'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800',
+  'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=800',
+  'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=800',
+  'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800',
 ];
 
 const containerVariants = {

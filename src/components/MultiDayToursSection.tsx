@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import SectionHeading from './SectionHeading'
 import MultiDayCard from './MultiDayCard'
 import { multiDayTours } from './data'
@@ -8,6 +9,7 @@ const CARD_WIDTH = 295
 const GAP = 16
 
 export default function MultiDayToursSection() {
+  const { t } = useTranslation()
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
@@ -47,7 +49,7 @@ export default function MultiDayToursSection() {
       <div className="multiday-container">
         <div className="multiday-viewport">
           <SectionHeading
-            title="Multi-Day Tours"
+            title={t('sections.multiDayTours')}
             viewAllLink="/tours?section=Multi-Day Tours"
             onScrollLeft={() => scroll('left')}
             onScrollRight={() => scroll('right')}

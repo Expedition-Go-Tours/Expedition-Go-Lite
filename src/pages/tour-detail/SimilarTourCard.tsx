@@ -1,22 +1,11 @@
-import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { MapPin, Star, Heart } from 'lucide-react'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
 import { useWishlist, toWishlistItem } from '../../context/WishlistContext'
 import { parsePrice, type Tour } from '../../components/data'
-import { getTourImage } from '../../lib/tourImages'
 import FormattedPrice from '../../components/FormattedPrice'
 import './SimilarTourCard.css'
-
-function hashStr(s: string): number {
-  let hash = 0
-  for (let i = 0; i < s.length; i++) {
-    hash = ((hash << 5) - hash) + s.charCodeAt(i)
-    hash |= 0
-  }
-  return Math.abs(hash)
-}
 
 interface SimilarTourCardProps extends Tour {
   discount?: string
@@ -34,8 +23,6 @@ export default function SimilarTourCard({
 }: SimilarTourCardProps) {
   const { t } = useTranslation()
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist()
-  const fallback = getTourImage(location, (hashStr(title) % 6) + 1)
-  const [src, setSrc] = useState(image)
   const item = toWishlistItem({ title, duration, features, price, rating: String(rating), reviews, location, image } as Tour)
   const inWishlist = isInWishlist(item.id)
 
@@ -60,9 +47,9 @@ export default function SimilarTourCard({
   const tourSlug = generateSlug(title)
 
   return (
-    <Link to={`/tour/${tourSlug}`} className="similar-tour-card">
+    <Link to={`/tour/${tourSlug}`} target="_blank" rel="noopener noreferrer" className="similar-tour-card">
       <div className="similar-tour-image">
-        <img src={src} alt={title} loading="lazy" onError={() => setSrc(fallback)} />
+        <img src={image} alt={title} loading="lazy" />
         <div className="similar-tour-overlay" />
         <button 
           className="similar-tour-wishlist" 

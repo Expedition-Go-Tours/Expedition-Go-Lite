@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import './SplashScreen.css'
 
 /**
@@ -48,6 +49,7 @@ function GhanaRibbon() {
 }
 
 export default function SplashScreen({ onFinish }: SplashScreenProps) {
+  const { t } = useTranslation()
   const [emblemError, setEmblemError] = useState(false)
 
   useEffect(() => {
@@ -74,11 +76,11 @@ export default function SplashScreen({ onFinish }: SplashScreenProps) {
           transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
         >
           {emblemError ? (
-            <div className="splash-emblem-fallback">EG</div>
+            <div className="splash-emblem-fallback">{t('splash.fallback')}</div>
           ) : (
             <img
               src={EMBLEM_SRC}
-              alt="Expedition-Go Tours Limited"
+              alt={t('splash.alt')}
               onError={() => setEmblemError(true)}
               draggable={false}
             />
@@ -93,9 +95,9 @@ export default function SplashScreen({ onFinish }: SplashScreenProps) {
             animate={{ opacity: 1, x: '0%' }}
             transition={{ delay: 0.5, duration: 0.7, ease: 'easeOut' }}
           >
-            <span className="splash-word-1">EXPEDITION-GO</span>
+            <span className="splash-word-1">{t('splash.word1')}</span>
             <span className="splash-word-2">
-              TOURS
+              {t('splash.word2')}
               {/* Phase 3 — Ghana ribbon */}
               <motion.span
                 className="splash-flag"
@@ -109,7 +111,7 @@ export default function SplashScreen({ onFinish }: SplashScreenProps) {
               >
                 <GhanaRibbon />
               </motion.span>
-              LIMITED
+              {t('splash.word3')}
             </span>
           </motion.div>
 
@@ -120,7 +122,7 @@ export default function SplashScreen({ onFinish }: SplashScreenProps) {
             animate={{ opacity: 1 }}
             transition={{ delay: 2, duration: 0.55, ease: 'linear' }}
           >
-            Your Gateway to Africa
+            {t('splash.tagline')}
           </motion.p>
         </div>
       </div>

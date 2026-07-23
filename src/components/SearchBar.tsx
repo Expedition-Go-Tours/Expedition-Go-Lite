@@ -1,11 +1,13 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Clock, X } from 'lucide-react'
 import { useSearchAutocomplete, type SearchSuggestion } from '../hooks/useSearchAutocomplete'
 import { useRecentSearches } from '../hooks/useRecentSearches'
 import './SearchBar.css'
 
 export default function SearchBar() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [inputValue, setInputValue] = useState('')
   const [showDropdown, setShowDropdown] = useState(false)
@@ -151,7 +153,7 @@ export default function SearchBar() {
                 ref={inputRef}
                 type="text"
                 className="hero-search-input"
-                placeholder="Search destinations..."
+                placeholder={t('hero.destinationPlaceholder')}
                 autoComplete="off"
                 value={inputValue}
                 onChange={handleInputChange}
@@ -169,7 +171,7 @@ export default function SearchBar() {
             </div>
           </div>
           <div className="hero-search-btn-wrap">
-            <button type="submit" className="hero-search-submit">Search</button>
+            <button type="submit" className="hero-search-submit">{t('hero.search')}</button>
           </div>
         </div>
 
@@ -177,7 +179,7 @@ export default function SearchBar() {
           <div className="search-dropdown">
             {isFocused && recentSearches.length > 0 && (
               <>
-                <div className="search-dropdown-section">Recent Searches</div>
+                <div className="search-dropdown-section">{t('search.recentSearches')}</div>
                 {recentSearches.map((item) => (
                   <div
                     key={item.slug}
@@ -192,7 +194,7 @@ export default function SearchBar() {
                     </div>
                     <div className="search-suggestion-text">
                       <span className="search-suggestion-title">{item.title}</span>
-                      <span className="search-suggestion-sub">{item.type === 'destination' ? 'Destination' : 'Tour'}</span>
+                      <span className="search-suggestion-sub">{item.type === 'destination' ? t('search.destination') : t('search.tour')}</span>
                     </div>
                     <button
                       type="button"
@@ -202,14 +204,14 @@ export default function SearchBar() {
                         e.stopPropagation()
                         removeSearch(item.slug)
                       }}
-                      aria-label="Remove from recent searches"
+                      aria-label={t('search.removeRecent')}
                     >
                       <X size={14} />
                     </button>
                   </div>
                 ))}
                 <div className="search-recent-clear" onMouseDown={(e) => { e.preventDefault(); clearAll() }}>
-                  Clear recent searches
+                  {t('search.clearRecent')}
                 </div>
                 {showDropdown && suggestions.length > 0 && <div className="search-recent-divider" />}
               </>
@@ -224,10 +226,10 @@ export default function SearchBar() {
                   return (
                     <div key={suggestion.id}>
                       {showDestHeader && (
-                        <div className="search-dropdown-section">Destinations</div>
+                        <div className="search-dropdown-section">{t('common.destinations')}</div>
                       )}
                       {showTourHeader && (
-                        <div className="search-dropdown-section">Tours &amp; Experiences</div>
+                          <div className="search-dropdown-section">{t('search.toursAndExperiences')}</div>
                       )}
                       <div
                         className={`search-suggestion${isHighlighted ? ' highlighted' : ''}`}

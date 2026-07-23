@@ -1,13 +1,15 @@
+import { useTranslation } from 'react-i18next'
 import SectionHeading from './SectionHeading'
 import './CustomReviewsSection.css'
 
 export default function CustomReviewsSection() {
+  const { t } = useTranslation()
   return (
     <section className="reviews-section">
       <div className="reviews-container">
         <div className="reviews-viewport">
           <SectionHeading
-            title="Reviews"
+            title={t('sections.reviews')}
             viewAllLink="https://www.tripadvisor.co.uk/Attraction_Review-g293797-d24155300-Reviews-Expedition_Go_Tours_Ltd-Accra_Greater_Accra.html"
           />
 
@@ -16,7 +18,7 @@ export default function CustomReviewsSection() {
           </div>
 
           <div className="tripadvisor-bar">
-            <span className="tripadvisor-text">Powered by Tripadvisor</span>
+            <span className="tripadvisor-text">{t('sections.poweredByTripadvisor')}</span>
           </div>
         </div>
       </div>

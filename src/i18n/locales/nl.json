@@ -21,10 +21,23 @@
   },
   "common": {
     "back": "Terug",
+    "close": "Sluiten",
     "destinations": "Bestemmingen",
     "duration": "Duur",
     "from": "Vanaf",
-    "rating": "Beoordeling"
+    "rating": "Beoordeling",
+    "scrollLeft": "Naar links scrollen",
+    "scrollRight": "Naar rechts scrollen"
+  },
+  "destinations": {
+    "allRegions": "Alle regio's",
+    "destination": "bestemming",
+    "destinations": "bestemmingen",
+    "explore": "Ontdekken",
+    "noResults": "Geen Ghanese bestemmingen gevonden die aan je zoekopdracht voldoen.",
+    "popular": "Populaire bestemmingen",
+    "subtitle": "Ontdek geweldige bestemmingen door het hele land",
+    "title": "Ontdek Ghana"
   },
   "features": {
     "whyBookHeading": "Waarom Bij Ons Boeken",
@@ -37,16 +50,26 @@
     "whyBookVerifiedDesc": "Alle tours zijn zorgvuldig gecontroleerd op kwaliteit",
     "whyBookVerifiedTitle": "Geverifieerde Tours"
   },
+  "feedback": {
+    "no": "Nee",
+    "question": "Waren deze aanbevelingen nuttig?",
+    "thanks": "Bedankt voor je feedback!",
+    "title": "Wat is je feedback?",
+    "yes": "Ja"
+  },
   "footer": {
     "aboutUs": "Over Ons",
+    "blog": "Blog",
     "cancellationHelp": "Annuleringshulp",
     "company": "Bedrijf",
+    "connectWithUs": "Maak verbinding met ons",
     "contact": "Contact",
     "contactUs": "Neem Contact Op",
     "copyright": "© 2026 Expedition GO. Alle rechten voorbehouden.",
     "faq": "FAQ",
     "helpCentre": "Helpcentrum",
     "home": "Home",
+    "partnerships": "Partnerschappen",
     "privacyPolicy": "Privacybeleid",
     "support": "Ondersteuning",
     "termsConditions": "Algemene Voorwaarden"
@@ -58,8 +81,15 @@
     "subtitle": "Ontdek buitengewone tours en ervaringen wereldwijd",
     "title": "Ontdek het Buitengewone"
   },
+  "mood": {
+    "title": "Wat wil je doen?",
+    "tours": "tours"
+  },
   "nav": {
+    "about": "Over ons",
     "bookings": "Boekingen",
+    "contact": "Contact",
+    "dashboard": "Dashboard",
     "currency": "Valuta",
     "language": "Taal",
     "profile": "Profiel",
@@ -70,21 +100,70 @@
   },
   "newsletter": {
     "description": "Abonneer je voor exclusieve aanbiedingen en reisinspiratie",
+    "disclaimer": "Door je aan te melden, ga je akkoord met het ontvangen van promotionele e-mails over activiteiten en reistips. Je kunt je op elk moment uitschrijven of je toestemming intrekken. Lees voor meer informatie onze",
     "emailPlaceholder": "Voer je e-mail in",
+    "imageAlt": "Kwame Nkrumah Gedenkpark",
     "privacyLink": "We respecteren je privacy. Altijd opzegbaar.",
     "signUp": "Aanmelden",
     "title": "Blijf op de Hoogte"
   },
+  "partners": {
+    "heading": "Bedrijven waarmee we samenwerken"
+  },
+  "search": {
+    "clearRecent": "Recente zoekopdrachten wissen",
+    "destination": "Bestemming",
+    "recentSearches": "Recente zoekopdrachten",
+    "removeRecent": "Verwijderen uit recente zoekopdrachten",
+    "tour": "Tour",
+    "toursAndExperiences": "Tours en Ervaringen"
+  },
   "sections": {
     "allToursTitle": "Tours",
+    "continuePlanning": "Verder Plannen",
+    "dayTours": "Dagtours",
     "destinations": "Bestemmingen",
     "lastMinuteDeals": "Last Minute Aanbiedingen",
     "likelyToSellOut": "Waarschijnlijk Uitverkocht",
-    "continuePlanning": "Verder Plannen",
+    "multiDayTours": "Meerdaagse Tours",
     "pickupTitle": "Ophalen Inbegrepen",
+    "poweredByTripadvisor": "Mogelijk gemaakt door Tripadvisor",
     "recommendedTitle": "Aanbevolen voor Jou",
+    "reviews": "Beoordelingen",
     "topRatedTitle": "Best Beoordeelde Tours",
+    "travelStories": "Reisverhalen en Nieuws",
     "viewAll": "Alles Bekijken"
+  },
+  "splash": {
+    "alt": "Expedition-Go Tours Limited",
+    "fallback": "EG",
+    "tagline": "Jouw Poort naar Afrika",
+    "word1": "EXPEDITION-GO",
+    "word2": "TOURS",
+    "word3": "LIMITED"
+  },
+  "stories": {
+    "readMore": "Lees meer"
+  },
+  "supportChat": {
+    "adminSupport": "Admin Ondersteuning",
+    "businessHours": "Kantooruren",
+    "call": "Bellen",
+    "callUs": "Bel ons",
+    "chatWithUs": "Chat met ons",
+    "chatWithUsSub": "Stuur een real-time bericht",
+    "contactUs": "Neem contact op",
+    "contactUsSub": "Bel of e-mail ons ondersteuningsteam",
+    "email": "E-mail",
+    "emailUs": "E-mail ons",
+    "getInTouch": "Neem contact op",
+    "getInTouchSub": "We streven ernaar om binnen 2 uur te reageren tijdens kantooruren",
+    "needHelp": "Hulp nodig?",
+    "online": "Online",
+    "openChat": "Open chat",
+    "typeMessage": "Typ een bericht...",
+    "welcomeText": "We zijn hier om te helpen. Kies een optie hieronder of stuur ons een bericht.",
+    "welcomeTitle": "Hallo! Welkom bij Expedition Go"
   },
   "tourDetail": {
     "aboutTour": "Over Deze Tour",

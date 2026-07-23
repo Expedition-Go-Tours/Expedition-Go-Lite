@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import SectionHeading from './SectionHeading'
 import { travelStories, storySlug } from './data'
 import type { TravelStory } from './data'
@@ -8,7 +9,7 @@ import './TravelStoriesSection.css'
 const CARD_WIDTH = 295
 const GAP = 16
 
-function StoryCard({ story }: { story: TravelStory }) {
+function StoryCard({ story, t }: { story: TravelStory; t: (key: string) => string }) {
   return (
     <div className="story-card-wrap">
       <Link to={`/stories/${storySlug(story.title)}`} className="story-card">
@@ -22,7 +23,7 @@ function StoryCard({ story }: { story: TravelStory }) {
           </div>
           <h3 className="story-card-title">{story.title}</h3>
           <p className="story-card-excerpt">{story.excerpt}</p>
-          <span className="story-card-link">Read more</span>
+          <span className="story-card-link">{t('stories.readMore')}</span>
         </div>
       </Link>
     </div>
@@ -30,6 +31,7 @@ function StoryCard({ story }: { story: TravelStory }) {
 }
 
 export default function TravelStoriesSection() {
+  const { t } = useTranslation()
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
@@ -75,7 +77,7 @@ export default function TravelStoriesSection() {
       <div className="stories-container">
         <div className="stories-viewport">
           <SectionHeading
-            title="Travel Stories & News"
+            title={t('sections.travelStories')}
             viewAllLink="/stories"
             onScrollLeft={() => scroll('left')}
             onScrollRight={() => scroll('right')}
@@ -85,7 +87,7 @@ export default function TravelStoriesSection() {
           <div className="stories-clip">
             <div className="stories-carousel" ref={scrollRef}>
                 {travelStories.map((story, i) => (
-                  <StoryCard key={`${story.title}-${i}`} story={story} />
+                  <StoryCard key={`${story.title}-${i}`} story={story} t={t} />
                 ))}
             </div>
           </div>

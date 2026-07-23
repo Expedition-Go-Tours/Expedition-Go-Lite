@@ -1,10 +1,9 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import SectionHeading from './SectionHeading'
 import { useContinuePlanning } from '../context/ContinuePlanningContext'
 import FormattedPrice from './FormattedPrice'
-import { getTourImage } from '../lib/tourImages'
 import './ContinuePlanningSection.css'
 
 const CARD_WIDTH = 440
@@ -12,15 +11,6 @@ const GAP = 16
 
 function toSlug(title: string): string {
   return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
-}
-
-function hashStr(s: string): number {
-  let hash = 0
-  for (let i = 0; i < s.length; i++) {
-    hash = ((hash << 5) - hash) + s.charCodeAt(i)
-    hash |= 0
-  }
-  return Math.abs(hash)
 }
 
 function StarRating({ rating }: { rating: number }) {
@@ -54,7 +44,6 @@ export default function ContinuePlanningSection() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
-  const navigate = useNavigate()
 
   const updateArrows = useCallback(() => {
     const el = scrollRef.current
@@ -106,21 +95,17 @@ export default function ContinuePlanningSection() {
             <div className="continue-planning-carousel" ref={scrollRef}>
               {continuePlanning.map((item) => (
                 <div key={item.id} className="continue-planning-card-wrap">
-                  <div
+                  <Link
+                    to={`/tour/${toSlug(item.title)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="continue-planning-card"
-                    onClick={() => navigate(`/tour/${toSlug(item.title)}`)}
                   >
                     <div className="cp-card-image">
                       <img
                         src={item.imageUrl}
                         alt={item.title}
                         loading="lazy"
-                        onError={(e) => {
-                          if (!e.currentTarget.dataset.fellback) {
-                            e.currentTarget.dataset.fellback = '1'
-                            e.currentTarget.src = getTourImage(item.location, (hashStr(item.title) % 6) + 1)
-                          }
-                        }}
                       />
                     </div>
                     <div className="cp-card-body">
@@ -140,7 +125,7 @@ export default function ContinuePlanningSection() {
                         </span>
                       </div>
                     </div>
-                  </div>
+                  </Link>
                 </div>
               ))}
             </div>

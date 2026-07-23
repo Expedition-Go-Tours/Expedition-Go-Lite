@@ -2,14 +2,16 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { toast } from 'sonner'
-import { Clock, X, Globe, ChevronDown } from 'lucide-react'
+import { Clock, X, Globe } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { useCurrency, availableCurrencies } from '../contexts/CurrencyContext'
+import i18n from '../i18n/config'
+import { useCurrency } from '../contexts/CurrencyContext'
 import logoSrc from '../assets/expo_trans.png'
 import userSrc from '../assets/icons/User Circle.png'
 import { subscribeToAuthState, signOutUser, getStoredAuthUser, type AuthUser } from '../lib/auth'
 import { useSearchAutocomplete, type SearchSuggestion } from '../hooks/useSearchAutocomplete'
 import { useRecentSearches } from '../hooks/useRecentSearches'
+import LanguageCurrencyModal from './LanguageCurrencyModal'
 import './Navbar.css'
 
 interface NavbarProps {
@@ -23,12 +25,10 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [signingOut, setSigningOut] = useState(false)
-  const [globeOpen, setGlobeOpen] = useState(false)
-  const [currencyAccordionOpen, setCurrencyAccordionOpen] = useState(false)
-  const globeRef = useRef<HTMLDivElement>(null)
+  const [langCurrencyOpen, setLangCurrencyOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const { t } = useTranslation()
-  const { currency, setCurrency: setAppCurrency } = useCurrency()
+  const { currency } = useCurrency()
   const [navSearchValue, setNavSearchValue] = useState('')
   const [showNavDropdown, setShowNavDropdown] = useState(false)
   const [navHighlightedIndex, setNavHighlightedIndex] = useState(-1)
@@ -44,48 +44,30 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
   }, [])
 
   useEffect(() => {
-    let cleanup: (() => void) | null = null
-
-    const setup = () => {
+    const handleScroll = () => {
       const heroSearch = document.getElementById('hero-search-bar')
-      if (!heroSearch) {
-        const id = setTimeout(setup, 100)
-        cleanup = () => clearTimeout(id)
+      if (!heroSearch) return
+
+      if (window.scrollY < 10) {
+        document.body.classList.remove('hero--search-sticky')
+        setSearchBarSticky(false)
         return
       }
-
-      document.body.classList.remove('hero--search-sticky')
-      setSearchBarSticky(false)
-
-      const navbar = document.querySelector('.navbar')
-      const navbarHeight = navbar ? navbar.clientHeight : 64
-
-      const handleScroll = () => {
-        if (window.scrollY < 10) {
-          document.body.classList.remove('hero--search-sticky')
-          setSearchBarSticky(false)
-          return
-        }
-        const rect = heroSearch.getBoundingClientRect()
-        if (rect.height === 0) return
-        const sticky = rect.top <= navbarHeight + 4
-        document.body.classList.toggle('hero--search-sticky', sticky)
-        setSearchBarSticky(sticky)
-      }
-
-      window.addEventListener('scroll', handleScroll, { passive: true })
-      handleScroll()
-
-      cleanup = () => {
-        window.removeEventListener('scroll', handleScroll)
-        document.body.classList.remove('hero--search-sticky')
-      }
+      const rect = heroSearch.getBoundingClientRect()
+      if (rect.height === 0) return
+      const navbarEl = document.querySelector('.navbar')
+      const navbarHeight = navbarEl ? navbarEl.clientHeight : 64
+      const sticky = rect.top <= navbarHeight + 4
+      document.body.classList.toggle('hero--search-sticky', sticky)
+      setSearchBarSticky(sticky)
     }
 
-    setup()
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    handleScroll()
 
     return () => {
-      if (cleanup) cleanup()
+      window.removeEventListener('scroll', handleScroll)
+      document.body.classList.remove('hero--search-sticky')
     }
   }, [])
 
@@ -189,9 +171,6 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setDropdownOpen(false)
       }
-      if (globeRef.current && !globeRef.current.contains(e.target as Node)) {
-        setGlobeOpen(false)
-      }
       if (navSearchRef.current && !navSearchRef.current.contains(e.target as Node)) {
         setShowNavDropdown(false)
       }
@@ -200,11 +179,11 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const dropdownLinks = [
-    ...(user ? [{ label: 'Bookings' as const, icon: 'bag' as const }] : []),
-    ...(user ? [{ label: 'Dashboard' as const, icon: 'grid' as const }] : []),
-    { label: 'About' as const, icon: 'info' as const },
-    { label: 'Contact' as const, icon: 'mail' as const },
+  const dropdownLinks: { label: string; key: string; icon: string }[] = [
+    ...(user ? [{ label: t('nav.bookings'), key: 'Bookings' as const, icon: 'bag' as const }] : []),
+    ...(user ? [{ label: t('nav.dashboard'), key: 'Dashboard' as const, icon: 'grid' as const }] : []),
+    { label: t('nav.about'), key: 'About' as const, icon: 'info' as const },
+    { label: t('nav.contact'), key: 'Contact' as const, icon: 'mail' as const },
   ]
 
   return (
@@ -263,7 +242,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
             <div className="navbar-search-dropdown">
               {navIsFocused && recentSearches.length > 0 && (
                 <>
-                  <div className="search-dropdown-section">Recent Searches</div>
+                  <div className="search-dropdown-section">{t('search.recentSearches')}</div>
                   {recentSearches.map((item) => (
                     <div
                       key={item.slug}
@@ -278,7 +257,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
                       </div>
                       <div className="search-suggestion-text">
                         <span className="search-suggestion-title">{item.title}</span>
-                        <span className="search-suggestion-sub">{item.type === 'destination' ? 'Destination' : 'Tour'}</span>
+                          <span className="search-suggestion-sub">{item.type === 'destination' ? t('search.destination') : t('search.tour')}</span>
                       </div>
                       <button
                         type="button"
@@ -288,14 +267,14 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
                           e.stopPropagation()
                           removeSearch(item.slug)
                         }}
-                        aria-label="Remove from recent searches"
+                        aria-label={t('search.removeRecent')}
                       >
                         <X size={14} />
                       </button>
                     </div>
                   ))}
                   <div className="search-recent-clear" onMouseDown={(e) => { e.preventDefault(); clearAll() }}>
-                    Clear recent searches
+                    {t('search.clearRecent')}
                   </div>
                   {showNavDropdown && navSuggestions.length > 0 && <div className="search-recent-divider" />}
                 </>
@@ -313,7 +292,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
                           <div className="search-dropdown-section">{t('common.destinations')}</div>
                         )}
                         {showTourHeader && (
-                          <div className="search-dropdown-section">Tours &amp; Experiences</div>
+                          <div className="search-dropdown-section">{t('search.toursAndExperiences')}</div>
                         )}
                         <div
                           className={`search-suggestion${isHighlighted ? ' highlighted' : ''}`}
@@ -360,39 +339,9 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
       </div>
 
       <div className="nav-right">
-        <div className="nav-icon-item nav-globe-trigger" ref={globeRef} onClick={() => setGlobeOpen(!globeOpen)}>
+        <div className="nav-icon-item nav-globe-trigger" onClick={() => setLangCurrencyOpen(true)}>
           <Globe size={20} />
-          <span className="nav-icon-label">{currency.code}</span>
-          <AnimatePresence>
-            {globeOpen && (
-              <motion.div
-                className="nav-globe-dropdown"
-                initial={{ opacity: 0, y: -6, scale: 0.97 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -6, scale: 0.97 }}
-                transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
-              >
-                <div className="nav-globe-header">
-                  <span>{t('nav.currency')}</span>
-                </div>
-                <div className="nav-globe-list">
-                  {availableCurrencies.map((c) => (
-                    <button
-                      key={c.code}
-                      className={`nav-globe-item${currency.code === c.code ? ' active' : ''}`}
-                      onClick={() => { setAppCurrency(c.code); setGlobeOpen(false) }}
-                    >
-                      <span className="nav-globe-item-symbol">{c.symbol}</span>
-                      <div className="nav-globe-item-info">
-                        <span className="nav-globe-item-code">{c.code}</span>
-                        <span className="nav-globe-item-label">{c.label}</span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <span className="nav-icon-label">{i18n.language.substring(0, 2).toUpperCase()} | {currency.code}</span>
         </div>
 
         <div className="nav-icons">
@@ -446,10 +395,10 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
                         e.preventDefault()
                         e.stopPropagation()
                         setDropdownOpen(false)
-                        if (link.label === 'Dashboard') {
+                        if (link.key === 'Dashboard') {
                           navigate('/dashboard')
                         }
-                        if (link.label === 'Bookings') {
+                        if (link.key === 'Bookings') {
                           navigate('/dashboard/bookings')
                         }
                       }}
@@ -589,31 +538,9 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
               {t('nav.wishlist')}
             </a>
             <div className="nav-mobile-divider" />
-            <div className="nav-mobile-accordion">
-              <button
-                className={`nav-mobile-accordion-header${currencyAccordionOpen ? ' open' : ''}`}
-                onClick={() => setCurrencyAccordionOpen(!currencyAccordionOpen)}
-              >
-                <span>{t('nav.currency')}</span>
-                <ChevronDown size={16} className="nav-mobile-accordion-chevron" />
-              </button>
-              <div className={`nav-mobile-accordion-content${currencyAccordionOpen ? ' open' : ''}`}>
-                <div className="nav-mobile-currency-list">
-                  {availableCurrencies.map((c) => (
-                    <button
-                      key={c.code}
-                      className={`nav-mobile-currency-item${currency.code === c.code ? ' active' : ''}`}
-                      onClick={() => setAppCurrency(c.code)}
-                    >
-                      <span className="nav-mobile-currency-symbol">{c.symbol}</span>
-                      <div className="nav-mobile-currency-info">
-                        <span className="nav-mobile-currency-code">{c.code}</span>
-                        <span className="nav-mobile-currency-label">{c.label}</span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
+            <div className="nav-mobile-link" onClick={() => { setMobileMenuOpen(false); setLangCurrencyOpen(true) }}>
+              <Globe size={18} />
+              <span>Language &amp; Currency</span>
             </div>
             <div className="nav-mobile-divider" />
             {user && (
@@ -634,7 +561,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
                   <rect x="14" y="14" width="7" height="7" />
                   <rect x="3" y="14" width="7" height="7" />
                 </svg>
-                Dashboard
+                {t('nav.dashboard')}
               </a>
             )}
 
@@ -644,14 +571,14 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
                 <line x1="12" y1="16" x2="12" y2="12" />
                 <line x1="12" y1="8" x2="12.01" y2="8" />
               </svg>
-              About
+              {t('nav.about')}
             </a>
             <a href="#" className="nav-mobile-link" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMobileMenuOpen(false); }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
                 <polyline points="22,6 12,13 2,6" />
               </svg>
-              Contact
+              {t('nav.contact')}
             </a>
             <div className="nav-mobile-divider" />
             {user ? (
@@ -693,6 +620,9 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
         )}
       </AnimatePresence>
 
+      <AnimatePresence>
+        {langCurrencyOpen && <LanguageCurrencyModal onClose={() => setLangCurrencyOpen(false)} />}
+      </AnimatePresence>
     </nav>
   )
 }

@@ -21,10 +21,23 @@
   },
   "common": {
     "back": "Retour",
+    "close": "Fermer",
     "destinations": "Destinations",
     "duration": "Durée",
     "from": "À partir de",
-    "rating": "Évaluation"
+    "rating": "Évaluation",
+    "scrollLeft": "Défiler vers la gauche",
+    "scrollRight": "Défiler vers la droite"
+  },
+  "destinations": {
+    "allRegions": "Toutes les régions",
+    "destination": "destination",
+    "destinations": "destinations",
+    "explore": "Explorer",
+    "noResults": "Aucune destination ghanéenne ne correspond à votre recherche.",
+    "popular": "Destinations populaires",
+    "subtitle": "Découvrez des destinations incroyables à travers le pays",
+    "title": "Explorer le Ghana"
   },
   "features": {
     "whyBookHeading": "Pourquoi Réserver Avec Nous",
@@ -37,16 +50,26 @@
     "whyBookVerifiedDesc": "Tous les circuits sont soigneusement sélectionnés",
     "whyBookVerifiedTitle": "Circuits Vérifiés"
   },
+  "feedback": {
+    "no": "Non",
+    "question": "Ces recommandations ont-elles été utiles ?",
+    "thanks": "Merci pour votre retour !",
+    "title": "Quel est votre avis ?",
+    "yes": "Oui"
+  },
   "footer": {
     "aboutUs": "À Propos de Nous",
+    "blog": "Blog",
     "cancellationHelp": "Aide Annulation",
     "company": "Entreprise",
+    "connectWithUs": "Connectez-vous avec nous",
     "contact": "Contact",
     "contactUs": "Contactez-Nous",
     "copyright": "© 2026 Expedition GO. Tous droits réservés.",
     "faq": "FAQ",
     "helpCentre": "Centre d'Aide",
     "home": "Accueil",
+    "partnerships": "Partenariats",
     "privacyPolicy": "Politique de Confidentialité",
     "support": "Support",
     "termsConditions": "Conditions Générales"
@@ -58,8 +81,15 @@
     "subtitle": "Découvrez des circuits et expériences extraordinaires dans le monde entier",
     "title": "Explorez l'Extraordinaire"
   },
+  "mood": {
+    "title": "Que voulez-vous faire ?",
+    "tours": "circuits"
+  },
   "nav": {
+    "about": "À propos",
     "bookings": "Réservations",
+    "contact": "Contact",
+    "dashboard": "Tableau de bord",
     "currency": "Devise",
     "language": "Langue",
     "profile": "Profil",
@@ -70,21 +100,70 @@
   },
   "newsletter": {
     "description": "Abonnez-vous pour recevoir des offres exclusives et de l'inspiration voyage",
+    "disclaimer": "En vous inscrivant, vous acceptez de recevoir des emails promotionnels sur les activités et les conseils de voyage. Vous pouvez vous désabonner ou retirer votre consentement à tout moment. Pour plus d'informations, lisez notre",
     "emailPlaceholder": "Entrez votre email",
+    "imageAlt": "Parc Commémoratif Kwame Nkrumah",
     "privacyLink": "Nous respectons votre vie privée. Désabonnez-vous à tout moment.",
     "signUp": "S'abonner",
     "title": "Restez Informé"
   },
+  "partners": {
+    "heading": "Entreprises avec lesquelles nous travaillons"
+  },
+  "search": {
+    "clearRecent": "Effacer les recherches récentes",
+    "destination": "Destination",
+    "recentSearches": "Recherches récentes",
+    "removeRecent": "Supprimer des recherches récentes",
+    "tour": "Circuit",
+    "toursAndExperiences": "Circuits et Expériences"
+  },
   "sections": {
     "allToursTitle": "Circuits",
+    "continuePlanning": "Continuer la Planification",
+    "dayTours": "Circuits d'un Jour",
     "destinations": "Destinations",
     "lastMinuteDeals": "Offres de Dernière Minute",
     "likelyToSellOut": "Risque de Rupture",
-    "continuePlanning": "Continuer la Planification",
+    "multiDayTours": "Circuits de Plusieurs Jours",
     "pickupTitle": "Prise en Charge Incluse",
+    "poweredByTripadvisor": "Propulsé par Tripadvisor",
     "recommendedTitle": "Recommandé pour Vous",
+    "reviews": "Avis",
     "topRatedTitle": "Circuits les Mieux Notés",
+    "travelStories": "Histoires et Actualités de Voyage",
     "viewAll": "Voir Tout"
+  },
+  "splash": {
+    "alt": "Expedition-Go Tours Limited",
+    "fallback": "EG",
+    "tagline": "Votre Porte d'Entrée vers l'Afrique",
+    "word1": "EXPEDITION-GO",
+    "word2": "TOURS",
+    "word3": "LIMITED"
+  },
+  "stories": {
+    "readMore": "Lire la suite"
+  },
+  "supportChat": {
+    "adminSupport": "Support Administratif",
+    "businessHours": "Heures d'Ouverture",
+    "call": "Appeler",
+    "callUs": "Appelez-nous",
+    "chatWithUs": "Discutez avec nous",
+    "chatWithUsSub": "Envoyez un message en temps réel",
+    "contactUs": "Contactez-nous",
+    "contactUsSub": "Appelez ou envoyez un email à notre équipe de support",
+    "email": "Email",
+    "emailUs": "Envoyez-nous un email",
+    "getInTouch": "Prenez Contact",
+    "getInTouchSub": "Nous visons à répondre sous 2 heures pendant les heures d'ouverture",
+    "needHelp": "Besoin d'aide ?",
+    "online": "En ligne",
+    "openChat": "Ouvrir le chat",
+    "typeMessage": "Tapez un message...",
+    "welcomeText": "Nous sommes là pour vous aider. Choisissez une option ci-dessous ou envoyez-nous un message.",
+    "welcomeTitle": "Bonjour ! Bienvenue chez Expedition Go"
   },
   "tourDetail": {
     "aboutTour": "À Propos de Ce Circuit",

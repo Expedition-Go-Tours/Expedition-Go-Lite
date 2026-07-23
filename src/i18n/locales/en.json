@@ -21,10 +21,23 @@
   },
   "common": {
     "back": "Back",
+    "close": "Close",
     "destinations": "Destinations",
     "duration": "Duration",
     "from": "From",
-    "rating": "Rating"
+    "rating": "Rating",
+    "scrollLeft": "Scroll left",
+    "scrollRight": "Scroll right"
+  },
+  "destinations": {
+    "allRegions": "All Regions",
+    "destination": "destination",
+    "destinations": "destinations",
+    "explore": "Explore",
+    "noResults": "No Ghanaian destinations match your search.",
+    "popular": "Popular destinations",
+    "subtitle": "Discover amazing destinations across the country",
+    "title": "Explore Ghana"
   },
   "features": {
     "whyBookHeading": "Why Book With Us",
@@ -37,16 +50,26 @@
     "whyBookVerifiedDesc": "All tours are carefully vetted for quality",
     "whyBookVerifiedTitle": "Verified Tours"
   },
+  "feedback": {
+    "no": "No",
+    "question": "Were these recommendations helpful?",
+    "thanks": "Thanks for your feedback!",
+    "title": "What's Your Feedback",
+    "yes": "Yes"
+  },
   "footer": {
     "aboutUs": "About Us",
+    "blog": "Blog",
     "cancellationHelp": "Cancellation Help",
     "company": "Company",
+    "connectWithUs": "Connect with us",
     "contact": "Contact",
     "contactUs": "Contact Us",
     "copyright": "© 2026 Expedition GO. All rights reserved.",
     "faq": "FAQ",
     "helpCentre": "Help Centre",
     "home": "Home",
+    "partnerships": "Partnerships",
     "privacyPolicy": "Privacy Policy",
     "support": "Support",
     "termsConditions": "Terms & Conditions"
@@ -58,8 +81,15 @@
     "subtitle": "Discover extraordinary tours & experiences worldwide",
     "title": "Explore the Extraordinary"
   },
+  "mood": {
+    "title": "What do you want to do?",
+    "tours": "tours"
+  },
   "nav": {
+    "about": "About",
     "bookings": "Bookings",
+    "contact": "Contact",
+    "dashboard": "Dashboard",
     "currency": "Currency",
     "language": "Language",
     "profile": "Profile",
@@ -70,21 +100,70 @@
   },
   "newsletter": {
     "description": "Subscribe to receive exclusive deals and travel inspiration",
+    "disclaimer": "By signing up, you agree to receive promotional emails on activities and insider tips. You can unsubscribe or withdraw your consent at any time. For more information, read our",
     "emailPlaceholder": "Enter your email",
+    "imageAlt": "Kwame Nkrumah Memorial Park",
     "privacyLink": "We respect your privacy. Unsubscribe at any time.",
     "signUp": "Sign Up",
     "title": "Stay in the Know"
   },
+  "partners": {
+    "heading": "Companies We Work With"
+  },
+  "search": {
+    "clearRecent": "Clear recent searches",
+    "destination": "Destination",
+    "recentSearches": "Recent Searches",
+    "removeRecent": "Remove from recent searches",
+    "tour": "Tour",
+    "toursAndExperiences": "Tours & Experiences"
+  },
   "sections": {
     "allToursTitle": "Tours",
+    "continuePlanning": "Continue Planning Your Trip",
+    "dayTours": "Day Tours",
     "destinations": "Destinations",
     "lastMinuteDeals": "Last Minute Deals",
     "likelyToSellOut": "Likely To Sell Out",
-    "continuePlanning": "Continue Planning Your Trip",
+    "multiDayTours": "Multi-Day Tours",
     "pickupTitle": "Pickup Included",
+    "poweredByTripadvisor": "Powered by Tripadvisor",
     "recommendedTitle": "Recommended For You",
+    "reviews": "Reviews",
     "topRatedTitle": "Top Rated Tours",
+    "travelStories": "Travel Stories & News",
     "viewAll": "View All"
+  },
+  "splash": {
+    "alt": "Expedition-Go Tours Limited",
+    "fallback": "EG",
+    "tagline": "Your Gateway to Africa",
+    "word1": "EXPEDITION-GO",
+    "word2": "TOURS",
+    "word3": "LIMITED"
+  },
+  "stories": {
+    "readMore": "Read more"
+  },
+  "supportChat": {
+    "adminSupport": "Admin Support",
+    "businessHours": "Business Hours",
+    "call": "Call",
+    "callUs": "Call us",
+    "chatWithUs": "Chat with us",
+    "chatWithUsSub": "Send a message in real-time",
+    "contactUs": "Contact Us",
+    "contactUsSub": "Call or email our support team",
+    "email": "Email",
+    "emailUs": "Email us",
+    "getInTouch": "Get in Touch",
+    "getInTouchSub": "We aim to respond within 2 hours during business hours",
+    "needHelp": "Need help?",
+    "online": "Online",
+    "openChat": "Open chat",
+    "typeMessage": "Type a message...",
+    "welcomeText": "We're here to help. Choose an option below or send us a message.",
+    "welcomeTitle": "Hi! Welcome to Expedition Go"
   },
   "tourDetail": {
     "aboutTour": "About This Tour",

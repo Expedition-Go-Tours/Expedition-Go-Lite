@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import { X, Search, ChevronLeft, ChevronRight } from 'lucide-react'
 import { destinations } from './data'
 import PopularLocationCard from './PopularLocationCard'
@@ -12,6 +13,7 @@ interface DestinationsModalProps {
 }
 
 export default function DestinationsModal({ isOpen, onClose }: DestinationsModalProps) {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedRegion, setSelectedRegion] = useState('all')
@@ -148,10 +150,10 @@ export default function DestinationsModal({ isOpen, onClose }: DestinationsModal
             {/* Header */}
             <div className="destinations-header">
               <div>
-                <h2 id="destinations-modal-title" className="destinations-title">Explore Ghana</h2>
-                <p className="destinations-subtitle">Discover amazing destinations across the country</p>
+                <h2 id="destinations-modal-title" className="destinations-title">{t('destinations.title')}</h2>
+                <p className="destinations-subtitle">{t('destinations.subtitle')}</p>
               </div>
-              <button onClick={onClose} className="destinations-close" aria-label="Close">
+              <button onClick={onClose} className="destinations-close" aria-label={t('common.close')}>
                 <X size={24} />
               </button>
             </div>
@@ -164,7 +166,7 @@ export default function DestinationsModal({ isOpen, onClose }: DestinationsModal
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search destinations..."
+                  placeholder={t('hero.destinationPlaceholder')}
                   className="destinations-search-input"
                 />
               </div>
@@ -176,7 +178,7 @@ export default function DestinationsModal({ isOpen, onClose }: DestinationsModal
                 type="button"
                 className={`destinations-region-arrow left ${showRegionLeft ? 'visible' : ''}`}
                 onClick={() => scrollRegion(-1)}
-                aria-label="Scroll regions left"
+                aria-label={t('common.scrollLeft')}
               >
                 <ChevronLeft size={18} />
               </button>
@@ -187,7 +189,7 @@ export default function DestinationsModal({ isOpen, onClose }: DestinationsModal
                     onClick={() => setSelectedRegion(region)}
                     className={`destinations-region-chip ${selectedRegion === region ? 'active' : ''}`}
                   >
-                    {region === 'all' ? 'All Regions' : region}
+                    {region === 'all' ? t('destinations.allRegions') : region}
                   </button>
                 ))}
               </div>
@@ -195,7 +197,7 @@ export default function DestinationsModal({ isOpen, onClose }: DestinationsModal
                 type="button"
                 className={`destinations-region-arrow right ${showRegionRight ? 'visible' : ''}`}
                 onClick={() => scrollRegion(1)}
-                aria-label="Scroll regions right"
+                aria-label={t('common.scrollRight')}
               >
                 <ChevronRight size={18} />
               </button>
@@ -207,8 +209,8 @@ export default function DestinationsModal({ isOpen, onClose }: DestinationsModal
               <div className="destinations-section">
                 <h3 className="destinations-section-title">
                   {searchQuery.trim()
-                    ? `${filtered.length} destination${filtered.length !== 1 ? 's' : ''}`
-                    : 'Popular destinations'}
+                    ? `${filtered.length} ${filtered.length === 1 ? t('destinations.destination') : t('destinations.destinations')}`
+                    : t('destinations.popular')}
                 </h3>
                 {filtered.length > 0 ? (
                   <div className="destinations-grid">
@@ -227,7 +229,7 @@ export default function DestinationsModal({ isOpen, onClose }: DestinationsModal
                   </div>
                 ) : (
                   <div className="destinations-empty">
-                    No Ghanaian destinations match your search.
+                    {t('destinations.noResults')}
                   </div>
                 )}
               </div>
@@ -241,7 +243,7 @@ export default function DestinationsModal({ isOpen, onClose }: DestinationsModal
                       onClick={() => handleExploreRegion(region)}
                       className="destinations-explore-btn"
                     >
-                      Explore
+                      {t('destinations.explore')}
                     </button>
                   </div>
                   <div className="destinations-grid">

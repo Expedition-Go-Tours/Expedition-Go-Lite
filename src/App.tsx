@@ -38,10 +38,9 @@ import { subscribeToAuthState, handleGoogleCallback } from './lib/auth'
 
 type PageView = 'home' | 'signin' | 'signup'
 
-function HomePage({ onOpenAuth }: any) {
+function HomePage() {
   return (
     <>
-      <Navbar onOpenAuth={onOpenAuth} />
       <Hero />
       <ContinuePlanningSection />
       <MoodSection />
@@ -116,11 +115,12 @@ function AppContent() {
       </AnimatePresence>
 
       <Toaster position="top-center" duration={2500} closeButton />
+      <Navbar onOpenAuth={handleOpenAuth} />
       <SupportChatWidget />
       <Routes>
         <Route path="/dashboard/*" element={<DashboardLayout />} />
         <Route path="/tour/:tourId" element={
-          <TourDetailPage onOpenAuth={handleOpenAuth} />
+          <TourDetailPage />
         } />
         <Route path="/tours" element={
           <AllToursPage onOpenAuth={handleOpenAuth} />
@@ -165,7 +165,7 @@ function AppContent() {
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.25, ease: 'easeInOut' }}
               >
-                <HomePage onOpenAuth={handleOpenAuth} />
+                <HomePage />
               </motion.div>
             )}
           </AnimatePresence>

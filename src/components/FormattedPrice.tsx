@@ -6,11 +6,11 @@ interface FormattedPriceProps {
 }
 
 export default function FormattedPrice({ usdPrice, className }: FormattedPriceProps) {
-  const { formatPrice, loading } = useCurrency()
+  const { currency, convertPrice, loading } = useCurrency()
 
   if (loading) {
-    return <span className={className}>${usdPrice.toLocaleString()}</span>
+    return <span className={className}>{currency.symbol}{Math.round(usdPrice).toLocaleString()}</span>
   }
 
-  return <span className={className}>{formatPrice(usdPrice)}</span>
+  return <span className={className}>{currency.symbol}{Math.round(convertPrice(usdPrice)).toLocaleString()}</span>
 }
