@@ -3,6 +3,7 @@ import { Button } from '../components/ui/button'
 import { useWishlist, type WishlistItem } from '../context/WishlistContext'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
+import { travioTours } from '../components/data'
 import './Wishlist.css'
 
 export default function Wishlist() {
@@ -15,6 +16,13 @@ export default function Wishlist() {
   }
 
   const handleBookNow = (item: WishlistItem) => {
+    if (item.source === 'travio-africa') {
+      const url = item.externalUrl || travioTours.find(t => t.title === item.title)?.externalUrl
+      if (url) {
+        window.open(url, '_blank', 'noopener')
+        return
+      }
+    }
     navigate('/booking', {
       state: {
         tour: {

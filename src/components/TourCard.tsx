@@ -13,7 +13,7 @@ interface TourCardProps extends Tour {
 export default function TourCard({ title, duration, features, price, rating, reviews, location, image, discount, source, externalUrl }: TourCardProps) {
   const { t } = useTranslation()
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist()
-  const item = toWishlistItem({ title, duration, features, price, rating: String(rating), reviews, location, image, source } as Tour)
+  const item = toWishlistItem({ title, duration, features, price, rating: String(rating), reviews, location, image, source, externalUrl } as Tour)
   const inWishlist = isInWishlist(item.id)
 
   const handleWishlist = (e: React.MouseEvent) => {

@@ -11,7 +11,7 @@ interface MultiDayCardProps extends MultiDayTour {}
 export default function MultiDayCard({ title, days, accommodation, highlights, price, rating, reviews, location, image, source, externalUrl }: MultiDayCardProps) {
   const { t } = useTranslation()
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist()
-  const item = toWishlistItem({ title, days, accommodation, highlights, price, rating: String(rating), reviews, location, image, source } as unknown as MultiDayTour)
+  const item = toWishlistItem({ title, days, accommodation, highlights, price, rating: String(rating), reviews, location, image, source, externalUrl } as unknown as MultiDayTour)
   const inWishlist = isInWishlist(item.id)
 
   const handleWishlist = (e: React.MouseEvent) => {

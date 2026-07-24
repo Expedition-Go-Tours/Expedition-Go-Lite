@@ -210,6 +210,7 @@ export default function TourDetailPage() {
         reviewCount: Number(selectedTourReviews) || 0,
         addedDate: new Date().toISOString(),
         source: (tour as any).source,
+        externalUrl: (tour as any).externalUrl,
       })
       toast.success(t('common.addedToWishlist'))
     }

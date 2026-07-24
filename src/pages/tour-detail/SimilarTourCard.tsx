@@ -25,7 +25,7 @@ export default function SimilarTourCard({
 }: SimilarTourCardProps) {
   const { t } = useTranslation()
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist()
-  const item = toWishlistItem({ title, duration, features, price, rating: String(rating), reviews, location, image, source } as Tour)
+  const item = toWishlistItem({ title, duration, features, price, rating: String(rating), reviews, location, image, source, externalUrl } as Tour)
   const inWishlist = isInWishlist(item.id)
 
   const handleWishlist = (e: React.MouseEvent) => {

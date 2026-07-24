@@ -12,6 +12,7 @@ export interface WishlistItem {
   reviewCount: number
   addedDate: string
   source?: 'expedition-go' | 'travio-africa'
+  externalUrl?: string
 }
 
 interface WishlistContextValue {
@@ -44,6 +45,7 @@ export function toWishlistItem(tour: Tour | MultiDayTour & { days?: string }): W
     reviewCount: tour.reviews,
     addedDate: new Date().toISOString(),
     source: tour.source,
+    externalUrl: tour.externalUrl,
   }
 }
 
