@@ -1,4 +1,5 @@
-﻿import './IncludedExcluded.css'
+﻿import { useTranslation } from 'react-i18next'
+import './IncludedExcluded.css'
 
 interface IncludedExcludedProps {
   included: string[]
@@ -6,9 +7,10 @@ interface IncludedExcludedProps {
 }
 
 export default function IncludedExcluded({ included, excluded }: IncludedExcludedProps) {
+  const { t } = useTranslation()
   return (
     <section className="included-excluded">
-      <h2 className="tour-section-title">What's Included</h2>
+      <h2 className="tour-section-title">{t('tourDetail.whatsIncluded')}</h2>
       
       <div className="included-excluded-grid">
         <div className="included-section">
@@ -16,7 +18,7 @@ export default function IncludedExcluded({ included, excluded }: IncludedExclude
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <polyline points="20 6 9 17 4 12" />
             </svg>
-            Included
+            {t('tourDetail.included')}
           </h3>
           <ul className="included-excluded-list">
             {included.map((item, index) => (
@@ -36,7 +38,7 @@ export default function IncludedExcluded({ included, excluded }: IncludedExclude
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
-            Excluded
+            {t('tourDetail.excluded')}
           </h3>
           <ul className="included-excluded-list">
             {excluded.map((item, index) => (

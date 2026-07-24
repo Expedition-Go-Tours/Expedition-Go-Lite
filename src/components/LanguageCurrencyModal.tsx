@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { X, Check } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import i18n from '../i18n/config'
 import { useCurrency, availableCurrencies } from '../contexts/CurrencyContext'
 
@@ -9,21 +10,22 @@ interface LanguageCurrencyModalProps {
 }
 
 const LANGUAGES = [
-  { code: 'en', name: 'English', flag: '🇬🇧' },
-  { code: 'es', name: 'Español', flag: '🇪🇸' },
-  { code: 'fr', name: 'Français', flag: '🇫🇷' },
-  { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
-  { code: 'nl', name: 'Nederlands', flag: '🇳🇱' },
+  { code: 'en', flag: '🇬🇧' },
+  { code: 'es', flag: '🇪🇸' },
+  { code: 'fr', flag: '🇫🇷' },
+  { code: 'de', flag: '🇩🇪' },
+  { code: 'nl', flag: '🇳🇱' },
 ]
 
 const TABS = [
-  { key: 'language', label: 'Language' },
-  { key: 'currency', label: 'Currency' },
-] as const
+  { key: 'language' as const },
+  { key: 'currency' as const },
+]
 
 type TabKey = (typeof TABS)[number]['key']
 
 export default function LanguageCurrencyModal({ onClose }: LanguageCurrencyModalProps) {
+  const { t } = useTranslation()
   const [activeTab, setActiveTab] = useState<TabKey>('language')
   const currentLang = i18n.language.substring(0, 2)
   const { currency, setCurrency: setAppCurrency } = useCurrency()
@@ -58,7 +60,7 @@ export default function LanguageCurrencyModal({ onClose }: LanguageCurrencyModal
                   : 'text-slate-400 hover:text-slate-600'
               }`}
             >
-              {tab.label}
+              {tab.key === 'language' ? t('nav.language') : t('nav.currency')}
               {activeTab === tab.key && (
                 <motion.div
                   layoutId="active-tab"
@@ -92,7 +94,7 @@ export default function LanguageCurrencyModal({ onClose }: LanguageCurrencyModal
                       }`}
                     >
                       <span className="text-lg">{lang.flag}</span>
-                      <span className="flex-1">{lang.name}</span>
+                      <span className="flex-1">{t(`languages.${lang.code}`)}</span>
                       {currentLang === lang.code && (
                         <Check className="size-4 text-emerald-600" />
                       )}

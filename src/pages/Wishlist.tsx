@@ -161,7 +161,7 @@ export default function Wishlist() {
                   <div className="wishlist-card-image">
                     <img src={item.imageUrl} alt={item.title} />
                     <button
-                      className="wishlist-remove-btn"
+                      className={`wishlist-remove-btn${item.source === 'travio-africa' ? '' : ' no-logo'}`}
                       onClick={() => handleRemove(item.id)}
                       aria-label="Remove from wishlist"
                       title="Remove from wishlist"
@@ -171,6 +171,11 @@ export default function Wishlist() {
                       </svg>
                     </button>
                     <div className="wishlist-card-badge">{item.duration}</div>
+                    {item.source === 'travio-africa' && (
+                      <div className="source-badge">
+                        <img src="/travio_logo.png" alt="Travio Africa" />
+                      </div>
+                    )}
                   </div>
 
                   <div className="wishlist-card-content">

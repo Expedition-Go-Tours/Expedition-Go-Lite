@@ -249,6 +249,30 @@
   transform: translateY(0);
 }
 
+/* Source Badge (Travio Africa logo) */
+.wishlist-card-image .source-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 36px;
+  height: 36px;
+  background: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  z-index: 10;
+  padding: 3px;
+}
+
+.wishlist-card-image .source-badge img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 50%;
+}
+
 /* ===== EMPTY STATE ===== */
 .empty-state {
   display: flex;
@@ -398,31 +422,137 @@
 
   .wishlist-grid {
     grid-template-columns: 1fr;
-    gap: 16px;
+    gap: 12px;
+  }
+
+  .wishlist-card {
+    flex-direction: row;
+    min-height: 150px;
+    height: auto;
+    border-radius: 10px;
   }
 
   .wishlist-card-image {
-    height: 200px;
+    width: 120px;
+    min-width: 120px;
+    height: auto;
+    align-self: stretch;
+    border-radius: 0;
+    margin: 0;
+  }
+
+  .wishlist-card-image img {
+    border-radius: 0;
   }
 
   .wishlist-card-content {
-    padding: 16px;
-    gap: 12px;
+    padding: 10px 14px;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
   }
 
   .wishlist-card-title {
-    font-size: 15px;
-    min-height: 40px;
+    font-size: 14px;
+    min-height: 0;
+    -webkit-line-clamp: 2;
+  }
+
+  .wishlist-card-location {
+    font-size: 11px;
+  }
+
+  .wishlist-card-location svg {
+    width: 10px;
+    height: 10px;
+  }
+
+  .wishlist-card-meta {
+    padding-top: 2px;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .wishlist-card-rating {
+    font-size: 11px;
+    gap: 3px;
+  }
+
+  .wishlist-card-rating svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .rating-value {
+    font-size: 11px;
+  }
+
+  .rating-count {
+    font-size: 10px;
+  }
+
+  .wishlist-card-price {
+    gap: 3px;
+  }
+
+  .price-label {
+    font-size: 10px;
+  }
+
+  .price-value {
+    font-size: 16px;
   }
 
   .wishlist-card-footer {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    padding-top: 2px;
+    margin-top: auto;
+  }
+
+  .wishlist-added-date {
+    font-size: 10px;
+    white-space: nowrap;
   }
 
   .wishlist-book-btn {
-    width: 100%;
+    width: auto;
+    padding: 4px 12px !important;
+    font-size: 11px !important;
+  }
+
+  .wishlist-remove-btn {
+    width: 24px;
+    height: 24px;
+    top: 6px;
+    right: 6px;
+  }
+
+  .wishlist-remove-btn.no-logo {
+    left: 6px;
+    right: auto;
+  }
+
+  .wishlist-remove-btn svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .wishlist-card-badge {
+    font-size: 9px;
+    padding: 3px 8px;
+    bottom: 6px;
+    left: 6px;
+  }
+
+  .wishlist-card-image .source-badge {
+    width: 24px;
+    height: 24px;
+    top: 6px;
+    left: 6px;
+    padding: 2px;
+    z-index: 10;
   }
 
   .empty-state {
@@ -439,70 +569,120 @@
 }
 
 @media (max-width: 480px) {
+  .wishlist-card {
+    min-height: 135px;
+    height: auto;
+    border-radius: 8px;
+  }
+
   .wishlist-card-image {
-    height: 180px;
+    width: 100px;
+    min-width: 100px;
+    height: auto;
+    align-self: stretch;
+    margin: 0;
+    border-radius: 0;
+  }
+
+  .wishlist-card-image img {
+    border-radius: 0;
   }
 
   .wishlist-card-content {
-    padding: 14px;
+    padding: 8px 10px;
+    gap: 1px;
   }
 
   .wishlist-card-title {
-    font-size: 14px;
-    min-height: 38px;
+    font-size: 13px;
+    min-height: 0;
+    -webkit-line-clamp: 2;
   }
 
   .wishlist-card-location {
-    font-size: 12px;
+    font-size: 10px;
+  }
+
+  .wishlist-card-location svg {
+    width: 9px;
+    height: 9px;
   }
 
   .wishlist-card-meta {
-    padding-top: 10px;
+    padding-top: 1px;
   }
 
   .wishlist-card-rating {
-    font-size: 13px;
-    gap: 3px;
+    font-size: 10px;
+    gap: 2px;
+  }
+
+  .wishlist-card-rating svg {
+    width: 10px;
+    height: 10px;
+  }
+
+  .rating-value {
+    font-size: 10px;
   }
 
   .rating-count {
-    font-size: 12px;
-    margin-left: 3px;
+    font-size: 9px;
   }
 
   .price-label {
-    font-size: 11px;
+    font-size: 9px;
   }
 
   .price-value {
-    font-size: 17px;
+    font-size: 14px;
   }
 
   .wishlist-card-footer {
-    padding-top: 12px;
+    gap: 4px;
+    padding-top: 1px;
   }
 
   .wishlist-added-date {
-    font-size: 11px;
+    font-size: 9px;
+  }
+
+  .wishlist-book-btn {
+    padding: 3px 10px !important;
+    font-size: 10px !important;
   }
 
   .wishlist-remove-btn {
-    width: 32px;
-    height: 32px;
-    top: 10px;
-    right: 10px;
+    width: 20px;
+    height: 20px;
+    top: 5px;
+    right: 5px;
+  }
+
+  .wishlist-remove-btn.no-logo {
+    left: 5px;
+    right: auto;
   }
 
   .wishlist-remove-btn svg {
-    width: 16px;
-    height: 16px;
+    width: 10px;
+    height: 10px;
   }
 
   .wishlist-card-badge {
-    font-size: 11px;
-    padding: 5px 10px;
-    bottom: 10px;
-    left: 10px;
+    font-size: 8px;
+    padding: 2px 6px;
+    bottom: 5px;
+    left: 5px;
+  }
+
+  .wishlist-card-image .source-badge {
+    width: 20px;
+    height: 20px;
+    top: 5px;
+    left: 5px;
+    padding: 1px;
+    z-index: 10;
   }
 
   .empty-state {

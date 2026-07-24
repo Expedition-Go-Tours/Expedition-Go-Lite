@@ -1,9 +1,11 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronDown, Star } from 'lucide-react'
 import './WriteReviewForm.css'
 
 export default function WriteReviewForm() {
+  const { t } = useTranslation()
   const [isOpen, setIsOpen] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
@@ -69,11 +71,11 @@ export default function WriteReviewForm() {
   }
 
   const ratingCategories = [
-    { key: 'sleep' as const, label: 'Sleep' },
-    { key: 'location' as const, label: 'Location' },
-    { key: 'service' as const, label: 'Service' },
-    { key: 'cleanliness' as const, label: 'Cleanliness' },
-    { key: 'guidance' as const, label: 'Guidance' },
+    { key: 'sleep' as const, label: t('reviews.sleep') },
+    { key: 'location' as const, label: t('reviews.location') },
+    { key: 'service' as const, label: t('reviews.service') },
+    { key: 'cleanliness' as const, label: t('reviews.cleanliness') },
+    { key: 'guidance' as const, label: t('reviews.guidance') },
   ]
 
   return (
@@ -83,7 +85,7 @@ export default function WriteReviewForm() {
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}
       >
-        <span>Write a review</span>
+        <span>{t('reviews.writeAReview')}</span>
         <motion.div
           animate={{ rotate: isOpen ? 180 : 0 }}
           transition={{ duration: 0.3 }}
@@ -102,9 +104,9 @@ export default function WriteReviewForm() {
             transition={{ duration: 0.3 }}
           >
             <form className="write-review-form" onSubmit={handleSubmit}>
-              <h3 className="write-review-title">Leave a review</h3>
+              <h3 className="write-review-title">{t('reviews.leaveAReview')}</h3>
               <p className="write-review-subtitle">
-                Your email address will not be published. Required fields are marked *
+                {t('reviews.emailNotPublished')}
               </p>
 
               <div className="write-review-row">
@@ -112,7 +114,7 @@ export default function WriteReviewForm() {
                   <input
                     type="text"
                     name="name"
-                    placeholder="Name *"
+                    placeholder={t('reviews.namePlaceholder')}
                     value={formData.name}
                     onChange={handleInputChange}
                     required
@@ -124,7 +126,7 @@ export default function WriteReviewForm() {
                   <input
                     type="email"
                     name="email"
-                    placeholder="Email *"
+                    placeholder={t('reviews.emailPlaceholder')}
                     value={formData.email}
                     onChange={handleInputChange}
                     required
@@ -137,7 +139,7 @@ export default function WriteReviewForm() {
                 <input
                   type="text"
                   name="title"
-                  placeholder="Title *"
+                    placeholder={t('reviews.titlePlaceholder')}
                   value={formData.title}
                   onChange={handleInputChange}
                   required
@@ -183,7 +185,7 @@ export default function WriteReviewForm() {
                 <div className="write-review-field write-review-content-field">
                   <textarea
                     name="content"
-                    placeholder="Content *"
+                    placeholder={t('reviews.contentPlaceholder')}
                     value={formData.content}
                     onChange={handleInputChange}
                     required
@@ -194,7 +196,7 @@ export default function WriteReviewForm() {
               </div>
 
               <button type="submit" className="write-review-submit">
-                POST REVIEW
+                {t('reviews.postReview')}
               </button>
             </form>
           </motion.div>

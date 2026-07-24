@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ChevronLeft, ChevronRight, Image, Upload, Heart, ArrowLeft } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import PhotoViewerModal from './PhotoViewerModal'
@@ -24,6 +25,7 @@ export default function TourImageGallery({
   onShare,
   showStickyHeader,
 }: TourImageGalleryProps) {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [isGalleryOpen, setIsGalleryOpen] = useState(false)
@@ -168,7 +170,7 @@ export default function TourImageGallery({
             className="tour-gallery-view-all"
           >
             <Image size={14} />
-            View All
+            {t('sections.viewAll')}
           </button>
 
           {/* Mobile dot pagination */}

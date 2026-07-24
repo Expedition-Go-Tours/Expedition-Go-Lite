@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { CalendarDays, Users, Minus, Plus, MessageSquare } from 'lucide-react'
 import { toast } from 'sonner'
 import { useCurrency } from '../../contexts/CurrencyContext'
+import SupportChatWidget from '../../components/SupportChatWidget'
 import './BookingWidget.css'
 
 interface BookingWidgetProps {
@@ -34,6 +35,7 @@ export default function BookingWidget({ tour }: BookingWidgetProps) {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [isChecking, setIsChecking] = useState(false)
   const [isAvailable, setIsAvailable] = useState(false)
+  const [showChat, setShowChat] = useState(false)
   const [promoCode, setPromoCode] = useState('')
   const [promoApplied, setPromoApplied] = useState(false)
   const [promoError, setPromoError] = useState('')
@@ -133,14 +135,14 @@ export default function BookingWidget({ tour }: BookingWidgetProps) {
     }
 
     if (!selectedDate) {
-      toast.error('Please select a date first')
+      toast.error(t('booking.selectDateFirst'))
       return
     }
     setIsChecking(true)
     setTimeout(() => {
       setIsChecking(false)
       setIsAvailable(true)
-      toast.success('Date is available!')
+      toast.success(t('booking.dateAvailable'))
     }, 1500)
   }, [selectedDate, isAvailable, tour, adults, seniors, youths, children, infants, totalPrice, navigate])
 
@@ -148,24 +150,24 @@ export default function BookingWidget({ tour }: BookingWidgetProps) {
     const code = promoCode.trim()
     if (!code) return
     if (code.length !== 8) {
-      setPromoError('Promo code must be exactly 8 characters.')
+      setPromoError(t('booking.promoLengthError'))
       return
     }
     if (!/^[A-Z0-9]+$/.test(code)) {
-      setPromoError('Promo code must contain only uppercase letters and numbers.')
+      setPromoError(t('booking.promoFormatError'))
       return
     }
     setPromoApplied(true)
     setPromoError('')
-    toast.success('Promo code applied!')
+    toast.success(t('booking.promoApplied'))
   }
 
   const travelerOptions = [
-    { label: 'Adults', age: 'Age 18 - 60', price: `${currency.symbol}${adultPrice}`, count: adults, key: 'adults' },
-    { label: 'Seniors', age: 'Age 61 - 80', price: `${currency.symbol}${seniorPrice}`, count: seniors, key: 'seniors' },
-    { label: 'Youths', age: 'Age 15 - 17', price: `${currency.symbol}${youthPrice}`, count: youths, key: 'youths' },
-    { label: 'Children', age: 'Age 4 - 14', price: `${currency.symbol}${childPrice}`, count: children, key: 'children' },
-    { label: 'Infants', age: 'Age 1 - 3', price: infantPrice > 0 ? `${currency.symbol}${infantPrice}` : 'Free', count: infants, key: 'infants' },
+    { label: t('booking.adults'), age: t('booking.ageAdult'), price: `${currency.symbol}${adultPrice}`, count: adults, key: 'adults' },
+    { label: t('booking.seniors'), age: t('booking.ageSenior'), price: `${currency.symbol}${seniorPrice}`, count: seniors, key: 'seniors' },
+    { label: t('booking.youths'), age: t('booking.ageYouth'), price: `${currency.symbol}${youthPrice}`, count: youths, key: 'youths' },
+    { label: t('booking.children'), age: t('booking.ageChild'), price: `${currency.symbol}${childPrice}`, count: children, key: 'children' },
+    { label: t('booking.infants'), age: t('booking.ageInfant'), price: infantPrice > 0 ? `${currency.symbol}${infantPrice}` : t('booking.free'), count: infants, key: 'infants' },
   ]
 
   const selectedDateLabel = selectedDate
@@ -179,7 +181,7 @@ export default function BookingWidget({ tour }: BookingWidgetProps) {
           <div className="booking-price-main">
             <span className="booking-price-from">{t('common.from')}</span>
             <span className="booking-price-amount">{currency.symbol}{Math.round(convertPrice(tour.price))}</span>
-            <span className="booking-price-per">/person</span>
+            <span className="booking-price-per">{t('tourDetail.perPerson')}</span>
           </div>
         </div>
 
@@ -235,7 +237,7 @@ export default function BookingWidget({ tour }: BookingWidgetProps) {
               onClick={() => { setShowGuestSelector((v) => !v); setShowCalendar(false) }}
               aria-expanded={showGuestSelector}
             >
-              <span>{totalTravelers} {totalTravelers === 1 ? 'traveler' : 'travelers'}</span>
+              <span>{totalTravelers} {t('booking.traveler', { count: totalTravelers })}</span>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <polyline points="6 9 12 15 18 9" />
               </svg>
@@ -287,7 +289,7 @@ export default function BookingWidget({ tour }: BookingWidgetProps) {
 
           {/* Total */}
           <div className="booking-total">
-            <span>Total ({totalTravelers} {totalTravelers === 1 ? 'traveler' : 'travelers'})</span>
+            <span>{t('booking.total', { count: totalTravelers })}</span>
             <span className="booking-total-amount">{currency.symbol}{Math.round(convertPrice(totalPrice))}</span>
           </div>
 
@@ -311,11 +313,11 @@ export default function BookingWidget({ tour }: BookingWidgetProps) {
                 onClick={handleApplyPromo}
                 className="booking-promo-btn"
               >
-                Apply
+                {t('booking.apply')}
               </button>
             </div>
             {promoError && <p className="booking-promo-error">{promoError}</p>}
-            {promoApplied && <p className="booking-promo-success">Promo code applied!</p>}
+            {promoApplied && <p className="booking-promo-success">{t('booking.promoApplied')}</p>}
           </div>
 
           {/* Submit */}
@@ -329,7 +331,7 @@ export default function BookingWidget({ tour }: BookingWidgetProps) {
                 <svg className="booking-spinner" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <circle cx="12" cy="12" r="10" strokeDasharray="31.4 31.4" strokeLinecap="round" />
                 </svg>
-                Checking...
+                {t('booking.checking')}
               </span>
             ) : isAvailable ? (
               t('tourDetail.bookNow')
@@ -341,7 +343,7 @@ export default function BookingWidget({ tour }: BookingWidgetProps) {
           {/* Assistance */}
           <div className="booking-assistance">
             <p className="booking-assistance-title">{t('tourDetail.needFurtherAssistance')}</p>
-            <button type="button" className="booking-assistance-btn">
+            <button type="button" className="booking-assistance-btn" onClick={() => setShowChat(true)}>
               <MessageSquare size={16} />
               {t('tourDetail.startChat')}
             </button>
@@ -356,6 +358,7 @@ export default function BookingWidget({ tour }: BookingWidgetProps) {
           <span>{t('tourDetail.freeCancellation')}</span>
         </div>
       </div>
+      {showChat && <SupportChatWidget initialOpen />}
     </div>
   )
 }

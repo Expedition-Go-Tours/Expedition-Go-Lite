@@ -25,7 +25,7 @@ export default function TourItinerary({
     return (
       <section className="tour-itinerary-new">
         <h2 className="itinerary-title">{t('tourDetail.itinerary')}</h2>
-        <p className="itinerary-empty">No itinerary details available for this tour.</p>
+        <p className="itinerary-empty">{t('tourDetail.noItinerary')}</p>
       </section>
     )
   }
@@ -44,7 +44,7 @@ export default function TourItinerary({
         <div className="itinerary-stops">
           {itinerary.map((stop, index) => {
             const isLast = index === itinerary.length - 1
-            const markerLabel = isLast ? 'End' : String(index + 1)
+            const markerLabel = isLast ? t('tourDetail.end') : String(index + 1)
             const hasLocation = Boolean(coordinates)
             const isFocused = focusedStopIndex === index
 

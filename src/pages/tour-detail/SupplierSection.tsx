@@ -133,7 +133,7 @@ export default function SupplierSection({
                     <span className="supplier-dot">&bull;</span>
                   </>
                 )}
-                <span>{totalTours} tours</span>
+                <span>{t('supplier.tours', { count: totalTours })}</span>
               </div>
             </div>
           </div>
@@ -147,7 +147,7 @@ export default function SupplierSection({
               onClick={onToggleInfo}
               className="supplier-about-trigger"
             >
-              About this supplier
+              {t('supplier.aboutThisSupplier')}
               <motion.span
                 animate={{ rotate: infoOpen ? 180 : 0 }}
                 transition={{ duration: 0.25 }}
@@ -161,7 +161,7 @@ export default function SupplierSection({
               onClick={() => navigate(`/supplier/${encodeURIComponent(name)}`)}
               className="supplier-view-more"
             >
-              View More
+              {t('supplier.viewMore')}
               <ChevronRight size={16} strokeWidth={2} />
             </button>
           </div>
@@ -206,7 +206,7 @@ export default function SupplierSection({
         {tours.length > 0 && (
           <div className="supplier-tours">
             <div className="supplier-tours-header">
-              <h3 className="supplier-tours-title">Tours by this supplier</h3>
+              <h3 className="supplier-tours-title">{t('supplier.toursBySupplier')}</h3>
             </div>
             <div className="supplier-tours-scroll-wrapper">
               <button

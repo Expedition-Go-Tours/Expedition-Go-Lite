@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import './TourGuideCard.css'
 
 interface TourGuideCardProps {
@@ -7,6 +8,7 @@ interface TourGuideCardProps {
 }
 
 export default function TourGuideCard({ name, memberSince, avatar }: TourGuideCardProps) {
+  const { t } = useTranslation()
   return (
     <div className="tour-guide-card">
       <div className="tour-guide-avatar-wrapper">
@@ -19,10 +21,10 @@ export default function TourGuideCard({ name, memberSince, avatar }: TourGuideCa
       
       <h3 className="tour-guide-name">{name}</h3>
       
-      <p className="tour-guide-since">Member Since {memberSince}</p>
+      <p className="tour-guide-since">{t('tourDetail.memberSince', { year: memberSince })}</p>
       
       <button className="tour-guide-question-btn">
-        Ask a Question
+        {t('tourDetail.askQuestion')}
       </button>
     </div>
   )

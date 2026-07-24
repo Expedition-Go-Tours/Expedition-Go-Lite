@@ -1,4 +1,5 @@
 ﻿import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { FAQ } from '../../lib/tourTypes'
 import './TourFAQ.css'
@@ -8,6 +9,7 @@ interface TourFAQProps {
 }
 
 export default function TourFAQ({ faqs }: TourFAQProps) {
+  const { t } = useTranslation()
   const [expandedFaq, setExpandedFaq] = useState<string | null>(null)
 
   const toggleFaq = (id: string) => {
@@ -16,7 +18,7 @@ export default function TourFAQ({ faqs }: TourFAQProps) {
 
   return (
     <section className="tour-faq">
-      <h2 className="tour-section-title">Frequently Asked Questions</h2>
+      <h2 className="tour-section-title">{t('tourDetail.faq')}</h2>
       
       <div className="faq-list">
         {faqs.map((faq) => {

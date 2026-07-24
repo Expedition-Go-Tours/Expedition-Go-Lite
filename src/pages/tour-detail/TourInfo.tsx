@@ -1,4 +1,5 @@
 ﻿import { useRef, useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import './TourInfo.css'
 
 interface TourInfoProps {
@@ -9,6 +10,7 @@ interface TourInfoProps {
 }
 
 export default function TourInfo({ duration, languages, difficulty, groupSize }: TourInfoProps) {
+  const { t } = useTranslation()
   const [activeIndex, setActiveIndex] = useState(0)
   const gridRef = useRef<HTMLDivElement>(null)
 
@@ -27,7 +29,7 @@ export default function TourInfo({ duration, languages, difficulty, groupSize }:
           <polyline points="12 6 12 12 16 14" />
         </svg>
       ),
-      label: 'Duration',
+      label: t('common.duration'),
       value: <span className="tour-info-value">{duration}</span>,
     },
     {
@@ -39,8 +41,8 @@ export default function TourInfo({ duration, languages, difficulty, groupSize }:
           <path d="M16 3.13a4 4 0 0 1 0 7.75" />
         </svg>
       ),
-      label: 'Group Size',
-      value: <span className="tour-info-value">Up to {groupSize} people</span>,
+      label: t('tourInfo.groupSize'),
+      value: <span className="tour-info-value">{t('tourInfo.upTo', { count: groupSize })}</span>,
     },
     {
       icon: (
@@ -50,7 +52,7 @@ export default function TourInfo({ duration, languages, difficulty, groupSize }:
           <path d="M2 12h20" />
         </svg>
       ),
-      label: 'Languages',
+      label: t('tourInfo.languages'),
       value: (
         <div className="tour-info-languages">
           {languages.map((lang, idx) => (
@@ -67,7 +69,7 @@ export default function TourInfo({ duration, languages, difficulty, groupSize }:
                 <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
               </svg>
             ),
-            label: 'Difficulty',
+            label: t('tourInfo.difficulty'),
             value: (
               <span
                 className="difficulty-badge"
@@ -98,7 +100,7 @@ export default function TourInfo({ duration, languages, difficulty, groupSize }:
 
   return (
     <section className="tour-info">
-      <h2 className="tour-section-title">Tour Information</h2>
+      <h2 className="tour-section-title">{t('tourInfo.title')}</h2>
 
       <div className="tour-info-grid" ref={gridRef}>
         {cards.map((card, idx) => (

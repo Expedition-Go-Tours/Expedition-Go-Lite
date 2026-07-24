@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { Component, useState, useEffect, useMemo, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
@@ -88,10 +88,10 @@ export default function TourDetailPage() {
   const { t } = useTranslation()
   const tourDetailTabs = useMemo(() => [
     { key: 'overview', label: t('tourDetail.aboutTour') },
-    { key: 'details', label: 'Details' },
-    { key: 'itinerary', label: 'Itinerary' },
-    { key: 'reviews', label: 'Reviews' },
-    { key: 'supplier', label: 'Supplier' },
+    { key: 'details', label: t('tourDetail.details') },
+    { key: 'itinerary', label: t('tourDetail.itinerary') },
+    { key: 'reviews', label: t('sections.reviews') },
+    { key: 'supplier', label: t('tourDetail.supplier') },
   ], [t])
   const { tourId } = useParams<{ tourId: string }>()
   const navigate = useNavigate()
@@ -123,6 +123,7 @@ export default function TourDetailPage() {
           ? parseInt((matchedTour as any).price.replace(/[^0-9]/g, ''), 10)
           : mockTourDetail.price,
         images: [matchedTour.image, ...mockTourDetail.images.slice(1)],
+        source: (matchedTour as any).source,
       }
     : mockTourDetail, [matchedTour, tourId])
 
@@ -196,7 +197,7 @@ export default function TourDetailPage() {
   const handleWishlistToggle = () => {
     if (isFavorited) {
       removeFromWishlist(selectedTourTitle)
-      if (!isMobile) toast.success('Removed from wishlist')
+      if (!isMobile) toast.success(t('common.removedFromWishlist'))
     } else {
       addToWishlist({
         id: selectedTourTitle,
@@ -208,8 +209,9 @@ export default function TourDetailPage() {
         rating: Number(selectedTourRating) || 0,
         reviewCount: Number(selectedTourReviews) || 0,
         addedDate: new Date().toISOString(),
+        source: (tour as any).source,
       })
-      toast.success('Added to wishlist')
+      toast.success(t('common.addedToWishlist'))
     }
   }
 
@@ -266,7 +268,7 @@ export default function TourDetailPage() {
     const apiCards = reviews.map((r) => ({
       id: r.id,
       name: r.author,
-      tag: r.verified ? 'Verified' : 'Traveler',
+      tag: r.verified ? t('reviews.verified') : t('reviews.traveler'),
       date: new Date(r.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
       rating: r.rating,
       text: r.content,
@@ -302,12 +304,12 @@ export default function TourDetailPage() {
   })
 
   const overviewHighlightsGrid = useMemo(() => [
-    { icon: CalendarCheck, title: t('tourDetail.freeCancellation'), desc: 'Cancel up to 24 hours in advance for a full refund' },
-    { icon: Clock, title: 'Duration Flexible', desc: 'Check availability to see starting times' },
-    { icon: Users, title: t('tourDetail.liveGuide'), desc: 'English' },
-    { icon: CreditCard, title: t('tourDetail.reservePayLater'), desc: 'Keep your travel plans flexible — book your spot and pay nothing today.' },
-    { icon: UserCheck, title: 'Skip the line through a separate entrance', desc: null },
-    { icon: Bus, title: t('tourDetail.pickupIncluded'), desc: 'Check availability for details' },
+    { icon: CalendarCheck, title: t('tourDetail.freeCancellation'), desc: t('tourDetail.cancelRefundDesc') },
+    { icon: Clock, title: t('tourDetail.durationFlexible'), desc: t('tourDetail.checkAvailabilityDesc') },
+    { icon: Users, title: t('tourDetail.liveGuide'), desc: t('tourDetail.guideLanguage') },
+    { icon: CreditCard, title: t('tourDetail.reservePayLater'), desc: t('tourDetail.reservePayLaterDesc') },
+    { icon: UserCheck, title: t('tourDetail.skipTheLine'), desc: null },
+    { icon: Bus, title: t('tourDetail.pickupIncluded'), desc: t('tourDetail.checkAvailabilityDesc') },
   ], [t])
 
   const descriptionSteps = DESCRIPTION_STEPS
@@ -316,27 +318,27 @@ export default function TourDetailPage() {
   const infoSections = [
     {
       key: 'included',
-      title: 'Included',
+      title: t('tourDetail.included'),
       content: buildIncludedExcludedContent(tour.included, tour.excluded),
     },
     {
       key: 'expect',
-      title: 'About this tour',
+      title: t('tourDetail.aboutTour'),
       content: buildAboutContent(tour.description),
     },
     {
       key: 'pickup',
-      title: 'Meeting and pickup',
-      content: buildMeetingContent('', 'Pickup details are confirmed after booking.'),
+      title: t('tourDetail.meetingPickup'),
+      content: buildMeetingContent('', t('tourDetail.pickupConfirmedAfterBooking')),
     },
     {
       key: 'accessibility',
-      title: 'Accessibility',
+      title: t('tourDetail.accessibility'),
       content: buildAccessibilityContent('', '', ''),
     },
     {
       key: 'policy',
-      title: 'Cancellation policy',
+      title: t('tourDetail.cancellationPolicy'),
       content: buildCancellationContent(undefined, tour.cancellationPolicy || ''),
     },
   ]
@@ -370,13 +372,14 @@ export default function TourDetailPage() {
   if (!tour) {
     return (
       <div className="tour-detail-error">
-        <h2>Tour not found</h2>
-        <p>The tour you're looking for doesn't exist.</p>
+        <h2>{t('tourDetail.tourNotFound')}</h2>
+        <p>{t('tourDetail.tourNotFoundDesc')}</p>
       </div>
     )
   }
 
   return (
+    <TourDetailErrorBoundary>
     <>
       <div className="tour-detail-page">
         <div className="tour-detail-container">
@@ -394,7 +397,7 @@ export default function TourDetailPage() {
                   onClick={handleWriteReview}
                   className="tour-detail-write-review-btn"
                 >
-                  Write a review
+                  {t('reviews.writeAReview')}
                 </button>
               </div>
 
@@ -527,7 +530,7 @@ export default function TourDetailPage() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="dialog-header">
-                <h3 className="dialog-title">Review details</h3>
+                <h3 className="dialog-title">{t('tourDetail.reviewDetails')}</h3>
                 <button type="button" onClick={() => setReviewDetail(null)} className="dialog-close">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
@@ -559,7 +562,7 @@ export default function TourDetailPage() {
         <div className="dialog-overlay" onClick={() => setIsReplyDialogOpen(false)}>
           <div className="dialog-content" onClick={(e) => e.stopPropagation()}>
             <div className="dialog-header">
-              <h3 className="dialog-title">Reply to customer comment</h3>
+              <h3 className="dialog-title">{t('tourDetail.replyToCustomer')}</h3>
               <button type="button" onClick={() => setIsReplyDialogOpen(false)} className="dialog-close">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
@@ -574,19 +577,19 @@ export default function TourDetailPage() {
                 </div>
               )}
               <form onSubmit={handleReplySubmit} className="reply-form">
-                <label htmlFor="reply-textarea" className="reply-label">Your reply</label>
+                <label htmlFor="reply-textarea" className="reply-label">{t('tourDetail.yourReply')}</label>
                 <textarea
                   id="reply-textarea"
                   value={replyMessage}
                   onChange={(e) => { setReplyMessage(e.target.value); setReplyConfirmation('') }}
                   rows={5}
-                  placeholder="Write a helpful reply for the customer..."
+                  placeholder={t('tourDetail.replyPlaceholder')}
                   className="reply-textarea"
                 />
                 {replyConfirmation && <p className="reply-confirmation">{replyConfirmation}</p>}
                 <div className="reply-actions">
-                  <button type="button" onClick={() => setIsReplyDialogOpen(false)} className="reply-cancel">Cancel</button>
-                  <button type="submit" disabled={!replyMessage.trim()} className="reply-submit">Accept reply</button>
+                  <button type="button" onClick={() => setIsReplyDialogOpen(false)} className="reply-cancel">{t('common.cancel')}</button>
+                  <button type="submit" disabled={!replyMessage.trim()} className="reply-submit">{t('tourDetail.acceptReply')}</button>
                 </div>
               </form>
             </div>
@@ -599,7 +602,7 @@ export default function TourDetailPage() {
         <div className="dialog-overlay" onClick={() => setIsWriteReviewOpen(false)}>
           <div className="dialog-content" onClick={(e) => e.stopPropagation()}>
             <div className="dialog-header">
-              <h3 className="dialog-title">Write a review</h3>
+              <h3 className="dialog-title">{t('reviews.writeAReview')}</h3>
               <button type="button" onClick={() => setIsWriteReviewOpen(false)} className="dialog-close">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
@@ -607,10 +610,10 @@ export default function TourDetailPage() {
               </button>
             </div>
             <div className="dialog-body">
-              <p className="write-review-info">Share your experience. You can add photos only as part of this review.</p>
+              <p className="write-review-info">{t('reviews.shareExperience')}</p>
               <form onSubmit={(e) => { e.preventDefault(); setIsWriteReviewOpen(false) }} className="write-review-form-dialog">
                 <div className="write-review-field">
-                  <label>Your rating</label>
+                  <label>{t('reviews.yourRating')}</label>
                   <div className="write-review-stars">
                     {[1, 2, 3, 4, 5].map((star) => (
                       <button key={star} type="button" className="write-review-star-btn">
@@ -622,12 +625,12 @@ export default function TourDetailPage() {
                   </div>
                 </div>
                 <div className="write-review-field">
-                  <label htmlFor="review-textarea-dialog">Your review</label>
-                  <textarea id="review-textarea-dialog" rows={5} required placeholder="Tell travelers what stood out…" className="write-review-textarea" />
+                  <label htmlFor="review-textarea-dialog">{t('reviews.yourReview')}</label>
+                  <textarea id="review-textarea-dialog" rows={5} required placeholder={t('reviews.contentPlaceholder')} className="write-review-textarea" />
                 </div>
                 <div className="reply-actions">
-                  <button type="button" onClick={() => setIsWriteReviewOpen(false)} className="reply-cancel">Cancel</button>
-                  <button type="submit" className="reply-submit">Post review</button>
+                  <button type="button" onClick={() => setIsWriteReviewOpen(false)} className="reply-cancel">{t('common.cancel')}</button>
+                  <button type="submit" className="reply-submit">{t('reviews.postReview')}</button>
                 </div>
               </form>
             </div>
@@ -635,5 +638,27 @@ export default function TourDetailPage() {
         </div>
       )}
     </>
+    </TourDetailErrorBoundary>
   )
+}
+
+class TourDetailErrorBoundary extends Component<{ children: React.ReactNode }, { hasError: boolean }> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props)
+    this.state = { hasError: false }
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true }
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: '60px 24px', textAlign: 'center', fontFamily: 'sans-serif' }}>
+          <h2 style={{ fontSize: 24, marginBottom: 8, color: '#1a1a1a' }}>Something went wrong</h2>
+          <p style={{ fontSize: 16, color: '#6b7280' }}>Please try refreshing the page.</p>
+        </div>
+      )
+    }
+    return this.props.children
+  }
 }

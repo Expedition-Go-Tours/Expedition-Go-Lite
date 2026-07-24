@@ -31,12 +31,16 @@ const SUPPORT_HOURS = [
   { label: "Sunday", value: "Closed" },
 ];
 
-export default function SupportChatWidget() {
+interface SupportChatWidgetProps {
+  initialOpen?: boolean
+}
+
+export default function SupportChatWidget({ initialOpen }: SupportChatWidgetProps) {
   const { t } = useTranslation();
   const location = useLocation();
   const isPublicPage = !location.pathname.startsWith("/dashboard") && !location.pathname.startsWith("/review");
 
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(!!initialOpen);
   const [view, setView] = useState<"welcome" | "contact" | "chat">("welcome");
   const [messages, setMessages] = useState<Message[]>(mockMessages);
   const [input, setInput] = useState("");
@@ -179,7 +183,7 @@ export default function SupportChatWidget() {
       {/* Floating Button */}
       <button
         onClick={openWidget}
-        className={`support-chat-btn ${isOpen ? "hidden" : ""}`}
+        className={`support-chat-btn ${isOpen || initialOpen ? "hidden" : ""}`}
         aria-label={t('supportChat.openChat')}
       >
         <span className="support-chat-btn-content">

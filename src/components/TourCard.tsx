@@ -1,6 +1,6 @@
-import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
+import i18n from '../i18n/config'
 import './TourCard.css'
 import { parsePrice, getTourSlug, type Tour } from './data'
 import { useWishlist, toWishlistItem } from '../context/WishlistContext'
@@ -13,7 +13,7 @@ interface TourCardProps extends Tour {
 export default function TourCard({ title, duration, features, price, rating, reviews, location, image, discount, source, externalUrl }: TourCardProps) {
   const { t } = useTranslation()
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist()
-  const item = toWishlistItem({ title, duration, features, price, rating: String(rating), reviews, location, image } as Tour)
+  const item = toWishlistItem({ title, duration, features, price, rating: String(rating), reviews, location, image, source } as Tour)
   const inWishlist = isInWishlist(item.id)
 
   const handleWishlist = (e: React.MouseEvent) => {
@@ -23,23 +23,30 @@ export default function TourCard({ title, duration, features, price, rating, rev
       removeFromWishlist(item.id)
     } else {
       addToWishlist(item)
-      toast.success('Added to wishlist')
+      toast.success(i18n.t('common.addedToWishlist'))
     }
   }
 
   const isExternal = !!externalUrl
   const tourSlug = getTourSlug(title)
 
-  const CardLink = isExternal
-    ? ({ children, className }: { children: React.ReactNode; className?: string }) => (
-        <a href={externalUrl} target="_blank" rel="noopener noreferrer" className={className}>{children}</a>
-      )
-    : ({ children, className }: { children: React.ReactNode; className?: string }) => (
-        <Link to={`/tour/${tourSlug}`} target="_blank" rel="noopener noreferrer" className={className}>{children}</Link>
-      )
+  const handleCardClick = () => {
+    if (isExternal) {
+      window.open(externalUrl, '_blank', 'noopener')
+    } else {
+      window.open(`/tour/${tourSlug}`, '_blank', 'noopener')
+    }
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      handleCardClick()
+    }
+  }
 
   return (
-    <CardLink className="tour-card">
+    <div className="tour-card" onClick={handleCardClick} onKeyDown={handleKeyDown} role="link" tabIndex={0}>
       <div className="tour-card-image">
         {source === 'travio-africa' && (
           <div className="source-badge">
@@ -82,6 +89,6 @@ export default function TourCard({ title, duration, features, price, rating, rev
           </div>
         </div>
       </div>
-    </CardLink>
+    </div>
   )
 }

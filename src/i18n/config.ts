@@ -21,10 +21,13 @@ i18n
     },
     fallbackLng: 'en',
     supportedLngs: ['en', 'es', 'fr', 'de', 'nl'],
+    nonExplicitSupportedLngs: true,
+    defaultNS: 'translation',
     detection: {
       order: ['localStorage', 'navigator'],
       caches: ['localStorage'],
       lookupLocalStorage: 'i18nextLng',
+      cleanCode: true,
     },
     interpolation: {
       escapeValue: false,

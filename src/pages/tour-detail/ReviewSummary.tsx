@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Star } from 'lucide-react'
 import type { ReviewStats } from '../../lib/tourTypes'
 import './ReviewSummary.css'
@@ -7,14 +8,15 @@ interface ReviewSummaryProps {
 }
 
 export default function ReviewSummary({ stats }: ReviewSummaryProps) {
+  const { t } = useTranslation()
   const { average, total, breakdown } = stats
 
-  const ratingLabels = {
-    5: 'Excellent',
-    4: 'Very Good',
-    3: 'Average',
-    2: 'Poor',
-    1: 'Terrible',
+  const ratingLabels: Record<number, string> = {
+    5: t('reviews.excellent'),
+    4: t('reviews.veryGood'),
+    3: t('reviews.average'),
+    2: t('reviews.poor'),
+    1: t('reviews.terrible'),
   }
 
   const getPercentage = (count: number): number => {
@@ -36,7 +38,7 @@ export default function ReviewSummary({ stats }: ReviewSummaryProps) {
           ))}
         </div>
         <div className="review-score-label">
-          {total} {total === 1 ? 'review' : 'reviews'}
+          {t('reviews.totalCount', { count: total })}
         </div>
       </div>
 

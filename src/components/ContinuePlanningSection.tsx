@@ -1,5 +1,4 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
-import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import SectionHeading from './SectionHeading'
 import { useContinuePlanning } from '../context/ContinuePlanningContext'
@@ -95,11 +94,17 @@ export default function ContinuePlanningSection() {
             <div className="continue-planning-carousel" ref={scrollRef}>
               {continuePlanning.map((item) => (
                 <div key={item.id} className="continue-planning-card-wrap">
-                  <Link
-                    to={`/tour/${toSlug(item.title)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <div
                     className="continue-planning-card"
+                    onClick={() => window.open(`/tour/${toSlug(item.title)}`, '_blank', 'noopener')}
+                    role="link"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        window.open(`/tour/${toSlug(item.title)}`, '_blank', 'noopener')
+                      }
+                    }}
                   >
                     <div className="cp-card-image">
                       <img
@@ -125,7 +130,7 @@ export default function ContinuePlanningSection() {
                         </span>
                       </div>
                     </div>
-                  </Link>
+                  </div>
                 </div>
               ))}
             </div>

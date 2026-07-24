@@ -64,9 +64,10 @@ function HomePage() {
 function AppContent() {
   const [currentPage, setCurrentPage] = useState<PageView>('home')
   const [showSplash, setShowSplash] = useState(() => {
-    // Show only on the first entrance of a browser session — not on later
-    // navigations/reloads (e.g. opening a tour card).
+    // Only show splash on the homepage — skip for direct deep-links
+    // (e.g. opening a tour card in a new tab).
     try {
+      if (window.location.pathname !== '/') return false
       return !sessionStorage.getItem('eg_splash_seen')
     } catch {
       return true
@@ -118,7 +119,7 @@ function AppContent() {
 
       <Toaster position="top-center" duration={2500} closeButton />
       {!hideNav && <Navbar onOpenAuth={handleOpenAuth} />}
-      <SupportChatWidget />
+      {!location.pathname.startsWith('/tour') && <SupportChatWidget />}
       <Routes>
         <Route path="/dashboard/*" element={<DashboardLayout />} />
         <Route path="/tour/:tourId" element={

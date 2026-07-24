@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import type { TourDetail } from '../../lib/tourTypes'
 import './Breadcrumb.css'
@@ -7,8 +8,9 @@ interface BreadcrumbProps {
 }
 
 export default function Breadcrumb({ tour }: BreadcrumbProps) {
+  const { t } = useTranslation()
   const breadcrumbs = [
-    { label: 'Home', path: '/' },
+    { label: t('breadcrumb.home'), path: '/' },
     { label: tour.location.split(',')[1]?.trim() || 'Tours', path: '/tours' },
     { label: tour.title, path: null },
   ]

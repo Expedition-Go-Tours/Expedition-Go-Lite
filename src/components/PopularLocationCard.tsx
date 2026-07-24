@@ -1,10 +1,12 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import './PopularLocationCard.css'
 import type { Destination } from './data'
 
 interface PopularLocationCardProps extends Destination {}
 
 export default function PopularLocationCard({ title, tours, image }: PopularLocationCardProps) {
+  const { t } = useTranslation()
   const [liked, setLiked] = useState(false)
 
   return (
@@ -23,7 +25,7 @@ export default function PopularLocationCard({ title, tours, image }: PopularLoca
         </button>
         <div className="popular-location-info">
           <h3 className="popular-location-title">{title}</h3>
-          <span className="popular-location-tours">{tours}</span>
+          <span className="popular-location-tours">{t('destinations.tours', { count: parseInt(tours) })}</span>
         </div>
       </div>
     </a>

@@ -21,7 +21,7 @@ export default function MobileStickyBar({ show, priceFormatted, onCheckAvailabil
         onClick={onCheckAvailability}
         className="mobile-sticky-bar-btn"
       >
-        Check availability
+        {t('tourDetail.checkAvailability')}
       </button>
     </div>
   )

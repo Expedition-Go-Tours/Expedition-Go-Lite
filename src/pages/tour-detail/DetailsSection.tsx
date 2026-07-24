@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import i18n from '../../i18n/config'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronDown, ChevronUp, Check, X } from 'lucide-react'
 import './DetailsSection.css'
@@ -89,7 +90,7 @@ export function buildIncludedExcludedContent(
       )}
       {excluded.length > 0 && (
         <div>
-          <h4 className="details-subsection-title">Not included</h4>
+          <h4 className="details-subsection-title">{i18n.t('tourDetail.notIncluded')}</h4>
           <ul className="details-list">
             {excluded.map((item, i) => (
               <li key={i} className="details-list-item excluded">
@@ -101,7 +102,7 @@ export function buildIncludedExcludedContent(
         </div>
       )}
       {included.length === 0 && excluded.length === 0 && (
-        <p className="details-empty">Details not available.</p>
+        <p className="details-empty">{i18n.t('tourDetail.detailsNotAvailable')}</p>
       )}
     </div>
   )
@@ -110,7 +111,7 @@ export function buildIncludedExcludedContent(
 export function buildAboutContent(text: string): React.ReactNode {
   return (
     <p className="details-text">
-      {text || 'Experience details coming soon.'}
+      {text || i18n.t('tourDetail.experienceComingSoon')}
     </p>
   )
 }
@@ -121,10 +122,10 @@ export function buildMeetingContent(
 ): React.ReactNode {
   return (
     <div className="details-text">
-      {meetingAddress && <p>Meeting point: {meetingAddress}</p>}
+      {meetingAddress && <p>{i18n.t('tourDetail.meetingPoint')}: {meetingAddress}</p>}
       {meetingInstructions && <p>{meetingInstructions}</p>}
       {!meetingAddress && !meetingInstructions && (
-        <p>Pickup details are confirmed after booking.</p>
+        <p>{i18n.t('tourDetail.pickupConfirmedAfterBooking')}</p>
       )}
     </div>
   )
@@ -141,7 +142,7 @@ export function buildAccessibilityContent(
       {restrictionsText && <p>{restrictionsText}</p>}
       {travelerReqsText && <p>{travelerReqsText}</p>}
       {!accessibilityText && !restrictionsText && !travelerReqsText && (
-        <p>Contact the operator for accessibility information.</p>
+        <p>{i18n.t('tourDetail.contactForAccessibility')}</p>
       )}
     </div>
   )
@@ -155,13 +156,11 @@ export function buildCancellationContent(
     <div className="details-text">
       {cutoffHours ? (
         <p>
-          Free cancellation is available up to {cutoffHours} hour
-          {cutoffHours !== 1 ? 's' : ''} before the experience starts local time.
+          {i18n.t('tourDetail.cancellationWithHours', { hours: cutoffHours })}
         </p>
       ) : (
         <p>
-          {refundRules ||
-            'Free cancellation is available up to 24 hours before the experience starts local time.'}
+          {refundRules || i18n.t('tourDetail.cancellationDefault')}
         </p>
       )}
       {refundRules && cutoffHours && <p className="details-mt-1">{refundRules}</p>}

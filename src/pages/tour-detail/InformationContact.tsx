@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import './InformationContact.css'
 
 interface InformationContactProps {
@@ -8,20 +9,21 @@ interface InformationContactProps {
 }
 
 export default function InformationContact({ email, website, phone, fax }: InformationContactProps) {
+  const { t } = useTranslation()
   return (
     <div className="information-contact">
-      <h3 className="information-contact-title">Information Contact</h3>
+      <h3 className="information-contact-title">{t('tourDetail.informationContact')}</h3>
       
       <div className="information-contact-list">
         <div className="information-contact-item">
-          <span className="information-contact-label">Email</span>
+          <span className="information-contact-label">{t('tourDetail.email')}</span>
           <a href={`mailto:${email}`} className="information-contact-value">
             {email}
           </a>
         </div>
 
         <div className="information-contact-item">
-          <span className="information-contact-label">Website</span>
+          <span className="information-contact-label">{t('tourDetail.website')}</span>
           <a 
             href={website.startsWith('http') ? website : `https://${website}`} 
             className="information-contact-value"
@@ -33,7 +35,7 @@ export default function InformationContact({ email, website, phone, fax }: Infor
         </div>
 
         <div className="information-contact-item">
-          <span className="information-contact-label">Phone</span>
+          <span className="information-contact-label">{t('tourDetail.phone')}</span>
           <a href={`tel:${phone}`} className="information-contact-value">
             {phone}
           </a>
@@ -41,7 +43,7 @@ export default function InformationContact({ email, website, phone, fax }: Infor
 
         {fax && (
           <div className="information-contact-item">
-            <span className="information-contact-label">Fax</span>
+            <span className="information-contact-label">{t('tourDetail.fax')}</span>
             <span className="information-contact-value">
               {fax}
             </span>

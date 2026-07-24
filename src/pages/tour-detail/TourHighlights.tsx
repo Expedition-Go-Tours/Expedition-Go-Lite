@@ -1,13 +1,15 @@
-﻿import './TourHighlights.css'
+﻿import { useTranslation } from 'react-i18next'
+import './TourHighlights.css'
 
 interface TourHighlightsProps {
   highlights: string[]
 }
 
 export default function TourHighlights({ highlights }: TourHighlightsProps) {
+  const { t } = useTranslation()
   return (
     <section className="tour-highlights">
-      <h2 className="tour-section-title">Highlights</h2>
+      <h2 className="tour-section-title">{t('tourDetail.highlights')}</h2>
       <ul className="tour-highlights-list">
         {highlights.map((highlight, index) => (
           <li key={index} className="tour-highlight-item">

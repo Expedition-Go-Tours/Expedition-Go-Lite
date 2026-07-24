@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, ChevronLeft, ChevronRight, Grid3X3 } from 'lucide-react'
 import './GalleryDialog.css'
@@ -20,6 +21,7 @@ export default function GalleryDialog({
   fallbackImage,
   onImageError,
 }: GalleryDialogProps) {
+  const { t } = useTranslation()
   const [currentIndex, setCurrentIndex] = useState(initialIndex)
   const [view, setView] = useState<'grid' | 'viewer'>('grid')
   const [slideDirection, setSlideDirection] = useState(0)
@@ -113,7 +115,7 @@ export default function GalleryDialog({
                   >
                     <img
                       src={img || fallbackImage}
-                      alt={`Tour image ${i + 1}`}
+                      alt={t('gallery.tourImage', { number: i + 1 })}
                       onError={onImageError}
                     />
                   </button>
@@ -164,7 +166,7 @@ export default function GalleryDialog({
                   >
                     <img
                       src={images[currentIndex] || fallbackImage}
-                      alt={`Tour image ${currentIndex + 1}`}
+                       alt={t('gallery.tourImage', { number: currentIndex + 1 })}
                       onError={onImageError}
                       className="gallery-viewer-image"
                     />

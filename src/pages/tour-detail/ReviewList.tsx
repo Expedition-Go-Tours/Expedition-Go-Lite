@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Star, ThumbsUp } from 'lucide-react'
 import { motion } from 'framer-motion'
 import type { Review } from '../../lib/tourTypes'
@@ -9,6 +10,7 @@ interface ReviewListProps {
 }
 
 export default function ReviewList({ reviews }: ReviewListProps) {
+  const { t } = useTranslation()
   const [expandedReviews, setExpandedReviews] = useState<Set<string>>(new Set())
   const [visibleCount, setVisibleCount] = useState(3)
 
@@ -87,7 +89,7 @@ export default function ReviewList({ reviews }: ReviewListProps) {
                 className="review-read-more"
                 onClick={() => toggleExpanded(review.id)}
               >
-                {isExpanded ? 'Show less' : 'Read more'}
+                {isExpanded ? t('tourDetail.seeLess') : t('tourDetail.seeMore')}
               </button>
             )}
 
@@ -95,7 +97,7 @@ export default function ReviewList({ reviews }: ReviewListProps) {
               <div className="review-helpful">
                 <button className="review-helpful-btn">
                   <ThumbsUp size={16} />
-                  Helpful ({review.helpful})
+                  {t('tourDetail.helpful', { count: review.helpful })}
                 </button>
               </div>
             )}
@@ -105,7 +107,7 @@ export default function ReviewList({ reviews }: ReviewListProps) {
 
       {visibleCount < reviews.length && (
         <button className="review-load-more" onClick={loadMore}>
-          Load More Reviews ({reviews.length - visibleCount} remaining)
+          {t('tourDetail.loadMoreReviews', { remaining: reviews.length - visibleCount })}
         </button>
       )}
     </div>

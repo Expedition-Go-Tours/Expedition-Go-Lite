@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useAnimate } from 'framer-motion'
 import { toast } from 'sonner'
 import {
   Check, ArrowLeft, MapPin, CalendarDays, Users,
@@ -99,6 +99,32 @@ function MobileSummaryCard({ tour, onChangeClick }: { tour: typeof DEMO_TOUR; on
 
 /* ─── Hold Timer ─── */
 
+function CountdownDigit({ value, label }: { value: number; label: string }) {
+  const [scope, animate] = useAnimate();
+  const prevRef = useRef(value);
+
+  useEffect(() => {
+    if (value !== prevRef.current) {
+      (async () => {
+        await animate(scope.current, { y: ["0%", "50%"], opacity: [1, 0] }, { duration: 0.2 });
+        prevRef.current = value;
+        await animate(scope.current, { y: ["-50%", "0%"], opacity: [0, 1] }, { duration: 0.2 });
+      })();
+    }
+  }, [value, animate, scope]);
+
+  return (
+    <div className="flex flex-col items-center">
+      <div className="relative w-full overflow-hidden text-center">
+        <span ref={scope} className="block text-lg font-bold text-emerald-900 tabular-nums">
+          {String(value).padStart(2, '0')}
+        </span>
+      </div>
+      <span className="text-[10px] font-medium text-emerald-600 uppercase tracking-wider">{label}</span>
+    </div>
+  );
+}
+
 function HoldTimer({ onExpire, lastActivityAt, isExpired }: { onExpire: () => void; lastActivityAt: React.MutableRefObject<number>; isExpired: boolean }) {
   const [seconds, setSeconds] = useState(25 * 60)
   const hasExpired = useRef(false)
@@ -140,11 +166,15 @@ function HoldTimer({ onExpire, lastActivityAt, isExpired }: { onExpire: () => vo
   }
 
   return (
-    <motion.div variants={itemVariants} className="flex items-center gap-2.5 rounded-[1.25rem] bg-emerald-50 px-5 py-3.5 text-sm font-semibold text-emerald-800 shadow-sm">
-      <span className="flex size-8 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+    <motion.div variants={itemVariants} className="flex items-center justify-center gap-3 rounded-[1.25rem] bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800 shadow-sm">
+      <span className="flex size-8 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 shrink-0">
         <Clock className="size-4" />
       </span>
-      <span>Holding your spot for {String(m).padStart(2, '0')}:{String(s).padStart(2, '0')}</span>
+      <div className="flex items-center gap-4">
+        <CountdownDigit value={m} label="min" />
+        <span className="self-start pt-0.5 text-lg font-bold text-emerald-900 tabular-nums">:</span>
+        <CountdownDigit value={s} label="sec" />
+      </div>
     </motion.div>
   )
 }
@@ -826,7 +856,7 @@ export default function BookingPage() {
 
   const [isExpired, setIsExpired] = useState(false)
   const [showExpiredModal, setShowExpiredModal] = useState(false)
-  const lastActivityAt = useRef(Date.now())
+  const lastActivityAt = useRef(0)
   const hasLoadedDraft = useRef(false)
 
   /* Restore draft from localStorage on mount */
@@ -967,7 +997,7 @@ export default function BookingPage() {
             initial="hidden"
             animate="visible"
           >
-            <div className="mb-6 space-y-3 md:hidden">
+            <div className="sticky top-0 z-10 mb-6 space-y-3 bg-[#f9fafb] pt-4 md:hidden">
               <HoldTimer onExpire={handleExpire} lastActivityAt={lastActivityAt} isExpired={isExpired} />
               <MobileSummaryCard tour={activeTour} onChangeClick={() => setIsChangeModalOpen(true)} />
             </div>

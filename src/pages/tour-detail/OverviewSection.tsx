@@ -128,13 +128,13 @@ export default function OverviewSection({
       {displayReviews.length > 0 && (
         <section className="overview-travellers">
           <div className="overview-travellers-header">
-            <h2 className="overview-travellers-title">What travellers loved</h2>
+            <h2 className="overview-travellers-title">{t('tourDetail.whatTravellersLoved')}</h2>
             <Link
               to="#reviews"
               onClick={() => onTabChange('reviews')}
               className="overview-travellers-link"
             >
-              See all reviews &rarr;
+              {t('tourDetail.seeAllReviews')}
             </Link>
           </div>
           <div className="overview-travellers-scroll-wrapper">
@@ -174,7 +174,7 @@ export default function OverviewSection({
                           <span>{review.date}</span>
                           <span className="overview-traveller-verified">
                             <Check size={10} strokeWidth={3} />
-                            Verified booking
+                            {t('tourDetail.verifiedBooking')}
                           </span>
                         </div>
                       </div>
@@ -194,7 +194,7 @@ export default function OverviewSection({
                       onClick={() => onReviewReadMore(review)}
                       className="overview-traveller-readmore"
                     >
-                      Read more
+                      {t('stories.readMore')}
                     </button>
                   </article>
                 )

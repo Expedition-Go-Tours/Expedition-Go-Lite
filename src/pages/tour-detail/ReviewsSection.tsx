@@ -79,9 +79,9 @@ export default function ReviewsSection({
       {/* Reviews Section */}
       <section className="reviews-section-content">
         <div className="reviews-header">
-          <h2 className="reviews-title">Reviews</h2>
+          <h2 className="reviews-title">{t('sections.reviews')}</h2>
           <button type="button" onClick={onWriteReview} className="reviews-write-btn">
-            Write a review
+            {t('reviews.writeAReview')}
           </button>
         </div>
 
@@ -96,7 +96,7 @@ export default function ReviewsSection({
                     <Star key={i} size={24} className="reviews-star-filled" />
                   ))}
                 </div>
-                <p className="reviews-rating-label">based on {reviewCount} reviews</p>
+                <p className="reviews-rating-label">{t('reviews.basedOn', { count: reviewCount })}</p>
               </div>
               <div className="reviews-rating-breakdown">
                 {reviewBreakdown.map((item) => {
@@ -130,7 +130,7 @@ export default function ReviewsSection({
                 value={searchQuery}
                 onChange={(e) => onSearchQueryChange(e.target.value)}
                 className="reviews-search-input"
-                placeholder="Search reviews..."
+                placeholder={t('reviews.searchPlaceholder')}
               />
               {starFilter !== null && (
                 <button
@@ -138,7 +138,7 @@ export default function ReviewsSection({
                   onClick={() => onStarFilterChange(null)}
                   className="reviews-clear-filter"
                 >
-                  Clear star filter
+                  {t('reviews.clearStarFilter')}
                 </button>
               )}
             </div>
@@ -146,16 +146,18 @@ export default function ReviewsSection({
             {/* Review Cards */}
             {reviews.length === 0 ? (
               <p className="reviews-empty">
-                No reviews match
-                {starFilter !== null ? ` ${starFilter}-star` : ''} ratings
-                {searchQuery.trim() ? ' and your search' : ''}. Try another rating or adjust your search.
+                {starFilter !== null
+                  ? t('reviews.noMatchWithStar', { stars: starFilter })
+                  : t('reviews.noMatch')}
+                {searchQuery.trim() ? t('reviews.andSearch') : ''}
+                . {t('reviews.tryAdjust')}
               </p>
             ) : (
               <div className="reviews-cards">
                 {reviews.map((review) => (
                   <article key={review.id} className="review-card">
                     <p className="review-card-author">{review.name}</p>
-                    <p className="review-card-date">{review.date} &bull; {review.tag || 'Traveler'}</p>
+                    <p className="review-card-date">{review.date} &bull; {review.tag || t('reviews.traveler')}</p>
                     <div className="review-card-stars">
                       {ratingDots.map((_, i) => (
                         <Star
@@ -182,9 +184,9 @@ export default function ReviewsSection({
                     )}
                     {(review.valueForMoneyRating || review.guideRating || review.meetingRating) && (
                       <div className="review-card-subratings">
-                        {review.valueForMoneyRating && <span>Value: {review.valueForMoneyRating}/5</span>}
-                        {review.guideRating && <span>Guide: {review.guideRating}/5</span>}
-                        {review.meetingRating && <span>Meeting: {review.meetingRating}/5</span>}
+                        {review.valueForMoneyRating && <span>{t('reviews.value')}: {review.valueForMoneyRating}/5</span>}
+                        {review.guideRating && <span>{t('reviews.guide')}: {review.guideRating}/5</span>}
+                        {review.meetingRating && <span>{t('reviews.meeting')}: {review.meetingRating}/5</span>}
                       </div>
                     )}
                     {(review.travelMonth || (review.companions && review.companions.length > 0)) && (
@@ -205,7 +207,7 @@ export default function ReviewsSection({
                     {review.supplierResponse && (
                       <div className="review-card-response">
                         <p className="review-card-response-title">
-                          Response from supplier
+                          {t('reviews.responseFromSupplier')}
                           {review.supplierResponseAt && (
                             <span className="review-card-response-date">
                               {new Date(review.supplierResponseAt).toLocaleDateString('en-US', {
@@ -230,7 +232,7 @@ export default function ReviewsSection({
                 disabled={loadingMore}
                 className="reviews-load-more"
               >
-                {loadingMore ? 'Loading...' : 'Load more reviews'}
+                {loadingMore ? t('common.loading') : t('reviews.loadMore')}
               </button>
             )}
           </div>
@@ -240,7 +242,7 @@ export default function ReviewsSection({
 
       {/* Q&A Section */}
       <section className="reviews-qa">
-        <h2 className="reviews-qa-title">Q&A</h2>
+        <h2 className="reviews-qa-title">{t('reviews.qa')}</h2>
         <div className="reviews-qa-list">
           {qaItems.map((item) => (
             <article key={item.question} className="qa-item">
@@ -252,7 +254,7 @@ export default function ReviewsSection({
                 onClick={() => onReplyToQuestion(item)}
                 className="qa-reply-btn"
               >
-                Answer
+                {t('reviews.answer')}
               </button>
             </article>
           ))}
