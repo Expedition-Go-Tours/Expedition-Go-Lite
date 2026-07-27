@@ -8,7 +8,9 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { CalendarDays, Users, Minus, Plus, MessageSquare } from 'lucide-react'
 import { toast } from 'sonner'
 import { useCurrency } from '../../contexts/CurrencyContext'
+import { getDateAvailability } from '../../lib/tourAvailability'
 import SupportChatWidget from '../../components/SupportChatWidget'
+import BookingTransition from '../../components/BookingTransition'
 import './BookingWidget.css'
 
 interface BookingWidgetProps {
@@ -33,9 +35,11 @@ export default function BookingWidget({ tour }: BookingWidgetProps) {
   const [showGuestSelector, setShowGuestSelector] = useState(false)
   const [showCalendar, setShowCalendar] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
-  const [isChecking, setIsChecking] = useState(false)
-  const [isAvailable, setIsAvailable] = useState(false)
   const [showChat, setShowChat] = useState(false)
+  const [isBooking, setIsBooking] = useState(false)
+  const [showTransition, setShowTransition] = useState(false)
+  const [transitVehicle, setTransitVehicle] = useState(0)
+  const pendingNavState = useRef<unknown>(null)
   const [promoCode, setPromoCode] = useState('')
   const [promoApplied, setPromoApplied] = useState(false)
   const [promoError, setPromoError] = useState('')
@@ -95,56 +99,61 @@ export default function BookingWidget({ tour }: BookingWidgetProps) {
     if (type === 'infants' && infants > 0) setInfants(infants - 1)
   }
 
-  useEffect(() => {
-    setIsAvailable(false)
-  }, [selectedDate])
-
-  const handleCheckAvailability = useCallback(() => {
-    if (isAvailable) {
-      const travelersLabel = [
-        adults > 0 && `${adults} ${adults === 1 ? 'adult' : 'adults'}`,
-        seniors > 0 && `${seniors} ${seniors === 1 ? 'senior' : 'seniors'}`,
-        youths > 0 && `${youths} ${youths === 1 ? 'youth' : 'youths'}`,
-        children > 0 && `${children} ${children === 1 ? 'child' : 'children'}`,
-        infants > 0 && `${infants} ${infants === 1 ? 'infant' : 'infants'}`,
-      ].filter(Boolean).join(', ')
-
-      const dateLabel = selectedDate
-        ? selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
-        : ''
-
-      navigate('/booking', {
-        state: {
-          tour: {
-            title: tour.title,
-            image: tour.images?.[0] || '',
-            provider: 'Expedition GO Tours',
-            rating: tour.rating,
-            reviews: tour.reviewCount,
-            date: dateLabel,
-            time: '9:00 AM',
-            duration: tour.duration,
-            travelers: travelersLabel,
-            price: totalPrice,
-            cancellation: tour.cancellationPolicy || 'Free cancellation up to 24 hours before',
-            language: tour.languages?.[0] || 'English',
-          },
-        },
-      })
-      return
-    }
-
+  const handleBookNow = useCallback(() => {
     if (!selectedDate) {
       toast.error(t('booking.selectDateFirst'))
       return
     }
-    setIsChecking(true)
-    setTimeout(() => {
-      setIsChecking(false)
-      setIsAvailable(true)
-      toast.success(t('booking.dateAvailable'))
-    }, 1500)
-  }, [selectedDate, isAvailable, tour, adults, seniors, youths, children, infants, totalPrice, navigate])
+
+    const travelersLabel = [
+      adults > 0 && `${adults} ${adults === 1 ? 'adult' : 'adults'}`,
+      seniors > 0 && `${seniors} ${seniors === 1 ? 'senior' : 'seniors'}`,
+      youths > 0 && `${youths} ${youths === 1 ? 'youth' : 'youths'}`,
+      children > 0 && `${children} ${children === 1 ? 'child' : 'children'}`,
+      infants > 0 && `${infants} ${infants === 1 ? 'infant' : 'infants'}`,
+    ].filter(Boolean).join(', ')
+
+    const dateLabel = selectedDate.toLocaleDateString('en-US', {
+      weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
+    })
+
+    // Stash the navigation payload, then play spinner → transition → booking.
+    pendingNavState.current = {
+      tour: {
+        title: tour.title,
+        image: tour.images?.[0] || '',
+        provider: 'Expedition GO Tours',
+        rating: tour.rating,
+        reviews: tour.reviewCount,
+        date: dateLabel,
+        time: '9:00 AM',
+        duration: tour.duration,
+        travelers: travelersLabel,
+        price: totalPrice,
+        cancellation: tour.cancellationPolicy || 'Free cancellation up to 24 hours before',
+        language: tour.languages?.[0] || 'English',
+      },
+    }
+
+    // Pick the vehicle for this booking, cycling helicopter → tram → truck
+    // across successive bookings (persisted so it advances each time).
+    let bookingCount = 0
+    try {
+      bookingCount = parseInt(localStorage.getItem('eg_booking_count') || '0', 10) || 0
+      localStorage.setItem('eg_booking_count', String(bookingCount + 1))
+    } catch {
+      /* ignore */
+    }
+    setTransitVehicle(bookingCount % 3)
+
+    setIsBooking(true)
+    // Spinner on the button for a moment, then reveal the travel transition.
+    setTimeout(() => setShowTransition(true), 1100)
+  }, [selectedDate, t, tour, adults, seniors, youths, children, infants, totalPrice])
+
+  const handleTransitionDone = useCallback(() => {
+    navigate('/booking', { state: pendingNavState.current })
+  }, [navigate])
 
   const handleApplyPromo = () => {
     const code = promoCode.trim()
@@ -219,6 +228,7 @@ export default function BookingWidget({ tour }: BookingWidgetProps) {
                     onClose={() => setShowCalendar(false)}
                     onDateSelect={(date) => setSelectedDate(date)}
                     selectedDate={selectedDate}
+                    getAvailability={(date) => getDateAvailability(tour.id || tour.title, date)}
                   />
                 </motion.div>
               )}
@@ -323,20 +333,18 @@ export default function BookingWidget({ tour }: BookingWidgetProps) {
           {/* Submit */}
           <Button
             className="booking-submit-btn"
-            onClick={handleCheckAvailability}
-            disabled={isChecking}
+            onClick={handleBookNow}
+            disabled={isBooking}
           >
-            {isChecking ? (
+            {isBooking ? (
               <span className="booking-btn-loader">
                 <svg className="booking-spinner" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <circle cx="12" cy="12" r="10" strokeDasharray="31.4 31.4" strokeLinecap="round" />
                 </svg>
                 {t('booking.checking')}
               </span>
-            ) : isAvailable ? (
-              t('tourDetail.bookNow')
             ) : (
-              t('tourDetail.checkAvailability')
+              t('tourDetail.bookNow')
             )}
           </Button>
 
@@ -359,6 +367,12 @@ export default function BookingWidget({ tour }: BookingWidgetProps) {
         </div>
       </div>
       {showChat && <SupportChatWidget initialOpen />}
+
+      <AnimatePresence>
+        {showTransition && (
+          <BookingTransition onDone={handleTransitionDone} vehicleIndex={transitVehicle} />
+        )}
+      </AnimatePresence>
     </div>
   )
 }

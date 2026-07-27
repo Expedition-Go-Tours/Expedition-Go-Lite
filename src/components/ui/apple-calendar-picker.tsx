@@ -30,14 +30,18 @@ const WEEKDAYS = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 const getDaysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
 const getFirstDayOfMonth = (year: number, month: number) => new Date(year, month, 1).getDay();
 
+type DayAvailability = 'available' | 'limited' | 'full'
+
 interface CalendarPickerProps {
   isOpen: boolean
   onClose: () => void
   onDateSelect: (date: Date) => void
   selectedDate?: Date | null
+  /** Optional per-date availability lookup. When omitted, all future dates are treated as available. */
+  getAvailability?: (date: Date) => DayAvailability
 }
 
-export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate }: CalendarPickerProps) => {
+export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate, getAvailability }: CalendarPickerProps) => {
   const todayRef = useRef(new Date())
   const today = todayRef.current
   const defaultDate = selectedDate || today
@@ -98,8 +102,10 @@ export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate }: 
     }
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(currentYear, currentMonth, day)
-      const isPast = date.setHours(0,0,0,0) < todayRef.current.setHours(0,0,0,0)
-      const isSelected = day === selectedDay && !isPast
+      const isPast = new Date(currentYear, currentMonth, day).setHours(0, 0, 0, 0) < new Date().setHours(0, 0, 0, 0)
+      const availability: DayAvailability = isPast ? 'full' : (getAvailability ? getAvailability(date) : 'available')
+      const isFull = !isPast && availability === 'full'
+      const isSelected = day === selectedDay && !isPast && !isFull
 
       if (isPast) {
         days.push(
@@ -110,18 +116,38 @@ export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate }: 
             {day}
           </div>
         )
+      } else if (isFull) {
+        // Fully booked — greyed out and not selectable
+        days.push(
+          <div
+            key={`day-${day}`}
+            title="Fully booked"
+            aria-disabled="true"
+            className="w-9 h-9 text-[15px] font-medium rounded-full flex items-center justify-center text-gray-300 line-through cursor-not-allowed"
+          >
+            {day}
+          </div>
+        )
       } else {
         days.push(
           <button
             key={`day-${day}`}
             onClick={() => handleSelectDay(day)}
-            className={`w-9 h-9 text-[15px] font-medium rounded-full flex items-center justify-center transition-all focus:outline-none ${
+            title={availability === 'limited' ? 'Limited availability' : 'Available'}
+            className={`relative w-9 h-9 text-[15px] font-medium rounded-full flex items-center justify-center transition-all focus:outline-none ${
               isSelected
                 ? 'bg-[#179237] text-white font-semibold shadow-md scale-105 z-10'
-                : 'text-[#179237] hover:bg-black/5'
+                : 'text-black hover:bg-black/5'
             }`}
           >
             {day}
+            {!isSelected && (
+              <span
+                className={`absolute bottom-[3px] left-1/2 -translate-x-1/2 w-1 h-1 rounded-full ${
+                  availability === 'limited' ? 'bg-amber-400' : 'bg-[#179237]'
+                }`}
+              />
+            )}
           </button>
         )
       }
@@ -135,7 +161,7 @@ export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate }: 
       <div className="flex items-center justify-between mb-4">
         <button
           onClick={() => setShowDropdown(!showDropdown)}
-          className="flex items-center gap-1 text-[17px] font-semibold text-[#179237] hover:opacity-75 transition-opacity focus:outline-none"
+          className="flex items-center gap-1 text-[17px] font-semibold text-black hover:opacity-75 transition-opacity focus:outline-none"
         >
           <span>{MONTH_NAMES[currentMonth]} {currentYear}</span>
           <div className={`transition-transform duration-200 ${showDropdown ? 'rotate-180' : 'rotate-0'}`}>
@@ -178,7 +204,7 @@ export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate }: 
               animate="center"
               exit="exit"
               transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-              className="grid grid-cols-7 gap-y-1 justify-items-center"
+              className="grid grid-cols-7 gap-y-1 justify-items-center pb-8"
             >
               {renderDays()}
             </motion.div>
@@ -221,6 +247,21 @@ export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate }: 
           </div>
         )}
       </div>
+
+      {/* Availability legend (flows below the grid so it never overlaps) */}
+      {getAvailability && (
+        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 pt-3 border-t border-black/5 text-[11px] font-medium text-gray-500">
+          <span className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-[#179237]" /> Available
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-amber-400" /> Limited
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="text-gray-300 line-through">31</span> Fully booked
+          </span>
+        </div>
+      )}
     </div>
   )
 }
