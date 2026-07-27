@@ -13,7 +13,6 @@ export default function Wishlist() {
   const navigate = useNavigate()
   const { wishlist: wishlistItems, removeFromWishlist } = useWishlist()
   const [showTransition, setShowTransition] = useState(false)
-  const [isBooking, setIsBooking] = useState(false)
   const [transitVehicle, setTransitVehicle] = useState(0)
   const pendingNavState = useRef<unknown>(null)
 
@@ -60,7 +59,6 @@ export default function Wishlist() {
     }
     setTransitVehicle(bookingCount % 3)
 
-    setIsBooking(true)
     setTimeout(() => setShowTransition(true), 1100)
   }
 
