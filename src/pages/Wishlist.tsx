@@ -1,18 +1,28 @@
+import { useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '../components/ui/button'
 import { useWishlist, type WishlistItem } from '../context/WishlistContext'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { travioTours } from '../components/data'
+import BookingTransition from '../components/BookingTransition'
 import './Wishlist.css'
 
 export default function Wishlist() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { wishlist: wishlistItems, removeFromWishlist } = useWishlist()
+  const [showTransition, setShowTransition] = useState(false)
+  const [isBooking, setIsBooking] = useState(false)
+  const [transitVehicle, setTransitVehicle] = useState(0)
+  const pendingNavState = useRef<unknown>(null)
 
   const handleRemove = (id: string) => {
     removeFromWishlist(id)
+  }
+
+  const handleTransitionDone = () => {
+    navigate('/booking', { state: pendingNavState.current })
   }
 
   const handleBookNow = (item: WishlistItem) => {
@@ -23,24 +33,35 @@ export default function Wishlist() {
         return
       }
     }
-    navigate('/booking', {
-      state: {
-        tour: {
-          title: item.title,
-          image: item.imageUrl,
-          provider: 'Expedition GO Tours',
-          rating: item.rating,
-          reviews: item.reviewCount,
-          date: 'Select date',
-          time: '9:00 AM',
-          duration: item.duration,
-          travelers: '1 adult',
-          price: item.price,
-          cancellation: 'Free cancellation up to 24 hours before',
-          language: 'English',
-        },
+
+    pendingNavState.current = {
+      tour: {
+        title: item.title,
+        image: item.imageUrl,
+        provider: 'Expedition GO Tours',
+        rating: item.rating,
+        reviews: item.reviewCount,
+        date: 'Select date',
+        time: '9:00 AM',
+        duration: item.duration,
+        travelers: '1 adult',
+        price: item.price,
+        cancellation: 'Free cancellation up to 24 hours before',
+        language: 'English',
       },
-    })
+    }
+
+    let bookingCount = 0
+    try {
+      bookingCount = parseInt(localStorage.getItem('eg_booking_count') || '0', 10) || 0
+      localStorage.setItem('eg_booking_count', String(bookingCount + 1))
+    } catch {
+      /* ignore */
+    }
+    setTransitVehicle(bookingCount % 3)
+
+    setIsBooking(true)
+    setTimeout(() => setShowTransition(true), 1100)
   }
 
   return (
@@ -234,6 +255,12 @@ export default function Wishlist() {
           </div>
         </>
       )}
+
+      <AnimatePresence>
+        {showTransition && (
+          <BookingTransition onDone={handleTransitionDone} vehicleIndex={transitVehicle} />
+        )}
+      </AnimatePresence>
     </div>
   )
 }
