@@ -420,3 +420,15 @@
   color: #0f172a;
   margin-top: 2px;
 }
+
+.supplier-tour-card-wrap {
+  flex: 0 0 260px;
+  scroll-snap-align: start;
+  min-width: 0;
+}
+
+@media (min-width: 640px) {
+  .supplier-tour-card-wrap {
+    flex: 0 0 280px;
+  }
+}

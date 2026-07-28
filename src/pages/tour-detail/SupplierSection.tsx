@@ -2,7 +2,9 @@ import { useRef, useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Star, ChevronDown, ChevronRight, ChevronLeft, Phone, Mail, Globe, MapPin, Heart } from 'lucide-react'
+import { Star, ChevronDown, ChevronRight, ChevronLeft, Phone, Mail, Globe, MapPin } from 'lucide-react'
+import SimilarTourCard from './SimilarTourCard'
+import './SimilarTourCard.css'
 import './SupplierSection.css'
 
 interface SupplierTour {
@@ -13,6 +15,10 @@ interface SupplierTour {
   price: number
   rating: string
   reviews: string | number
+  features?: string
+  location?: string
+  source?: 'expedition-go' | 'travio-africa'
+  externalUrl?: string
 }
 
 interface SupplierSectionProps {
@@ -29,10 +35,6 @@ interface SupplierSectionProps {
   onOpenInfo: () => void
   infoOpen: boolean
   onToggleInfo: () => void
-  onNavigateTour: (slug: string) => void
-  onToggleWishlist?: (tour: SupplierTour) => void
-  isInWishlist?: (title: string) => boolean
-  formatPrice: (price: number) => { formatted: string }
 }
 
 const CARD_GAP = 16
@@ -52,10 +54,6 @@ export default function SupplierSection({
   tours,
   infoOpen,
   onToggleInfo,
-  onNavigateTour,
-  onToggleWishlist,
-  isInWishlist,
-  formatPrice,
 }: SupplierSectionProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -219,60 +217,22 @@ export default function SupplierSection({
                 <ChevronLeft size={20} />
               </button>
               <div ref={scrollRef} className="supplier-tours-scroll">
-                {tours.map((tour) => {
-                  const isFav = isInWishlist?.(tour.title) || false
-                  return (
-                    <article key={tour.title} className="supplier-tour-card">
-                      <div className="supplier-tour-card-image">
-                        <button
-                          type="button"
-                          className="supplier-tour-card-img-btn"
-                          onClick={() => onNavigateTour(tour.slug || tour.title)}
-                        >
-                          <img src={tour.image} alt="" />
-                        </button>
-                        <span className="supplier-tour-card-duration">{tour.duration}</span>
-                        {onToggleWishlist && (
-                          <button
-                            type="button"
-                            onClick={() => onToggleWishlist(tour)}
-                            className="supplier-tour-card-wishlist"
-                            aria-label="Toggle wishlist"
-                          >
-                            <Heart
-                              size={16}
-                              className={isFav ? 'wishlist-filled' : ''}
-                            />
-                          </button>
-                        )}
-                      </div>
-                      <div className="supplier-tour-card-body">
-                        <button
-                          type="button"
-                          onClick={() => onNavigateTour(tour.slug || tour.title)}
-                          className="supplier-tour-card-title-btn"
-                        >
-                          {tour.title}
-                        </button>
-                        <div className="supplier-tour-card-footer">
-                          <div className="supplier-tour-card-rating">
-                            <Star size={14} className="supplier-tour-card-star" />
-                            <span>{tour.rating}</span>
-                            <span className="supplier-tour-card-reviews">
-                              ({tour.reviews})
-                            </span>
-                          </div>
-                          <div className="supplier-tour-card-price">
-                            <span className="supplier-tour-card-from">{t('common.from')}</span>
-                            <span className="supplier-tour-card-amount">
-                              {formatPrice(tour.price).formatted}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </article>
-                  )
-                })}
+                {tours.map((tour) => (
+                  <div key={tour.title} className="supplier-tour-card-wrap">
+                    <SimilarTourCard
+                      title={tour.title}
+                      duration={tour.duration}
+                      features={tour.features || ''}
+                      price={String(tour.price)}
+                      rating={tour.rating}
+                      reviews={tour.reviews}
+                      location={tour.location || ''}
+                      image={tour.image}
+                      source={tour.source}
+                      externalUrl={tour.externalUrl}
+                    />
+                  </div>
+                ))}
               </div>
               <button
                 type="button"

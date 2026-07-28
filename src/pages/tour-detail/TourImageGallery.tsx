@@ -113,7 +113,7 @@ export default function TourImageGallery({
           <div className={`tour-gallery-overlay-top-left ${showStickyHeader ? 'hidden' : ''}`}>
             <button
               type="button"
-              onClick={() => navigate(-1)}
+              onClick={() => { if (window.history.length > 1) { navigate(-1) } else { navigate('/') } }}
               className="tour-gallery-overlay-btn"
               aria-label="Go back"
             >

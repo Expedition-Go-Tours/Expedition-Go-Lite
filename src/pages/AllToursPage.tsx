@@ -58,6 +58,7 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const sectionParam = searchParams.get('section') || '';
+  const locationParam = searchParams.get('location') || '';
   const [tourTypes, setTourTypes] = useState<string[]>([])
   const [sections, setSections] = useState<string[]>([])
   const [destinations, setDestinations] = useState<string[]>([])
@@ -146,7 +147,18 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
     if (filterOptions.languages.some(l => l.value === value)) { handleMulti(setLanguageFilter)(value); return }
   }
 
-  const pageTitle = SECTION_TITLES[sectionParam] || t('sections.allToursTitle')
+  useEffect(() => {
+    if (locationParam) {
+      const matching = allTours
+        .filter(t => t.location.toLowerCase().includes(locationParam.toLowerCase()))
+        .map(t => t.location)
+      setDestinations([...new Set(matching)])
+    }
+  }, [locationParam])
+
+  const pageTitle = locationParam
+    ? t('sections.toursIn', { location: locationParam })
+    : SECTION_TITLES[sectionParam] || t('sections.allToursTitle')
 
   const filteredTours = useMemo(() => {
     let result = [...allTours]
@@ -327,6 +339,8 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
                     reviews={tour.reviews}
                     location={tour.location}
                     image={tour.image}
+                    source={tour.source}
+                    externalUrl={tour.externalUrl}
                   />
                 ) : (
                   <TourCard
@@ -340,6 +354,8 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
                     location={tour.location}
                     image={tour.image}
                     discount={tour.discount}
+                    source={tour.source}
+                    externalUrl={tour.externalUrl}
                   />
                 )}
               </motion.div>

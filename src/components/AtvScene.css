@@ -61,21 +61,21 @@
   mask: radial-gradient(circle, transparent 22%, #000 24%);
 }
 
-/* Wheel positions (tunable to the artwork). */
+/* Wheel positions (tuned to the artwork). */
 .atv-wheel-rear {
   width: 15%;
   padding-bottom: 15%;
   height: 0;
-  left: 24%;
-  bottom: 8%;
+  left: 30%;
+  bottom: 10%;
 }
 
 .atv-wheel-front {
   width: 15%;
   padding-bottom: 15%;
   height: 0;
-  left: 63%;
-  bottom: 8%;
+  left: 54%;
+  bottom: 10%;
 }
 
 /* Ground shadow */

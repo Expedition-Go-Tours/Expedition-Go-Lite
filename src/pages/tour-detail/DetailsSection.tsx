@@ -32,7 +32,6 @@ export default function DetailsSection({ sections }: DetailsSectionProps) {
       transition={{ duration: 0.2, ease: 'easeOut' }}
       className="details-section"
     >
-      <h2 className="details-section-title">{t('tourDetail.aboutTour')}</h2>
       <div className="details-section-list">
         {sections.map((section) => {
           const isOpen = !!expanded[section.key]

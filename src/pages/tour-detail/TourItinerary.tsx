@@ -24,7 +24,6 @@ export default function TourItinerary({
   if (itinerary.length === 0) {
     return (
       <section className="tour-itinerary-new">
-        <h2 className="itinerary-title">{t('tourDetail.itinerary')}</h2>
         <p className="itinerary-empty">{t('tourDetail.noItinerary')}</p>
       </section>
     )
@@ -39,7 +38,6 @@ export default function TourItinerary({
       transition={{ duration: 0.2, ease: 'easeOut' }}
       className="tour-itinerary-new"
     >
-      <h2 className="itinerary-title">{t('tourDetail.itinerary')}</h2>
       <div className="itinerary-layout">
         <div className="itinerary-stops">
           {itinerary.map((stop, index) => {

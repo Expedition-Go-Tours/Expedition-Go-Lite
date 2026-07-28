@@ -68,14 +68,14 @@ export default function SimilarTourCard({
         <img src={image} alt={title} loading="lazy" />
         <div className="similar-tour-overlay" />
         <button 
-          className="similar-tour-wishlist" 
+          className={`similar-tour-wishlist${inWishlist ? ' wishlist-active' : ''}`} 
           onClick={handleWishlist}
           aria-label={inWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
         >
           <Heart 
             size={18} 
-            fill={inWishlist ? '#fff' : 'none'} 
-            stroke="#fff"
+            fill={inWishlist ? 'currentColor' : 'none'} 
+            stroke="currentColor"
             strokeWidth={2}
           />
         </button>

@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router-dom'
 import SectionHeading from './SectionHeading'
 import PopularLocationCard from './PopularLocationCard'
 import DestinationsModal from './DestinationsModal'
@@ -11,6 +12,7 @@ const GAP = 16
 
 export default function PopularLocations() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
@@ -62,7 +64,7 @@ export default function PopularLocations() {
             <div className="popular-locations-carousel" ref={scrollRef}>
               {items.map((dest, i) => (
                 <div key={`${dest.title}-${i}`} className="location-card-wrap">
-                  <PopularLocationCard {...dest} />
+                  <PopularLocationCard {...dest} onClick={() => navigate(`/tours?location=${encodeURIComponent(dest.title)}`)} />
                 </div>
               ))}
             </div>

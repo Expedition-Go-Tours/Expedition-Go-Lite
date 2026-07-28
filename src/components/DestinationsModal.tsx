@@ -97,7 +97,7 @@ export default function DestinationsModal({ isOpen, onClose }: DestinationsModal
   const handleNavigate = useCallback(
     (title: string) => {
       onClose()
-      navigate(`/tours?search=${encodeURIComponent(title)}`)
+      navigate(`/tours?location=${encodeURIComponent(title)}`)
     },
     [navigate, onClose]
   )
@@ -105,7 +105,7 @@ export default function DestinationsModal({ isOpen, onClose }: DestinationsModal
   const handleExploreRegion = useCallback(
     (region: string) => {
       onClose()
-      navigate(`/tours?search=${encodeURIComponent(region)}`)
+      navigate(`/tours?location=${encodeURIComponent(region)}`)
     },
     [navigate, onClose]
   )

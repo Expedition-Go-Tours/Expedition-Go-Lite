@@ -3,14 +3,16 @@ import { useTranslation } from 'react-i18next'
 import './PopularLocationCard.css'
 import type { Destination } from './data'
 
-interface PopularLocationCardProps extends Destination {}
+interface PopularLocationCardProps extends Destination {
+  onClick?: () => void
+}
 
-export default function PopularLocationCard({ title, tours, image }: PopularLocationCardProps) {
+export default function PopularLocationCard({ title, tours, image, onClick }: PopularLocationCardProps) {
   const { t } = useTranslation()
   const [liked, setLiked] = useState(false)
 
   return (
-    <a href="#" className="popular-location-card">
+    <div className="popular-location-card" onClick={onClick} role="link" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick?.() } }}>
       <div className="popular-location-image">
         <img src={image} alt={title} loading="lazy" />
         <div className="popular-location-gradient" />
@@ -19,7 +21,7 @@ export default function PopularLocationCard({ title, tours, image }: PopularLoca
           onClick={(e) => { e.preventDefault(); e.stopPropagation(); setLiked(!liked) }}
           aria-label={liked ? 'Remove from wishlist' : 'Add to wishlist'}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill={liked ? '#179237' : 'none'} stroke={liked ? '#179237' : 'currentColor'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill={liked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
           </svg>
         </button>
@@ -28,6 +30,6 @@ export default function PopularLocationCard({ title, tours, image }: PopularLoca
           <span className="popular-location-tours">{t('destinations.tours', { count: parseInt(tours) })}</span>
         </div>
       </div>
-    </a>
+    </div>
   )
 }

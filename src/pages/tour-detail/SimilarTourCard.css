@@ -87,11 +87,17 @@
   align-items: center;
   justify-content: center;
   z-index: 3;
+  color: #fff;
   transition: all 0.2s ease;
 }
 
+.similar-tour-wishlist.wishlist-active {
+  color: #179237;
+}
+
 .similar-tour-wishlist:hover {
-  background: rgba(0, 0, 0, 0.6);
+  background: #179237;
+  color: #fff;
   transform: scale(1.1);
 }
 

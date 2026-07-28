@@ -30,7 +30,7 @@ export default function TourHeader({
           onClick={onReviewsClick}
           className="tour-header-reviews-btn"
         >
-          {reviewCount} {t('tourDetail.reviews')}
+          {reviewCount} {t('sections.reviews')}
         </button>
         <span className="tour-header-divider" aria-hidden />
         <span className="tour-header-badge">

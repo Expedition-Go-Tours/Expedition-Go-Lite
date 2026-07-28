@@ -13,7 +13,11 @@ export default function DayToursSection() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
-  const items = dayTours
+  const items = [...dayTours].sort((a, b) => {
+    if (a.source === 'travio-africa' && b.source !== 'travio-africa') return -1
+    if (a.source !== 'travio-africa' && b.source === 'travio-africa') return 1
+    return 0
+  })
 
   const updateArrows = useCallback(() => {
     const el = scrollRef.current

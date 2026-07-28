@@ -13,7 +13,6 @@ import Footer from '../../components/Footer'
 import { useContinuePlanning, toContinuePlanningItem } from '../../context/ContinuePlanningContext'
 import { useWishlist } from '../../context/WishlistContext'
 import { toast } from 'sonner'
-import { useCurrency } from '../../contexts/CurrencyContext'
 import { useTranslation } from 'react-i18next'
 
 import TourImageGallery from './TourImageGallery'
@@ -298,12 +297,6 @@ export default function TourDetailPage() {
     return labels.map((item) => ({ ...item, count: 0, percentage: 0 }))
   }, [])
 
-  const { formatPrice: currencyFormatPrice } = useCurrency()
-  const convertPrice = (price: number) => ({
-    formatted: currencyFormatPrice(price),
-    value: price,
-  })
-
   const overviewHighlightsGrid = useMemo(() => [
     { icon: CalendarCheck, title: t('tourDetail.freeCancellation'), desc: t('tourDetail.cancelRefundDesc') },
     { icon: Clock, title: t('tourDetail.durationFlexible'), desc: t('tourDetail.checkAvailabilityDesc') },
@@ -364,11 +357,11 @@ export default function TourDetailPage() {
     price: parseInt(String(t.price).replace(/[^0-9]/g, ''), 10) || 100,
     rating: t.rating,
     reviews: t.reviews,
+    features: t.features,
+    location: t.location,
+    source: t.source,
+    externalUrl: t.externalUrl,
   }))
-
-  const handleNavigateTour = (slug: string) => {
-    navigate(`/tour/${encodeURIComponent(slug)}`)
-  }
 
   if (!tour) {
     return (
@@ -495,8 +488,6 @@ export default function TourDetailPage() {
                       infoOpen={supplierInfoOpen}
                       onToggleInfo={() => setSupplierInfoOpen((v) => !v)}
                       onOpenInfo={() => setSupplierInfoOpen(true)}
-                      onNavigateTour={handleNavigateTour}
-                      formatPrice={convertPrice}
                     />
                   )}
                 </AnimatePresence>

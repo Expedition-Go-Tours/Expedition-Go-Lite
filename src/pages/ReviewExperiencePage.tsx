@@ -5,6 +5,8 @@ import {
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
+import i18n from '../i18n/config'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import ReviewTourCard from '../pages/tour-detail/ReviewTourCard'
@@ -43,11 +45,6 @@ function writeSubmittedHandoff(tourTitle: string, tourId: string | null, review:
   } catch { }
 }
 
-const MONTH_NAMES = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
-]
-
 function StarRating({ value, onChange, count = 5 }: { value: number; onChange: (v: number) => void; count?: number }) {
   return (
     <div className="review-star-rating">
@@ -84,6 +81,7 @@ function CompanionToggle({ label, active, onClick }: { label: string; active: bo
 }
 
 export default function ReviewExperiencePage() {
+  const { t } = useTranslation()
   const { tourTitle: tourSlugParam } = useParams()
   const navigate = useNavigate()
   const location = useLocation()
@@ -163,15 +161,15 @@ export default function ReviewExperiencePage() {
 
   const handleSubmit = async () => {
     if (!overallRating) {
-      toast.error('Please select an overall rating')
+      toast.error(t('reviews.errorNoRating'))
       return
     }
     if (!reviewText.trim() || reviewText.trim().length < 20) {
-      toast.error('Please write at least 20 characters in your review')
+      toast.error(t('reviews.errorMinLength'))
       return
     }
     if (!certified) {
-      toast.error('Please certify that this review is based on your own experience')
+      toast.error(t('reviews.errorNotCertified'))
       return
     }
 
@@ -179,10 +177,10 @@ export default function ReviewExperiencePage() {
     try {
       const submittedReview = {
         id: `submitted-${Date.now()}`,
-        name: 'You',
-        tag: 'Traveler',
+        name: t('common.you'),
+        tag: t('reviews.traveler'),
         title: reviewTitle.trim() || null,
-        date: new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+        date: new Date().toLocaleDateString(i18n.language, { month: 'short', year: 'numeric' }),
         rating: overallRating,
         text: reviewText.trim(),
         photos: [],
@@ -195,13 +193,13 @@ export default function ReviewExperiencePage() {
 
       writeSubmittedHandoff(tour.title, tour.tourId || tour.id, submittedReview)
       clearDraft(getDraftKey(draftKey))
-      toast.success('Review submitted successfully!')
+      toast.success(t('reviews.submittedSuccess'))
       navigate(returnTo, {
         replace: true,
         state: { submittedReview, submittedReviewTourId: tour.tourId || tour.id, submittedReviewTourTitle: tour.title },
       })
     } catch (err: any) {
-      toast.error(err?.message || 'Failed to submit review. Please try again.')
+      toast.error(err?.message || t('reviews.submitError'))
     } finally {
       setIsSubmitting(false)
     }
@@ -220,7 +218,7 @@ export default function ReviewExperiencePage() {
             className="review-back-btn"
           >
             <ArrowLeft size={16} />
-            Back
+            {t('common.back')}
           </button>
         </div>
 
@@ -233,7 +231,7 @@ export default function ReviewExperiencePage() {
             <div className="review-columns">
               {/* Left Column */}
               <aside className="review-sidebar-col">
-                <h1 className="review-heading">Tell Us, How Was Your Trip</h1>
+                <h1 className="review-heading">{t('reviews.tellUsAboutTrip')}</h1>
                 <div className="review-sidebar-content">
                   <ReviewTourCard
                     images={tourCardImages}
@@ -245,7 +243,7 @@ export default function ReviewExperiencePage() {
                     duration={tour.duration}
                   />
                   <Link to="/tours" className="review-change-link">
-                    Not the right one? Change activity
+                    {t('reviews.changeActivity')}
                     <ChevronRight size={16} />
                   </Link>
                 </div>
@@ -255,24 +253,24 @@ export default function ReviewExperiencePage() {
               <div className="review-form-col">
                 {/* Overall Rating */}
                 <section className="review-form-section">
-                  <h2 className="review-form-section-title">How would you rate your experience?</h2>
+                  <h2 className="review-form-section-title">{t('reviews.rateExperience')}</h2>
                   <StarRating value={overallRating} onChange={setOverallRating} />
                 </section>
 
                 {/* Sub-ratings */}
                 <section className="review-form-section">
-                  <h2 className="review-form-section-title">How would you rate these?</h2>
+                  <h2 className="review-form-section-title">{t('reviews.rateThese')}</h2>
                   <div className="review-subratings">
                     <div className="review-subrating-row">
-                      <span>Value for money</span>
+                      <span>{t('reviews.value')}</span>
                       <StarRating value={subRatings.valueForMoney} onChange={(v) => setSubRatings((p) => ({ ...p, valueForMoney: v }))} />
                     </div>
                     <div className="review-subrating-row">
-                      <span>Guide</span>
+                      <span>{t('reviews.guide')}</span>
                       <StarRating value={subRatings.guide} onChange={(v) => setSubRatings((p) => ({ ...p, guide: v }))} />
                     </div>
                     <div className="review-subrating-row">
-                      <span>Meeting or pickup</span>
+                      <span>{t('reviews.meeting')}</span>
                       <StarRating value={subRatings.meeting} onChange={(v) => setSubRatings((p) => ({ ...p, meeting: v }))} />
                     </div>
                   </div>
@@ -280,7 +278,7 @@ export default function ReviewExperiencePage() {
 
                 {/* Date */}
                 <section className="review-form-section">
-                  <h2 className="review-form-section-title">When did you go?</h2>
+                  <h2 className="review-form-section-title">{t('reviews.whenDidYouGo')}</h2>
                   <div className="review-date-wrapper">
                     <button
                       type="button"
@@ -288,8 +286,8 @@ export default function ReviewExperiencePage() {
                       className="review-date-btn"
                     >
                       {selectedDate
-                        ? `${MONTH_NAMES[selectedDate.getMonth()]} ${selectedDate.getFullYear()}`
-                        : <span className="review-date-placeholder">Select month and year</span>}
+                        ? selectedDate.toLocaleDateString(i18n.language, { month: 'long', year: 'numeric' })
+                        : <span className="review-date-placeholder">{t('reviews.selectMonthYear')}</span>}
                     </button>
                     <Calendar size={16} className="review-date-icon" />
                     <CalendarPicker
@@ -303,12 +301,12 @@ export default function ReviewExperiencePage() {
 
                 {/* Companions */}
                 <section className="review-form-section">
-                  <h2 className="review-form-section-title">Who did you go with?</h2>
+                  <h2 className="review-form-section-title">{t('reviews.whoDidYouGoWith')}</h2>
                   <div className="review-companions">
                     {Object.entries(companions).map(([key, active]) => (
                       <CompanionToggle
                         key={key}
-                        label={key.charAt(0).toUpperCase() + key.slice(1)}
+                        label={t(`reviews.companion.${key}`)}
                         active={active}
                         onClick={() => setCompanions((prev) => ({ ...prev, [key]: !prev[key] }))}
                       />
@@ -321,57 +319,57 @@ export default function ReviewExperiencePage() {
                 {/* Write Review */}
                 <section className="review-form-section">
                   <div className="review-write-header">
-                    <h2 className="review-form-section-title">Write your review</h2>
+                    <h2 className="review-form-section-title">{t('reviews.writeYourReview')}</h2>
                     <button
                       type="button"
                       className="review-info-btn"
-                      title="Your review helps other travellers make informed decisions."
+                      title={t('reviews.reviewHelpInfo')}
                     >
                       <Info size={12} />
                     </button>
                   </div>
                   <div className="review-categories">
-                    {['Experience', 'Admission fee', 'Length of visit', 'Atmosphere', 'Crowd size', 'Staff', 'Best for'].map((cat) => (
-                      <span key={cat} className="review-category-tag">{cat}</span>
+                    {['tagExperience', 'tagAdmissionFee', 'tagLengthOfVisit', 'tagAtmosphere', 'tagCrowdSize', 'tagStaff', 'tagBestFor'].map((key) => (
+                      <span key={key} className="review-category-tag">{t(`reviews.${key}`)}</span>
                     ))}
                   </div>
                   <div className="review-textarea-wrapper">
                     <textarea
                       value={reviewText}
                       onChange={(e) => setReviewText(e.target.value)}
-                      placeholder="Share your experience..."
+                      placeholder={t('reviews.shareExperience')}
                       rows={6}
                       className="review-textarea"
                     />
                     <div className="review-textarea-count">
-                      <span>{reviewText.length}/25 min</span>
+                      <span>{reviewText.length}/25 {t('reviews.min')}</span>
                     </div>
                   </div>
                 </section>
 
                 {/* Title */}
                 <section className="review-form-section">
-                  <h2 className="review-form-section-title">Title your review</h2>
+                  <h2 className="review-form-section-title">{t('reviews.titleYourReview')}</h2>
                   <input
                     type="text"
                     value={reviewTitle}
                     onChange={(e) => setReviewTitle(e.target.value)}
-                    placeholder="Give us the gist of your experience"
+                    placeholder={t('reviews.gistPlaceholder')}
                     className="review-title-input"
                   />
                 </section>
 
                 {/* Photos */}
                 <section className="review-form-section">
-                  <h2 className="review-form-section-title">Add some photos</h2>
-                  <p className="review-photos-subtitle">Optional</p>
+                  <h2 className="review-form-section-title">{t('reviews.addPhotos')}</h2>
+                  <p className="review-photos-subtitle">{t('common.optional')}</p>
                   <div className="review-photos-info">
                     <div className="review-photos-info-icon">
                       <Camera size={20} />
                     </div>
                     <div>
-                      <p className="review-photos-info-title">Reach a Photos milestone</p>
-                      <p className="review-photos-info-desc">Upload your first photo to start your journey as a top contributor.</p>
+                      <p className="review-photos-info-title">{t('reviews.photosMilestone')}</p>
+                      <p className="review-photos-info-desc">{t('reviews.photosMilestoneDesc')}</p>
                     </div>
                   </div>
                   <button
@@ -380,8 +378,8 @@ export default function ReviewExperiencePage() {
                     className="review-photos-upload"
                   >
                     <Image size={32} />
-                    <span className="review-photos-upload-text">Click to add photos</span>
-                    <span className="review-photos-upload-hint">or drag and drop</span>
+                    <span className="review-photos-upload-text">{t('reviews.clickToAddPhotos')}</span>
+                    <span className="review-photos-upload-hint">{t('reviews.dragAndDrop')}</span>
                   </button>
                   <input
                     ref={fileInputRef}
@@ -395,7 +393,7 @@ export default function ReviewExperiencePage() {
                     <div className="review-photos-previews">
                       {photoPreviews.map((url, i) => (
                         <div key={i} className="review-photo-preview">
-                          <img src={url} alt={`Upload ${i + 1}`} />
+                          <img src={url} alt={t('reviews.uploadAlt', { number: i + 1 })} />
                           <button type="button" onClick={() => removePhoto(i)} className="review-photo-remove">
                             ✕
                           </button>
@@ -415,9 +413,7 @@ export default function ReviewExperiencePage() {
                       className="review-certify-checkbox"
                     />
                     <span className="review-certify-text">
-                      I certify that this review is based on my own experience and is my genuine opinion
-                      of this tour experience. I understand that TravioAfrica has a zero-tolerance policy
-                      on fake reviews and that my review may be removed if found to violate these terms.
+                      {t('reviews.certificationText')}
                     </span>
                   </label>
                 </section>
@@ -429,7 +425,7 @@ export default function ReviewExperiencePage() {
                   disabled={isSubmitting || !overallRating || !certified}
                   className="review-submit-btn"
                 >
-                  {isSubmitting ? 'Submitting...' : 'Submit review'}
+                  {isSubmitting ? t('common.submitting') : t('reviews.submitReview')}
                 </button>
               </div>
             </div>

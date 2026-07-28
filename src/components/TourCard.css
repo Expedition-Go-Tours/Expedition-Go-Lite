@@ -89,13 +89,23 @@
   align-items: center;
   justify-content: center;
   z-index: 3;
-  transition: transform 0.2s;
+  transition: transform 0.2s, background 0.2s, color 0.2s;
   backdrop-filter: blur(4px);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
 }
 
+.tour-card-wishlist.wishlist-active {
+  color: #179237;
+}
+
 .tour-card-wishlist:hover {
+  background: #179237;
+  color: #fff;
   transform: scale(1.1);
+}
+
+.tour-card-wishlist:active {
+  transform: scale(0.95);
 }
 
 .tour-card-body {
