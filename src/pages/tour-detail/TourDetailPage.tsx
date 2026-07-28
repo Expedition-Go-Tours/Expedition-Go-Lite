@@ -359,6 +359,7 @@ export default function TourDetailPage() {
     reviews: t.reviews,
     features: t.features,
     location: t.location,
+    category: t.category,
     source: t.source,
     externalUrl: t.externalUrl,
   }))

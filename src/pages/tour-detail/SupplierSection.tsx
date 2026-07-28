@@ -17,6 +17,7 @@ interface SupplierTour {
   reviews: string | number
   features?: string
   location?: string
+  category?: string
   source?: 'expedition-go' | 'travio-africa'
   externalUrl?: string
 }
@@ -222,6 +223,7 @@ export default function SupplierSection({
                     <SimilarTourCard
                       title={tour.title}
                       duration={tour.duration}
+                      category={tour.category || ''}
                       features={tour.features || ''}
                       price={String(tour.price)}
                       rating={tour.rating}
