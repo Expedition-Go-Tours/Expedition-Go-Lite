@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useRef, useCallback, type ReactNode } fro
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronLeft, ChevronRight, X, Star, ArrowLeft } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
 import {
   allTours,
   parsePrice,
@@ -9,7 +10,9 @@ import {
   getDurationHours,
   durationBuckets,
   priceRanges,
+  type TourWithMeta,
 } from '../components/data'
+import { apiFetch } from '../lib/api'
 import { useTranslation } from 'react-i18next'
 import Navbar from '../components/Navbar'
 import TourCard from '../components/TourCard'
@@ -18,6 +21,55 @@ import './AllToursPage.css'
 
 const PRICE_MIN = Math.min(...allTours.map(t => parsePrice(t.price)))
 const PRICE_MAX = Math.max(...allTours.map(t => parsePrice(t.price)))
+
+interface ApiTour {
+  id: string
+  title: string
+  slug: string
+  description: string | null
+  coverPhoto: string | null
+  photos: string[]
+  category: string
+  durationMinutes: number | null
+  startingPrice: number | null
+  currency: string
+  averageRating: number | null
+  reviewCount: number | null
+  city: string | null
+  country: string | null
+  bookingFlow: 'DIRECT' | 'EXTERNAL' | null
+  externalUrl: string | null
+}
+
+function minutesToDuration(minutes: number | null): string {
+  if (!minutes) return ''
+  if (minutes < 60) return `${minutes} min`
+  if (minutes < 1440) {
+    const h = minutes / 60
+    return h % 1 === 0 ? `${h} hours` : `${h.toFixed(1)} hours`
+  }
+  const d = minutes / 1440
+  return d % 1 === 0 ? `${d} days` : `${d.toFixed(1)} days`
+}
+
+function apiTourToTourWithMeta(t: ApiTour): TourWithMeta {
+  const isDirect = t.bookingFlow === 'DIRECT'
+  return {
+    title: t.title,
+    category: t.category || '',
+    duration: minutesToDuration(t.durationMinutes),
+    features: 'Guide included',
+    price: t.startingPrice != null ? `$${t.startingPrice}` : '',
+    rating: t.averageRating != null ? t.averageRating.toFixed(1) : '0',
+    reviews: t.reviewCount || 0,
+    location: [t.city, t.country].filter(Boolean).join(', ') || '',
+    image: t.coverPhoto || '',
+    externalUrl: isDirect ? undefined : (t.externalUrl || undefined),
+    source: isDirect ? 'expedition-go' : 'travio-africa',
+    section: 'Recommended',
+    tourType: 'day',
+  }
+}
 
 const PAGE_SIZE = 12
 
@@ -59,6 +111,23 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
   const navigate = useNavigate();
   const sectionParam = searchParams.get('section') || '';
   const locationParam = searchParams.get('location') || '';
+
+  const { data: apiTours } = useQuery({
+    queryKey: ['expedition-recommended'],
+    queryFn: () => apiFetch<ApiTour[]>('/expedition/tours'),
+    staleTime: 5 * 60 * 1000,
+  })
+
+  const allMergedTours = useMemo(() => {
+    if (apiTours && apiTours.length > 0) {
+      const apiMapped = apiTours.map(apiTourToTourWithMeta)
+      return [
+        ...apiMapped,
+        ...allTours.filter(t => t.section !== 'Recommended'),
+      ]
+    }
+    return allTours
+  }, [apiTours])
   const [tourTypes, setTourTypes] = useState<string[]>([])
   const [sections, setSections] = useState<string[]>([])
   const [destinations, setDestinations] = useState<string[]>([])
@@ -107,17 +176,17 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
   }
 
   const filterOptions = useMemo(() => {
-    const uniqueSections = [...new Set(allTours.map(t => t.section))]
-    const uniqueDests = [...new Set(allTours.map(t => t.location))]
-    const uniqueCats = [...new Set(allTours.map(t => parseCategory(t.category)))].filter(Boolean) as string[]
-    const uniqueLangs = [...new Set(allTours.flatMap(t => t.languages || ['English']))].sort()
+    const uniqueSections = [...new Set(allMergedTours.map(t => t.section))]
+    const uniqueDests = [...new Set(allMergedTours.map(t => t.location))]
+    const uniqueCats = [...new Set(allMergedTours.map(t => parseCategory(t.category)))].filter(Boolean) as string[]
+    const uniqueLangs = [...new Set(allMergedTours.flatMap(t => t.languages || ['English']))].sort()
     return {
       sections: uniqueSections.map(v => ({ value: v, label: v })),
       destinations: uniqueDests.map(v => ({ value: v, label: v })),
       categories: uniqueCats.map(v => ({ value: v, label: v })),
       languages: uniqueLangs.map(v => ({ value: v, label: v })),
     }
-  }, [])
+  }, [allMergedTours])
 
   const allPillOptions = useMemo(() => {
     const pills: { key: string; value: string; label: string }[] = []
@@ -161,7 +230,7 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
     : SECTION_TITLES[sectionParam] || t('sections.allToursTitle')
 
   const filteredTours = useMemo(() => {
-    let result = [...allTours]
+    let result = [...allMergedTours]
     if (sectionParam) result = result.filter(t => t.section === sectionParam)
     if (tourTypes.length > 0) result = result.filter(t => tourTypes.includes(t.tourType))
     if (sections.length > 0) result = result.filter(t => sections.includes(t.section))
@@ -208,7 +277,7 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
     else if (sortKey === 'price-low') result.sort((a, b) => parsePrice(a.price) - parsePrice(b.price))
     else if (sortKey === 'price-high') result.sort((a, b) => parsePrice(b.price) - parsePrice(a.price))
     return result
-  }, [sectionParam, tourTypes, sections, destinations, categories, durationFilter, priceFilter, priceSliderMin, priceSliderMax, languageFilter, ratingFilter, sortBy])
+  }, [allMergedTours, sectionParam, tourTypes, sections, destinations, categories, durationFilter, priceFilter, priceSliderMin, priceSliderMax, languageFilter, ratingFilter, sortBy])
 
   useEffect(() => { setVisibleCount(PAGE_SIZE) }, [sectionParam, tourTypes, sections, destinations, categories, durationFilter, priceFilter, priceSliderMin, priceSliderMax, languageFilter, ratingFilter, sortBy])
 
