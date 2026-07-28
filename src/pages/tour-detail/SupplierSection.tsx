@@ -225,7 +225,7 @@ export default function SupplierSection({
                       features={tour.features || ''}
                       price={String(tour.price)}
                       rating={tour.rating}
-                      reviews={tour.reviews}
+                      reviews={Number(tour.reviews)}
                       location={tour.location || ''}
                       image={tour.image}
                       source={tour.source}

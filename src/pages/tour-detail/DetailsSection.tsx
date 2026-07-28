@@ -16,7 +16,6 @@ interface DetailsSectionProps {
 }
 
 export default function DetailsSection({ sections }: DetailsSectionProps) {
-  const { t } = useTranslation()
   const [expanded, setExpanded] = useState<Record<string, boolean>>({ included: true })
 
   const toggle = (key: string) => {
