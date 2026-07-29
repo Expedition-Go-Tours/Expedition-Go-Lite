@@ -47,7 +47,6 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
   const [promoError, setPromoError] = useState('')
   const [pricingBreakdown, setPricingBreakdown] = useState<{ label: string; quantity: number; unitPrice: number; total: number }[]>([])
   const [pricingTotal, setPricingTotal] = useState<number | null>(null)
-  const [pricingCurrency, setPricingCurrency] = useState<string>('USD')
   const [pricingLoading, setPricingLoading] = useState(false)
   const guestRef = useRef<HTMLDivElement>(null)
   const calendarRef = useRef<HTMLDivElement>(null)
@@ -80,7 +79,6 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
       if (data.pricing) {
         setPricingBreakdown(data.pricing.breakdown || [])
         setPricingTotal(data.pricing.total)
-        setPricingCurrency(data.pricing.currency)
       }
     } catch (err) {
       setPricingBreakdown([])

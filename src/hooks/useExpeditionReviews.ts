@@ -99,11 +99,20 @@ export function useCreateReview() {
 
   return useMutation({
     mutationFn: async (input: CreateReviewInput) => {
-      const data = await apiFetch('/expedition/reviews', {
+      const base = getApiBaseUrl()
+      const token = await getAuthToken()
+      const res = await fetch(`${base}/expedition/reviews`, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify(input),
       })
-      return data
+      const payload = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(payload.message || `Request failed (${res.status})`)
+      return payload.data ?? payload
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['expedition', 'tours'] })

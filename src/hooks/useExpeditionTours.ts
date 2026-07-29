@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { apiFetch } from '../lib/api'
 import { getApiBaseUrl, getAuthToken } from '../lib/auth'
-import type { TourDetail, ItineraryDay, FAQ as TourFAQ } from '../lib/tourTypes'
+import type { TourDetail } from '../lib/tourTypes'
 
 async function expeditionFetchRaw(path: string) {
   const base = getApiBaseUrl()
@@ -155,39 +154,6 @@ export function useExpeditionFeaturedTours() {
       return records.map((r) => mapToListing(r.tour))
     },
   })
-}
-
-interface ExpeditionTourDetailResponse {
-  id: string
-  displayOrder: number
-  isFeatured: boolean
-  tour: {
-    id: string
-    title: string
-    slug: string
-    description: string
-    coverPhoto: string | null
-    photos: string[]
-    category: string | null
-    durationMinutes: number | null
-    startingPrice: number | null
-    currency: string
-    averageRating: number | null
-    reviewCount: number
-    city: string | null
-    country: string | null
-    highlights: string[]
-    included: string[]
-    whatToBring: string[]
-    meetingPoint: string | null
-    cancellationPolicy: string | null
-    confirmationType: string | null
-    supplierName: string | null
-    supplierPhoto: string | null
-    supplierRating: number | null
-    supplierTotalBookings: number
-  }
-  tourSchema: Record<string, unknown>
 }
 
 export interface TourDetailData extends Omit<TourDetail, 'guide' | 'contact'> {

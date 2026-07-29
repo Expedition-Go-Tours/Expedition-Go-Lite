@@ -460,7 +460,7 @@ export default function TourDetailPage() {
                       highlightsGrid={overviewHighlightsGrid}
                       descriptionSteps={descriptionSteps}
                       highlights={highlights}
-                      reviews={allReviewCards.map(r => ({ name: r.name, date: r.date, rating: r.rating, text: r.text, country: '' }))}
+                      reviews={allReviewCards.map(r => ({ id: r.id, name: r.name, date: r.date, rating: r.rating, text: r.text, country: '' }))}
                       onTabChange={setActiveTab}
                       onReviewReadMore={setReviewDetail}
                     />

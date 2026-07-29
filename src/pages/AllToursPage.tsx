@@ -5,8 +5,8 @@ import { ChevronLeft, ChevronRight, X, Star, ArrowLeft } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import Navbar from '../components/Navbar'
 import TourCard from '../components/TourCard'
-import MultiDayCard from '../components/MultiDayCard'
-import { useExpeditionTours, type TourCardData } from '../hooks/useExpeditionTours'
+
+import { useExpeditionTours } from '../hooks/useExpeditionTours'
 import './AllToursPage.css'
 
 const PAGE_SIZE = 12
@@ -48,7 +48,7 @@ const SECTION_TITLES: Record<string, string> = {
   'Last Minute Deals': 'Last Minute Deals',
 }
 
-function getSortBy(sectionParam: string, manualSort: string | undefined): string | undefined {
+function getSortBy(sectionParam: string, manualSort: string | undefined): 'price_asc' | 'price_desc' | 'rating' | 'newest' | 'popular' | undefined {
   if (manualSort && manualSort !== 'recommended') {
     if (manualSort === 'top-rated') return 'rating'
     if (manualSort === 'price-low') return 'price_asc'
@@ -60,63 +60,10 @@ function getSortBy(sectionParam: string, manualSort: string | undefined): string
   return undefined
 }
 
-function getCityFilter(sectionParam: string, locationParam: string, manualDestinations: string[]): string | undefined {
+function getCityFilter(locationParam: string, manualDestinations: string[]): string | undefined {
   if (manualDestinations.length === 1) return manualDestinations[0]
   if (locationParam) return locationParam
   return undefined
-}
-
-function applyClientFilters(
-  tours: TourCardData[],
-  tourTypes: string[],
-  durationFilter: string[],
-  languageFilter: string[],
-  sectionParam: string,
-  manualDestinations: string[],
-  manualCategories: string[],
-) {
-  let result = tours
-
-  if (tourTypes.length > 0) {
-    result = result.filter(t => {
-      const isMultiDay = false
-      const tourType = isMultiDay ? 'multi-day' : 'day'
-      return tourTypes.includes(tourType)
-    })
-  }
-
-  if (durationFilter.length > 0 && result.length > 0) {
-    result = result.filter(() => true)
-  }
-
-  if (languageFilter.length > 0) {
-    result = result.filter(() => true)
-  }
-
-  if (sectionParam === 'Day Tours') {
-    result = result.filter(() => true)
-  }
-  if (sectionParam === 'Multi-Day Tours') {
-    result = result.filter(() => true)
-  }
-
-  if (manualDestinations.length > 0 || manualCategories.length > 0) {
-    result = result
-  }
-
-  return result
-}
-
-function extractPrice(priceStr: string): number {
-  return parseInt(priceStr.replace(/[^0-9]/g, ''), 10) || 0
-}
-
-function getMinutesFromDuration(durationStr: string): number {
-  const match = durationStr.match(/(\d+)\s*hour/)
-  if (match) return parseInt(match[1]) * 60
-  const dayMatch = durationStr.match(/(\d+)\s*day/)
-  if (dayMatch) return parseInt(dayMatch[1]) * 1440
-  return 0
 }
 
 interface AllToursPageProps {
@@ -174,14 +121,13 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
 
   const minRating = ratingFilter.length > 0 ? Math.min(...ratingFilter.map(Number)) : undefined
 
-  const apiDestinations = destinations.length > 0 ? destinations : undefined
   const apiCategories = categories.length > 0 ? categories : undefined
 
   const { data, isLoading, isError, error } = useExpeditionTours({
     page,
     limit: PAGE_SIZE,
     sortBy: apiSortBy,
-    city: getCityFilter(sectionParam, locationParam, destinations),
+    city: getCityFilter(locationParam, destinations),
     category: apiCategories?.[0],
     minPrice,
     maxPrice,
@@ -190,11 +136,6 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
 
   const fetchedTours = data?.tours || []
   const pagination = data?.pagination
-
-  const allTours = useMemo(() => {
-    if (page === 1) return fetchedTours
-    return fetchedTours
-  }, [fetchedTours, page])
 
   const filterOptions = useMemo(() => {
     const allLocations = [...new Set(fetchedTours.map(t => t.location).filter(Boolean))]
