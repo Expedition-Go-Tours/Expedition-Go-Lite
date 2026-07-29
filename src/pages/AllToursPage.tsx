@@ -2,20 +2,6 @@ import { useState, useMemo, useRef, useCallback, type ReactNode } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronLeft, ChevronRight, X, Star, ArrowLeft } from 'lucide-react'
-<<<<<<< HEAD
-=======
-import { useQuery } from '@tanstack/react-query'
-import {
-  allTours,
-  parsePrice,
-  parseCategory,
-  getDurationHours,
-  durationBuckets,
-  priceRanges,
-  type TourWithMeta,
-} from '../components/data'
-import { apiFetch } from '../lib/api'
->>>>>>> 768f68a0e2f7137f40610f5f6509f13475bb13a6
 import { useTranslation } from 'react-i18next'
 import Navbar from '../components/Navbar'
 import TourCard from '../components/TourCard'
@@ -23,61 +9,6 @@ import MultiDayCard from '../components/MultiDayCard'
 import { useExpeditionTours, type TourCardData } from '../hooks/useExpeditionTours'
 import './AllToursPage.css'
 
-<<<<<<< HEAD
-=======
-const PRICE_MIN = Math.min(...allTours.map(t => parsePrice(t.price)))
-const PRICE_MAX = Math.max(...allTours.map(t => parsePrice(t.price)))
-
-interface ApiTour {
-  id: string
-  title: string
-  slug: string
-  description: string | null
-  coverPhoto: string | null
-  photos: string[]
-  category: string
-  durationMinutes: number | null
-  startingPrice: number | null
-  currency: string
-  averageRating: number | null
-  reviewCount: number | null
-  city: string | null
-  country: string | null
-  bookingFlow: 'DIRECT' | 'EXTERNAL' | null
-  externalUrl: string | null
-}
-
-function minutesToDuration(minutes: number | null): string {
-  if (!minutes) return ''
-  if (minutes < 60) return `${minutes} min`
-  if (minutes < 1440) {
-    const h = minutes / 60
-    return h % 1 === 0 ? `${h} hours` : `${h.toFixed(1)} hours`
-  }
-  const d = minutes / 1440
-  return d % 1 === 0 ? `${d} days` : `${d.toFixed(1)} days`
-}
-
-function apiTourToTourWithMeta(t: ApiTour): TourWithMeta {
-  const isDirect = t.bookingFlow === 'DIRECT'
-  return {
-    title: t.title,
-    category: t.category || '',
-    duration: minutesToDuration(t.durationMinutes),
-    features: 'Guide included',
-    price: t.startingPrice != null ? `$${t.startingPrice}` : '',
-    rating: t.averageRating != null ? t.averageRating.toFixed(1) : '0',
-    reviews: t.reviewCount || 0,
-    location: [t.city, t.country].filter(Boolean).join(', ') || '',
-    image: t.coverPhoto || '',
-    externalUrl: isDirect ? undefined : (t.externalUrl || undefined),
-    source: isDirect ? 'expedition-go' : 'travio-africa',
-    section: 'Recommended',
-    tourType: 'day',
-  }
-}
-
->>>>>>> 768f68a0e2f7137f40610f5f6509f13475bb13a6
 const PAGE_SIZE = 12
 
 const RATING_OPTIONS = [
@@ -310,7 +241,6 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
     { value: 'price-low', label: 'Price: Low – High' },
     { value: 'price-high', label: 'Price: High – Low' },
   ] as const, [t])
-<<<<<<< HEAD
 
   const handleMulti = (setter: React.Dispatch<React.SetStateAction<string[]>>) =>
     (value: string) => setter(prev => prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value])
@@ -326,42 +256,6 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
 
   const activeFilterCount = tourTypes.length + destinations.length + categories.length +
     durationFilter.length + priceFilter.length + languageFilter.length + ratingFilter.length
-=======
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
-  const sectionParam = searchParams.get('section') || '';
-  const locationParam = searchParams.get('location') || '';
-
-  const { data: apiTours } = useQuery({
-    queryKey: ['expedition-recommended'],
-    queryFn: () => apiFetch<ApiTour[]>('/expedition/tours'),
-    staleTime: 5 * 60 * 1000,
-  })
-
-  const allMergedTours = useMemo(() => {
-    if (apiTours && apiTours.length > 0) {
-      const apiMapped = apiTours.map(apiTourToTourWithMeta)
-      return [
-        ...apiMapped,
-        ...allTours.filter(t => t.section !== 'Recommended'),
-      ]
-    }
-    return allTours
-  }, [apiTours])
-  const [tourTypes, setTourTypes] = useState<string[]>([])
-  const [sections, setSections] = useState<string[]>([])
-  const [destinations, setDestinations] = useState<string[]>([])
-  const [categories, setCategories] = useState<string[]>([])
-  const [durationFilter, setDurationFilter] = useState<string[]>([])
-  const [priceFilter, setPriceFilter] = useState<string[]>([])
-  const [priceSliderMin, setPriceSliderMin] = useState(PRICE_MIN)
-  const [priceSliderMax, setPriceSliderMax] = useState(PRICE_MAX)
-  const [languageFilter, setLanguageFilter] = useState<string[]>([])
-  const [ratingFilter, setRatingFilter] = useState<string[]>([])
-  const [sortBy, setSortBy] = useState<string[]>(['recommended'])
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
-  const [drawerOpen, setDrawerOpen] = useState(false)
->>>>>>> 768f68a0e2f7137f40610f5f6509f13475bb13a6
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const [showLeftArrow, setShowLeftArrow] = useState(false)
@@ -383,140 +277,10 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
     if (pagination?.hasNextPage) setPage(p => p + 1)
   }
 
-<<<<<<< HEAD
   const goPrevPage = () => {
     if (pagination?.hasPrevPage) setPage(p => Math.max(1, p - 1))
   }
 
-=======
-  const filterOptions = useMemo(() => {
-    const uniqueSections = [...new Set(allMergedTours.map(t => t.section))]
-    const uniqueDests = [...new Set(allMergedTours.map(t => t.location))]
-    const uniqueCats = [...new Set(allMergedTours.map(t => parseCategory(t.category)))].filter(Boolean) as string[]
-    const uniqueLangs = [...new Set(allMergedTours.flatMap(t => t.languages || ['English']))].sort()
-    return {
-      sections: uniqueSections.map(v => ({ value: v, label: v })),
-      destinations: uniqueDests.map(v => ({ value: v, label: v })),
-      categories: uniqueCats.map(v => ({ value: v, label: v })),
-      languages: uniqueLangs.map(v => ({ value: v, label: v })),
-    }
-  }, [allMergedTours])
-
-  const allPillOptions = useMemo(() => {
-    const pills: { key: string; value: string; label: string }[] = []
-    TOUR_TYPE_OPTIONS.forEach(o => pills.push({ key: `type-${o.value}`, value: o.value, label: o.label }))
-    durationBuckets.forEach(b => pills.push({ key: `dur-${b.value}`, value: b.value, label: b.label }))
-    priceRanges.forEach(r => pills.push({ key: `price-${r.value}`, value: r.value, label: r.label }))
-    filterOptions.destinations.forEach(d => pills.push({ key: `dest-${d.value}`, value: d.value, label: d.label }))
-    filterOptions.categories.forEach(c => pills.push({ key: `cat-${c.value}`, value: c.value, label: c.label }))
-    filterOptions.languages.forEach(l => pills.push({ key: `lang-${l.value}`, value: l.value, label: l.label }))
-    RATING_OPTIONS.forEach(r => pills.push({ key: `rating-${r.value}`, value: r.value, label: r.label }))
-    return pills
-  }, [filterOptions])
-
-  const isPillActive = (value: string) => {
-    return tourTypes.includes(value) || sections.includes(value) || destinations.includes(value) ||
-      categories.includes(value) || durationFilter.includes(value) || priceFilter.includes(value) ||
-      languageFilter.includes(value) || ratingFilter.includes(value)
-  }
-
-  const handlePillToggle = (value: string) => {
-    if (TOUR_TYPE_OPTIONS.some(o => o.value === value)) { handleMulti(setTourTypes)(value); return }
-    if (durationBuckets.some(b => b.value === value)) { handleMulti(setDurationFilter)(value); return }
-    if (priceRanges.some(r => r.value === value)) { handleMulti(setPriceFilter)(value); return }
-    if (RATING_OPTIONS.some(r => r.value === value)) { handleMulti(setRatingFilter)(value); return }
-    if (filterOptions.destinations.some(d => d.value === value)) { handleMulti(setDestinations)(value); return }
-    if (filterOptions.categories.some(c => c.value === value)) { handleMulti(setCategories)(value); return }
-    if (filterOptions.languages.some(l => l.value === value)) { handleMulti(setLanguageFilter)(value); return }
-  }
-
-  useEffect(() => {
-    if (locationParam) {
-      const matching = allTours
-        .filter(t => t.location.toLowerCase().includes(locationParam.toLowerCase()))
-        .map(t => t.location)
-      setDestinations([...new Set(matching)])
-    }
-  }, [locationParam])
-
-  const pageTitle = locationParam
-    ? t('sections.toursIn', { location: locationParam })
-    : SECTION_TITLES[sectionParam] || t('sections.allToursTitle')
-
-  const filteredTours = useMemo(() => {
-    let result = [...allMergedTours]
-    if (sectionParam) result = result.filter(t => t.section === sectionParam)
-    if (tourTypes.length > 0) result = result.filter(t => tourTypes.includes(t.tourType))
-    if (sections.length > 0) result = result.filter(t => sections.includes(t.section))
-    if (destinations.length > 0) result = result.filter(t => destinations.includes(t.location))
-    if (categories.length > 0) result = result.filter(t => categories.includes(parseCategory(t.category)))
-    if (durationFilter.length > 0) {
-      result = result.filter(t => {
-        const hours = getDurationHours(t)
-        return durationFilter.some(key => {
-          const bucket = durationBuckets.find(b => b.value === key)
-          return bucket ? bucket.match(hours) : false
-        })
-      })
-    }
-    if (priceFilter.length > 0) {
-      result = result.filter(t => {
-        const price = parsePrice(t.price)
-        return priceFilter.some(key => {
-          const range = priceRanges.find(r => r.value === key)
-          return range ? range.match(price) : false
-        })
-      })
-    }
-    if (priceSliderMin > PRICE_MIN || priceSliderMax < PRICE_MAX) {
-      result = result.filter(t => {
-        const price = parsePrice(t.price)
-        return price >= priceSliderMin && price <= priceSliderMax
-      })
-    }
-    if (languageFilter.length > 0) {
-      result = result.filter(t => {
-        const langs = t.languages || ['English']
-        return langs.some(l => languageFilter.includes(l))
-      })
-    }
-    if (ratingFilter.length > 0) {
-      result = result.filter(t => {
-        const rating = parseFloat(t.rating)
-        return ratingFilter.some(key => parseFloat(key) <= rating)
-      })
-    }
-    const sortKey = sortBy[0] || 'recommended'
-    if (sortKey === 'top-rated') result.sort((a, b) => parseFloat(b.rating) - parseFloat(a.rating))
-    else if (sortKey === 'price-low') result.sort((a, b) => parsePrice(a.price) - parsePrice(b.price))
-    else if (sortKey === 'price-high') result.sort((a, b) => parsePrice(b.price) - parsePrice(a.price))
-    return result
-  }, [allMergedTours, sectionParam, tourTypes, sections, destinations, categories, durationFilter, priceFilter, priceSliderMin, priceSliderMax, languageFilter, ratingFilter, sortBy])
-
-  useEffect(() => { setVisibleCount(PAGE_SIZE) }, [sectionParam, tourTypes, sections, destinations, categories, durationFilter, priceFilter, priceSliderMin, priceSliderMax, languageFilter, ratingFilter, sortBy])
-
-  const visibleTours = filteredTours.slice(0, visibleCount)
-  const hasMore = visibleCount < filteredTours.length
-
-  const handleMulti = (setter: React.Dispatch<React.SetStateAction<string[]>>) =>
-    (value: string) => setter(prev => prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value])
-
-  const handleSingle = (setter: React.Dispatch<React.SetStateAction<string[]>>) =>
-    (value: string) => setter(prev => prev[0] === value ? [] : [value])
-
-  const clearAll = () => {
-    setTourTypes([]); setSections([]); setDestinations([]); setCategories([])
-    setDurationFilter([]); setPriceFilter([]); setLanguageFilter([]); setRatingFilter([])
-    setPriceSliderMin(PRICE_MIN); setPriceSliderMax(PRICE_MAX)
-    setSortBy(['recommended'])
-  }
-
-  const priceSliderActive = priceSliderMin > PRICE_MIN || priceSliderMax < PRICE_MAX
-  const activeFilterCount = tourTypes.length + sections.length + destinations.length + categories.length +
-    durationFilter.length + priceFilter.length + languageFilter.length + ratingFilter.length +
-    (priceSliderActive ? 1 : 0)
-
->>>>>>> 768f68a0e2f7137f40610f5f6509f13475bb13a6
   return (
     <div className="all-tours-page">
       <Navbar onOpenAuth={onOpenAuth} />
