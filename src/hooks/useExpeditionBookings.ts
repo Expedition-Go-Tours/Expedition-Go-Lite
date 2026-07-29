@@ -25,13 +25,6 @@ interface AvailabilityCalendarDay {
   timeSlots?: { time: string; status: string; remaining: number }[]
 }
 
-interface AvailabilityResponse {
-  tour: { id: string; title: string }
-  startDate: string
-  endDate: string
-  calendar: AvailabilityCalendarDay[]
-}
-
 export function useTourAvailability(
   slug: string | undefined,
   startDate: string | undefined,
@@ -129,11 +122,20 @@ interface ConfirmBookingResponse {
 export function useCreateBooking() {
   return useMutation({
     mutationFn: async (input: ConfirmBookingInput) => {
-      const data = await apiFetch<ConfirmBookingResponse>('/expedition/checkout/confirm', {
+      const base = getApiBaseUrl()
+      const token = await getAuthToken()
+      const res = await fetch(`${base}/expedition/checkout/confirm`, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify(input),
       })
-      return data
+      const payload = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(payload.message || `Request failed (${res.status})`)
+      return (payload.data ?? payload) as ConfirmBookingResponse
     },
   })
 }
@@ -158,10 +160,9 @@ export function useMyExpeditionBookings(page: number = 1, status?: string) {
   return useQuery({
     queryKey: ['expedition', 'bookings', page, status],
     queryFn: async () => {
-      const data = await apiFetch<{ bookings: ExpeditionBookingSummary[] }>(
-        `/expedition/bookings?${params.toString()}`
-      )
-      return data.bookings
+      const payload = await expeditionFetchRaw(`/expedition/bookings?${params.toString()}`)
+      const data = payload.data ?? payload
+      return (data.bookings || []) as ExpeditionBookingSummary[]
     },
   })
 }

@@ -29,20 +29,6 @@ interface ExpeditionReview {
   createdAt: string
 }
 
-interface ExpeditionReviewsResponse {
-  reviews: ExpeditionReview[]
-  averageRating: number | null
-  totalCount: number
-  pagination: {
-    currentPage: number
-    totalPages: number
-    totalCount: number
-    hasNextPage: boolean
-    hasPrevPage: boolean
-    limit: number
-  }
-}
-
 export interface ReviewCardData {
   id: string
   author: string
