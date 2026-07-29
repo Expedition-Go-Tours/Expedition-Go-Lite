@@ -68,15 +68,17 @@ export default function DetailsSection({ sections }: DetailsSectionProps) {
 }
 
 export function buildIncludedExcludedContent(
-  included: string[],
-  excluded: string[]
+  included?: string[],
+  excluded?: string[]
 ): React.ReactNode {
+  const inc = included ?? []
+  const exc = excluded ?? []
   return (
     <div className="details-included-excluded">
-      {included.length > 0 && (
+      {inc.length > 0 && (
         <div>
           <ul className="details-list">
-            {included.map((item, i) => (
+            {inc.map((item, i) => (
               <li key={i} className="details-list-item included">
                 <Check size={16} strokeWidth={2.5} className="details-check-icon" />
                 <span>{typeof item === 'string' ? item : item}</span>
@@ -85,11 +87,11 @@ export function buildIncludedExcludedContent(
           </ul>
         </div>
       )}
-      {excluded.length > 0 && (
+      {exc.length > 0 && (
         <div>
           <h4 className="details-subsection-title">{i18n.t('tourDetail.notIncluded')}</h4>
           <ul className="details-list">
-            {excluded.map((item, i) => (
+            {exc.map((item, i) => (
               <li key={i} className="details-list-item excluded">
                 <X size={16} strokeWidth={2.5} className="details-x-icon" />
                 <span>{typeof item === 'string' ? item : item}</span>
@@ -98,7 +100,7 @@ export function buildIncludedExcludedContent(
           </ul>
         </div>
       )}
-      {included.length === 0 && excluded.length === 0 && (
+      {inc.length === 0 && exc.length === 0 && (
         <p className="details-empty">{i18n.t('tourDetail.detailsNotAvailable')}</p>
       )}
     </div>

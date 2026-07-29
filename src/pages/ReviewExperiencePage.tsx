@@ -11,6 +11,7 @@ import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import ReviewTourCard from '../pages/tour-detail/ReviewTourCard'
 import { CalendarPicker } from '../components/ui/apple-calendar-picker'
+import { useCreateReview } from '../hooks/useExpeditionReviews'
 import './ReviewExperiencePage.css'
 
 const REVIEW_DRAFT_PREFIX = 'eg_review_draft:'
@@ -159,6 +160,8 @@ export default function ReviewExperiencePage() {
     setPhotoPreviews((prev) => prev.filter((_, i) => i !== index))
   }
 
+  const createReview = useCreateReview()
+
   const handleSubmit = async () => {
     if (!overallRating) {
       toast.error(t('reviews.errorNoRating'))
@@ -175,6 +178,13 @@ export default function ReviewExperiencePage() {
 
     setIsSubmitting(true)
     try {
+      await createReview.mutateAsync({
+        bookingId: tour.tourId || tour.id || 'unknown',
+        rating: overallRating,
+        title: reviewTitle.trim() || undefined,
+        comment: reviewText.trim(),
+      })
+
       const submittedReview = {
         id: `submitted-${Date.now()}`,
         name: t('common.you'),

@@ -8,9 +8,10 @@ import FormattedPrice from './FormattedPrice'
 
 interface TourCardProps extends Tour {
   discount?: string
+  slug?: string
 }
 
-export default function TourCard({ title, duration, features, price, rating, reviews, location, image, discount, source, externalUrl }: TourCardProps) {
+export default function TourCard({ title, duration, features, price, rating, reviews, location, image, discount, source, externalUrl, slug }: TourCardProps) {
   const { t } = useTranslation()
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist()
   const item = toWishlistItem({ title, duration, features, price, rating: String(rating), reviews, location, image, source, externalUrl } as Tour)
@@ -27,15 +28,10 @@ export default function TourCard({ title, duration, features, price, rating, rev
     }
   }
 
-  const isExternal = !!externalUrl
-  const tourSlug = getTourSlug(title)
+  const tourSlug = slug || getTourSlug(title)
 
   const handleCardClick = () => {
-    if (isExternal) {
-      window.open(externalUrl, '_blank', 'noopener')
-    } else {
-      window.open(`/tour/${tourSlug}`, '_blank', 'noopener')
-    }
+    window.open(`/tour/${tourSlug}`, '_blank', 'noopener')
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -81,12 +77,14 @@ export default function TourCard({ title, duration, features, price, rating, rev
             <span className="tour-card-rating-value">{rating}</span>
             <span className="tour-card-rating-reviews">({reviews})</span>
           </div>
-          <div className="tour-card-price">
-            <span className="tour-card-from">{t('common.from')} </span>
-            <span className="tour-card-price-value">
-              <FormattedPrice usdPrice={parsePrice(price)} />
-            </span>
-          </div>
+          {price && (
+            <div className="tour-card-price">
+              <span className="tour-card-from">{t('common.from')} </span>
+              <span className="tour-card-price-value">
+                <FormattedPrice usdPrice={parsePrice(price)} />
+              </span>
+            </div>
+          )}
         </div>
       </div>
     </div>

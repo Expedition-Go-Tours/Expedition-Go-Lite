@@ -13,6 +13,7 @@ import { FieldLabel, TextInput, SelectInput } from '../components/booking/FormFi
 import ChangeBookingModal from '../components/booking/ChangeBookingModal'
 import BookingConfirmationDialog from '../components/booking/BookingConfirmationDialog'
 import ExpiredHoldModal from '../components/booking/ExpiredHoldModal'
+import { useCreateBooking } from '../hooks/useExpeditionBookings'
 
 /* ─── Constants ─── */
 
@@ -33,21 +34,21 @@ const PAYMENT_METHODS = [
   { id: 'googlepay', label: 'Google Pay' },
 ]
 
-/* ─── Demo fallback ─── */
+/* ─── Tour data from location state ─── */
 
-const DEMO_TOUR = {
-  title: 'Experience the Beauty, History and the Culture Of Accra in a Day',
-  image: 'https://images.unsplash.com/photo-1601758125946-6ec2ef64daf8?auto=format&fit=crop&w=600&q=80',
+const FALLBACK_TOUR = {
+  title: 'Loading...',
+  image: '',
   provider: 'Expedition GO Tours',
-  rating: 4.9,
-  reviews: 248,
-  date: 'Tuesday, June 2, 2026',
+  rating: 0,
+  reviews: 0,
+  date: 'Select date',
   time: '9:00 AM',
-  duration: '6h',
+  duration: '',
   travelers: '1 adult',
-  price: 80,
-  cancellation: 'Free cancellation before 9:00 AM on June 1 (tour local time)',
-  language: 'English - Guide',
+  price: 0,
+  cancellation: 'Free cancellation up to 24 hours before',
+  language: 'English',
 }
 
 /* ─── Page entrance variants ─── */
@@ -73,7 +74,7 @@ const stepContentVariants = {
 
 /* ─── Mobile Summary Card ─── */
 
-function MobileSummaryCard({ tour, onChangeClick }: { tour: typeof DEMO_TOUR; onChangeClick: () => void }) {
+function MobileSummaryCard({ tour, onChangeClick }: { tour: typeof FALLBACK_TOUR; onChangeClick: () => void }) {
   return (
     <motion.div variants={itemVariants} className="rounded-[1.75rem] border border-slate-200/40 bg-white p-5 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)]">
       <div className="flex items-start gap-3">
@@ -343,7 +344,7 @@ function ActivityDetailsStep({
 }: {
   data: { leadFirstName: string; leadLastName: string }
   onChange: (key: string, value: string) => void
-  tour: typeof DEMO_TOUR
+  tour: typeof FALLBACK_TOUR
   onNext: () => void
   valid: { leadFirstName: boolean; leadLastName: boolean; all: boolean }
   step: number
@@ -490,7 +491,7 @@ function PaymentDetailsStep({
 }: {
   data: { paymentTiming: string; paymentMethod: string }
   onChange: (key: string, value: string) => void
-  tour: typeof DEMO_TOUR
+  tour: typeof FALLBACK_TOUR
   onBook: () => void
   step: number
   setStep: (s: number) => void
@@ -656,7 +657,7 @@ function BookingSidebar({
   tour, promoCode, setPromoCode, onApplyPromo, onChangeClick, discount, finalPrice,
   contact, activity, step,
 }: {
-  tour: typeof DEMO_TOUR
+  tour: typeof FALLBACK_TOUR
   promoCode: string
   setPromoCode: (v: string) => void
   onApplyPromo: () => void
@@ -836,7 +837,7 @@ export default function BookingPage() {
   const location = useLocation()
   const navigate = useNavigate()
 
-  const tour = location.state?.tour || DEMO_TOUR
+  const tour = location.state?.tour || FALLBACK_TOUR
 
   const [step, setStep] = useState(1)
   const [promoCode, setPromoCode] = useState('')
@@ -933,26 +934,36 @@ export default function BookingPage() {
     navigate('/')
   }
 
+  const createBooking = useCreateBooking()
+
   const handleBook = async () => {
     if (payment.paymentTiming === 'now') {
       return
     }
 
-    const payload = {
-      tourId: tour.title,
-      selectedDate: editableTour.date,
-      travelers: { adults: 1, phoneNumber: contact.phone, details: [{ name: `${activity.leadFirstName} ${activity.leadLastName}`.trim() || `${contact.firstName} ${contact.lastName}`, ageGroup: 'adult' }] },
+    try {
+      const payload = {
+        tourId: tour.id || tour.title,
+        selectedDate: editableTour.date,
+        travelers: {
+          adults: 1,
+          phoneNumber: contact.phone,
+          location: '',
+          details: [{ name: `${activity.leadFirstName} ${activity.leadLastName}`.trim() || `${contact.firstName} ${contact.lastName}`, age: 30, ageGroup: 'adult' }],
+        },
+        paymentMethodId: 'pm_placeholder',
+      }
+      await createBooking.mutateAsync(payload)
+      toast.success('Booking confirmed!')
+      clearDraft()
+      setBookingConfirmation({
+        tour: { title: tour.title, image: tour.image, rating: tour.rating, reviews: tour.reviews, duration: tour.duration },
+        date: editableTour.date,
+        travelers: 1,
+      })
+    } catch (err) {
+      toast.error('Booking failed. Please try again.')
     }
-    console.log('Booking payload:', payload)
-    toast.success('Booking confirmed!')
-
-    clearDraft()
-
-    setBookingConfirmation({
-      tour: { title: tour.title, image: tour.image, rating: tour.rating, reviews: tour.reviews, duration: tour.duration },
-      date: editableTour.date,
-      travelers: 1,
-    })
   }
 
   const handleApplyPromo = useCallback(() => {

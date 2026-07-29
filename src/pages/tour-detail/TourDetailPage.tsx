@@ -4,16 +4,15 @@ import { AnimatePresence, motion } from 'framer-motion'
 import {
   CalendarCheck, Clock, Users, CreditCard, UserCheck, Bus,
 } from 'lucide-react'
-import { mockTourDetail, mockReviews } from '../../data/mockTourDetail'
-import {
-  recommendedTours, dayTours, topRatedTours,
-  sellOutTours, lastMinuteDeals, multiDayTours,
-} from '../../components/data'
 import Footer from '../../components/Footer'
 import { useContinuePlanning, toContinuePlanningItem } from '../../context/ContinuePlanningContext'
 import { useWishlist } from '../../context/WishlistContext'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
+import { useExpeditionTour, useSimilarTours } from '../../hooks/useExpeditionTours'
+import { useExpeditionTourReviews, useCreateReview } from '../../hooks/useExpeditionReviews'
+import { useTourAvailability } from '../../hooks/useExpeditionBookings'
+import type { DayAvailability } from '../../lib/tourAvailability'
 
 import TourImageGallery from './TourImageGallery'
 import TourHeader from './TourHeader'
@@ -42,43 +41,6 @@ const EXTERNAL_FALLBACK_IMAGES = [
   'https://images.squarespace-cdn.com/content/v1/65cfd1369377d32bcd0051fa/f0eaf879-3685-41fb-ba88-5fbab02dda4a/Travel+to+Ghana-+Sheeda+Travel+Tribe.jpg',
 ]
 
-const DESCRIPTION_STEPS = [
-  {
-    title: 'Start Your Journey from Accra to Cape Coast:',
-    body: 'Set out from Accra on a scenic drive of approximately three hours along the coast. Along the way you\'ll pass villages, palm-lined roads, and ocean views as you head toward one of Ghana\'s most historic regions.',
-  },
-  {
-    title: 'Experience the Adventure of Kakum National Park:',
-    body: 'Trek through lush rainforest and cross the famous canopy walkway suspended high above the forest floor. Your guide will point out birds, butterflies, and the rich biodiversity that makes Kakum a highlight for nature lovers.',
-  },
-  {
-    title: 'Discover the History of Elmina Castle:',
-    body: 'Visit Elmina Castle (St. George\'s Castle), a UNESCO World Heritage site and one of the oldest European buildings in sub-Saharan Africa. Learn about its role in trade and the trans-Atlantic slave trade with time to reflect on this powerful history.',
-  },
-  {
-    title: 'Explore Cape Coast Castle and Township:',
-    body: 'Continue to Cape Coast Castle to tour the chambers, courtyards, and museum exhibits. Your guide shares stories of resilience and remembrance before you have a chance to explore the surrounding township and coastal atmosphere.',
-  },
-  {
-    title: 'Drive Back to Accra:',
-    body: 'After a full day of culture, history, and nature, relax on the return drive to Accra with drop-off at your hotel or agreed meeting point, carrying memories of Ghana\'s Central Region.',
-  },
-]
-
-const DUMMY_REVIEWS = [
-  { id: 'dummy-1', name: 'Sarah Johnson', date: 'Mar 2026', rating: 5, text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.', country: 'United States' },
-  { id: 'dummy-2', name: 'Michael Chen', date: 'Feb 2026', rating: 4, text: 'Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.', country: 'United States' },
-  { id: 'dummy-3', name: 'Emma Williams', date: 'Jan 2026', rating: 5, text: 'At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores.', country: 'United States' },
-  { id: 'dummy-4', name: 'James Rodriguez', date: 'Dec 2025', rating: 4, text: 'Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit.', country: 'United States' },
-  { id: 'dummy-5', name: 'Olivia Brown', date: 'Nov 2025', rating: 5, text: 'Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit.', country: 'United States' },
-  { id: 'dummy-6', name: 'David Kim', date: 'Oct 2025', rating: 3, text: 'Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur.', country: 'United States' },
-]
-
-const QA_ITEMS = [
-  { asker: 'Mish', question: 'What is the pick up and drop off time? I land at 6am and have a 8pm returning flight.', answer: 'Contact the operator to confirm shorter versions of the tour and custom pickup timing.' },
-  { asker: 'Charlie B', question: 'Hello what time is pick up and return from Accra?', answer: 'Pickup is usually early morning and return timing depends on traffic and selected stops.' },
-]
-
 function toSlug(title: string): string {
   return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 }
@@ -97,47 +59,37 @@ export default function TourDetailPage() {
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist()
   const { addToContinuePlanning } = useContinuePlanning()
 
-  const allTours = useMemo(() => [
-    ...recommendedTours, ...dayTours, ...topRatedTours,
-    ...sellOutTours, ...lastMinuteDeals,
-  ], [])
+  const { data: tour, isLoading, isError } = useExpeditionTour(tourId)
+  const { data: reviewsData } = useExpeditionTourReviews(tourId, 1, 10)
+  const { data: similarTours } = useSimilarTours(tourId)
 
-  const matchedTour = useMemo(() => {
-    const found = allTours.find(t => toSlug(t.title) === tourId)
-    if (found) return found
-    return (multiDayTours as any[]).find((t: any) => toSlug(t.title) === tourId)
-  }, [allTours, tourId])
+  const now = new Date()
+  const availStart = now.toISOString().slice(0, 10)
+  const availEnd = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+  const { data: availabilityCalendar } = useTourAvailability(tourId, availStart, availEnd)
 
-  const tour = useMemo(() => matchedTour
-    ? {
-        ...mockTourDetail,
-        id: tourId || mockTourDetail.id,
-        slug: tourId || mockTourDetail.slug,
-        title: matchedTour.title,
-        location: matchedTour.location || mockTourDetail.location,
-        duration: matchedTour.duration || (matchedTour as any).days || mockTourDetail.duration,
-        rating: typeof matchedTour.rating === 'string' ? parseFloat(matchedTour.rating) : (matchedTour as any).rating,
-        reviewCount: typeof matchedTour.reviews === 'number' ? matchedTour.reviews : mockTourDetail.reviewCount,
-        price: typeof (matchedTour as any).price === 'string'
-          ? parseInt((matchedTour as any).price.replace(/[^0-9]/g, ''), 10)
-          : mockTourDetail.price,
-        images: [matchedTour.image, ...mockTourDetail.images.slice(1)],
-        source: (matchedTour as any).source,
+  const availabilityMap = useMemo(() => {
+    const map = new Map<string, DayAvailability>()
+    if (availabilityCalendar) {
+      for (const day of availabilityCalendar) {
+        const dateStr = day.date
+        let status: DayAvailability = 'available'
+        if (day.status === 'FULL') status = 'full'
+        else if (day.status === 'LIMITED') status = 'limited'
+        else if (day.status === 'BLOCKED') status = 'full'
+        map.set(dateStr, status)
       }
-    : mockTourDetail, [matchedTour, tourId])
+    }
+    return map
+  }, [availabilityCalendar])
 
-  const reviews = mockReviews
-  const relatedTours = recommendedTours.slice(0, 6)
-
-  const slug = tourId || tour.slug
-  const selectedTourTitle = tour.title
-  const selectedTourRating = tour.rating
-  const selectedTourReviews = tour.reviewCount
+  const reviews = reviewsData?.reviews || []
+  const relatedTours = similarTours || []
 
   const mergedImages = useMemo(() => {
     const seen = new Set<string>()
     const all = [
-      ...(tour.images || []),
+      ...(tour?.images || []),
       ...EXTERNAL_FALLBACK_IMAGES,
     ]
     return all.filter((url) => {
@@ -146,19 +98,25 @@ export default function TourDetailPage() {
       seen.add(key)
       return true
     })
-  }, [tour.images])
+  }, [tour?.images])
 
   useEffect(() => {
     if (tour) {
       document.title = `${tour.title} | Expedition-Go Tours`
     }
-    if (matchedTour) {
-      addToContinuePlanning(toContinuePlanningItem(matchedTour as any))
+    if (tour) {
+      addToContinuePlanning(toContinuePlanningItem({
+        title: tour.title,
+        location: tour.location,
+        image: mergedImages[0] || '',
+        price: `$${tour.price}`,
+        rating: String(tour.rating),
+        reviews: tour.reviewCount,
+        source: tour.bookingFlow === 'EXTERNAL' ? 'travio-africa' as const : 'expedition-go' as const,
+        externalUrl: tour.externalUrl || undefined,
+      } as any))
     }
-    return () => {
-      document.title = 'Expedition-Go Tours - Discover Amazing Tours'
-    }
-  }, [tour, matchedTour, addToContinuePlanning])
+  }, [tour, addToContinuePlanning, mergedImages])
 
   const pricingRef = useRef<HTMLDivElement>(null)
   const [activeTab, setActiveTab] = useState('overview')
@@ -175,6 +133,8 @@ export default function TourDetailPage() {
   const [loadingMoreReviews, setLoadingMoreReviews] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
 
+  const createReview = useCreateReview()
+
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 768px)')
     setIsMobile(mq.matches)
@@ -189,7 +149,11 @@ export default function TourDetailPage() {
     setReviewSearchQuery('')
   }, [tourId])
 
-
+  const isExternal = tour?.bookingFlow === 'EXTERNAL'
+  const selectedTourTitle = tour?.title || ''
+  const selectedTourRating = tour?.rating || 0
+  const selectedTourReviews = tour?.reviewCount || 0
+  const slug = tourId || tour?.slug || ''
 
   const isFavorited = isInWishlist(selectedTourTitle)
 
@@ -201,15 +165,15 @@ export default function TourDetailPage() {
       addToWishlist({
         id: selectedTourTitle,
         title: selectedTourTitle,
-        location: tour.location,
-        price: tour.price,
-        duration: tour.duration,
+        location: tour?.location || '',
+        price: tour?.price || 0,
+        duration: tour?.duration || '',
         imageUrl: mergedImages[0] || '',
-        rating: Number(selectedTourRating) || 0,
-        reviewCount: Number(selectedTourReviews) || 0,
+        rating: selectedTourRating,
+        reviewCount: selectedTourReviews,
         addedDate: new Date().toISOString(),
-        source: (tour as any).source,
-        externalUrl: (tour as any).externalUrl,
+        source: isExternal ? 'travio-africa' : 'expedition-go',
+        externalUrl: tour?.externalUrl || undefined,
       })
       toast.success(t('common.addedToWishlist'))
     }
@@ -234,14 +198,14 @@ export default function TourDetailPage() {
           slug,
           rating: selectedTourRating,
           reviews: selectedTourReviews,
-          duration: tour.duration,
-          price: tour.price,
+          duration: tour?.duration || '',
+          price: tour?.price || 0,
           image: mergedImages[0],
           images: mergedImages.slice(0, 5),
-          location: tour.location || 'Accra, Ghana',
-          tourId: tour.id,
-          supplierName: 'Expedition-Go Tours Ltd',
-          supplierLogo: 'https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?auto=format&fit=crop&w=120&q=80',
+          location: tour?.location || 'Accra, Ghana',
+          tourId: tour?.id || '',
+          supplierName: tour?.supplierName || 'Expedition-Go Tours Ltd',
+          supplierLogo: tour?.supplierPhoto || '',
         },
       },
     })
@@ -265,17 +229,16 @@ export default function TourDetailPage() {
   }
 
   const allReviewCards = useMemo(() => {
-    const apiCards = reviews.map((r) => ({
+    return reviews.map((r) => ({
       id: r.id,
       name: r.author,
-      tag: r.verified ? t('reviews.verified') : t('reviews.traveler'),
+      tag: t('reviews.traveler'),
       date: new Date(r.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
       rating: r.rating,
       text: r.content,
       title: r.title,
     }))
-    return apiCards
-  }, [reviews])
+  }, [reviews, t])
 
   const filteredReviewCards = useMemo(() => {
     const q = reviewSearchQuery.trim().toLowerCase()
@@ -294,8 +257,15 @@ export default function TourDetailPage() {
       { label: '2 stars', stars: 2 },
       { label: '1 star', stars: 1 },
     ]
-    return labels.map((item) => ({ ...item, count: 0, percentage: 0 }))
-  }, [])
+    const counts: Record<number, number> = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
+    allReviewCards.forEach((r) => { if (counts[r.rating] !== undefined) counts[r.rating]++ })
+    const total = allReviewCards.length || 1
+    return labels.map((item) => ({
+      ...item,
+      count: counts[item.stars],
+      percentage: Math.round((counts[item.stars] / total) * 100),
+    }))
+  }, [allReviewCards])
 
   const overviewHighlightsGrid = useMemo(() => [
     { icon: CalendarCheck, title: t('tourDetail.freeCancellation'), desc: t('tourDetail.cancelRefundDesc') },
@@ -306,19 +276,26 @@ export default function TourDetailPage() {
     { icon: Bus, title: t('tourDetail.pickupIncluded'), desc: t('tourDetail.checkAvailabilityDesc') },
   ], [t])
 
-  const descriptionSteps = DESCRIPTION_STEPS
-  const highlights = tour.highlights || []
+  const descriptionSteps = useMemo(() => {
+    if (!tour?.description) return []
+    return [
+      { title: 'About this tour', body: tour.description },
+    ]
+  }, [tour?.description])
 
-  const infoSections = [
+  const highlights = tour?.highlights || []
+  const cancellationPolicy = tour?.cancellationPolicy || 'Free cancellation up to 24 hours before'
+
+  const infoSections = useMemo(() => [
     {
       key: 'included',
       title: t('tourDetail.included'),
-      content: buildIncludedExcludedContent(tour.included, tour.excluded),
+      content: buildIncludedExcludedContent(tour?.included, tour?.excluded),
     },
     {
       key: 'expect',
       title: t('tourDetail.aboutTour'),
-      content: buildAboutContent(tour.description),
+      content: buildAboutContent(tour?.description || ''),
     },
     {
       key: 'pickup',
@@ -333,28 +310,28 @@ export default function TourDetailPage() {
     {
       key: 'policy',
       title: t('tourDetail.cancellationPolicy'),
-      content: buildCancellationContent(undefined, tour.cancellationPolicy || ''),
+      content: buildCancellationContent(undefined, cancellationPolicy),
     },
-  ]
+  ], [t, tour?.included, tour?.excluded, tour?.description, cancellationPolicy])
 
-  const supplierData = {
-    name: 'Expedition-Go Tours Ltd',
-    logo: 'https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?auto=format&fit=crop&w=120&q=80',
-    description: 'Expedition-Go Tours Ltd offers authentic guided experiences across Ghana, showcasing the country\'s rich culture, history, and natural beauty.',
-    rating: 4.8,
+  const supplierData = useMemo(() => ({
+    name: tour?.supplierName || 'Expedition-Go Tours Ltd',
+    logo: tour?.supplierPhoto || '',
+    description: `${tour?.supplierName || 'This supplier'} offers authentic guided experiences.`,
+    rating: tour?.rating || null,
     totalTours: relatedTours.length,
-    phone: '+233 20 123 4567',
-    email: 'info@expeditiongo.com',
-    website: 'https://expeditiongo.com',
-    address: 'Accra, Ghana',
-  }
+    phone: '',
+    email: '',
+    website: '',
+    address: tour?.location || '',
+  }), [tour, relatedTours])
 
-  const supplierTours = relatedTours.map((t) => ({
+  const supplierTours = useMemo(() => relatedTours.map((t) => ({
     title: t.title,
     slug: toSlug(t.title),
     image: t.image,
     duration: t.duration,
-    price: parseInt(String(t.price).replace(/[^0-9]/g, ''), 10) || 100,
+    price: parseInt(t.price.replace(/[^0-9]/g, ''), 10) || 100,
     rating: t.rating,
     reviews: t.reviews,
     features: t.features,
@@ -362,11 +339,38 @@ export default function TourDetailPage() {
     category: t.category,
     source: t.source,
     externalUrl: t.externalUrl,
-  }))
+  })), [relatedTours])
 
-  if (!tour) {
+  const handleWriteReviewSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    const form = e.target as HTMLFormElement
+    const comment = (form.elements.namedItem('review-comment') as HTMLTextAreaElement)?.value
+    const ratingEl = form.elements.namedItem('review-rating') as HTMLInputElement
+    const rating = ratingEl ? parseInt(ratingEl.value) : 5
+
+    if (comment && tour?.id) {
+      createReview.mutate({
+        bookingId: tour.id,
+        rating,
+        comment,
+        title: selectedTourTitle,
+      })
+    }
+    setIsWriteReviewOpen(false)
+    toast.success(t('reviews.thankYou'))
+  }
+
+  if (isLoading) {
     return (
-      <div className="tour-detail-error">
+      <div className="tour-detail-loading" style={{ padding: '60px 24px', textAlign: 'center' }}>
+        <h2>Loading tour...</h2>
+      </div>
+    )
+  }
+
+  if (isError || !tour) {
+    return (
+      <div className="tour-detail-error" style={{ padding: '60px 24px', textAlign: 'center' }}>
         <h2>{t('tourDetail.tourNotFound')}</h2>
         <p>{t('tourDetail.tourNotFoundDesc')}</p>
       </div>
@@ -407,18 +411,47 @@ export default function TourDetailPage() {
             </div>
 
             <aside className="tour-detail-sidebar" ref={pricingRef}>
-              <BookingWidget tour={tour as any} />
+              {isExternal && tour.externalUrl ? (
+                <div className="external-booking-card" style={{
+                  background: '#fff', borderRadius: 12, padding: 24,
+                  border: '1px solid #e5e7eb', boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+                  textAlign: 'center',
+                }}>
+                  <img src="/travio_logo.png" alt="Travio Africa" style={{ height: 32, marginBottom: 16 }} />
+                  <p style={{ fontSize: 14, color: '#6b7280', marginBottom: 16 }}>
+                    This tour is operated by a partner on Travio Africa
+                  </p>
+                  <a
+                    href={tour.externalUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: 'inline-block', width: '100%', padding: '12px 24px',
+                      background: '#179237', color: '#fff', borderRadius: 8,
+                      fontWeight: 600, textDecoration: 'none', fontSize: 16,
+                    }}
+                  >
+                    Book on Travio Africa
+                  </a>
+                </div>
+              ) : (
+                <BookingWidget
+                  tour={tour as any}
+                  getAvailability={(date: Date) => {
+                    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+                    return availabilityMap.get(key) || 'available'
+                  }}
+                />
+              )}
             </aside>
 
             <div className="tour-detail-bottom">
-              {/* Tab Navigation */}
               <TourDetailTabs
                 tabs={tourDetailTabs}
                 activeTab={activeTab}
                 onTabChange={setActiveTab}
               />
 
-              {/* Tab Content */}
               <div className="tour-detail-tab-content">
                 <AnimatePresence mode="wait">
                   {activeTab === 'overview' && (
@@ -427,7 +460,7 @@ export default function TourDetailPage() {
                       highlightsGrid={overviewHighlightsGrid}
                       descriptionSteps={descriptionSteps}
                       highlights={highlights}
-                      reviews={DUMMY_REVIEWS}
+                      reviews={allReviewCards.map(r => ({ name: r.name, date: r.date, rating: r.rating, text: r.text, country: '' }))}
                       onTabChange={setActiveTab}
                       onReviewReadMore={setReviewDetail}
                     />
@@ -465,7 +498,7 @@ export default function TourDetailPage() {
                         setReplyTarget(item)
                         setIsReplyDialogOpen(true)
                       }}
-                      qaItems={QA_ITEMS}
+                      qaItems={[]}
                       starFilter={reviewStarFilter}
                       onStarFilterChange={setReviewStarFilter}
                       searchQuery={reviewSearchQuery}
@@ -496,14 +529,12 @@ export default function TourDetailPage() {
             </div>
           </div>
 
-          {/* Similar Experiences */}
           <RelatedTours tours={relatedTours} />
         </div>
       </div>
 
       <Footer />
 
-      {/* Review Detail Dialog */}
       <AnimatePresence>
         {reviewDetail && (
           <motion.div
@@ -532,7 +563,7 @@ export default function TourDetailPage() {
               </div>
               <div className="dialog-body">
                 <div className="review-detail-avatar">
-                  {reviewDetail.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
+                  {reviewDetail.name?.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
                 </div>
                 <p className="review-detail-name">{reviewDetail.name}</p>
                 <p className="review-detail-date">{reviewDetail.date}</p>
@@ -550,7 +581,6 @@ export default function TourDetailPage() {
         )}
       </AnimatePresence>
 
-      {/* Reply Dialog */}
       {isReplyDialogOpen && (
         <div className="dialog-overlay" onClick={() => setIsReplyDialogOpen(false)}>
           <div className="dialog-content" onClick={(e) => e.stopPropagation()}>
@@ -590,7 +620,6 @@ export default function TourDetailPage() {
         </div>
       )}
 
-      {/* Write Review Dialog */}
       {isWriteReviewOpen && (
         <div className="dialog-overlay" onClick={() => setIsWriteReviewOpen(false)}>
           <div className="dialog-content" onClick={(e) => e.stopPropagation()}>
@@ -604,7 +633,8 @@ export default function TourDetailPage() {
             </div>
             <div className="dialog-body">
               <p className="write-review-info">{t('reviews.shareExperience')}</p>
-              <form onSubmit={(e) => { e.preventDefault(); setIsWriteReviewOpen(false) }} className="write-review-form-dialog">
+              <form onSubmit={handleWriteReviewSubmit} className="write-review-form-dialog">
+                <input type="hidden" name="review-rating" value="5" />
                 <div className="write-review-field">
                   <label>{t('reviews.yourRating')}</label>
                   <div className="write-review-stars">
@@ -618,8 +648,8 @@ export default function TourDetailPage() {
                   </div>
                 </div>
                 <div className="write-review-field">
-                  <label htmlFor="review-textarea-dialog">{t('reviews.yourReview')}</label>
-                  <textarea id="review-textarea-dialog" rows={5} required placeholder={t('reviews.contentPlaceholder')} className="write-review-textarea" />
+                  <label htmlFor="review-comment">{t('reviews.yourReview')}</label>
+                  <textarea id="review-comment" name="review-comment" rows={5} required placeholder={t('reviews.contentPlaceholder')} className="write-review-textarea" />
                 </div>
                 <div className="reply-actions">
                   <button type="button" onClick={() => setIsWriteReviewOpen(false)} className="reply-cancel">{t('common.cancel')}</button>

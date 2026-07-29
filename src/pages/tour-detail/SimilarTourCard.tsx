@@ -39,15 +39,10 @@ export default function SimilarTourCard({
     }
   }
 
-  const isExternal = !!externalUrl
   const tourSlug = getTourSlug(title)
 
   const handleCardClick = () => {
-    if (isExternal) {
-      window.open(externalUrl, '_blank', 'noopener')
-    } else {
-      window.open(`/tour/${tourSlug}`, '_blank', 'noopener')
-    }
+    window.open(`/tour/${tourSlug}`, '_blank', 'noopener')
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

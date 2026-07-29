@@ -5,13 +5,10 @@ import {
   ArrowLeft, Heart, MessageSquare, Star, Shield, Users, Headset,
   Phone, Mail, Globe, MapPin, ChevronDown, Leaf, Award, Route,
 } from 'lucide-react'
-import {
-  recommendedTours, dayTours, topRatedTours,
-  sellOutTours, lastMinuteDeals, multiDayTours,
-} from '../components/data'
 import TourCard from '../components/TourCard'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
+import { useExpeditionTours } from '../hooks/useExpeditionTours'
 import './SupplierPage.css'
 
 const PAGE_SIZE = 8
@@ -44,13 +41,10 @@ export default function SupplierPage() {
   const navigate = useNavigate()
   const decodedName = supplierName ? decodeURIComponent(supplierName) : ''
 
-  const allTours = [
-    ...recommendedTours, ...dayTours, ...topRatedTours,
-    ...sellOutTours, ...lastMinuteDeals,
-  ]
-  const multiDayArray = multiDayTours as any[]
+  const { data: toursData } = useExpeditionTours({ limit: 50 })
+  const fetchedTours = toursData?.tours || []
 
-  const supplierTours = allTours.length > 0 ? allTours : multiDayArray
+  const supplierTours = fetchedTours
 
   const [page, setPage] = useState(1)
   const [activeFeature, setActiveFeature] = useState(0)
@@ -75,11 +69,7 @@ export default function SupplierPage() {
   const supplierData = {
     name: decodedName || 'Expedition-Go Tours Ltd',
     logo: 'https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?auto=format&fit=crop&w=240&q=80',
-    description: `Expedition-Go Tours Ltd is a trusted local tour operator based in Accra, Ghana. We specialize in creating authentic, immersive travel experiences that showcase the rich culture, history, and natural beauty of Ghana.
-
-From the lush rainforests of Kakum National Park to the historic shores of Cape Coast, our expert guides bring every destination to life with deep local knowledge and genuine hospitality.
-
-We are committed to sustainable tourism practices that support local communities and protect Ghana's incredible natural heritage for generations to come.`,
+    description: `${decodedName || 'Expedition-Go Tours Ltd'} offers authentic guided experiences across Ghana, showcasing the country's rich culture, history, and natural beauty.`,
     rating: 4.8,
     reviewCount: 15,
     totalTours: supplierTours.length,

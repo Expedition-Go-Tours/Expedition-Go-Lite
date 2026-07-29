@@ -1,4 +1,4 @@
-﻿import { useState, useRef, useEffect, useCallback } from 'react'
+﻿import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import type { TourDetail } from '../../lib/tourTypes'
@@ -8,13 +8,15 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { CalendarDays, Users, Minus, Plus, MessageSquare } from 'lucide-react'
 import { toast } from 'sonner'
 import { useCurrency } from '../../contexts/CurrencyContext'
-import { getDateAvailability } from '../../lib/tourAvailability'
+import type { DayAvailability } from '../../lib/tourAvailability'
 import SupportChatWidget from '../../components/SupportChatWidget'
 import BookingTransition from '../../components/BookingTransition'
+import { getApiBaseUrl, getAuthToken } from '../../lib/auth'
 import './BookingWidget.css'
 
 interface BookingWidgetProps {
   tour: TourDetail
+  getAvailability?: (date: Date) => DayAvailability
 }
 
 const dropdownVariants = {
@@ -23,7 +25,7 @@ const dropdownVariants = {
   exit: { opacity: 0, y: -8, scale: 0.96 },
 }
 
-export default function BookingWidget({ tour }: BookingWidgetProps) {
+export default function BookingWidget({ tour, getAvailability: propGetAvailability }: BookingWidgetProps) {
   const { t } = useTranslation()
   const { currency, convertPrice } = useCurrency()
   const navigate = useNavigate()
@@ -43,8 +45,80 @@ export default function BookingWidget({ tour }: BookingWidgetProps) {
   const [promoCode, setPromoCode] = useState('')
   const [promoApplied, setPromoApplied] = useState(false)
   const [promoError, setPromoError] = useState('')
+  const [pricingBreakdown, setPricingBreakdown] = useState<{ label: string; quantity: number; unitPrice: number; total: number }[]>([])
+  const [pricingTotal, setPricingTotal] = useState<number | null>(null)
+  const [pricingCurrency, setPricingCurrency] = useState<string>('USD')
+  const [pricingLoading, setPricingLoading] = useState(false)
   const guestRef = useRef<HTMLDivElement>(null)
   const calendarRef = useRef<HTMLDivElement>(null)
+
+  const doFetchPricing = useCallback(async (date: string) => {
+    const tId = tour.id
+    if (!tId) return
+    setPricingLoading(true)
+    try {
+      const base = getApiBaseUrl()
+      const token = await getAuthToken()
+      const res = await fetch(`${base}/expedition/checkout/calculate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          tourId: tId,
+          selectedDate: date,
+          travelers: { adults, children, infants },
+        }),
+      })
+      const payload = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        throw new Error(payload.message || `Checkout API error (${res.status})`)
+      }
+      const data = payload.data ?? payload
+      if (data.pricing) {
+        setPricingBreakdown(data.pricing.breakdown || [])
+        setPricingTotal(data.pricing.total)
+        setPricingCurrency(data.pricing.currency)
+      }
+    } catch (err) {
+      setPricingBreakdown([])
+      setPricingTotal(null)
+    } finally {
+      setPricingLoading(false)
+    }
+  }, [tour.id, adults, children, infants])
+
+  const pricingFetched = useRef(false)
+  useEffect(() => {
+    if (!tour.id || pricingFetched.current) return
+    pricingFetched.current = true
+    const tomorrow = new Date()
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    doFetchPricing(tomorrow.toISOString().slice(0, 10))
+  }, [tour.id, doFetchPricing])
+
+  useEffect(() => {
+    if (!selectedDate) return
+    doFetchPricing(selectedDate.toISOString().slice(0, 10))
+  }, [selectedDate, adults, children, infants, doFetchPricing])
+
+  const priceMap = useMemo(() => {
+    const map = new Map<string, { unitPrice: number; total: number }>()
+    for (const item of pricingBreakdown) {
+      map.set(item.label.toLowerCase(), { unitPrice: item.unitPrice, total: item.total })
+    }
+    return map
+  }, [pricingBreakdown])
+
+  const getPriceForGroup = (label: string, defaultPrice: number): { unitPrice: number; total: number } => {
+    return priceMap.get(label.toLowerCase()) || { unitPrice: defaultPrice, total: defaultPrice * 1 }
+  }
+
+  const pAdults = getPriceForGroup('adult', tour.price)
+  const pChildren = getPriceForGroup('child', Math.round(tour.price * 0.6))
+  const pInfants = getPriceForGroup('infant', 0)
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -71,17 +145,15 @@ export default function BookingWidget({ tour }: BookingWidgetProps) {
   }, [showGuestSelector, showCalendar])
 
   const totalTravelers = adults + seniors + youths + children + infants
-  const adultPrice = tour.price
-  const seniorPrice = tour.price
-  const youthPrice = Math.round(tour.price * 0.7)
-  const childPrice = Math.round(tour.price * 0.6)
-  const infantPrice = 0
-  const totalPrice =
-    adults * adultPrice +
-    seniors * seniorPrice +
-    youths * youthPrice +
-    children * childPrice +
-    infants * infantPrice
+
+  const totalPrice = pricingTotal ?? 0
+  const hasPricing = pricingTotal !== null
+
+  const adultPrice = hasPricing ? pAdults.unitPrice : 0
+  const seniorPrice = hasPricing ? pAdults.unitPrice : 0
+  const youthPrice = hasPricing ? Math.round(pAdults.unitPrice * 0.7) : 0
+  const childPrice = hasPricing ? pChildren.unitPrice : 0
+  const infantPrice = hasPricing ? pInfants.unitPrice : 0
 
   const increment = (type: string) => {
     if (type === 'adults' && adults < 9) setAdults(adults + 1)
@@ -171,12 +243,14 @@ export default function BookingWidget({ tour }: BookingWidgetProps) {
     toast.success(t('booking.promoApplied'))
   }
 
+  const formatPrice = (val: number) => val > 0 ? `${currency.symbol}${val}` : t('booking.free')
+
   const travelerOptions = [
-    { label: t('booking.adults'), age: t('booking.ageAdult'), price: `${currency.symbol}${adultPrice}`, count: adults, key: 'adults' },
-    { label: t('booking.seniors'), age: t('booking.ageSenior'), price: `${currency.symbol}${seniorPrice}`, count: seniors, key: 'seniors' },
-    { label: t('booking.youths'), age: t('booking.ageYouth'), price: `${currency.symbol}${youthPrice}`, count: youths, key: 'youths' },
-    { label: t('booking.children'), age: t('booking.ageChild'), price: `${currency.symbol}${childPrice}`, count: children, key: 'children' },
-    { label: t('booking.infants'), age: t('booking.ageInfant'), price: infantPrice > 0 ? `${currency.symbol}${infantPrice}` : t('booking.free'), count: infants, key: 'infants' },
+    { label: t('booking.adults'), age: t('booking.ageAdult'), price: formatPrice(adultPrice), count: adults, key: 'adults' },
+    { label: t('booking.seniors'), age: t('booking.ageSenior'), price: formatPrice(seniorPrice), count: seniors, key: 'seniors' },
+    { label: t('booking.youths'), age: t('booking.ageYouth'), price: formatPrice(youthPrice), count: youths, key: 'youths' },
+    { label: t('booking.children'), age: t('booking.ageChild'), price: formatPrice(childPrice), count: children, key: 'children' },
+    { label: t('booking.infants'), age: t('booking.ageInfant'), price: infantPrice > 0 ? formatPrice(infantPrice) : t('booking.free'), count: infants, key: 'infants' },
   ]
 
   const selectedDateLabel = selectedDate
@@ -189,7 +263,13 @@ export default function BookingWidget({ tour }: BookingWidgetProps) {
         <div className="booking-price-section">
           <div className="booking-price-main">
             <span className="booking-price-from">{t('common.from')}</span>
-            <span className="booking-price-amount">{currency.symbol}{Math.round(convertPrice(tour.price))}</span>
+            <span className="booking-price-amount">
+              {hasPricing && adultPrice > 0
+                ? `${currency.symbol}${Math.round(convertPrice(adultPrice))}`
+                : pricingLoading
+                  ? '...'
+                  : `${currency.symbol}0`}
+            </span>
             <span className="booking-price-per">{t('tourDetail.perPerson')}</span>
           </div>
         </div>
@@ -228,7 +308,10 @@ export default function BookingWidget({ tour }: BookingWidgetProps) {
                     onClose={() => setShowCalendar(false)}
                     onDateSelect={(date) => setSelectedDate(date)}
                     selectedDate={selectedDate}
-                    getAvailability={(date) => getDateAvailability(tour.id || tour.title, date)}
+                    getAvailability={(date) => {
+                      const avail = propGetAvailability ? propGetAvailability(date) : 'available'
+                      return avail
+                    }}
                   />
                 </motion.div>
               )}
@@ -300,7 +383,13 @@ export default function BookingWidget({ tour }: BookingWidgetProps) {
           {/* Total */}
           <div className="booking-total">
             <span>{t('booking.total', { count: totalTravelers })}</span>
-            <span className="booking-total-amount">{currency.symbol}{Math.round(convertPrice(totalPrice))}</span>
+            <span className="booking-total-amount">
+              {hasPricing
+                ? `${currency.symbol}${Math.round(convertPrice(totalPrice))}`
+                : pricingLoading
+                  ? '...'
+                  : `${currency.symbol}0`}
+            </span>
           </div>
 
           {/* Promo code */}
