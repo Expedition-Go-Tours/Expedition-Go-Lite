@@ -110,6 +110,7 @@ interface ExpeditionTourRecord {
     bookingAndTickets?: any
     difficulty?: string | null
     cancellationPolicy?: string | null
+    pickupIncluded?: boolean | null
     supplierName: string | null
     supplierPhoto: string | null
     bookingFlow: 'DIRECT' | 'EXTERNAL'
@@ -264,7 +265,7 @@ function mapToListing(tour: ExpeditionTourRecord['tour']): TourCardData {
     languages: tour.languages?.length ? tour.languages : undefined,
     difficulty: extractDifficultyFromTour(tour) || undefined,
     cancellationPolicy: extractCancellationFromTour(tour) || undefined,
-    pickupIncluded: tour.pickupIncluded ?? undefined,
+    pickupIncluded: tour.pickupIncluded ?? (tour.bookingAndTickets?.pickupAvailable ?? tour.bookingAndTickets?.pickupProvided) ?? undefined,
   }
 }
 
