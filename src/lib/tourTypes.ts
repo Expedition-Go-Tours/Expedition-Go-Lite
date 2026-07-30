@@ -47,13 +47,37 @@ export interface TourDetail {
 
 export interface ItineraryDay {
   day: number
+  time?: string
+  type?: 'activity' | 'transfer'
   title: string
   description: string
+  duration?: number
+  durationUnit?: 'minute' | 'hour' | 'day'
+  importance?: 'major' | 'minor'
+  isOptional?: boolean
+  additionalFee?: boolean
+  activityName?: string
+  locationName?: string
+  locationAddress?: string
+  locationLat?: number | null
+  locationLng?: number | null
+  isCustomLocation?: boolean
   image?: string
-  duration?: string
   activities?: string[]
   meals?: string[]
   accommodation?: string
+}
+
+export function formatItineraryDuration(duration?: number, unit?: string): string {
+  if (duration == null) return ''
+  switch (unit) {
+    case 'hour':
+      return `${duration}h`
+    case 'day':
+      return `${duration} day${duration > 1 ? 's' : ''}`
+    default:
+      return `${duration} min`
+  }
 }
 
 export interface FAQ {

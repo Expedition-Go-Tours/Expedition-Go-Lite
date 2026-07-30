@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import i18n from '../../i18n/config'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { ChevronDown, ChevronUp, Check, X } from 'lucide-react'
 import './DetailsSection.css'
 
@@ -12,6 +12,31 @@ interface InfoSection {
 
 interface DetailsSectionProps {
   sections: InfoSection[]
+}
+
+function AccordionContent({ isOpen, children }: { isOpen: boolean; children: React.ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [height, setHeight] = useState(0)
+
+  useEffect(() => {
+    if (ref.current) {
+      setHeight(ref.current.scrollHeight)
+    }
+  }, [isOpen])
+
+  return (
+    <motion.div
+      initial={false}
+      animate={{ height: isOpen ? height : 0, opacity: isOpen ? 1 : 0 }}
+      transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
+      style={{ overflow: 'hidden' }}
+      className="details-accordion-content"
+    >
+      <div ref={ref} className="details-accordion-body">
+        {children}
+      </div>
+    </motion.div>
+  )
 }
 
 export default function DetailsSection({ sections }: DetailsSectionProps) {
@@ -43,22 +68,9 @@ export default function DetailsSection({ sections }: DetailsSectionProps) {
                 {section.title}
                 {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
               </button>
-              <AnimatePresence initial={false}>
-                {isOpen && (
-                  <motion.div
-                    key={section.key}
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
-                    className="details-accordion-content"
-                  >
-                    <div className="details-accordion-body">
-                      {section.content}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              <AccordionContent isOpen={isOpen}>
+                {section.content}
+              </AccordionContent>
             </div>
           )
         })}
@@ -107,11 +119,54 @@ export function buildIncludedExcludedContent(
   )
 }
 
+function parseNumberedContent(text: string): { preamble: string; items: { num: string; content: string }[] } {
+  const lines = text.split('\n')
+  const items: { num: string; content: string }[] = []
+  const preambleParts: string[] = []
+  let inItems = false
+
+  for (const line of lines) {
+    const trimmed = line.trim()
+    const match = trimmed.match(/^(\d+)\.\s+(.*)/)
+    if (match) {
+      inItems = true
+      items.push({ num: match[1], content: match[2] })
+    } else if (inItems) {
+      if (items.length > 0) {
+        items[items.length - 1].content += '\n' + trimmed
+      }
+    } else {
+      preambleParts.push(trimmed)
+    }
+  }
+
+  return {
+    preamble: preambleParts.join('\n'),
+    items,
+  }
+}
+
 export function buildAboutContent(text: string): React.ReactNode {
+  if (!text) {
+    return <p className="details-text">{i18n.t('tourDetail.experienceComingSoon')}</p>
+  }
+
+  const { preamble, items } = parseNumberedContent(text)
+
   return (
-    <p className="details-text">
-      {text || i18n.t('tourDetail.experienceComingSoon')}
-    </p>
+    <div className="details-about">
+      {preamble && <p className="details-text">{preamble}</p>}
+      {items.length > 0 && (
+        <ol className="details-about-list">
+          {items.map((item) => (
+            <li key={item.num} className="details-about-item">
+              <span className="details-about-num">{item.num}.</span>
+              <span>{item.content}</span>
+            </li>
+          ))}
+        </ol>
+      )}
+    </div>
   )
 }
 

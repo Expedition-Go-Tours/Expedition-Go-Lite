@@ -374,11 +374,12 @@ export function useExpeditionFeaturedTours() {
   })
 }
 
-export interface TourDetailData extends Omit<TourDetail, 'guide' | 'contact'> {
+export interface TourDetailData extends Omit<TourDetail, 'guide' | 'contact' | 'difficulty'> {
   coverPhoto: string | null
   category: string
   city: string | null
   country: string | null
+  difficulty?: string
   tags: string[]
   whatToBring: string[]
   meetingPoint: string
@@ -404,8 +405,8 @@ export function useExpeditionTour(slug: string | undefined) {
 
       let resolvedPrice = tour.startingPrice ?? extractStartingPriceFromRaw(tour.schedulesAndPricing)
 
-      // Fallback: fetch raw tour data from public endpoint if price, location, or duration missing
-      if ((resolvedPrice == null || !tour.city || !tour.durationMinutes) && tour.id) {
+      // Fetch raw tour data to get excluded and other missing fields
+      if (tour.id) {
         try {
           const base = getApiBaseUrl()
           const token = await getAuthToken()
@@ -432,6 +433,21 @@ export function useExpeditionTour(slug: string | undefined) {
               const fallbackDuration = extractDurationFromTour(rawTour)
               if (fallbackDuration != null) tour.durationMinutes = fallbackDuration
             }
+            // Extract excluded from raw productContent
+            if (!Array.isArray(tour.excluded)) {
+              const pc = rawTour?.productContent
+              if (pc && Array.isArray(pc.excluded)) {
+                tour.excluded = pc.excluded
+              }
+            }
+            // Extract itinerary from raw productContent
+            if (!Array.isArray(tour.itinerary) || tour.itinerary.length === 0) {
+              const pc = rawTour?.productContent
+              const rawItin = pc?.itinerary
+              if (Array.isArray(rawItin) && rawItin.length > 0) {
+                tour.itinerary = rawItin
+              }
+            }
           }
         } catch (e) {
           console.warn('[useExpeditionTour] fallback fetch failed:', e)
@@ -440,6 +456,14 @@ export function useExpeditionTour(slug: string | undefined) {
 
       resolvedPrice = resolvedPrice ?? 0
       const loc = [tour.city, tour.country].filter(Boolean).join(', ')
+
+      const rawTourPayload = wrapper
+      const rawItinerary =
+        Array.isArray(tour.itinerary) && tour.itinerary.length > 0
+          ? tour.itinerary
+          : Array.isArray(rawTourPayload?.productContent?.itinerary)
+            ? rawTourPayload.productContent.itinerary
+            : []
 
       const result: TourDetailData = {
         id: tour.id || '',
@@ -458,16 +482,24 @@ export function useExpeditionTour(slug: string | undefined) {
         location: loc,
         city: tour.city || null,
         country: tour.country || null,
-        difficulty: undefined,
+        difficulty: extractDifficultyFromTour(tour) || undefined,
         tags: [],
         highlights: Array.isArray(tour.highlights) ? tour.highlights : [],
         included: Array.isArray(tour.included) ? tour.included : [],
-        excluded: [],
+        excluded: Array.isArray(tour.excluded) ? tour.excluded : [],
         whatToBring: Array.isArray(tour.whatToBring) ? tour.whatToBring : [],
-        itinerary: [],
+        itinerary: rawItinerary,
         faqs: [],
         coordinates: { lat: 0, lng: 0 },
-        cancellationPolicy: tour.cancellationPolicy || 'Free cancellation up to 24 hours before',
+        cancellationPolicy: (() => {
+          const cp = tour.cancellationPolicy
+          if (typeof cp === 'string') return cp
+          if (cp && typeof cp === 'object') {
+            if (cp.refundRules) return cp.refundRules
+            if (cp.cutoffHours != null) return `Free cancellation up to ${cp.cutoffHours} hours before`
+          }
+          return 'Free cancellation up to 24 hours before'
+        })(),
         meetingPoint: tour.meetingPoint || '',
         languages: [],
         supplierName: tour.supplierName || '',
@@ -493,6 +525,64 @@ export function useSimilarTours(slug: string | undefined) {
         `/expedition/tours/${encodeURIComponent(slug!)}/similar`
       )
       const records: ExpeditionTourRecord[] = payload.data?.tours ?? []
+
+      // Batch-enrich similar tours with full data (price, location, duration, etc.)
+      const needsBatch = records.some((r) =>
+        r.tour.startingPrice == null || !r.tour.city || !r.tour.durationMinutes ||
+        !extractDifficultyFromTour(r.tour) || !extractCancellationFromTour(r.tour)
+      )
+      if (needsBatch) {
+        try {
+          const allPayload = await expeditionFetchRaw('/tours?limit=500')
+          const allTours: any[] = allPayload.data?.tours ?? []
+          const priceMap = new Map<string, number>()
+          const cityMap = new Map<string, string | null>()
+          const countryMap = new Map<string, string | null>()
+          const durationMap = new Map<string, number | null>()
+          const difficultyMap = new Map<string, string | null>()
+          const cancellationMap = new Map<string, string | null>()
+          const pickupMap = new Map<string, boolean | undefined>()
+          for (const t of allTours) {
+            const p = extractStartingPriceFromRaw(t.schedulesAndPricing)
+            if (p != null) priceMap.set(t.id, p)
+            cityMap.set(t.id, extractCityFromTour(t))
+            countryMap.set(t.id, extractCountryFromTour(t))
+            durationMap.set(t.id, extractDurationFromTour(t))
+            difficultyMap.set(t.id, extractDifficultyFromTour(t))
+            cancellationMap.set(t.id, extractCancellationFromTour(t))
+            pickupMap.set(t.id, t.pickupIncluded ?? (t.bookingAndTickets?.pickupAvailable ?? t.bookingAndTickets?.pickupProvided) ?? undefined)
+          }
+          for (const r of records) {
+            if (r.tour.startingPrice == null) {
+              const fallbackPrice = priceMap.get(r.tour.id)
+              if (fallbackPrice != null) r.tour.startingPrice = fallbackPrice
+            }
+            if (!r.tour.city) {
+              r.tour.city = cityMap.get(r.tour.id) ?? null
+            }
+            if (!r.tour.country) {
+              r.tour.country = countryMap.get(r.tour.id) ?? null
+            }
+            if (!r.tour.durationMinutes) {
+              const fallbackDuration = durationMap.get(r.tour.id)
+              if (fallbackDuration != null) r.tour.durationMinutes = fallbackDuration
+            }
+            if (!extractDifficultyFromTour(r.tour)) {
+              r.tour.difficulty = difficultyMap.get(r.tour.id) ?? null
+            }
+            if (!extractCancellationFromTour(r.tour)) {
+              r.tour.cancellationPolicy = cancellationMap.get(r.tour.id) ?? null
+            }
+            if (r.tour.pickupIncluded == null) {
+              const p = pickupMap.get(r.tour.id)
+              if (p != null) r.tour.pickupIncluded = p
+            }
+          }
+        } catch (e) {
+          console.warn('[useSimilarTours] batch fallback failed:', e)
+        }
+      }
+
       return records.map((r) => mapToListing(r.tour))
     },
   })

@@ -86,7 +86,6 @@
     font-size: 14px;
   }
 }
-
 /* Description */
 .overview-description {
   margin-top: 32px;
@@ -104,21 +103,21 @@
 }
 
 .overview-description-step-title {
-  font-size: 18px;
-  font-weight: 700;
+  font-size: 16px;
+  font-weight: 900;
   color: #0f172a;
   margin: 0 0 6px;
 }
 
 @media (min-width: 640px) {
   .overview-description-step-title {
-    font-size: 20px;
+    font-size: 18px;
   }
 }
 
 @media (min-width: 1024px) {
   .overview-description-step-title {
-    font-size: 22px;
+    font-size: 20px;
   }
 }
 

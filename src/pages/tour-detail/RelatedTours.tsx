@@ -1,7 +1,7 @@
 import { useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import SimilarTourCard from './SimilarTourCard'
+import TourCard from '../../components/TourCard'
 import type { Tour } from '../../components/data'
 import './RelatedTours.css'
 
@@ -54,7 +54,7 @@ export default function RelatedTours({ tours }: RelatedToursProps) {
       <div className="related-tours-container" ref={scrollContainerRef}>
         {tours.map((tour) => (
           <div key={tour.title} className="related-tour-card-wrapper">
-            <SimilarTourCard {...tour} />
+            <TourCard {...tour} />
           </div>
         ))}
       </div>

@@ -76,7 +76,7 @@
 
 .details-subsection-title {
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 900;
   color: #0f172a;
   margin: 0 0 12px;
 }
@@ -133,6 +133,44 @@
   font-size: 14px;
   line-height: 1.75;
   color: rgba(0, 43, 17, 0.8);
+}
+
+/* About content */
+.details-about {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.details-about-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.details-about-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 14px;
+  line-height: 1.75;
+  color: rgba(0, 43, 17, 0.85);
+}
+
+@media (min-width: 640px) {
+  .details-about-item {
+    font-size: 16px;
+  }
+}
+
+.details-about-num {
+  font-weight: 700;
+  color: #0f172a;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 /* Text content */

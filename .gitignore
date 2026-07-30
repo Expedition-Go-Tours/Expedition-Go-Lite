@@ -10,6 +10,7 @@ node_modules/
 .env.production.local
 .vite 
 .kiro
+opencode.json
 
 Expedition-Go-Backend-v2/
 Expedition-Go-Backend/

@@ -2,7 +2,7 @@ import { Component, useState, useEffect, useMemo, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
-  CalendarCheck, Clock, Users, CreditCard, UserCheck, Bus,
+  CalendarCheck, Clock, Users, UserCheck, Bus, Gauge,
 } from 'lucide-react'
 import Footer from '../../components/Footer'
 import { useContinuePlanning, toContinuePlanningItem } from '../../context/ContinuePlanningContext'
@@ -48,7 +48,7 @@ function toSlug(title: string): string {
 export default function TourDetailPage() {
   const { t } = useTranslation()
   const tourDetailTabs = useMemo(() => [
-    { key: 'overview', label: t('tourDetail.aboutTour') },
+    { key: 'overview', label: 'Overview' },
     { key: 'details', label: t('tourDetail.details') },
     { key: 'itinerary', label: t('tourDetail.itinerary') },
     { key: 'reviews', label: t('sections.reviews') },
@@ -267,19 +267,54 @@ export default function TourDetailPage() {
     }))
   }, [allReviewCards])
 
-  const overviewHighlightsGrid = useMemo(() => [
-    { icon: CalendarCheck, title: t('tourDetail.freeCancellation'), desc: t('tourDetail.cancelRefundDesc') },
-    { icon: Clock, title: t('tourDetail.durationFlexible'), desc: t('tourDetail.checkAvailabilityDesc') },
-    { icon: Users, title: t('tourDetail.liveGuide'), desc: t('tourDetail.guideLanguage') },
-    { icon: CreditCard, title: t('tourDetail.reservePayLater'), desc: t('tourDetail.reservePayLaterDesc') },
-    { icon: UserCheck, title: t('tourDetail.skipTheLine'), desc: null },
-    { icon: Bus, title: t('tourDetail.pickupIncluded'), desc: t('tourDetail.checkAvailabilityDesc') },
-  ], [t])
+  const difficultyColorMap: Record<string, string> = {
+    'Easy': '#22c55e',
+    'Moderate': '#f59e0b',
+    'Challenging': '#ef4444',
+    'Strenuous': '#dc2626',
+  }
+
+  const overviewHighlightsGrid = useMemo(() => {
+    const rawDifficulty = tour?.difficulty?.trim()
+    // Default to "Easy" when the tour has no difficulty value so the card always shows.
+    const diffLabel = rawDifficulty
+      ? rawDifficulty.charAt(0).toUpperCase() + rawDifficulty.slice(1).toLowerCase()
+      : 'Easy'
+    // Match the normalized label against the color map, falling back to a neutral color.
+    const diffColor = difficultyColorMap[diffLabel] ?? '#6b7280'
+
+    return [
+      { icon: CalendarCheck, title: t('tourDetail.freeCancellation'), desc: t('tourDetail.cancelRefundDesc') },
+      { icon: Clock, title: t('tourDetail.duration'), desc: tour?.duration || t('tourDetail.checkAvailabilityDesc') },
+      { icon: Users, title: t('tourDetail.liveGuide'), desc: t('tourDetail.guideLanguage') },
+      ...(diffLabel && diffColor ? [{
+        icon: Gauge,
+        title: t('tourInfo.difficulty'),
+        desc: null,
+        renderValue: () => (
+          <>
+            <p className="overview-highlight-card-title">{t('tourInfo.difficulty')}</p>
+            <span
+              className="difficulty-grid-badge"
+              style={{ backgroundColor: `${diffColor}15`, color: diffColor }}
+            >
+              {diffLabel}
+            </span>
+          </>
+        ),
+      }] : []),
+      { icon: UserCheck, title: t('tourDetail.skipTheLine'), desc: null },
+      { icon: Bus, title: t('tourDetail.pickupIncluded'), desc: t('tourDetail.checkAvailabilityDesc') },
+    ]
+  }, [t, tour?.difficulty, tour?.duration])
 
   const descriptionSteps = useMemo(() => {
     if (!tour?.description) return []
+    const truncated = tour.description.length > 250
+      ? tour.description.slice(0, 250) + '...'
+      : tour.description
     return [
-      { title: 'About this tour', body: tour.description },
+      { title: 'Short description', body: truncated },
     ]
   }, [tour?.description])
 
@@ -457,15 +492,22 @@ export default function TourDetailPage() {
               <div className="tour-detail-tab-content">
                 <AnimatePresence mode="wait">
                   {activeTab === 'overview' && (
-                    <OverviewSection
+                    <motion.div
                       key="overview"
-                      highlightsGrid={overviewHighlightsGrid}
-                      descriptionSteps={descriptionSteps}
-                      highlights={highlights}
-                      reviews={allReviewCards.map(r => ({ id: r.id, name: r.name, date: r.date, rating: r.rating, text: r.text, country: '' }))}
-                      onTabChange={setActiveTab}
-                      onReviewReadMore={setReviewDetail}
-                    />
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -12 }}
+                      transition={{ duration: 0.2, ease: 'easeOut' }}
+                    >
+                      <OverviewSection
+                        highlightsGrid={overviewHighlightsGrid}
+                        descriptionSteps={descriptionSteps}
+                        highlights={highlights}
+                        reviews={allReviewCards.map(r => ({ id: r.id, name: r.name, date: r.date, rating: r.rating, text: r.text, country: '' }))}
+                        onTabChange={setActiveTab}
+                        onReviewReadMore={setReviewDetail}
+                      />
+                    </motion.div>
                   )}
 
                   {activeTab === 'details' && (
@@ -479,9 +521,6 @@ export default function TourDetailPage() {
                     <TourItinerary
                       key="itinerary"
                       itinerary={tour.itinerary}
-                      coordinates={tour.coordinates}
-                      location={tour.location}
-                      title={selectedTourTitle}
                     />
                   )}
 

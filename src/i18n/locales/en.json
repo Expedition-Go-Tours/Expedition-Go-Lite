@@ -307,6 +307,7 @@
     "defaultLocation": "Accra, Ghana",
     "details": "Details",
     "detailsNotAvailable": "Details not available.",
+    "duration": "Duration",
     "durationFlexible": "Duration Flexible",
     "email": "Email",
     "end": "End",
@@ -354,7 +355,10 @@
     "website": "Website",
     "whatTravellersLoved": "What travellers loved",
     "yourReply": "Your reply",
-    "acceptReply": "Accept reply"
+    "acceptReply": "Accept reply",
+    "activity": "Activity",
+    "transfer": "Transfer",
+    "highlight": "Highlight"
   },
   "tourInfo": {
     "title": "Tour Information",

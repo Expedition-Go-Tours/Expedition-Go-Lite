@@ -3,8 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Star, ChevronDown, ChevronRight, ChevronLeft, Phone, Mail, Globe, MapPin } from 'lucide-react'
-import SimilarTourCard from './SimilarTourCard'
-import './SimilarTourCard.css'
+import TourCard from '../../components/TourCard'
 import './SupplierSection.css'
 
 interface SupplierTour {
@@ -220,7 +219,7 @@ export default function SupplierSection({
               <div ref={scrollRef} className="supplier-tours-scroll">
                 {tours.map((tour) => (
                   <div key={tour.title} className="supplier-tour-card-wrap">
-                    <SimilarTourCard
+                    <TourCard
                       title={tour.title}
                       duration={tour.duration}
                       category={tour.category || ''}
@@ -232,6 +231,7 @@ export default function SupplierSection({
                       image={tour.image}
                       source={tour.source}
                       externalUrl={tour.externalUrl}
+                      slug={tour.slug}
                     />
                   </div>
                 ))}

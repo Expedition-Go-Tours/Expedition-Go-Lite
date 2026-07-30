@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChevronDown, ChevronUp, Star, Check, ChevronLeft, ChevronRight,
 } from 'lucide-react'
-import type { ComponentType } from 'react'
+import type { ComponentType, ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import './OverviewSection.css'
 
@@ -12,6 +12,7 @@ interface OverviewItem {
   icon: ComponentType<{ className?: string; strokeWidth?: number }>
   title: string
   desc: string | null
+  renderValue?: () => ReactNode
 }
 
 interface OverviewSectionProps {
@@ -64,24 +65,21 @@ export default function OverviewSection({
   const avatarColors = ['bg-amber-600', 'bg-emerald-600', 'bg-blue-600', 'bg-rose-500', 'bg-violet-600', 'bg-orange-500']
 
   return (
-    <motion.section
-      key="overview"
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -12 }}
-      transition={{ duration: 0.2, ease: 'easeOut' }}
-      className="overview-section"
-    >
+    <section className="overview-section">
       {/* Highlights Grid */}
       <div className="overview-highlights-grid">
-        {highlightsGrid.map(({ icon: Icon, title, desc }) => (
+        {highlightsGrid.map(({ icon: Icon, title, desc, renderValue }) => (
           <div key={title} className="overview-highlight-card">
             <div className="overview-highlight-icon">
               <Icon className="overview-highlight-icon-svg" strokeWidth={1.5} />
             </div>
             <div>
-              <p className="overview-highlight-card-title">{title}</p>
-              {desc && <p className="overview-highlight-card-desc">{desc}</p>}
+              {renderValue ? renderValue() : (
+                <>
+                  <p className="overview-highlight-card-title">{title}</p>
+                  {desc && <p className="overview-highlight-card-desc">{desc}</p>}
+                </>
+              )}
             </div>
           </div>
         ))}
@@ -246,6 +244,6 @@ export default function OverviewSection({
           </AnimatePresence>
         </div>
       )}
-    </motion.section>
+    </section>
   )
 }

@@ -152,6 +152,18 @@
   min-width: 0;
 }
 
+/* Difficulty Grid Badge */
+.difficulty-grid-badge {
+  display: inline-block;
+  padding: 4px 14px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: 20px;
+  line-height: 1.5;
+  margin-top: 4px;
+}
+
 /* Error State */
 .tour-detail-error {
   display: flex;
