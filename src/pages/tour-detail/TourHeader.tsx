@@ -6,6 +6,8 @@ interface TourHeaderProps {
   title: string
   rating: number
   reviewCount: number
+  location?: string
+  supplierName?: string
   onReviewsClick: () => void
 }
 
@@ -13,6 +15,8 @@ export default function TourHeader({
   title,
   rating,
   reviewCount,
+  location,
+  supplierName,
   onReviewsClick,
 }: TourHeaderProps) {
   const { t } = useTranslation()
@@ -42,8 +46,14 @@ export default function TourHeader({
         <span className="tour-header-divider" aria-hidden />
         <span className="tour-header-location">
           <MapPin size={14} />
-          <span>{t('tourDetail.defaultLocation')}</span>
+          <span>{location || t('tourDetail.defaultLocation')}</span>
         </span>
+        {supplierName && (
+          <>
+            <span className="tour-header-divider" aria-hidden />
+            <span className="tour-header-supplier">{supplierName}</span>
+          </>
+        )}
       </div>
     </header>
   )

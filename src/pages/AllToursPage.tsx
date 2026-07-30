@@ -350,6 +350,9 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
                       source={tour.source}
                       externalUrl={tour.externalUrl}
                       slug={tour.slug}
+                      difficulty={tour.difficulty}
+                      cancellationPolicy={tour.cancellationPolicy}
+                      pickupIncluded={tour.pickupIncluded}
                     />
                 </motion.div>
               ))}

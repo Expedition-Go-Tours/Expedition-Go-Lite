@@ -147,10 +147,10 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
   const totalPrice = pricingTotal ?? 0
   const hasPricing = pricingTotal !== null
 
-  const adultPrice = hasPricing ? pAdults.unitPrice : 0
-  const seniorPrice = hasPricing ? pAdults.unitPrice : 0
-  const youthPrice = hasPricing ? Math.round(pAdults.unitPrice * 0.7) : 0
-  const childPrice = hasPricing ? pChildren.unitPrice : 0
+  const adultPrice = hasPricing ? pAdults.unitPrice : tour.price
+  const seniorPrice = hasPricing ? pAdults.unitPrice : tour.price
+  const youthPrice = hasPricing ? Math.round(pAdults.unitPrice * 0.7) : Math.round(tour.price * 0.7)
+  const childPrice = hasPricing ? pChildren.unitPrice : Math.round(tour.price * 0.6)
   const infantPrice = hasPricing ? pInfants.unitPrice : 0
 
   const increment = (type: string) => {
@@ -258,17 +258,21 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
   return (
     <div className="booking-widget-desktop">
       <div className="booking-widget-card">
-        <div className="booking-price-section">
+          <div className="booking-price-section">
           <div className="booking-price-main">
-            <span className="booking-price-from">{t('common.from')}</span>
-            <span className="booking-price-amount">
-              {hasPricing && adultPrice > 0
-                ? `${currency.symbol}${Math.round(convertPrice(adultPrice))}`
-                : pricingLoading
-                  ? '...'
-                  : `${currency.symbol}0`}
-            </span>
-            <span className="booking-price-per">{t('tourDetail.perPerson')}</span>
+            {tour.price > 0 ? (
+              <>
+                <span className="booking-price-from">{t('common.from')}</span>
+                <span className="booking-price-amount">
+                  {hasPricing && adultPrice > 0
+                    ? `${currency.symbol}${Math.round(convertPrice(adultPrice))}`
+                    : pricingLoading
+                      ? '...'
+                      : `${currency.symbol}${Math.round(convertPrice(tour.price))}`}
+                </span>
+                <span className="booking-price-per">{t('tourDetail.perPerson')}</span>
+              </>
+            ) : null}
           </div>
         </div>
 
@@ -379,16 +383,18 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
           </div>
 
           {/* Total */}
-          <div className="booking-total">
-            <span>{t('booking.total', { count: totalTravelers })}</span>
-            <span className="booking-total-amount">
-              {hasPricing
-                ? `${currency.symbol}${Math.round(convertPrice(totalPrice))}`
-                : pricingLoading
-                  ? '...'
-                  : `${currency.symbol}0`}
-            </span>
-          </div>
+          {tour.price > 0 && totalTravelers > 0 && (
+            <div className="booking-total">
+              <span>{t('booking.total', { count: totalTravelers })}</span>
+              <span className="booking-total-amount">
+                {hasPricing
+                  ? `${currency.symbol}${Math.round(convertPrice(totalPrice))}`
+                  : pricingLoading
+                    ? '...'
+                    : `${currency.symbol}${Math.round(convertPrice(tour.price * totalTravelers))}`}
+              </span>
+            </div>
+          )}
 
           {/* Promo code */}
           <div className="booking-promo">

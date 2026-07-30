@@ -389,6 +389,8 @@ export default function TourDetailPage() {
                   title={selectedTourTitle}
                   rating={selectedTourRating}
                   reviewCount={selectedTourReviews}
+                  location={tour.location}
+                  supplierName={tour.supplierName}
                   onReviewsClick={handleReviewsTab}
                 />
                 <button

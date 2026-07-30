@@ -123,6 +123,27 @@
   color: #475569;
 }
 
+.tour-header-supplier {
+  display: inline-flex;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  white-space: nowrap;
+}
+
+@media (min-width: 640px) {
+  .tour-header-supplier {
+    font-size: 14px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .tour-header-supplier {
+    font-size: 16px;
+  }
+}
+
 @media (min-width: 640px) {
   .tour-header-location {
     font-size: 14px;

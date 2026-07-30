@@ -10,6 +10,9 @@ export interface Tour {
   image: string
   discount?: string
   languages?: string[]
+  difficulty?: string
+  cancellationPolicy?: string
+  pickupIncluded?: boolean
   source?: 'expedition-go' | 'travio-africa'
   externalUrl?: string
 }

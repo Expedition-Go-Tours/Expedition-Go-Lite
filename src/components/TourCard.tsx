@@ -11,7 +11,7 @@ interface TourCardProps extends Tour {
   slug?: string
 }
 
-export default function TourCard({ title, duration, features, price, rating, reviews, location, image, discount, source, externalUrl, slug }: TourCardProps) {
+export default function TourCard({ title, duration, features, price, rating, reviews, location, image, discount, difficulty, cancellationPolicy, pickupIncluded, source, externalUrl, slug }: TourCardProps) {
   const { t } = useTranslation()
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist()
   const item = toWishlistItem({ title, duration, features, price, rating: String(rating), reviews, location, image, source, externalUrl } as Tour)
@@ -51,7 +51,6 @@ export default function TourCard({ title, duration, features, price, rating, rev
         )}
         <img src={image} alt={title} loading="lazy" />
         <div className="tour-card-image-fade" />
-        <span className="tour-card-duration">{duration}</span>
         {discount && <span className="tour-card-discount">{discount}</span>}
         <button className={`tour-card-wishlist${inWishlist ? ' wishlist-active' : ''}`} onClick={handleWishlist} aria-label={inWishlist ? 'Remove from wishlist' : 'Add to wishlist'}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill={inWishlist ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -60,14 +59,22 @@ export default function TourCard({ title, duration, features, price, rating, rev
         </button>
       </div>
       <div className="tour-card-body">
-        <div className="tour-card-location">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-            <circle cx="12" cy="10" r="3" />
-          </svg>
-          {location}
+        <div className="tour-card-location-row">
+          <span className="tour-card-location">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+              <circle cx="12" cy="10" r="3" />
+            </svg>
+            {location}
+          </span>
+          {duration && <span className="tour-card-duration-badge">{duration}</span>}
         </div>
         <h3 className="tour-card-title">{title}</h3>
+        <div className="tour-card-meta">
+          {pickupIncluded && <span className="tour-card-meta-item">Pickup included</span>}
+          {cancellationPolicy && <span className="tour-card-cancellation">{cancellationPolicy.toLowerCase().includes('free') ? 'Free Cancellation' : cancellationPolicy}</span>}
+          {difficulty && <span className="tour-card-difficulty">{difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}</span>}
+        </div>
         <div className="tour-card-features">{features}</div>
         <div className="tour-card-bottom">
           <div className="tour-card-rating">
