@@ -2,39 +2,59 @@
   padding-bottom: 32px;
 }
 
-.itinerary-empty {
-  margin-top: 20px;
-  font-size: 14px;
-  color: #64748b;
+.itinerary-title {
+  font-family: var(--font-body);
+  font-size: 18px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 24px;
+  letter-spacing: -0.01em;
 }
 
-/* ───────────── Stops container (full width) ───────────── */
+@media (min-width: 640px) {
+  .itinerary-title {
+    font-size: 20px;
+  }
+}
 
-.itinerary-stops-full {
+@media (min-width: 1024px) {
+  .itinerary-title {
+    font-size: 24px;
+  }
+}
+
+.itinerary-empty {
+  margin-top: 8px;
+  font-size: 14px;
+  color: #000;
+}
+
+/* ───────────── Stops container ───────────── */
+
+.itinerary-stops-simple {
   display: flex;
   flex-direction: column;
-  gap: 0;
   max-width: 720px;
+  padding-left: 20px;
 }
 
 /* ───────────── Individual stop row ───────────── */
 
-.itinerary-stop {
+.itinerary-stop-simple {
   display: flex;
-  gap: 16px;
+  gap: 20px;
 }
 
 /* ───────────── Marker column ───────────── */
 
-.itinerary-stop-marker-col {
+.itinerary-stop-simple-marker-col {
   display: flex;
   flex-direction: column;
   align-items: center;
+  flex-shrink: 0;
 }
 
-/* ───────────── Frosted glass marker ───────────── */
-
-.itinerary-stop-marker {
+.itinerary-stop-simple-marker {
   position: relative;
   z-index: 10;
   display: grid;
@@ -43,220 +63,51 @@
   height: 40px;
   flex-shrink: 0;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1.5px solid rgba(255, 255, 255, 0.6);
-  box-shadow:
-    0 2px 12px rgba(23, 146, 55, 0.10),
-    0 0 0 1px rgba(23, 146, 55, 0.08);
-  cursor: default;
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
-}
-
-.itinerary-stop-marker.end {
-  font-size: 9px;
-}
-
-.itinerary-stop-marker:hover {
-  transform: scale(1.08);
-  box-shadow:
-    0 4px 20px rgba(23, 146, 55, 0.18),
-    0 0 0 1px rgba(23, 146, 55, 0.15);
-}
-
-button.itinerary-stop-marker {
-  cursor: pointer;
-}
-
-/* ───────────── Marker inner ring ───────────── */
-
-.marker-ring {
-  position: absolute;
-  inset: 3px;
-  border-radius: 50%;
-  border: 2px solid rgba(23, 146, 55, 0.20);
-  pointer-events: none;
-  transition: border-color 0.25s ease, transform 0.25s ease;
-}
-
-.itinerary-stop-marker:hover .marker-ring {
-  border-color: rgba(23, 146, 55, 0.40);
-  transform: scale(1.05);
-}
-
-.itinerary-stop-marker.focused .marker-ring {
-  border-color: rgba(23, 146, 55, 0.55);
-  box-shadow: 0 0 12px rgba(23, 146, 55, 0.15);
-}
-
-/* ───────────── Marker number text ───────────── */
-
-.marker-text {
-  position: relative;
-  z-index: 1;
+  background: #0f172a;
+  color: #fff;
   font-family: var(--font-body);
-  font-size: 12px;
-  font-weight: 800;
-  color: #179237;
+  font-size: 16px;
+  font-weight: 700;
   line-height: 1;
 }
 
-.itinerary-stop-marker.end .marker-text {
-  font-size: 9px;
-}
-
-/* ───────────── Connecting gradient line ───────────── */
-
-.itinerary-stop-line {
-  width: 2px;
+.itinerary-stop-simple-line {
+  width: 3px;
   flex: 1;
-  margin-top: 6px;
-  background: linear-gradient(
-    to bottom,
-    rgba(23, 146, 55, 0.18),
-    rgba(23, 146, 55, 0.04)
-  );
+  min-height: 24px;
+  margin-top: 4px;
+  background: #0f172a;
 }
 
-/* ───────────── Glass card content ───────────── */
+/* ───────────── Content ───────────── */
 
-.itinerary-stop-glass {
+.itinerary-stop-simple-content {
   flex: 1;
   min-width: 0;
-  margin-bottom: 16px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  box-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.03),
-    0 4px 16px rgba(0, 0, 0, 0.03);
-  transition: background 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
-  overflow: hidden;
+  padding-bottom: 28px;
 }
 
-.itinerary-stop-glass:hover {
-  background: rgba(255, 255, 255, 0.70);
-  box-shadow:
-    0 1px 4px rgba(0, 0, 0, 0.04),
-    0 8px 24px rgba(0, 0, 0, 0.05);
-  transform: translateY(-1px);
-}
-
-.itinerary-stop-content {
-  padding: 16px 20px;
-}
-
-/* ───────────── Stop header row (time · duration · badges) ───────────── */
-
-.itinerary-stop-header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.itinerary-stop-time {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-family: var(--font-body);
-  font-size: 12px;
-  font-weight: 700;
-  color: #179237;
-  letter-spacing: 0.02em;
-}
-
-.itinerary-stop-duration {
-  font-family: var(--font-body);
-  font-size: 11px;
-  font-weight: 600;
-  color: #6b7280;
-  padding: 2px 8px;
-  background: rgba(107, 114, 128, 0.08);
-  border-radius: 6px;
-}
-
-/* ───────────── Badges ───────────── */
-
-.itinerary-stop-badge {
-  display: inline-flex;
-  align-items: center;
-  font-family: var(--font-body);
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  padding: 2px 8px;
-  border-radius: 6px;
-  line-height: 1.4;
-}
-
-.itinerary-stop-badge.activity {
-  background: rgba(23, 146, 55, 0.10);
-  color: #179237;
-}
-
-.itinerary-stop-badge.transfer {
-  background: rgba(59, 130, 246, 0.10);
-  color: #2563eb;
-}
-
-.itinerary-stop-badge.major {
-  background: rgba(245, 158, 11, 0.10);
-  color: #d97706;
-}
-
-/* ───────────── Title ───────────── */
-
-.itinerary-stop-title {
-  margin: 0 0 2px;
+.itinerary-stop-simple-title {
+  margin: 4px 0 6px;
   font-family: var(--font-heading);
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 17px;
+  font-weight: 700;
   color: #0f172a;
   letter-spacing: -0.01em;
 }
 
-.itinerary-stop-subtitle {
-  margin: 0 0 4px;
-  font-family: var(--font-body);
-  font-size: 12px;
-  font-weight: 500;
-  color: #6b7280;
-}
-
-/* ───────────── Description ───────────── */
-
-.itinerary-stop-desc {
-  margin: 6px 0 0;
+.itinerary-stop-simple-desc {
+  margin: 0 0 8px;
   font-family: var(--font-body);
   font-size: 14px;
-  line-height: 1.65;
-  color: #475569;
+  line-height: 1.6;
+  color: #000;
   white-space: pre-wrap;
 }
 
-/* ───────────── Address ───────────── */
-
-.itinerary-stop-address {
-  display: inline-flex;
-  align-items: flex-start;
-  gap: 4px;
-  margin: 8px 0 0;
+.itinerary-stop-simple-meta {
+  margin: 0;
   font-family: var(--font-body);
-  font-size: 12px;
-  line-height: 1.4;
-  color: #6b7280;
+  font-size: 13px;
+  color: #000;
 }
-
-.itinerary-stop-address svg {
-  flex-shrink: 0;
-  margin-top: 2px;
-  color: #9ca3af;
-}
-
-

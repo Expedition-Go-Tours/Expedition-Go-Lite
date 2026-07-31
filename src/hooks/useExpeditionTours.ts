@@ -404,6 +404,7 @@ export function useExpeditionTour(slug: string | undefined) {
       const tourType = tour.durationMinutes && tour.durationMinutes >= 1440 ? 'multi-day' : 'day'
 
       let resolvedPrice = tour.startingPrice ?? extractStartingPriceFromRaw(tour.schedulesAndPricing)
+      let shortDescription = ''
 
       // Fetch raw tour data to get excluded and other missing fields
       if (tour.id) {
@@ -448,6 +449,30 @@ export function useExpeditionTour(slug: string | undefined) {
                 tour.itinerary = rawItin
               }
             }
+            // Extract short description (productContent.shortSummary)
+            const pcShort = rawTour?.productContent
+            if (pcShort && typeof pcShort.shortSummary === 'string') {
+              shortDescription = pcShort.shortSummary
+            }
+            // Extract guide/spoken language (productContent.writingLanguage)
+            if (!Array.isArray(tour.languages) || tour.languages.length === 0) {
+              if (pcShort && typeof pcShort.writingLanguage === 'string' && pcShort.writingLanguage) {
+                tour.languages = [pcShort.writingLanguage]
+              }
+            }
+            // Extract pickup included from bookingAndTickets (pickupProvided / pickupAvailable)
+            if (tour.pickupIncluded == null) {
+              const bt = rawTour?.bookingAndTickets
+              if (bt) {
+                tour.pickupIncluded = !!(bt.pickupProvided ?? bt.pickupAvailable)
+              }
+            }
+            // Extract difficulty — the expedition detail endpoint does not return it,
+            // so pull it from the raw tour record (top-level column or categorization blob).
+            if (!extractDifficultyFromTour(tour)) {
+              const diff = extractDifficultyFromTour(rawTour)
+              if (diff) tour.difficulty = diff
+            }
           }
         } catch (e) {
           console.warn('[useExpeditionTour] fallback fetch failed:', e)
@@ -470,6 +495,7 @@ export function useExpeditionTour(slug: string | undefined) {
         title: tour.title || '',
         slug: tour.slug || '',
         description: tour.description || '',
+        shortDescription: shortDescription || undefined,
         images: Array.isArray(tour.photos) ? tour.photos : [],
         coverPhoto: tour.coverPhoto || null,
         category: tour.category || '',
@@ -501,7 +527,7 @@ export function useExpeditionTour(slug: string | undefined) {
           return 'Free cancellation up to 24 hours before'
         })(),
         meetingPoint: tour.meetingPoint || '',
-        languages: [],
+        languages: Array.isArray(tour.languages) ? tour.languages : [],
         supplierName: tour.supplierName || '',
         supplierPhoto: tour.supplierPhoto || null,
         bookingFlow: 'DIRECT',
@@ -509,7 +535,7 @@ export function useExpeditionTour(slug: string | undefined) {
         groupSize: 15,
         tourType,
         availability: [],
-        pickupIncluded: false,
+        pickupIncluded: !!tour.pickupIncluded,
       }
       return result
     },

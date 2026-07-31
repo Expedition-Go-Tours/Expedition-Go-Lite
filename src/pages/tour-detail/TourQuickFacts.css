@@ -1,0 +1,57 @@
+.tour-quick-facts {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #e2e8f0;
+}
+
+@media (min-width: 640px) {
+  .tour-quick-facts {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .tour-quick-facts {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.tour-quick-fact {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.tour-quick-fact-icon {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-radius: 8px;
+  background: #f0fdf4;
+  flex-shrink: 0;
+}
+
+.tour-quick-fact-icon-svg {
+  width: 20px;
+  height: 20px;
+  color: #16a34a;
+}
+
+.tour-quick-fact-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.tour-quick-fact-desc {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.5;
+}

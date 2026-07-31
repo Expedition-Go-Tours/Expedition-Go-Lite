@@ -16,10 +16,10 @@ import type { DayAvailability } from '../../lib/tourAvailability'
 
 import TourImageGallery from './TourImageGallery'
 import TourHeader from './TourHeader'
+import TourQuickFacts from './TourQuickFacts'
 import BookingWidget from './BookingWidget'
 import RelatedTours from './RelatedTours'
 
-import TourDetailTabs from './TourDetailTabs'
 import OverviewSection from './OverviewSection'
 import DetailsSection, {
   buildIncludedExcludedContent,
@@ -47,13 +47,6 @@ function toSlug(title: string): string {
 
 export default function TourDetailPage() {
   const { t } = useTranslation()
-  const tourDetailTabs = useMemo(() => [
-    { key: 'overview', label: 'Overview' },
-    { key: 'details', label: t('tourDetail.details') },
-    { key: 'itinerary', label: t('tourDetail.itinerary') },
-    { key: 'reviews', label: t('sections.reviews') },
-    { key: 'supplier', label: t('tourDetail.supplier') },
-  ], [t])
   const { tourId } = useParams<{ tourId: string }>()
   const navigate = useNavigate()
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist()
@@ -119,7 +112,7 @@ export default function TourDetailPage() {
   }, [tour, addToContinuePlanning, mergedImages])
 
   const pricingRef = useRef<HTMLDivElement>(null)
-  const [activeTab, setActiveTab] = useState('overview')
+  const reviewsRef = useRef<HTMLDivElement>(null)
   const [reviewDetail, setReviewDetail] = useState<any>(null)
   const [isWriteReviewOpen, setIsWriteReviewOpen] = useState(false)
   const [isReplyDialogOpen, setIsReplyDialogOpen] = useState(false)
@@ -144,7 +137,6 @@ export default function TourDetailPage() {
   }, [])
 
   useEffect(() => {
-    setActiveTab('overview')
     setReviewStarFilter(null)
     setReviewSearchQuery('')
   }, [tourId])
@@ -211,7 +203,9 @@ export default function TourDetailPage() {
     })
   }
 
-  const handleReviewsTab = () => setActiveTab('reviews')
+  const handleReviewsTab = () => {
+    reviewsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
 
   const loadMoreReviews = async () => {
     setLoadingMoreReviews(true)
@@ -272,28 +266,36 @@ export default function TourDetailPage() {
     'Moderate': '#f59e0b',
     'Challenging': '#ef4444',
     'Strenuous': '#dc2626',
+    'Hard': '#ef4444',
+    'Extreme': '#dc2626',
+    'Expert': '#dc2626',
   }
 
-  const overviewHighlightsGrid = useMemo(() => {
+  const tourQuickFacts = useMemo(() => {
+    // Difficulty is dynamic per tour — only render a badge when a real value exists,
+    // otherwise it stays hidden (matching the tour card behaviour).
     const rawDifficulty = tour?.difficulty?.trim()
-    // Default to "Easy" when the tour has no difficulty value so the card always shows.
     const diffLabel = rawDifficulty
       ? rawDifficulty.charAt(0).toUpperCase() + rawDifficulty.slice(1).toLowerCase()
-      : 'Easy'
-    // Match the normalized label against the color map, falling back to a neutral color.
-    const diffColor = difficultyColorMap[diffLabel] ?? '#6b7280'
+      : ''
+    const diffColor = diffLabel ? (difficultyColorMap[diffLabel] ?? '#6b7280') : ''
+
+    // Live guide language is dynamic per tour (from the tour's languages list).
+    const guideLanguage = tour?.languages?.length
+      ? tour.languages.join(', ')
+      : t('tourDetail.guideLanguage')
 
     return [
       { icon: CalendarCheck, title: t('tourDetail.freeCancellation'), desc: t('tourDetail.cancelRefundDesc') },
       { icon: Clock, title: t('tourDetail.duration'), desc: tour?.duration || t('tourDetail.checkAvailabilityDesc') },
-      { icon: Users, title: t('tourDetail.liveGuide'), desc: t('tourDetail.guideLanguage') },
+      { icon: Users, title: t('tourDetail.liveGuide'), desc: guideLanguage },
       ...(diffLabel && diffColor ? [{
         icon: Gauge,
         title: t('tourInfo.difficulty'),
         desc: null,
         renderValue: () => (
           <>
-            <p className="overview-highlight-card-title">{t('tourInfo.difficulty')}</p>
+            <p className="tour-quick-fact-title">{t('tourInfo.difficulty')}</p>
             <span
               className="difficulty-grid-badge"
               style={{ backgroundColor: `${diffColor}15`, color: diffColor }}
@@ -304,19 +306,28 @@ export default function TourDetailPage() {
         ),
       }] : []),
       { icon: UserCheck, title: t('tourDetail.skipTheLine'), desc: null },
-      { icon: Bus, title: t('tourDetail.pickupIncluded'), desc: t('tourDetail.checkAvailabilityDesc') },
+      ...(tour?.pickupIncluded
+        ? [{ icon: Bus, title: t('tourDetail.pickupIncluded'), desc: t('tourDetail.checkAvailabilityDesc') }]
+        : []),
     ]
-  }, [t, tour?.difficulty, tour?.duration])
+  }, [t, tour?.difficulty, tour?.duration, tour?.languages, tour?.pickupIncluded])
 
-  const descriptionSteps = useMemo(() => {
-    if (!tour?.description) return []
-    const truncated = tour.description.length > 250
+  // Short teaser shown right after the gallery (GetYourGuide-style), no heading.
+  const shortDescriptionText = useMemo(() => {
+    if (tour?.shortDescription) return tour.shortDescription
+    if (!tour?.description) return ''
+    return tour.description.length > 250
       ? tour.description.slice(0, 250) + '...'
       : tour.description
+  }, [tour?.shortDescription, tour?.description])
+
+  // Full description (with numbered details) shown at the top of the page.
+  const descriptionSteps = useMemo(() => {
+    if (!tour?.description) return []
     return [
-      { title: 'Short description', body: truncated },
+      { title: t('tourDetail.aboutTour'), body: buildAboutContent(tour.description) },
     ]
-  }, [tour?.description])
+  }, [tour?.description, t])
 
   const highlights = tour?.highlights || []
   const cancellationPolicy = tour?.cancellationPolicy || 'Free cancellation up to 24 hours before'
@@ -326,11 +337,6 @@ export default function TourDetailPage() {
       key: 'included',
       title: t('tourDetail.included'),
       content: buildIncludedExcludedContent(tour?.included, tour?.excluded),
-    },
-    {
-      key: 'expect',
-      title: t('tourDetail.aboutTour'),
-      content: buildAboutContent(tour?.description || ''),
     },
     {
       key: 'pickup',
@@ -347,7 +353,7 @@ export default function TourDetailPage() {
       title: t('tourDetail.cancellationPolicy'),
       content: buildCancellationContent(undefined, cancellationPolicy),
     },
-  ], [t, tour?.included, tour?.excluded, tour?.description, cancellationPolicy])
+  ], [t, tour?.included, tour?.excluded, cancellationPolicy])
 
   const supplierData = useMemo(() => ({
     name: tour?.supplierName || 'Expedition-Go Tours Ltd',
@@ -417,26 +423,26 @@ export default function TourDetailPage() {
     <>
       <div className="tour-detail-page">
         <div className="tour-detail-container">
+          <div className="tour-detail-header-row">
+            <TourHeader
+              title={selectedTourTitle}
+              rating={selectedTourRating}
+              reviewCount={selectedTourReviews}
+              location={tour.location}
+              supplierName={tour.supplierName}
+              onReviewsClick={handleReviewsTab}
+            />
+            <button
+              type="button"
+              onClick={handleWriteReview}
+              className="tour-detail-write-review-btn"
+            >
+              {t('reviews.writeAReview')}
+            </button>
+          </div>
+
           <div className="tour-detail-content">
             <div className="tour-detail-main">
-              <div className="tour-detail-header-row">
-                <TourHeader
-                  title={selectedTourTitle}
-                  rating={selectedTourRating}
-                  reviewCount={selectedTourReviews}
-                  location={tour.location}
-                  supplierName={tour.supplierName}
-                  onReviewsClick={handleReviewsTab}
-                />
-                <button
-                  type="button"
-                  onClick={handleWriteReview}
-                  className="tour-detail-write-review-btn"
-                >
-                  {t('reviews.writeAReview')}
-                </button>
-              </div>
-
               <TourImageGallery
                 images={mergedImages}
                 title={selectedTourTitle}
@@ -445,6 +451,12 @@ export default function TourDetailPage() {
                 onWishlistToggle={handleWishlistToggle}
                 onShare={handleShare}
               />
+
+              {shortDescriptionText && (
+                <p className="tour-detail-short-description">{shortDescriptionText}</p>
+              )}
+
+              <TourQuickFacts items={tourQuickFacts} />
             </div>
 
             <aside className="tour-detail-sidebar" ref={pricingRef}>
@@ -483,50 +495,26 @@ export default function TourDetailPage() {
             </aside>
 
             <div className="tour-detail-bottom">
-              <TourDetailTabs
-                tabs={tourDetailTabs}
-                activeTab={activeTab}
-                onTabChange={setActiveTab}
-              />
-
               <div className="tour-detail-tab-content">
-                <AnimatePresence mode="wait">
-                  {activeTab === 'overview' && (
-                    <motion.div
-                      key="overview"
-                      initial={{ opacity: 0, y: 12 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -12 }}
-                      transition={{ duration: 0.2, ease: 'easeOut' }}
-                    >
-                      <OverviewSection
-                        highlightsGrid={overviewHighlightsGrid}
-                        descriptionSteps={descriptionSteps}
-                        highlights={highlights}
-                        reviews={allReviewCards.map(r => ({ id: r.id, name: r.name, date: r.date, rating: r.rating, text: r.text, country: '' }))}
-                        onTabChange={setActiveTab}
-                        onReviewReadMore={setReviewDetail}
-                      />
-                    </motion.div>
-                  )}
+                <div className="tour-detail-sections">
+                  <OverviewSection
+                    descriptionSteps={descriptionSteps}
+                    highlights={highlights}
+                    reviews={allReviewCards.map(r => ({ id: r.id, name: r.name, date: r.date, rating: r.rating, text: r.text, country: '' }))}
+                    onTabChange={handleReviewsTab}
+                    onReviewReadMore={setReviewDetail}
+                  />
 
-                  {activeTab === 'details' && (
-                    <DetailsSection
-                      key="details"
-                      sections={infoSections}
-                    />
-                  )}
+                  <DetailsSection
+                    sections={infoSections}
+                  />
 
-                  {activeTab === 'itinerary' && (
-                    <TourItinerary
-                      key="itinerary"
-                      itinerary={tour.itinerary}
-                    />
-                  )}
+                  <TourItinerary
+                    itinerary={tour.itinerary}
+                  />
 
-                  {activeTab === 'reviews' && (
+                  <div ref={reviewsRef} className="tour-detail-reviews-anchor">
                     <ReviewsSection
-                      key="reviews"
                       rating={selectedTourRating}
                       reviewCount={selectedTourReviews}
                       reviewBreakdown={reviewBreakdown}
@@ -545,27 +533,24 @@ export default function TourDetailPage() {
                       searchQuery={reviewSearchQuery}
                       onSearchQueryChange={setReviewSearchQuery}
                     />
-                  )}
+                  </div>
 
-                  {activeTab === 'supplier' && (
-                    <SupplierSection
-                      key="supplier"
-                      name={supplierData.name}
-                      logo={supplierData.logo}
-                      description={supplierData.description}
-                      rating={supplierData.rating}
-                      totalTours={supplierData.totalTours}
-                      phone={supplierData.phone}
-                      email={supplierData.email}
-                      website={supplierData.website}
-                      address={supplierData.address}
-                      tours={supplierTours}
-                      infoOpen={supplierInfoOpen}
-                      onToggleInfo={() => setSupplierInfoOpen((v) => !v)}
-                      onOpenInfo={() => setSupplierInfoOpen(true)}
-                    />
-                  )}
-                </AnimatePresence>
+                  <SupplierSection
+                    name={supplierData.name}
+                    logo={supplierData.logo}
+                    description={supplierData.description}
+                    rating={supplierData.rating}
+                    totalTours={supplierData.totalTours}
+                    phone={supplierData.phone}
+                    email={supplierData.email}
+                    website={supplierData.website}
+                    address={supplierData.address}
+                    tours={supplierTours}
+                    infoOpen={supplierInfoOpen}
+                    onToggleInfo={() => setSupplierInfoOpen((v) => !v)}
+                    onOpenInfo={() => setSupplierInfoOpen(true)}
+                  />
+                </div>
               </div>
             </div>
           </div>

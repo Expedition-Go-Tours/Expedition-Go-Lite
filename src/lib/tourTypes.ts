@@ -28,6 +28,7 @@ export interface TourDetail {
   images: string[]
   videoUrl?: string
   description: string
+  shortDescription?: string
   highlights: string[]
   included: string[]
   excluded: string[]

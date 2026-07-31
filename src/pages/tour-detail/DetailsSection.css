@@ -26,45 +26,40 @@
   flex-direction: column;
 }
 
-.details-accordion-trigger {
-  display: flex;
-  width: 100%;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 0;
-  border: none;
-  background: none;
-  cursor: pointer;
+/* Label-left / content-right row, GetYourGuide style */
+.details-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  padding: 20px 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.details-row:first-child {
+  padding-top: 0;
+}
+
+.details-row:last-child {
+  border-bottom: none;
+}
+
+.details-row-heading {
   font-size: 16px;
   font-weight: 900;
   color: #0f172a;
-  text-align: left;
+  margin: 0;
   font-family: var(--font-body);
 }
 
 @media (min-width: 640px) {
-  .details-accordion-trigger {
+  .details-row-heading {
     font-size: 18px;
   }
 }
 
-@media (min-width: 1024px) {
-  .details-accordion-trigger {
-    font-size: 20px;
-  }
-}
-
-.details-accordion-trigger svg {
-  color: #166534;
-  flex-shrink: 0;
-}
-
-.details-accordion-content {
-  overflow: hidden;
-}
-
-.details-accordion-body {
-  padding-bottom: 20px;
+.details-row-content {
+  min-width: 0;
+  padding-left: 20px;
 }
 
 /* Included / Excluded */
@@ -108,7 +103,7 @@
   gap: 8px;
   font-size: 14px;
   line-height: 1.5;
-  color: rgba(0, 43, 17, 0.85);
+  color: #000;
 }
 
 @media (min-width: 640px) {
@@ -132,7 +127,7 @@
 .details-empty {
   font-size: 14px;
   line-height: 1.75;
-  color: rgba(0, 43, 17, 0.8);
+  color: #000;
 }
 
 /* About content */
@@ -143,21 +138,16 @@
 }
 
 .details-about-list {
-  list-style: none;
-  padding: 0;
+  list-style: disc;
+  padding-left: 20px;
   margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
 }
 
 .details-about-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 6px;
+  margin-bottom: 8px;
   font-size: 14px;
   line-height: 1.75;
-  color: rgba(0, 43, 17, 0.85);
+  color: #000;
 }
 
 @media (min-width: 640px) {
@@ -166,18 +156,11 @@
   }
 }
 
-.details-about-num {
-  font-weight: 700;
-  color: #0f172a;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
 /* Text content */
 .details-text {
   font-size: 14px;
   line-height: 1.75;
-  color: rgba(0, 43, 17, 0.8);
+  color: #000;
 }
 
 @media (min-width: 640px) {

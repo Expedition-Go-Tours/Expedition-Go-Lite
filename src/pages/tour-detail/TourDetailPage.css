@@ -32,6 +32,7 @@
   grid-template-columns: 1fr;
   gap: 20px 32px;
   padding-bottom: 40px;
+  margin-top: 24px;
 }
 
 @media (min-width: 1024px) {
@@ -46,10 +47,18 @@
   }
 }
 
-/* Main Content (header + gallery) */
+/* Main Content (gallery + short description + quick facts) */
 .tour-detail-main {
   width: 100%;
   background: #fff;
+}
+
+/* Short teaser description, right after the gallery */
+.tour-detail-short-description {
+  margin: 20px 0 0;
+  font-size: 15px;
+  line-height: 1.7;
+  color: #334155;
 }
 
 @media (min-width: 1024px) {
@@ -99,7 +108,7 @@
 
 /* Header Row - title left, write review right */
 .tour-detail-header-row {
-  margin-bottom: 12px;
+  margin-bottom: 20px;
 }
 
 .tour-detail-header-row .tour-header-new {
@@ -150,6 +159,17 @@
 /* Tab Content Area */
 .tour-detail-tab-content {
   min-width: 0;
+}
+
+/* Stacked section layout (no tabs) */
+.tour-detail-sections > * + * {
+  margin-top: 48px;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 48px;
+}
+
+.tour-detail-reviews-anchor {
+  scroll-margin-top: 96px;
 }
 
 /* Difficulty Grid Badge */

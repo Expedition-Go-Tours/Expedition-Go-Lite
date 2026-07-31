@@ -1,23 +1,14 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ChevronDown, ChevronUp, Star, Check, ChevronLeft, ChevronRight,
 } from 'lucide-react'
-import type { ComponentType, ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import './OverviewSection.css'
 
-interface OverviewItem {
-  icon: ComponentType<{ className?: string; strokeWidth?: number }>
-  title: string
-  desc: string | null
-  renderValue?: () => ReactNode
-}
-
 interface OverviewSectionProps {
-  highlightsGrid: OverviewItem[]
-  descriptionSteps: { title: string; body: string }[]
+  descriptionSteps: { title: string; body: ReactNode }[]
   highlights: string[]
   reviews: {
     id: string
@@ -32,7 +23,6 @@ interface OverviewSectionProps {
 }
 
 export default function OverviewSection({
-  highlightsGrid,
   descriptionSteps,
   highlights,
   reviews,
@@ -66,25 +56,6 @@ export default function OverviewSection({
 
   return (
     <section className="overview-section">
-      {/* Highlights Grid */}
-      <div className="overview-highlights-grid">
-        {highlightsGrid.map(({ icon: Icon, title, desc, renderValue }) => (
-          <div key={title} className="overview-highlight-card">
-            <div className="overview-highlight-icon">
-              <Icon className="overview-highlight-icon-svg" strokeWidth={1.5} />
-            </div>
-            <div>
-              {renderValue ? renderValue() : (
-                <>
-                  <p className="overview-highlight-card-title">{title}</p>
-                  {desc && <p className="overview-highlight-card-desc">{desc}</p>}
-                </>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-
       {/* Full Description */}
       {descriptionSteps.length > 0 && (
         <div className="overview-description">
@@ -92,7 +63,7 @@ export default function OverviewSection({
             {descriptionSteps.slice(0, 2).map((step) => (
               <li key={step.title}>
                 <p className="overview-description-step-title">{step.title}</p>
-                <p className="overview-description-step-body">{step.body}</p>
+                <div className="overview-description-step-body">{step.body}</div>
               </li>
             ))}
             <AnimatePresence initial={false}>
@@ -105,7 +76,7 @@ export default function OverviewSection({
                   transition={{ duration: 0.25, ease: 'easeOut' }}
                 >
                   <p className="overview-description-step-title">{step.title}</p>
-                  <p className="overview-description-step-body">{step.body}</p>
+                  <div className="overview-description-step-body">{step.body}</div>
                 </motion.li>
               ))}
             </AnimatePresence>

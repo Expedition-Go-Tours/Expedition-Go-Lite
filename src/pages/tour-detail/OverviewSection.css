@@ -2,94 +2,10 @@
   padding-bottom: 24px;
 }
 
-/* Highlights Grid */
-.overview-highlights-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 12px;
-}
-
-@media (min-width: 640px) {
-  .overview-highlights-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (min-width: 1024px) {
-  .overview-highlights-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-.overview-highlight-card {
-  display: flex;
-  align-items: flex-start;
-  gap: 16px;
-  border-radius: 12px;
-  background: #fff;
-  padding: 16px;
-}
-
-.overview-highlight-icon {
-  display: grid;
-  width: 40px;
-  height: 40px;
-  place-items: center;
-  border-radius: 8px;
-  background: #f0fdf4;
-  flex-shrink: 0;
-}
-
-@media (min-width: 1024px) {
-  .overview-highlight-icon {
-    width: 48px;
-    height: 48px;
-  }
-}
-
-.overview-highlight-icon-svg {
-  width: 20px;
-  height: 20px;
-  color: #16a34a;
-}
-
-@media (min-width: 1024px) {
-  .overview-highlight-icon-svg {
-    width: 24px;
-    height: 24px;
-  }
-}
-
-.overview-highlight-card-title {
-  font-size: 14px;
-  font-weight: 700;
-  color: #0f172a;
-  margin: 0;
-  line-height: 1.3;
-}
-
-@media (min-width: 1024px) {
-  .overview-highlight-card-title {
-    font-size: 16px;
-  }
-}
-
-.overview-highlight-card-desc {
-  margin: 4px 0 0;
-  font-size: 12px;
-  color: #64748b;
-  line-height: 1.5;
-}
-
-@media (min-width: 1024px) {
-  .overview-highlight-card-desc {
-    font-size: 14px;
-  }
-}
 /* Description */
 .overview-description {
   margin-top: 32px;
-  padding-top: 24px;
+  padding-top: 0;
 }
 
 .overview-description-list {
@@ -125,7 +41,19 @@
   margin: 6px 0 0;
   font-size: 14px;
   line-height: 1.75;
-  color: #475569;
+  color: #000;
+}
+
+.overview-description-step-body .details-about,
+.overview-description-step-body .details-about-list,
+.overview-description-step-body .details-about-item,
+.overview-description-step-body .details-about-num,
+.overview-description-step-body .details-text {
+  color: #000;
+}
+
+.overview-description-step-body .details-text {
+  padding-left: 20px;
 }
 
 @media (min-width: 640px) {
@@ -259,7 +187,7 @@
   align-items: center;
   gap: 8px;
   font-size: 12px;
-  color: #94a3b8;
+  color: #000;
   margin-top: 2px;
   flex-wrap: wrap;
 }
@@ -295,7 +223,7 @@
   margin-top: 10px;
   font-size: 14px;
   line-height: 1.5;
-  color: #475569;
+  color: #000;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
@@ -409,7 +337,7 @@
   gap: 6px;
   font-size: 14px;
   line-height: 1.75;
-  color: #334155;
+  color: #000;
 }
 
 @media (min-width: 640px) {
