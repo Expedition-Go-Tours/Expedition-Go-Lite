@@ -19,7 +19,7 @@
 
 .tour-card-image {
   position: relative;
-  height: 220px;
+  height: 190px;
   overflow: hidden;
   background: #f1f1f1;
   flex-shrink: 0;
@@ -49,7 +49,7 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 2px 0;
+  gap: 4px 12px;
   font-size: 12px;
   font-weight: 600;
   color: #6b7280;
@@ -246,7 +246,7 @@
 
 @media (max-width: 1024px) {
   .tour-card-image {
-    height: 180px;
+    height: 160px;
   }
 
   .tour-card-body {
@@ -264,7 +264,7 @@
 
 @media (max-width: 768px) {
   .tour-card-image {
-    height: 200px;
+    height: 175px;
   }
 
   .tour-card-body {

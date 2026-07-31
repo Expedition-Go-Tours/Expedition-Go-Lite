@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  ChevronDown, ChevronUp, Star, Check, ChevronLeft, ChevronRight,
+  Star, Check, ChevronLeft, ChevronRight,
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import './OverviewSection.css'
@@ -31,7 +31,6 @@ export default function OverviewSection({
 }: OverviewSectionProps) {
   const { t } = useTranslation()
   const [fullDescriptionExpanded, setFullDescriptionExpanded] = useState(true)
-  const [highlightsOpen, setHighlightsOpen] = useState(true)
   const travellersLovedRef = useRef<HTMLDivElement>(null)
   const [showLeftArrow, setShowLeftArrow] = useState(false)
   const [showRightArrow, setShowRightArrow] = useState(true)
@@ -183,37 +182,16 @@ export default function OverviewSection({
         </section>
       )}
 
-      {/* Highlights Accordion */}
+      {/* Highlights */}
       {highlights.length > 0 && (
-        <div className="overview-accordion">
-          <button
-            type="button"
-            onClick={() => setHighlightsOpen((v) => !v)}
-            className="overview-accordion-trigger"
-            aria-expanded={highlightsOpen}
-          >
-            <span>{t('tourDetail.highlights')}</span>
-            {highlightsOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-          </button>
-          <AnimatePresence initial={false}>
-            {highlightsOpen && (
-              <motion.div
-                key="highlights-content"
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
-                className="overview-accordion-content"
-              >
-                <ul className="overview-accordion-list">
-                  {highlights.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+        <section className="overview-highlights">
+          <h2 className="overview-section-title">{t('tourDetail.highlights')}</h2>
+          <ul className="overview-highlights-list">
+            {highlights.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </section>
       )}
     </section>
   )

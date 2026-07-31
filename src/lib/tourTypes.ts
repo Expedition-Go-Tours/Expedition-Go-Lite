@@ -13,6 +13,13 @@ export interface ContactInfo {
   fax?: string
 }
 
+export interface TravelerPricing {
+  label: string
+  price: number
+  minAge?: number | null
+  maxAge?: number | null
+}
+
 export interface TourDetail {
   id: string
   slug: string
@@ -42,6 +49,7 @@ export interface TourDetail {
   maxAge?: number
   pickupIncluded?: boolean
   cancellationPolicy?: string
+  travelerPricing?: TravelerPricing[]
   guide?: TourGuide
   contact?: ContactInfo
 }

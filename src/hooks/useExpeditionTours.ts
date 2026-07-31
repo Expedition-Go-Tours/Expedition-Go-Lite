@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { getApiBaseUrl, getAuthToken } from '../lib/auth'
-import type { TourDetail } from '../lib/tourTypes'
+import type { TourDetail, TravelerPricing } from '../lib/tourTypes'
 
 async function expeditionFetchRaw(path: string) {
   const base = getApiBaseUrl()
@@ -210,20 +210,107 @@ function extractDifficultyFromTour(tour: any): string | null {
   }
 }
 
+function formatCancellationPolicy(policy: any): string | null {
+  if (policy == null) return null
+  if (typeof policy === 'string') {
+    const trimmed = policy.trim()
+    return trimmed || null
+  }
+  if (typeof policy !== 'object') return null
+
+  const type = String(policy.type ?? '').toLowerCase()
+  const hours = policy.cutoffHours ?? policy.cancellationWindowHours ?? policy.freeCancellationHours
+  const refundPct = policy.refundPercentage ?? policy.refundRate
+  const hasRules = typeof policy.refundRules === 'string' && policy.refundRules.trim() !== ''
+
+  if (
+    type === 'non-refundable' ||
+    type === 'non_refundable' ||
+    (refundPct != null && Number(refundPct) === 0) ||
+    (hours != null && Number(hours) === 0)
+  ) {
+    return 'Non-refundable'
+  }
+
+  if (hours != null && Number(hours) > 0) {
+    const h = Math.round(Number(hours))
+    if (refundPct == null || Number(refundPct) >= 100) {
+      return `Free cancellation up to ${h} hours before start time`
+    }
+    return `Cancel up to ${h} hours before start time with ${refundPct}% refund`
+  }
+
+  if (type === 'flexible') return 'Free cancellation'
+  if (type === 'strict') return 'Strict cancellation policy'
+  if (type === 'moderate') return 'Moderate cancellation policy'
+  if (hasRules) return policy.refundRules.trim()
+  return null
+}
+
 function extractCancellationFromTour(tour: any): string | null {
   try {
-    if (tour?.cancellationPolicy && typeof tour.cancellationPolicy === 'string') return tour.cancellationPolicy
-    const bt = typeof tour?.bookingAndTickets === 'string' ? JSON.parse(tour.bookingAndTickets) : tour?.bookingAndTickets
-    const policy = bt?.cancellationPolicy
-    if (!policy) return null
-    if (typeof policy === 'string') return policy
-    const hours = policy.cancellationWindowHours ?? policy.freeCancellationHours ?? policy.cutoffHours
-    if (hours != null) return `Free cancellation up to ${hours} hours before start time`
-    if (policy.type === 'flexible') return 'Free cancellation'
-    if (policy.type === 'non_refundable') return 'Non-refundable'
-    return null
+    if (tour?.cancellationPolicy != null) {
+      const formatted = formatCancellationPolicy(tour.cancellationPolicy)
+      if (formatted) return formatted
+    }
+    const bt = typeof tour?.bookingAndTickets === 'string'
+      ? JSON.parse(tour.bookingAndTickets)
+      : tour?.bookingAndTickets
+    return formatCancellationPolicy(bt?.cancellationPolicy)
   } catch {
     return null
+  }
+}
+
+function extractTravelerPricing(rawTour: any): TravelerPricing[] {
+  try {
+    const sp = typeof rawTour?.schedulesAndPricing === 'string'
+      ? JSON.parse(rawTour.schedulesAndPricing)
+      : rawTour?.schedulesAndPricing
+    if (!sp) return []
+    const td = sp.travelerDetails || {}
+
+    // Prefer schedule prices (ageGroup -> retailPrice), these drive checkout pricing.
+    const priceByLabel = new Map<string, number>()
+    for (const s of Array.isArray(sp?.pricingSchedules?.schedules) ? sp.pricingSchedules.schedules : []) {
+      for (const p of Array.isArray(s?.prices) ? s.prices : []) {
+        if (p?.ageGroup && p?.retailPrice != null && !priceByLabel.has(p.ageGroup)) {
+          priceByLabel.set(p.ageGroup, Number(p.retailPrice))
+        }
+      }
+      if (priceByLabel.size > 0) break
+    }
+
+    const metaByLabel = new Map<string, { price?: number; minAge?: number | null; maxAge?: number | null }>()
+    for (const c of Array.isArray(td.pricingCategories) ? td.pricingCategories : []) {
+      if (c?.name && !metaByLabel.has(c.name)) {
+        metaByLabel.set(c.name, {
+          price: c.price != null ? Number(c.price) : undefined,
+          minAge: c.minAge ?? null,
+          maxAge: c.maxAge ?? null,
+        })
+      }
+    }
+
+    const groups: { label: string; minAge?: number | null; maxAge?: number | null }[] | null =
+      Array.isArray(td.ageGroups) && td.ageGroups.length > 0 ? td.ageGroups : null
+    const labels = groups && groups.length > 0
+      ? groups.map((g) => g.label).filter(Boolean)
+      : Array.from(new Set([...priceByLabel.keys(), ...metaByLabel.keys()]))
+
+    return labels.map((label: string) => {
+      const group = groups?.find((g) => g.label === label)
+      const meta = metaByLabel.get(label)
+      const price = priceByLabel.get(label) ?? meta?.price ?? 0
+      return {
+        label,
+        price,
+        minAge: group?.minAge ?? meta?.minAge ?? null,
+        maxAge: group?.maxAge ?? meta?.maxAge ?? null,
+      }
+    })
+  } catch {
+    return []
   }
 }
 
@@ -382,12 +469,16 @@ export interface TourDetailData extends Omit<TourDetail, 'guide' | 'contact' | '
   difficulty?: string
   tags: string[]
   whatToBring: string[]
+  notSuitableFor: string[]
+  notAllowed: string[]
+  additionalInfo: string
   meetingPoint: string
   supplierName: string
   supplierPhoto: string | null
   bookingFlow: 'DIRECT' | 'EXTERNAL'
   externalUrl: string | null
   startingPrice: number | null
+  travelerPricing: TravelerPricing[]
   guide?: TourDetail['guide']
   contact?: TourDetail['contact']
 }
@@ -405,6 +496,7 @@ export function useExpeditionTour(slug: string | undefined) {
 
       let resolvedPrice = tour.startingPrice ?? extractStartingPriceFromRaw(tour.schedulesAndPricing)
       let shortDescription = ''
+      let travelerPricing: TravelerPricing[] = []
 
       // Fetch raw tour data to get excluded and other missing fields
       if (tour.id) {
@@ -421,6 +513,7 @@ export function useExpeditionTour(slug: string | undefined) {
           if (rawRes.ok) {
             const rawPayload = await rawRes.json()
             const rawTour = rawPayload.data?.tour ?? rawPayload.tour ?? rawPayload
+            travelerPricing = extractTravelerPricing(rawTour)
             if (resolvedPrice == null) {
               resolvedPrice = extractStartingPriceFromRaw(rawTour?.schedulesAndPricing)
             }
@@ -473,6 +566,18 @@ export function useExpeditionTour(slug: string | undefined) {
               const diff = extractDifficultyFromTour(rawTour)
               if (diff) tour.difficulty = diff
             }
+            // Extract additional info (not suitable for / not allowed / know before you go)
+            if (pcShort) {
+              if (!Array.isArray(tour.notSuitableFor) && Array.isArray(pcShort.healthRestrictions)) {
+                tour.notSuitableFor = pcShort.healthRestrictions
+              }
+              if (!Array.isArray(tour.notAllowed) && Array.isArray(pcShort.notAllowed)) {
+                tour.notAllowed = pcShort.notAllowed
+              }
+              if (!tour.additionalInfo && typeof pcShort.additionalInfo === 'string') {
+                tour.additionalInfo = pcShort.additionalInfo
+              }
+            }
           }
         } catch (e) {
           console.warn('[useExpeditionTour] fallback fetch failed:', e)
@@ -514,18 +619,13 @@ export function useExpeditionTour(slug: string | undefined) {
         included: Array.isArray(tour.included) ? tour.included : [],
         excluded: Array.isArray(tour.excluded) ? tour.excluded : [],
         whatToBring: Array.isArray(tour.whatToBring) ? tour.whatToBring : [],
+        notSuitableFor: Array.isArray(tour.notSuitableFor) ? tour.notSuitableFor : [],
+        notAllowed: Array.isArray(tour.notAllowed) ? tour.notAllowed : [],
+        additionalInfo: tour.additionalInfo || '',
         itinerary: rawItinerary,
         faqs: [],
         coordinates: { lat: 0, lng: 0 },
-        cancellationPolicy: (() => {
-          const cp = tour.cancellationPolicy
-          if (typeof cp === 'string') return cp
-          if (cp && typeof cp === 'object') {
-            if (cp.refundRules) return cp.refundRules
-            if (cp.cutoffHours != null) return `Free cancellation up to ${cp.cutoffHours} hours before`
-          }
-          return 'Free cancellation up to 24 hours before'
-        })(),
+        cancellationPolicy: extractCancellationFromTour(tour) || 'Free cancellation up to 24 hours before',
         meetingPoint: tour.meetingPoint || '',
         languages: Array.isArray(tour.languages) ? tour.languages : [],
         supplierName: tour.supplierName || '',
@@ -536,6 +636,7 @@ export function useExpeditionTour(slug: string | undefined) {
         tourType,
         availability: [],
         pickupIncluded: !!tour.pickupIncluded,
+        travelerPricing,
       }
       return result
     },

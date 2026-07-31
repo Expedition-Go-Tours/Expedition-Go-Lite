@@ -1,7 +1,7 @@
 ﻿import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-import type { TourDetail } from '../../lib/tourTypes'
+import type { TourDetail, TravelerPricing } from '../../lib/tourTypes'
 import { Button } from '../../components/ui/button'
 import { CalendarPicker } from '../../components/ui/apple-calendar-picker'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -30,8 +30,6 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
   const { currency, convertPrice } = useCurrency()
   const navigate = useNavigate()
   const [adults, setAdults] = useState(2)
-  const [seniors, setSeniors] = useState(0)
-  const [youths, setYouths] = useState(0)
   const [children, setChildren] = useState(0)
   const [infants, setInfants] = useState(0)
   const [showGuestSelector, setShowGuestSelector] = useState(false)
@@ -45,7 +43,6 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
   const [promoCode, setPromoCode] = useState('')
   const [promoApplied, setPromoApplied] = useState(false)
   const [promoError, setPromoError] = useState('')
-  const [pricingBreakdown, setPricingBreakdown] = useState<{ label: string; quantity: number; unitPrice: number; total: number }[]>([])
   const [pricingTotal, setPricingTotal] = useState<number | null>(null)
   const [pricingLoading, setPricingLoading] = useState(false)
   const guestRef = useRef<HTMLDivElement>(null)
@@ -77,11 +74,9 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
       }
       const data = payload.data ?? payload
       if (data.pricing) {
-        setPricingBreakdown(data.pricing.breakdown || [])
         setPricingTotal(data.pricing.total)
       }
-    } catch (err) {
-      setPricingBreakdown([])
+    } catch {
       setPricingTotal(null)
     } finally {
       setPricingLoading(false)
@@ -102,21 +97,29 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
     doFetchPricing(selectedDate.toISOString().slice(0, 10))
   }, [selectedDate, adults, children, infants, doFetchPricing])
 
-  const priceMap = useMemo(() => {
-    const map = new Map<string, { unitPrice: number; total: number }>()
-    for (const item of pricingBreakdown) {
-      map.set(item.label.toLowerCase(), { unitPrice: item.unitPrice, total: item.total })
-    }
-    return map
-  }, [pricingBreakdown])
+  const travelerGroups = useMemo(() => {
+    const pricing = tour.travelerPricing || []
+    if (pricing.length > 0) return pricing
+    return [{ label: 'Adult', price: tour.price || 0, minAge: null, maxAge: null }]
+  }, [tour.travelerPricing, tour.price])
 
-  const getPriceForGroup = (label: string, defaultPrice: number): { unitPrice: number; total: number } => {
-    return priceMap.get(label.toLowerCase()) || { unitPrice: defaultPrice, total: defaultPrice * 1 }
+  const findGroup = (key: string): TravelerPricing | undefined =>
+    travelerGroups.find((g) => new RegExp(key, 'i').test(g.label))
+
+  const adultGroup = findGroup('adult')
+  const childGroup = findGroup('child')
+  const infantGroup = findGroup('infant')
+
+  const adultPrice = adultGroup?.price ?? tour.price
+  const childPrice = childGroup?.price ?? 0
+  const infantPrice = infantGroup?.price ?? 0
+
+  const ageRangeLabel = (g?: TravelerPricing): string => {
+    if (!g || (g.minAge == null && g.maxAge == null)) return ''
+    if (g.minAge != null && g.maxAge != null) return `${g.minAge}-${g.maxAge} years`
+    if (g.maxAge != null) return `Up to ${g.maxAge} years`
+    return `${g.minAge}+ years`
   }
-
-  const pAdults = getPriceForGroup('adult', tour.price)
-  const pChildren = getPriceForGroup('child', Math.round(tour.price * 0.6))
-  const pInfants = getPriceForGroup('infant', 0)
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -142,29 +145,19 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [showGuestSelector, showCalendar])
 
-  const totalTravelers = adults + seniors + youths + children + infants
+  const totalTravelers = adults + children + infants
 
   const totalPrice = pricingTotal ?? 0
   const hasPricing = pricingTotal !== null
 
-  const adultPrice = hasPricing ? pAdults.unitPrice : tour.price
-  const seniorPrice = hasPricing ? pAdults.unitPrice : tour.price
-  const youthPrice = hasPricing ? Math.round(pAdults.unitPrice * 0.7) : Math.round(tour.price * 0.7)
-  const childPrice = hasPricing ? pChildren.unitPrice : Math.round(tour.price * 0.6)
-  const infantPrice = hasPricing ? pInfants.unitPrice : 0
-
   const increment = (type: string) => {
     if (type === 'adults' && adults < 9) setAdults(adults + 1)
-    if (type === 'seniors' && seniors < 9) setSeniors(seniors + 1)
-    if (type === 'youths' && youths < 9) setYouths(youths + 1)
     if (type === 'children' && children < 9) setChildren(children + 1)
     if (type === 'infants' && infants < 9) setInfants(infants + 1)
   }
 
   const decrement = (type: string) => {
     if (type === 'adults' && adults > 1) setAdults(adults - 1)
-    if (type === 'seniors' && seniors > 0) setSeniors(seniors - 1)
-    if (type === 'youths' && youths > 0) setYouths(youths - 1)
     if (type === 'children' && children > 0) setChildren(children - 1)
     if (type === 'infants' && infants > 0) setInfants(infants - 1)
   }
@@ -177,8 +170,6 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
 
     const travelersLabel = [
       adults > 0 && `${adults} ${adults === 1 ? 'adult' : 'adults'}`,
-      seniors > 0 && `${seniors} ${seniors === 1 ? 'senior' : 'seniors'}`,
-      youths > 0 && `${youths} ${youths === 1 ? 'youth' : 'youths'}`,
       children > 0 && `${children} ${children === 1 ? 'child' : 'children'}`,
       infants > 0 && `${infants} ${infants === 1 ? 'infant' : 'infants'}`,
     ].filter(Boolean).join(', ')
@@ -219,7 +210,7 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
     setIsBooking(true)
     // Spinner on the button for a moment, then reveal the travel transition.
     setTimeout(() => setShowTransition(true), 1100)
-  }, [selectedDate, t, tour, adults, seniors, youths, children, infants, totalPrice])
+  }, [selectedDate, t, tour, adults, children, infants, totalPrice])
 
   const handleTransitionDone = useCallback(() => {
     navigate('/booking', { state: pendingNavState.current })
@@ -244,11 +235,9 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
   const formatPrice = (val: number) => val > 0 ? `${currency.symbol}${val}` : t('booking.free')
 
   const travelerOptions = [
-    { label: t('booking.adults'), age: t('booking.ageAdult'), price: formatPrice(adultPrice), count: adults, key: 'adults' },
-    { label: t('booking.seniors'), age: t('booking.ageSenior'), price: formatPrice(seniorPrice), count: seniors, key: 'seniors' },
-    { label: t('booking.youths'), age: t('booking.ageYouth'), price: formatPrice(youthPrice), count: youths, key: 'youths' },
-    { label: t('booking.children'), age: t('booking.ageChild'), price: formatPrice(childPrice), count: children, key: 'children' },
-    { label: t('booking.infants'), age: t('booking.ageInfant'), price: infantPrice > 0 ? formatPrice(infantPrice) : t('booking.free'), count: infants, key: 'infants' },
+    { label: t('booking.adults'), age: ageRangeLabel(adultGroup) || t('booking.ageAdult'), price: formatPrice(adultPrice), count: adults, key: 'adults' },
+    { label: t('booking.children'), age: ageRangeLabel(childGroup) || t('booking.ageChild'), price: childPrice > 0 ? formatPrice(childPrice) : t('booking.free'), count: children, key: 'children' },
+    { label: t('booking.infants'), age: ageRangeLabel(infantGroup) || t('booking.ageInfant'), price: infantPrice > 0 ? formatPrice(infantPrice) : t('booking.free'), count: infants, key: 'infants' },
   ]
 
   const selectedDateLabel = selectedDate

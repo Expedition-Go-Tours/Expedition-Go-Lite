@@ -19,21 +19,21 @@
 }
 
 .overview-description-step-title {
-  font-size: 16px;
-  font-weight: 900;
+  font-size: 18px;
+  font-weight: 800;
   color: #0f172a;
   margin: 0 0 6px;
 }
 
 @media (min-width: 640px) {
   .overview-description-step-title {
-    font-size: 18px;
+    font-size: 20px;
   }
 }
 
 @media (min-width: 1024px) {
   .overview-description-step-title {
-    font-size: 20px;
+    font-size: 24px;
   }
 }
 
@@ -93,21 +93,21 @@
 }
 
 .overview-travellers-title {
-  font-size: 16px;
-  font-weight: 900;
+  font-size: 18px;
+  font-weight: 800;
   color: #0f172a;
   margin: 0;
 }
 
 @media (min-width: 640px) {
   .overview-travellers-title {
-    font-size: 18px;
+    font-size: 20px;
   }
 }
 
 @media (min-width: 1024px) {
   .overview-travellers-title {
-    font-size: 20px;
+    font-size: 24px;
   }
 }
 
@@ -284,64 +284,60 @@
   right: -16px;
 }
 
-/* Highlights Accordion */
-.overview-accordion {
-  margin-top: 32px;
-  padding-top: 24px;
-}
-
-.overview-accordion-trigger {
-  display: flex;
-  width: 100%;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 16px 0;
-  border: none;
-  background: none;
-  cursor: pointer;
-  font-size: 16px;
-  font-weight: 900;
+/* Section titles (shared: Highlights, Includes) */
+.overview-section-title {
+  font-size: 18px;
+  font-weight: 800;
   color: #0f172a;
-  text-align: left;
+  margin: 0 0 18px;
   font-family: var(--font-body);
 }
 
 @media (min-width: 640px) {
-  .overview-accordion-trigger {
-    font-size: 18px;
-  }
-}
-
-@media (min-width: 1024px) {
-  .overview-accordion-trigger {
+  .overview-section-title {
     font-size: 20px;
   }
 }
 
-.overview-accordion-trigger svg {
-  color: #166534;
-  flex-shrink: 0;
+@media (min-width: 1024px) {
+  .overview-section-title {
+    font-size: 24px;
+  }
 }
 
-.overview-accordion-content {
-  overflow: hidden;
+/* Highlights (GetYourGuide-style: title left, bullets right) */
+.overview-highlights {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
 }
 
-.overview-accordion-list {
+.overview-highlights .overview-section-title {
+  margin: 0;
+}
+
+@media (min-width: 768px) {
+  .overview-highlights {
+    grid-template-columns: 240px 1fr;
+    gap: 40px;
+    align-items: start;
+  }
+}
+
+.overview-highlights-list {
   list-style: disc;
   padding-left: 20px;
-  margin: 0 0 20px;
+  margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   font-size: 14px;
-  line-height: 1.75;
+  line-height: 1.6;
   color: #000;
 }
 
 @media (min-width: 640px) {
-  .overview-accordion-list {
+  .overview-highlights-list {
     font-size: 16px;
   }
 }

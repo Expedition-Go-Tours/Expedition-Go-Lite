@@ -47,18 +47,18 @@
   }
 }
 
-/* Main Content (gallery + short description + quick facts) */
+/* Main Content (image gallery) */
 .tour-detail-main {
   width: 100%;
   background: #fff;
 }
 
-/* Short teaser description, right after the gallery */
+/* Short teaser description, first block of the Overview tab */
 .tour-detail-short-description {
-  margin: 20px 0 0;
+  margin: 8px 0 0;
   font-size: 15px;
   line-height: 1.7;
-  color: #334155;
+  color: #000;
 }
 
 @media (min-width: 1024px) {
@@ -159,13 +159,39 @@
 /* Tab Content Area */
 .tour-detail-tab-content {
   min-width: 0;
+  margin-top: 24px;
 }
 
-/* Stacked section layout (no tabs) */
-.tour-detail-sections > * + * {
-  margin-top: 48px;
+/* Overview tab: short description, then features, then the rest.
+   GetYourGuide-style sections separated by divider lines. */
+.tour-detail-overview {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 48px;
+}
+
+.tour-detail-overview > * + * {
   border-top: 1px solid #e2e8f0;
-  padding-top: 48px;
+  padding-top: 40px;
+}
+
+/* Includes (GetYourGuide-style: title left, checks/crosses right) */
+.overview-includes {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+}
+
+.overview-includes .overview-section-title {
+  margin: 0;
+}
+
+@media (min-width: 768px) {
+  .overview-includes {
+    grid-template-columns: 240px 1fr;
+    gap: 40px;
+    align-items: start;
+  }
 }
 
 .tour-detail-reviews-anchor {

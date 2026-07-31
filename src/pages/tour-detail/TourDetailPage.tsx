@@ -20,15 +20,19 @@ import TourQuickFacts from './TourQuickFacts'
 import BookingWidget from './BookingWidget'
 import RelatedTours from './RelatedTours'
 
+import TourDetailTabs from './TourDetailTabs'
 import OverviewSection from './OverviewSection'
 import DetailsSection, {
   buildIncludedExcludedContent,
-  buildAboutContent,
   buildMeetingContent,
   buildAccessibilityContent,
   buildCancellationContent,
+  buildNotSuitableContent,
+  buildNotAllowedContent,
+  buildKnowBeforeContent,
 } from './DetailsSection'
 import TourItinerary from './TourItinerary'
+import TourItineraryPreview from './TourItineraryPreview'
 import ReviewsSection from './ReviewsSection'
 import SupplierSection from './SupplierSection'
 
@@ -47,6 +51,13 @@ function toSlug(title: string): string {
 
 export default function TourDetailPage() {
   const { t } = useTranslation()
+  const tourDetailTabs = useMemo(() => [
+    { key: 'overview', label: 'Overview' },
+    { key: 'itinerary', label: t('tourDetail.itinerary') },
+    { key: 'additional', label: t('tourDetail.additionalInformation') },
+    { key: 'reviews', label: t('sections.reviews') },
+    { key: 'supplier', label: t('tourDetail.supplier') },
+  ], [t])
   const { tourId } = useParams<{ tourId: string }>()
   const navigate = useNavigate()
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist()
@@ -113,6 +124,7 @@ export default function TourDetailPage() {
 
   const pricingRef = useRef<HTMLDivElement>(null)
   const reviewsRef = useRef<HTMLDivElement>(null)
+  const [activeTab, setActiveTab] = useState('overview')
   const [reviewDetail, setReviewDetail] = useState<any>(null)
   const [isWriteReviewOpen, setIsWriteReviewOpen] = useState(false)
   const [isReplyDialogOpen, setIsReplyDialogOpen] = useState(false)
@@ -137,6 +149,7 @@ export default function TourDetailPage() {
   }, [])
 
   useEffect(() => {
+    setActiveTab('overview')
     setReviewStarFilter(null)
     setReviewSearchQuery('')
   }, [tourId])
@@ -203,9 +216,7 @@ export default function TourDetailPage() {
     })
   }
 
-  const handleReviewsTab = () => {
-    reviewsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }
+  const handleReviewsTab = () => setActiveTab('reviews')
 
   const loadMoreReviews = async () => {
     setLoadingMoreReviews(true)
@@ -321,22 +332,24 @@ export default function TourDetailPage() {
       : tour.description
   }, [tour?.shortDescription, tour?.description])
 
-  // Full description (with numbered details) shown at the top of the page.
-  const descriptionSteps = useMemo(() => {
-    if (!tour?.description) return []
-    return [
-      { title: t('tourDetail.aboutTour'), body: buildAboutContent(tour.description) },
-    ]
-  }, [tour?.description, t])
-
   const highlights = tour?.highlights || []
   const cancellationPolicy = tour?.cancellationPolicy || 'Free cancellation up to 24 hours before'
 
-  const infoSections = useMemo(() => [
+  const additionalInfoSections = useMemo(() => [
     {
-      key: 'included',
-      title: t('tourDetail.included'),
-      content: buildIncludedExcludedContent(tour?.included, tour?.excluded),
+      key: 'notSuitable',
+      title: t('tourDetail.notSuitableFor'),
+      content: buildNotSuitableContent(tour?.notSuitableFor || []),
+    },
+    {
+      key: 'notAllowed',
+      title: t('tourDetail.notAllowed'),
+      content: buildNotAllowedContent(tour?.notAllowed || []),
+    },
+    {
+      key: 'knowBefore',
+      title: t('tourDetail.knowBeforeYouGo'),
+      content: buildKnowBeforeContent(tour?.additionalInfo || ''),
     },
     {
       key: 'pickup',
@@ -353,7 +366,7 @@ export default function TourDetailPage() {
       title: t('tourDetail.cancellationPolicy'),
       content: buildCancellationContent(undefined, cancellationPolicy),
     },
-  ], [t, tour?.included, tour?.excluded, cancellationPolicy])
+  ], [t, tour?.notSuitableFor, tour?.notAllowed, tour?.additionalInfo, cancellationPolicy])
 
   const supplierData = useMemo(() => ({
     name: tour?.supplierName || 'Expedition-Go Tours Ltd',
@@ -451,12 +464,6 @@ export default function TourDetailPage() {
                 onWishlistToggle={handleWishlistToggle}
                 onShare={handleShare}
               />
-
-              {shortDescriptionText && (
-                <p className="tour-detail-short-description">{shortDescriptionText}</p>
-              )}
-
-              <TourQuickFacts items={tourQuickFacts} />
             </div>
 
             <aside className="tour-detail-sidebar" ref={pricingRef}>
@@ -495,62 +502,104 @@ export default function TourDetailPage() {
             </aside>
 
             <div className="tour-detail-bottom">
+              <TourDetailTabs
+                tabs={tourDetailTabs}
+                activeTab={activeTab}
+                onTabChange={setActiveTab}
+              />
+
               <div className="tour-detail-tab-content">
-                <div className="tour-detail-sections">
-                  <OverviewSection
-                    descriptionSteps={descriptionSteps}
-                    highlights={highlights}
-                    reviews={allReviewCards.map(r => ({ id: r.id, name: r.name, date: r.date, rating: r.rating, text: r.text, country: '' }))}
-                    onTabChange={handleReviewsTab}
-                    onReviewReadMore={setReviewDetail}
-                  />
+                <AnimatePresence mode="wait">
+                  {activeTab === 'overview' && (
+                    <motion.div
+                      key="overview"
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -12 }}
+                      transition={{ duration: 0.2, ease: 'easeOut' }}
+                    >
+                      <div className="tour-detail-overview">
+                        {shortDescriptionText && (
+                          <p className="tour-detail-short-description">{shortDescriptionText}</p>
+                        )}
 
-                  <DetailsSection
-                    sections={infoSections}
-                  />
+                        <TourQuickFacts items={tourQuickFacts} />
 
-                  <TourItinerary
-                    itinerary={tour.itinerary}
-                  />
+                        <TourItineraryPreview itinerary={tour.itinerary} />
 
-                  <div ref={reviewsRef} className="tour-detail-reviews-anchor">
-                    <ReviewsSection
-                      rating={selectedTourRating}
-                      reviewCount={selectedTourReviews}
-                      reviewBreakdown={reviewBreakdown}
-                      reviews={filteredReviewCards}
-                      hasMore={hasMoreReviews}
-                      loadingMore={loadingMoreReviews}
-                      onLoadMore={loadMoreReviews}
-                      onWriteReview={handleWriteReview}
-                      onReplyToQuestion={(item) => {
-                        setReplyTarget(item)
-                        setIsReplyDialogOpen(true)
-                      }}
-                      qaItems={[]}
-                      starFilter={reviewStarFilter}
-                      onStarFilterChange={setReviewStarFilter}
-                      searchQuery={reviewSearchQuery}
-                      onSearchQueryChange={setReviewSearchQuery}
+                        <OverviewSection
+                          descriptionSteps={[]}
+                          highlights={highlights}
+                          reviews={allReviewCards.map(r => ({ id: r.id, name: r.name, date: r.date, rating: r.rating, text: r.text, country: '' }))}
+                          onTabChange={setActiveTab}
+                          onReviewReadMore={setReviewDetail}
+                        />
+
+                        <section className="overview-includes">
+                          <h2 className="overview-section-title">{t('tourDetail.included')}</h2>
+                          {buildIncludedExcludedContent(tour?.included, tour?.excluded)}
+                        </section>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {activeTab === 'itinerary' && (
+                    <TourItinerary
+                      key="itinerary"
+                      itinerary={tour.itinerary}
                     />
-                  </div>
+                  )}
 
-                  <SupplierSection
-                    name={supplierData.name}
-                    logo={supplierData.logo}
-                    description={supplierData.description}
-                    rating={supplierData.rating}
-                    totalTours={supplierData.totalTours}
-                    phone={supplierData.phone}
-                    email={supplierData.email}
-                    website={supplierData.website}
-                    address={supplierData.address}
-                    tours={supplierTours}
-                    infoOpen={supplierInfoOpen}
-                    onToggleInfo={() => setSupplierInfoOpen((v) => !v)}
-                    onOpenInfo={() => setSupplierInfoOpen(true)}
-                  />
-                </div>
+                  {activeTab === 'additional' && (
+                    <DetailsSection
+                      key="additional"
+                      sections={additionalInfoSections}
+                    />
+                  )}
+
+                  {activeTab === 'reviews' && (
+                    <div key="reviews" ref={reviewsRef} className="tour-detail-reviews-anchor">
+                      <ReviewsSection
+                        rating={selectedTourRating}
+                        reviewCount={selectedTourReviews}
+                        reviewBreakdown={reviewBreakdown}
+                        reviews={filteredReviewCards}
+                        hasMore={hasMoreReviews}
+                        loadingMore={loadingMoreReviews}
+                        onLoadMore={loadMoreReviews}
+                        onWriteReview={handleWriteReview}
+                        onReplyToQuestion={(item) => {
+                          setReplyTarget(item)
+                          setIsReplyDialogOpen(true)
+                        }}
+                        qaItems={[]}
+                        starFilter={reviewStarFilter}
+                        onStarFilterChange={setReviewStarFilter}
+                        searchQuery={reviewSearchQuery}
+                        onSearchQueryChange={setReviewSearchQuery}
+                      />
+                    </div>
+                  )}
+
+                  {activeTab === 'supplier' && (
+                    <SupplierSection
+                      key="supplier"
+                      name={supplierData.name}
+                      logo={supplierData.logo}
+                      description={supplierData.description}
+                      rating={supplierData.rating}
+                      totalTours={supplierData.totalTours}
+                      phone={supplierData.phone}
+                      email={supplierData.email}
+                      website={supplierData.website}
+                      address={supplierData.address}
+                      tours={supplierTours}
+                      infoOpen={supplierInfoOpen}
+                      onToggleInfo={() => setSupplierInfoOpen((v) => !v)}
+                      onOpenInfo={() => setSupplierInfoOpen(true)}
+                    />
+                  )}
+                </AnimatePresence>
               </div>
             </div>
           </div>

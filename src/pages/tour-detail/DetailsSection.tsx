@@ -43,32 +43,24 @@ export function buildIncludedExcludedContent(
 ): React.ReactNode {
   const inc = included ?? []
   const exc = excluded ?? []
-  if (inc.length === 0 && exc.length === 0) {
+  const items = [
+    ...inc.map((item, i) => ({ key: `inc-${i}`, type: 'inc', text: typeof item === 'string' ? item : String(item) })),
+    ...exc.map((item, i) => ({ key: `exc-${i}`, type: 'exc', text: typeof item === 'string' ? item : String(item) })),
+  ]
+  if (items.length === 0) {
     return <p className="details-empty">{i18n.t('tourDetail.detailsNotAvailable')}</p>
   }
   return (
-    <div className="details-included-excluded">
-      {inc.length > 0 && (
-        <ul className="details-list">
-          {inc.map((item, i) => (
-            <li key={i} className="details-list-item included">
-              <Check size={16} strokeWidth={2.5} className="details-check-icon" />
-              <span>{typeof item === 'string' ? item : item}</span>
-            </li>
-          ))}
-        </ul>
-      )}
-      {exc.length > 0 && (
-        <ul className="details-list">
-          {exc.map((item, i) => (
-            <li key={i} className="details-list-item excluded">
-              <X size={16} strokeWidth={2.5} className="details-x-icon" />
-              <span>{typeof item === 'string' ? item : item}</span>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
+    <ul className="details-list">
+      {items.map((entry) => (
+        <li key={entry.key} className={`details-list-item ${entry.type === 'inc' ? 'included' : 'excluded'}`}>
+          {entry.type === 'inc'
+            ? <Check size={18} strokeWidth={2.5} className="details-check-icon" />
+            : <X size={18} strokeWidth={2.5} className="details-x-icon" />}
+          <span>{entry.text}</span>
+        </li>
+      ))}
+    </ul>
   )
 }
 
@@ -152,6 +144,36 @@ export function buildAccessibilityContent(
       )}
     </div>
   )
+}
+
+export function buildStringListContent(items: string[]): React.ReactNode {
+  if (!Array.isArray(items) || items.length === 0) {
+    return <p className="details-text">{i18n.t('tourDetail.detailsNotAvailable')}</p>
+  }
+  return (
+    <ul className="details-list">
+      {items.map((item, i) => (
+        <li key={i} className="details-list-item">
+          <span>{typeof item === 'string' ? item : String(item)}</span>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+export function buildNotSuitableContent(items: string[]): React.ReactNode {
+  return buildStringListContent(items)
+}
+
+export function buildNotAllowedContent(items: string[]): React.ReactNode {
+  return buildStringListContent(items)
+}
+
+export function buildKnowBeforeContent(text: string): React.ReactNode {
+  if (!text) {
+    return <p className="details-text">{i18n.t('tourDetail.detailsNotAvailable')}</p>
+  }
+  return <p className="details-text">{text}</p>
 }
 
 export function buildCancellationContent(
