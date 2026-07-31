@@ -314,6 +314,20 @@ function extractTravelerPricing(rawTour: any): TravelerPricing[] {
   }
 }
 
+function extractSkipTheLine(rawTour: any): string | null {
+  try {
+    const pc = typeof rawTour?.productContent === 'string'
+      ? JSON.parse(rawTour.productContent)
+      : rawTour?.productContent
+    const options = Array.isArray(pc?.options) ? pc.options : []
+    const value = options
+      .map((o: any) => o?.skipTheLine)
+      .find((v: unknown) => typeof v === 'string' && v && v !== 'none')
+    return typeof value === 'string' ? value : null
+  } catch {
+    return null
+  }
+}
 
 function mapToListing(tour: ExpeditionTourRecord['tour']): TourCardData {
   const location = [tour.city, tour.country].filter(Boolean).join(', ')
@@ -479,6 +493,7 @@ export interface TourDetailData extends Omit<TourDetail, 'guide' | 'contact' | '
   externalUrl: string | null
   startingPrice: number | null
   travelerPricing: TravelerPricing[]
+  skipTheLine?: string | null
   guide?: TourDetail['guide']
   contact?: TourDetail['contact']
 }
@@ -497,6 +512,7 @@ export function useExpeditionTour(slug: string | undefined) {
       let resolvedPrice = tour.startingPrice ?? extractStartingPriceFromRaw(tour.schedulesAndPricing)
       let shortDescription = ''
       let travelerPricing: TravelerPricing[] = []
+      let skipTheLine: string | null = null
 
       // Fetch raw tour data to get excluded and other missing fields
       if (tour.id) {
@@ -514,6 +530,7 @@ export function useExpeditionTour(slug: string | undefined) {
             const rawPayload = await rawRes.json()
             const rawTour = rawPayload.data?.tour ?? rawPayload.tour ?? rawPayload
             travelerPricing = extractTravelerPricing(rawTour)
+            skipTheLine = extractSkipTheLine(rawTour)
             if (resolvedPrice == null) {
               resolvedPrice = extractStartingPriceFromRaw(rawTour?.schedulesAndPricing)
             }
@@ -637,6 +654,7 @@ export function useExpeditionTour(slug: string | undefined) {
         availability: [],
         pickupIncluded: !!tour.pickupIncluded,
         travelerPricing,
+        skipTheLine,
       }
       return result
     },

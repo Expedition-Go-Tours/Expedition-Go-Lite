@@ -24,6 +24,7 @@ import TourDetailTabs from './TourDetailTabs'
 import OverviewSection from './OverviewSection'
 import DetailsSection, {
   buildIncludedExcludedContent,
+  buildAboutContent,
   buildMeetingContent,
   buildAccessibilityContent,
   buildCancellationContent,
@@ -291,6 +292,21 @@ export default function TourDetailPage() {
       : ''
     const diffColor = diffLabel ? (difficultyColorMap[diffLabel] ?? '#6b7280') : ''
 
+    // Skip-the-line feature is dynamic per tour (productContent.options[].skipTheLine).
+    const skipTheLineLabel = (value: string): string => {
+      switch (value) {
+        case 'skip_tickets':
+          return t('tourDetail.skipTheLineTickets')
+        case 'express_security':
+          return t('tourDetail.skipTheLineSecurity')
+        case 'express_elevators':
+          return t('tourDetail.skipTheLineElevators')
+        case 'separate_entrance':
+        default:
+          return t('tourDetail.skipTheLine')
+      }
+    }
+
     // Live guide language is dynamic per tour (from the tour's languages list).
     const guideLanguage = tour?.languages?.length
       ? tour.languages.join(', ')
@@ -316,12 +332,16 @@ export default function TourDetailPage() {
           </>
         ),
       }] : []),
-      { icon: UserCheck, title: t('tourDetail.skipTheLine'), desc: null },
+      ...(tour?.skipTheLine && tour.skipTheLine !== 'none' ? [{
+        icon: UserCheck,
+        title: skipTheLineLabel(tour.skipTheLine),
+        desc: null,
+      }] : []),
       ...(tour?.pickupIncluded
         ? [{ icon: Bus, title: t('tourDetail.pickupIncluded'), desc: t('tourDetail.checkAvailabilityDesc') }]
         : []),
     ]
-  }, [t, tour?.difficulty, tour?.duration, tour?.languages, tour?.pickupIncluded])
+  }, [t, tour?.difficulty, tour?.duration, tour?.languages, tour?.pickupIncluded, tour?.skipTheLine])
 
   // Short teaser shown right after the gallery (GetYourGuide-style), no heading.
   const shortDescriptionText = useMemo(() => {
@@ -334,6 +354,15 @@ export default function TourDetailPage() {
 
   const highlights = tour?.highlights || []
   const cancellationPolicy = tour?.cancellationPolicy || 'Free cancellation up to 24 hours before'
+
+  const descriptionSteps = useMemo(() => {
+    const desc = tour?.description
+    if (!desc) return []
+    return [{
+      title: t('tourDetail.fullDescription'),
+      body: buildAboutContent(desc),
+    }]
+  }, [tour?.description, t])
 
   const additionalInfoSections = useMemo(() => [
     {
@@ -520,7 +549,10 @@ export default function TourDetailPage() {
                     >
                       <div className="tour-detail-overview">
                         {shortDescriptionText && (
-                          <p className="tour-detail-short-description">{shortDescriptionText}</p>
+                          <div className="tour-detail-short-description-block">
+                            <h2 className="overview-section-title">{t('tourDetail.shortDescription')}</h2>
+                            <p className="tour-detail-short-description">{shortDescriptionText}</p>
+                          </div>
                         )}
 
                         <TourQuickFacts items={tourQuickFacts} />
@@ -528,7 +560,8 @@ export default function TourDetailPage() {
                         <TourItineraryPreview itinerary={tour.itinerary} />
 
                         <OverviewSection
-                          descriptionSteps={[]}
+                          descriptionSteps={descriptionSteps}
+                          descriptionLong={(tour?.description?.length || 0) > 300}
                           highlights={highlights}
                           reviews={allReviewCards.map(r => ({ id: r.id, name: r.name, date: r.date, rating: r.rating, text: r.text, country: '' }))}
                           onTabChange={setActiveTab}

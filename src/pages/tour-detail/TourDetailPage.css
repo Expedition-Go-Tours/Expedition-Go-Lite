@@ -54,8 +54,21 @@
 }
 
 /* Short teaser description, first block of the Overview tab */
+.tour-detail-short-description-block {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tour-detail-short-description-block .overview-section-title {
+  margin: 0;
+}
+
+.tour-detail-short-description-block .tour-detail-short-description {
+  margin: 0;
+}
+
 .tour-detail-short-description {
-  margin: 8px 0 0;
   font-size: 15px;
   line-height: 1.7;
   color: #000;

@@ -20,6 +20,7 @@ export default function TourItineraryPreview({ itinerary }: TourItineraryPreview
 
   const isLong = itinerary.length > PREVIEW_COUNT
   const previewStops = itinerary.slice(0, PREVIEW_COUNT)
+  const extraStops = itinerary.slice(PREVIEW_COUNT)
 
   const stopMeta = (stop: ItineraryDay) => {
     const durationLabel = formatItineraryDuration(stop.duration, stop.durationUnit)
@@ -29,23 +30,7 @@ export default function TourItineraryPreview({ itinerary }: TourItineraryPreview
     ].filter(Boolean).join(' \u2022 ')
   }
 
-  const renderCard = (stop: ItineraryDay, index: number) => {
-    const displayTitle = stop.locationName || stop.title
-    return (
-      <div className="itinerary-preview-card">
-        <span className="itinerary-preview-card-badge">{index + 1}</span>
-        {displayTitle && (
-          <h3 className="itinerary-preview-card-title">{displayTitle}</h3>
-        )}
-        {stop.description && (
-          <p className="itinerary-preview-card-desc">{stop.description}</p>
-        )}
-        {stopMeta(stop) && <p className="itinerary-preview-card-meta">{stopMeta(stop)}</p>}
-      </div>
-    )
-  }
-
-  const renderTimelineStop = (stop: ItineraryDay, index: number) => {
+  const renderStop = (stop: ItineraryDay, index: number) => {
     const isLast = index === itinerary.length - 1
     const displayTitle = stop.locationName || stop.title
     return (
@@ -73,33 +58,31 @@ export default function TourItineraryPreview({ itinerary }: TourItineraryPreview
     <section className="itinerary-preview">
       <h2 className="overview-section-title">{t('tourDetail.itineraryPreview')}</h2>
       <div className="itinerary-preview-body">
-        <AnimatePresence mode="wait" initial={false}>
-          {!expanded ? (
-            <motion.div
-              key="cards"
-              className="itinerary-preview-cards"
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.2 }}
-            >
-              {previewStops.map((stop, i) => (
-                <div key={`card-${i}-${stop.title}`}>{renderCard(stop, i)}</div>
-              ))}
-            </motion.div>
-          ) : (
-            <motion.div
-              key="timeline"
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.25 }}
-            >
-              <div className="itinerary-stops-simple">
-                {itinerary.map((stop, i) => (
-                  <div key={`stop-${i}-${stop.title}`}>{renderTimelineStop(stop, i)}</div>
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        <div className={`itinerary-preview-stops-wrap${isLong && !expanded ? ' has-fade' : ''}`}>
+          <div className="itinerary-stops-simple">
+            {previewStops.map((stop, i) => (
+              <div key={`preview-${i}-${stop.title}`}>{renderStop(stop, i)}</div>
+            ))}
+          </div>
+          <AnimatePresence initial={false}>
+            {expanded && (
+              <motion.div
+                key="extra"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.3, ease: 'easeOut' }}
+              >
+                <div className="itinerary-stops-simple">
+                  {extraStops.map((stop, i) => (
+                    <div key={`extra-${i}-${stop.title}`}>{renderStop(stop, PREVIEW_COUNT + i)}</div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          {isLong && !expanded && <div className="itinerary-preview-fade" />}
+        </div>
         {isLong && (
           <button
             type="button"

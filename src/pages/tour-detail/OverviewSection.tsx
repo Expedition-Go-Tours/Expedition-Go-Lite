@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import {
   Star, Check, ChevronLeft, ChevronRight,
 } from 'lucide-react'
@@ -9,6 +9,7 @@ import './OverviewSection.css'
 
 interface OverviewSectionProps {
   descriptionSteps: { title: string; body: ReactNode }[]
+  descriptionLong?: boolean
   highlights: string[]
   reviews: {
     id: string
@@ -24,13 +25,14 @@ interface OverviewSectionProps {
 
 export default function OverviewSection({
   descriptionSteps,
+  descriptionLong = false,
   highlights,
   reviews,
   onTabChange,
   onReviewReadMore,
 }: OverviewSectionProps) {
   const { t } = useTranslation()
-  const [fullDescriptionExpanded, setFullDescriptionExpanded] = useState(true)
+  const [fullDescriptionExpanded, setFullDescriptionExpanded] = useState(false)
   const travellersLovedRef = useRef<HTMLDivElement>(null)
   const [showLeftArrow, setShowLeftArrow] = useState(false)
   const [showRightArrow, setShowRightArrow] = useState(true)
@@ -55,43 +57,6 @@ export default function OverviewSection({
 
   return (
     <section className="overview-section">
-      {/* Full Description */}
-      {descriptionSteps.length > 0 && (
-        <div className="overview-description">
-          <ol className="overview-description-list">
-            {descriptionSteps.slice(0, 2).map((step) => (
-              <li key={step.title}>
-                <p className="overview-description-step-title">{step.title}</p>
-                <div className="overview-description-step-body">{step.body}</div>
-              </li>
-            ))}
-            <AnimatePresence initial={false}>
-              {fullDescriptionExpanded && descriptionSteps.slice(2).map((step) => (
-                <motion.li
-                  key={step.title}
-                  initial={{ opacity: 0, y: -8, height: 0 }}
-                  animate={{ opacity: 1, y: 0, height: 'auto' }}
-                  exit={{ opacity: 0, y: -8, height: 0 }}
-                  transition={{ duration: 0.25, ease: 'easeOut' }}
-                >
-                  <p className="overview-description-step-title">{step.title}</p>
-                  <div className="overview-description-step-body">{step.body}</div>
-                </motion.li>
-              ))}
-            </AnimatePresence>
-          </ol>
-          {descriptionSteps.length > 2 && (
-            <button
-              type="button"
-              onClick={() => setFullDescriptionExpanded((v) => !v)}
-              className="overview-description-toggle"
-            >
-              {fullDescriptionExpanded ? t('tourDetail.seeLess') : t('tourDetail.seeMore')}
-            </button>
-          )}
-        </div>
-      )}
-
       {/* What Travellers Loved */}
       {displayReviews.length > 0 && (
         <section className="overview-travellers">
@@ -191,6 +156,45 @@ export default function OverviewSection({
               <li key={item}>{item}</li>
             ))}
           </ul>
+        </section>
+      )}
+
+      {/* Full Description */}
+      {descriptionSteps.length > 0 && (
+        <section className="overview-description">
+          <h2 className="overview-section-title">{descriptionSteps[0].title}</h2>
+          <div className="overview-description-content">
+            <motion.div
+              className="overview-description-collapse"
+              initial={false}
+              animate={{ height: fullDescriptionExpanded || !descriptionLong ? 'auto' : 150 }}
+              transition={{ duration: 0.3, ease: 'easeInOut' }}
+              style={{ overflow: 'hidden' }}
+            >
+              <ol className="overview-description-list">
+                {descriptionSteps.map((step) => (
+                  <li key={step.title}>
+                    {descriptionSteps.length > 1 && (
+                      <p className="overview-description-step-title">{step.title}</p>
+                    )}
+                    <div className="overview-description-step-body">{step.body}</div>
+                  </li>
+                ))}
+              </ol>
+              {descriptionLong && !fullDescriptionExpanded && (
+                <div className="overview-description-fade" />
+              )}
+            </motion.div>
+            {descriptionLong && (
+              <button
+                type="button"
+                onClick={() => setFullDescriptionExpanded((v) => !v)}
+                className="overview-description-toggle"
+              >
+                {fullDescriptionExpanded ? t('tourDetail.seeLess') : t('tourDetail.seeMore')}
+              </button>
+            )}
+          </div>
         </section>
       )}
     </section>

@@ -50,6 +50,7 @@ export interface TourDetail {
   pickupIncluded?: boolean
   cancellationPolicy?: string
   travelerPricing?: TravelerPricing[]
+  skipTheLine?: string | null
   guide?: TourGuide
   contact?: ContactInfo
 }
