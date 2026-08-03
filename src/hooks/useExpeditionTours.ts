@@ -19,7 +19,7 @@ async function expeditionFetchRaw(path: string) {
   return payload
 }
 
-function extractStartingPriceFromRaw(sp: unknown): number | null {
+export function extractStartingPriceFromRaw(sp: unknown): number | null {
   if (!sp) return null;
   try {
     const data = typeof sp === 'string' ? JSON.parse(sp) : sp as Record<string, any>;
@@ -68,7 +68,15 @@ function extractStartingPriceFromRaw(sp: unknown): number | null {
   }
 }
 
-function formatDuration(minutes: number | null): string {
+function parseJsonMaybe(value: unknown): any {
+  if (!value) return {}
+  if (typeof value === 'string') {
+    try { return JSON.parse(value) } catch { return {} }
+  }
+  return value
+}
+
+export function formatDuration(minutes: number | null): string {
   if (!minutes) return ''
   if (minutes >= 1440) {
     const days = Math.round(minutes / 1440)
@@ -107,6 +115,7 @@ interface ExpeditionTourRecord {
     city: string | null
     country: string | null
     categorization?: any
+    productContent?: any
     bookingAndTickets?: any
     difficulty?: string | null
     cancellationPolicy?: string | null
@@ -329,10 +338,80 @@ function extractSkipTheLine(rawTour: any): string | null {
   }
 }
 
+function parseProductContent(rawTour: any): any {
+  if (!rawTour) return {}
+  try {
+    return typeof rawTour.productContent === 'string'
+      ? JSON.parse(rawTour.productContent)
+      : (rawTour.productContent || {})
+  } catch {
+    return {}
+  }
+}
+
+function extractLanguagesFromTour(rawTour: any): string[] {
+  try {
+    const pc = parseProductContent(rawTour)
+    const set = new Set<string>()
+    const writing = pc?.writingLanguage
+    if (typeof writing === 'string' && writing.trim()) set.add(writing.trim())
+    const options = Array.isArray(pc?.options) ? pc.options : []
+    for (const o of options) {
+      if (Array.isArray(o?.languages)) {
+        for (const l of o.languages) {
+          if (typeof l === 'string' && l.trim()) set.add(l.trim())
+        }
+      }
+    }
+    return Array.from(set)
+  } catch {
+    return []
+  }
+}
+
+function extractWheelchairAccessible(rawTour: any): boolean {
+  try {
+    const pc = parseProductContent(rawTour)
+    const options = Array.isArray(pc?.options) ? pc.options : []
+    return options.some((o: any) => o?.wheelchairAccessible === true)
+  } catch {
+    return false
+  }
+}
+
+function extractFoodProvided(rawTour: any): boolean {
+  return !!parseProductContent(rawTour)?.foodProvided
+}
+
+function extractDrinksIncluded(rawTour: any): boolean {
+  return !!parseProductContent(rawTour)?.drinksIncluded
+}
+
+function extractGuideType(rawTour: any): string {
+  return (parseProductContent(rawTour)?.guideType as string) || 'tour-guide'
+}
+
+function extractGuideMaterials(rawTour: any): { audioGuide: boolean; infoBooklet: boolean } {
+  try {
+    const gm = parseProductContent(rawTour)?.guideMaterials || {}
+    return {
+      audioGuide: !!gm.audioGuide,
+      infoBooklet: !!gm.infoBooklet,
+    }
+  } catch {
+    return { audioGuide: false, infoBooklet: false }
+  }
+}
+
+function extractPetFriendly(rawTour: any): boolean {
+  return !!parseProductContent(rawTour)?.petFriendly
+}
+
 function mapToListing(tour: ExpeditionTourRecord['tour']): TourCardData {
   const location = [tour.city, tour.country].filter(Boolean).join(', ')
   const isExternal = tour.bookingFlow === 'EXTERNAL'
   const effectivePrice = tour.startingPrice ?? extractStartingPriceFromRaw(tour.schedulesAndPricing)
+  const languages = tour.languages?.length ? tour.languages : extractLanguagesFromTour(tour)
 
   let effectiveDuration = tour.durationMinutes
   if (!effectiveDuration && tour.categorization) {
@@ -363,7 +442,7 @@ function mapToListing(tour: ExpeditionTourRecord['tour']): TourCardData {
     source: isExternal ? 'travio-africa' : 'expedition-go',
     externalUrl: isExternal ? (tour.externalUrl || undefined) : undefined,
     slug: tour.slug,
-    languages: tour.languages?.length ? tour.languages : undefined,
+    languages: languages.length ? languages : undefined,
     difficulty: extractDifficultyFromTour(tour) || undefined,
     cancellationPolicy: extractCancellationFromTour(tour) || undefined,
     pickupIncluded: tour.pickupIncluded ?? (tour.bookingAndTickets?.pickupAvailable ?? tour.bookingAndTickets?.pickupProvided) ?? undefined,
@@ -420,6 +499,7 @@ export function useExpeditionTours(filters: ExpeditionToursFilters = {}) {
           const durationMap = new Map<string, number | null>()
           const difficultyMap = new Map<string, string | null>()
           const cancellationMap = new Map<string, string | null>()
+          const languagesMap = new Map<string, string[]>()
           for (const t of allTours) {
             const p = extractStartingPriceFromRaw(t.schedulesAndPricing)
             if (p != null) priceMap.set(t.id, p)
@@ -428,6 +508,7 @@ export function useExpeditionTours(filters: ExpeditionToursFilters = {}) {
             durationMap.set(t.id, extractDurationFromTour(t))
             difficultyMap.set(t.id, extractDifficultyFromTour(t))
             cancellationMap.set(t.id, extractCancellationFromTour(t))
+            languagesMap.set(t.id, extractLanguagesFromTour(t))
           }
           for (const r of records) {
             if (r.tour.startingPrice == null) {
@@ -449,6 +530,10 @@ export function useExpeditionTours(filters: ExpeditionToursFilters = {}) {
             }
             if (!extractCancellationFromTour(r.tour)) {
               r.tour.cancellationPolicy = cancellationMap.get(r.tour.id) ?? null
+            }
+            if (!r.tour.languages?.length) {
+              const fallbackLanguages = languagesMap.get(r.tour.id)
+              if (fallbackLanguages?.length) r.tour.languages = fallbackLanguages
             }
           }
         } catch (e) {
@@ -494,8 +579,103 @@ export interface TourDetailData extends Omit<TourDetail, 'guide' | 'contact' | '
   startingPrice: number | null
   travelerPricing: TravelerPricing[]
   skipTheLine?: string | null
+  wheelchairAccessible?: boolean
+  foodProvided?: boolean
+  drinksIncluded?: boolean
+  guideType?: string
+  guideMaterials?: { audioGuide: boolean; infoBooklet: boolean }
+  petFriendly?: boolean
   guide?: TourDetail['guide']
   contact?: TourDetail['contact']
+}
+
+/**
+ * Fetches a tour directly from the public /tours/:id endpoint (works for
+ * any ACTIVE tour, regardless of whether it has been curated onto the
+ * Expedition-Go homepage). Used as a fallback so newly created / uncurated
+ * tours found via search can still be opened on the detail page.
+ */
+async function fetchRawTourBySlugOrId(idOrSlug: string): Promise<any | null> {
+  const base = getApiBaseUrl()
+  const token = await getAuthToken()
+  const res = await fetch(`${base}/tours/${encodeURIComponent(idOrSlug)}`, {
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  })
+  if (!res.ok) return null
+  const payload = await res.json().catch(() => ({}))
+  return payload.data?.tour ?? payload.tour ?? payload ?? null
+}
+
+function buildTourDetailFromRawTour(rawTour: any): TourDetailData {
+  const pc = parseJsonMaybe(rawTour?.productContent)
+  const bt = parseJsonMaybe(rawTour?.bookingAndTickets)
+
+  const durationMinutes = rawTour?.durationMinutes ?? extractDurationFromTour(rawTour)
+  const resolvedPrice = extractStartingPriceFromRaw(rawTour?.schedulesAndPricing) ?? 0
+  const city = rawTour?.city || extractCityFromTour(rawTour)
+  const country = rawTour?.country || extractCountryFromTour(rawTour)
+  const location = [city, country].filter(Boolean).join(', ')
+  const travelerPricing = extractTravelerPricing(rawTour)
+  const skipTheLine = extractSkipTheLine(rawTour)
+  const languages = extractLanguagesFromTour(rawTour)
+  const itinerary = Array.isArray(pc?.itinerary) ? pc.itinerary : []
+
+  return {
+    id: rawTour?.id || '',
+    title: rawTour?.title || '',
+    slug: rawTour?.slug || '',
+    description: rawTour?.description || '',
+    shortDescription: typeof pc?.shortSummary === 'string' ? pc.shortSummary : undefined,
+    images: Array.isArray(rawTour?.photos) ? rawTour.photos : [],
+    coverPhoto: rawTour?.coverPhoto || null,
+    category: rawTour?.category || '',
+    duration: formatDuration(durationMinutes),
+    price: resolvedPrice,
+    currency: rawTour?.schedulesAndPricing
+      ? (parseJsonMaybe(rawTour.schedulesAndPricing)?.pricingSchedules?.currency || 'USD')
+      : 'USD',
+    startingPrice: resolvedPrice,
+    rating: rawTour?.averageRating != null ? Number(rawTour.averageRating) : 0,
+    reviewCount: rawTour?.reviewCount || rawTour?._count?.reviews || 0,
+    location,
+    city: city || null,
+    country: country || null,
+    difficulty: extractDifficultyFromTour(rawTour) || undefined,
+    tags: Array.isArray(rawTour?.tags) ? rawTour.tags : [],
+    highlights: Array.isArray(pc?.highlights) ? pc.highlights : [],
+    included: Array.isArray(pc?.included) ? pc.included : [],
+    excluded: Array.isArray(pc?.excluded) ? pc.excluded : [],
+    whatToBring: Array.isArray(pc?.whatToBring) ? pc.whatToBring : [],
+    notSuitableFor: Array.isArray(pc?.healthRestrictions) ? pc.healthRestrictions : [],
+    notAllowed: Array.isArray(pc?.notAllowed) ? pc.notAllowed : [],
+    additionalInfo: typeof pc?.additionalInfo === 'string' ? pc.additionalInfo : '',
+    itinerary,
+    faqs: [],
+    coordinates: { lat: rawTour?.latitude ?? 0, lng: rawTour?.longitude ?? 0 },
+    cancellationPolicy: extractCancellationFromTour(rawTour) || 'Free cancellation up to 24 hours before',
+    meetingPoint: bt?.meetingPoint || '',
+    languages,
+    supplierName: rawTour?.supplier?.name || '',
+    supplierPhoto: rawTour?.supplier?.photoURL || null,
+    bookingFlow: 'DIRECT',
+    externalUrl: null,
+    groupSize: 15,
+    tourType: durationMinutes && durationMinutes >= 1440 ? 'multi-day' : 'day',
+    availability: [],
+    pickupIncluded: !!(bt?.pickupProvided ?? bt?.pickupAvailable),
+    travelerPricing,
+    skipTheLine,
+    wheelchairAccessible: extractWheelchairAccessible(rawTour),
+    foodProvided: extractFoodProvided(rawTour),
+    drinksIncluded: extractDrinksIncluded(rawTour),
+    guideType: extractGuideType(rawTour),
+    guideMaterials: extractGuideMaterials(rawTour),
+    petFriendly: extractPetFriendly(rawTour),
+  }
 }
 
 export function useExpeditionTour(slug: string | undefined) {
@@ -503,9 +683,29 @@ export function useExpeditionTour(slug: string | undefined) {
     queryKey: ['expedition', 'tour', slug],
     enabled: !!slug,
     queryFn: async () => {
-      const payload = await expeditionFetchRaw(`/expedition/tours/${encodeURIComponent(slug!)}`)
+      // Try the curated (homepage) endpoint first — it's cached and includes
+      // a few pre-computed fields. If the tour hasn't been curated (e.g. it
+      // was just created by a supplier), fall back to the public /tours/:id
+      // endpoint so it's still viewable when found via search.
+      let payload: any
+      try {
+        payload = await expeditionFetchRaw(`/expedition/tours/${encodeURIComponent(slug!)}`)
+      } catch (e: any) {
+        const rawTour = await fetchRawTourBySlugOrId(slug!)
+        if (rawTour) {
+          return buildTourDetailFromRawTour(rawTour)
+        }
+        throw e
+      }
       const wrapper = payload.data?.tour ?? {}
       const tour = wrapper.tour ?? {}
+
+      if (!tour.id) {
+        const rawTour = await fetchRawTourBySlugOrId(slug!)
+        if (rawTour) {
+          return buildTourDetailFromRawTour(rawTour)
+        }
+      }
 
       const tourType = tour.durationMinutes && tour.durationMinutes >= 1440 ? 'multi-day' : 'day'
 
@@ -531,6 +731,13 @@ export function useExpeditionTour(slug: string | undefined) {
             const rawTour = rawPayload.data?.tour ?? rawPayload.tour ?? rawPayload
             travelerPricing = extractTravelerPricing(rawTour)
             skipTheLine = extractSkipTheLine(rawTour)
+            // Dynamic per-option / inclusion facts selected by the supplier
+            tour.wheelchairAccessible = extractWheelchairAccessible(rawTour)
+            tour.foodProvided = extractFoodProvided(rawTour)
+            tour.drinksIncluded = extractDrinksIncluded(rawTour)
+            tour.guideType = extractGuideType(rawTour)
+            tour.guideMaterials = extractGuideMaterials(rawTour)
+            tour.petFriendly = extractPetFriendly(rawTour)
             if (resolvedPrice == null) {
               resolvedPrice = extractStartingPriceFromRaw(rawTour?.schedulesAndPricing)
             }
@@ -564,10 +771,13 @@ export function useExpeditionTour(slug: string | undefined) {
             if (pcShort && typeof pcShort.shortSummary === 'string') {
               shortDescription = pcShort.shortSummary
             }
-            // Extract guide/spoken language (productContent.writingLanguage)
-            if (!Array.isArray(tour.languages) || tour.languages.length === 0) {
-              if (pcShort && typeof pcShort.writingLanguage === 'string' && pcShort.writingLanguage) {
-                tour.languages = [pcShort.writingLanguage]
+            // Extract guide/spoken language (productContent.writingLanguage + option languages)
+            if (pcShort) {
+              const optionLangs = extractLanguagesFromTour(rawTour)
+              if (!Array.isArray(tour.languages) || tour.languages.length === 0) {
+                tour.languages = optionLangs
+              } else if (optionLangs.length > 0) {
+                tour.languages = Array.from(new Set([...tour.languages, ...optionLangs]))
               }
             }
             // Extract pickup included from bookingAndTickets (pickupProvided / pickupAvailable)
@@ -655,6 +865,12 @@ export function useExpeditionTour(slug: string | undefined) {
         pickupIncluded: !!tour.pickupIncluded,
         travelerPricing,
         skipTheLine,
+        wheelchairAccessible: !!tour.wheelchairAccessible,
+        foodProvided: !!tour.foodProvided,
+        drinksIncluded: !!tour.drinksIncluded,
+        guideType: tour.guideType || undefined,
+        guideMaterials: tour.guideMaterials || undefined,
+        petFriendly: !!tour.petFriendly,
       }
       return result
     },
@@ -687,6 +903,7 @@ export function useSimilarTours(slug: string | undefined) {
           const difficultyMap = new Map<string, string | null>()
           const cancellationMap = new Map<string, string | null>()
           const pickupMap = new Map<string, boolean | undefined>()
+          const languagesMap = new Map<string, string[]>()
           for (const t of allTours) {
             const p = extractStartingPriceFromRaw(t.schedulesAndPricing)
             if (p != null) priceMap.set(t.id, p)
@@ -696,6 +913,7 @@ export function useSimilarTours(slug: string | undefined) {
             difficultyMap.set(t.id, extractDifficultyFromTour(t))
             cancellationMap.set(t.id, extractCancellationFromTour(t))
             pickupMap.set(t.id, t.pickupIncluded ?? (t.bookingAndTickets?.pickupAvailable ?? t.bookingAndTickets?.pickupProvided) ?? undefined)
+            languagesMap.set(t.id, extractLanguagesFromTour(t))
           }
           for (const r of records) {
             if (r.tour.startingPrice == null) {
@@ -721,6 +939,10 @@ export function useSimilarTours(slug: string | undefined) {
             if (r.tour.pickupIncluded == null) {
               const p = pickupMap.get(r.tour.id)
               if (p != null) r.tour.pickupIncluded = p
+            }
+            if (!r.tour.languages?.length) {
+              const fallbackLanguages = languagesMap.get(r.tour.id)
+              if (fallbackLanguages?.length) r.tour.languages = fallbackLanguages
             }
           }
         } catch (e) {

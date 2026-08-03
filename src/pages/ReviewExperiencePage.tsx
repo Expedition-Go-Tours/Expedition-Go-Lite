@@ -11,7 +11,7 @@ import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import ReviewTourCard from '../pages/tour-detail/ReviewTourCard'
 import { CalendarPicker } from '../components/ui/apple-calendar-picker'
-import { useCreateReview } from '../hooks/useExpeditionReviews'
+import { useCreateReview, useUpdateReview } from '../hooks/useExpeditionReviews'
 import './ReviewExperiencePage.css'
 
 const REVIEW_DRAFT_PREFIX = 'eg_review_draft:'
@@ -88,6 +88,8 @@ export default function ReviewExperiencePage() {
   const location = useLocation()
   const stateTour = location.state?.tour
   const returnTo = location.state?.returnTo || `/tour/${tourSlugParam || ''}#reviews`
+  const stateBookingId: string | undefined = location.state?.bookingId
+  const editingReviewId: string | undefined = location.state?.editingReviewId
 
   const tour = stateTour || {
     title: tourSlugParam ? decodeURIComponent(tourSlugParam).replace(/-/g, ' ') : 'Tour',
@@ -161,6 +163,7 @@ export default function ReviewExperiencePage() {
   }
 
   const createReview = useCreateReview()
+  const updateReview = useUpdateReview()
 
   const handleSubmit = async () => {
     if (!overallRating) {
@@ -176,14 +179,30 @@ export default function ReviewExperiencePage() {
       return
     }
 
+    if (!editingReviewId && !stateBookingId) {
+      toast.error(t('reviews.errorMissingBooking', {
+        defaultValue: 'We couldn\u2019t find a completed booking to review. Please open this page from a completed booking.',
+      }))
+      return
+    }
+
     setIsSubmitting(true)
     try {
-      await createReview.mutateAsync({
-        bookingId: tour.tourId || tour.id || 'unknown',
-        rating: overallRating,
-        title: reviewTitle.trim() || undefined,
-        comment: reviewText.trim(),
-      })
+      if (editingReviewId) {
+        await updateReview.mutateAsync({
+          id: editingReviewId,
+          rating: overallRating,
+          title: reviewTitle.trim() || undefined,
+          comment: reviewText.trim(),
+        })
+      } else {
+        await createReview.mutateAsync({
+          bookingId: stateBookingId!,
+          rating: overallRating,
+          title: reviewTitle.trim() || undefined,
+          comment: reviewText.trim(),
+        })
+      }
 
       const submittedReview = {
         id: `submitted-${Date.now()}`,
@@ -429,13 +448,20 @@ export default function ReviewExperiencePage() {
                 </section>
 
                 {/* Submit */}
+                {!editingReviewId && !stateBookingId && (
+                  <p className="review-missing-booking-notice" role="alert">
+                    {t('reviews.errorMissingBooking', {
+                      defaultValue: 'We couldn\u2019t find a completed booking to review. Please open this page from a completed booking.',
+                    })}
+                  </p>
+                )}
                 <button
                   type="button"
                   onClick={handleSubmit}
-                  disabled={isSubmitting || !overallRating || !certified}
+                  disabled={isSubmitting || !overallRating || !certified || (!editingReviewId && !stateBookingId)}
                   className="review-submit-btn"
                 >
-                  {isSubmitting ? t('common.submitting') : t('reviews.submitReview')}
+                  {isSubmitting ? t('common.submitting') : editingReviewId ? t('reviews.updateReview', { defaultValue: 'Update Review' }) : t('reviews.submitReview')}
                 </button>
               </div>
             </div>

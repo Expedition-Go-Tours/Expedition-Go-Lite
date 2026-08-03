@@ -151,9 +151,9 @@ export function buildStringListContent(items: string[]): React.ReactNode {
     return <p className="details-text">{i18n.t('tourDetail.detailsNotAvailable')}</p>
   }
   return (
-    <ul className="details-list">
+    <ul className="details-bullet-list">
       {items.map((item, i) => (
-        <li key={i} className="details-list-item">
+        <li key={i} className="details-bullet-item">
           <span>{typeof item === 'string' ? item : String(item)}</span>
         </li>
       ))}

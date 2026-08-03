@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Star, Edit3, Trash2, ChevronDown, ChevronUp, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { useMyReviews, useDeleteReview, type MyReviewData } from "../../hooks/useExpeditionReviews";
 
 const REVIEW_DRAFT_PREFIX = "eg_review_draft:";
 
@@ -23,61 +24,10 @@ function getTimeLeft(submittedAt: string): string | null {
   return `${secs}s`;
 }
 
-interface Review {
-  id: string
-  tourTitle: string
-  slug: string
-  location: string
-  rating: number
-  comment: string
-  date: string
-  submittedAt: string
-  imageUrl: string
-  duration: string
-}
-
-const mockReviews: Review[] = [
-  {
-    id: "1",
-    tourTitle: "Cape Coast Castle & Kakum National Park",
-    slug: "cape-coast-castle-and-kakum-national-park",
-    location: "Cape Coast, Ghana",
-    rating: 5,
-    comment: "Absolutely incredible experience! The canopy walkway was breathtaking and the castle tour was deeply moving. Our guide was knowledgeable and passionate.",
-    date: "2024-03-20",
-    submittedAt: new Date(Date.now() - 2 * 60 * 1000).toISOString(),
-    imageUrl: "https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?w=200",
-    duration: "Full day",
-  },
-  {
-    id: "2",
-    tourTitle: "Mole National Park Safari Adventure",
-    slug: "mole-national-park-safari-adventure",
-    location: "Mole, Ghana",
-    rating: 4,
-    comment: "Saw elephants, antelopes, and baboons up close. The accommodation was basic but comfortable. A must-do for nature lovers!",
-    date: "2024-02-14",
-    submittedAt: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
-    imageUrl: "https://images.unsplash.com/photo-1516426122078-c23e76319801?w=200",
-    duration: "2 days",
-  },
-  {
-    id: "3",
-    tourTitle: "Kumasi Cultural Heritage Tour",
-    slug: "kumasi-cultural-heritage-tour",
-    location: "Kumasi, Ghana",
-    rating: 5,
-    comment: "Rich cultural experience. The Manhyia Palace and Kejetia Market were unforgettable. Learned so much about Ashanti history.",
-    date: "2024-01-28",
-    submittedAt: new Date(Date.now() - 20 * 60 * 1000).toISOString(),
-    imageUrl: "https://images.unsplash.com/photo-1523805009345-7448845a9e53?w=200",
-    duration: "Full day",
-  },
-];
-
 export default function ReviewsPage() {
   const navigate = useNavigate();
-  const [reviews, setReviews] = useState<Review[]>(mockReviews);
+  const { data: reviews = [], isLoading, isError } = useMyReviews();
+  const deleteReview = useDeleteReview();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [, forceUpdate] = useState(0);
 
@@ -86,13 +36,17 @@ export default function ReviewsPage() {
     return () => clearInterval(timer);
   }, []);
 
-  const handleDelete = (id: string) => {
-    setReviews((prev) => prev.filter((r) => r.id !== id));
-    toast.success("Review deleted");
+  const handleDelete = async (review: MyReviewData) => {
+    try {
+      await deleteReview.mutateAsync(review.id);
+      toast.success("Review deleted");
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to delete review");
+    }
   };
 
-  const handleEdit = (review: Review) => {
-    const elapsed = Date.now() - new Date(review.submittedAt).getTime();
+  const handleEdit = (review: MyReviewData) => {
+    const elapsed = Date.now() - new Date(review.createdAt).getTime();
     if (elapsed > EDIT_WINDOW_MS) {
       toast.error("Edit window has expired. Reviews can only be edited within 15 minutes of posting.");
       return;
@@ -101,7 +55,6 @@ export default function ReviewsPage() {
     const draftData = {
       overallRating: review.rating,
       reviewText: review.comment,
-      selectedDate: review.date,
     };
     try {
       sessionStorage.setItem(getDraftKey(review.tourTitle), JSON.stringify(draftData));
@@ -109,17 +62,36 @@ export default function ReviewsPage() {
 
     const tour = {
       title: review.tourTitle,
-      image: review.imageUrl,
-      location: review.location,
-      slug: review.slug,
+      image: review.tourImage || '',
+      location: review.tourLocation,
+      slug: review.tourSlug,
       rating: review.rating,
-      duration: review.duration,
+      tourId: review.tourId,
     };
 
-    navigate(`/review/${review.slug}`, {
-      state: { tour, returnTo: "/dashboard/reviews" },
+    navigate(`/review/${review.tourSlug}`, {
+      state: { tour, returnTo: "/dashboard/reviews", bookingId: review.bookingId, editingReviewId: review.id },
     });
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-20 text-sm text-[#6b7280]">
+        Loading your reviews...
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 px-6 text-center bg-white rounded-2xl border border-[#e5e4e7] shadow-sm">
+        <h3 className="text-xl font-heading font-semibold text-[#1a1a1a] mb-2">Couldn't load your reviews</h3>
+        <p className="text-sm text-[#6b7280] max-w-sm leading-relaxed">
+          Something went wrong while fetching your reviews. Please try again later.
+        </p>
+      </div>
+    );
+  }
 
   if (reviews.length === 0) {
     return (
@@ -131,7 +103,7 @@ export default function ReviewsPage() {
         <p className="text-sm text-[#6b7280] max-w-sm leading-relaxed mb-7">
           You haven't reviewed any tours yet. Share your experience to help other travelers!
         </p>
-        <Button className="bg-[#065f46] text-white hover:bg-[#047857]">Browse Tours</Button>
+        <Button onClick={() => navigate('/tours')} className="bg-[#065f46] text-white hover:bg-[#047857]">Browse Tours</Button>
       </div>
     );
   }
@@ -140,8 +112,8 @@ export default function ReviewsPage() {
     <div className="w-full max-w-4xl mx-auto space-y-4">
       <AnimatePresence mode="popLayout">
         {reviews.map((review) => {
-          const canEdit = Date.now() - new Date(review.submittedAt).getTime() <= EDIT_WINDOW_MS;
-          const timeLeft = canEdit ? getTimeLeft(review.submittedAt) : null;
+          const canEdit = Date.now() - new Date(review.createdAt).getTime() <= EDIT_WINDOW_MS;
+          const timeLeft = canEdit ? getTimeLeft(review.createdAt) : null;
 
           return (
             <motion.div
@@ -155,14 +127,21 @@ export default function ReviewsPage() {
             >
               <div className="flex flex-col sm:flex-row sm:gap-4 sm:p-5">
                 <div className="relative w-full h-44 sm:w-[72px] sm:h-[72px] sm:rounded-lg overflow-hidden shrink-0 bg-[#f3f4f6]">
-                  <img src={review.imageUrl} alt={review.tourTitle} className="w-full h-full object-cover" />
+                  {review.tourImage && (
+                    <img src={review.tourImage} alt={review.tourTitle} className="w-full h-full object-cover" />
+                  )}
                 </div>
 
                 <div className="flex-1 min-w-0 p-4 sm:p-0">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <h3 className="text-[15px] font-heading font-semibold text-[#1a1a1a] line-clamp-2 sm:truncate">{review.tourTitle}</h3>
-                      <p className="text-[13px] text-[#6b7280] mt-0.5">{review.location}</p>
+                      <p className="text-[13px] text-[#6b7280] mt-0.5">{review.tourLocation}</p>
+                      {review.status === 'PENDING' && (
+                        <span className="inline-block mt-1 text-[11px] font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5">
+                          Pending approval
+                        </span>
+                      )}
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
                       <div className="flex items-center gap-0.5">
@@ -180,7 +159,10 @@ export default function ReviewsPage() {
                     </div>
                   </div>
 
-                  <p className={`text-[14px] text-[#4b5563] mt-2 leading-relaxed ${expandedId !== review.id && review.comment.length > 120 ? "line-clamp-2" : ""}`}>
+                  {review.title && (
+                    <p className="text-[14px] font-semibold text-[#1a1a1a] mt-2">{review.title}</p>
+                  )}
+                  <p className={`text-[14px] text-[#4b5563] mt-1 leading-relaxed ${expandedId !== review.id && review.comment.length > 120 ? "line-clamp-2" : ""}`}>
                     {review.comment}
                   </p>
 
@@ -196,7 +178,7 @@ export default function ReviewsPage() {
 
                   <div className="flex items-center justify-between gap-2 mt-3 pt-3 border-t border-[#e5e4e7] flex-nowrap min-w-0">
                     <span className="text-[13px] text-[#9ca3af] truncate min-w-0">
-                      {new Date(review.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                      {new Date(review.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                     </span>
                     <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
                       {canEdit ? (
@@ -220,8 +202,9 @@ export default function ReviewsPage() {
                         </span>
                       )}
                       <button
-                        onClick={() => handleDelete(review.id)}
-                        className="flex items-center gap-1 sm:gap-1.5 text-[12px] sm:text-[13px] font-medium text-[#6b7280] hover:text-[#ef4444] transition-colors px-2 sm:px-2.5 py-1.5 rounded-lg hover:bg-red-50"
+                        onClick={() => handleDelete(review)}
+                        disabled={deleteReview.isPending}
+                        className="flex items-center gap-1 sm:gap-1.5 text-[12px] sm:text-[13px] font-medium text-[#6b7280] hover:text-[#ef4444] transition-colors px-2 sm:px-2.5 py-1.5 rounded-lg hover:bg-red-50 disabled:opacity-50"
                       >
                         <Trash2 size={12} className="sm:size-[13px]" />
                         Delete

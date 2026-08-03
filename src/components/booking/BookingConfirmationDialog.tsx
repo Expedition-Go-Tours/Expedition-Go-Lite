@@ -4,6 +4,8 @@ import { Check, CalendarDays, Users } from 'lucide-react'
 interface BookingConfirmationData {
   date: string
   travelers: number
+  bookingId?: string
+  tourId?: string
   tour: {
     title: string
     image: string
@@ -68,7 +70,10 @@ export default function BookingConfirmationDialog({ data, onClose }: BookingConf
               const reviewSlug = data.tour.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
               onClose()
               navigate(`/review/${reviewSlug}`, {
-                state: { tour: { ...data.tour, slug: reviewSlug } },
+                state: {
+                  tour: { ...data.tour, slug: reviewSlug, tourId: data.tourId },
+                  bookingId: data.bookingId,
+                },
               })
             }}
             className="flex-1 rounded-full border border-slate-200 py-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 active:scale-[0.98]"

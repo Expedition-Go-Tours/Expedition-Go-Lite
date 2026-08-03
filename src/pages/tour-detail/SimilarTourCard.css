@@ -160,6 +160,26 @@
   overflow: hidden;
 }
 
+/* Meta badges (category, language) */
+.similar-tour-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.similar-tour-meta-badge {
+  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7280;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
 /* Footer */
 .similar-tour-footer {
   display: flex;

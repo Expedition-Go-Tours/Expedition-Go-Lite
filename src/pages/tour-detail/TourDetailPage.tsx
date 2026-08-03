@@ -2,7 +2,8 @@ import { Component, useState, useEffect, useMemo, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
-  CalendarCheck, Clock, Users, UserCheck, Bus, Gauge,
+  CalendarCheck, Clock, UserCheck, Bus, Gauge,
+  Globe, Utensils, CupSoda, PawPrint, Accessibility, User,
 } from 'lucide-react'
 import Footer from '../../components/Footer'
 import { useContinuePlanning, toContinuePlanningItem } from '../../context/ContinuePlanningContext'
@@ -11,7 +12,7 @@ import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
 import { useExpeditionTour, useSimilarTours } from '../../hooks/useExpeditionTours'
 import { useExpeditionTourReviews, useCreateReview } from '../../hooks/useExpeditionReviews'
-import { useTourAvailability } from '../../hooks/useExpeditionBookings'
+import { useTourAvailability, useReviewableBookingForTour } from '../../hooks/useExpeditionBookings'
 import type { DayAvailability } from '../../lib/tourAvailability'
 
 import TourImageGallery from './TourImageGallery'
@@ -65,7 +66,8 @@ export default function TourDetailPage() {
   const { addToContinuePlanning } = useContinuePlanning()
 
   const { data: tour, isLoading, isError } = useExpeditionTour(tourId)
-  const { data: reviewsData } = useExpeditionTourReviews(tourId, 1, 10)
+  const { data: reviewsData } = useExpeditionTourReviews(tourId, 1, 10, tour?.id)
+  const { data: reviewableBookingId } = useReviewableBookingForTour(tourId)
   const { data: similarTours } = useSimilarTours(tourId)
 
   const now = new Date()
@@ -196,9 +198,16 @@ export default function TourDetailPage() {
   }
 
   const handleWriteReview = () => {
+    if (!reviewableBookingId) {
+      toast.error(t('reviews.noCompletedBookingToReview', {
+        defaultValue: 'You can only review this tour after completing a booking for it.',
+      }))
+      return
+    }
     navigate(`/review/${encodeURIComponent(slug)}`, {
       state: {
         returnTo: `/tour/${slug}#reviews`,
+        bookingId: reviewableBookingId,
         tour: {
           title: selectedTourTitle,
           slug,
@@ -307,15 +316,53 @@ export default function TourDetailPage() {
       }
     }
 
-    // Live guide language is dynamic per tour (from the tour's languages list).
-    const guideLanguage = tour?.languages?.length
+    // Guide type is dynamic per tour (productContent.guideType).
+    const guideTypeLabel = (type: string): string => {
+      switch (type) {
+        case 'driver':
+          return t('tourDetail.guideTypes.driver')
+        case 'host':
+          return t('tourDetail.guideTypes.host')
+        case 'greeter':
+          return t('tourDetail.guideTypes.greeter')
+        case 'self-guided':
+          return t('tourDetail.guideTypes.selfGuided')
+        case 'instructor':
+          return t('tourDetail.guideTypes.instructor')
+        default:
+          return t('tourDetail.guideTypes.tourGuide')
+      }
+    }
+
+    // Languages are dynamic per tour (productContent.writingLanguage + option languages).
+    const languagesLabel = tour?.languages?.length
       ? tour.languages.join(', ')
       : t('tourDetail.guideLanguage')
 
+    // Guide materials (audio guide / info booklet) are dynamic per tour.
+    const guideMaterials = tour?.guideMaterials || { audioGuide: false, infoBooklet: false }
+    const guideMaterialLabels = [
+      guideMaterials.audioGuide ? t('tourDetail.guideMaterials.audioGuide') : '',
+      guideMaterials.infoBooklet ? t('tourDetail.guideMaterials.infoBooklet') : '',
+    ].filter(Boolean)
+
+    // Cancellation policy is dynamic per tour (bookingAndTickets.cancellationPolicy).
+    const cancellationLabel = tour?.cancellationPolicy || t('tourDetail.cancellationDefault')
+
+    // Food & drinks are dynamic per tour (productContent.foodProvided / drinksIncluded).
+    const foodDrinkFact = tour?.foodProvided && tour?.drinksIncluded
+      ? { icon: Utensils, title: t('tourDetail.foodAndDrinksIncluded'), desc: null as string | null }
+      : tour?.foodProvided
+        ? { icon: Utensils, title: t('tourDetail.foodIncluded'), desc: null as string | null }
+        : tour?.drinksIncluded
+          ? { icon: CupSoda, title: t('tourDetail.drinksIncluded'), desc: null as string | null }
+          : null
+
     return [
-      { icon: CalendarCheck, title: t('tourDetail.freeCancellation'), desc: t('tourDetail.cancelRefundDesc') },
+      { icon: CalendarCheck, title: t('tourDetail.cancellationPolicy'), desc: cancellationLabel },
+      { icon: Globe, title: t('tourDetail.languages'), desc: languagesLabel },
       { icon: Clock, title: t('tourDetail.duration'), desc: tour?.duration || t('tourDetail.checkAvailabilityDesc') },
-      { icon: Users, title: t('tourDetail.liveGuide'), desc: guideLanguage },
+      { icon: User, title: guideTypeLabel(tour?.guideType || 'tour-guide'), desc: guideMaterialLabels.length ? guideMaterialLabels.join(', ') : null },
       ...(diffLabel && diffColor ? [{
         icon: Gauge,
         title: t('tourInfo.difficulty'),
@@ -336,12 +383,30 @@ export default function TourDetailPage() {
         icon: UserCheck,
         title: skipTheLineLabel(tour.skipTheLine),
         desc: null,
+        renderValue: () => (
+          <>
+            <p className="tour-quick-fact-title">{t('tourDetail.skipTheLineTitle')}</p>
+            <span
+              className="difficulty-grid-badge"
+              style={{ backgroundColor: '#17923715', color: '#179237' }}
+            >
+              {skipTheLineLabel(tour.skipTheLine as string)}
+            </span>
+          </>
+        ),
       }] : []),
       ...(tour?.pickupIncluded
         ? [{ icon: Bus, title: t('tourDetail.pickupIncluded'), desc: t('tourDetail.checkAvailabilityDesc') }]
         : []),
+      ...(foodDrinkFact ? [foodDrinkFact] : []),
+      ...(tour?.petFriendly
+        ? [{ icon: PawPrint, title: t('tourDetail.petsAllowed'), desc: null }]
+        : []),
+      ...(tour?.wheelchairAccessible
+        ? [{ icon: Accessibility, title: t('tourDetail.wheelchairAccessible'), desc: null }]
+        : []),
     ]
-  }, [t, tour?.difficulty, tour?.duration, tour?.languages, tour?.pickupIncluded, tour?.skipTheLine])
+  }, [t, tour?.difficulty, tour?.duration, tour?.languages, tour?.pickupIncluded, tour?.skipTheLine, tour?.cancellationPolicy, tour?.guideType, tour?.guideMaterials, tour?.foodProvided, tour?.drinksIncluded, tour?.petFriendly, tour?.wheelchairAccessible])
 
   // Short teaser shown right after the gallery (GetYourGuide-style), no heading.
   const shortDescriptionText = useMemo(() => {

@@ -20,6 +20,8 @@ export default function SimilarTourCard({
   reviews, 
   location, 
   image,
+  category,
+  languages,
   source,
   externalUrl,
 }: SimilarTourCardProps) {
@@ -27,6 +29,11 @@ export default function SimilarTourCard({
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist()
   const item = toWishlistItem({ title, duration, features, price, rating: String(rating), reviews, location, image, source, externalUrl } as Tour)
   const inWishlist = isInWishlist(item.id)
+
+  const categoryLabel = category
+    ? category.charAt(0).toUpperCase() + category.slice(1)
+    : ''
+  const languageLabel = languages?.length ? languages.join(', ') : ''
 
   const handleWishlist = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -84,6 +91,13 @@ export default function SimilarTourCard({
         </div>
 
         <h3 className="similar-tour-title">{title}</h3>
+
+        {(categoryLabel || languageLabel) && (
+          <div className="similar-tour-meta">
+            {categoryLabel && <span className="similar-tour-meta-badge">{categoryLabel}</span>}
+            {languageLabel && <span className="similar-tour-meta-badge">{languageLabel}</span>}
+          </div>
+        )}
 
         <p className="similar-tour-features">{features}</p>
 

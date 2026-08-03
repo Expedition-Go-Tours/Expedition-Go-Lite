@@ -11,11 +11,16 @@ interface TourCardProps extends Tour {
   slug?: string
 }
 
-export default function TourCard({ title, duration, features, price, rating, reviews, location, image, discount, difficulty, cancellationPolicy, pickupIncluded, source, externalUrl, slug }: TourCardProps) {
+export default function TourCard({ title, duration, features, price, rating, reviews, location, image, discount, difficulty, cancellationPolicy, pickupIncluded, category, languages, source, externalUrl, slug }: TourCardProps) {
   const { t } = useTranslation()
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist()
   const item = toWishlistItem({ title, duration, features, price, rating: String(rating), reviews, location, image, source, externalUrl } as Tour)
   const inWishlist = isInWishlist(item.id)
+
+  const categoryLabel = category
+    ? category.charAt(0).toUpperCase() + category.slice(1)
+    : ''
+  const languageLabel = languages?.length ? languages.join(', ') : ''
 
   const handleWishlist = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -72,6 +77,8 @@ export default function TourCard({ title, duration, features, price, rating, rev
         <h3 className="tour-card-title">{title}</h3>
         <div className="tour-card-meta">
           {pickupIncluded && <span className="tour-card-meta-item">Pickup included</span>}
+          {categoryLabel && <span className="tour-card-category">{categoryLabel}</span>}
+          {languageLabel && <span className="tour-card-language">{languageLabel}</span>}
           {cancellationPolicy && <span className="tour-card-cancellation">{cancellationPolicy.toLowerCase().includes('free') ? 'Free Cancellation' : cancellationPolicy}</span>}
           {difficulty && <span className="tour-card-difficulty">{difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}</span>}
         </div>

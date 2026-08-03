@@ -852,7 +852,8 @@ export default function BookingPage() {
     date: tour.date, time: tour.time, travelers: tour.travelers, price: tour.price,
   })
   const [bookingConfirmation, setBookingConfirmation] = useState<{
-    date: string; travelers: number; tour: { title: string; image: string; rating: number; reviews: number; duration: string }
+    date: string; travelers: number; bookingId?: string; tourId?: string
+    tour: { title: string; image: string; rating: number; reviews: number; duration: string }
   } | null>(null)
 
   const [isExpired, setIsExpired] = useState(false)
@@ -953,13 +954,15 @@ export default function BookingPage() {
         },
         paymentMethodId: 'pm_placeholder',
       }
-      await createBooking.mutateAsync(payload)
+      const result = await createBooking.mutateAsync(payload)
       toast.success('Booking confirmed!')
       clearDraft()
       setBookingConfirmation({
         tour: { title: tour.title, image: tour.image, rating: tour.rating, reviews: tour.reviews, duration: tour.duration },
         date: editableTour.date,
         travelers: 1,
+        bookingId: result?.booking?.id,
+        tourId: tour.id,
       })
     } catch (err) {
       toast.error('Booking failed. Please try again.')
