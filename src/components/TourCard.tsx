@@ -11,10 +11,10 @@ interface TourCardProps extends Tour {
   slug?: string
 }
 
-export default function TourCard({ title, duration, features, price, rating, reviews, location, image, discount, difficulty, cancellationPolicy, pickupIncluded, category, languages, source, externalUrl, slug }: TourCardProps) {
+export default function TourCard({ id, title, duration, features, price, rating, reviews, location, image, discount, difficulty, cancellationPolicy, pickupIncluded, category, languages, source, externalUrl, slug }: TourCardProps) {
   const { t } = useTranslation()
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist()
-  const item = toWishlistItem({ title, duration, features, price, rating: String(rating), reviews, location, image, source, externalUrl } as Tour)
+  const item = toWishlistItem({ id, title, duration, features, price, rating: String(rating), reviews, location, image, source, externalUrl } as Tour)
   const inWishlist = isInWishlist(item.id)
 
   const categoryLabel = category

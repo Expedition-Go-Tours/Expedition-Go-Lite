@@ -343,6 +343,7 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: 18px;
+  padding-bottom: 32px;
 }
 
 .overview-highlights .overview-section-title {

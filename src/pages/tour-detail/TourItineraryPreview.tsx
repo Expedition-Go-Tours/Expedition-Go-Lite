@@ -4,6 +4,11 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import type { ItineraryDay } from '../../lib/tourTypes'
 import { formatItineraryDuration } from '../../lib/tourTypes'
+// Shared black rounded marker/timeline styles (.itinerary-stop-simple-*)
+// live in TourItinerary.css, whose only other consumer (TourItinerary.tsx)
+// isn't imported anywhere in the page — so those classes were unstyled
+// here without this import.
+import './TourItinerary.css'
 import './TourItineraryPreview.css'
 
 const PREVIEW_COUNT = 3

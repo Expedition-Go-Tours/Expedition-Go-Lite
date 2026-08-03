@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import {
   CalendarCheck, Clock, UserCheck, Bus, Gauge,
   Globe, Utensils, CupSoda, PawPrint, Accessibility, User,
+  Wifi, Users,
 } from 'lucide-react'
 import Footer from '../../components/Footer'
 import { useContinuePlanning, toContinuePlanningItem } from '../../context/ContinuePlanningContext'
@@ -33,7 +34,6 @@ import DetailsSection, {
   buildNotAllowedContent,
   buildKnowBeforeContent,
 } from './DetailsSection'
-import TourItinerary from './TourItinerary'
 import TourItineraryPreview from './TourItineraryPreview'
 import ReviewsSection from './ReviewsSection'
 import SupplierSection from './SupplierSection'
@@ -55,7 +55,6 @@ export default function TourDetailPage() {
   const { t } = useTranslation()
   const tourDetailTabs = useMemo(() => [
     { key: 'overview', label: 'Overview' },
-    { key: 'itinerary', label: t('tourDetail.itinerary') },
     { key: 'additional', label: t('tourDetail.additionalInformation') },
     { key: 'reviews', label: t('sections.reviews') },
     { key: 'supplier', label: t('tourDetail.supplier') },
@@ -163,15 +162,17 @@ export default function TourDetailPage() {
   const selectedTourReviews = tour?.reviewCount || 0
   const slug = tourId || tour?.slug || ''
 
-  const isFavorited = isInWishlist(selectedTourTitle)
+  const wishlistItemId = tour?.id || selectedTourTitle
+  const isFavorited = isInWishlist(wishlistItemId)
 
   const handleWishlistToggle = () => {
     if (isFavorited) {
-      removeFromWishlist(selectedTourTitle)
+      removeFromWishlist(wishlistItemId)
       if (!isMobile) toast.success(t('common.removedFromWishlist'))
     } else {
       addToWishlist({
-        id: selectedTourTitle,
+        id: wishlistItemId,
+        tourId: tour?.id || undefined,
         title: selectedTourTitle,
         location: tour?.location || '',
         price: tour?.price || 0,
@@ -293,13 +294,24 @@ export default function TourDetailPage() {
   }
 
   const tourQuickFacts = useMemo(() => {
-    // Difficulty is dynamic per tour — only render a badge when a real value exists,
-    // otherwise it stays hidden (matching the tour card behaviour).
+    // Reusable badge renderer — used for every Yes/No style quick fact so
+    // unselected facts still show up (in red) instead of disappearing.
+    const yesNoBadge = (isYes: boolean, yesLabel: string, noLabel: string) => (
+      <span
+        className="difficulty-grid-badge"
+        style={isYes ? { backgroundColor: '#17923715', color: '#179237' } : { backgroundColor: '#ef444415', color: '#ef4444' }}
+      >
+        {isYes ? yesLabel : noLabel}
+      </span>
+    )
+
+    // Difficulty is dynamic per tour — show the value when set, otherwise
+    // fall back to a neutral "Not specified" state so the fact still renders.
     const rawDifficulty = tour?.difficulty?.trim()
     const diffLabel = rawDifficulty
       ? rawDifficulty.charAt(0).toUpperCase() + rawDifficulty.slice(1).toLowerCase()
       : ''
-    const diffColor = diffLabel ? (difficultyColorMap[diffLabel] ?? '#6b7280') : ''
+    const diffColor = diffLabel ? (difficultyColorMap[diffLabel] ?? '#6b7280') : '#9ca3af'
 
     // Skip-the-line feature is dynamic per tour (productContent.options[].skipTheLine).
     const skipTheLineLabel = (value: string): string => {
@@ -315,55 +327,63 @@ export default function TourDetailPage() {
           return t('tourDetail.skipTheLine')
       }
     }
-
-    // Guide type is dynamic per tour (productContent.guideType).
-    const guideTypeLabel = (type: string): string => {
-      switch (type) {
-        case 'driver':
-          return t('tourDetail.guideTypes.driver')
-        case 'host':
-          return t('tourDetail.guideTypes.host')
-        case 'greeter':
-          return t('tourDetail.guideTypes.greeter')
-        case 'self-guided':
-          return t('tourDetail.guideTypes.selfGuided')
-        case 'instructor':
-          return t('tourDetail.guideTypes.instructor')
-        default:
-          return t('tourDetail.guideTypes.tourGuide')
-      }
-    }
+    const hasSkipTheLine = !!tour?.skipTheLine && tour.skipTheLine !== 'none'
 
     // Languages are dynamic per tour (productContent.writingLanguage + option languages).
     const languagesLabel = tour?.languages?.length
       ? tour.languages.join(', ')
       : t('tourDetail.guideLanguage')
 
-    // Guide materials (audio guide / info booklet) are dynamic per tour.
-    const guideMaterials = tour?.guideMaterials || { audioGuide: false, infoBooklet: false }
-    const guideMaterialLabels = [
-      guideMaterials.audioGuide ? t('tourDetail.guideMaterials.audioGuide') : '',
-      guideMaterials.infoBooklet ? t('tourDetail.guideMaterials.infoBooklet') : '',
-    ].filter(Boolean)
-
     // Cancellation policy is dynamic per tour (bookingAndTickets.cancellationPolicy).
     const cancellationLabel = tour?.cancellationPolicy || t('tourDetail.cancellationDefault')
 
-    // Food & drinks are dynamic per tour (productContent.foodProvided / drinksIncluded).
-    const foodDrinkFact = tour?.foodProvided && tour?.drinksIncluded
-      ? { icon: Utensils, title: t('tourDetail.foodAndDrinksIncluded'), desc: null as string | null }
-      : tour?.foodProvided
-        ? { icon: Utensils, title: t('tourDetail.foodIncluded'), desc: null as string | null }
-        : tour?.drinksIncluded
-          ? { icon: CupSoda, title: t('tourDetail.drinksIncluded'), desc: null as string | null }
-          : null
+    // Food & drinks: build a descriptive label from meals / dietary options
+    // (Step07 in the supplier product builder) when included, otherwise
+    // render a clear "No" badge instead of hiding the fact.
+    const foodIncluded = !!tour?.foodProvided
+    const drinksIncluded = !!tour?.drinksIncluded
+    const foodOrDrinksIncluded = foodIncluded || drinksIncluded
+    const meals = tour?.meals || []
+    const dietaryOptions = tour?.dietaryOptions || []
+    // The badge itself should surface the actual meal option(s) the
+    // supplier selected (e.g. "Breakfast, Lunch"), not a generic "Yes" —
+    // same treatment as the Skip the line fact showing its chosen option.
+    const mealTypesLabel = Array.from(new Set(meals.map((m) => m.type).filter(Boolean))).join(', ')
+    const foodDrinkBadgeLabel = [
+      foodIncluded && mealTypesLabel ? mealTypesLabel : (foodIncluded ? t('tourDetail.foodIncluded') : ''),
+      drinksIncluded ? t('tourDetail.drinksIncluded') : '',
+    ].filter(Boolean).join(' + ')
+    const foodDrinkDescParts = [
+      dietaryOptions.length ? t('tourDetail.dietaryOptionsSupported', { options: dietaryOptions.join(', ') }) : '',
+    ].filter(Boolean)
+
+    // Guide label — "Live guide" by default, "Self-guided" when the
+    // supplier selected the self-guided option.
+    const guideLabel = tour?.guideType === 'self-guided'
+      ? t('tourDetail.guideTypes.selfGuided')
+      : t('tourDetail.liveGuide')
+
+    // Private vs group experience — sourced from productContent.isPrivateActivity.
+    const isPrivateExperience = !!tour?.isPrivateActivity
 
     return [
-      { icon: CalendarCheck, title: t('tourDetail.cancellationPolicy'), desc: cancellationLabel },
-      { icon: Globe, title: t('tourDetail.languages'), desc: languagesLabel },
-      { icon: Clock, title: t('tourDetail.duration'), desc: tour?.duration || t('tourDetail.checkAvailabilityDesc') },
-      { icon: User, title: guideTypeLabel(tour?.guideType || 'tour-guide'), desc: guideMaterialLabels.length ? guideMaterialLabels.join(', ') : null },
-      ...(diffLabel && diffColor ? [{
+      // 1. Cancellation policy — always shown, green accent since a policy is always available.
+      {
+        icon: CalendarCheck,
+        title: t('tourDetail.cancellationPolicy'),
+        desc: null,
+        renderValue: () => (
+          <>
+            <p className="tour-quick-fact-title">{t('tourDetail.cancellationPolicy')}</p>
+            <span className="difficulty-grid-badge" style={{ backgroundColor: '#17923715', color: '#179237' }}>
+              {cancellationLabel}
+            </span>
+          </>
+        ),
+      },
+
+      // 2. Difficulty — always shown, neutral badge if not specified.
+      {
         icon: Gauge,
         title: t('tourInfo.difficulty'),
         desc: null,
@@ -374,39 +394,176 @@ export default function TourDetailPage() {
               className="difficulty-grid-badge"
               style={{ backgroundColor: `${diffColor}15`, color: diffColor }}
             >
-              {diffLabel}
+              {diffLabel || t('tourInfo.notSpecified', { defaultValue: 'Not specified' })}
             </span>
           </>
         ),
-      }] : []),
-      ...(tour?.skipTheLine && tour.skipTheLine !== 'none' ? [{
+      },
+
+      // 3. Duration — always shown, green accent when a real duration is set.
+      {
+        icon: Clock,
+        title: t('tourDetail.duration'),
+        desc: null,
+        renderValue: () => (
+          <>
+            <p className="tour-quick-fact-title">{t('tourDetail.duration')}</p>
+            {tour?.duration
+              ? (
+                <span className="difficulty-grid-badge" style={{ backgroundColor: '#17923715', color: '#179237' }}>
+                  {tour.duration}
+                </span>
+              )
+              : <p className="tour-quick-fact-desc">{t('tourDetail.checkAvailabilityDesc')}</p>}
+          </>
+        ),
+      },
+
+      // 4. Skip the line — always shown, red "No" when not offered.
+      {
         icon: UserCheck,
-        title: skipTheLineLabel(tour.skipTheLine),
+        title: t('tourDetail.skipTheLineTitle'),
         desc: null,
         renderValue: () => (
           <>
             <p className="tour-quick-fact-title">{t('tourDetail.skipTheLineTitle')}</p>
+            {hasSkipTheLine
+              ? yesNoBadge(true, skipTheLineLabel(tour!.skipTheLine as string), t('tourDetail.noLabel'))
+              : yesNoBadge(false, t('tourDetail.yesLabel'), t('tourDetail.noLabel'))}
+          </>
+        ),
+      },
+
+      // 5. Food and drinks included — badge shows the actual selected
+      // option(s) (e.g. "Breakfast, Lunch" or "Breakfast + Drinks
+      // included"), same treatment as Skip the line. Red "No" only when
+      // nothing was selected in Step 07 of the supplier product builder.
+      {
+        icon: foodIncluded ? Utensils : CupSoda,
+        title: t('tourDetail.foodAndDrinksIncluded'),
+        desc: null,
+        renderValue: () => (
+          <>
+            <p className="tour-quick-fact-title">{t('tourDetail.foodAndDrinksIncluded')}</p>
+            {foodOrDrinksIncluded
+              ? yesNoBadge(true, foodDrinkBadgeLabel || t('tourDetail.yesLabel'), t('tourDetail.noLabel'))
+              : yesNoBadge(false, t('tourDetail.yesLabel'), t('tourDetail.noLabel'))}
+            {foodOrDrinksIncluded && foodDrinkDescParts.length > 0 && (
+              <p className="tour-quick-fact-desc">{foodDrinkDescParts.join(' · ')}</p>
+            )}
+          </>
+        ),
+      },
+
+      // 6. Guide information — always shown, title is fixed, content is
+      // just the single selected guide type (e.g. "Tour guide").
+      {
+        icon: User,
+        title: t('tourDetail.guideInformation'),
+        desc: null,
+        renderValue: () => (
+          <>
+            <p className="tour-quick-fact-title">{t('tourDetail.guideInformation')}</p>
             <span
               className="difficulty-grid-badge"
               style={{ backgroundColor: '#17923715', color: '#179237' }}
             >
-              {skipTheLineLabel(tour.skipTheLine as string)}
+              {guideLabel}
             </span>
           </>
         ),
-      }] : []),
-      ...(tour?.pickupIncluded
-        ? [{ icon: Bus, title: t('tourDetail.pickupIncluded'), desc: t('tourDetail.checkAvailabilityDesc') }]
-        : []),
-      ...(foodDrinkFact ? [foodDrinkFact] : []),
-      ...(tour?.petFriendly
-        ? [{ icon: PawPrint, title: t('tourDetail.petsAllowed'), desc: null }]
-        : []),
-      ...(tour?.wheelchairAccessible
-        ? [{ icon: Accessibility, title: t('tourDetail.wheelchairAccessible'), desc: null }]
-        : []),
+      },
+
+      // 7a. Pets allowed — always shown, red "No" if not selected.
+      {
+        icon: PawPrint,
+        title: t('tourDetail.petsAllowed'),
+        desc: null,
+        renderValue: () => (
+          <>
+            <p className="tour-quick-fact-title">{t('tourDetail.petsAllowed')}</p>
+            {yesNoBadge(!!tour?.petFriendly, t('tourDetail.yesLabel'), t('tourDetail.noLabel'))}
+          </>
+        ),
+      },
+
+      // 7b. Wheelchair accessible — always shown, red "No" if not selected.
+      {
+        icon: Accessibility,
+        title: t('tourDetail.wheelchairAccessible'),
+        desc: null,
+        renderValue: () => (
+          <>
+            <p className="tour-quick-fact-title">{t('tourDetail.wheelchairAccessible')}</p>
+            {yesNoBadge(!!tour?.wheelchairAccessible, t('tourDetail.yesLabel'), t('tourDetail.noLabel'))}
+          </>
+        ),
+      },
+
+      // 8. WiFi available — no supplier-facing field exists for this today
+      // (checked TravioAfrica-Supplier's product builder), so it always
+      // renders as a red "No" until that capability is added.
+      {
+        icon: Wifi,
+        title: t('tourDetail.wifiAvailable', { defaultValue: 'WiFi available' }),
+        desc: null,
+        renderValue: () => (
+          <>
+            <p className="tour-quick-fact-title">{t('tourDetail.wifiAvailable', { defaultValue: 'WiFi available' })}</p>
+            {yesNoBadge(false, t('tourDetail.yesLabel'), t('tourDetail.noLabel'))}
+          </>
+        ),
+      },
+
+      // 9. Private experience — sourced from productContent.isPrivateActivity.
+      {
+        icon: isPrivateExperience ? Users : UserCheck,
+        title: isPrivateExperience ? t('tourDetail.privateExperience') : t('tourDetail.groupExperience'),
+        desc: null,
+        renderValue: () => (
+          <>
+            <p className="tour-quick-fact-title">{t('tourDetail.privateExperience')}</p>
+            {yesNoBadge(isPrivateExperience, t('tourDetail.yesLabel'), t('tourDetail.noLabel'))}
+          </>
+        ),
+      },
+
+      // 10. Pickup included — always shown, red "No" if not selected.
+      {
+        icon: Bus,
+        title: t('tourDetail.pickupIncluded'),
+        desc: null,
+        renderValue: () => (
+          <>
+            <p className="tour-quick-fact-title">{t('tourDetail.pickupIncluded')}</p>
+            {tour?.pickupIncluded
+              ? yesNoBadge(true, t('tourDetail.yesLabel'), t('tourDetail.noLabel'))
+              : yesNoBadge(false, t('tourDetail.yesLabel'), t('tourDetail.noLabel'))}
+          </>
+        ),
+      },
+
+      // 11. Language — always shown, green accent since a language is always available.
+      {
+        icon: Globe,
+        title: t('tourDetail.languages'),
+        desc: null,
+        renderValue: () => (
+          <>
+            <p className="tour-quick-fact-title">{t('tourDetail.languages')}</p>
+            <span className="difficulty-grid-badge" style={{ backgroundColor: '#17923715', color: '#179237' }}>
+              {languagesLabel}
+            </span>
+          </>
+        ),
+      },
     ]
-  }, [t, tour?.difficulty, tour?.duration, tour?.languages, tour?.pickupIncluded, tour?.skipTheLine, tour?.cancellationPolicy, tour?.guideType, tour?.guideMaterials, tour?.foodProvided, tour?.drinksIncluded, tour?.petFriendly, tour?.wheelchairAccessible])
+  }, [
+    t, tour?.difficulty, tour?.duration, tour?.languages, tour?.pickupIncluded,
+    tour?.skipTheLine, tour?.cancellationPolicy, tour?.guideType, tour?.guideMaterials,
+    tour?.foodProvided, tour?.drinksIncluded, tour?.meals, tour?.dietaryOptions,
+    tour?.petFriendly, tour?.wheelchairAccessible, tour?.isPrivateActivity,
+  ])
 
   // Short teaser shown right after the gallery (GetYourGuide-style), no heading.
   const shortDescriptionText = useMemo(() => {
@@ -639,13 +796,6 @@ export default function TourDetailPage() {
                         </section>
                       </div>
                     </motion.div>
-                  )}
-
-                  {activeTab === 'itinerary' && (
-                    <TourItinerary
-                      key="itinerary"
-                      itinerary={tour.itinerary}
-                    />
                   )}
 
                   {activeTab === 'additional' && (

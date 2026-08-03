@@ -56,3 +56,9 @@
   color: #64748b;
   line-height: 1.5;
 }
+
+/* When a description follows a Yes/No badge (e.g. food & drinks, pickup),
+   give it a touch more breathing room than a plain title+desc pairing. */
+.difficulty-grid-badge + .tour-quick-fact-desc {
+  margin-top: 6px;
+}

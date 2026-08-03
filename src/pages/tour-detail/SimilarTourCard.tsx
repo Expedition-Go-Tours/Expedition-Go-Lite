@@ -12,6 +12,7 @@ interface SimilarTourCardProps extends Tour {
 }
 
 export default function SimilarTourCard({ 
+  id,
   title, 
   duration, 
   features, 
@@ -27,7 +28,7 @@ export default function SimilarTourCard({
 }: SimilarTourCardProps) {
   const { t } = useTranslation()
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist()
-  const item = toWishlistItem({ title, duration, features, price, rating: String(rating), reviews, location, image, source, externalUrl } as Tour)
+  const item = toWishlistItem({ id, title, duration, features, price, rating: String(rating), reviews, location, image, source, externalUrl } as Tour)
   const inWishlist = isInWishlist(item.id)
 
   const categoryLabel = category

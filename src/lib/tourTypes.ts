@@ -13,11 +13,30 @@ export interface ContactInfo {
   fax?: string
 }
 
+export interface PricingTier {
+  from: number
+  to: number
+  pricePerPerson: number
+}
+
 export interface TravelerPricing {
   label: string
   price: number
   minAge?: number | null
   maxAge?: number | null
+  /**
+   * Age-based category tiers (GetYourGuide-style): the per-person price for
+   * this category depends on the TOTAL number of travelers in the whole
+   * booking (not just this category's count). When present, the matching
+   * tier for the current total headcount should be used instead of `price`.
+   */
+  tiers?: PricingTier[]
+}
+
+export interface GroupSizeBand {
+  from: number
+  to: number
+  price: number
 }
 
 export interface TourDetail {
@@ -53,6 +72,14 @@ export interface TourDetail {
   skipTheLine?: string | null
   guide?: TourGuide
   contact?: ContactInfo
+  /** How the supplier priced this tour: per traveler, or a flat price per group. */
+  pricingModel?: 'perPerson' | 'perGroup'
+  /** Only relevant when pricingModel is 'perPerson'. */
+  pricingApproach?: 'sameForEveryone' | 'dependsOnAge'
+  /** Flat per-person price used for every traveler type when pricingApproach is 'sameForEveryone'. */
+  uniformPrice?: number | null
+  /** Flat price bands by total group headcount, used when pricingModel is 'perGroup'. */
+  groupSizePricing?: GroupSizeBand[]
 }
 
 export interface ItineraryDay {

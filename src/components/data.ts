@@ -15,6 +15,8 @@ export interface Tour {
   pickupIncluded?: boolean
   source?: 'expedition-go' | 'travio-africa'
   externalUrl?: string
+  /** Real backend tour ID, present only for tours fetched from the API (not the static mock lists below). Enables wishlist backend sync. */
+  id?: string
 }
 
 export function getTourSlug(title: string): string {
@@ -578,6 +580,8 @@ export interface MultiDayTour {
   languages?: string[]
   source?: 'expedition-go' | 'travio-africa'
   externalUrl?: string
+  /** Real backend tour ID, present only for tours fetched from the API. Enables wishlist backend sync. */
+  id?: string
 }
 
 const multiDayTours: MultiDayTour[] = [

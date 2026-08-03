@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { getApiBaseUrl, getAuthToken } from '../lib/auth'
-import type { TourDetail, TravelerPricing } from '../lib/tourTypes'
+import type { TourDetail, TravelerPricing, GroupSizeBand, PricingTier } from '../lib/tourTypes'
 
 async function expeditionFetchRaw(path: string) {
   const base = getApiBaseUrl()
@@ -131,6 +131,7 @@ interface ExpeditionTourRecord {
 }
 
 export interface TourCardData {
+  id: string
   title: string
   category: string
   duration: string
@@ -278,6 +279,26 @@ function extractTravelerPricing(rawTour: any): TravelerPricing[] {
       : rawTour?.schedulesAndPricing
     if (!sp) return []
     const td = sp.travelerDetails || {}
+    const pricingModel = td.pricingModel || 'perPerson'
+
+    // perGroup tours don't have per-traveler-type pricing at all — the
+    // group-size bands are surfaced separately via extractGroupSizePricing().
+    if (pricingModel === 'perGroup') return []
+
+    const pricingApproach = td.pricingApproach || 'dependsOnAge'
+
+    // sameForEveryone: a single flat per-person price applies to every
+    // traveler type (adult/child/infant alike) — mirrors the backend's
+    // calculateTourPrice() sameForEveryone branch, which charges
+    // uniformPrice * count for every non-zero traveler bucket.
+    if (pricingApproach === 'sameForEveryone') {
+      const uniformPrice = td.uniformPrice != null ? Number(td.uniformPrice) : 0
+      return [
+        { label: 'Adult', price: uniformPrice, minAge: null, maxAge: null },
+        { label: 'Child', price: uniformPrice, minAge: null, maxAge: null },
+        { label: 'Infant', price: uniformPrice, minAge: null, maxAge: null },
+      ]
+    }
 
     // Prefer schedule prices (ageGroup -> retailPrice), these drive checkout pricing.
     const priceByLabel = new Map<string, number>()
@@ -290,13 +311,23 @@ function extractTravelerPricing(rawTour: any): TravelerPricing[] {
       if (priceByLabel.size > 0) break
     }
 
-    const metaByLabel = new Map<string, { price?: number; minAge?: number | null; maxAge?: number | null }>()
+    const metaByLabel = new Map<string, { price?: number; minAge?: number | null; maxAge?: number | null; tiers?: PricingTier[] }>()
     for (const c of Array.isArray(td.pricingCategories) ? td.pricingCategories : []) {
       if (c?.name && !metaByLabel.has(c.name)) {
+        const tiers = Array.isArray(c.tiers)
+          ? c.tiers
+            .filter((t: any) => t && t.pricePerPerson != null)
+            .map((t: any) => ({
+              from: t.from != null ? Number(t.from) : 1,
+              to: t.to != null ? Number(t.to) : Infinity,
+              pricePerPerson: Number(t.pricePerPerson),
+            }))
+          : undefined
         metaByLabel.set(c.name, {
           price: c.price != null ? Number(c.price) : undefined,
           minAge: c.minAge ?? null,
           maxAge: c.maxAge ?? null,
+          tiers: tiers && tiers.length > 0 ? tiers : undefined,
         })
       }
     }
@@ -316,8 +347,69 @@ function extractTravelerPricing(rawTour: any): TravelerPricing[] {
         price,
         minAge: group?.minAge ?? meta?.minAge ?? null,
         maxAge: group?.maxAge ?? meta?.maxAge ?? null,
+        tiers: meta?.tiers,
       }
     })
+  } catch {
+    return []
+  }
+}
+
+/** Returns 'perPerson' or 'perGroup' — mirrors td.pricingModel used throughout the backend. */
+function extractPricingModel(rawTour: any): 'perPerson' | 'perGroup' {
+  try {
+    const sp = typeof rawTour?.schedulesAndPricing === 'string'
+      ? JSON.parse(rawTour.schedulesAndPricing)
+      : rawTour?.schedulesAndPricing
+    return sp?.travelerDetails?.pricingModel === 'perGroup' ? 'perGroup' : 'perPerson'
+  } catch {
+    return 'perPerson'
+  }
+}
+
+function extractPricingApproach(rawTour: any): 'sameForEveryone' | 'dependsOnAge' {
+  try {
+    const sp = typeof rawTour?.schedulesAndPricing === 'string'
+      ? JSON.parse(rawTour.schedulesAndPricing)
+      : rawTour?.schedulesAndPricing
+    return sp?.travelerDetails?.pricingApproach === 'sameForEveryone' ? 'sameForEveryone' : 'dependsOnAge'
+  } catch {
+    return 'dependsOnAge'
+  }
+}
+
+function extractUniformPrice(rawTour: any): number | null {
+  try {
+    const sp = typeof rawTour?.schedulesAndPricing === 'string'
+      ? JSON.parse(rawTour.schedulesAndPricing)
+      : rawTour?.schedulesAndPricing
+    const v = sp?.travelerDetails?.uniformPrice
+    return v != null ? Number(v) : null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Flat price bands by total group headcount — used when the supplier chose
+ * pricingModel: 'perGroup' in Step 14 of the product builder (GroupSizeStep /
+ * PerGroupPriceStep), instead of per-traveler-type pricing.
+ */
+function extractGroupSizePricing(rawTour: any): GroupSizeBand[] {
+  try {
+    const sp = typeof rawTour?.schedulesAndPricing === 'string'
+      ? JSON.parse(rawTour.schedulesAndPricing)
+      : rawTour?.schedulesAndPricing
+    const td = sp?.travelerDetails || {}
+    if (td.pricingModel !== 'perGroup') return []
+    const groupSizes = Array.isArray(td.groupSizes) ? td.groupSizes : []
+    return groupSizes
+      .filter((gs: any) => gs && gs.price != null)
+      .map((gs: any) => ({
+        from: gs.from != null ? Number(gs.from) : 1,
+        to: gs.to != null ? Number(gs.to) : Infinity,
+        price: Number(gs.price),
+      }))
   } catch {
     return []
   }
@@ -369,6 +461,22 @@ function extractLanguagesFromTour(rawTour: any): string[] {
   }
 }
 
+/**
+ * Returns just the single product content language chosen in Step 1 of
+ * the supplier product builder (productContent.writingLanguage). Used for
+ * tour card listings, which should show one language — not the full set
+ * merged in from every per-option language (Step 12), which is what
+ * extractLanguagesFromTour() returns for the tour detail page.
+ */
+function extractContentLanguage(rawTour: any): string[] {
+  try {
+    const writing = parseProductContent(rawTour)?.writingLanguage
+    return typeof writing === 'string' && writing.trim() ? [writing.trim()] : []
+  } catch {
+    return []
+  }
+}
+
 function extractWheelchairAccessible(rawTour: any): boolean {
   try {
     const pc = parseProductContent(rawTour)
@@ -407,11 +515,54 @@ function extractPetFriendly(rawTour: any): boolean {
   return !!parseProductContent(rawTour)?.petFriendly
 }
 
+/**
+ * Whether the tour is a private (not shared/group) experience. Sourced from
+ * productContent.isPrivateActivity — note this field currently has no
+ * supplier-facing UI to set it in TravioAfrica-Supplier's product builder,
+ * so it will read as false/"No" for virtually all tours until that's added.
+ */
+function extractIsPrivateActivity(rawTour: any): boolean {
+  return !!parseProductContent(rawTour)?.isPrivateActivity
+}
+
+interface MealInfo {
+  type: string
+  format: string
+}
+
+function extractMeals(rawTour: any): MealInfo[] {
+  try {
+    const meals = parseProductContent(rawTour)?.meals
+    if (!Array.isArray(meals)) return []
+    return meals
+      .filter((m: any) => m && typeof m === 'object' && (m.type || m.format))
+      .map((m: any) => ({ type: m.type || '', format: m.format || '' }))
+  } catch {
+    return []
+  }
+}
+
+function extractDietaryOptions(rawTour: any): string[] {
+  try {
+    const pc = parseProductContent(rawTour)
+    if (!pc?.showDietaryRestrictions) return []
+    return Array.isArray(pc?.dietaryOptions) ? pc.dietaryOptions : []
+  } catch {
+    return []
+  }
+}
+
 function mapToListing(tour: ExpeditionTourRecord['tour']): TourCardData {
   const location = [tour.city, tour.country].filter(Boolean).join(', ')
   const isExternal = tour.bookingFlow === 'EXTERNAL'
   const effectivePrice = tour.startingPrice ?? extractStartingPriceFromRaw(tour.schedulesAndPricing)
-  const languages = tour.languages?.length ? tour.languages : extractLanguagesFromTour(tour)
+  // Cards show only the single Step 1 content language, not every
+  // per-option language merged in — see extractContentLanguage().
+  // The curated /expedition/tours select never includes productContent,
+  // so prefer the already-enriched tour.languages (backfilled from the
+  // full /tours listing by enrichExpeditionRecords) and only fall back to
+  // reading productContent directly when it's actually present on `tour`.
+  const languages = tour.languages?.length ? tour.languages : extractContentLanguage(tour)
 
   let effectiveDuration = tour.durationMinutes
   if (!effectiveDuration && tour.categorization) {
@@ -430,6 +581,7 @@ function mapToListing(tour: ExpeditionTourRecord['tour']): TourCardData {
   }
 
   return {
+    id: tour.id,
     title: tour.title,
     category: tour.category || '',
     duration: formatDuration(effectiveDuration),
@@ -462,6 +614,87 @@ export interface ExpeditionToursFilters {
   sortBy?: 'price_asc' | 'price_desc' | 'rating' | 'newest' | 'popular'
 }
 
+/**
+ * The curated /expedition/tours endpoint only selects a handful of
+ * top-level Tour columns (city, country, category, etc.), which are
+ * frequently null — the real values live inside the productContent /
+ * categorization / bookingAndTickets JSON blobs, which that endpoint
+ * doesn't fetch. This cross-references the full /tours listing (which
+ * does include those JSON blobs) to backfill missing listing fields
+ * (location, difficulty, cancellation policy, duration, pickup, languages,
+ * price) on curated records by tour ID, mutating them in place.
+ */
+async function enrichExpeditionRecords(records: ExpeditionTourRecord[]): Promise<void> {
+  const needsBatch = records.some((r) =>
+    r.tour.startingPrice == null || !r.tour.city || !r.tour.durationMinutes ||
+    !extractDifficultyFromTour(r.tour) || !extractCancellationFromTour(r.tour)
+  )
+  if (!needsBatch) return
+
+  try {
+    const allPayload = await expeditionFetchRaw('/tours?limit=500')
+    const allTours: any[] = allPayload.data?.tours ?? []
+    const priceMap = new Map<string, number>()
+    const cityMap = new Map<string, string | null>()
+    const countryMap = new Map<string, string | null>()
+    const durationMap = new Map<string, number | null>()
+    const difficultyMap = new Map<string, string | null>()
+    const cancellationMap = new Map<string, string | null>()
+    const pickupMap = new Map<string, boolean | undefined>()
+    const languagesMap = new Map<string, string[]>()
+    const categoryMap = new Map<string, string | null>()
+    for (const t of allTours) {
+      const p = extractStartingPriceFromRaw(t.schedulesAndPricing)
+      if (p != null) priceMap.set(t.id, p)
+      cityMap.set(t.id, extractCityFromTour(t))
+      countryMap.set(t.id, extractCountryFromTour(t))
+      durationMap.set(t.id, extractDurationFromTour(t))
+      difficultyMap.set(t.id, extractDifficultyFromTour(t))
+      cancellationMap.set(t.id, extractCancellationFromTour(t))
+      pickupMap.set(t.id, t.pickupIncluded ?? (t.bookingAndTickets?.pickupAvailable ?? t.bookingAndTickets?.pickupProvided) ?? undefined)
+      // Cards show only the single Step 1 content language, not the full
+      // per-option merge extractLanguagesFromTour() returns.
+      languagesMap.set(t.id, extractContentLanguage(t))
+      categoryMap.set(t.id, t.category ?? null)
+    }
+    for (const r of records) {
+      if (r.tour.startingPrice == null) {
+        const fallbackPrice = priceMap.get(r.tour.id)
+        if (fallbackPrice != null) r.tour.startingPrice = fallbackPrice
+      }
+      if (!r.tour.city) {
+        r.tour.city = cityMap.get(r.tour.id) ?? null
+      }
+      if (!r.tour.country) {
+        r.tour.country = countryMap.get(r.tour.id) ?? null
+      }
+      if (!r.tour.category) {
+        r.tour.category = categoryMap.get(r.tour.id) ?? null
+      }
+      if (!r.tour.durationMinutes) {
+        const fallbackDuration = durationMap.get(r.tour.id)
+        if (fallbackDuration != null) r.tour.durationMinutes = fallbackDuration
+      }
+      if (!extractDifficultyFromTour(r.tour)) {
+        r.tour.difficulty = difficultyMap.get(r.tour.id) ?? null
+      }
+      if (!extractCancellationFromTour(r.tour)) {
+        r.tour.cancellationPolicy = cancellationMap.get(r.tour.id) ?? null
+      }
+      if (r.tour.pickupIncluded == null) {
+        const p = pickupMap.get(r.tour.id)
+        if (p != null) r.tour.pickupIncluded = p
+      }
+      if (!r.tour.languages?.length) {
+        const fallbackLanguages = languagesMap.get(r.tour.id)
+        if (fallbackLanguages?.length) r.tour.languages = fallbackLanguages
+      }
+    }
+  } catch (e) {
+    console.warn('[enrichExpeditionRecords] batch fallback failed:', e)
+  }
+}
+
 export function useExpeditionTours(filters: ExpeditionToursFilters = {}) {
   const params = new URLSearchParams()
   if (filters.page) params.set('page', String(filters.page))
@@ -484,62 +717,7 @@ export function useExpeditionTours(filters: ExpeditionToursFilters = {}) {
       const records: ExpeditionTourRecord[] = payload.data?.tours ?? payload.tours ?? []
       const pagination = payload.pagination ?? null
 
-      // If any tour is missing listing fields, batch-fetch from main tour endpoint
-      const needsBatch = records.some((r) =>
-        r.tour.startingPrice == null || !r.tour.city || !r.tour.durationMinutes ||
-        !extractDifficultyFromTour(r.tour) || !extractCancellationFromTour(r.tour)
-      )
-      if (needsBatch) {
-        try {
-          const allPayload = await expeditionFetchRaw('/tours?limit=500')
-          const allTours: any[] = allPayload.data?.tours ?? []
-          const priceMap = new Map<string, number>()
-          const cityMap = new Map<string, string | null>()
-          const countryMap = new Map<string, string | null>()
-          const durationMap = new Map<string, number | null>()
-          const difficultyMap = new Map<string, string | null>()
-          const cancellationMap = new Map<string, string | null>()
-          const languagesMap = new Map<string, string[]>()
-          for (const t of allTours) {
-            const p = extractStartingPriceFromRaw(t.schedulesAndPricing)
-            if (p != null) priceMap.set(t.id, p)
-            cityMap.set(t.id, extractCityFromTour(t))
-            countryMap.set(t.id, extractCountryFromTour(t))
-            durationMap.set(t.id, extractDurationFromTour(t))
-            difficultyMap.set(t.id, extractDifficultyFromTour(t))
-            cancellationMap.set(t.id, extractCancellationFromTour(t))
-            languagesMap.set(t.id, extractLanguagesFromTour(t))
-          }
-          for (const r of records) {
-            if (r.tour.startingPrice == null) {
-              const fallbackPrice = priceMap.get(r.tour.id)
-              if (fallbackPrice != null) r.tour.startingPrice = fallbackPrice
-            }
-            if (!r.tour.city) {
-              r.tour.city = cityMap.get(r.tour.id) ?? null
-            }
-            if (!r.tour.country) {
-              r.tour.country = countryMap.get(r.tour.id) ?? null
-            }
-            if (!r.tour.durationMinutes) {
-              const fallbackDuration = durationMap.get(r.tour.id)
-              if (fallbackDuration != null) r.tour.durationMinutes = fallbackDuration
-            }
-            if (!extractDifficultyFromTour(r.tour)) {
-              r.tour.difficulty = difficultyMap.get(r.tour.id) ?? null
-            }
-            if (!extractCancellationFromTour(r.tour)) {
-              r.tour.cancellationPolicy = cancellationMap.get(r.tour.id) ?? null
-            }
-            if (!r.tour.languages?.length) {
-              const fallbackLanguages = languagesMap.get(r.tour.id)
-              if (fallbackLanguages?.length) r.tour.languages = fallbackLanguages
-            }
-          }
-        } catch (e) {
-          console.warn('[useExpeditionTours] batch fallback failed:', e)
-        }
-      }
+      await enrichExpeditionRecords(records)
 
       return {
         tours: records.map((r) => mapToListing(r.tour)),
@@ -582,11 +760,24 @@ export interface TourDetailData extends Omit<TourDetail, 'guide' | 'contact' | '
   wheelchairAccessible?: boolean
   foodProvided?: boolean
   drinksIncluded?: boolean
+  meals?: MealInfo[]
+  dietaryOptions?: string[]
   guideType?: string
   guideMaterials?: { audioGuide: boolean; infoBooklet: boolean }
   petFriendly?: boolean
+  /**
+   * Whether the tour is a private (not shared/group) experience.
+   * Sourced from productContent.isPrivateActivity — this field currently
+   * has no supplier-facing UI to set it in TravioAfrica-Supplier, so it
+   * will read false for virtually all tours until that control is added.
+   */
+  isPrivateActivity?: boolean
   guide?: TourDetail['guide']
   contact?: TourDetail['contact']
+  pricingModel?: TourDetail['pricingModel']
+  pricingApproach?: TourDetail['pricingApproach']
+  uniformPrice?: TourDetail['uniformPrice']
+  groupSizePricing?: TourDetail['groupSizePricing']
 }
 
 /**
@@ -672,9 +863,16 @@ function buildTourDetailFromRawTour(rawTour: any): TourDetailData {
     wheelchairAccessible: extractWheelchairAccessible(rawTour),
     foodProvided: extractFoodProvided(rawTour),
     drinksIncluded: extractDrinksIncluded(rawTour),
+    meals: extractMeals(rawTour),
+    dietaryOptions: extractDietaryOptions(rawTour),
     guideType: extractGuideType(rawTour),
     guideMaterials: extractGuideMaterials(rawTour),
     petFriendly: extractPetFriendly(rawTour),
+    isPrivateActivity: extractIsPrivateActivity(rawTour),
+    pricingModel: extractPricingModel(rawTour),
+    pricingApproach: extractPricingApproach(rawTour),
+    uniformPrice: extractUniformPrice(rawTour),
+    groupSizePricing: extractGroupSizePricing(rawTour),
   }
 }
 
@@ -713,6 +911,10 @@ export function useExpeditionTour(slug: string | undefined) {
       let shortDescription = ''
       let travelerPricing: TravelerPricing[] = []
       let skipTheLine: string | null = null
+      let pricingModel: 'perPerson' | 'perGroup' = 'perPerson'
+      let pricingApproach: 'sameForEveryone' | 'dependsOnAge' = 'dependsOnAge'
+      let uniformPrice: number | null = null
+      let groupSizePricing: GroupSizeBand[] = []
 
       // Fetch raw tour data to get excluded and other missing fields
       if (tour.id) {
@@ -731,13 +933,32 @@ export function useExpeditionTour(slug: string | undefined) {
             const rawTour = rawPayload.data?.tour ?? rawPayload.tour ?? rawPayload
             travelerPricing = extractTravelerPricing(rawTour)
             skipTheLine = extractSkipTheLine(rawTour)
+            pricingModel = extractPricingModel(rawTour)
+            pricingApproach = extractPricingApproach(rawTour)
+            uniformPrice = extractUniformPrice(rawTour)
+            groupSizePricing = extractGroupSizePricing(rawTour)
             // Dynamic per-option / inclusion facts selected by the supplier
             tour.wheelchairAccessible = extractWheelchairAccessible(rawTour)
             tour.foodProvided = extractFoodProvided(rawTour)
             tour.drinksIncluded = extractDrinksIncluded(rawTour)
+            tour.meals = extractMeals(rawTour)
+            tour.dietaryOptions = extractDietaryOptions(rawTour)
             tour.guideType = extractGuideType(rawTour)
             tour.guideMaterials = extractGuideMaterials(rawTour)
             tour.petFriendly = extractPetFriendly(rawTour)
+            tour.isPrivateActivity = extractIsPrivateActivity(rawTour)
+            // Re-derive the cancellation policy from the raw tour's
+            // bookingAndTickets.cancellationPolicy (Step 17 in the supplier
+            // builder: "Standard" vs "All sales final") whenever it can be
+            // resolved there — this is the source of truth for whichever of
+            // the two options the supplier actually picked, and keeps the
+            // curated record's copy from going stale or missing that detail.
+            {
+              const rawCancellation = extractCancellationFromTour(rawTour)
+              if (rawCancellation) {
+                tour.cancellationPolicy = rawCancellation
+              }
+            }
             if (resolvedPrice == null) {
               resolvedPrice = extractStartingPriceFromRaw(rawTour?.schedulesAndPricing)
             }
@@ -868,11 +1089,130 @@ export function useExpeditionTour(slug: string | undefined) {
         wheelchairAccessible: !!tour.wheelchairAccessible,
         foodProvided: !!tour.foodProvided,
         drinksIncluded: !!tour.drinksIncluded,
+        meals: Array.isArray(tour.meals) ? tour.meals : [],
+        dietaryOptions: Array.isArray(tour.dietaryOptions) ? tour.dietaryOptions : [],
         guideType: tour.guideType || undefined,
         guideMaterials: tour.guideMaterials || undefined,
         petFriendly: !!tour.petFriendly,
+        isPrivateActivity: !!tour.isPrivateActivity,
+        pricingModel,
+        pricingApproach,
+        uniformPrice,
+        groupSizePricing,
       }
       return result
+    },
+  })
+}
+
+export function mapRawTourToListing(t: any): TourCardData {
+  const location = [t.city, t.country].filter(Boolean).join(', ')
+  const price = extractStartingPriceFromRaw(t.schedulesAndPricing)
+  const durationMinutes = t.durationMinutes ?? extractDurationFromTour(t)
+  // Cards show only the single Step 1 content language, not every
+  // per-option language merged in — see extractContentLanguage().
+  const languages = extractContentLanguage(t)
+
+  return {
+    id: t.id,
+    title: t.title,
+    category: t.category || '',
+    duration: formatDuration(durationMinutes),
+    features: '',
+    price: formatPrice(price),
+    rating: t.averageRating != null ? String(t.averageRating) : '0',
+    reviews: t.reviewCount ?? t._count?.reviews ?? 0,
+    location,
+    image: t.coverPhoto || t.photos?.[0] || '',
+    source: 'expedition-go',
+    externalUrl: undefined,
+    slug: t.slug,
+    languages: languages.length ? languages : undefined,
+    difficulty: extractDifficultyFromTour(t) || undefined,
+    cancellationPolicy: extractCancellationFromTour(t) || undefined,
+    pickupIncluded: t.pickupIncluded ?? undefined,
+  }
+}
+
+/**
+ * Fallback used when the curated "similar tours" endpoint has nothing to
+ * offer — either because the current tour isn't curated onto the homepage
+ * (ExpeditionTour table) or because it has no category-matching curated
+ * siblings. Queries the public /tours listing directly so every active
+ * tour can show a "similar experiences" section, not just curated ones.
+ */
+async function fetchSimilarToursFallback(excludeTourId: string | undefined, category: string | null, city: string | null, country: string | null): Promise<TourCardData[]> {
+  const tryFetch = async (params: URLSearchParams) => {
+    const payload = await expeditionFetchRaw(`/tours?${params.toString()}`)
+    const tours: any[] = payload.data?.tours ?? payload.tours ?? []
+    return tours.filter((t) => t.id !== excludeTourId)
+  }
+
+  // 1) Same category first (closest match to the curated endpoint's intent)
+  if (category) {
+    const params = new URLSearchParams({ category, limit: '8' })
+    const results = await tryFetch(params)
+    if (results.length > 0) return results.slice(0, 4).map(mapRawTourToListing)
+  }
+
+  // 2) Fall back to same city/country
+  if (city || country) {
+    const params = new URLSearchParams({ limit: '8' })
+    if (city) params.set('city', city)
+    if (country) params.set('country', country)
+    const results = await tryFetch(params)
+    if (results.length > 0) return results.slice(0, 4).map(mapRawTourToListing)
+  }
+
+  // 3) Last resort: just show other active tours
+  const params = new URLSearchParams({ limit: '8', sortBy: 'popularity' })
+  const results = await tryFetch(params)
+  return results.slice(0, 4).map(mapRawTourToListing)
+}
+
+/**
+ * Powers the homepage "Recommended" section.
+ *
+ * The curated /expedition/tours endpoint only returns tours an admin has
+ * manually added to the ExpeditionTour table, so brand-new tours never
+ * show up here until someone curates them — even though they're fully
+ * ACTIVE and bookable. To fix that, this merges the curated list with the
+ * most recently published active tours from the public /tours endpoint,
+ * so new tours appear on the homepage immediately without waiting on
+ * manual curation. Curated tours still take priority in ordering; any
+ * new tour not yet curated is appended (deduped) so nothing is lost.
+ */
+export function useRecommendedTours(limit: number = 12) {
+  return useQuery({
+    queryKey: ['expedition', 'tours', 'recommended', limit],
+    queryFn: async (): Promise<TourCardData[]> => {
+      const [curatedResult, newestResult] = await Promise.allSettled([
+        expeditionFetchRaw(`/expedition/tours?limit=${limit}`),
+        expeditionFetchRaw(`/tours?limit=${limit}&sortBy=createdAt&sortOrder=desc`),
+      ])
+
+      const curatedTours: TourCardData[] = []
+      if (curatedResult.status === 'fulfilled') {
+        const records: ExpeditionTourRecord[] = curatedResult.value.data?.tours ?? curatedResult.value.tours ?? []
+        await enrichExpeditionRecords(records)
+        curatedTours.push(...records.map((r) => mapToListing(r.tour)))
+      }
+
+      const newestTours: TourCardData[] = []
+      if (newestResult.status === 'fulfilled') {
+        const rawTours: any[] = newestResult.value.data?.tours ?? newestResult.value.tours ?? []
+        newestTours.push(...rawTours.map(mapRawTourToListing))
+      }
+
+      const seenSlugs = new Set(curatedTours.map((t) => t.slug))
+      const merged = [...curatedTours]
+      for (const tour of newestTours) {
+        if (seenSlugs.has(tour.slug)) continue
+        seenSlugs.add(tour.slug)
+        merged.push(tour)
+      }
+
+      return merged.slice(0, limit)
     },
   })
 }
@@ -882,10 +1222,28 @@ export function useSimilarTours(slug: string | undefined) {
     queryKey: ['expedition', 'tours', slug, 'similar'],
     enabled: !!slug,
     queryFn: async () => {
-      const payload = await expeditionFetchRaw(
-        `/expedition/tours/${encodeURIComponent(slug!)}/similar`
-      )
+      let payload: any
+      try {
+        payload = await expeditionFetchRaw(`/expedition/tours/${encodeURIComponent(slug!)}/similar`)
+      } catch {
+        // Tour isn't curated onto the homepage — resolve its category/location
+        // from the public tour endpoint and fall back to a live query.
+        const rawTour = await fetchRawTourBySlugOrId(slug!)
+        if (!rawTour) return []
+        return fetchSimilarToursFallback(rawTour.id, rawTour.category || null, rawTour.city || null, rawTour.country || null)
+      }
+
       const records: ExpeditionTourRecord[] = payload.data?.tours ?? []
+
+      if (records.length === 0) {
+        // Curated, but no category-matching curated siblings — fall back to
+        // the live tour listing so a "similar experiences" section still shows.
+        const rawTour = await fetchRawTourBySlugOrId(slug!)
+        if (rawTour) {
+          return fetchSimilarToursFallback(rawTour.id, rawTour.category || null, rawTour.city || null, rawTour.country || null)
+        }
+        return []
+      }
 
       // Batch-enrich similar tours with full data (price, location, duration, etc.)
       const needsBatch = records.some((r) =>
@@ -913,7 +1271,9 @@ export function useSimilarTours(slug: string | undefined) {
             difficultyMap.set(t.id, extractDifficultyFromTour(t))
             cancellationMap.set(t.id, extractCancellationFromTour(t))
             pickupMap.set(t.id, t.pickupIncluded ?? (t.bookingAndTickets?.pickupAvailable ?? t.bookingAndTickets?.pickupProvided) ?? undefined)
-            languagesMap.set(t.id, extractLanguagesFromTour(t))
+            // Cards show only the single Step 1 content language, not the
+            // full per-option merge extractLanguagesFromTour() returns.
+            languagesMap.set(t.id, extractContentLanguage(t))
           }
           for (const r of records) {
             if (r.tour.startingPrice == null) {

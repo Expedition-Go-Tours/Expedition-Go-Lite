@@ -188,6 +188,41 @@
   gap: 12px;
 }
 
+.group-size-bands {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-bottom: 12px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.group-size-band {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #475569;
+}
+
+.group-size-band-active {
+  background: rgba(22, 101, 52, 0.08);
+  color: #14532d;
+  font-weight: 600;
+}
+
+.group-size-band-price {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.group-size-band-active .group-size-band-price {
+  color: #166534;
+}
+
 .guest-type {
   display: flex;
   align-items: center;

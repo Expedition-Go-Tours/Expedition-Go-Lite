@@ -54,18 +54,25 @@ interface CalculateCheckoutInput {
   }
 }
 
+// Mirrors the actual shape returned by
+// Expedition-Go-Backend/controllers/expeditionController.js#calculateCheckout
+// — note `available`/`availableSpots` are top-level fields, not nested
+// under an `availability` object, and `pricing` has no `breakdown` array.
 interface CalculateCheckoutResponse {
+  available: boolean
+  availableSpots: number
   pricing: {
     subtotal: number
     fees: number
     discounts: number
     total: number
     currency: string
-    breakdown: { label: string; quantity: number; unitPrice: number; total: number }[]
   }
-  availability: {
-    available: boolean
-    remainingSpots: number
+  travelerSummary: {
+    adults: number
+    children: number
+    infants: number
+    total: number
   }
 }
 

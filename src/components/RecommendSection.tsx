@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import SectionHeading from './SectionHeading'
 import TourCard from './TourCard'
 import { recommendedTours } from './data'
+import { useRecommendedTours } from '../hooks/useExpeditionTours'
 import './RecommendSection.css'
 
 const CARD_WIDTH = 295
@@ -13,7 +14,12 @@ export default function RecommendSection() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
-  const items = recommendedTours
+  const { data: liveTours } = useRecommendedTours(12)
+
+  // Fall back to the static mock list while loading or if the live data is
+  // empty/unavailable — once live data arrives (including newly created
+  // tours that haven't been manually curated yet) it takes over.
+  const items = liveTours && liveTours.length > 0 ? liveTours : recommendedTours
 
   const updateArrows = useCallback(() => {
     const el = scrollRef.current
