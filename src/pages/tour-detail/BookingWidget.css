@@ -488,6 +488,15 @@
   flex-shrink: 0;
 }
 
+/* Non-refundable ("All sales final") footer state */
+.booking-footer-nonrefundable {
+  color: #dc2626;
+}
+
+.booking-footer-nonrefundable svg {
+  color: #dc2626;
+}
+
 /* ===== DESKTOP TWEAKS (1024px+) ===== */
 @media (min-width: 1024px) {
   .booking-form {

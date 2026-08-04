@@ -61,7 +61,7 @@
 .tour-card-language {
   display: inline-flex;
   align-items: center;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: #6b7280;
   font-family: 'Raleway', sans-serif;
@@ -71,8 +71,8 @@
 .tour-card-difficulty {
   display: inline-flex;
   align-items: center;
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 600;
   color: #6b7280;
   font-family: 'Raleway', sans-serif;
 }

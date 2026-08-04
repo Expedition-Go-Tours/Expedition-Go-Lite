@@ -224,26 +224,65 @@ function formatCancellationPolicy(policy: any): string | null {
   if (policy == null) return null
   if (typeof policy === 'string') {
     const trimmed = policy.trim()
-    return trimmed || null
+    if (!trimmed) return null
+    const lower = trimmed.toLowerCase()
+    // Supplier "All sales final" / legacy non-refundable values.
+    if (lower === 'all_sales_final' || lower === 'non-refundable' || lower === 'non_refundable') {
+      return 'Non-refundable'
+    }
+    // Supplier "Standard" policy (free cancellation, default 24h window).
+    if (lower === 'standard') return 'Free cancellation up to 24 hours before start time'
+    return trimmed
   }
   if (typeof policy !== 'object') return null
 
   const type = String(policy.type ?? '').toLowerCase()
-  const hours = policy.cutoffHours ?? policy.cancellationWindowHours ?? policy.freeCancellationHours
+  // NOTE: cutoffHours on the supplier record is the booking cut-off (Step 15),
+  // NOT the cancellation window — so a bare cutoffHours: 0 must NOT be read as
+  // "non-refundable". Newer "standard" / "all_sales_final" records carry the
+  // cancellation window in cancellationWindowHours instead.
+  const cutoffHours = policy.cutoffHours
+  const windowHours = policy.cancellationWindowHours ?? policy.freeCancellationHours
   const refundPct = policy.refundPercentage ?? policy.refundRate
   const hasRules = typeof policy.refundRules === 'string' && policy.refundRules.trim() !== ''
+  const label = typeof policy.label === 'string' && policy.label.trim() ? policy.label.trim() : null
 
+  // Non-refundable: the supplier's "All sales final" choice, legacy
+  // non-refundable types, or an explicit 0% refund.
   if (
+    type === 'all_sales_final' ||
     type === 'non-refundable' ||
     type === 'non_refundable' ||
-    (refundPct != null && Number(refundPct) === 0) ||
-    (hours != null && Number(hours) === 0)
+    (refundPct != null && Number(refundPct) === 0)
   ) {
     return 'Non-refundable'
   }
 
-  if (hours != null && Number(hours) > 0) {
-    const h = Math.round(Number(hours))
+  // Supplier's "Standard" choice — free cancellation up to the configured
+  // window (defaults to the platform-standard 24 hours).
+  if (type === 'standard') {
+    const h = windowHours != null && Number(windowHours) > 0
+      ? Math.round(Number(windowHours))
+      : (cutoffHours != null && Number(cutoffHours) > 0 ? Math.round(Number(cutoffHours)) : 24)
+    return `Free cancellation up to ${h} hours before start time`
+  }
+
+  // Legacy structured rules (freeCancellation days-before window).
+  const freeRule = policy.freeCancellation
+  if (freeRule && typeof freeRule === 'object') {
+    const days = Number(freeRule.daysBefore)
+    if (Number.isFinite(days) && days > 0) {
+      return `Free cancellation up to ${days} ${days === 1 ? 'day' : 'days'} before start time`
+    }
+  }
+
+  // Legacy flexible policies stored the free-cancellation window in
+  // cutoffHours (or cancellationWindowHours).
+  const legacyHours = (cutoffHours != null && Number(cutoffHours) > 0)
+    ? Number(cutoffHours)
+    : (windowHours != null && Number(windowHours) > 0 ? Number(windowHours) : null)
+  if (legacyHours != null) {
+    const h = Math.round(legacyHours)
     if (refundPct == null || Number(refundPct) >= 100) {
       return `Free cancellation up to ${h} hours before start time`
     }
@@ -253,6 +292,7 @@ function formatCancellationPolicy(policy: any): string | null {
   if (type === 'flexible') return 'Free cancellation'
   if (type === 'strict') return 'Strict cancellation policy'
   if (type === 'moderate') return 'Moderate cancellation policy'
+  if (label) return label
   if (hasRules) return policy.refundRules.trim()
   return null
 }
@@ -266,7 +306,16 @@ function extractCancellationFromTour(tour: any): string | null {
     const bt = typeof tour?.bookingAndTickets === 'string'
       ? JSON.parse(tour.bookingAndTickets)
       : tour?.bookingAndTickets
-    return formatCancellationPolicy(bt?.cancellationPolicy)
+    const policy = bt?.cancellationPolicy
+    const formatted = formatCancellationPolicy(policy)
+    if (formatted) return formatted
+    // A configured policy that isn't explicitly non-refundable defaults to the
+    // platform-standard free cancellation policy, so tours created with the
+    // supplier's "Standard" option still show "Free Cancellation" on cards.
+    if (policy != null && typeof policy === 'object' && Object.keys(policy).length > 0) {
+      return 'Free cancellation up to 24 hours before'
+    }
+    return null
   } catch {
     return null
   }
@@ -555,7 +604,10 @@ function extractDietaryOptions(rawTour: any): string[] {
 function mapToListing(tour: ExpeditionTourRecord['tour']): TourCardData {
   const location = [tour.city, tour.country].filter(Boolean).join(', ')
   const isExternal = tour.bookingFlow === 'EXTERNAL'
-  const effectivePrice = tour.startingPrice ?? extractStartingPriceFromRaw(tour.schedulesAndPricing)
+  // Prefer the authoritative schedule-derived price whenever the record
+  // carries schedulesAndPricing, falling back to the (possibly stale)
+  // stored startingPrice only when no schedule data is available.
+  const effectivePrice = extractStartingPriceFromRaw(tour.schedulesAndPricing) ?? tour.startingPrice
   // Cards show only the single Step 1 content language, not every
   // per-option language merged in — see extractContentLanguage().
   // The curated /expedition/tours select never includes productContent,
@@ -625,12 +677,11 @@ export interface ExpeditionToursFilters {
  * price) on curated records by tour ID, mutating them in place.
  */
 async function enrichExpeditionRecords(records: ExpeditionTourRecord[]): Promise<void> {
-  const needsBatch = records.some((r) =>
-    r.tour.startingPrice == null || !r.tour.city || !r.tour.durationMinutes ||
-    !extractDifficultyFromTour(r.tour) || !extractCancellationFromTour(r.tour)
-  )
-  if (!needsBatch) return
-
+  // Always run: curated records carry a stored startingPrice that can be
+  // stale/wrong (e.g. a tour's Child price while adults are charged more),
+  // which is only detectable by cross-referencing the full /tours listing.
+  // There is no cheap way to detect staleness up front, so skip the old
+  // "needsBatch" short-circuit to keep every listing price authoritative.
   try {
     const allPayload = await expeditionFetchRaw('/tours?limit=500')
     const allTours: any[] = allPayload.data?.tours ?? []
@@ -658,10 +709,12 @@ async function enrichExpeditionRecords(records: ExpeditionTourRecord[]): Promise
       categoryMap.set(t.id, t.category ?? null)
     }
     for (const r of records) {
-      if (r.tour.startingPrice == null) {
-        const fallbackPrice = priceMap.get(r.tour.id)
-        if (fallbackPrice != null) r.tour.startingPrice = fallbackPrice
-      }
+      // The curated /expedition/tours records carry a stored startingPrice
+      // that can be stale/wrong (e.g. a tour's Child price while the adult
+      // price is what checkout charges). Always prefer the authoritative
+      // schedule-derived price from the full tour listing when known.
+      const authoritativePrice = priceMap.get(r.tour.id)
+      if (authoritativePrice != null) r.tour.startingPrice = authoritativePrice
       if (!r.tour.city) {
         r.tour.city = cityMap.get(r.tour.id) ?? null
       }
@@ -733,6 +786,7 @@ export function useExpeditionFeaturedTours() {
     queryFn: async () => {
       const payload = await expeditionFetchRaw('/expedition/tours/featured')
       const records: ExpeditionTourRecord[] = payload.data?.tours ?? []
+      await enrichExpeditionRecords(records)
       return records.map((r) => mapToListing(r.tour))
     },
   })
@@ -961,6 +1015,14 @@ export function useExpeditionTour(slug: string | undefined) {
             }
             if (resolvedPrice == null) {
               resolvedPrice = extractStartingPriceFromRaw(rawTour?.schedulesAndPricing)
+            } else {
+              // The curated record's stored startingPrice can be stale (e.g.
+              // a tour's Child price while adults are charged more), so once
+              // we have the raw tour we always prefer the authoritative
+              // schedule-derived price — keeping the detail page, booking
+              // widget, and listings consistent.
+              const rawResolved = extractStartingPriceFromRaw(rawTour?.schedulesAndPricing)
+              if (rawResolved != null) resolvedPrice = rawResolved
             }
             if (!tour.city) {
               tour.city = extractCityFromTour(rawTour)
@@ -1245,12 +1307,11 @@ export function useSimilarTours(slug: string | undefined) {
         return []
       }
 
-      // Batch-enrich similar tours with full data (price, location, duration, etc.)
-      const needsBatch = records.some((r) =>
-        r.tour.startingPrice == null || !r.tour.city || !r.tour.durationMinutes ||
-        !extractDifficultyFromTour(r.tour) || !extractCancellationFromTour(r.tour)
-      )
-      if (needsBatch) {
+      // Batch-enrich similar tours with full data (price, location, duration,
+      // etc.). Always run — same reason as enrichExpeditionRecords: the stored
+      // startingPrice on curated records can be stale and is only correctable
+      // by cross-referencing the full /tours listing.
+      {
         try {
           const allPayload = await expeditionFetchRaw('/tours?limit=500')
           const allTours: any[] = allPayload.data?.tours ?? []
@@ -1276,10 +1337,11 @@ export function useSimilarTours(slug: string | undefined) {
             languagesMap.set(t.id, extractContentLanguage(t))
           }
           for (const r of records) {
-            if (r.tour.startingPrice == null) {
-              const fallbackPrice = priceMap.get(r.tour.id)
-              if (fallbackPrice != null) r.tour.startingPrice = fallbackPrice
-            }
+            // Same rule as enrichExpeditionRecords: the stored startingPrice
+            // on curated records can be stale, so always prefer the
+            // authoritative schedule-derived price when known.
+            const authoritativePrice = priceMap.get(r.tour.id)
+            if (authoritativePrice != null) r.tour.startingPrice = authoritativePrice
             if (!r.tour.city) {
               r.tour.city = cityMap.get(r.tour.id) ?? null
             }

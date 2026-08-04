@@ -5,7 +5,7 @@ import type { TourDetail, TravelerPricing } from '../../lib/tourTypes'
 import { Button } from '../../components/ui/button'
 import { CalendarPicker } from '../../components/ui/apple-calendar-picker'
 import { motion, AnimatePresence } from 'framer-motion'
-import { CalendarDays, Users, Minus, Plus, MessageSquare } from 'lucide-react'
+import { CalendarDays, Users, Minus, Plus, MessageSquare, Ban } from 'lucide-react'
 import { toast } from 'sonner'
 import { useCurrency } from '../../contexts/CurrencyContext'
 import type { DayAvailability } from '../../lib/tourAvailability'
@@ -277,6 +277,14 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
 
   const formatPrice = (val: number) => val > 0 ? `${currency.symbol}${val}` : t('booking.free')
 
+  // Cancellation shown in the widget footer mirrors the supplier's choice:
+  // "Standard" -> free cancellation, "All sales final" -> non-refundable.
+  const policyText = tour?.cancellationPolicy?.trim() || ''
+  const isNonRefundablePolicy = /non[- ]?refundable|no refunds?|all sales final/i.test(policyText)
+  const cancellationFooterLabel = isNonRefundablePolicy
+    ? t('tourDetail.nonRefundable')
+    : (policyText || t('tourDetail.freeCancellation'))
+
   const travelerOptions = isPerGroup
     ? [
         { label: t('booking.travelers'), age: t('booking.perGroupHeadcount', 'Group headcount'), price: matchingGroupBand ? formatPrice(matchingGroupBand.price) : '', count: adults, key: 'adults' },
@@ -519,12 +527,16 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
           </div>
         </div>
 
-        <div className="booking-footer">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-            <polyline points="22 4 12 14.01 9 11.01" />
-          </svg>
-          <span>{t('tourDetail.freeCancellation')}</span>
+        <div className={`booking-footer${isNonRefundablePolicy ? ' booking-footer-nonrefundable' : ''}`}>
+          {isNonRefundablePolicy ? (
+            <Ban size={16} />
+          ) : (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+              <polyline points="22 4 12 14.01 9 11.01" />
+            </svg>
+          )}
+          <span>{cancellationFooterLabel}</span>
         </div>
       </div>
       {showChat && <SupportChatWidget initialOpen />}

@@ -19,6 +19,7 @@ import type { DayAvailability } from '../../lib/tourAvailability'
 import TourImageGallery from './TourImageGallery'
 import TourHeader from './TourHeader'
 import TourQuickFacts from './TourQuickFacts'
+import TravelersLoved from './TravelersLoved'
 import BookingWidget from './BookingWidget'
 import RelatedTours from './RelatedTours'
 
@@ -335,7 +336,9 @@ export default function TourDetailPage() {
       : t('tourDetail.guideLanguage')
 
     // Cancellation policy is dynamic per tour (bookingAndTickets.cancellationPolicy).
+    // Supplier choices: "Standard" (free cancellation) vs "All sales final" (non-refundable).
     const cancellationLabel = tour?.cancellationPolicy || t('tourDetail.cancellationDefault')
+    const isNonRefundableCancellation = /non[- ]?refundable|no refunds?|all sales final/i.test(cancellationLabel)
 
     // Food & drinks: build a descriptive label from meals / dietary options
     // (Step07 in the supplier product builder) when included, otherwise
@@ -367,40 +370,22 @@ export default function TourDetailPage() {
     const isPrivateExperience = !!tour?.isPrivateActivity
 
     return [
-      // 1. Cancellation policy — always shown, green accent since a policy is always available.
+      // 1. Language — always shown, green accent since a language is always available.
       {
-        icon: CalendarCheck,
-        title: t('tourDetail.cancellationPolicy'),
+        icon: Globe,
+        title: t('tourDetail.languages'),
         desc: null,
         renderValue: () => (
           <>
-            <p className="tour-quick-fact-title">{t('tourDetail.cancellationPolicy')}</p>
+            <p className="tour-quick-fact-title">{t('tourDetail.languages')}</p>
             <span className="difficulty-grid-badge" style={{ backgroundColor: '#17923715', color: '#179237' }}>
-              {cancellationLabel}
+              {languagesLabel}
             </span>
           </>
         ),
       },
 
-      // 2. Difficulty — always shown, neutral badge if not specified.
-      {
-        icon: Gauge,
-        title: t('tourInfo.difficulty'),
-        desc: null,
-        renderValue: () => (
-          <>
-            <p className="tour-quick-fact-title">{t('tourInfo.difficulty')}</p>
-            <span
-              className="difficulty-grid-badge"
-              style={{ backgroundColor: `${diffColor}15`, color: diffColor }}
-            >
-              {diffLabel || t('tourInfo.notSpecified', { defaultValue: 'Not specified' })}
-            </span>
-          </>
-        ),
-      },
-
-      // 3. Duration — always shown, green accent when a real duration is set.
+      // 2. Duration — always shown, green accent when a real duration is set.
       {
         icon: Clock,
         title: t('tourDetail.duration'),
@@ -419,7 +404,72 @@ export default function TourDetailPage() {
         ),
       },
 
-      // 4. Skip the line — always shown, red "No" when not offered.
+      // 3. Difficulty — always shown, neutral badge if not specified.
+      {
+        icon: Gauge,
+        title: t('tourInfo.difficulty'),
+        desc: null,
+        renderValue: () => (
+          <>
+            <p className="tour-quick-fact-title">{t('tourInfo.difficulty')}</p>
+            <span
+              className="difficulty-grid-badge"
+              style={{ backgroundColor: `${diffColor}15`, color: diffColor }}
+            >
+              {diffLabel || t('tourInfo.notSpecified', { defaultValue: 'Not specified' })}
+            </span>
+          </>
+        ),
+      },
+
+      // 4. Pickup included — always shown, red "No" if not selected.
+      {
+        icon: Bus,
+        title: t('tourDetail.pickupIncluded'),
+        desc: null,
+        renderValue: () => (
+          <>
+            <p className="tour-quick-fact-title">{t('tourDetail.pickupIncluded')}</p>
+            {tour?.pickupIncluded
+              ? yesNoBadge(true, t('tourDetail.yesLabel'), t('tourDetail.noLabel'))
+              : yesNoBadge(false, t('tourDetail.yesLabel'), t('tourDetail.noLabel'))}
+          </>
+        ),
+      },
+
+      // 5. Guide information — always shown, title is fixed, content is
+      // just the single selected guide type (e.g. "Tour guide").
+      {
+        icon: User,
+        title: t('tourDetail.guideInformation'),
+        desc: null,
+        renderValue: () => (
+          <>
+            <p className="tour-quick-fact-title">{t('tourDetail.guideInformation')}</p>
+            <span
+              className="difficulty-grid-badge"
+              style={{ backgroundColor: '#17923715', color: '#179237' }}
+            >
+              {guideLabel}
+            </span>
+          </>
+        ),
+      },
+
+      // 6. Private experience — sourced from productContent.isPrivateActivity.
+      {
+        icon: isPrivateExperience ? Users : UserCheck,
+        title: isPrivateExperience ? t('tourDetail.privateExperience') : t('tourDetail.groupExperience'),
+        desc: null,
+        renderValue: () => (
+          <>
+            <p className="tour-quick-fact-title">{t('tourDetail.privateExperience')}</p>
+            {yesNoBadge(isPrivateExperience, t('tourDetail.yesLabel'), t('tourDetail.noLabel'))}
+          </>
+        ),
+      },
+
+      // 7. Skip the line — always shown, red "No" when not offered.
       {
         icon: UserCheck,
         title: t('tourDetail.skipTheLineTitle'),
@@ -434,7 +484,28 @@ export default function TourDetailPage() {
         ),
       },
 
-      // 5. Food and drinks included — badge shows the actual selected
+      // 8. Cancellation policy — always shown; green when travellers can
+      // cancel free, red when the supplier chose "All sales final".
+      {
+        icon: CalendarCheck,
+        title: t('tourDetail.cancellationPolicy'),
+        desc: null,
+        renderValue: () => (
+          <>
+            <p className="tour-quick-fact-title">{t('tourDetail.cancellationPolicy')}</p>
+            <span
+              className="difficulty-grid-badge"
+              style={isNonRefundableCancellation
+                ? { backgroundColor: '#ef444415', color: '#ef4444' }
+                : { backgroundColor: '#17923715', color: '#179237' }}
+            >
+              {cancellationLabel}
+            </span>
+          </>
+        ),
+      },
+
+      // 9. Food and drinks included — badge shows the actual selected
       // option(s) (e.g. "Breakfast, Lunch" or "Breakfast + Drinks
       // included"), same treatment as Skip the line. Red "No" only when
       // nothing was selected in Step 07 of the supplier product builder.
@@ -455,39 +526,7 @@ export default function TourDetailPage() {
         ),
       },
 
-      // 6. Guide information — always shown, title is fixed, content is
-      // just the single selected guide type (e.g. "Tour guide").
-      {
-        icon: User,
-        title: t('tourDetail.guideInformation'),
-        desc: null,
-        renderValue: () => (
-          <>
-            <p className="tour-quick-fact-title">{t('tourDetail.guideInformation')}</p>
-            <span
-              className="difficulty-grid-badge"
-              style={{ backgroundColor: '#17923715', color: '#179237' }}
-            >
-              {guideLabel}
-            </span>
-          </>
-        ),
-      },
-
-      // 7a. Pets allowed — always shown, red "No" if not selected.
-      {
-        icon: PawPrint,
-        title: t('tourDetail.petsAllowed'),
-        desc: null,
-        renderValue: () => (
-          <>
-            <p className="tour-quick-fact-title">{t('tourDetail.petsAllowed')}</p>
-            {yesNoBadge(!!tour?.petFriendly, t('tourDetail.yesLabel'), t('tourDetail.noLabel'))}
-          </>
-        ),
-      },
-
-      // 7b. Wheelchair accessible — always shown, red "No" if not selected.
+      // 10. Wheelchair accessible — always shown, red "No" if not selected.
       {
         icon: Accessibility,
         title: t('tourDetail.wheelchairAccessible'),
@@ -500,7 +539,7 @@ export default function TourDetailPage() {
         ),
       },
 
-      // 8. WiFi available — no supplier-facing field exists for this today
+      // 11. WiFi available — no supplier-facing field exists for this today
       // (checked TravioAfrica-Supplier's product builder), so it always
       // renders as a red "No" until that capability is added.
       {
@@ -515,45 +554,15 @@ export default function TourDetailPage() {
         ),
       },
 
-      // 9. Private experience — sourced from productContent.isPrivateActivity.
+      // 12. Pets allowed — always shown, red "No" if not selected.
       {
-        icon: isPrivateExperience ? Users : UserCheck,
-        title: isPrivateExperience ? t('tourDetail.privateExperience') : t('tourDetail.groupExperience'),
+        icon: PawPrint,
+        title: t('tourDetail.petsAllowed'),
         desc: null,
         renderValue: () => (
           <>
-            <p className="tour-quick-fact-title">{t('tourDetail.privateExperience')}</p>
-            {yesNoBadge(isPrivateExperience, t('tourDetail.yesLabel'), t('tourDetail.noLabel'))}
-          </>
-        ),
-      },
-
-      // 10. Pickup included — always shown, red "No" if not selected.
-      {
-        icon: Bus,
-        title: t('tourDetail.pickupIncluded'),
-        desc: null,
-        renderValue: () => (
-          <>
-            <p className="tour-quick-fact-title">{t('tourDetail.pickupIncluded')}</p>
-            {tour?.pickupIncluded
-              ? yesNoBadge(true, t('tourDetail.yesLabel'), t('tourDetail.noLabel'))
-              : yesNoBadge(false, t('tourDetail.yesLabel'), t('tourDetail.noLabel'))}
-          </>
-        ),
-      },
-
-      // 11. Language — always shown, green accent since a language is always available.
-      {
-        icon: Globe,
-        title: t('tourDetail.languages'),
-        desc: null,
-        renderValue: () => (
-          <>
-            <p className="tour-quick-fact-title">{t('tourDetail.languages')}</p>
-            <span className="difficulty-grid-badge" style={{ backgroundColor: '#17923715', color: '#179237' }}>
-              {languagesLabel}
-            </span>
+            <p className="tour-quick-fact-title">{t('tourDetail.petsAllowed')}</p>
+            {yesNoBadge(!!tour?.petFriendly, t('tourDetail.yesLabel'), t('tourDetail.noLabel'))}
           </>
         ),
       },
@@ -778,6 +787,11 @@ export default function TourDetailPage() {
                         )}
 
                         <TourQuickFacts items={tourQuickFacts} />
+
+                        <TravelersLoved
+                          reviews={allReviewCards}
+                          onViewAllReviews={handleReviewsTab}
+                        />
 
                         <TourItineraryPreview itinerary={tour.itinerary} />
 

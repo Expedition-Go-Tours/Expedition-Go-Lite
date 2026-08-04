@@ -1,0 +1,216 @@
+/* What travellers loved — GetYourGuide-style review highlight section */
+.travelers-loved {
+  width: 100%;
+  min-width: 0;
+  /* Generous breathing room between the review cards and the divider line
+     that separates this section from the itinerary below it. */
+  padding-bottom: 64px;
+}
+
+.travelers-loved-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.travelers-loved-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+  font-family: var(--font-body);
+}
+
+.travelers-loved-sample-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #c2410c;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  white-space: nowrap;
+}
+
+.travelers-loved-view-all {
+  background: none;
+  border: none;
+  padding: 0;
+  margin-left: auto;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--primary, #179237);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.2s ease;
+}
+
+.travelers-loved-view-all:hover {
+  color: var(--primary-hover, #137a2e);
+  text-decoration: underline;
+}
+
+.travelers-loved-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+}
+
+.travelers-loved-card {
+  border: 1px solid var(--border, #e5e4e7);
+  border-radius: 12px;
+  background: #fff;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.travelers-loved-card-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.travelers-loved-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary, #179237), var(--dash-accent, #69c982));
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.travelers-loved-author {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.travelers-loved-author-name {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-h, #08060d);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.travelers-loved-meta {
+  font-size: 12px;
+  color: var(--text, #6b6375);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.travelers-loved-verified {
+  color: var(--primary, #179237);
+}
+
+.travelers-loved-stars {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.travelers-loved-card-title {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--text-h, #08060d);
+  margin: 0 0 8px;
+}
+
+.travelers-loved-card-text {
+  position: relative;
+  overflow: hidden;
+}
+
+.travelers-loved-card-text.collapsed .travelers-loved-card-paragraph {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.travelers-loved-card-paragraph {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text, #6b6375);
+}
+
+.travelers-loved-card-toggle {
+  background: none;
+  border: none;
+  padding: 0;
+  margin-top: 8px;
+  align-self: flex-start;
+  color: var(--primary, #179237);
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.travelers-loved-card-toggle:hover {
+  color: var(--primary-hover, #137a2e);
+  text-decoration: underline;
+}
+
+/* Tablet - 768px+ */
+@media (min-width: 768px) {
+  .travelers-loved-title {
+    font-size: 20px;
+  }
+
+  .travelers-loved-view-all {
+    font-size: 15px;
+  }
+
+  /* Two columns until the main column is wide enough to safely fit three.
+     Using minmax(0, 1fr) keeps the tracks from blowing out past the main
+     column and sliding under the sticky booking widget in the sidebar. */
+  .travelers-loved-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+  }
+
+  .travelers-loved-card {
+    padding: 24px;
+  }
+}
+
+/* Desktop - 1200px+ (wider main column fits three cards) */
+@media (min-width: 1200px) {
+  .travelers-loved-title {
+    font-size: 24px;
+  }
+
+  .travelers-loved-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .travelers-loved-card {
+    padding: 28px;
+  }
+}
