@@ -41,13 +41,6 @@ import SupplierSection from './SupplierSection'
 
 import './TourDetailPage.css'
 
-const EXTERNAL_FALLBACK_IMAGES = [
-  'https://ecotourghana.com/img/n10.jpg',
-  'https://grassroottours.com/wp-content/uploads/2019/04/IMG_5843-370x260.jpg',
-  'https://images.squarespace-cdn.com/content/v1/65cfd1369377d32bcd0051fa/1713964352006-GG68CSEC76Z06G1JZBFQ/Accra+City+Tour-+Sheeda+Travel+Tribe.jpg',
-  'https://images.squarespace-cdn.com/content/v1/65cfd1369377d32bcd0051fa/f0eaf879-3685-41fb-ba88-5fbab02dda4a/Travel+to+Ghana-+Sheeda+Travel+Tribe.jpg',
-]
-
 function toSlug(title: string): string {
   return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 }
@@ -97,7 +90,6 @@ export default function TourDetailPage() {
     const seen = new Set<string>()
     const all = [
       ...(tour?.images || []),
-      ...EXTERNAL_FALLBACK_IMAGES,
     ]
     return all.filter((url) => {
       const key = String(url || '').toLowerCase().replace(/[?#].*$/, '').replace(/\/$/, '')
