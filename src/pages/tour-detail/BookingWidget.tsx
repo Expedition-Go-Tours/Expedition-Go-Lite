@@ -9,6 +9,11 @@ import { CalendarDays, Users, Minus, Plus, MessageSquare, Ban } from 'lucide-rea
 import { toast } from 'sonner'
 import { useCurrency } from '../../contexts/CurrencyContext'
 import type { DayAvailability } from '../../lib/tourAvailability'
+import {
+  clampGroupHeadcount,
+  groupBandLabel,
+  groupPricingRange,
+} from '../../lib/groupPricing'
 import SupportChatWidget from '../../components/SupportChatWidget'
 import BookingTransition from '../../components/BookingTransition'
 import { getApiBaseUrl, getAuthToken } from '../../lib/auth'
@@ -159,6 +164,32 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
     return [...groupSizeBands].sort((a, b) => a.price - b.price)[0]
   }, [groupSizeBands])
 
+  // For per-group pricing the supplier defines flat headcount bands (e.g.
+  // "Group of 1-2", "Group of 3-5"), and the checkout fails when the selected
+  // headcount falls outside every band. Mirror Viator: clamp the headcount
+  // into the valid band range so a price is always resolvable, and expose the
+  // band boundaries so the +/- stepper stops at the edges.
+  const { min: groupMinHeadcount, max: groupMaxHeadcount } = useMemo(
+    () => groupPricingRange(groupSizeBands),
+    [groupSizeBands]
+  )
+
+  const activeGroupBandLabel = useMemo(
+    () => groupBandLabel(matchingGroupBand),
+    [matchingGroupBand]
+  )
+
+  // Snap the headcount into the valid band range whenever the bands load or
+  // the pricing model changes, so the widget never presents an unpriceable
+  // headcount (which the checkout would reject). React-recommended "adjust
+  // state during render" pattern — guarded so it only runs when the bands
+  // actually change.
+  const [prevGroupBands, setPrevGroupBands] = useState(groupSizeBands)
+  if (isPerGroup && groupSizeBands.length > 0 && prevGroupBands !== groupSizeBands) {
+    setPrevGroupBands(groupSizeBands)
+    setAdults((prev) => clampGroupHeadcount(prev, groupSizeBands))
+  }
+
   const ageRangeLabel = (g?: TravelerPricing): string => {
     if (!g || (g.minAge == null && g.maxAge == null)) return ''
     if (g.minAge != null && g.maxAge != null) return `${g.minAge}-${g.maxAge} years`
@@ -194,13 +225,19 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
   const hasPricing = pricingTotal !== null
 
   const increment = (type: string) => {
-    if (type === 'adults' && adults < 50) setAdults(adults + 1)
+    if (type === 'adults') {
+      const max = isPerGroup ? groupMaxHeadcount : 50
+      if (adults < max) setAdults(adults + 1)
+    }
     if (type === 'children' && children < 9) setChildren(children + 1)
     if (type === 'infants' && infants < 9) setInfants(infants + 1)
   }
 
   const decrement = (type: string) => {
-    if (type === 'adults' && adults > 1) setAdults(adults - 1)
+    if (type === 'adults') {
+      const min = isPerGroup ? groupMinHeadcount : 1
+      if (adults > min) setAdults(adults - 1)
+    }
     if (type === 'children' && children > 0) setChildren(children - 1)
     if (type === 'infants' && infants > 0) setInfants(infants - 1)
   }
@@ -233,7 +270,7 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
         time: '9:00 AM',
         duration: tour.duration,
         travelers: travelersLabel,
-        price: totalPrice,
+        price: isPerGroup ? (matchingGroupBand?.price ?? totalPrice) : totalPrice,
         cancellation: tour.cancellationPolicy || 'Free cancellation up to 24 hours before',
         language: tour.languages?.[0] || 'English',
       },
@@ -253,7 +290,7 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
     setIsBooking(true)
     // Spinner on the button for a moment, then reveal the travel transition.
     setTimeout(() => setShowTransition(true), 1100)
-  }, [selectedDate, t, tour, adults, children, infants, totalPrice])
+  }, [selectedDate, t, tour, adults, children, infants, totalPrice, isPerGroup, matchingGroupBand])
 
   const handleTransitionDone = useCallback(() => {
     navigate('/booking', { state: pendingNavState.current })
@@ -287,12 +324,18 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
 
   const travelerOptions = isPerGroup
     ? [
-        { label: t('booking.travelers'), age: t('booking.perGroupHeadcount', 'Group headcount'), price: matchingGroupBand ? formatPrice(matchingGroupBand.price) : '', count: adults, key: 'adults' },
+        {
+          label: t('booking.travelers'),
+          age: matchingGroupBand ? activeGroupBandLabel : t('booking.perGroupHeadcount', 'Group headcount'),
+          price: matchingGroupBand ? formatPrice(matchingGroupBand.price) : '',
+          count: adults,
+          key: 'adults' as const,
+        },
       ]
     : [
-        { label: t('booking.adults'), age: ageRangeLabel(adultGroup) || t('booking.ageAdult'), price: formatPrice(adultPrice), count: adults, key: 'adults' },
-        { label: t('booking.children'), age: ageRangeLabel(childGroup) || t('booking.ageChild'), price: childPrice > 0 ? formatPrice(childPrice) : t('booking.free'), count: children, key: 'children' },
-        { label: t('booking.infants'), age: ageRangeLabel(infantGroup) || t('booking.ageInfant'), price: infantPrice > 0 ? formatPrice(infantPrice) : t('booking.free'), count: infants, key: 'infants' },
+        { label: t('booking.adults'), age: ageRangeLabel(adultGroup) || t('booking.ageAdult'), price: formatPrice(adultPrice), count: adults, key: 'adults' as const },
+        { label: t('booking.children'), age: ageRangeLabel(childGroup) || t('booking.ageChild'), price: childPrice > 0 ? formatPrice(childPrice) : t('booking.free'), count: children, key: 'children' as const },
+        { label: t('booking.infants'), age: ageRangeLabel(infantGroup) || t('booking.ageInfant'), price: infantPrice > 0 ? formatPrice(infantPrice) : t('booking.free'), count: infants, key: 'infants' as const },
       ]
 
   const selectedDateLabel = selectedDate
@@ -386,7 +429,14 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
               onClick={() => { setShowGuestSelector((v) => !v); setShowCalendar(false) }}
               aria-expanded={showGuestSelector}
             >
-              <span>{totalTravelers} {t('booking.traveler', { count: totalTravelers })}</span>
+              <span>
+                {totalTravelers} {t('booking.traveler', { count: totalTravelers })}
+                {isPerGroup && activeGroupBandLabel && (
+                  <span className="booking-active-band">
+                    {' '}· {t('booking.groupOf', 'Group of {{range}}', { range: activeGroupBandLabel })}
+                  </span>
+                )}
+              </span>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <polyline points="6 9 12 15 18 9" />
               </svg>
@@ -423,7 +473,12 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
                     </div>
                   )}
                   {travelerOptions.map((opt) => {
-                    const canDecrement = opt.key === 'adults' ? opt.count > 1 : opt.count > 0
+                    const canDecrement = opt.key === 'adults'
+                      ? (isPerGroup ? opt.count > groupMinHeadcount : opt.count > 1)
+                      : opt.count > 0
+                    const canIncrement = opt.key === 'adults'
+                      ? (isPerGroup ? opt.count < groupMaxHeadcount : opt.count < 50)
+                      : opt.count < 9
                     return (
                       <div key={opt.key} className="guest-type">
                         <div className="guest-type-info">
@@ -443,6 +498,7 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
                           <button
                             className="guest-btn"
                             onClick={() => increment(opt.key)}
+                            disabled={!canIncrement}
                             aria-label={`Add one ${opt.label}`}
                           >
                             <Plus size={16} />
@@ -461,15 +517,19 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
             <div className="booking-total">
               <span>{isPerGroup ? t('booking.groupTotal', 'Group total') : t('booking.total', { count: totalTravelers })}</span>
               <span className="booking-total-amount">
-                {hasPricing
-                  ? `${currency.symbol}${Math.round(convertPrice(totalPrice))}`
-                  : pricingLoading
-                    ? '...'
-                    : isPerGroup
-                      ? (matchingGroupBand ? `${currency.symbol}${Math.round(convertPrice(matchingGroupBand.price))}` : '...')
+                {isPerGroup
+                  ? (matchingGroupBand ? `${currency.symbol}${Math.round(convertPrice(matchingGroupBand.price))}` : pricingLoading ? '...' : '')
+                  : hasPricing
+                    ? `${currency.symbol}${Math.round(convertPrice(totalPrice))}`
+                    : pricingLoading
+                      ? '...'
                       : `${currency.symbol}${Math.round(convertPrice(tour.price * totalTravelers))}`}
               </span>
             </div>
+          )}
+
+          {isPerGroup && groupSizeBands.length === 0 && (
+            <p className="booking-group-unavailable">{t('booking.groupPricingUnavailable')}</p>
           )}
 
           {/* Promo code */}

@@ -43,7 +43,8 @@
     "perGroupHeadcount": "Group headcount",
     "perGroup": "per group",
     "groupTotal": "Group total",
-    "groupOf": "Group of {{range}}"
+    "groupOf": "Group of {{range}}",
+    "groupPricingUnavailable": "Group pricing has not been configured for this tour yet."
   },
   "common": {
     "back": "Back",
