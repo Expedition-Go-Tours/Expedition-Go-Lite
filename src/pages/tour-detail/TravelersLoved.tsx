@@ -55,9 +55,6 @@ export default function TravelersLoved({ reviews, onViewAllReviews }: TravelersL
         <h2 id="travelers-loved-title" className="travelers-loved-title">
           {t('tourDetail.whatTravellersLoved')}
         </h2>
-        {!hasRealReviews && (
-          <span className="travelers-loved-sample-badge">{t('tourDetail.sampleReviews')}</span>
-        )}
         <button type="button" className="travelers-loved-view-all" onClick={onViewAllReviews}>
           {t('tourDetail.seeAllReviews')}
         </button>

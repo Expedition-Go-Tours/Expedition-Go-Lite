@@ -15,7 +15,6 @@ describe('TravelersLoved', () => {
     render(<TravelersLoved reviews={[]} onViewAllReviews={() => {}} />)
 
     expect(screen.getByText('What travellers loved')).toBeInTheDocument()
-    expect(screen.getByText('Sample reviews')).toBeInTheDocument()
     expect(screen.getByText(SAMPLE_TRAVELERS_LOVED[0].name)).toBeInTheDocument()
     expect(screen.getByText(SAMPLE_TRAVELERS_LOVED[0].title!)).toBeInTheDocument()
   })

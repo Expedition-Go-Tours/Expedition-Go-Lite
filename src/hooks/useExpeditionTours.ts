@@ -2,7 +2,16 @@ import { useQuery } from '@tanstack/react-query'
 import { getApiBaseUrl, getAuthToken } from '../lib/auth'
 import type { TourDetail, TravelerPricing, GroupSizeBand, PricingTier } from '../lib/tourTypes'
 
-async function expeditionFetchRaw(path: string) {
+/**
+ * `bypassCache` skips the browser's HTTP cache for this request. The tour
+ * detail endpoints respond with `Cache-Control: max-age=60`, so a page
+ * revisited within that window would otherwise get a stale response even
+ * though our own refetch fired — that would hide a supplier's just-saved
+ * pricing/tier change for up to a minute. Used for the tour-detail fetches
+ * (useExpeditionTour) where freshness matters most; other listing fetches
+ * keep the default caching to avoid unnecessary network traffic.
+ */
+async function expeditionFetchRaw(path: string, bypassCache = false) {
   const base = getApiBaseUrl()
   const token = await getAuthToken()
   const res = await fetch(`${base}${path}`, {
@@ -11,6 +20,7 @@ async function expeditionFetchRaw(path: string) {
       Accept: 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
+    ...(bypassCache ? { cache: 'no-store' } : {}),
   })
   const payload = await res.json().catch(() => ({}))
   if (!res.ok) {
@@ -839,8 +849,13 @@ export interface TourDetailData extends Omit<TourDetail, 'guide' | 'contact' | '
  * any ACTIVE tour, regardless of whether it has been curated onto the
  * Expedition-Go homepage). Used as a fallback so newly created / uncurated
  * tours found via search can still be opened on the detail page.
+ *
+ * `bypassCache` skips the browser HTTP cache — the tour detail path
+ * (useExpeditionTour) needs this so a supplier's just-saved pricing/tier
+ * change is visible immediately instead of waiting out the endpoint's
+ * max-age=60 response caching.
  */
-async function fetchRawTourBySlugOrId(idOrSlug: string): Promise<any | null> {
+async function fetchRawTourBySlugOrId(idOrSlug: string, bypassCache = false): Promise<any | null> {
   const base = getApiBaseUrl()
   const token = await getAuthToken()
   const res = await fetch(`${base}/tours/${encodeURIComponent(idOrSlug)}`, {
@@ -849,6 +864,7 @@ async function fetchRawTourBySlugOrId(idOrSlug: string): Promise<any | null> {
       Accept: 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
+    ...(bypassCache ? { cache: 'no-store' } : {}),
   })
   if (!res.ok) return null
   const payload = await res.json().catch(() => ({}))
@@ -934,6 +950,15 @@ export function useExpeditionTour(slug: string | undefined) {
   return useQuery({
     queryKey: ['expedition', 'tour', slug],
     enabled: !!slug,
+    // Pricing (tiers, group-size bands, uniform price, etc.) is set by the
+    // supplier and can change at any time on the supplier platform. The
+    // global queryClient default (staleTime: 5min) would let the booking
+    // widget show a stale price/tier for up to 5 minutes after a supplier
+    // edit, so this query always treats its data as stale and refetches on
+    // every mount — the tour detail page (and its booking widget) should
+    // always reflect the supplier's current pricing and availability.
+    staleTime: 0,
+    refetchOnMount: 'always',
     queryFn: async () => {
       // Try the curated (homepage) endpoint first — it's cached and includes
       // a few pre-computed fields. If the tour hasn't been curated (e.g. it
@@ -941,9 +966,9 @@ export function useExpeditionTour(slug: string | undefined) {
       // endpoint so it's still viewable when found via search.
       let payload: any
       try {
-        payload = await expeditionFetchRaw(`/expedition/tours/${encodeURIComponent(slug!)}`)
+        payload = await expeditionFetchRaw(`/expedition/tours/${encodeURIComponent(slug!)}`, true)
       } catch (e: any) {
-        const rawTour = await fetchRawTourBySlugOrId(slug!)
+        const rawTour = await fetchRawTourBySlugOrId(slug!, true)
         if (rawTour) {
           return buildTourDetailFromRawTour(rawTour)
         }
@@ -953,7 +978,7 @@ export function useExpeditionTour(slug: string | undefined) {
       const tour = wrapper.tour ?? {}
 
       if (!tour.id) {
-        const rawTour = await fetchRawTourBySlugOrId(slug!)
+        const rawTour = await fetchRawTourBySlugOrId(slug!, true)
         if (rawTour) {
           return buildTourDetailFromRawTour(rawTour)
         }
@@ -981,6 +1006,9 @@ export function useExpeditionTour(slug: string | undefined) {
               Accept: 'application/json',
               ...(token ? { Authorization: `Bearer ${token}` } : {}),
             },
+            // Bypass HTTP caching so pricing/tier edits a supplier just
+            // saved are reflected immediately on the tour detail page.
+            cache: 'no-store',
           })
           if (rawRes.ok) {
             const rawPayload = await rawRes.json()

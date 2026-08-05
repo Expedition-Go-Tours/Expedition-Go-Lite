@@ -229,6 +229,16 @@
   font-weight: 600;
 }
 
+/* Explains that per-person prices are tiered by total headcount */
+.booking-tier-hint {
+  margin: 0 0 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #64748b;
+}
+
 /* Shown when a per-group tour has no group-size bands configured yet */
 .booking-group-unavailable {
   margin: 12px 0 0;

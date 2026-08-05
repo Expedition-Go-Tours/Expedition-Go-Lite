@@ -14,6 +14,7 @@ import {
   groupBandLabel,
   groupPricingRange,
 } from '../../lib/groupPricing'
+import { findActiveTier, hasTieredPricing, resolveTierPrice, tierRangeLabel } from '../../lib/tierPricing'
 import SupportChatWidget from '../../components/SupportChatWidget'
 import BookingTransition from '../../components/BookingTransition'
 import { getApiBaseUrl, getAuthToken } from '../../lib/auth'
@@ -138,20 +139,20 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
 
   // A category's per-person price can depend on the TOTAL number of
   // travelers in the booking (GetYourGuide-style tiered pricing) —
-  // mirrors the backend's calculateTourPrice() tier-matching logic so the
-  // widget shows the same price the checkout call will actually charge.
-  const resolveTierPrice = useCallback((group: TravelerPricing | undefined, fallback: number): number => {
-    if (!group) return fallback
-    if (group.tiers && group.tiers.length > 0) {
-      const tier = group.tiers.find((t) => totalTravelers >= t.from && totalTravelers <= t.to)
-      if (tier) return tier.pricePerPerson
-    }
-    return group.price
-  }, [totalTravelers])
+  // mirrors the backend's calculateTourPrice() tier-matching logic (see
+  // lib/tierPricing.ts) so the widget shows the same price the checkout
+  // call will actually charge.
+  const adultPrice = isPerGroup ? 0 : resolveTierPrice(adultGroup, totalTravelers, tour.price)
+  const childPrice = isPerGroup ? 0 : resolveTierPrice(childGroup, totalTravelers, 0)
+  const infantPrice = isPerGroup ? 0 : resolveTierPrice(infantGroup, totalTravelers, 0)
 
-  const adultPrice = isPerGroup ? 0 : resolveTierPrice(adultGroup, tour.price)
-  const childPrice = isPerGroup ? 0 : resolveTierPrice(childGroup, 0)
-  const infantPrice = isPerGroup ? 0 : resolveTierPrice(infantGroup, 0)
+  // Surface when a category's displayed price is currently coming from a
+  // tier (rather than its flat base price), so travelers understand why the
+  // per-person rate changes as they add more people to the booking.
+  const adultActiveTier = isPerGroup ? undefined : findActiveTier(adultGroup, totalTravelers)
+  const childActiveTier = isPerGroup ? undefined : findActiveTier(childGroup, totalTravelers)
+  const infantActiveTier = isPerGroup ? undefined : findActiveTier(infantGroup, totalTravelers)
+  const anyTieredPricing = !isPerGroup && (hasTieredPricing(adultGroup) || hasTieredPricing(childGroup) || hasTieredPricing(infantGroup))
 
   // Matching flat-rate band for the current headcount, when perGroup.
   const matchingGroupBand = useMemo(() => {
@@ -322,6 +323,14 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
     ? t('tourDetail.nonRefundable')
     : (policyText || t('tourDetail.freeCancellation'))
 
+  // When a tier is currently active for a category, show the age range plus
+  // the tier's headcount band (e.g. "18-60 years · Group of 3-5") so it's
+  // clear why the per-person price changed as travelers were added/removed.
+  const withTierNote = (baseLabel: string, tier: ReturnType<typeof findActiveTier>): string => {
+    if (!tier) return baseLabel
+    return `${baseLabel} · ${t('booking.groupOf', 'Group of {{range}}', { range: tierRangeLabel(tier) })}`
+  }
+
   const travelerOptions = isPerGroup
     ? [
         {
@@ -333,9 +342,9 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
         },
       ]
     : [
-        { label: t('booking.adults'), age: ageRangeLabel(adultGroup) || t('booking.ageAdult'), price: formatPrice(adultPrice), count: adults, key: 'adults' as const },
-        { label: t('booking.children'), age: ageRangeLabel(childGroup) || t('booking.ageChild'), price: childPrice > 0 ? formatPrice(childPrice) : t('booking.free'), count: children, key: 'children' as const },
-        { label: t('booking.infants'), age: ageRangeLabel(infantGroup) || t('booking.ageInfant'), price: infantPrice > 0 ? formatPrice(infantPrice) : t('booking.free'), count: infants, key: 'infants' as const },
+        { label: t('booking.adults'), age: withTierNote(ageRangeLabel(adultGroup) || t('booking.ageAdult'), adultActiveTier), price: formatPrice(adultPrice), count: adults, key: 'adults' as const },
+        { label: t('booking.children'), age: withTierNote(ageRangeLabel(childGroup) || t('booking.ageChild'), childActiveTier), price: childPrice > 0 ? formatPrice(childPrice) : t('booking.free'), count: children, key: 'children' as const },
+        { label: t('booking.infants'), age: withTierNote(ageRangeLabel(infantGroup) || t('booking.ageInfant'), infantActiveTier), price: infantPrice > 0 ? formatPrice(infantPrice) : t('booking.free'), count: infants, key: 'infants' as const },
       ]
 
   const selectedDateLabel = selectedDate
@@ -459,7 +468,9 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
                         .sort((a, b) => a.from - b.from)
                         .map((band, i) => {
                           const isActive = totalTravelers >= band.from && totalTravelers <= band.to
-                          const rangeLabel = Number.isFinite(band.to) ? `${band.from}-${band.to}` : `${band.from}+`
+                          const rangeLabel = band.from === band.to
+                            ? `${band.from}`
+                            : (Number.isFinite(band.to) ? `${band.from}-${band.to}` : `${band.from}+`)
                           return (
                             <div
                               key={i}
@@ -471,6 +482,9 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
                           )
                         })}
                     </div>
+                  )}
+                  {anyTieredPricing && (
+                    <p className="booking-tier-hint">{t('booking.tierPricingHint', 'Per-person prices below depend on your total number of travelers.')}</p>
                   )}
                   {travelerOptions.map((opt) => {
                     const canDecrement = opt.key === 'adults'

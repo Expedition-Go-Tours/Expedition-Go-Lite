@@ -44,7 +44,8 @@
     "perGroup": "per group",
     "groupTotal": "Group total",
     "groupOf": "Group of {{range}}",
-    "groupPricingUnavailable": "Group pricing has not been configured for this tour yet."
+    "groupPricingUnavailable": "Group pricing has not been configured for this tour yet.",
+    "tierPricingHint": "Per-person prices below depend on your total number of travelers."
   },
   "common": {
     "back": "Back",

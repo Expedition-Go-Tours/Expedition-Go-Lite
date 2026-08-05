@@ -63,6 +63,10 @@ describe('groupBandLabel', () => {
     expect(groupBandLabel({ from: 6, to: Infinity, price: 450 })).toBe('6+')
   })
 
+  it('renders a single-headcount band as just the number', () => {
+    expect(groupBandLabel({ from: 2, to: 2, price: 300 })).toBe('2')
+  })
+
   it('returns an empty string for a missing band', () => {
     expect(groupBandLabel(undefined)).toBe('')
   })
