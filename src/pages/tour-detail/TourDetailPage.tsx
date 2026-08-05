@@ -22,6 +22,7 @@ import TourQuickFacts from './TourQuickFacts'
 import TravelersLoved from './TravelersLoved'
 import BookingWidget from './BookingWidget'
 import RelatedTours from './RelatedTours'
+import StickyNavHeader from './StickyNavHeader'
 
 import TourDetailTabs from './TourDetailTabs'
 import OverviewSection from './OverviewSection'
@@ -111,11 +112,46 @@ export default function TourDetailPage() {
         price: `$${tour.price}`,
         rating: String(tour.rating),
         reviews: tour.reviewCount,
+        duration: tour.duration,
+        features: tour.highlights?.length ? tour.highlights.slice(0, 4).join(' · ') : '',
         source: tour.bookingFlow === 'EXTERNAL' ? 'travio-africa' as const : 'expedition-go' as const,
         externalUrl: tour.externalUrl || undefined,
+        category: tour.category,
+        difficulty: tour.difficulty,
+        cancellationPolicy: tour.cancellationPolicy,
+        pickupIncluded: tour.pickupIncluded,
+        languages: tour.languages,
+        slug: tour.slug,
       } as any))
     }
   }, [tour, addToContinuePlanning, mergedImages])
+
+  // Mobile sticky-title behaviour: once the page title scrolls out of view the
+  // tour title sticks to the top (below the navbar); when the detail tabs reach
+  // the top they stick instead, so the title bar steps aside.
+  const [showStickyTitle, setShowStickyTitle] = useState(false)
+  useEffect(() => {
+    const STICKY_TOP = 64
+    const compute = () => {
+      if (window.innerWidth >= 1024) {
+        setShowStickyTitle(false)
+        return
+      }
+      const header = document.querySelector<HTMLElement>('.tour-header-new')
+      const tabs = document.querySelector<HTMLElement>('.tour-detail-tabs')
+      if (!header || !tabs) return
+      const headerGone = header.getBoundingClientRect().bottom <= STICKY_TOP + 1
+      const tabsReached = tabs.getBoundingClientRect().top <= STICKY_TOP + 1
+      setShowStickyTitle(headerGone && !tabsReached)
+    }
+    compute()
+    window.addEventListener('scroll', compute, { passive: true })
+    window.addEventListener('resize', compute)
+    return () => {
+      window.removeEventListener('scroll', compute)
+      window.removeEventListener('resize', compute)
+    }
+  }, [])
 
   const pricingRef = useRef<HTMLDivElement>(null)
   const reviewsRef = useRef<HTMLDivElement>(null)
@@ -220,7 +256,25 @@ export default function TourDetailPage() {
     })
   }
 
-  const handleReviewsTab = () => setActiveTab('reviews')
+  // Scrolls so the (sticky) tabs sit right below the navbar and the new tab's
+  // content starts at the top of the viewport.
+  const scrollTabContentIntoView = () => {
+    const tabsEl = document.querySelector<HTMLElement>('.tour-detail-tabs')
+    const contentEl = document.querySelector<HTMLElement>('.tour-detail-tab-content')
+    if (!tabsEl || !contentEl) return
+    // Place the tab content right below the sticky tabs (tabs stick at the
+    // navbar offset), regardless of how far down the page was scrolled.
+    const tabsHeight = tabsEl.offsetHeight
+    const contentTop = contentEl.getBoundingClientRect().top + window.scrollY
+    window.scrollTo({ top: contentTop - tabsHeight - 64, behavior: 'smooth' })
+  }
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab)
+    scrollTabContentIntoView()
+  }
+
+  const handleReviewsTab = () => handleTabChange('reviews')
 
   const loadMoreReviews = async () => {
     setLoadingMoreReviews(true)
@@ -686,6 +740,7 @@ export default function TourDetailPage() {
   return (
     <TourDetailErrorBoundary>
     <>
+      <StickyNavHeader show={showStickyTitle} title={selectedTourTitle} />
       <div className="tour-detail-page">
         <div className="tour-detail-container">
           <div className="tour-detail-header-row">
@@ -757,7 +812,7 @@ export default function TourDetailPage() {
               <TourDetailTabs
                 tabs={tourDetailTabs}
                 activeTab={activeTab}
-                onTabChange={setActiveTab}
+                onTabChange={handleTabChange}
               />
 
               <div className="tour-detail-tab-content">
@@ -792,7 +847,7 @@ export default function TourDetailPage() {
                           descriptionLong={(tour?.description?.length || 0) > 300}
                           highlights={highlights}
                           reviews={allReviewCards.map(r => ({ id: r.id, name: r.name, date: r.date, rating: r.rating, text: r.text, country: '' }))}
-                          onTabChange={setActiveTab}
+                          onTabChange={handleTabChange}
                           onReviewReadMore={setReviewDetail}
                         />
 

@@ -12,6 +12,16 @@ export interface ContinuePlanningItem {
   rating: number
   reviewCount: number
   viewedAt: string
+  /** Tour-card fields so the Continue Planning carousel can render full cards. */
+  category?: string
+  languages?: string[]
+  difficulty?: string
+  cancellationPolicy?: string
+  pickupIncluded?: boolean
+  source?: 'expedition-go' | 'travio-africa'
+  externalUrl?: string
+  slug?: string
+  discount?: string
 }
 
 interface ContinuePlanningContextValue {
@@ -49,6 +59,15 @@ export function toContinuePlanningItem(tour: Tour | (MultiDayTour & { days?: str
     rating: parseFloat(tour.rating) || 0,
     reviewCount: tour.reviews,
     viewedAt: new Date().toISOString(),
+    category: (tour as Tour).category,
+    languages: (tour as Tour).languages,
+    difficulty: (tour as Tour).difficulty,
+    cancellationPolicy: (tour as Tour).cancellationPolicy,
+    pickupIncluded: (tour as Tour).pickupIncluded,
+    source: (tour as Tour).source,
+    externalUrl: (tour as Tour).externalUrl,
+    slug: (tour as Tour & { slug?: string }).slug,
+    discount: (tour as Tour).discount,
   }
 }
 

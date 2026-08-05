@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { ComponentType, ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AnimatePresence, motion } from 'framer-motion'
@@ -31,8 +31,24 @@ const ACCORDION_EASE = [0.22, 1, 0.36, 1] as const
 export default function TourQuickFacts({ items }: TourQuickFactsProps) {
   const { t } = useTranslation()
   const [expanded, setExpanded] = useState(false)
+  const wrapRef = useRef<HTMLDivElement>(null)
+  const collapseRef = useRef(false)
 
-  const toggleExpanded = () => setExpanded((prev) => !prev)
+  const toggleExpanded = () => {
+    collapseRef.current = expanded
+    setExpanded((prev) => !prev)
+  }
+
+  // After the collapse animation finishes (page height settled), snap back so
+  // the top of the quick-facts strip sits just below the sticky detail tabs.
+  const scrollToSectionTop = () => {
+    const el = wrapRef.current
+    if (!el) return
+    const tabsEl = document.querySelector<HTMLElement>('.tour-detail-tabs')
+    const tabsHeight = tabsEl ? tabsEl.offsetHeight : 0
+    const top = el.getBoundingClientRect().top + window.scrollY
+    window.scrollTo({ top: Math.max(0, top - 64 - tabsHeight), behavior: 'smooth' })
+  }
 
   const renderFacts = (): ReactNode =>
     items.map(({ icon: Icon, title, desc, renderValue }) => (
@@ -53,8 +69,20 @@ export default function TourQuickFacts({ items }: TourQuickFactsProps) {
 
   return (
     <>
-      <div className={`tour-quick-facts-wrap${expanded ? ' tour-quick-facts-wrap-expanded' : ''}`}>
-        <AnimatePresence mode="wait" initial={false}>
+      <div
+        ref={wrapRef}
+        className={`tour-quick-facts-wrap${expanded ? ' tour-quick-facts-wrap-expanded' : ''}`}
+      >
+        <AnimatePresence
+          mode="popLayout"
+          initial={false}
+          onExitComplete={() => {
+            if (collapseRef.current) {
+              collapseRef.current = false
+              scrollToSectionTop()
+            }
+          }}
+        >
           {expanded ? (
             <motion.div
               key="facts-grid"
@@ -62,7 +90,7 @@ export default function TourQuickFacts({ items }: TourQuickFactsProps) {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.3, ease: ACCORDION_EASE }}
+              transition={{ duration: 0.45, ease: ACCORDION_EASE }}
             >
               {renderFacts()}
             </motion.div>
@@ -72,8 +100,8 @@ export default function TourQuickFacts({ items }: TourQuickFactsProps) {
               className="tour-quick-facts"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.12 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              transition={{ duration: 0.25, ease: 'easeInOut' }}
             >
               {renderFacts()}
             </motion.div>

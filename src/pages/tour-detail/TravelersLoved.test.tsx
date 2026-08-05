@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, within, waitFor } from '@testing-library/react'
 import TravelersLoved, { type TravelerLovedReview } from './TravelersLoved'
 import { SAMPLE_TRAVELERS_LOVED } from '../../data/sampleTravelersLoved'
 
@@ -35,14 +35,27 @@ describe('TravelersLoved', () => {
     expect(screen.getByText('Unforgettable')).toBeInTheDocument()
   })
 
-  it('shows at most 3 reviews, prioritising the highest ratings', () => {
+  it('renders every review, ordered by highest rating first', () => {
     render(<TravelersLoved reviews={reviews} onViewAllReviews={() => {}} />)
 
-    // Ratings 5, 5, 4 are the top three; the 3-star one is left out.
+    // All four reviews render; the carousel browses the full set.
     expect(screen.getByText('Ama Mensah')).toBeInTheDocument()
     expect(screen.getByText('Yaa Asantewaa')).toBeInTheDocument()
     expect(screen.getByText('Kwame Boateng')).toBeInTheDocument()
-    expect(screen.queryByText('Kojo Antwi')).not.toBeInTheDocument()
+    expect(screen.getByText('Kojo Antwi')).toBeInTheDocument()
+
+    // 5-star reviews come before the 4-star and 3-star ones in the DOM.
+    const names = screen.getAllByText(/^(Ama Mensah|Yaa Asantewaa|Kwame Boateng|Kojo Antwi)$/)
+    const order = names.map((n) => n.textContent)
+    expect(order.indexOf('Ama Mensah')).toBeLessThan(order.indexOf('Kwame Boateng'))
+    expect(order.indexOf('Yaa Asantewaa')).toBeLessThan(order.indexOf('Kojo Antwi'))
+  })
+
+  it('exposes prev/next carousel controls', () => {
+    render(<TravelersLoved reviews={reviews} onViewAllReviews={() => {}} />)
+
+    expect(screen.getByLabelText('Previous reviews')).toBeInTheDocument()
+    expect(screen.getByLabelText('Next reviews')).toBeInTheDocument()
   })
 
   it('calls onViewAllReviews when "See all reviews" is clicked', () => {
@@ -53,7 +66,7 @@ describe('TravelersLoved', () => {
     expect(onViewAllReviews).toHaveBeenCalledTimes(1)
   })
 
-  it('shows a "See more" toggle for long reviews and expands on click', () => {
+  it('opens a full-detail modal when "See more" is clicked on a long review', async () => {
     const longText =
       'This is an exceptionally detailed review that goes on for quite a while. ' +
       'It contains a lot of useful information about the tour, the guide, the food, ' +
@@ -69,6 +82,11 @@ describe('TravelersLoved', () => {
     expect(toggle).toBeInTheDocument()
 
     fireEvent.click(toggle)
-    expect(screen.getByText('See less')).toBeInTheDocument()
+    const dialog = screen.getByRole('dialog')
+    expect(dialog).toBeInTheDocument()
+    expect(within(dialog).getByText(longText)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByLabelText('Close review'))
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
   })
 })
