@@ -43,11 +43,22 @@
 }
 
 .travelers-loved-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  display: flex;
+  flex-wrap: nowrap;
   gap: 16px;
   width: 100%;
   min-width: 0;
+  /* Mobile: swipeable horizontal row of review cards with snap-to-card
+     behavior, mirroring the GetYourGuide mobile experience. */
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 4px;
+}
+
+.travelers-loved-grid::-webkit-scrollbar {
+  display: none;
 }
 
 .travelers-loved-card {
@@ -57,7 +68,8 @@
   padding: 20px;
   display: flex;
   flex-direction: column;
-  min-width: 0;
+  min-width: min(85%, 360px);
+  scroll-snap-align: start;
 }
 
 .travelers-loved-card-head {
@@ -177,12 +189,19 @@
      Using minmax(0, 1fr) keeps the tracks from blowing out past the main
      column and sliding under the sticky booking widget in the sidebar. */
   .travelers-loved-grid {
+    display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 20px;
+    overflow: visible;
+    scroll-snap-type: none;
+    scrollbar-width: auto;
+    padding-bottom: 0;
   }
 
   .travelers-loved-card {
     padding: 24px;
+    min-width: 0;
+    scroll-snap-align: none;
   }
 }
 
