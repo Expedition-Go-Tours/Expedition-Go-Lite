@@ -158,6 +158,10 @@ export interface TourCardData {
   difficulty?: string
   cancellationPolicy?: string
   pickupIncluded?: boolean
+  /** Numeric equivalents for client-side filtering (All Tours page). */
+  durationMinutes?: number | null
+  priceValue?: number | null
+  ratingValue?: number | null
 }
 function extractDurationFromTour(tour: any): number | null {
   try {
@@ -660,6 +664,9 @@ function mapToListing(tour: ExpeditionTourRecord['tour']): TourCardData {
     difficulty: extractDifficultyFromTour(tour) || undefined,
     cancellationPolicy: extractCancellationFromTour(tour) || undefined,
     pickupIncluded: tour.pickupIncluded ?? (tour.bookingAndTickets?.pickupAvailable ?? tour.bookingAndTickets?.pickupProvided) ?? undefined,
+    durationMinutes: effectiveDuration ?? tour.durationMinutes ?? null,
+    priceValue: effectivePrice != null ? effectivePrice : null,
+    ratingValue: tour.averageRating != null ? Number(tour.averageRating) : null,
   }
 }
 
@@ -785,6 +792,66 @@ export function useExpeditionTours(filters: ExpeditionToursFilters = {}) {
       return {
         tours: records.map((r) => mapToListing(r.tour)),
         pagination,
+      }
+    },
+  })
+}
+
+/**
+ * Fetches the ENTIRE active curated catalog by paging through
+ * /expedition/tours (limit capped at 50 per request). The curated endpoint
+ * only supports a handful of filters server-side (and has broken pagination
+ * counts for price/rating), so the All Tours page pulls the full set once and
+ * filters/sorts/paginates locally — this keeps every filter working with
+ * accurate counts without touching the backend.
+ */
+const MAX_CATALOG_PAGES = 10
+const CATALOG_PAGE_SIZE = 50
+
+export function useAllExpeditionTours() {
+  return useQuery({
+    queryKey: ['expedition', 'tours', 'all'],
+    staleTime: 5 * 60_000,
+    queryFn: async (): Promise<TourCardData[]> => {
+      const records: ExpeditionTourRecord[] = []
+      let page = 1
+      let totalPages = 1
+
+      do {
+        const payload = await expeditionFetchRaw(`/expedition/tours?page=${page}&limit=${CATALOG_PAGE_SIZE}`)
+        const batch: ExpeditionTourRecord[] = payload.data?.tours ?? payload.tours ?? []
+        records.push(...batch)
+        totalPages = payload.pagination?.totalPages ?? 1
+        if (batch.length === 0) break
+        page += 1
+      } while (page <= totalPages && page <= MAX_CATALOG_PAGES)
+
+      await enrichExpeditionRecords(records)
+
+      return records.map((r) => mapToListing(r.tour))
+    },
+  })
+}
+
+export interface TourFilterOptions {
+  categories: string[]
+  destinations: string[]
+}
+
+/**
+ * Fetch options for the All Tours filter UI from the public
+ * /tours/filters/options endpoint (cached server-side + by react-query).
+ */
+export function useTourFilterOptions() {
+  return useQuery({
+    queryKey: ['expedition', 'tours', 'filter-options'],
+    staleTime: 60 * 60_000,
+    queryFn: async (): Promise<TourFilterOptions> => {
+      const payload = await expeditionFetchRaw('/tours/filters/options')
+      const opts = payload.data?.filterOptions ?? {}
+      return {
+        categories: Array.isArray(opts.categories) ? opts.categories : [],
+        destinations: Array.isArray(opts.locations?.cities) ? opts.locations.cities : [],
       }
     },
   })

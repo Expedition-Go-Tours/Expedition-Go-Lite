@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useCallback, type ReactNode } from 'react'
+import { useState, useMemo, useRef, useCallback, useEffect, type ReactNode } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronLeft, ChevronRight, X, Star, ArrowLeft } from 'lucide-react'
@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next'
 import Navbar from '../components/Navbar'
 import TourCard from '../components/TourCard'
 
-import { useExpeditionTours } from '../hooks/useExpeditionTours'
+import { useAllExpeditionTours, useTourFilterOptions, type TourCardData } from '../hooks/useExpeditionTours'
 import './AllToursPage.css'
 
 const PAGE_SIZE = 12
@@ -48,22 +48,31 @@ const SECTION_TITLES: Record<string, string> = {
   'Last Minute Deals': 'Last Minute Deals',
 }
 
-function getSortBy(sectionParam: string, manualSort: string | undefined): 'price_asc' | 'price_desc' | 'rating' | 'newest' | 'popular' | undefined {
-  if (manualSort && manualSort !== 'recommended') {
-    if (manualSort === 'top-rated') return 'rating'
-    if (manualSort === 'price-low') return 'price_asc'
-    if (manualSort === 'price-high') return 'price_desc'
-  }
+/** Maps a homepage section to a client-side sort key used when the user hasn't
+    picked an explicit sort (the "recommended" default). */
+function sectionSortKey(sectionParam: string): 'rating' | 'popular' | 'recommended' {
   if (sectionParam === 'Top Rated') return 'rating'
   if (sectionParam === 'Sell Out' || sectionParam === 'Last Minute Deals') return 'popular'
-  if (sectionParam === 'Multi-Day Tours' || sectionParam === 'Day Tours') return 'popular'
-  return undefined
+  return 'recommended'
 }
 
-function getCityFilter(locationParam: string, manualDestinations: string[]): string | undefined {
-  if (manualDestinations.length === 1) return manualDestinations[0]
-  if (locationParam) return locationParam
-  return undefined
+type SortKey = 'recommended' | 'rating' | 'popular' | 'price-low' | 'price-high'
+
+function applySort(tours: TourCardData[], sortKey: SortKey): TourCardData[] {
+  const arr = [...tours]
+  switch (sortKey) {
+    case 'rating':
+      return arr.sort((a, b) => (b.ratingValue ?? 0) - (a.ratingValue ?? 0))
+    case 'popular':
+      return arr.sort((a, b) => b.reviews - a.reviews)
+    case 'price-low':
+      return arr.sort((a, b) => (a.priceValue ?? Infinity) - (b.priceValue ?? Infinity))
+    case 'price-high':
+      return arr.sort((a, b) => (b.priceValue ?? -Infinity) - (a.priceValue ?? -Infinity))
+    default:
+      // recommended — keep the backend's curated catalog order
+      return arr
+  }
 }
 
 interface AllToursPageProps {
@@ -82,69 +91,95 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
   const [categories, setCategories] = useState<string[]>([])
   const [durationFilter, setDurationFilter] = useState<string[]>([])
   const [priceFilter, setPriceFilter] = useState<string[]>([])
-  const [languageFilter, setLanguageFilter] = useState<string[]>([])
   const [ratingFilter, setRatingFilter] = useState<string[]>([])
   const [sortBy, setSortBy] = useState<string[]>(['recommended'])
   const [page, setPage] = useState(1)
   const [drawerOpen, setDrawerOpen] = useState(false)
 
-  const sortByVal = sortBy[0] || 'recommended'
-  const apiSortBy = getSortBy(sectionParam, sortByVal)
+  const sortByVal = (sortBy[0] || 'recommended') as SortKey
+  const effectiveSortKey: SortKey =
+    sortByVal === 'recommended' && sectionParam ? sectionSortKey(sectionParam) : sortByVal
 
-  const minPrice = useMemo(() => {
-    if (priceFilter.length > 0) {
-      const vals = priceFilter.map(v => {
-        const range = PRICE_RANGES.find(r => r.value === v)
-        if (range?.value === 'under-50') return 0
-        if (range?.value === 'over-200') return 200
-        const m = range?.label.match(/\$(\d+)/)
-        return m ? parseInt(m[1]) : 0
-      })
-      return Math.min(...vals)
+  const { data: allTours, isLoading, isError, error } = useAllExpeditionTours()
+  const { data: filterOptionData } = useTourFilterOptions()
+
+  // Seed the destination filter from a /tours?location=... link (once per value).
+  const seededLocationRef = useRef<string | null>(null)
+  useEffect(() => {
+    if (locationParam && seededLocationRef.current !== locationParam) {
+      seededLocationRef.current = locationParam
+      setDestinations(prev => prev.includes(locationParam) ? prev : [...prev, locationParam])
     }
-    return undefined
-  }, [priceFilter])
+  }, [locationParam])
 
-  const maxPrice = useMemo(() => {
-    if (priceFilter.length > 0) {
-      const vals = priceFilter.map(v => {
-        const range = PRICE_RANGES.find(r => r.value === v)
-        if (range?.value === 'under-50') return 50
-        if (range?.value === 'over-200') return 99999
-        const parts = range?.label.match(/\$(\d+)\s*–\s*\$(\d+)/)
-        return parts ? parseInt(parts[2]) : 99999
+  // Always start from page 1 whenever the active filters or sort change.
+  useEffect(() => {
+    setPage(1)
+  }, [tourTypes, destinations, categories, durationFilter, priceFilter, ratingFilter, sortBy])
+
+  const filteredTours = useMemo(() => {
+    let list = allTours || []
+
+    if (tourTypes.length > 0) {
+      list = list.filter((tour) => {
+        const isMultiDay = (tour.durationMinutes ?? 0) >= 1440
+        return tourTypes.includes(isMultiDay ? 'multi-day' : 'day')
       })
-      return Math.max(...vals)
     }
-    return undefined
-  }, [priceFilter])
+    if (durationFilter.length > 0) {
+      list = list.filter((tour) => {
+        const mins = tour.durationMinutes
+        if (mins == null || mins <= 0) return false
+        return durationFilter.some(value => DURATION_BUCKETS.find(b => b.value === value)?.match(mins))
+      })
+    }
+    if (priceFilter.length > 0) {
+      list = list.filter((tour) => {
+        const price = tour.priceValue
+        if (price == null) return false
+        return priceFilter.some(value => PRICE_RANGES.find(r => r.value === value)?.match(price))
+      })
+    }
+    if (ratingFilter.length > 0) {
+      const minRating = Math.min(...ratingFilter.map(Number))
+      list = list.filter((tour) => (tour.ratingValue ?? 0) >= minRating)
+    }
+    if (categories.length > 0) {
+      list = list.filter((tour) => categories.includes(tour.category))
+    }
+    if (destinations.length > 0) {
+      list = list.filter((tour) => {
+        const locLower = tour.location.toLowerCase()
+        return destinations.some((d) => {
+          const dl = d.toLowerCase()
+          return locLower === dl || locLower.startsWith(`${dl},`) || locLower.includes(`, ${dl}`)
+        })
+      })
+    }
 
-  const minRating = ratingFilter.length > 0 ? Math.min(...ratingFilter.map(Number)) : undefined
+    return applySort(list, effectiveSortKey)
+  }, [allTours, tourTypes, durationFilter, priceFilter, ratingFilter, categories, destinations, effectiveSortKey])
 
-  const apiCategories = categories.length > 0 ? categories : undefined
+  const totalCount = filteredTours.length
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
+  const hasNextPage = page < totalPages
+  const hasPrevPage = page > 1
 
-  const { data, isLoading, isError, error } = useExpeditionTours({
-    page,
-    limit: PAGE_SIZE,
-    sortBy: apiSortBy,
-    city: getCityFilter(locationParam, destinations),
-    category: apiCategories?.[0],
-    minPrice,
-    maxPrice,
-    minRating,
-  })
-
-  const fetchedTours = data?.tours || []
-  const pagination = data?.pagination
+  const displayTours = useMemo(
+    () => filteredTours.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+    [filteredTours, page],
+  )
 
   const filterOptions = useMemo(() => {
-    const allLocations = [...new Set(fetchedTours.map(t => t.location).filter(Boolean))]
-    const allCategories = [...new Set(fetchedTours.map(t => t.category).filter(Boolean))]
-    return {
-      destinations: allLocations.map(v => ({ value: v, label: v })),
-      categories: allCategories.map(v => ({ value: v, label: v })),
+    const optionDestinations = [...(filterOptionData?.destinations || [])]
+    if (locationParam && !optionDestinations.some(d => d.toLowerCase() === locationParam.toLowerCase())) {
+      optionDestinations.push(locationParam)
     }
-  }, [fetchedTours])
+    return {
+      destinations: optionDestinations.map(v => ({ value: v, label: v })),
+      categories: (filterOptionData?.categories || []).map(v => ({ value: v, label: v })),
+    }
+  }, [filterOptionData, locationParam])
 
   const allPillOptions = useMemo(() => {
     const pills: { key: string; value: string; label: string }[] = []
@@ -160,7 +195,7 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
   const isPillActive = (value: string) => {
     return tourTypes.includes(value) || destinations.includes(value) ||
       categories.includes(value) || durationFilter.includes(value) || priceFilter.includes(value) ||
-      languageFilter.includes(value) || ratingFilter.includes(value)
+      ratingFilter.includes(value)
   }
 
   const handlePillToggle = (value: string) => {
@@ -178,7 +213,7 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
 
   const sortOptions = useMemo(() => [
     { value: 'recommended', label: t('sections.recommendedTitle') },
-    { value: 'top-rated', label: t('sections.topRatedTitle') },
+    { value: 'rating', label: t('sections.topRatedTitle') },
     { value: 'price-low', label: 'Price: Low – High' },
     { value: 'price-high', label: 'Price: High – Low' },
   ] as const, [t])
@@ -191,12 +226,12 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
 
   const clearAll = () => {
     setTourTypes([]); setDestinations([]); setCategories([])
-    setDurationFilter([]); setPriceFilter([]); setLanguageFilter([]); setRatingFilter([])
+    setDurationFilter([]); setPriceFilter([]); setRatingFilter([])
     setSortBy(['recommended']); setPage(1)
   }
 
   const activeFilterCount = tourTypes.length + destinations.length + categories.length +
-    durationFilter.length + priceFilter.length + languageFilter.length + ratingFilter.length
+    durationFilter.length + priceFilter.length + ratingFilter.length
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const [showLeftArrow, setShowLeftArrow] = useState(false)
@@ -212,14 +247,12 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
 
   const handleScroll = useCallback(() => updateArrows(), [updateArrows])
 
-  const displayTours = fetchedTours
-
   const goNextPage = () => {
-    if (pagination?.hasNextPage) setPage(p => p + 1)
+    if (hasNextPage) setPage(p => p + 1)
   }
 
   const goPrevPage = () => {
-    if (pagination?.hasPrevPage) setPage(p => Math.max(1, p - 1))
+    if (hasPrevPage) setPage(p => Math.max(1, p - 1))
   }
 
   return (
@@ -243,7 +276,7 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
                 <p className="all-tours-count">Loading tours...</p>
               ) : (
                 <p className="all-tours-count">
-                  {pagination?.totalCount ?? 0} tour{(pagination?.totalCount ?? 0) !== 1 ? 's' : ''} found
+                  {totalCount} tour{totalCount !== 1 ? 's' : ''} found
                 </p>
               )}
             </div>
@@ -373,25 +406,25 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
           </div>
         )}
 
-        {pagination && (pagination.hasNextPage || pagination.hasPrevPage) && (
+        {(hasNextPage || hasPrevPage) && (
           <div className="all-tours-load-more">
             <div className="pagination-controls" style={{ display: 'flex', gap: 8, justifyContent: 'center', alignItems: 'center' }}>
               <button
                 className="all-tours-load-btn"
                 onClick={goPrevPage}
-                disabled={!pagination.hasPrevPage}
-                style={{ opacity: pagination.hasPrevPage ? 1 : 0.4 }}
+                disabled={!hasPrevPage}
+                style={{ opacity: hasPrevPage ? 1 : 0.4 }}
               >
                 Previous
               </button>
               <span style={{ fontSize: 14, color: '#666' }}>
-                Page {page} of {pagination.totalPages}
+                Page {page} of {totalPages}
               </span>
               <button
                 className="all-tours-load-btn"
                 onClick={goNextPage}
-                disabled={!pagination.hasNextPage}
-                style={{ opacity: pagination.hasNextPage ? 1 : 0.4 }}
+                disabled={!hasNextPage}
+                style={{ opacity: hasNextPage ? 1 : 0.4 }}
               >
                 Next
               </button>
