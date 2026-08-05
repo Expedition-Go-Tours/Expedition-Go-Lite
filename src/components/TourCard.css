@@ -49,38 +49,98 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 6px 16px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #6b7280;
+  gap: 6px;
   font-family: 'Raleway', sans-serif;
 }
 
-.tour-card-cancellation,
-.tour-card-category,
-.tour-card-language {
+/* Industry-standard pill badges (GetYourGuide/Viator style): compact,
+   icon-led, neutral by default, with a distinct accent for the pickup
+   badge (primary trust signal) and a red variant for non-refundable
+   cancellation policies. Order in markup drives visual order: Pickup
+   included, Language, Cancellation policy, then category/difficulty. */
+.tour-card-badge {
   display: inline-flex;
   align-items: center;
-  font-size: 12px;
+  gap: 4px;
+  font-size: 11px;
   font-weight: 600;
-  color: #6b7280;
-  font-family: 'Raleway', sans-serif;
+  line-height: 1;
+  color: #4b5563;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  padding: 4px 8px;
+  border-radius: 999px;
   white-space: nowrap;
 }
 
-.tour-card-difficulty {
-  display: inline-flex;
-  align-items: center;
-  font-size: 12px;
-  font-weight: 600;
+.tour-card-badge svg {
+  flex-shrink: 0;
+}
+
+.tour-card-badge-pickup {
+  color: #166534;
+  background: rgba(22, 101, 52, 0.08);
+  border-color: rgba(22, 101, 52, 0.18);
+}
+
+.tour-card-badge-language {
+  color: #1e40af;
+  background: rgba(30, 64, 175, 0.07);
+  border-color: rgba(30, 64, 175, 0.16);
+}
+
+.tour-card-badge-cancellation {
+  color: #166534;
+  background: rgba(22, 101, 52, 0.08);
+  border-color: rgba(22, 101, 52, 0.18);
+}
+
+.tour-card-badge-cancellation-negative {
+  color: #b91c1c;
+  background: rgba(185, 28, 28, 0.08);
+  border-color: rgba(185, 28, 28, 0.18);
+}
+
+.tour-card-badge-difficulty {
   color: #6b7280;
-  font-family: 'Raleway', sans-serif;
+  background: #f3f4f6;
+  border-color: #e5e7eb;
+}
+
+/* Product type badge (Tour / Activity / Transport) — each type gets its own
+   accent so the three read apart from each other at a glance. */
+.tour-card-badge-type {
+  font-weight: 700;
+}
+
+.tour-card-badge-type-tour {
+  color: #9a3412;
+  background: rgba(234, 88, 12, 0.09);
+  border-color: rgba(234, 88, 12, 0.2);
+}
+
+.tour-card-badge-type-activity {
+  color: #15803d;
+  background: rgba(22, 163, 74, 0.09);
+  border-color: rgba(22, 163, 74, 0.2);
+}
+
+.tour-card-badge-type-transport {
+  color: #0e7490;
+  background: rgba(8, 145, 178, 0.09);
+  border-color: rgba(8, 145, 178, 0.2);
+}
+
+.tour-card-badge-type-default {
+  color: #6b7280;
+  background: #f3f4f6;
+  border-color: #e5e7eb;
 }
 
 .tour-card-discount {
   position: absolute;
   bottom: 8px;
-  left: 8px;
+  right: 8px;
   background: #ef4444;
   color: #fff;
   font-family: 'Raleway', sans-serif;
@@ -278,7 +338,7 @@
 
 .source-badge {
   position: absolute;
-  bottom: 8px;
+  top: 8px;
   left: 8px;
   width: 36px;
   height: 36px;
@@ -297,4 +357,43 @@
   height: 100%;
   object-fit: contain;
   border-radius: 50%;
+}
+
+/* Product type badge pinned to the bottom-left of the image, matching
+   industry-standard placement (GetYourGuide/Viator show the product type
+   directly on the image, distinct from the trust/logo badge up top).
+   Uses solid, higher-contrast colors than the in-body badge variants
+   since this sits directly on a photo rather than a white background. */
+.tour-card-image-type-badge {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: 'Raleway', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  padding: 4px 9px;
+  border-radius: 999px;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+.tour-card-image-type-badge.tour-card-badge-type-tour {
+  background: rgba(234, 88, 12, 0.92);
+}
+
+.tour-card-image-type-badge.tour-card-badge-type-activity {
+  background: rgba(22, 163, 74, 0.92);
+}
+
+.tour-card-image-type-badge.tour-card-badge-type-transport {
+  background: rgba(8, 145, 178, 0.92);
+}
+
+.tour-card-image-type-badge.tour-card-badge-type-default {
+  background: rgba(55, 65, 81, 0.85);
 }

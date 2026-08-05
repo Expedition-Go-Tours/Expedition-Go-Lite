@@ -1,10 +1,11 @@
-import { MapPin, Star, Heart } from 'lucide-react'
+import { MapPin, Star, Heart, Car, Languages as LanguagesIcon, ShieldCheck, Ban } from 'lucide-react'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
 import i18n from '../../i18n/config'
 import { useWishlist, toWishlistItem } from '../../context/WishlistContext'
 import { parsePrice, getTourSlug, type Tour } from '../../components/data'
 import FormattedPrice from '../../components/FormattedPrice'
+import { getCategoryMeta } from '../../components/categoryMeta'
 import './SimilarTourCard.css'
 
 interface SimilarTourCardProps extends Tour {
@@ -23,6 +24,9 @@ export default function SimilarTourCard({
   image,
   category,
   languages,
+  difficulty,
+  cancellationPolicy,
+  pickupIncluded,
   source,
   externalUrl,
 }: SimilarTourCardProps) {
@@ -31,10 +35,14 @@ export default function SimilarTourCard({
   const item = toWishlistItem({ id, title, duration, features, price, rating: String(rating), reviews, location, image, source, externalUrl } as Tour)
   const inWishlist = isInWishlist(item.id)
 
-  const categoryLabel = category
-    ? category.charAt(0).toUpperCase() + category.slice(1)
+  const categoryMeta = getCategoryMeta(category)
+  // "Guide" appended for the same reason as TourCard: makes clear this is
+  // the language the tour guide conducts the experience in.
+  const languageLabel = languages?.length ? `${languages.join(', ')} Guide` : ''
+  const isNonRefundable = !!cancellationPolicy && /non[- ]?refundable/i.test(cancellationPolicy)
+  const cancellationLabel = cancellationPolicy
+    ? (isNonRefundable ? 'Non-refundable' : (cancellationPolicy.toLowerCase().includes('free') ? 'Free cancellation' : cancellationPolicy))
     : ''
-  const languageLabel = languages?.length ? languages.join(', ') : ''
 
   const handleWishlist = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -70,6 +78,12 @@ export default function SimilarTourCard({
         )}
         <img src={image} alt={title} loading="lazy" />
         <div className="similar-tour-overlay" />
+        {categoryMeta && (
+          <span className={`similar-tour-image-type-badge similar-tour-meta-badge-type-${categoryMeta.variant}`}>
+            <categoryMeta.Icon size={12} strokeWidth={2.4} />
+            {categoryMeta.label}
+          </span>
+        )}
         <button 
           className={`similar-tour-wishlist${inWishlist ? ' wishlist-active' : ''}`} 
           onClick={handleWishlist}
@@ -93,10 +107,27 @@ export default function SimilarTourCard({
 
         <h3 className="similar-tour-title">{title}</h3>
 
-        {(categoryLabel || languageLabel) && (
+        {(pickupIncluded || languageLabel || cancellationLabel || difficulty) && (
           <div className="similar-tour-meta">
-            {categoryLabel && <span className="similar-tour-meta-badge">{categoryLabel}</span>}
-            {languageLabel && <span className="similar-tour-meta-badge">{languageLabel}</span>}
+            {pickupIncluded && (
+              <span className="similar-tour-meta-badge similar-tour-meta-badge-pickup">
+                <Car size={11} strokeWidth={2.2} />
+                Pickup included
+              </span>
+            )}
+            {languageLabel && (
+              <span className="similar-tour-meta-badge similar-tour-meta-badge-language">
+                <LanguagesIcon size={11} strokeWidth={2.2} />
+                {languageLabel}
+              </span>
+            )}
+            {cancellationLabel && (
+              <span className={`similar-tour-meta-badge similar-tour-meta-badge-cancellation${isNonRefundable ? ' similar-tour-meta-badge-cancellation-negative' : ''}`}>
+                {isNonRefundable ? <Ban size={11} strokeWidth={2.2} /> : <ShieldCheck size={11} strokeWidth={2.2} />}
+                {cancellationLabel}
+              </span>
+            )}
+            {difficulty && <span className="similar-tour-meta-badge">{difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}</span>}
           </div>
         )}
 

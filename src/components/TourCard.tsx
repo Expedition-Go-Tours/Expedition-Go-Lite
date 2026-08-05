@@ -1,10 +1,12 @@
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
+import { Car, Languages as LanguagesIcon, ShieldCheck, Ban, TrendingUp } from 'lucide-react'
 import i18n from '../i18n/config'
 import './TourCard.css'
 import { parsePrice, getTourSlug, type Tour } from './data'
 import { useWishlist, toWishlistItem } from '../context/WishlistContext'
 import FormattedPrice from './FormattedPrice'
+import { getCategoryMeta } from './categoryMeta'
 
 interface TourCardProps extends Tour {
   discount?: string
@@ -17,10 +19,20 @@ export default function TourCard({ id, title, duration, features, price, rating,
   const item = toWishlistItem({ id, title, duration, features, price, rating: String(rating), reviews, location, image, source, externalUrl } as Tour)
   const inWishlist = isInWishlist(item.id)
 
-  const categoryLabel = category
-    ? category.charAt(0).toUpperCase() + category.slice(1)
+  // "tour" / "activity" / "transport" is the supplier's Step 2 product type
+  // choice — give each its own icon + accent so the badge reads at a glance,
+  // the way GetYourGuide/Viator distinguish product types on their cards.
+  // Legacy mock data (e.g. "Accra · Day trip") doesn't match a known type,
+  // so it falls back to a plain neutral label with a generic tag icon.
+  const categoryMeta = getCategoryMeta(category)
+  // "Guide" is appended so the badge unambiguously reads as the language the
+  // tour guide conducts the experience in (e.g. "English Guide"), not the
+  // language of e.g. printed materials or the page itself.
+  const languageLabel = languages?.length ? `${languages.join(', ')} Guide` : ''
+  const isNonRefundable = !!cancellationPolicy && /non[- ]?refundable/i.test(cancellationPolicy)
+  const cancellationLabel = cancellationPolicy
+    ? (isNonRefundable ? 'Non-refundable' : (cancellationPolicy.toLowerCase().includes('free') ? 'Free cancellation' : cancellationPolicy))
     : ''
-  const languageLabel = languages?.length ? languages.join(', ') : ''
 
   const handleWishlist = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -57,6 +69,12 @@ export default function TourCard({ id, title, duration, features, price, rating,
         <img src={image} alt={title} loading="lazy" />
         <div className="tour-card-image-fade" />
         {discount && <span className="tour-card-discount">{discount}</span>}
+        {categoryMeta && (
+          <span className={`tour-card-image-type-badge tour-card-badge-type-${categoryMeta.variant}`}>
+            <categoryMeta.Icon size={12} strokeWidth={2.4} />
+            {categoryMeta.label}
+          </span>
+        )}
         <button className={`tour-card-wishlist${inWishlist ? ' wishlist-active' : ''}`} onClick={handleWishlist} aria-label={inWishlist ? 'Remove from wishlist' : 'Add to wishlist'}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill={inWishlist ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
@@ -76,11 +94,30 @@ export default function TourCard({ id, title, duration, features, price, rating,
         </div>
         <h3 className="tour-card-title">{title}</h3>
         <div className="tour-card-meta">
-          {pickupIncluded && <span className="tour-card-meta-item">Pickup included</span>}
-          {categoryLabel && <span className="tour-card-category">{categoryLabel}</span>}
-          {languageLabel && <span className="tour-card-language">{languageLabel}</span>}
-          {cancellationPolicy && <span className="tour-card-cancellation">{cancellationPolicy.toLowerCase().includes('free') ? 'Free Cancellation' : cancellationPolicy}</span>}
-          {difficulty && <span className="tour-card-difficulty">{difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}</span>}
+          {pickupIncluded && (
+            <span className="tour-card-badge tour-card-badge-pickup">
+              <Car size={12} strokeWidth={2.2} />
+              Pickup included
+            </span>
+          )}
+          {languageLabel && (
+            <span className="tour-card-badge tour-card-badge-language">
+              <LanguagesIcon size={12} strokeWidth={2.2} />
+              {languageLabel}
+            </span>
+          )}
+          {cancellationLabel && (
+            <span className={`tour-card-badge tour-card-badge-cancellation${isNonRefundable ? ' tour-card-badge-cancellation-negative' : ''}`}>
+              {isNonRefundable ? <Ban size={12} strokeWidth={2.2} /> : <ShieldCheck size={12} strokeWidth={2.2} />}
+              {cancellationLabel}
+            </span>
+          )}
+          {difficulty && (
+            <span className="tour-card-badge tour-card-badge-difficulty">
+              <TrendingUp size={12} strokeWidth={2.2} />
+              {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
+            </span>
+          )}
         </div>
         <div className="tour-card-features">{features}</div>
         <div className="tour-card-bottom">

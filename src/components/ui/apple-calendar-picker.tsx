@@ -103,6 +103,7 @@ export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate, ge
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(currentYear, currentMonth, day)
       const isPast = new Date(currentYear, currentMonth, day).setHours(0, 0, 0, 0) < new Date().setHours(0, 0, 0, 0)
+      const isToday = !isPast && date.toDateString() === today.toDateString()
       const availability: DayAvailability = isPast ? 'full' : (getAvailability ? getAvailability(date) : 'available')
       const isFull = !isPast && availability === 'full'
       const isSelected = day === selectedDay && !isPast && !isFull
@@ -111,19 +112,19 @@ export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate, ge
         days.push(
           <div
             key={`day-${day}`}
-            className="w-9 h-9 text-[15px] font-medium rounded-full flex items-center justify-center text-gray-300 cursor-not-allowed"
+            className="w-9 h-9 text-[14px] font-medium rounded-full flex items-center justify-center text-gray-300 cursor-not-allowed"
           >
             {day}
           </div>
         )
       } else if (isFull) {
-        // Fully booked — greyed out and not selectable
+        // Sold out — soft red pill, not selectable
         days.push(
           <div
             key={`day-${day}`}
-            title="Fully booked"
+            title="Sold out"
             aria-disabled="true"
-            className="w-9 h-9 text-[15px] font-medium rounded-full flex items-center justify-center text-gray-300 line-through cursor-not-allowed"
+            className="w-9 h-9 text-[14px] font-medium rounded-full flex items-center justify-center bg-red-50 text-red-400 line-through cursor-not-allowed"
           >
             {day}
           </div>
@@ -134,16 +135,18 @@ export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate, ge
             key={`day-${day}`}
             onClick={() => handleSelectDay(day)}
             title={availability === 'limited' ? 'Limited availability' : 'Available'}
-            className={`relative w-9 h-9 text-[15px] font-medium rounded-full flex items-center justify-center transition-all focus:outline-none ${
+            className={`relative w-9 h-9 text-[14px] font-medium rounded-full flex items-center justify-center transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#179237]/40 active:scale-95 ${
               isSelected
-                ? 'bg-[#179237] text-white font-semibold shadow-md scale-105 z-10'
-                : 'text-black hover:bg-black/5'
-            }`}
+                ? 'bg-gradient-to-b from-[#1a9e3d] to-[#147a2e] text-white font-semibold shadow-[0_4px_10px_-2px_rgba(23,146,55,0.5)] scale-105 z-10'
+                : availability === 'limited'
+                  ? 'text-black hover:bg-amber-400/10'
+                  : 'text-black hover:bg-[#179237]/10'
+            } ${isToday && !isSelected ? 'ring-1 ring-inset ring-[#179237]/50 font-semibold' : ''}`}
           >
             {day}
             {!isSelected && (
               <span
-                className={`absolute bottom-[3px] left-1/2 -translate-x-1/2 w-1 h-1 rounded-full ${
+                className={`absolute bottom-[3px] left-1/2 -translate-x-1/2 w-[5px] h-[5px] rounded-full ${
                   availability === 'limited' ? 'bg-amber-400' : 'bg-[#179237]'
                 }`}
               />
@@ -156,34 +159,34 @@ export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate, ge
   }
 
   return (
-    <div ref={calendarRef} className="absolute top-full left-0 z-50 mt-1 w-full bg-white border border-black/5 rounded-[18px] shadow-xl overflow-hidden p-[18px] animate-in fade-in zoom-in duration-200 origin-top">
+    <div ref={calendarRef} className="absolute top-full left-0 z-50 mt-1.5 w-full bg-white border border-black/[0.06] rounded-[20px] shadow-[0_12px_32px_-8px_rgba(0,0,0,0.18)] overflow-hidden p-5 animate-in fade-in zoom-in duration-200 origin-top">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <button
           onClick={() => setShowDropdown(!showDropdown)}
-          className="flex items-center gap-1 text-[17px] font-semibold text-black hover:opacity-75 transition-opacity focus:outline-none"
+          className="flex items-center gap-1.5 text-[16px] font-semibold text-gray-900 hover:opacity-70 transition-opacity focus:outline-none"
         >
           <span>{MONTH_NAMES[currentMonth]} {currentYear}</span>
-          <div className={`transition-transform duration-200 ${showDropdown ? 'rotate-180' : 'rotate-0'}`}>
+          <div className={`text-gray-400 transition-transform duration-200 ${showDropdown ? 'rotate-180' : 'rotate-0'}`}>
             <DropdownArrowIcon />
           </div>
         </button>
 
-        <div className="flex items-center gap-2">
-          <button onClick={prevMonth} className="p-1.5 text-[#179237] hover:bg-black/5 rounded-full transition-colors focus:outline-none">
+        <div className="flex items-center gap-1.5">
+          <button onClick={prevMonth} className="p-1.5 text-gray-500 hover:text-[#179237] hover:bg-[#179237]/8 rounded-full transition-colors focus:outline-none">
             <ChevronLeftIcon />
           </button>
-          <button onClick={nextMonth} className="p-1.5 text-[#179237] hover:bg-black/5 rounded-full transition-colors focus:outline-none">
+          <button onClick={nextMonth} className="p-1.5 text-gray-500 hover:text-[#179237] hover:bg-[#179237]/8 rounded-full transition-colors focus:outline-none">
             <ChevronRightIcon />
           </button>
         </div>
       </div>
 
       {/* Weekdays */}
-      <div className="grid grid-cols-7 gap-y-1 mb-2 text-center">
+      <div className="grid grid-cols-7 gap-y-1 mb-1 text-center">
         {WEEKDAYS.map((day) => (
           <div key={day} className="text-[10px] font-bold text-gray-400 tracking-wider">
-            {day}
+            {day.slice(0, 1)}{day.slice(1).toLowerCase()}
           </div>
         ))}
       </div>
@@ -212,13 +215,13 @@ export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate, ge
         </div>
 
         {showDropdown && (
-          <div className="absolute inset-0 z-30 flex flex-col p-3 rounded-[18px] bg-white/95 backdrop-blur-md transition-all duration-200">
-            <div className="flex items-center justify-between mb-3 border-b pb-2 border-black/5">
-              <button onClick={() => setCurrentYear(y => y - 1)} className="p-1.5 text-[#179237] hover:bg-black/5 rounded-full transition-colors">
+          <div className="absolute inset-0 z-30 flex flex-col p-3 rounded-[16px] bg-white/98 backdrop-blur-md transition-all duration-200">
+            <div className="flex items-center justify-between mb-3 border-b pb-2.5 border-black/5">
+              <button onClick={() => setCurrentYear(y => y - 1)} className="p-1.5 text-gray-500 hover:text-[#179237] hover:bg-[#179237]/8 rounded-full transition-colors">
                 <ChevronLeftIcon />
               </button>
-              <span className="font-bold text-[16px] text-black">{currentYear}</span>
-              <button onClick={() => setCurrentYear(y => y + 1)} className="p-1.5 text-[#179237] hover:bg-black/5 rounded-full transition-colors">
+              <span className="font-bold text-[16px] text-gray-900">{currentYear}</span>
+              <button onClick={() => setCurrentYear(y => y + 1)} className="p-1.5 text-gray-500 hover:text-[#179237] hover:bg-[#179237]/8 rounded-full transition-colors">
                 <ChevronRightIcon />
               </button>
             </div>
@@ -233,10 +236,10 @@ export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate, ge
                       setCurrentMonth(idx)
                       setShowDropdown(false)
                     }}
-                    className={`py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    className={`py-2 rounded-[10px] text-xs font-bold transition-all ${
                       isSelected
                         ? 'bg-[#179237] text-white shadow-sm'
-                        : 'text-black hover:bg-black/5'
+                        : 'text-gray-700 hover:bg-[#179237]/8'
                     }`}
                   >
                     {m.slice(0, 3)}
@@ -250,15 +253,15 @@ export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate, ge
 
       {/* Availability legend (flows below the grid so it never overlaps) */}
       {getAvailability && (
-        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 pt-3 border-t border-black/5 text-[11px] font-medium text-gray-500">
+        <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1.5 pt-3.5 border-t border-black/[0.06] text-[11px] font-medium text-gray-500">
           <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-[#179237]" /> Available
+            <span className="w-[7px] h-[7px] rounded-full bg-[#179237] shadow-[0_0_0_2px_rgba(23,146,55,0.15)]" /> Available
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-amber-400" /> Limited
+            <span className="w-[7px] h-[7px] rounded-full bg-amber-400 shadow-[0_0_0_2px_rgba(251,191,36,0.18)]" /> Limited
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="text-gray-300 line-through">31</span> Fully booked
+            <span className="w-[7px] h-[7px] rounded-full bg-red-400 shadow-[0_0_0_2px_rgba(248,113,113,0.18)]" /> Sold Out
           </span>
         </div>
       )}

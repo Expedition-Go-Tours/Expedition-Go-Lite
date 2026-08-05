@@ -54,11 +54,12 @@
   z-index: 1;
 }
 
-/* Duration Badge */
+/* Duration Badge — bottom-right, leaving top-left free for the source
+   logo badge and bottom-left free for the product type badge. */
 .similar-tour-duration {
   position: absolute;
-  top: 10px;
-  left: 10px;
+  bottom: 10px;
+  right: 10px;
   background: rgba(0, 0, 0, 0.75);
   color: #fff;
   font-family: var(--font-body, 'Raleway', sans-serif);
@@ -169,15 +170,76 @@
 }
 
 .similar-tour-meta-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-family: var(--font-body, 'Raleway', sans-serif);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   color: #6b7280;
   background: #f3f4f6;
   border: 1px solid #e5e7eb;
-  padding: 2px 8px;
+  padding: 3px 8px;
   border-radius: 999px;
   white-space: nowrap;
+  line-height: 1.2;
+}
+
+.similar-tour-meta-badge svg {
+  flex-shrink: 0;
+}
+
+.similar-tour-meta-badge-pickup {
+  color: #166534;
+  background: rgba(22, 101, 52, 0.08);
+  border-color: rgba(22, 101, 52, 0.18);
+}
+
+.similar-tour-meta-badge-language {
+  color: #1e40af;
+  background: rgba(30, 64, 175, 0.07);
+  border-color: rgba(30, 64, 175, 0.16);
+}
+
+.similar-tour-meta-badge-cancellation {
+  color: #166534;
+  background: rgba(22, 101, 52, 0.08);
+  border-color: rgba(22, 101, 52, 0.18);
+}
+
+.similar-tour-meta-badge-cancellation-negative {
+  color: #b91c1c;
+  background: rgba(185, 28, 28, 0.08);
+  border-color: rgba(185, 28, 28, 0.18);
+}
+
+/* Product type badge (Tour / Activity / Transport) */
+.similar-tour-meta-badge-type {
+  font-weight: 700;
+}
+
+.similar-tour-meta-badge-type-tour {
+  color: #9a3412;
+  background: rgba(234, 88, 12, 0.09);
+  border-color: rgba(234, 88, 12, 0.2);
+}
+
+.similar-tour-meta-badge-type-activity {
+  color: #7e22ce;
+  background: rgba(147, 51, 234, 0.09);
+  border-color: rgba(147, 51, 234, 0.2);
+}
+
+.similar-tour-meta-badge-type-transport {
+  color: #0e7490;
+  background: rgba(8, 145, 178, 0.09);
+  border-color: rgba(8, 145, 178, 0.2);
+}
+
+.similar-tour-meta-badge-type-default {
+  color: #6b7280;
+  background: #f3f4f6;
+  border-color: #e5e7eb;
 }
 
 /* Footer */
@@ -321,7 +383,7 @@
 
 .source-badge {
   position: absolute;
-  bottom: 8px;
+  top: 8px;
   left: 8px;
   width: 36px;
   height: 36px;
@@ -340,4 +402,40 @@
   height: 100%;
   object-fit: contain;
   border-radius: 50%;
+}
+
+/* Product type badge pinned to the bottom-left of the image — mirrors
+   TourCard's placement so type is recognizable at a glance everywhere. */
+.similar-tour-image-type-badge {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  padding: 4px 9px;
+  border-radius: 999px;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+.similar-tour-image-type-badge.similar-tour-meta-badge-type-tour {
+  background: rgba(234, 88, 12, 0.92);
+}
+
+.similar-tour-image-type-badge.similar-tour-meta-badge-type-activity {
+  background: rgba(147, 51, 234, 0.92);
+}
+
+.similar-tour-image-type-badge.similar-tour-meta-badge-type-transport {
+  background: rgba(8, 145, 178, 0.92);
+}
+
+.similar-tour-image-type-badge.similar-tour-meta-badge-type-default {
+  background: rgba(55, 65, 81, 0.85);
 }
