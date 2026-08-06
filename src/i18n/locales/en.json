@@ -132,6 +132,8 @@
     "tours": "tours"
   },
   "nav": {
+    "listAnExperience": "List an Experience",
+    "listAnExperienceSub": "Become a supplier and start earning",
     "about": "About",
     "bookings": "Bookings",
     "contact": "Contact",

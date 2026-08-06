@@ -3,7 +3,7 @@ import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Settings, CalendarDays, Heart, Star, Bell, MessageCircle,
-  LogOut, ChevronLeft, ChevronRight, Menu, Home
+  LogOut, ChevronLeft, ChevronRight, Menu, Home, ArrowLeft
 } from "lucide-react";
 import { toast } from "sonner";
 import { useSidebarStore } from "@/stores/sidebarStore";
@@ -253,6 +253,7 @@ function AnimatedPage({ children }: { children: React.ReactNode }) {
 export default function DashboardLayout() {
   const { isCollapsed } = useSidebarStore();
   const location = useLocation();
+  const navigate = useNavigate();
   const title = pageTitles[location.pathname] || "Dashboard";
 
   // Redirect the base /dashboard path (or any unknown dashboard subpath) to a
@@ -274,18 +275,31 @@ export default function DashboardLayout() {
         }`}
       >
         <div className="px-4 sm:px-6 lg:px-10 pb-10">
-          <AnimatePresence mode="wait">
-            <motion.h1
-              key={location.pathname}
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 8 }}
-              transition={{ duration: 0.25, ease: "easeInOut" }}
-              className="text-[clamp(24px,2.4vw,32px)] font-heading font-bold text-[#1a1a1a] mb-8 text-center lg:text-left"
-            >
-              {title}
-            </motion.h1>
-          </AnimatePresence>
+          <div className="flex items-center justify-center lg:justify-start mb-8 relative">
+            <AnimatePresence mode="wait">
+              <motion.h1
+                key={location.pathname}
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 8 }}
+                transition={{ duration: 0.25, ease: "easeInOut" }}
+                className="text-[clamp(24px,2.4vw,32px)] font-heading font-bold text-[#1a1a1a] text-center lg:text-left"
+              >
+                {title}
+              </motion.h1>
+            </AnimatePresence>
+
+            {location.pathname === "/dashboard/settings" && (
+              <button
+                type="button"
+                onClick={() => navigate("/")}
+                className="lg:hidden absolute right-0 flex h-9 w-9 items-center justify-center rounded-full border border-[#e5e4e7] bg-white text-[#1a1a1a] shadow-sm transition-colors hover:bg-[#f8f9fb]"
+                aria-label="Back to home"
+              >
+                <ArrowLeft size={16} strokeWidth={2.2} />
+              </button>
+            )}
+          </div>
 
           <AnimatePresence mode="wait">
             <Routes location={location} key={location.pathname}>

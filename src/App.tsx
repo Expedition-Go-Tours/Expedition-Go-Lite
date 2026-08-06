@@ -29,11 +29,13 @@ import Footer from './components/Footer'
 import MountOnView from './components/MountOnView'
 import ReviewExperiencePage from './pages/ReviewExperiencePage'
 import SupplierPage from './pages/SupplierPage'
+import SupplierRegisterPage from './pages/supplier/SupplierRegisterPage'
+import SupplierLandingPage from './pages/supplier/SupplierLandingPage'
 import BookingPage from './pages/BookingPage'
 import { WishlistProvider } from './context/WishlistContext'
 import { ContinuePlanningProvider } from './context/ContinuePlanningContext'
 import SupportChatWidget from './components/SupportChatWidget'
-import { subscribeToAuthState, handleGoogleCallback } from './lib/auth'
+import { subscribeToAuthState, handleGoogleCallback, getAuthReturnTo, clearAuthReturnTo } from './lib/auth'
 
 
 type PageView = 'home' | 'signin' | 'signup'
@@ -91,8 +93,14 @@ function AppContent() {
   }, [])
 
   useEffect(() => {
-    handleGoogleCallback()
-  }, [])
+    handleGoogleCallback().then(() => {
+      const returnTo = getAuthReturnTo()
+      if (returnTo) {
+        clearAuthReturnTo()
+        navigate(returnTo)
+      }
+    })
+  }, [navigate])
 
   const handleOpenAuth = (mode: 'signin' | 'signup') => {
     navigate('/')
@@ -100,7 +108,7 @@ function AppContent() {
   }
   const handleGoHome = () => setCurrentPage('home')
   const location = useLocation()
-  const hideNav = location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/booking')
+  const hideNav = currentPage === 'signin' || currentPage === 'signup' || location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/booking') || location.pathname.startsWith('/supplier/register') || location.pathname.startsWith('/supplier/list-experience')
 
   return (
     <>
@@ -133,6 +141,12 @@ function AppContent() {
         } />
         <Route path="/supplier/:supplierName" element={
           <SupplierPage />
+        } />
+        <Route path="/supplier/register" element={
+          <SupplierRegisterPage onOpenAuth={handleOpenAuth} />
+        } />
+        <Route path="/supplier/list-experience" element={
+          <SupplierLandingPage onOpenAuth={handleOpenAuth} />
         } />
         <Route path="/booking" element={
           <motion.div

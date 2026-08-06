@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import compyBg from '../assets/icons/compyIcon.png'
-import { signInWithGoogle, signInWithEmail, registerWithEmail, setAuthReturnTo, clearAuthReturnTo } from '../lib/auth'
+import { signInWithGoogle, signInWithEmail, registerWithEmail, setAuthReturnTo, clearAuthReturnTo, getAuthReturnTo } from '../lib/auth'
+import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 
 interface AuthFormProps {
@@ -53,6 +54,20 @@ const itemVariants = {
   },
 } as const;
 
+/** After a successful sign-in/sign-up, honor a pending return path (e.g. supplier register). */
+function useAuthSuccessRedirect(onAuthSuccess?: () => void) {
+  const navigate = useNavigate()
+  return () => {
+    const returnTo = getAuthReturnTo()
+    if (returnTo) {
+      clearAuthReturnTo()
+      navigate(returnTo)
+      return
+    }
+    onAuthSuccess?.()
+  }
+}
+
 function GoogleG() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24">
@@ -89,21 +104,21 @@ function SignInForm({ onSwitchToSignUp, onAuthSuccess }: { onSwitchToSignUp: () 
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
+  const handleAuthSuccess = useAuthSuccessRedirect(onAuthSuccess)
 
   const handleGoogle = async () => {
     flushSync(() => {
       setGoogleLoading(true)
     })
     try {
-      setAuthReturnTo('/')
+      if (!getAuthReturnTo()) setAuthReturnTo('/')
 
       const result = await signInWithGoogle()
 
       if (result && 'redirected' in result && result.redirected) return
 
       toast.success('Signed in successfully')
-      clearAuthReturnTo()
-      onAuthSuccess?.()
+      handleAuthSuccess()
     } catch (err: any) {
       toast.error(err.message || 'Google sign in failed')
     } finally {
@@ -117,7 +132,7 @@ function SignInForm({ onSwitchToSignUp, onAuthSuccess }: { onSwitchToSignUp: () 
     try {
       await signInWithEmail(email, password)
       toast.success('Signed in successfully')
-      onAuthSuccess?.()
+      handleAuthSuccess()
     } catch (err: any) {
       toast.error(err.message || 'Sign in failed')
     } finally {
@@ -187,21 +202,21 @@ function SignUpForm({ onSwitchToSignIn, onAuthSuccess }: { onSwitchToSignIn: () 
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
+  const handleAuthSuccess = useAuthSuccessRedirect(onAuthSuccess)
 
   const handleGoogle = async () => {
     flushSync(() => {
       setGoogleLoading(true)
     })
     try {
-      setAuthReturnTo('/')
+      if (!getAuthReturnTo()) setAuthReturnTo('/')
 
       const result = await signInWithGoogle()
 
       if (result && 'redirected' in result && result.redirected) return
 
       toast.success('Signed up successfully')
-      clearAuthReturnTo()
-      onAuthSuccess?.()
+      handleAuthSuccess()
     } catch (err: any) {
       toast.error(err.message || 'Google sign up failed')
     } finally {
@@ -215,7 +230,7 @@ function SignUpForm({ onSwitchToSignIn, onAuthSuccess }: { onSwitchToSignIn: () 
     try {
       await registerWithEmail(name, email, password)
       toast.success('Account created successfully')
-      onAuthSuccess?.()
+      handleAuthSuccess()
     } catch (err: any) {
       toast.error(err.message || 'Registration failed')
     } finally {

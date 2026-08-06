@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { toast } from 'sonner'
-import { Clock, X, Globe } from 'lucide-react'
+import { Clock, X, Globe, Megaphone, ChevronRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import i18n from '../i18n/config'
 import { useCurrency } from '../contexts/CurrencyContext'
@@ -108,6 +108,16 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
       }
     }
   }, [navSearchValue, navSuggestions, navigate, addSearch])
+
+  const handleListExperience = useCallback(() => {
+    if (user) {
+      navigate('/supplier/register')
+      return
+    }
+    // Signed-out visitors land on the public "become a supplier" page first
+    // (how it works + FAQ) instead of being dropped straight into sign-in.
+    navigate('/supplier/list-experience')
+  }, [user, navigate])
 
   const handleNavKeyDown = (e: React.KeyboardEvent) => {
     if (!showNavDropdown) {
@@ -339,20 +349,19 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
       </div>
 
       <div className="nav-right">
+        <a href="#" className="nav-list-experience" onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleListExperience() }}>
+          <span className="nav-list-experience-icon">
+            <Megaphone size={15} strokeWidth={2.1} />
+          </span>
+          <span className="nav-list-experience-label">{t('nav.listAnExperience', 'List an Experience')}</span>
+        </a>
+
         <div className="nav-icon-item nav-globe-trigger" onClick={() => setLangCurrencyOpen(true)}>
           <Globe size={20} />
           <span className="nav-icon-label">{i18n.language.substring(0, 2).toUpperCase()} | {currency.code}</span>
         </div>
 
         <div className="nav-icons">
-          <a href="#" className="nav-icon-item" onClick={(e) => { e.preventDefault(); e.stopPropagation() }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10" />
-              <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
-            </svg>
-            <span className="nav-icon-label">{t('nav.listAnExperience', 'List an Experience')}</span>
-          </a>
-
           <a href="#" className="nav-icon-item" onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate('/dashboard/wishlist') }}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
@@ -507,6 +516,16 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
                 <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
             </button>
+            <a href="#" className="nav-mobile-list-experience" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMobileMenuOpen(false); handleListExperience() }}>
+              <span className="nav-mobile-list-experience-icon">
+                <Megaphone size={19} strokeWidth={2} />
+              </span>
+              <span className="nav-mobile-list-experience-text">
+                <span className="nav-mobile-list-experience-title">{t('nav.listAnExperience', 'List an Experience')}</span>
+                <span className="nav-mobile-list-experience-sub">{t('nav.listAnExperienceSub', 'Become a supplier and start earning')}</span>
+              </span>
+              <ChevronRight size={18} className="nav-mobile-list-experience-chevron" />
+            </a>
             {user ? (
               <div className="nav-mobile-user">
                 <img src={user.photoURL || userSrc} alt="" className="nav-mobile-user-avatar" onError={(e) => { (e.target as HTMLImageElement).src = userSrc }} />
@@ -524,13 +543,6 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
                 {t('nav.profile')}
               </a>
             )}
-            <a href="#" className="nav-mobile-link" onClick={(e) => { e.preventDefault(); e.stopPropagation() }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10" />
-                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" />
-              </svg>
-              {t('nav.listAnExperience', 'List an Experience')}
-            </a>
             <a href="#" className="nav-mobile-link" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMobileMenuOpen(false); navigate('/dashboard/wishlist') }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />

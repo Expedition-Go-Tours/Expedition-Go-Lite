@@ -173,7 +173,25 @@ export function buildKnowBeforeContent(text: string): React.ReactNode {
   if (!text) {
     return <p className="details-text">{i18n.t('tourDetail.detailsNotAvailable')}</p>
   }
-  return <p className="details-text">{text}</p>
+
+  const { preamble, items } = parseNumberedContent(text)
+
+  if (items.length === 0) {
+    return <p className="details-text">{text}</p>
+  }
+
+  return (
+    <div className="details-about">
+      {preamble && <p className="details-text">{preamble}</p>}
+      <ul className="details-bullet-list">
+        {items.map((item) => (
+          <li key={item.num} className="details-bullet-item">
+            {item.content}
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
 }
 
 export function buildCancellationContent(

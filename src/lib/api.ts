@@ -13,10 +13,14 @@ export async function apiFetch<T>(path: string, options?: RequestInit): Promise<
   const base = getApiBaseUrl()
   const token = await getAuthToken()
 
+  const isFormData = options?.body instanceof FormData
+
   const res = await fetch(`${base}${path}`, {
     ...options,
     headers: {
-      'Content-Type': 'application/json',
+      // Skip the JSON content type for multipart bodies — the browser sets the
+      // boundary automatically when Content-Type is left unset.
+      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
       Accept: 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(options?.headers as Record<string, string>),
