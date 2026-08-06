@@ -406,11 +406,20 @@ export default function TourDetailPage() {
       dietaryOptions.length ? t('tourDetail.dietaryOptionsSupported', { options: dietaryOptions.join(', ') }) : '',
     ].filter(Boolean)
 
-    // Guide label — "Live guide" by default, "Self-guided" when the
-    // supplier selected the self-guided option.
-    const guideLabel = tour?.guideType === 'self-guided'
-      ? t('tourDetail.guideTypes.selfGuided')
-      : t('tourDetail.liveGuide')
+    // Guide label — reflects the exact guide type the supplier selected in
+    // the product builder's Guide information step: self-guided, tour guide,
+    // host or greeter, instructor, or driver. "greeter" is a legacy alias.
+    const guideLabel = (() => {
+      switch (tour?.guideType) {
+        case 'self-guided': return t('tourDetail.guideTypes.selfGuided')
+        case 'tour-guide': return t('tourDetail.guideTypes.tourGuide')
+        case 'driver': return t('tourDetail.guideTypes.driver')
+        case 'instructor': return t('tourDetail.guideTypes.instructor')
+        case 'host':
+        case 'greeter': return t('tourDetail.guideTypes.host')
+        default: return t('tourDetail.guideTypes.tourGuide')
+      }
+    })()
 
     // Private vs group experience — sourced from productContent.isPrivateActivity.
     const isPrivateExperience = !!tour?.isPrivateActivity

@@ -327,8 +327,8 @@
     },
     "guideTypes": {
       "tourGuide": "Reiseleiter",
-      "driver": "Fahrer-Guide",
-      "host": "Gastgeber",
+      "driver": "Fahrer",
+      "host": "Gastgeber oder Begrüßer",
       "greeter": "Begrüßer",
       "selfGuided": "Selbstgeführt",
       "instructor": "Instruktor"

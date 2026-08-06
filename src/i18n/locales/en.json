@@ -335,8 +335,8 @@
     },
     "guideTypes": {
       "tourGuide": "Tour guide",
-      "driver": "Driver guide",
-      "host": "Host",
+      "driver": "Driver",
+      "host": "Host or greeter",
       "greeter": "Greeter",
       "selfGuided": "Self-guided",
       "instructor": "Instructor"
