@@ -1,17 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getApiBaseUrl, getAuthToken } from '../lib/auth'
+import { fetchWithAuth } from '../lib/api'
 import { useMyExpeditionBookings } from './useExpeditionBookings'
 
 async function expeditionFetchRaw(path: string) {
-  const base = getApiBaseUrl()
-  const token = await getAuthToken()
-  const res = await fetch(`${base}${path}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-  })
+  const res = await fetchWithAuth(path)
   const payload = await res.json().catch(() => ({}))
   if (!res.ok) {
     throw new Error(payload.message || `Request failed (${res.status})`)
@@ -48,17 +40,8 @@ export interface ReviewCardData {
  * Used as a fallback so reviews for newly created / uncurated tours still load.
  */
 async function fetchRawTourReviews(tourId: string, page: number, limit: number) {
-  const base = getApiBaseUrl()
-  const token = await getAuthToken()
-  const res = await fetch(
-    `${base}/reviews/tours/${encodeURIComponent(tourId)}?page=${page}&limit=${limit}&sortBy=createdAt&sortOrder=desc`,
-    {
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-    }
+  const res = await fetchWithAuth(
+    `/reviews/tours/${encodeURIComponent(tourId)}?page=${page}&limit=${limit}&sortBy=createdAt&sortOrder=desc`
   )
   if (!res.ok) return null
   const payload = await res.json().catch(() => ({}))
@@ -146,15 +129,8 @@ export function useCreateReview() {
 
   return useMutation({
     mutationFn: async (input: CreateReviewInput) => {
-      const base = getApiBaseUrl()
-      const token = await getAuthToken()
-      const res = await fetch(`${base}/expedition/reviews`, {
+      const res = await fetchWithAuth('/expedition/reviews', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
         body: JSON.stringify(input),
       })
       const payload = await res.json().catch(() => ({}))
@@ -242,19 +218,13 @@ export function useUpdateReview() {
 
   return useMutation({
     mutationFn: async ({ id, ...input }: UpdateReviewInput) => {
-      const base = getApiBaseUrl()
-      const token = await getAuthToken()
       const formData = new FormData()
       if (input.rating != null) formData.append('rating', String(input.rating))
       if (input.title != null) formData.append('title', input.title)
       if (input.comment != null) formData.append('comment', input.comment)
 
-      const res = await fetch(`${base}/reviews/${encodeURIComponent(id)}`, {
+      const res = await fetchWithAuth(`/reviews/${encodeURIComponent(id)}`, {
         method: 'PATCH',
-        headers: {
-          Accept: 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
         body: formData,
       })
       const payload = await res.json().catch(() => ({}))
@@ -272,14 +242,8 @@ export function useDeleteReview() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const base = getApiBaseUrl()
-      const token = await getAuthToken()
-      const res = await fetch(`${base}/reviews/${encodeURIComponent(id)}`, {
+      const res = await fetchWithAuth(`/reviews/${encodeURIComponent(id)}`, {
         method: 'DELETE',
-        headers: {
-          Accept: 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
       })
       if (!res.ok && res.status !== 204) {
         const payload = await res.json().catch(() => ({}))

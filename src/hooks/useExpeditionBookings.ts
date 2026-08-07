@@ -1,16 +1,8 @@
 import { useQuery, useMutation } from '@tanstack/react-query'
-import { getApiBaseUrl, getAuthToken } from '../lib/auth'
+import { fetchWithAuth } from '../lib/api'
 
 async function expeditionFetchRaw(path: string) {
-  const base = getApiBaseUrl()
-  const token = await getAuthToken()
-  const res = await fetch(`${base}${path}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-  })
+  const res = await fetchWithAuth(path)
   const payload = await res.json().catch(() => ({}))
   if (!res.ok) {
     throw new Error(payload.message || `Request failed (${res.status})`)
@@ -79,15 +71,8 @@ interface CalculateCheckoutResponse {
 export function useCalculateCheckout() {
   return useMutation({
     mutationFn: async (input: CalculateCheckoutInput) => {
-      const base = getApiBaseUrl()
-      const token = await getAuthToken()
-      const res = await fetch(`${base}/expedition/checkout/calculate`, {
+      const res = await fetchWithAuth('/expedition/checkout/calculate', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
         body: JSON.stringify(input),
       })
       const payload = await res.json().catch(() => ({}))
@@ -129,15 +114,8 @@ interface ConfirmBookingResponse {
 export function useCreateBooking() {
   return useMutation({
     mutationFn: async (input: ConfirmBookingInput) => {
-      const base = getApiBaseUrl()
-      const token = await getAuthToken()
-      const res = await fetch(`${base}/expedition/checkout/confirm`, {
+      const res = await fetchWithAuth('/expedition/checkout/confirm', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
         body: JSON.stringify(input),
       })
       const payload = await res.json().catch(() => ({}))

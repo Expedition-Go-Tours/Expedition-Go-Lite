@@ -17,7 +17,7 @@ import {
 import { findActiveTier, hasTieredPricing, resolveTierPrice, tierRangeLabel } from '../../lib/tierPricing'
 import SupportChatWidget from '../../components/SupportChatWidget'
 import BookingTransition from '../../components/BookingTransition'
-import { getApiBaseUrl, getAuthToken } from '../../lib/auth'
+import { fetchWithAuth } from '../../lib/api'
 import './BookingWidget.css'
 
 interface BookingWidgetProps {
@@ -66,15 +66,8 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
     if (!tId) return
     setPricingLoading(true)
     try {
-      const base = getApiBaseUrl()
-      const token = await getAuthToken()
-      const res = await fetch(`${base}/expedition/checkout/calculate`, {
+      const res = await fetchWithAuth('/expedition/checkout/calculate', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
         body: JSON.stringify({
           tourId: tId,
           selectedDate: date,

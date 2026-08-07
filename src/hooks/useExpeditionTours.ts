@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { getApiBaseUrl, getAuthToken } from '../lib/auth'
 import type { TourDetail, TravelerPricing, GroupSizeBand, PricingTier, ItineraryDay } from '../lib/tourTypes'
+import { fetchWithAuth } from '../lib/api'
 
 /**
  * `bypassCache` skips the browser's HTTP cache for this request. The tour
@@ -12,14 +12,7 @@ import type { TourDetail, TravelerPricing, GroupSizeBand, PricingTier, Itinerary
  * keep the default caching to avoid unnecessary network traffic.
  */
 async function expeditionFetchRaw(path: string, bypassCache = false) {
-  const base = getApiBaseUrl()
-  const token = await getAuthToken()
-  const res = await fetch(`${base}${path}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
+  const res = await fetchWithAuth(path, {
     ...(bypassCache ? { cache: 'no-store' } : {}),
   })
   const payload = await res.json().catch(() => ({}))
@@ -966,14 +959,7 @@ export interface TourDetailData extends Omit<TourDetail, 'guide' | 'contact' | '
  * max-age=60 response caching.
  */
 async function fetchRawTourBySlugOrId(idOrSlug: string, bypassCache = false): Promise<any | null> {
-  const base = getApiBaseUrl()
-  const token = await getAuthToken()
-  const res = await fetch(`${base}/tours/${encodeURIComponent(idOrSlug)}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
+  const res = await fetchWithAuth(`/tours/${encodeURIComponent(idOrSlug)}`, {
     ...(bypassCache ? { cache: 'no-store' } : {}),
   })
   if (!res.ok) return null
@@ -1112,16 +1098,9 @@ export function useExpeditionTour(slug: string | undefined) {
       // Fetch raw tour data to get excluded and other missing fields
       if (tour.id) {
         try {
-          const base = getApiBaseUrl()
-          const token = await getAuthToken()
-          const rawRes = await fetch(`${base}/tours/${tour.id}`, {
-            headers: {
-              'Content-Type': 'application/json',
-              Accept: 'application/json',
-              ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            },
-            // Bypass HTTP caching so pricing/tier edits a supplier just
-            // saved are reflected immediately on the tour detail page.
+          // Bypass HTTP caching so pricing/tier edits a supplier just
+          // saved are reflected immediately on the tour detail page.
+          const rawRes = await fetchWithAuth(`/tours/${tour.id}`, {
             cache: 'no-store',
           })
           if (rawRes.ok) {
