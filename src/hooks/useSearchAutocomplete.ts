@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { destinations } from '../components/data'
-import { getApiBaseUrl, getAuthToken } from '../lib/auth'
+import { fetchWithAuth } from '../lib/api'
 import { extractStartingPriceFromRaw, formatDuration } from './useExpeditionTours'
 
 export interface SearchSuggestion {
@@ -28,17 +28,9 @@ interface BackendTourResult {
 }
 
 async function fetchBackendTourSuggestions(query: string): Promise<SearchSuggestion[]> {
-  const base = getApiBaseUrl()
-  const token = await getAuthToken()
   const params = new URLSearchParams({ search: query, limit: '8' })
 
-  const res = await fetch(`${base}/tours?${params.toString()}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-  })
+  const res = await fetchWithAuth(`/tours?${params.toString()}`)
 
   if (!res.ok) return []
 
