@@ -1,13 +1,14 @@
 import { motion } from 'framer-motion'
-import { Check } from 'lucide-react'
+import { Check, AlertCircle } from 'lucide-react'
 
 interface StepBadgeProps {
   number: number
   active: boolean
   completed: boolean
+  error?: boolean
 }
 
-export default function StepBadge({ number, active, completed }: StepBadgeProps) {
+export default function StepBadge({ number, active, completed, error }: StepBadgeProps) {
   return (
     <motion.div
       layout
@@ -19,13 +20,11 @@ export default function StepBadge({ number, active, completed }: StepBadgeProps)
         animate={{
           scale: active ? 1 : 0.96,
           backgroundColor: completed || active ? '#179237' : 'transparent',
-          borderColor: completed || active ? '#179237' : '#cbd5e1',
-          color: completed || active ? '#fff' : '#94a3b8',
+          borderColor: error && !completed ? '#e11d48' : completed || active ? '#179237' : '#cbd5e1',
+          color: error && !completed ? '#e11d48' : completed || active ? '#fff' : '#94a3b8',
         }}
         transition={{ type: 'spring', stiffness: 150, damping: 18 }}
-        className={`grid size-9 place-items-center rounded-full text-sm font-bold border-2 ${
-          completed || active ? 'border-[#179237]' : 'border-slate-300'
-        }`}
+        className="grid size-9 place-items-center rounded-full text-sm font-bold border-2"
       >
         {completed ? (
           <motion.span
@@ -35,19 +34,12 @@ export default function StepBadge({ number, active, completed }: StepBadgeProps)
           >
             <Check className="size-4" />
           </motion.span>
+        ) : error ? (
+          <AlertCircle className="size-4" strokeWidth={2.5} />
         ) : (
           number
         )}
       </motion.div>
-      {active && (
-        <motion.span
-          layoutId="active-ring"
-          className="absolute inset-0 rounded-full border-2 border-[#179237]/30"
-          animate={{ scale: [1, 1.15, 1] }}
-          transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-          style={{ pointerEvents: 'none' }}
-        />
-      )}
     </motion.div>
   )
 }

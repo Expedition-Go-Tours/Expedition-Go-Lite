@@ -182,9 +182,10 @@ function HoldTimer({ onExpire, lastActivityAt, isExpired }: { onExpire: () => vo
 
 /* ─── Step wrapper ─── */
 
-function StepCard({ children }: { children: React.ReactNode }) {
+function StepCard({ children, id }: { children: React.ReactNode; id?: string }) {
   return (
     <motion.div
+      id={id}
       layout
       className="rounded-[1.75rem] border border-slate-200/40 bg-white shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)]"
       transition={{ type: 'spring' as const, stiffness: 120, damping: 18 }}
@@ -197,14 +198,15 @@ function StepCard({ children }: { children: React.ReactNode }) {
 /* ─── Step 1 – Contact Details ─── */
 
 function ContactDetailsStep({
-  data, onChange, onNext, valid, step, setStep, disabled,
+  data, onChange, onNext, valid, step, onNavigate, hasError, disabled,
 }: {
   data: { firstName: string; lastName: string; email: string; countryCode: string; phone: string }
   onChange: (key: string, value: string | boolean) => void
   onNext: () => void
   valid: { firstName: boolean; lastName: boolean; email: boolean; phone: boolean; all: boolean }
   step: number
-  setStep: (s: number) => void
+  onNavigate: (n: number) => void
+  hasError: boolean
   disabled?: boolean
 }) {
   const isActive = step === 1
@@ -218,15 +220,20 @@ function ContactDetailsStep({
       : undefined
 
   return (
-    <StepCard>
+    <StepCard id="booking-step-1">
       <div className="border-b border-slate-100/60 px-7 py-6 sm:px-9">
-        <div className="flex items-start gap-4">
-          <StepBadge number={1} active={isActive} completed={isCompleted} />
+        <button
+          type="button"
+          onClick={() => onNavigate(1)}
+          aria-label="Go to Contact Details"
+          className="flex w-full items-start gap-4 text-left transition-opacity hover:opacity-80"
+        >
+          <StepBadge number={1} active={isActive} completed={isCompleted} error={hasError} />
           <div className="pt-0.5">
             <h2 className="text-lg font-bold text-slate-900 tracking-tight">Contact Details</h2>
             <p className="mt-0.5 text-sm text-slate-400">Confirmation will be sent here</p>
           </div>
-        </div>
+        </button>
       </div>
 
       <AnimatePresence mode="wait">
@@ -293,8 +300,12 @@ function ContactDetailsStep({
               </div>
             </div>
 
-            {!valid.all && Object.keys(touched).length > 0 && (
-              <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-xs text-rose-500 text-center">
+            {!valid.all && (Object.keys(touched).length > 0 || hasError) && (
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="rounded-lg bg-rose-50 px-4 py-2.5 text-center text-xs font-semibold text-rose-600"
+              >
                 Please fill in all required fields correctly before proceeding.
               </motion.p>
             )}
@@ -327,7 +338,10 @@ function ContactDetailsStep({
             <p className="text-sm font-semibold text-slate-900">{data.firstName} {data.lastName}</p>
             <p className="text-sm text-slate-400">{data.email}</p>
             <p className="text-sm text-slate-400">{data.countryCode} {data.phone}</p>
-            <button type="button" onClick={() => setStep(1)} className="mt-1 text-sm font-semibold text-emerald-600 underline underline-offset-2 hover:text-emerald-700">
+            {hasError && (
+              <p className="pt-1 text-xs font-semibold text-rose-500">There are errors in this step — please review.</p>
+            )}
+            <button type="button" onClick={() => onNavigate(1)} className="mt-1 text-sm font-semibold text-emerald-600 underline underline-offset-2 hover:text-emerald-700">
               Edit
             </button>
           </motion.div>
@@ -340,7 +354,7 @@ function ContactDetailsStep({
 /* ─── Step 2 – Activity Details ─── */
 
 function ActivityDetailsStep({
-  data, onChange, tour, onNext, valid, step, setStep, disabled,
+  data, onChange, tour, onNext, valid, step, onNavigate, hasError, disabled,
 }: {
   data: { leadFirstName: string; leadLastName: string }
   onChange: (key: string, value: string) => void
@@ -348,7 +362,8 @@ function ActivityDetailsStep({
   onNext: () => void
   valid: { leadFirstName: boolean; leadLastName: boolean; all: boolean }
   step: number
-  setStep: (s: number) => void
+  onNavigate: (n: number) => void
+  hasError: boolean
   disabled?: boolean
 }) {
   const isActive = step === 2
@@ -362,32 +377,82 @@ function ActivityDetailsStep({
       : undefined
 
   const tourSummaryCard = (
-    <div className="flex gap-3 rounded-xl border border-slate-200/40 bg-slate-50/30 p-3">
-      <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-slate-100 ring-1 ring-slate-200/20">
-        <img src={tour.image} alt={tour.title} className="h-full w-full object-cover" loading="lazy" />
-      </div>
-      <div className="min-w-0">
-        <div className="flex items-start gap-1.5">
-          <ShieldCheck className="mt-0.5 size-3.5 shrink-0 text-emerald-600" />
-          <p className="text-xs font-medium text-emerald-700">{tour.cancellation}</p>
+    <div className="overflow-hidden rounded-xl border border-slate-200/40 bg-slate-50/30">
+      <div className="flex gap-3 p-3">
+        <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-slate-100 ring-1 ring-slate-200/20">
+          <img src={tour.image} alt={tour.title} className="h-full w-full object-cover" loading="lazy" />
         </div>
-        <h3 className="mt-1 text-sm font-bold text-slate-900 line-clamp-2">{tour.title}</h3>
-        <p className="mt-0.5 text-xs text-slate-400 line-clamp-1">{tour.title}</p>
-        <p className="mt-0.5 text-xs text-slate-400">{tour.date} &bull; {tour.time}</p>
-        <p className="mt-0.5 text-xs text-slate-400">{tour.travelers}</p>
+        <div className="min-w-0 flex-1">
+          <h3 className="text-sm font-bold leading-tight text-slate-900 line-clamp-2">{tour.title}</h3>
+          <p className="mt-0.5 text-xs text-slate-400">By <span className="font-semibold text-slate-600">{tour.provider}</span></p>
+          {Number.isFinite(Number(tour.rating)) && Number(tour.rating) > 0 && (
+            <div className="mt-1 flex items-center gap-1">
+              <span className="text-sm font-bold text-slate-900">{tour.rating}</span>
+              <div className="flex items-center gap-0.5">
+                {Array.from({ length: 5 }, (_, i) => (
+                  <Star
+                    key={i}
+                    className={`size-3 ${i < Math.round(Number(tour.rating)) ? 'fill-emerald-500 text-emerald-500' : 'text-slate-200'}`}
+                  />
+                ))}
+              </div>
+              <span className="text-xs text-slate-400">({tour.reviews})</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="space-y-2 border-t border-slate-100/60 px-3 py-3">
+        <div className="flex items-center gap-2 text-xs text-slate-500">
+          <CalendarDays className="size-3.5 shrink-0 text-slate-300" />
+          <span>{tour.date} &bull; {tour.time}</span>
+        </div>
+        {tour.duration && (
+          <div className="flex items-center gap-2 text-xs text-slate-500">
+            <Clock className="size-3.5 shrink-0 text-slate-300" />
+            <span>{tour.duration}</span>
+          </div>
+        )}
+        {tour.travelers && (
+          <div className="flex items-center gap-2 text-xs text-slate-500">
+            <Users className="size-3.5 shrink-0 text-slate-300" />
+            <span>{tour.travelers}</span>
+          </div>
+        )}
+        {tour.language && (
+          <div className="flex items-center gap-2 text-xs text-slate-500">
+            <Globe className="size-3.5 shrink-0 text-slate-300" />
+            <span>{tour.language}</span>
+          </div>
+        )}
+        {tour.cancellation && (
+          <div className="flex items-start gap-2 text-xs text-slate-500">
+            <ShieldCheck className="mt-0.5 size-3.5 shrink-0 text-emerald-600" />
+            <span>{tour.cancellation}</span>
+          </div>
+        )}
+        <div className="flex items-center justify-between border-t border-slate-100 pt-2">
+          <span className="text-xs font-semibold text-slate-500">Total</span>
+          <span className="text-base font-bold text-slate-900">${tour.price.toFixed(2)}</span>
+        </div>
       </div>
     </div>
   )
 
   return (
-    <StepCard>
+    <StepCard id="booking-step-2">
       <div className="border-b border-slate-100/60 px-7 py-6 sm:px-9">
-        <div className="flex items-start gap-4">
-          <StepBadge number={2} active={isActive} completed={isCompleted} />
+        <button
+          type="button"
+          onClick={() => onNavigate(2)}
+          aria-label="Go to Activity Details"
+          className="flex w-full items-start gap-4 text-left transition-opacity hover:opacity-80"
+        >
+          <StepBadge number={2} active={isActive} completed={isCompleted} error={hasError} />
           <div className="pt-0.5">
             <h2 className="text-lg font-bold text-slate-900 tracking-tight">Activity Details</h2>
           </div>
-        </div>
+        </button>
       </div>
 
       <AnimatePresence mode="wait">
@@ -440,8 +505,12 @@ function ActivityDetailsStep({
               <p className="text-xs text-slate-400">Pickup details will be provided after booking confirmation.</p>
             </div>
 
-            {!valid.all && Object.keys(touched).length > 0 && (
-              <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-xs text-rose-500 text-center">
+            {!valid.all && (Object.keys(touched).length > 0 || hasError) && (
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="rounded-lg bg-rose-50 px-4 py-2.5 text-center text-xs font-semibold text-rose-600"
+              >
                 Please fill in all required fields correctly before proceeding.
               </motion.p>
             )}
@@ -472,8 +541,11 @@ function ActivityDetailsStep({
             className="space-y-3 p-7 sm:p-9"
           >
             {tourSummaryCard}
+            {hasError && (
+              <p className="pt-1 text-xs font-semibold text-rose-500">There are errors in this step — please review.</p>
+            )}
             {isCompleted && (
-              <button type="button" onClick={() => setStep(2)} className="text-sm font-semibold text-emerald-600 underline underline-offset-2 hover:text-emerald-700">
+              <button type="button" onClick={() => onNavigate(2)} className="text-sm font-semibold text-emerald-600 underline underline-offset-2 hover:text-emerald-700">
                 Edit
               </button>
             )}
@@ -487,14 +559,14 @@ function ActivityDetailsStep({
 /* ─── Step 3 – Payment Details ─── */
 
 function PaymentDetailsStep({
-  data, onChange, tour, onBook, step, setStep, disabled,
+  data, onChange, tour, onBook, step, onNavigate, disabled,
 }: {
   data: { paymentTiming: string; paymentMethod: string }
   onChange: (key: string, value: string) => void
   tour: typeof FALLBACK_TOUR
   onBook: () => void
   step: number
-  setStep: (s: number) => void
+  onNavigate: (n: number) => void
   disabled?: boolean
 }) {
   const isActive = step === 3
@@ -510,14 +582,19 @@ function PaymentDetailsStep({
   )
 
   return (
-    <StepCard>
+    <StepCard id="booking-step-3">
       <div className="border-b border-slate-100/60 px-7 py-6 sm:px-9">
-        <div className="flex items-start gap-4">
+        <button
+          type="button"
+          onClick={() => onNavigate(3)}
+          aria-label="Go to Payment Details"
+          className="flex w-full items-start gap-4 text-left transition-opacity hover:opacity-80"
+        >
           <StepBadge number={3} active={isActive} completed={isCompleted} />
           <div className="pt-0.5">
             <h2 className="text-lg font-bold text-slate-900 tracking-tight">Payment Details</h2>
           </div>
-        </div>
+        </button>
       </div>
 
       <AnimatePresence mode="wait">
@@ -640,7 +717,7 @@ function PaymentDetailsStep({
           >
             {paymentSummary}
             {isCompleted && (
-              <button type="button" onClick={() => setStep(3)} className="text-sm font-semibold text-emerald-600 underline underline-offset-2 hover:text-emerald-700">
+              <button type="button" onClick={() => onNavigate(3)} className="text-sm font-semibold text-emerald-600 underline underline-offset-2 hover:text-emerald-700">
                 Edit
               </button>
             )}
@@ -840,6 +917,7 @@ export default function BookingPage() {
   const tour = location.state?.tour || FALLBACK_TOUR
 
   const [step, setStep] = useState(1)
+  const [attempted, setAttempted] = useState<Record<number, boolean>>({})
   const [promoCode, setPromoCode] = useState('')
   const [discount, setDiscount] = useState(0)
 
@@ -917,6 +995,40 @@ export default function BookingPage() {
     trackActivity()
     setPayment((prev) => ({ ...prev, [key]: value }))
   }
+
+  const scrollToStep = (n: number) => {
+    requestAnimationFrame(() => {
+      document.getElementById(`booking-step-${n}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    })
+  }
+
+  /* Clickable-step navigation with validation: jumping forward is only allowed
+     when every preceding step is valid. If a previous step has errors, navigate
+     to it instead, flag it and tell the user what's wrong. */
+  const goToStep = (target: number) => {
+    if (target < 1 || target > 3) return
+
+    if (target > step) {
+      if (!contactValid.all) {
+        setAttempted((p) => ({ ...p, 1: true }))
+        setStep(1)
+        scrollToStep(1)
+        return
+      }
+      if (target > 2 && !activityValid.all) {
+        setAttempted((p) => ({ ...p, 2: true }))
+        setStep(2)
+        scrollToStep(2)
+        return
+      }
+    }
+
+    setStep(target)
+    if (target !== step) scrollToStep(target)
+  }
+
+  const contactHasError = !contactValid.all && attempted[1] === true
+  const activityHasError = !activityValid.all && attempted[2] === true
 
   const handleExpire = () => {
     setIsExpired(true)
@@ -1021,20 +1133,22 @@ export default function BookingPage() {
                 <ContactDetailsStep
                   data={contact}
                   onChange={handleContactChange}
-                  onNext={() => contactValid.all ? setStep(2) : undefined}
+                  onNext={() => goToStep(2)}
                   valid={contactValid}
                   step={step}
-                  setStep={setStep}
+                  onNavigate={goToStep}
+                  hasError={contactHasError}
                   disabled={isExpired}
                 />
                 <ActivityDetailsStep
                   data={activity}
                   onChange={handleActivityChange}
                   tour={activeTour}
-                  onNext={() => activityValid.all ? setStep(3) : undefined}
+                  onNext={() => goToStep(3)}
                   valid={activityValid}
                   step={step}
-                  setStep={setStep}
+                  onNavigate={goToStep}
+                  hasError={activityHasError}
                   disabled={isExpired}
                 />
                 <PaymentDetailsStep
@@ -1043,7 +1157,7 @@ export default function BookingPage() {
                   tour={activeTour}
                   onBook={handleBook}
                   step={step}
-                  setStep={setStep}
+                  onNavigate={goToStep}
                   disabled={isExpired}
                 />
               </div>

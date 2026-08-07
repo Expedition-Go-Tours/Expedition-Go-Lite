@@ -99,6 +99,10 @@ body:has(.story-detail) .navbar-compact-search {
   pointer-events: auto;
 }
 
+.navbar-compact-search.searching .navbar-search-form {
+  animation: search-glow-pulse 1.6s ease-in-out infinite;
+}
+
 .navbar-search-form {
   position: relative;
   display: flex;

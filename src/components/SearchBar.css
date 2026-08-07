@@ -82,6 +82,10 @@ body.hero--search-sticky .hero-search-wrap {
   pointer-events: none;
 }
 
+.hero-search-wrap.searching .hero-search-bar {
+  animation: search-glow-pulse 1.6s ease-in-out infinite;
+}
+
 /* ===== Autocomplete Dropdown ===== */
 
 .search-dropdown {
@@ -93,8 +97,17 @@ body.hero--search-sticky .hero-search-wrap {
   border-radius: 12px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
   z-index: 1000;
-  overflow: hidden;
   padding: 6px 0;
+  /* Keep scrolling functional but hide the OS scrollbar that otherwise
+     appears on the right edge when the list exceeds max-height. */
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.search-dropdown::-webkit-scrollbar {
+  display: none;
 }
 
 .search-dropdown-section {
@@ -299,6 +312,11 @@ body.hero--search-sticky .hero-search-wrap {
 
 /* PC view - reduce autocomplete height */
 @media (min-width: 769px) {
+  .search-dropdown {
+    max-height: 50vh;
+    overflow-y: auto;
+  }
+
   .search-suggestion {
     padding: 6px 16px;
     min-height: 36px;

@@ -1,10 +1,28 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useLayoutEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
+import { AnimatePresence, MotionConfig, motion, type Variants } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Clock, X } from 'lucide-react'
 import { useSearchAutocomplete, type SearchSuggestion } from '../hooks/useSearchAutocomplete'
 import { useRecentSearches } from '../hooks/useRecentSearches'
 import './SearchBar.css'
+
+const dropdownVariants: Variants = {
+  hidden: { opacity: 0, y: -8, scale: 0.985 },
+  show: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { duration: 0.18, ease: 'easeOut' },
+  },
+  exit: {
+    opacity: 0,
+    y: -8,
+    scale: 0.985,
+    transition: { duration: 0.15, ease: 'easeIn' },
+  },
+}
 
 export default function SearchBar() {
   const { t } = useTranslation()
@@ -13,10 +31,12 @@ export default function SearchBar() {
   const [showDropdown, setShowDropdown] = useState(false)
   const [highlightedIndex, setHighlightedIndex] = useState(-1)
   const [isFocused, setIsFocused] = useState(false)
-  const suggestions = useSearchAutocomplete(inputValue)
+  const { suggestions, isSearching } = useSearchAutocomplete(inputValue)
   const { recentSearches, addSearch, removeSearch, clearAll } = useRecentSearches()
   const containerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const barRef = useRef<HTMLDivElement>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
 
   const navigateToSuggestion = useCallback((suggestion: SearchSuggestion) => {
     if (suggestion.type === 'tour' && suggestion.slug) {
@@ -70,13 +90,50 @@ export default function SearchBar() {
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      const insideContainer = containerRef.current?.contains(e.target as Node)
+      const insideDropdown = dropdownRef.current?.contains(e.target as Node)
+      if (!insideContainer && !insideDropdown) {
         setShowDropdown(false)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+
+  const dropdownOpen =
+    (isFocused && recentSearches.length > 0) ||
+    (showDropdown && suggestions.length > 0) ||
+    (isSearching && isFocused)
+
+  const showSkeleton = isSearching && isFocused && suggestions.length === 0
+
+  useLayoutEffect(() => {
+    if (!dropdownOpen) return
+    const measure = () => {
+      const el = dropdownRef.current
+      const bar = barRef.current
+      if (!el || !bar) return
+      const rect = bar.getBoundingClientRect()
+      el.style.top = `${rect.bottom + 6}px`
+      el.style.left = `${rect.left}px`
+      el.style.width = `${rect.width}px`
+      el.style.visibility = 'visible'
+    }
+    measure()
+    window.addEventListener('resize', measure)
+    const onScroll = () => {
+      if (window.scrollY > 8) {
+        setShowDropdown(false)
+      } else {
+        measure()
+      }
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      window.removeEventListener('resize', measure)
+      window.removeEventListener('scroll', onScroll)
+    }
+  }, [dropdownOpen])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value)
@@ -140,14 +197,18 @@ export default function SearchBar() {
   }
 
   return (
-    <div className="hero-search-wrap" ref={containerRef}>
+    <div className={`hero-search-wrap${isSearching ? ' searching' : ''}`} ref={containerRef}>
       <form className="hero-search-form" onSubmit={handleSubmit}>
-        <div id="hero-search-bar" className="hero-search-bar">
+        <div id="hero-search-bar" className="hero-search-bar" ref={barRef}>
           <div className="hero-search-input-wrap">
-            <svg className="hero-search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
+            {isSearching ? (
+              <span className="search-loading-spinner" aria-hidden="true" />
+            ) : (
+              <svg className="hero-search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+            )}
             <div className="hero-search-input-inner">
               <input
                 ref={inputRef}
@@ -175,9 +236,41 @@ export default function SearchBar() {
           </div>
         </div>
 
-        {(isFocused && recentSearches.length > 0) || (showDropdown && suggestions.length > 0) ? (
-          <div className="search-dropdown">
-            {isFocused && recentSearches.length > 0 && (
+        <MotionConfig reducedMotion="user">
+          {createPortal(
+            <AnimatePresence initial={false}>
+              {dropdownOpen && (
+                <motion.div
+                  className="search-dropdown"
+                  ref={dropdownRef}
+                  variants={dropdownVariants}
+                  initial="hidden"
+                  animate="show"
+                  exit="exit"
+                  style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    width: 0,
+                    visibility: 'hidden',
+                    zIndex: 1000,
+                  }}
+                >
+                {showSkeleton ? (
+                  <div className="search-skeleton" aria-hidden="true">
+                    {[0, 1, 2].map((i) => (
+                      <div className="search-skeleton-row" key={i}>
+                        <div className="search-skeleton-icon" />
+                        <div className="search-skeleton-lines">
+                          <div className="search-skeleton-line search-skeleton-line-title" />
+                          <div className="search-skeleton-line search-skeleton-line-sub" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <>
+                    {isFocused && recentSearches.length > 0 && (
               <>
                 <div className="search-dropdown-section">{t('search.recentSearches')}</div>
                 {recentSearches.map((item) => (
@@ -224,7 +317,12 @@ export default function SearchBar() {
                   const showTourHeader = suggestion.type === 'tour' && (idx === 0 || suggestions[idx - 1]?.type !== 'tour')
 
                   return (
-                    <div key={suggestion.id}>
+                    <motion.div
+                      key={suggestion.id}
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.18, ease: 'easeOut', delay: Math.min(idx * 0.03, 0.45) }}
+                    >
                       {showDestHeader && (
                         <div className="search-dropdown-section">{t('common.destinations')}</div>
                       )}
@@ -265,13 +363,19 @@ export default function SearchBar() {
                           </>
                         )}
                       </div>
-                    </div>
+                    </motion.div>
                   )
                 })}
               </>
             )}
-          </div>
-        ) : null}
+              </>
+            )}
+                </motion.div>
+              )}
+            </AnimatePresence>,
+            document.body,
+          )}
+        </MotionConfig>
       </form>
     </div>
   )

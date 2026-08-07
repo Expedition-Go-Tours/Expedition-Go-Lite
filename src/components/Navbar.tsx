@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, motion, type Variants } from 'framer-motion'
 import { toast } from 'sonner'
 import { Clock, X, Globe, Megaphone, ChevronRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -13,6 +13,22 @@ import { useSearchAutocomplete, type SearchSuggestion } from '../hooks/useSearch
 import { useRecentSearches } from '../hooks/useRecentSearches'
 import LanguageCurrencyModal from './LanguageCurrencyModal'
 import './Navbar.css'
+
+const navDropdownVariants: Variants = {
+  hidden: { opacity: 0, y: -6, scale: 0.985 },
+  show: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { duration: 0.18, ease: 'easeOut' },
+  },
+  exit: {
+    opacity: 0,
+    y: -6,
+    scale: 0.985,
+    transition: { duration: 0.15, ease: 'easeIn' },
+  },
+}
 
 interface NavbarProps {
   onOpenAuth?: (mode: 'signin' | 'signup') => void
@@ -35,7 +51,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
   const [navIsFocused, setNavIsFocused] = useState(false)
   const navSearchRef = useRef<HTMLDivElement>(null)
   const navInputRef = useRef<HTMLInputElement>(null)
-  const navSuggestions = useSearchAutocomplete(navSearchValue)
+  const { suggestions: navSuggestions, isSearching: navIsSearching } = useSearchAutocomplete(navSearchValue)
   const { recentSearches, addSearch, removeSearch, clearAll } = useRecentSearches()
 
   useEffect(() => {
@@ -206,6 +222,13 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
     { label: t('nav.contact'), key: 'Contact' as const, icon: 'mail' as const },
   ]
 
+  const navDropdownOpen =
+    (navIsFocused && recentSearches.length > 0) ||
+    (showNavDropdown && navSuggestions.length > 0) ||
+    (navIsSearching && navIsFocused)
+
+  const navShowSkeleton = navIsSearching && navIsFocused && navSuggestions.length === 0
+
   return (
     <nav className={`navbar${searchBarSticky ? ' scrolled' : ''}`}>
       <div className="nav-left">
@@ -217,7 +240,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
       </div>
 
       <div className="nav-center">
-        <div className="navbar-compact-search" ref={navSearchRef}>
+        <div className={`navbar-compact-search${navIsSearching ? ' searching' : ''}`} ref={navSearchRef}>
           <form className="navbar-search-form" onSubmit={(e) => {
             e.preventDefault()
             if (navHighlightedIndex >= 0 && navHighlightedIndex < navSuggestions.length) {
@@ -227,10 +250,14 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
             }
           }}>
             <div className="navbar-search-inner">
-              <svg className="navbar-search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
+              {navIsSearching ? (
+                <span className="search-loading-spinner" aria-hidden="true" />
+              ) : (
+                <svg className="navbar-search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+              )}
               <div className="navbar-search-input-inner">
                 <input
                   ref={navInputRef}
@@ -258,9 +285,30 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
             </div>
           </form>
 
-          {(navIsFocused && recentSearches.length > 0) || (showNavDropdown && navSuggestions.length > 0) ? (
-            <div className="navbar-search-dropdown">
-              {navIsFocused && recentSearches.length > 0 && (
+          <AnimatePresence initial={false}>
+            {navDropdownOpen && (
+              <motion.div
+                className="navbar-search-dropdown"
+                variants={navDropdownVariants}
+                initial="hidden"
+                animate="show"
+                exit="exit"
+              >
+                {navShowSkeleton ? (
+                  <div className="search-skeleton" aria-hidden="true">
+                    {[0, 1, 2].map((i) => (
+                      <div className="search-skeleton-row" key={i}>
+                        <div className="search-skeleton-icon" />
+                        <div className="search-skeleton-lines">
+                          <div className="search-skeleton-line search-skeleton-line-title" />
+                          <div className="search-skeleton-line search-skeleton-line-sub" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <>
+                    {navIsFocused && recentSearches.length > 0 && (
                 <>
                   <div className="search-dropdown-section">{t('search.recentSearches')}</div>
                   {recentSearches.map((item) => (
@@ -307,7 +355,12 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
                     const showTourHeader = suggestion.type === 'tour' && (idx === 0 || navSuggestions[idx - 1]?.type !== 'tour')
 
                     return (
-                      <div key={suggestion.id}>
+                      <motion.div
+                        key={suggestion.id}
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.18, ease: 'easeOut', delay: Math.min(idx * 0.03, 0.45) }}
+                      >
                         {showDestHeader && (
                           <div className="search-dropdown-section">{t('common.destinations')}</div>
                         )}
@@ -348,13 +401,16 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
                             </>
                           )}
                         </div>
-                      </div>
+                      </motion.div>
                     )
                   })}
                 </>
               )}
-            </div>
-          ) : null}
+                  </>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 

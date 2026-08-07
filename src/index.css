@@ -199,4 +199,91 @@ body {
   display: none; /* Chrome, Safari, Opera */
 }
 
+/* ===== Search autocomplete animation helpers (shared by hero + navbar) ===== */
+
+/* Small spinner that replaces the search icon while a query is in flight */
+.search-loading-spinner {
+  width: 18px;
+  height: 18px;
+  margin: 1px;
+  flex-shrink: 0;
+  border: 2px solid #cbd5e1;
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: search-spin 0.7s linear infinite;
+}
+
+@keyframes search-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Shimmer skeleton rows shown in the dropdown while a search is loading */
+.search-skeleton-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  min-height: 48px;
+}
+
+.search-skeleton-icon {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: search-shimmer 1.4s ease-in-out infinite;
+}
+
+.search-skeleton-lines {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.search-skeleton-line {
+  height: 10px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: search-shimmer 1.4s ease-in-out infinite;
+}
+
+.search-skeleton-line-title {
+  width: 62%;
+  height: 12px;
+}
+
+.search-skeleton-line-sub {
+  width: 40%;
+  height: 9px;
+}
+
+@keyframes search-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Soft breathing glow around the search pill while a search is in flight */
+@keyframes search-glow-pulse {
+  0%, 100% {
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15), 0 0 0 0 rgba(23, 146, 55, 0);
+  }
+  50% {
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15), 0 0 0 5px rgba(23, 146, 55, 0.12);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .search-skeleton-icon,
+  .search-skeleton-line,
+  .hero-search-wrap.searching .hero-search-bar,
+  .navbar-compact-search.searching .navbar-search-form {
+    animation: none;
+  }
+}
+
 

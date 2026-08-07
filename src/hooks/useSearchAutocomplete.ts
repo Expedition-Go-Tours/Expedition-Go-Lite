@@ -86,7 +86,7 @@ export function useSearchAutocomplete(inputValue: string) {
       }))
   }, [trimmed, isQueryLongEnough])
 
-  const { data: tourSuggestions = [] } = useQuery({
+  const tourQuery = useQuery({
     queryKey: ['search-autocomplete', 'tours', trimmed],
     queryFn: () => fetchBackendTourSuggestions(trimmed),
     enabled: isQueryLongEnough,
@@ -97,6 +97,7 @@ export function useSearchAutocomplete(inputValue: string) {
   const suggestions = useMemo<SearchSuggestion[]>(() => {
     if (!isQueryLongEnough) return []
 
+    const tourSuggestions = tourQuery.data ?? []
     const lq = trimmed.toLowerCase()
     const seenTitles = new Set(destinationSuggestions.map((d) => d.title))
     const dedupedTours = tourSuggestions.filter((t) => {
@@ -117,7 +118,12 @@ export function useSearchAutocomplete(inputValue: string) {
     })
 
     return results.slice(0, 8)
-  }, [destinationSuggestions, tourSuggestions, trimmed, isQueryLongEnough])
+  }, [destinationSuggestions, tourQuery.data, trimmed, isQueryLongEnough])
 
-  return suggestions
+  // True while the user is actively searching but results aren't ready yet —
+  // covers both the 250ms debounce window and the in-flight backend request.
+  const inputTrim = inputValue.trim()
+  const isSearching = inputTrim.length >= 2 && (inputTrim !== debounced || tourQuery.isFetching)
+
+  return { suggestions, isSearching }
 }
