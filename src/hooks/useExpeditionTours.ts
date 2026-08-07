@@ -1026,6 +1026,10 @@ export function useExpeditionTour(slug: string | undefined) {
     // always reflect the supplier's current pricing and availability.
     staleTime: 0,
     refetchOnMount: 'always',
+    // The global client default turns refetchOnWindowFocus off; the tour
+    // detail page must stay fresh even while the tab sits in the background
+    // (e.g. an admin just approved a supplier's update), so refetch on focus.
+    refetchOnWindowFocus: true,
     queryFn: async () => {
       // Try the curated (homepage) endpoint first — it's cached and includes
       // a few pre-computed fields. If the tour hasn't been curated (e.g. it
