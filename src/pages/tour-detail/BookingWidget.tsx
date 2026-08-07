@@ -199,7 +199,7 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
   }
 
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
+    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
       const target = e.target as Node
       if (
         showGuestSelector &&
@@ -218,8 +218,12 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
     }
     if (showGuestSelector || showCalendar) {
       document.addEventListener('mousedown', handleClickOutside)
+      document.addEventListener('touchstart', handleClickOutside, { passive: true })
     }
-    return () => document.removeEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('touchstart', handleClickOutside)
+    }
   }, [showGuestSelector, showCalendar])
 
   const totalPrice = pricingTotal ?? 0

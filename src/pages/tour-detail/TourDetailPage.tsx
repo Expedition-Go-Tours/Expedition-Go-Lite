@@ -158,12 +158,7 @@ export default function TourDetailPage() {
   const [activeTab, setActiveTab] = useState('overview')
   const [reviewDetail, setReviewDetail] = useState<any>(null)
   const [isWriteReviewOpen, setIsWriteReviewOpen] = useState(false)
-  const [isReplyDialogOpen, setIsReplyDialogOpen] = useState(false)
-  const [replyTarget, setReplyTarget] = useState<any>(null)
-  const [replyMessage, setReplyMessage] = useState('')
-  const [replyConfirmation, setReplyConfirmation] = useState('')
   const [reviewStarFilter, setReviewStarFilter] = useState<number | null>(null)
-  const [reviewSearchQuery, setReviewSearchQuery] = useState('')
   const [supplierInfoOpen, setSupplierInfoOpen] = useState(false)
   const [hasMoreReviews, setHasMoreReviews] = useState(false)
   const [loadingMoreReviews, setLoadingMoreReviews] = useState(false)
@@ -182,7 +177,6 @@ export default function TourDetailPage() {
   useEffect(() => {
     setActiveTab('overview')
     setReviewStarFilter(null)
-    setReviewSearchQuery('')
   }, [tourId])
 
   const isExternal = tour?.bookingFlow === 'EXTERNAL'
@@ -194,10 +188,10 @@ export default function TourDetailPage() {
   const wishlistItemId = tour?.id || selectedTourTitle
   const isFavorited = isInWishlist(wishlistItemId)
 
-  const handleWishlistToggle = () => {
+  const handleWishlistToggle = (suppressRemoveToast = false) => {
     if (isFavorited) {
       removeFromWishlist(wishlistItemId)
-      if (!isMobile) toast.success(t('common.removedFromWishlist'))
+      if (!isMobile && !suppressRemoveToast) toast.success(t('common.removedFromWishlist'))
     } else {
       addToWishlist({
         id: wishlistItemId,
@@ -284,13 +278,6 @@ export default function TourDetailPage() {
     }, 800)
   }
 
-  const handleReplySubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!replyMessage.trim()) return
-    setReplyConfirmation('Your reply has been accepted and is ready to be sent to the customer.')
-    setReplyMessage('')
-  }
-
   const allReviewCards = useMemo(() => {
     return reviews.map((r) => ({
       id: r.id,
@@ -304,13 +291,11 @@ export default function TourDetailPage() {
   }, [reviews, t])
 
   const filteredReviewCards = useMemo(() => {
-    const q = reviewSearchQuery.trim().toLowerCase()
     return allReviewCards.filter((r) => {
       if (reviewStarFilter !== null && r.rating !== reviewStarFilter) return false
-      if (!q) return true
-      return r.text.toLowerCase().includes(q) || r.name.toLowerCase().includes(q)
+      return true
     })
-  }, [allReviewCards, reviewSearchQuery, reviewStarFilter])
+  }, [allReviewCards, reviewStarFilter])
 
   const reviewBreakdown = useMemo(() => {
     const labels = [
@@ -777,7 +762,7 @@ export default function TourDetailPage() {
                 title={selectedTourTitle}
                 fallbackImage={mergedImages[0]}
                 isFavorited={isFavorited}
-                onWishlistToggle={handleWishlistToggle}
+                onWishlistToggle={() => handleWishlistToggle(true)}
                 onShare={handleShare}
               />
             </div>
@@ -886,15 +871,8 @@ export default function TourDetailPage() {
                         loadingMore={loadingMoreReviews}
                         onLoadMore={loadMoreReviews}
                         onWriteReview={handleWriteReview}
-                        onReplyToQuestion={(item) => {
-                          setReplyTarget(item)
-                          setIsReplyDialogOpen(true)
-                        }}
-                        qaItems={[]}
                         starFilter={reviewStarFilter}
                         onStarFilterChange={setReviewStarFilter}
-                        searchQuery={reviewSearchQuery}
-                        onSearchQueryChange={setReviewSearchQuery}
                       />
                     </div>
                   )}
@@ -973,45 +951,6 @@ export default function TourDetailPage() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {isReplyDialogOpen && (
-        <div className="dialog-overlay" onClick={() => setIsReplyDialogOpen(false)}>
-          <div className="dialog-content" onClick={(e) => e.stopPropagation()}>
-            <div className="dialog-header">
-              <h3 className="dialog-title">{t('tourDetail.replyToCustomer')}</h3>
-              <button type="button" onClick={() => setIsReplyDialogOpen(false)} className="dialog-close">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
-            </div>
-            <div className="dialog-body">
-              {replyTarget && (
-                <div className="reply-target">
-                  <p className="reply-target-asker">{replyTarget.asker}</p>
-                  <p className="reply-target-question">{replyTarget.question}</p>
-                </div>
-              )}
-              <form onSubmit={handleReplySubmit} className="reply-form">
-                <label htmlFor="reply-textarea" className="reply-label">{t('tourDetail.yourReply')}</label>
-                <textarea
-                  id="reply-textarea"
-                  value={replyMessage}
-                  onChange={(e) => { setReplyMessage(e.target.value); setReplyConfirmation('') }}
-                  rows={5}
-                  placeholder={t('tourDetail.replyPlaceholder')}
-                  className="reply-textarea"
-                />
-                {replyConfirmation && <p className="reply-confirmation">{replyConfirmation}</p>}
-                <div className="reply-actions">
-                  <button type="button" onClick={() => setIsReplyDialogOpen(false)} className="reply-cancel">{t('common.cancel')}</button>
-                  <button type="submit" disabled={!replyMessage.trim()} className="reply-submit">{t('tourDetail.acceptReply')}</button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
 
       {isWriteReviewOpen && (
         <div className="dialog-overlay" onClick={() => setIsWriteReviewOpen(false)}>

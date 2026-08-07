@@ -32,12 +32,8 @@ interface ReviewsSectionProps {
   loadingMore: boolean
   onLoadMore: () => void
   onWriteReview: () => void
-  onReplyToQuestion: (question: { asker: string; question: string }) => void
-  qaItems: { asker: string; question: string; answer: string }[]
   starFilter: number | null
   onStarFilterChange: (stars: number | null) => void
-  searchQuery: string
-  onSearchQueryChange: (query: string) => void
 }
 
 export default function ReviewsSection({
@@ -49,12 +45,8 @@ export default function ReviewsSection({
   loadingMore,
   onLoadMore,
   onWriteReview,
-  onReplyToQuestion,
-  qaItems,
   starFilter,
   onStarFilterChange,
-  searchQuery,
-  onSearchQueryChange,
 }: ReviewsSectionProps) {
   const { t } = useTranslation()
   const ratingDots = Array.from({ length: 5 })
@@ -124,15 +116,9 @@ export default function ReviewsSection({
               </div>
             </div>
 
-            {/* Search & Filter */}
-            <div className="reviews-search">
-              <input
-                value={searchQuery}
-                onChange={(e) => onSearchQueryChange(e.target.value)}
-                className="reviews-search-input"
-                placeholder={t('reviews.searchPlaceholder')}
-              />
-              {starFilter !== null && (
+            {/* Star filter clear */}
+            {starFilter !== null && (
+              <div className="reviews-search">
                 <button
                   type="button"
                   onClick={() => onStarFilterChange(null)}
@@ -140,19 +126,11 @@ export default function ReviewsSection({
                 >
                   {t('reviews.clearStarFilter')}
                 </button>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* Review Cards */}
-            {reviews.length === 0 ? (
-              <p className="reviews-empty">
-                {starFilter !== null
-                  ? t('reviews.noMatchWithStar', { stars: starFilter })
-                  : t('reviews.noMatch')}
-                {searchQuery.trim() ? t('reviews.andSearch') : ''}
-                . {t('reviews.tryAdjust')}
-              </p>
-            ) : (
+            {reviews.length > 0 && (
               <div className="reviews-cards">
                 {reviews.map((review) => (
                   <article key={review.id} className="review-card">
@@ -225,7 +203,7 @@ export default function ReviewsSection({
               </div>
             )}
 
-            {hasMore && !starFilter && !searchQuery.trim() && (
+            {hasMore && !starFilter && (
               <button
                 type="button"
                 onClick={onLoadMore}
@@ -237,27 +215,6 @@ export default function ReviewsSection({
             )}
           </div>
 
-        </div>
-      </section>
-
-      {/* Q&A Section */}
-      <section className="reviews-qa">
-        <h2 className="reviews-qa-title">{t('reviews.qa')}</h2>
-        <div className="reviews-qa-list">
-          {qaItems.map((item) => (
-            <article key={item.question} className="qa-item">
-              <p className="qa-asker">{item.asker}</p>
-              <p className="qa-question">{item.question}</p>
-              <p className="qa-answer">{item.answer}</p>
-              <button
-                type="button"
-                onClick={() => onReplyToQuestion(item)}
-                className="qa-reply-btn"
-              >
-                {t('reviews.answer')}
-              </button>
-            </article>
-          ))}
         </div>
       </section>
     </motion.div>

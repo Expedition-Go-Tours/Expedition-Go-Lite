@@ -148,6 +148,27 @@
   fill: currentColor;
 }
 
+/* Wishlist heart hover mirrors the Recommended section cards: the button
+   fills green, the heart turns white against it, and it scales up. Works
+   for both the unfilled and the already-wishlisted (filled) states. */
+.tour-gallery-wishlist-btn {
+  transition: background 0.2s, color 0.2s, transform 0.2s;
+}
+
+.tour-gallery-wishlist-btn:hover {
+  background: #179237;
+  color: #fff;
+  transform: scale(1.1);
+}
+
+.tour-gallery-wishlist-btn:hover .wishlist-active {
+  color: #fff;
+}
+
+.tour-gallery-wishlist-btn:active {
+  transform: scale(0.95);
+}
+
 /* Nav arrows */
 .tour-gallery-nav-arrow {
   position: absolute;

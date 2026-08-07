@@ -119,6 +119,16 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
     navigate('/supplier/list-experience')
   }, [user, navigate])
 
+  // Mobile "List an Experience": close the drawer so its AnimatePresence exit
+  // transition plays out smoothly in this tab, then open the supplier page in
+  // a brand-new browser tab. window.open runs inside the tap gesture so popup
+  // blockers don't swallow it.
+  const handleMobileListExperience = useCallback(() => {
+    const path = user ? '/supplier/register' : '/supplier/list-experience'
+    window.open(path, '_blank', 'noopener')
+    setMobileMenuOpen(false)
+  }, [user])
+
   const handleNavKeyDown = (e: React.KeyboardEvent) => {
     if (!showNavDropdown) {
       if (e.key === 'ArrowDown' && navSuggestions.length > 0) {
@@ -516,7 +526,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
                 <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
             </button>
-            <a href="#" className="nav-mobile-list-experience" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMobileMenuOpen(false); handleListExperience() }}>
+            <a href="#" className="nav-mobile-list-experience" onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleMobileListExperience() }}>
               <span className="nav-mobile-list-experience-icon">
                 <Megaphone size={19} strokeWidth={2} />
               </span>

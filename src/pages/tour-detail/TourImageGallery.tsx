@@ -134,7 +134,7 @@ export default function TourImageGallery({
             <button
               type="button"
               onClick={onWishlistToggle}
-              className="tour-gallery-overlay-btn"
+              className="tour-gallery-overlay-btn tour-gallery-wishlist-btn"
               aria-label={isFavorited ? 'Remove from wishlist' : 'Add to wishlist'}
               aria-pressed={isFavorited}
             >

@@ -151,11 +151,13 @@ export default function ContinuePlanningSection() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
+  const [hasOverflow, setHasOverflow] = useState(false)
 
   const updateArrows = useCallback(() => {
     const el = scrollRef.current
     if (!el) return
     const maxScroll = el.scrollWidth - el.clientWidth
+    setHasOverflow(maxScroll > 1)
     setCanScrollLeft(el.scrollLeft > 2)
     setCanScrollRight(el.scrollLeft < maxScroll - 2)
   }, [])
@@ -188,7 +190,7 @@ export default function ContinuePlanningSection() {
   if (continuePlanning.length === 0) return null
 
   return (
-    <section className="continue-planning-section">
+    <section className={`continue-planning-section${hasOverflow ? ' has-overflow' : ''}`}>
       <div className="continue-planning-container">
         <div className="continue-planning-viewport">
           <SectionHeading

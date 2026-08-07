@@ -47,6 +47,28 @@
   align-items: stretch;
 }
 
+/* Center the cards whenever they don't fill the viewport (e.g. a single
+   saved tour). Auto margins absorb the leftover space, and collapse to 0
+   the moment the row overflows — at which point the carousel scrolls/swipes
+   normally again. */
+.continue-planning-carousel > :first-child {
+  margin-left: auto;
+}
+
+.continue-planning-carousel > :last-child {
+  margin-right: auto;
+}
+
+/* Chevrons only make sense once the row actually overflows — a centered
+   card or a non-scrolling row gets no arrows at all. */
+.continue-planning-section .section-arrows {
+  display: none;
+}
+
+.continue-planning-section.has-overflow .section-arrows {
+  display: flex;
+}
+
 /* GetYourGuide-style horizontal card: image left, details middle, price
    right. */
 .cp-card {
@@ -300,7 +322,6 @@
   font-family: 'Raleway', sans-serif;
   font-size: 11px;
   color: #9ca3af;
-  text-transform: uppercase;
   letter-spacing: 0.4px;
   line-height: 1.2;
 }
@@ -335,8 +356,15 @@
   }
 
   .continue-planning-card-wrap {
-    width: min(88%, 360px);
-    min-width: min(88%, 360px);
+    width: min(94%, 460px);
+    min-width: min(94%, 460px);
+  }
+
+  /* Mobile never shows chevrons — the row is swiped instead, even when it
+     overflows. */
+  .continue-planning-section .section-arrows,
+  .continue-planning-section.has-overflow .section-arrows {
+    display: none;
   }
 
   .cp-card {

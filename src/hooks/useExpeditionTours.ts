@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { getApiBaseUrl, getAuthToken } from '../lib/auth'
-import type { TourDetail, TravelerPricing, GroupSizeBand, PricingTier } from '../lib/tourTypes'
+import type { TourDetail, TravelerPricing, GroupSizeBand, PricingTier, ItineraryDay } from '../lib/tourTypes'
 
 /**
  * `bypassCache` skips the browser's HTTP cache for this request. The tour
@@ -615,6 +615,49 @@ function extractDietaryOptions(rawTour: any): string[] {
   }
 }
 
+function normalizeDurationUnit(unit: unknown): 'minute' | 'hour' | 'day' {
+  const u = String(unit || '').toLowerCase()
+  if (u.startsWith('min')) return 'minute'
+  if (u.startsWith('day')) return 'day'
+  return 'hour'
+}
+
+/**
+ * Resolves the tour's itinerary. Prefers the explicit `productContent.itinerary`
+ * array (structured itinerary stops created in the supplier builder); when that
+ * is absent or empty, falls back to deriving stops from `productContent.locations`
+ * (the ordered list of places the tour visits), so tours that never filled in a
+ * dedicated itinerary still show an itinerary section on the detail page.
+ */
+function extractItinerary(rawTour: any): ItineraryDay[] {
+  try {
+    const pc = parseProductContent(rawTour)
+    const explicit = Array.isArray(pc?.itinerary) ? pc.itinerary : []
+    if (explicit.length > 0) return explicit
+
+    const locations = Array.isArray(pc?.locations) ? pc.locations : []
+    if (locations.length === 0) return []
+
+    return locations
+      .filter((loc: any) => loc && (loc.name || loc.title))
+      .map((loc: any, index: number) => ({
+        day: index + 1,
+        title: loc.name || loc.title || `Stop ${index + 1}`,
+        description: typeof loc.description === 'string' ? loc.description : '',
+        locationName: loc.name || loc.title || undefined,
+        locationAddress: loc.address || undefined,
+        locationLat: loc.lat != null ? loc.lat : null,
+        locationLng: loc.lng != null ? loc.lng : null,
+        duration: loc.timeSpent != null ? Number(loc.timeSpent) : undefined,
+        durationUnit: loc.timeSpentUnit != null ? normalizeDurationUnit(loc.timeSpentUnit) : undefined,
+        type: 'activity' as const,
+        additionalFee: loc.admissionIncluded === 'no',
+      }))
+  } catch {
+    return []
+  }
+}
+
 function mapToListing(tour: ExpeditionTourRecord['tour']): TourCardData {
   const location = [tour.city, tour.country].filter(Boolean).join(', ')
   const isExternal = tour.bookingFlow === 'EXTERNAL'
@@ -950,7 +993,7 @@ function buildTourDetailFromRawTour(rawTour: any): TourDetailData {
   const travelerPricing = extractTravelerPricing(rawTour)
   const skipTheLine = extractSkipTheLine(rawTour)
   const languages = extractLanguagesFromTour(rawTour)
-  const itinerary = Array.isArray(pc?.itinerary) ? pc.itinerary : []
+  const itinerary = extractItinerary(rawTour)
 
   return {
     id: rawTour?.id || '',
@@ -1140,12 +1183,19 @@ export function useExpeditionTour(slug: string | undefined) {
                 tour.excluded = pc.excluded
               }
             }
-            // Extract itinerary from raw productContent
+            // Extract itinerary from raw productContent (explicit itinerary
+            // first, falling back to the locations list for tours that never
+            // filled in a dedicated itinerary).
             if (!Array.isArray(tour.itinerary) || tour.itinerary.length === 0) {
               const pc = rawTour?.productContent
               const rawItin = pc?.itinerary
               if (Array.isArray(rawItin) && rawItin.length > 0) {
                 tour.itinerary = rawItin
+              } else {
+                const derived = extractItinerary(rawTour)
+                if (derived.length > 0) {
+                  tour.itinerary = derived
+                }
               }
             }
             // Extract short description (productContent.shortSummary)
@@ -1202,7 +1252,7 @@ export function useExpeditionTour(slug: string | undefined) {
           ? tour.itinerary
           : Array.isArray(rawTourPayload?.productContent?.itinerary)
             ? rawTourPayload.productContent.itinerary
-            : []
+            : extractItinerary(rawTourPayload)
 
       const result: TourDetailData = {
         id: tour.id || '',

@@ -11,10 +11,10 @@
  */
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, animate } from 'framer-motion'
 import {
   ClipboardList, BadgeCheck, Wallet, Rocket,
-  ShieldCheck, Globe2, Headset,
+  ShieldCheck, Plane, LifeBuoy,
   Megaphone, ChevronDown,
 } from 'lucide-react'
 import image01Src from '../../assets/Image01.webp'
@@ -114,14 +114,14 @@ const HOW_IT_WORKS = [
 
 const WHY_SELL = [
   {
-    icon: Globe2,
+    icon: Plane,
     title: 'Reach travelers worldwide',
-    desc: 'Tap into a growing audience of adventure travelers actively looking for unique experiences.',
+    desc: 'Get discovered by a global audience of adventure travelers actively looking for unique experiences.',
   },
   {
     icon: Megaphone,
     title: 'We handle the marketing',
-    desc: 'Social media, email campaigns, and cross-listings on Viator, TripAdvisor, and GetYourGuide — all done for you.',
+    desc: 'Social media and email campaigns put your activity in front of the right travelers — all done for you.',
   },
   {
     icon: ShieldCheck,
@@ -129,9 +129,9 @@ const WHY_SELL = [
     desc: 'Fully registered with the Ghana Tourism Authority (GTA), so you partner with a compliant, trustworthy platform.',
   },
   {
-    icon: Headset,
+    icon: LifeBuoy,
     title: 'Support when you need it',
-    desc: 'A dedicated team is on hand to help you get set up and keep your listings running smoothly.',
+    desc: 'A dedicated team is on hand to help you get set up, resolve issues fast, and keep your listings running smoothly.',
   },
 ]
 
@@ -179,7 +179,7 @@ const FAQ_GROUPS: { heading: string; items: FaqItem[] }[] = [
       },
       {
         question: 'What is the commission fee?',
-        answer: 'Rates may vary depending on your country of operation \u2014 the exact amount will be shared after you sign up. The commission fee for every fulfilled booking goes towards managing our platform, building tools, developing insights, and promoting your activities across dozens of marketing channels.',
+        answer: 'It\u2019s a flat 10% commission fee on every tour booked through the platform \u2014 you keep the remaining 90% of each booking. The fee covers platform management, tools, insights, and promoting your activities across dozens of marketing channels.',
       },
       {
         question: 'How and when do I get paid?',
@@ -282,6 +282,19 @@ export default function SupplierLandingPage({ onOpenAuth }: SupplierLandingPageP
     navigate('/supplier/register')
   }
 
+  const handleReadFaq = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault()
+    const target = document.getElementById('supplier-landing-faq')
+    if (!target) return
+    const start = window.scrollY
+    const end = target.getBoundingClientRect().top + window.scrollY
+    animate(start, end, {
+      duration: 0.8,
+      ease: [0.25, 0.1, 0.25, 1],
+      onUpdate: (value) => window.scrollTo(0, value),
+    })
+  }
+
   return (
     <div className="supplier-landing-page">
       <Navbar onOpenAuth={onOpenAuth} />
@@ -316,7 +329,7 @@ export default function SupplierLandingPage({ onOpenAuth }: SupplierLandingPageP
               <button type="button" className="supplier-landing-cta-primary" onClick={handleBecomeSupplier}>
                 Become a Supplier
               </button>
-              <a href="#supplier-landing-faq" className="supplier-landing-cta-secondary">
+              <a href="#supplier-landing-faq" className="supplier-landing-cta-secondary" onClick={handleReadFaq}>
                 Read the FAQ
               </a>
             </div>

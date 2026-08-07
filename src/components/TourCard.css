@@ -331,6 +331,22 @@
     font-size: 14px;
   }
 
+  .tour-card-meta {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tour-card-meta::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tour-card-badge {
+    flex-shrink: 0;
+  }
+
   .tour-card-price-value {
     font-size: 22px;
   }

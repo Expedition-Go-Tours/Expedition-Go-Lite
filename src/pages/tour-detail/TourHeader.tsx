@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { Star, MapPin, Check } from 'lucide-react'
+import { Star, MapPin } from 'lucide-react'
 import './TourHeader.css'
 
 interface TourHeaderProps {
@@ -36,13 +36,6 @@ export default function TourHeader({
         >
           {reviewCount} {t('sections.reviews')}
         </button>
-        <span className="tour-header-divider" aria-hidden />
-        <span className="tour-header-badge">
-          <span className="tour-header-badge-icon">
-            <Check size={12} strokeWidth={3} />
-          </span>
-          {t('tourDetail.travelerSatisfaction')}
-        </span>
         <span className="tour-header-divider" aria-hidden />
         <span className="tour-header-location">
           <MapPin size={14} />
