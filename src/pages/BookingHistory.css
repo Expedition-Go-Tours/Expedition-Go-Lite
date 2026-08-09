@@ -127,6 +127,14 @@
   transform: scale(1.05);
 }
 
+.booking-item-image-placeholder,
+.booking-modal-hero-placeholder {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #0f766e, #14532d);
+  opacity: 0.6;
+}
+
 /* Status Badge */
 .booking-status-badge {
   position: absolute;
@@ -145,6 +153,11 @@
 
 .status-completed {
   background: rgba(34, 197, 94, 0.95);
+  color: #fff;
+}
+
+.status-confirmed {
+  background: rgba(59, 130, 246, 0.95);
   color: #fff;
 }
 
@@ -804,6 +817,39 @@
 
 .booking-modal-close-btn:hover {
   background: #01513f !important;
+}
+
+.booking-modal-cancel-btn {
+  background: #dc2626 !important;
+}
+
+.booking-modal-cancel-btn:hover {
+  background: #b91c1c !important;
+}
+
+.booking-modal-cancel-error {
+  margin: 0;
+  color: #dc2626;
+  font-size: 13px;
+  line-height: 1.4;
+  flex: 1;
+  text-align: left;
+}
+
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid rgba(105, 201, 130, 0.2);
+  border-top-color: var(--dash-accent);
+  border-radius: 50%;
+  margin-bottom: 20px;
+  animation: booking-spin 0.8s linear infinite;
+  z-index: 2;
+  position: relative;
+}
+
+@keyframes booking-spin {
+  to { transform: rotate(360deg); }
 }
 
 @media (max-width: 480px) {

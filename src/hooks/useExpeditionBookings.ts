@@ -1,4 +1,4 @@
-import { useQuery, useMutation } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { fetchWithAuth } from '../lib/api'
 
 async function expeditionFetchRaw(path: string) {
@@ -131,7 +131,7 @@ export function useCreateBooking() {
   })
 }
 
-interface ExpeditionBookingSummary {
+export interface ExpeditionBookingSummary {
   id: string
   bookingNumber: string
   tourTitle: string
@@ -247,6 +247,50 @@ export function useReviewableBookingForTour(tourSlugOrId: string | undefined) {
         // already exists (409 "already reviewed").
         return match.id
       }
+    },
+  })
+}
+
+/**
+ * Fetches a single booking record (includes `travelers` JSON and the tour
+ * relation). The backend only returns the authenticated customer's own
+ * bookings, so this is filter-safe.
+ */
+export function useExpeditionBookingDetail(id: string | null | undefined) {
+  return useQuery({
+    queryKey: ['expedition', 'bookings', id, 'detail'],
+    enabled: !!id,
+    queryFn: async () => {
+      const payload = await expeditionFetchRaw(`/expedition/bookings/${encodeURIComponent(id!)}`)
+      const data = payload.data ?? payload
+      return data.booking
+    },
+  })
+}
+
+/**
+ * Cancels the customer's own booking via
+ * PATCH /expedition/bookings/:id/cancel. The backend enforces the tour's
+ * cancellation policy (a 400 with a human-readable reason is surfaced via
+ * the thrown Error message) and refunds via Stripe when eligible.
+ */
+export function useCancelBooking() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (input: { id: string; reason: string }) => {
+      const res = await fetchWithAuth(`/expedition/bookings/${encodeURIComponent(input.id)}/cancel`, {
+        method: 'PATCH',
+        body: JSON.stringify({ reason: input.reason }),
+      })
+      const payload = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        throw new Error(payload.message || `Request failed (${res.status})`)
+      }
+      return (payload.data?.booking ?? payload) as { id: string; status: string; refundAmount?: number | null }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['expedition', 'bookings'] })
     },
   })
 }
