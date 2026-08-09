@@ -256,18 +256,26 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
       weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
     })
 
+    const dateISO = selectedDate.toISOString().slice(0, 10)
+
     // Stash the navigation payload, then play spinner → transition → booking.
     pendingNavState.current = {
       tour: {
+        id: tour.id,
+        slug: tour.slug,
         title: tour.title,
         image: tour.images?.[0] || '',
         provider: 'Expedition GO Tours',
         rating: tour.rating,
         reviews: tour.reviewCount,
         date: dateLabel,
+        dateISO,
         time: '9:00 AM',
-        duration: tour.duration,
         travelers: travelersLabel,
+        travelersCount: totalTravelers,
+        adults,
+        children,
+        infants,
         price: isPerGroup ? (matchingGroupBand?.price ?? totalPrice) : totalPrice,
         cancellation: tour.cancellationPolicy || 'Free cancellation up to 24 hours before',
         language: tour.languages?.[0] || 'English',
