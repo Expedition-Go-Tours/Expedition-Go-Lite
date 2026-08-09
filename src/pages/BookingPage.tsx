@@ -13,6 +13,10 @@ import { FieldLabel, TextInput, SelectInput } from '../components/booking/FormFi
 import ChangeBookingModal from '../components/booking/ChangeBookingModal'
 import BookingConfirmationDialog from '../components/booking/BookingConfirmationDialog'
 import ExpiredHoldModal from '../components/booking/ExpiredHoldModal'
+import CardField from '../components/booking/CardField'
+import type { CardElementHandle } from '../components/booking/CardField'
+import { getStripePromise } from '../lib/stripe'
+import { fetchWithAuth } from '../lib/api'
 import { useCreateBooking } from '../hooks/useExpeditionBookings'
 
 /* ─── Constants ─── */
@@ -28,27 +32,37 @@ const COUNTRY_CODES = [
   { label: 'Canada (+1)', value: '+1' },
 ]
 
-const PAYMENT_METHODS = [
-  { id: 'card', label: 'Credit / Debit Card', logos: ['Mastercard', 'Amex', 'JCB', 'Discover', 'Visa'] },
-  { id: 'paypal', label: 'PayPal' },
-  { id: 'googlepay', label: 'Google Pay' },
-]
-
 /* ─── Tour data from location state ─── */
 
 const FALLBACK_TOUR = {
+  id: '',
+  slug: '',
   title: 'Loading...',
   image: '',
   provider: 'Expedition GO Tours',
   rating: 0,
   reviews: 0,
-  date: 'Select date',
+  date: '',
+  dateISO: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
   time: '9:00 AM',
   duration: '',
   travelers: '1 adult',
+  travelersCount: 1,
+  adults: 1,
+  children: 0,
+  infants: 0,
   price: 0,
   cancellation: 'Free cancellation up to 24 hours before',
   language: 'English',
+}
+
+function formatDate(value: string): string {
+  if (!value) return ''
+  // Accept ISO (YYYY-MM-DD) or a pre-formatted label unchanged.
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return value
+  const d = new Date(`${value}T00:00:00`)
+  if (Number.isNaN(d.getTime())) return value
+  return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
 }
 
 /* ─── Page entrance variants ─── */
@@ -83,7 +97,7 @@ function MobileSummaryCard({ tour, onChangeClick }: { tour: typeof FALLBACK_TOUR
         </div>
         <div className="min-w-0 flex-1">
           <h3 className="text-sm font-bold leading-tight text-slate-900 line-clamp-2">{tour.title}</h3>
-          <p className="mt-0.5 text-xs text-slate-400">{tour.date} &bull; {tour.time}</p>
+          <p className="mt-0.5 text-xs text-slate-400">{formatDate(tour.date)} &bull; {tour.time}</p>
           <p className="mt-0.5 text-xs text-slate-400">{tour.travelers}</p>
         </div>
         <button onClick={onChangeClick} className="shrink-0 text-xs font-semibold text-emerald-600 hover:text-emerald-700 transition-colors">
@@ -559,25 +573,27 @@ function ActivityDetailsStep({
 /* ─── Step 3 – Payment Details ─── */
 
 function PaymentDetailsStep({
-  data, onChange, tour, onBook, step, onNavigate, disabled,
+  data, onChange, tour, onBook, step, onNavigate, disabled, isBooking,
 }: {
   data: { paymentTiming: string; paymentMethod: string }
   onChange: (key: string, value: string) => void
   tour: typeof FALLBACK_TOUR
-  onBook: () => void
+  onBook: (paymentMethodId: string) => void
   step: number
   onNavigate: (n: number) => void
   disabled?: boolean
+  isBooking?: boolean
 }) {
   const isActive = step === 3
   const isCompleted = step > 3
+  const [cardHandle, setCardHandle] = useState<CardElementHandle | null>(null)
+  const [creating, setCreating] = useState(false)
 
   const buttonLabel = data.paymentTiming === 'later' ? 'Reserve Now' : 'Pay Now'
 
   const paymentSummary = (
     <div className="space-y-2 text-sm text-slate-600">
       <p><span className="font-semibold text-slate-800">When to pay:</span> {data.paymentTiming === 'now' ? `Pay now — $${tour.price.toFixed(2)}` : 'Reserve now, pay later'}</p>
-      <p><span className="font-semibold text-slate-800">Payment method:</span> {PAYMENT_METHODS.find((m) => m.id === data.paymentMethod)?.label || 'Credit / Debit Card'}</p>
     </div>
   )
 
@@ -668,6 +684,8 @@ function PaymentDetailsStep({
               </div>
             </div>
 
+            <CardField onReady={setCardHandle} />
+
             <p className="text-xs leading-relaxed text-slate-400">
               By clicking &quot;{buttonLabel}&quot;, you agree to our{' '}
               <a href="#" className="font-semibold underline text-slate-500 hover:text-slate-700">Terms</a> &amp;{' '}
@@ -676,25 +694,41 @@ function PaymentDetailsStep({
             </p>
 
             <motion.button
-              onClick={onBook}
-              disabled={disabled}
+              onClick={async () => {
+                if (!cardHandle) {
+                  toast.error('Please enter your card details to continue.')
+                  return
+                }
+                setCreating(true)
+                try {
+                  const { paymentMethod, error } = await cardHandle.createPaymentMethod()
+                  if (error || !paymentMethod) {
+                    toast.error(error?.message || 'Please check your card details and try again.')
+                    return
+                  }
+                  onBook(paymentMethod.id)
+                } finally {
+                  setCreating(false)
+                }
+              }}
+              disabled={disabled || creating || isBooking}
               whileTap={{ scale: 0.97 }}
-              className={`w-full rounded-full py-3.5 text-sm font-bold text-white shadow-sm transition ${
-                disabled
+              className={`relative w-full rounded-full py-3.5 text-sm font-bold text-white shadow-sm transition ${
+                disabled || creating || isBooking
                   ? 'cursor-not-allowed bg-slate-300'
                   : 'bg-emerald-600 hover:brightness-110'
               }`}
             >
               <AnimatePresence mode="wait" initial={false}>
                 <motion.span
-                  key={disabled ? 'expired' : buttonLabel}
+                  key={isBooking ? 'booking' : creating ? 'creating' : disabled ? 'expired' : buttonLabel}
                   initial={{ opacity: 0, y: -4 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 4 }}
                   transition={{ duration: 0.15, ease: 'easeOut' }}
                   className="inline-block"
                 >
-                  {disabled ? 'Hold Expired' : buttonLabel}
+                  {isBooking ? 'Booking…' : creating ? 'Creating…' : disabled ? 'Hold Expired' : buttonLabel}
                 </motion.span>
               </AnimatePresence>
             </motion.button>
@@ -923,16 +957,21 @@ export default function BookingPage() {
 
   const [contact, setContact] = useState({ firstName: '', lastName: '', email: '', countryCode: '+233', phone: '' })
   const [activity, setActivity] = useState({ leadFirstName: '', leadLastName: '' })
-  const [payment, setPayment] = useState({ paymentTiming: 'now', paymentMethod: 'card' })
 
   const [isChangeModalOpen, setIsChangeModalOpen] = useState(false)
   const [editableTour, setEditableTour] = useState({
-    date: tour.date, time: tour.time, travelers: tour.travelers, price: tour.price,
+    date: tour.dateISO, time: tour.time, travelers: tour.travelers,
+    travelersCount: tour.travelersCount, adults: tour.adults, children: tour.children, infants: tour.infants,
+    price: tour.price,
   })
+  const [payment, setPayment] = useState({ paymentTiming: 'now', paymentMethod: 'card' })
+  const [isBooking, setIsBooking] = useState(false)
   const [bookingConfirmation, setBookingConfirmation] = useState<{
     date: string; travelers: number; bookingId?: string; tourId?: string
     tour: { title: string; image: string; rating: number; reviews: number; duration: string }
   } | null>(null)
+
+  const [isActive, setIsActive] = useState(false)
 
   const [isExpired, setIsExpired] = useState(false)
   const [showExpiredModal, setShowExpiredModal] = useState(false)
@@ -947,7 +986,7 @@ export default function BookingPage() {
         const draft = JSON.parse(saved)
         if (draft.contact) setContact(draft.contact)
         if (draft.activity) setActivity(draft.activity)
-        if (draft.payment) setPayment(draft.payment)
+        if (draft.editableTour) setEditableTour(draft.editableTour)
       }
     } catch { /* ignore */ }
     hasLoadedDraft.current = true
@@ -957,9 +996,9 @@ export default function BookingPage() {
   useEffect(() => {
     if (!hasLoadedDraft.current) return
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ contact, activity, payment }))
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ contact, activity, editableTour }))
     } catch { /* ignore */ }
-  }, [contact, activity, payment])
+  }, [contact, activity, editableTour])
 
   const clearDraft = () => {
     try { localStorage.removeItem(STORAGE_KEY) } catch { /* ignore */ }
@@ -1049,46 +1088,120 @@ export default function BookingPage() {
 
   const createBooking = useCreateBooking()
 
-  const handleBook = async () => {
-    if (payment.paymentTiming === 'now') {
+  // Poll the backend until the webhook reconciles the booking after the
+  // server-side Stripe confirm. We do NOT optimistically show success: a
+  // card that needs 3DS can still fail, and the webhook arrives async.
+  const pollBooking = useCallback(async (bookingId: string) => {
+    if (!bookingId) return
+    setIsActive(true)
+    const maxAttempts = 30
+    try {
+      for (let i = 0; i < maxAttempts; i++) {
+        let booking: { status?: string; paymentStatus?: string; id: string } | null = null
+        try {
+          const res = await fetchWithAuth(`/expedition/bookings/${encodeURIComponent(bookingId)}`)
+          const payload = await res.json().catch(() => ({}))
+          booking = payload.data?.booking ?? payload.data ?? null
+        } catch (e: unknown) {
+          if (e && typeof e === 'object' && 'status' in e && (e as { status?: number }).status === 404) {
+            // Booking not yet committed on the read path — keep polling briefly.
+            booking = null
+          }
+        }
+
+        if (booking) {
+          const { status, paymentStatus } = booking
+          if (paymentStatus === 'SUCCEEDED' || status === 'CONFIRMED') {
+            toast.success('Booking confirmed!')
+            clearDraft()
+            setBookingConfirmation({
+              tour: {
+                title: tour.title,
+                image: tour.image,
+                rating: tour.rating,
+                reviews: tour.reviews,
+                duration: tour.duration,
+              },
+              date: editableTour.date,
+              travelers: editableTour.travelersCount,
+              bookingId: booking.id,
+              tourId: tour.id,
+            })
+            return
+          }
+          if (paymentStatus === 'FAILED' || status === 'CANCELLED') {
+            toast.error('Your booking could not be confirmed — your card was not charged.')
+            return
+          }
+        }
+
+        await new Promise((r) => setTimeout(r, 2000))
+      }
+
+      // Webhook still hasn't landed — tell the user it's still processing (not
+      // a success) and let the backend's stale-PENDING cleanup reconcile later.
+      console.warn('[Booking] polling timed out; booking still settling. Backend cleanup will reconcile.')
+    } finally {
+      setIsActive(false)
+    }
+  }, [editableTour, tour])
+
+  const handleBook = useCallback(async (paymentMethodId: string) => {
+    if (isBooking || isActive) return
+    if (!paymentMethodId) {
+      toast.error('Please enter your card details to continue.')
       return
     }
 
+    setIsBooking(true)
     try {
+      const fullName = `${activity.leadFirstName} ${activity.leadLastName}`.trim() || `${contact.firstName} ${contact.lastName}`
+      const detailsName = fullName || undefined
+      const details = detailsName ? [{ name: detailsName, age: 30, ageGroup: 'adult' }] : []
+
       const payload = {
-        tourId: tour.id || tour.title,
+        tourId: tour.id || tour.slug,
         selectedDate: editableTour.date,
         travelers: {
-          adults: 1,
+          adults: editableTour.adults,
+          children: editableTour.children,
+          infants: editableTour.infants,
           phoneNumber: contact.phone,
           location: '',
-          details: [{ name: `${activity.leadFirstName} ${activity.leadLastName}`.trim() || `${contact.firstName} ${contact.lastName}`, age: 30, ageGroup: 'adult' }],
+          details,
         },
-        paymentMethodId: 'pm_placeholder',
+        paymentMethodId,
+        specialRequests: '',
       }
+
       const result = await createBooking.mutateAsync(payload)
-      toast.success('Booking confirmed!')
-      clearDraft()
-      setBookingConfirmation({
-        tour: { title: tour.title, image: tour.image, rating: tour.rating, reviews: tour.reviews, duration: tour.duration },
-        date: editableTour.date,
-        travelers: 1,
-        bookingId: result?.booking?.id,
-        tourId: tour.id,
-      })
-    } catch (err) {
-      toast.error('Booking failed. Please try again.')
+      const intent = result?.paymentIntent
+
+      // If the backend needs a 3DS challenge, complete it client-side before
+      // polling for the settled booking state.
+      if (intent?.requiresAction && intent.clientSecret) {
+        toast('Please complete the 3D Secure verification…')
+        const stripe = await getStripePromise()
+        if (stripe) {
+          await stripe.handleCardAction(intent.clientSecret)
+        }
+      }
+
+      await pollBooking(result?.booking?.id)
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Booking failed. Please try again.'
+      toast.error(msg)
+    } finally {
+      setIsBooking(false)
     }
-  }
+  }, [createBooking, contact, activity, editableTour, tour, isBooking, isActive, pollBooking])
 
   const handleApplyPromo = useCallback(() => {
     const code = promoCode.trim().toUpperCase()
     if (code === 'SAVE10') {
-      const amount = editableTour.price * 0.1
-      setDiscount(Math.min(amount, editableTour.price))
+      setDiscount(Math.min(editableTour.price * 0.1, editableTour.price))
     } else if (code === 'SAVE20') {
-      const amount = editableTour.price * 0.2
-      setDiscount(Math.min(amount, editableTour.price))
+      setDiscount(Math.min(editableTour.price * 0.2, editableTour.price))
     } else {
       setDiscount(0)
       if (code) toast.error('Invalid promo code')
@@ -1157,8 +1270,9 @@ export default function BookingPage() {
                   tour={activeTour}
                   onBook={handleBook}
                   step={step}
-                  onNavigate={goToStep}
+                  onNavigate={scrollToStep}
                   disabled={isExpired}
+                  isBooking={isBooking}
                 />
               </div>
 

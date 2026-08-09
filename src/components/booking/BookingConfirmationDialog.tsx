@@ -1,6 +1,14 @@
 import { useNavigate } from 'react-router-dom'
 import { Check, CalendarDays, Users } from 'lucide-react'
 
+function formatDate(value: string): string {
+  if (!value) return ''
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return value
+  const d = new Date(`${value}T00:00:00`)
+  if (Number.isNaN(d.getTime())) return value
+  return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+}
+
 interface BookingConfirmationData {
   date: string
   travelers: number
@@ -41,7 +49,7 @@ export default function BookingConfirmationDialog({ data, onClose }: BookingConf
 
           <div className="flex items-center gap-2">
             <CalendarDays className="size-4 shrink-0 text-slate-400" />
-            <span>{data.date}</span>
+            <span>{formatDate(data.date)}</span>
           </div>
 
           <div className="flex items-center gap-2">

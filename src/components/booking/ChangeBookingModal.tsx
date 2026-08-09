@@ -10,7 +10,7 @@ interface ChangeBookingModalProps {
   }
   isOpen: boolean
   onClose: () => void
-  onReserve: (updates: { date: string; time: string; travelers: string; price: number }) => void
+  onReserve: (updates: { date: string; dateISO: string; time: string; travelers: string; travelersCount: number; price: number }) => void
 }
 
 const TIME_SLOTS = [
@@ -157,9 +157,11 @@ export default function ChangeBookingModal({ tour, isOpen, onClose, onReserve }:
             onClick={() => {
               onReserve({
                 date: formattedDate,
+                dateISO: selectedDate,
                 time: selectedTime,
                 travelers: `${travelers} ${travelers === 1 ? 'adult' : 'adults'}`,
-                price: tour.price,
+                travelersCount: travelers,
+                price: total,
               })
               onClose()
             }}

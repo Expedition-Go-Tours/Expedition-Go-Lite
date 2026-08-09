@@ -23,23 +23,35 @@ export default function Wishlist() {
     navigate('/booking', { state: pendingNavState.current })
   }
 
-  const handleBookNow = (item: WishlistItem) => {
-    pendingNavState.current = {
-      tour: {
-        title: item.title,
-        image: item.imageUrl,
-        provider: 'Expedition GO Tours',
-        rating: item.rating,
-        reviews: item.reviewCount,
-        date: 'Select date',
-        time: '9:00 AM',
-        duration: item.duration,
-        travelers: '1 adult',
-        price: item.price,
-        cancellation: 'Free cancellation up to 24 hours before',
-        language: 'English',
-      },
-    }
+const handleBookNow = (item: WishlistItem) => {
+  const dateISO = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
+  const dateLabel = new Date(dateISO).toLocaleDateString('en-US', {
+    weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
+  })
+
+  pendingNavState.current = {
+    tour: {
+      id: item.tourId || item.id,
+      slug: item.tourId || item.id,
+      title: item.title,
+      image: item.imageUrl,
+      provider: 'Expedition GO Tours',
+      rating: item.rating,
+      reviews: item.reviewCount,
+      date: dateLabel,
+      dateISO,
+      time: '9:00 AM',
+      duration: item.duration,
+      travelers: '1 adult',
+      travelersCount: 1,
+      adults: 1,
+      children: 0,
+      infants: 0,
+      price: item.price,
+      cancellation: 'Free cancellation up to 24 hours before',
+      language: 'English',
+    },
+  }
 
     let bookingCount = 0
     try {

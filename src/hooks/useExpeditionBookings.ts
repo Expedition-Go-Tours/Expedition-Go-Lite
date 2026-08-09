@@ -108,7 +108,13 @@ interface ConfirmBookingResponse {
     total: number
     currency: string
   }
-  clientSecret: string
+  clientSecret?: string
+  paymentIntent?: {
+    id: string
+    clientSecret: string
+    status: string
+    requiresAction?: boolean
+  }
 }
 
 export function useCreateBooking() {
