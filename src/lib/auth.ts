@@ -251,6 +251,65 @@ export async function signInWithGoogle(): Promise<{ redirected?: boolean } | Aut
   return user
 }
 
+export async function signInWithGoogleOneTap(credential: string): Promise<AuthUser> {
+  if (isBackend) {
+    const payload = await authFetch('/auth/google/onetap', {
+      method: 'POST',
+      body: JSON.stringify({ credential }),
+    })
+
+    const user = payload.data?.user || payload.user || payload
+    const accessToken = payload.data?.accessToken || payload.accessToken
+    const refreshToken = payload.data?.refreshToken || payload.refreshToken
+
+    storeAuth({ accessToken, refreshToken, user })
+    notifyAuthStateChange(user)
+    return user
+  }
+
+  await new Promise((r) => setTimeout(r, 800))
+  const user: AuthUser = {
+    id: 'mock-google-' + Date.now(),
+    email: 'user@gmail.com',
+    name: 'Google User',
+  }
+  storeAuth({ accessToken: null, refreshToken: null, user })
+  notifyAuthStateChange(user)
+  return user
+}
+
+export function getGoogleClientId(): string {
+  return import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
+}
+
+export function googleOneTapSupported(): boolean {
+  return isBackend && Boolean(getGoogleClientId())
+}
+
+let googleScriptPromise: Promise<boolean> | null = null
+
+export function loadGoogleIdentityScript(): Promise<boolean> {
+  if (googleScriptPromise) return googleScriptPromise
+
+  googleScriptPromise = new Promise((resolve) => {
+    if (typeof window === 'undefined') return resolve(false)
+    if (window.google?.accounts?.id) return resolve(true)
+
+    const script = document.createElement('script')
+    script.src = 'https://accounts.google.com/gsi/client'
+    script.async = true
+    script.defer = true
+    script.onload = () => resolve(true)
+    script.onerror = () => {
+      googleScriptPromise = null
+      resolve(false)
+    }
+    document.head.appendChild(script)
+  })
+
+  return googleScriptPromise
+}
+
 export async function signOutUser() {
   if (isBackend) {
     try {

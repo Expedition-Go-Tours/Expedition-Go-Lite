@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { flushSync } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
@@ -7,7 +7,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import compyBg from '../assets/icons/compyIcon.png'
-import { signInWithGoogle, signInWithEmail, registerWithEmail, setAuthReturnTo, clearAuthReturnTo, getAuthReturnTo } from '../lib/auth'
+import {
+  signInWithGoogle,
+  signInWithGoogleOneTap,
+  signInWithEmail,
+  registerWithEmail,
+  setAuthReturnTo,
+  clearAuthReturnTo,
+  getAuthReturnTo,
+  getGoogleClientId,
+  googleOneTapSupported,
+  loadGoogleIdentityScript,
+} from '../lib/auth'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 
@@ -68,6 +79,83 @@ function useAuthSuccessRedirect(onAuthSuccess?: () => void) {
   }
 }
 
+/**
+ * Google sign-in. When One Tap is configured (VITE_GOOGLE_CLIENT_ID + backend auth),
+ * shows the Google One Tap prompt and exchanges the credential for our own tokens
+ * via POST /api/auth/google/onetap. Otherwise falls back to the OAuth redirect flow.
+ */
+function useGoogleSignIn(successMessage: string, onAuthSuccess?: () => void) {
+  const [googleLoading, setGoogleLoading] = useState(false)
+  const handleAuthSuccess = useAuthSuccessRedirect(onAuthSuccess)
+
+  useEffect(() => {
+    return () => {
+      try {
+        window.google?.accounts?.id?.cancel()
+      } catch {
+        /* ignore */
+      }
+    }
+  }, [])
+
+  const handleGoogle = async () => {
+    if (!getAuthReturnTo()) setAuthReturnTo('/')
+
+    if (googleOneTapSupported()) {
+      flushSync(() => setGoogleLoading(true))
+      const loaded = await loadGoogleIdentityScript()
+      const accounts = window.google?.accounts?.id
+      if (!loaded || !accounts) {
+        setGoogleLoading(false)
+        toast.error('Unable to load Google sign-in')
+        return
+      }
+
+      accounts.initialize({
+        client_id: getGoogleClientId(),
+        callback: async (response: GoogleOneTapResponse) => {
+          setGoogleLoading(false)
+          if (response?.error) {
+            if (response.error !== 'user_cancel' && response.error !== 'canceled') {
+              toast.error(response.error_description || 'Google sign in failed')
+            }
+            return
+          }
+          if (!response?.credential) return
+
+          try {
+            await signInWithGoogleOneTap(response.credential)
+            toast.success(successMessage)
+            handleAuthSuccess()
+          } catch (err: unknown) {
+            toast.error(err instanceof Error ? err.message : 'Google sign in failed')
+          }
+        },
+      })
+
+      accounts.prompt()
+      setTimeout(() => setGoogleLoading(false), 10000)
+      return
+    }
+
+    flushSync(() => setGoogleLoading(true))
+    try {
+      const result = await signInWithGoogle()
+
+      if (result && 'redirected' in result && result.redirected) return
+
+      toast.success(successMessage)
+      handleAuthSuccess()
+    } catch (err: any) {
+      toast.error(err.message || 'Google sign in failed')
+    } finally {
+      setGoogleLoading(false)
+    }
+  }
+
+  return { googleLoading, handleGoogle }
+}
+
 function GoogleG() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24">
@@ -103,28 +191,8 @@ function SignInForm({ onSwitchToSignUp, onAuthSuccess }: { onSwitchToSignUp: () 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
-  const [googleLoading, setGoogleLoading] = useState(false)
   const handleAuthSuccess = useAuthSuccessRedirect(onAuthSuccess)
-
-  const handleGoogle = async () => {
-    flushSync(() => {
-      setGoogleLoading(true)
-    })
-    try {
-      if (!getAuthReturnTo()) setAuthReturnTo('/')
-
-      const result = await signInWithGoogle()
-
-      if (result && 'redirected' in result && result.redirected) return
-
-      toast.success('Signed in successfully')
-      handleAuthSuccess()
-    } catch (err: any) {
-      toast.error(err.message || 'Google sign in failed')
-    } finally {
-      setGoogleLoading(false)
-    }
-  }
+  const { googleLoading, handleGoogle } = useGoogleSignIn('Signed in successfully', onAuthSuccess)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -201,28 +269,8 @@ function SignUpForm({ onSwitchToSignIn, onAuthSuccess }: { onSwitchToSignIn: () 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
-  const [googleLoading, setGoogleLoading] = useState(false)
   const handleAuthSuccess = useAuthSuccessRedirect(onAuthSuccess)
-
-  const handleGoogle = async () => {
-    flushSync(() => {
-      setGoogleLoading(true)
-    })
-    try {
-      if (!getAuthReturnTo()) setAuthReturnTo('/')
-
-      const result = await signInWithGoogle()
-
-      if (result && 'redirected' in result && result.redirected) return
-
-      toast.success('Signed up successfully')
-      handleAuthSuccess()
-    } catch (err: any) {
-      toast.error(err.message || 'Google sign up failed')
-    } finally {
-      setGoogleLoading(false)
-    }
-  }
+  const { googleLoading, handleGoogle } = useGoogleSignIn('Signed up successfully', onAuthSuccess)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
