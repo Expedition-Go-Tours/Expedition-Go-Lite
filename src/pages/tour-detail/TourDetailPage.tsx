@@ -1,4 +1,4 @@
-import { Component, useState, useEffect, useMemo, useRef } from 'react'
+import { Component, useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
@@ -14,7 +14,7 @@ import { useTranslation } from 'react-i18next'
 import { useExpeditionTour, useSimilarTours } from '../../hooks/useExpeditionTours'
 import { useExpeditionTourReviews, useCreateReview } from '../../hooks/useExpeditionReviews'
 import { useTourAvailability, useReviewableBookingForTour } from '../../hooks/useExpeditionBookings'
-import type { DayAvailability } from '../../lib/tourAvailability'
+import type { DayAvailability, DayAvailabilityInfo } from '../../lib/tourAvailability'
 
 import TourImageGallery from './TourImageGallery'
 import TourHeader from './TourHeader'
@@ -64,21 +64,42 @@ export default function TourDetailPage() {
   const { data: reviewableBookingId } = useReviewableBookingForTour(tourId)
   const { data: similarTours } = useSimilarTours(tourId)
 
-  const now = new Date()
-  const availStart = now.toISOString().slice(0, 10)
-  const availEnd = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
-  const { data: availabilityCalendar } = useTourAvailability(tourId, availStart, availEnd)
+  // Availability is fetched for the calendar month the widget is currently
+  // showing (the backend caps the public window at 31 days). Refetching on
+  // month navigation keeps blocked/full dates accurate instead of letting
+  // them silently fall back to "available".
+  const [availMonth, setAvailMonth] = useState(() => {
+    const now = new Date()
+    return { year: now.getFullYear(), month: now.getMonth() }
+  })
+  const handleAvailabilityMonthChange = useCallback((year: number, month: number) => {
+    setAvailMonth((prev) => (prev.year === year && prev.month === month ? prev : { year, month }))
+  }, [])
+  const availStart = useMemo(() => {
+    const d = new Date(availMonth.year, availMonth.month, 1)
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  }, [availMonth])
+  const availEnd = useMemo(() => {
+    const d = new Date(availMonth.year, availMonth.month + 1, 0)
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  }, [availMonth])
+  const { data: availabilityCalendar, isFetching: availabilityLoading } = useTourAvailability(tourId, availStart, availEnd)
 
   const availabilityMap = useMemo(() => {
     const map = new Map<string, DayAvailability>()
     if (availabilityCalendar) {
       for (const day of availabilityCalendar) {
-        const dateStr = day.date
-        let status: DayAvailability = 'available'
-        if (day.status === 'FULL') status = 'full'
-        else if (day.status === 'LIMITED') status = 'limited'
-        else if (day.status === 'BLOCKED') status = 'full'
-        map.set(dateStr, status)
+        map.set(day.date, day.status)
+      }
+    }
+    return map
+  }, [availabilityCalendar])
+
+  const availabilityInfoMap = useMemo(() => {
+    const map = new Map<string, DayAvailabilityInfo>()
+    if (availabilityCalendar) {
+      for (const day of availabilityCalendar) {
+        map.set(day.date, day)
       }
     }
     return map
@@ -798,6 +819,12 @@ export default function TourDetailPage() {
                     const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
                     return availabilityMap.get(key) || 'available'
                   }}
+                  getDayInfo={(date: Date) => {
+                    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+                    return availabilityInfoMap.get(key)
+                  }}
+                  availabilityLoading={availabilityLoading}
+                  onMonthChange={handleAvailabilityMonthChange}
                 />
               )}
             </aside>

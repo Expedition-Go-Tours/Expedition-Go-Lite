@@ -367,7 +367,7 @@ function extractTravelerPricing(rawTour: any): TravelerPricing[] {
       if (priceByLabel.size > 0) break
     }
 
-    const metaByLabel = new Map<string, { price?: number; minAge?: number | null; maxAge?: number | null; tiers?: PricingTier[] }>()
+    const metaByLabel = new Map<string, { price?: number; minAge?: number | null; maxAge?: number | null; tiers?: PricingTier[]; notAllowed?: boolean; ticketNotRequired?: boolean; needsAdult?: boolean }>()
     for (const c of Array.isArray(td.pricingCategories) ? td.pricingCategories : []) {
       if (c?.name && !metaByLabel.has(c.name)) {
         const tiers = Array.isArray(c.tiers)
@@ -384,6 +384,9 @@ function extractTravelerPricing(rawTour: any): TravelerPricing[] {
           minAge: c.minAge ?? null,
           maxAge: c.maxAge ?? null,
           tiers: tiers && tiers.length > 0 ? tiers : undefined,
+          notAllowed: c.notAllowed === true,
+          ticketNotRequired: c.ticketNotRequired === true,
+          needsAdult: c.needsAdult === true,
         })
       }
     }
@@ -397,13 +400,21 @@ function extractTravelerPricing(rawTour: any): TravelerPricing[] {
     return labels.map((label: string) => {
       const group = groups?.find((g) => g.label === label)
       const meta = metaByLabel.get(label)
-      const price = priceByLabel.get(label) ?? meta?.price ?? 0
+      // Mirror the backend (calculateTourPrice dependsOnAge branch): the
+      // pricingCategories[].price is authoritative over the derived schedule
+      // retailPrice, which only serves as a fallback. Reversing this order
+      // used to show a different unit price than checkout would charge when
+      // the two ever diverged.
+      const price = meta?.price ?? priceByLabel.get(label) ?? 0
       return {
         label,
         price,
         minAge: group?.minAge ?? meta?.minAge ?? null,
         maxAge: group?.maxAge ?? meta?.maxAge ?? null,
         tiers: meta?.tiers,
+        notAllowed: meta?.notAllowed,
+        ticketNotRequired: meta?.ticketNotRequired,
+        needsAdult: meta?.needsAdult,
       }
     })
   } catch {
@@ -441,6 +452,20 @@ function extractUniformPrice(rawTour: any): number | null {
       : rawTour?.schedulesAndPricing
     const v = sp?.travelerDetails?.uniformPrice
     return v != null ? Number(v) : null
+  } catch {
+    return null
+  }
+}
+
+/** Supplier capacity bound (minParticipants/maxParticipants) from the blob. */
+function extractParticipantsBound(rawTour: any, key: 'minParticipants' | 'maxParticipants'): number | null {
+  try {
+    const sp = typeof rawTour?.schedulesAndPricing === 'string'
+      ? JSON.parse(rawTour.schedulesAndPricing)
+      : rawTour?.schedulesAndPricing
+    const v = sp?.travelerDetails?.[key]
+    const n = Number(v)
+    return Number.isFinite(n) && n > 0 ? Math.floor(n) : null
   } catch {
     return null
   }
@@ -945,6 +970,9 @@ export interface TourDetailData extends Omit<TourDetail, 'guide' | 'contact' | '
   pricingApproach?: TourDetail['pricingApproach']
   uniformPrice?: TourDetail['uniformPrice']
   groupSizePricing?: TourDetail['groupSizePricing']
+  /** Supplier capacity bounds for the whole party (Viator pax-mix parity). */
+  minParticipants?: number | null
+  maxParticipants?: number | null
 }
 
 /**
@@ -1039,6 +1067,8 @@ function buildTourDetailFromRawTour(rawTour: any): TourDetailData {
     pricingApproach: extractPricingApproach(rawTour),
     uniformPrice: extractUniformPrice(rawTour),
     groupSizePricing: extractGroupSizePricing(rawTour),
+    minParticipants: extractParticipantsBound(rawTour, 'minParticipants'),
+    maxParticipants: extractParticipantsBound(rawTour, 'maxParticipants'),
   }
 }
 

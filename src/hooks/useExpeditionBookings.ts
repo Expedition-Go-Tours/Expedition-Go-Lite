@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { fetchWithAuth } from '../lib/api'
+import type { DayAvailability, DayAvailabilityInfo, DayTimeSlot } from '../lib/tourAvailability'
 
 async function expeditionFetchRaw(path: string) {
   const res = await fetchWithAuth(path)
@@ -10,11 +11,76 @@ async function expeditionFetchRaw(path: string) {
   return payload
 }
 
-interface AvailabilityCalendarDay {
+/** Raw shape returned by the Expedition availability calendar endpoint. */
+interface RawAvailabilityDay {
   date: string
-  status: 'AVAILABLE' | 'LIMITED' | 'FULL' | 'BLOCKED'
-  remainingSpots: number | null
-  timeSlots?: { time: string; status: string; remaining: number }[]
+  dayOfWeek: string
+  timezone?: string
+  isOperatingDay: boolean
+  status: 'AVAILABLE' | 'LIMITED' | 'FULL' | 'BLOCKED' | 'PAST'
+  capacity: number
+  booked: number
+  remaining: number
+  timeSlots?: RawAvailabilitySlot[]
+  hasOverride: boolean
+  overrideStatus: string | null
+  overrideCapacity: number | null
+  baseCapacity: number
+  isPast: boolean
+  capacityUnit?: 'groups' | 'people'
+  groupsPerSlot?: number | null
+  maxGroupSize?: number | null
+}
+
+interface RawAvailabilitySlot {
+  time: string
+  capacity: number
+  booked: number
+  remaining: number
+  groupsBooked?: number
+  groupsRemaining?: number
+}
+
+function mapDayStatus(raw: RawAvailabilityDay['status']): DayAvailability {
+  switch (raw) {
+    case 'LIMITED': return 'limited'
+    case 'FULL': return 'full'
+    case 'BLOCKED': return 'blocked'
+    case 'PAST': return 'past'
+    default: return 'available'
+  }
+}
+
+function mapDay(raw: RawAvailabilityDay): DayAvailabilityInfo {
+  const slots: DayTimeSlot[] = Array.isArray(raw.timeSlots)
+    ? raw.timeSlots.map((s) => ({
+        time: s.time,
+        capacity: s.capacity,
+        booked: s.booked || 0,
+        remaining: s.remaining ?? Math.max(0, (s.capacity || 0) - (s.booked || 0)),
+        groupsBooked: s.groupsBooked ?? 0,
+        groupsRemaining: s.groupsRemaining ?? null,
+      }))
+    : []
+  const capacityUnit = raw.capacityUnit === 'groups' ? 'groups' as const : 'people' as const
+  return {
+    date: raw.date,
+    dayOfWeek: raw.dayOfWeek,
+    isOperatingDay: raw.isOperatingDay,
+    status: mapDayStatus(raw.status),
+    capacity: raw.capacity,
+    booked: raw.booked,
+    remaining: raw.remaining,
+    baseCapacity: raw.baseCapacity,
+    overrideCapacity: raw.overrideCapacity ?? null,
+    overrideStatus: raw.overrideStatus,
+    hasOverride: raw.hasOverride,
+    capacityUnit,
+    groupsPerSlot: raw.groupsPerSlot ?? null,
+    maxGroupSize: raw.maxGroupSize ?? null,
+    isPast: raw.isPast,
+    timeSlots: slots,
+  }
 }
 
 export function useTourAvailability(
@@ -25,13 +91,16 @@ export function useTourAvailability(
   return useQuery({
     queryKey: ['expedition', 'tours', slug, 'availability', startDate, endDate],
     enabled: !!slug && !!startDate && !!endDate,
+    // Keep the previous window's counts visible while a new month (or a
+    // background refetch) resolves, so the calendar never blanks the numbers.
+    placeholderData: (prev) => prev,
     queryFn: async () => {
       const payload = await expeditionFetchRaw(
         `/expedition/tours/${encodeURIComponent(slug!)}/availability`
         + `?startDate=${startDate!}&endDate=${endDate!}`
       )
       const data = payload.data ?? payload
-      return (data.calendar || []) as AvailabilityCalendarDay[]
+      return ((data.calendar || []) as RawAvailabilityDay[]).map(mapDay)
     },
   })
 }
@@ -39,11 +108,7 @@ export function useTourAvailability(
 interface CalculateCheckoutInput {
   tourId: string
   selectedDate: string
-  travelers: {
-    adults: number
-    children?: number
-    infants?: number
-  }
+  travelers: Record<string, number>
 }
 
 // Mirrors the actual shape returned by
@@ -88,14 +153,8 @@ export function useCalculateCheckout() {
 interface ConfirmBookingInput {
   tourId: string
   selectedDate: string
-  travelers: {
-    adults: number
-    children?: number
-    infants?: number
-    phoneNumber: string
-    location: string
-    details?: { name: string; age: number; ageGroup: string; specialRequests?: string }[]
-  }
+  selectedTime?: string | null
+  travelers: Record<string, number | string | { name: string; age: number; ageGroup: string; specialRequests?: string }[] | undefined>
   paymentMethodId: string
   specialRequests?: string
 }

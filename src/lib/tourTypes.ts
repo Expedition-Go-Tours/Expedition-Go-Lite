@@ -31,6 +31,12 @@ export interface TravelerPricing {
    * tier for the current total headcount should be used instead of `price`.
    */
   tiers?: PricingTier[]
+  /** Supplier rule: this category cannot be booked (notAllowed). */
+  notAllowed?: boolean
+  /** Supplier rule: this category is free of charge (ticketNotRequired). */
+  ticketNotRequired?: boolean
+  /** Supplier rule: a child/youth/teen must be accompanied by an adult or senior. */
+  needsAdult?: boolean
 }
 
 export interface GroupSizeBand {
@@ -80,6 +86,9 @@ export interface TourDetail {
   uniformPrice?: number | null
   /** Flat price bands by total group headcount, used when pricingModel is 'perGroup'. */
   groupSizePricing?: GroupSizeBand[]
+  /** Supplier capacity bounds for the whole party (Viator pax-mix parity). */
+  minParticipants?: number | null
+  maxParticipants?: number | null
 }
 
 export interface ItineraryDay {

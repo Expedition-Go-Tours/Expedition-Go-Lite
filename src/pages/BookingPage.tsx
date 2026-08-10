@@ -48,10 +48,12 @@ const FALLBACK_TOUR = {
   time: '9:00 AM',
   duration: '',
   travelers: '1 adult',
-  travelersCount: 1,
+  travelersCount: { adults: 1, children: 0, infants: 0 } as Record<string, number>,
   adults: 1,
   children: 0,
   infants: 0,
+  selectedDate: '',
+  selectedTime: null as string | null,
   price: 0,
   cancellation: 'Free cancellation up to 24 hours before',
   language: 'English',
@@ -978,10 +980,23 @@ export default function BookingPage() {
   const [activity, setActivity] = useState({ leadFirstName: '', leadLastName: '' })
 
   const [isChangeModalOpen, setIsChangeModalOpen] = useState(false)
-  const [editableTour, setEditableTour] = useState({
-    date: tour.dateISO, time: tour.time, travelers: tour.travelers,
-    travelersCount: tour.travelersCount, adults: tour.adults, children: tour.children, infants: tour.infants,
-    price: tour.price,
+  const [editableTour, setEditableTour] = useState<{
+    date: string
+    time: string
+    travelers: string
+    travelersCount: Record<string, number>
+    adults: number
+    children: number
+    infants: number
+    selectedDate: string
+    selectedTime: string | null
+    price: number
+  }>({
+    date: String(tour.dateISO || tour.selectedDate || tour.date || ''), time: tour.time || '9:00 AM', travelers: tour.travelers || '1 adult',
+    travelersCount: (tour.travelersCount && typeof tour.travelersCount === 'object' ? tour.travelersCount : { adults: 1, children: 0, infants: 0 }) as Record<string, number>,
+    adults: Number(tour.adults) || 1, children: Number(tour.children) || 0, infants: Number(tour.infants) || 0,
+    selectedDate: String(tour.selectedDate || tour.dateISO || ''), selectedTime: tour.selectedTime || null,
+    price: Number(tour.price) || 0,
   })
   const [payment, setPayment] = useState({ paymentTiming: 'now', paymentMethod: 'card' })
   const [isBooking, setIsBooking] = useState(false)
@@ -1144,7 +1159,10 @@ export default function BookingPage() {
                 duration: tour.duration,
               },
               date: editableTour.date,
-              travelers: editableTour.travelersCount,
+              travelers: Object.values(editableTour.travelersCount || {}).reduce(
+                (sum, v) => sum + (typeof v === 'number' && v > 0 ? v : 0),
+                0
+              ),
               bookingId: booking.id,
               tourId: tour.id,
             })
@@ -1185,13 +1203,17 @@ export default function BookingPage() {
       const detailsName = fullName || undefined
       const details = detailsName ? [{ name: detailsName, age: 30, ageGroup: 'adult' }] : []
 
+      // Authoritative per-category map (adults/children/infants + any supplier
+      // categories like seniors/students) so every category is priced at its
+      // own rate on confirm.
+      const counts: Record<string, number> = editableTour.travelersCount || { adults: 1, children: 0, infants: 0 }
+
       const payload = {
         tourId: tour.id || tour.slug,
-        selectedDate: editableTour.date,
+        selectedDate: editableTour.selectedDate || editableTour.date,
+        ...(editableTour.selectedTime ? { selectedTime: editableTour.selectedTime } : {}),
         travelers: {
-          adults: editableTour.adults,
-          children: editableTour.children,
-          infants: editableTour.infants,
+          ...counts,
           phoneNumber,
           location: contact.location.trim(),
           details,
@@ -1331,7 +1353,16 @@ export default function BookingPage() {
             tour={activeTour}
             isOpen={isChangeModalOpen}
             onClose={() => setIsChangeModalOpen(false)}
-            onReserve={(updates) => setEditableTour((prev) => ({ ...prev, ...updates, price: updates.price }))}
+            onReserve={(updates) => setEditableTour((prev) => ({
+              ...prev,
+              ...updates,
+              // The modal reports a total traveler count; fold it into the
+              // canonical map (adults) so the confirm payload stays a valid
+              // per-category shape.
+              travelersCount: { ...(prev.travelersCount || {}), adults: updates.travelersCount || 1 },
+              adults: updates.travelersCount || prev.adults,
+              price: updates.price,
+            }))}
           />
         )}
       </AnimatePresence>

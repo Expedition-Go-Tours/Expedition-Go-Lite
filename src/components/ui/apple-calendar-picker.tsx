@@ -1,6 +1,7 @@
 "use client";
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion'
+import type { DayAvailability } from '../../lib/tourAvailability'
 
 const ChevronLeftIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -30,7 +31,7 @@ const WEEKDAYS = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 const getDaysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
 const getFirstDayOfMonth = (year: number, month: number) => new Date(year, month, 1).getDay();
 
-type DayAvailability = 'available' | 'limited' | 'full'
+type DayAvailabilityStatus = DayAvailability
 
 interface CalendarPickerProps {
   isOpen: boolean
@@ -38,10 +39,20 @@ interface CalendarPickerProps {
   onDateSelect: (date: Date) => void
   selectedDate?: Date | null
   /** Optional per-date availability lookup. When omitted, all future dates are treated as available. */
-  getAvailability?: (date: Date) => DayAvailability
+  getAvailability?: (date: Date) => DayAvailabilityStatus
+  /** Optional remaining/capacity counts for a date (shown under the day number on available/limited days). */
+  getDayCounts?: (date: Date) => {
+    remaining: number | null
+    capacity: number | null
+    capacityUnit?: 'people' | 'groups'
+  } | null
+  /** When true and a day has no data yet, render a subtle pulse instead of a misleading "available" fallback. */
+  loading?: boolean
+  /** Fired whenever the user navigates to a different month (used to refetch availability for that window). */
+  onMonthChange?: (year: number, month: number) => void
 }
 
-export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate, getAvailability }: CalendarPickerProps) => {
+export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate, getAvailability, getDayCounts, loading, onMonthChange }: CalendarPickerProps) => {
   const todayRef = useRef(new Date())
   const today = todayRef.current
   const defaultDate = selectedDate || today
@@ -71,22 +82,20 @@ export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate, ge
 
   const prevMonth = () => {
     setDirection(-1)
-    if (currentMonth === 0) {
-      setCurrentMonth(11)
-      setCurrentYear(currentYear - 1)
-    } else {
-      setCurrentMonth(currentMonth - 1)
-    }
+    const y = currentMonth === 0 ? currentYear - 1 : currentYear
+    const m = currentMonth === 0 ? 11 : currentMonth - 1
+    setCurrentMonth(m)
+    setCurrentYear(y)
+    onMonthChange?.(y, m)
   }
 
   const nextMonth = () => {
     setDirection(1)
-    if (currentMonth === 11) {
-      setCurrentMonth(0)
-      setCurrentYear(currentYear + 1)
-    } else {
-      setCurrentMonth(currentMonth + 1)
-    }
+    const y = currentMonth === 11 ? currentYear + 1 : currentYear
+    const m = currentMonth === 11 ? 0 : currentMonth + 1
+    setCurrentMonth(m)
+    setCurrentYear(y)
+    onMonthChange?.(y, m)
   }
 
   const handleSelectDay = (day: number) => {
@@ -104,9 +113,17 @@ export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate, ge
       const date = new Date(currentYear, currentMonth, day)
       const isPast = new Date(currentYear, currentMonth, day).setHours(0, 0, 0, 0) < new Date().setHours(0, 0, 0, 0)
       const isToday = !isPast && date.toDateString() === today.toDateString()
-      const availability: DayAvailability = isPast ? 'full' : (getAvailability ? getAvailability(date) : 'available')
+      const availability: DayAvailabilityStatus = isPast ? 'past' : (getAvailability ? getAvailability(date) : 'available')
+      const counts = getDayCounts ? getDayCounts(date) : null
+      const hasCounts = !isPast && counts != null && counts.remaining != null && counts.capacity != null && counts.remaining > 0 && (availability === 'available' || availability === 'limited')
+      const countUnit = counts?.capacityUnit === 'groups' ? 'groups' : 'spots'
       const isFull = !isPast && availability === 'full'
-      const isSelected = day === selectedDay && !isPast && !isFull
+      const isBlocked = !isPast && availability === 'blocked'
+      const isSelectable = !isPast && !isFull && !isBlocked
+      const isSelected = day === selectedDay && isSelectable
+      // No data for this day yet (availability still fetching) — show a
+      // neutral pulse instead of a misleading "available" fallback.
+      const isPending = loading && counts == null && !isPast
 
       if (isPast) {
         days.push(
@@ -115,6 +132,17 @@ export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate, ge
             className="w-9 h-9 text-[14px] font-medium rounded-full flex items-center justify-center text-gray-300 cursor-not-allowed"
           >
             {day}
+          </div>
+        )
+      } else if (isPending) {
+        days.push(
+          <div
+            key={`day-${day}`}
+            title="Checking availability…"
+            aria-disabled="true"
+            className="w-9 h-9 rounded-full flex items-center justify-center bg-slate-100 animate-pulse cursor-default"
+          >
+            <span className="text-[14px] font-medium text-slate-300">{day}</span>
           </div>
         )
       } else if (isFull) {
@@ -129,12 +157,29 @@ export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate, ge
             {day}
           </div>
         )
+      } else if (isBlocked) {
+        // Closed/blocked by the supplier — muted, not selectable
+        days.push(
+          <div
+            key={`day-${day}`}
+            title="Not available"
+            aria-disabled="true"
+            className="w-9 h-9 text-[14px] font-medium rounded-full flex items-center justify-center bg-slate-50 text-slate-300 cursor-not-allowed"
+          >
+            {day}
+          </div>
+        )
       } else {
+        const title = availability === 'limited'
+          ? `Limited availability${hasCounts ? ` · ${counts?.remaining} of ${counts?.capacity} ${countUnit} available` : ''}`
+          : hasCounts
+            ? `${counts?.remaining} of ${counts?.capacity} ${countUnit} available`
+            : 'Available'
         days.push(
           <button
             key={`day-${day}`}
             onClick={() => handleSelectDay(day)}
-            title={availability === 'limited' ? 'Limited availability' : 'Available'}
+            title={title}
             className={`relative w-9 h-9 text-[14px] font-medium rounded-full flex items-center justify-center transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#179237]/40 active:scale-95 ${
               isSelected
                 ? 'bg-gradient-to-b from-[#1a9e3d] to-[#147a2e] text-white font-semibold shadow-[0_4px_10px_-2px_rgba(23,146,55,0.5)] scale-105 z-10'
@@ -145,11 +190,21 @@ export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate, ge
           >
             {day}
             {!isSelected && (
-              <span
-                className={`absolute bottom-[3px] left-1/2 -translate-x-1/2 w-[5px] h-[5px] rounded-full ${
-                  availability === 'limited' ? 'bg-amber-400' : 'bg-[#179237]'
-                }`}
-              />
+              hasCounts ? (
+                <span
+                  className={`absolute bottom-[1px] left-1/2 -translate-x-1/2 text-[8px] font-bold leading-none tracking-tight whitespace-nowrap pointer-events-none ${
+                    availability === 'limited' ? 'text-amber-500' : 'text-[#179237]'
+                  }`}
+                >
+                  {counts?.remaining}/{counts?.capacity}
+                </span>
+              ) : (
+                <span
+                  className={`absolute bottom-[3px] left-1/2 -translate-x-1/2 w-[5px] h-[5px] rounded-full ${
+                    availability === 'limited' ? 'bg-amber-400' : 'bg-[#179237]'
+                  }`}
+                />
+              )
             )}
           </button>
         )
@@ -235,6 +290,7 @@ export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate, ge
                     onClick={() => {
                       setCurrentMonth(idx)
                       setShowDropdown(false)
+                      onMonthChange?.(currentYear, idx)
                     }}
                     className={`py-2 rounded-[10px] text-xs font-bold transition-all ${
                       isSelected
@@ -251,9 +307,9 @@ export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate, ge
         )}
       </div>
 
-      {/* Availability legend (flows below the grid so it never overlaps) */}
+      {/* Availability legend (single horizontal row — never wraps) */}
       {getAvailability && (
-        <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1.5 pt-3.5 border-t border-black/[0.06] text-[11px] font-medium text-gray-500">
+        <div className="flex items-center justify-center gap-x-3 pt-3.5 text-[11px] font-medium text-gray-500 whitespace-nowrap overflow-hidden">
           <span className="flex items-center gap-1.5">
             <span className="w-[7px] h-[7px] rounded-full bg-[#179237] shadow-[0_0_0_2px_rgba(23,146,55,0.15)]" /> Available
           </span>
@@ -262,6 +318,9 @@ export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate, ge
           </span>
           <span className="flex items-center gap-1.5">
             <span className="w-[7px] h-[7px] rounded-full bg-red-400 shadow-[0_0_0_2px_rgba(248,113,113,0.18)]" /> Sold Out
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="w-[7px] h-[7px] rounded-full bg-slate-300 shadow-[0_0_0_2px_rgba(148,163,184,0.18)]" /> Closed
           </span>
         </div>
       )}

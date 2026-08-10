@@ -268,6 +268,8 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+  flex: 1;
+  min-width: 0;
 }
 
 .guest-type-label {
@@ -279,6 +281,28 @@
 .guest-type-desc {
   font-size: 13px;
   color: #64748b;
+}
+
+.guest-type-price {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.guest-type-unit {
+  font-weight: 700;
+  font-size: 15px;
+  color: #166534;
+  white-space: nowrap;
+}
+
+.guest-type-line {
+  font-size: 11px;
+  color: #64748b;
+  white-space: nowrap;
 }
 
 .guest-type-controls {
@@ -320,6 +344,43 @@
   color: #0f172a;
 }
 
+/* Manual price update button inside the traveler picker */
+.booking-update-btn {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 4px;
+  padding: 10px 16px;
+  background: #166534;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.booking-update-btn:hover:not(:disabled) {
+  background: #14532d;
+}
+
+.booking-update-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Spinner shown in place of a price while it recalculates */
+.booking-price-spinner {
+  display: inline-flex;
+  align-items: center;
+  color: #166534;
+  vertical-align: middle;
+}
+
 .guest-limit-notice {
   padding: 10px 12px;
   background: rgba(239, 68, 68, 0.05);
@@ -330,13 +391,89 @@
   text-align: center;
 }
 
-/* Total */
-.booking-total {
+/* Time slot selector */
+.booking-slot-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 8px;
+}
+
+.booking-slot-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 12px;
+  background: #fff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  font-family: var(--font-body);
+}
+
+.booking-slot-chip:hover:not(:disabled) {
+  border-color: #166534;
+  background: rgba(22, 101, 52, 0.04);
+}
+
+.booking-slot-chip:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.booking-slot-chip-active {
+  border-color: #166534;
+  background: rgba(22, 101, 52, 0.08);
+  box-shadow: 0 0 0 3px rgba(22, 101, 52, 0.1);
+}
+
+.booking-slot-time {
+  font-weight: 600;
+  font-size: 14px;
+  color: #0f172a;
+}
+
+.booking-slot-chip-active .booking-slot-time {
+  color: #166534;
+}
+
+.booking-slot-cap {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.booking-slot-note {
+  font-size: 12px;
+  color: #64748b;
+  margin: 6px 0 0;
+  line-height: 1.4;
+}
+
+.booking-slot-warning {
+  font-size: 13px;
+  color: #b45309;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+/* Total summary */
+.booking-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 12px;
+  border-top: 1px solid #e2e8f0;
+}
+
+/* Total */.booking-total {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: 16px;
-  border-top: 1px solid #e2e8f0;
+  padding-top: 10px;
+  margin-top: 2px;
   font-weight: 600;
   font-size: 15px;
   color: #0f172a;

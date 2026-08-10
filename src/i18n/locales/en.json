@@ -45,7 +45,21 @@
     "groupTotal": "Group total",
     "groupOf": "Group of {{range}}",
     "groupPricingUnavailable": "Group pricing has not been configured for this tour yet.",
-    "tierPricingHint": "Per-person prices below depend on your total number of travelers."
+    "tierPricingHint": "Per-person prices below depend on your total number of travelers.",
+    "selectTime": "Select time",
+    "selectTimeFirst": "Please select a time slot",
+    "soldOut": "Sold out",
+    "groupSlots": "group slots",
+    "spotsLeft": "spots left",
+    "groupBookingsNote": "Group bookings · up to {{max}} travelers per group",
+    "tooManyTravelers": "Only {{count}} spot(s) left on this date",
+    "checkingAvailability": "Checking availability…",
+    "updatePrice": "Update",
+    "totalLabel": "Total",
+    "perPersonShort": "per person",
+    "notAllowed": "Not permitted on this tour",
+    "bookableRange": "Bookable by {{min}}–{{max}} travelers",
+    "priceUpdated": "Price updated to reflect the latest availability"
   },
   "common": {
     "back": "Back",

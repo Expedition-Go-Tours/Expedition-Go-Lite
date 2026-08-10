@@ -5,16 +5,18 @@ import type { TourDetail, TravelerPricing } from '../../lib/tourTypes'
 import { Button } from '../../components/ui/button'
 import { CalendarPicker } from '../../components/ui/apple-calendar-picker'
 import { motion, AnimatePresence } from 'framer-motion'
-import { CalendarDays, Users, Minus, Plus, MessageSquare } from 'lucide-react'
+import { CalendarDays, Users, Minus, Plus, MessageSquare, Clock as ClockIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { useCurrency } from '../../contexts/CurrencyContext'
-import type { DayAvailability } from '../../lib/tourAvailability'
+import type { DayAvailability, DayAvailabilityInfo } from '../../lib/tourAvailability'
 import {
   clampGroupHeadcount,
   groupBandLabel,
   groupPricingRange,
 } from '../../lib/groupPricing'
 import { findActiveTier, hasTieredPricing, resolveTierPrice, tierRangeLabel } from '../../lib/tierPricing'
+import { categoryKey, sumCountsToBuckets } from '../../lib/travelerBuckets'
+import { validatePassengerMix } from '../../lib/passengerMix'
 import SupportChatWidget from '../../components/SupportChatWidget'
 import BookingTransition from '../../components/BookingTransition'
 import { fetchWithAuth } from '../../lib/api'
@@ -23,6 +25,17 @@ import './BookingWidget.css'
 interface BookingWidgetProps {
   tour: TourDetail
   getAvailability?: (date: Date) => DayAvailability
+  getDayInfo?: (date: Date) => DayAvailabilityInfo | undefined
+  availabilityLoading?: boolean
+  onMonthChange?: (year: number, month: number) => void
+}
+
+interface PricingResult {
+  currency?: string
+  subtotal: number
+  fees: number
+  discounts: number
+  total: number
 }
 
 const dropdownVariants = {
@@ -31,16 +44,25 @@ const dropdownVariants = {
   exit: { opacity: 0, y: -8, scale: 0.96 },
 }
 
-export default function BookingWidget({ tour, getAvailability: propGetAvailability }: BookingWidgetProps) {
+/** Seed the per-category counts: the first adult-like category defaults to 2, all others 0. */
+function defaultCountsFor(categories: TravelerPricing[]): Record<string, number> {
+  const counts: Record<string, number> = {}
+  const primary = categories.findIndex((g) => /adult/i.test(g.label))
+  const adultIdx = primary >= 0 ? primary : 0
+  categories.forEach((g, i) => {
+    counts[categoryKey(g.label)] = i === adultIdx ? 2 : 0
+  })
+  return counts
+}
+
+export default function BookingWidget({ tour, getAvailability: propGetAvailability, getDayInfo, availabilityLoading, onMonthChange }: BookingWidgetProps) {
   const { t } = useTranslation()
   const { currency, convertPrice } = useCurrency()
   const navigate = useNavigate()
-  const [adults, setAdults] = useState(2)
-  const [children, setChildren] = useState(0)
-  const [infants, setInfants] = useState(0)
   const [showGuestSelector, setShowGuestSelector] = useState(false)
   const [showCalendar, setShowCalendar] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+  const [selectedTime, setSelectedTime] = useState<string | null>(null)
   const [showChat, setShowChat] = useState(false)
   const [isBooking, setIsBooking] = useState(false)
   const [showTransition, setShowTransition] = useState(false)
@@ -49,8 +71,10 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
   const [promoCode, setPromoCode] = useState('')
   const [promoApplied, setPromoApplied] = useState(false)
   const [promoError, setPromoError] = useState('')
-  const [pricingTotal, setPricingTotal] = useState<number | null>(null)
+  const [pricingResult, setPricingResult] = useState<PricingResult | null>(null)
   const [pricingLoading, setPricingLoading] = useState(false)
+  const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({})
+  const [groupHeadcount, setGroupHeadcount] = useState(2)
   const guestRef = useRef<HTMLDivElement>(null)
   const calendarRef = useRef<HTMLDivElement>(null)
 
@@ -59,9 +83,33 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
   // pricing at all); 'perPerson' covers both sameForEveryone (uniform price
   // for every traveler type) and dependsOnAge (per-category, optionally tiered).
   const isPerGroup = tour.pricingModel === 'perGroup'
-  const totalTravelers = adults + children + infants
 
-  const doFetchPricing = useCallback(async (date: string) => {
+  const groupSizeBands = useMemo(() => tour.groupSizePricing || [], [tour.groupSizePricing])
+
+  const travelerGroups = useMemo(() => {
+    const pricing = tour.travelerPricing || []
+    if (pricing.length > 0) return pricing
+    return [{ label: 'Adult', price: tour.price || 0, minAge: null, maxAge: null }]
+  }, [tour.travelerPricing, tour.price])
+
+  // Seed the dynamic per-category counts once the categories are available.
+  const [prevCategories, setPrevCategories] = useState<TravelerPricing[]>([])
+  if (!isPerGroup && travelerGroups.length > 0 && prevCategories !== travelerGroups) {
+    setPrevCategories(travelerGroups)
+    setCategoryCounts(defaultCountsFor(travelerGroups))
+  }
+
+  const totalTravelers = useMemo(() => {
+    if (isPerGroup) return groupHeadcount
+    return Object.values(categoryCounts).reduce((s, c) => s + (typeof c === 'number' && c > 0 ? c : 0), 0)
+  }, [isPerGroup, groupHeadcount, categoryCounts])
+
+  const travelersPayload = useMemo(() => {
+    if (isPerGroup) return { adults: totalTravelers }
+    return sumCountsToBuckets(categoryCounts)
+  }, [isPerGroup, totalTravelers, categoryCounts])
+
+  const doFetchPricing = useCallback(async (date: string, time?: string | null) => {
     const tId = tour.id
     if (!tId) return
     setPricingLoading(true)
@@ -71,14 +119,14 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
         body: JSON.stringify({
           tourId: tId,
           selectedDate: date,
-          // For perGroup tours the backend just sums every traveler bucket
-          // to get the total headcount for group-band matching (see
-          // calculateTourPrice's perGroup branch) — the Zod schema still
-          // requires the adults/children/infants shape, so the full
-          // headcount is sent as `adults` and children/infants are omitted.
-          travelers: isPerGroup
-            ? { adults: totalTravelers }
-            : { adults, children, infants },
+          // Fixed-slot tours must carry a concrete time slot or the backend
+          // rejects the check ("A time slot must be selected").
+          ...(time ? { selectedTime: time } : {}),
+          // The checkout schema accepts arbitrary traveler-count keys; the
+          // dynamic per-category counts (incl. seniors, students, …) are
+          // sent under their own keys so the backend prices each at its own
+          // rate instead of folding them into adults.
+          travelers: travelersPayload,
         }),
       })
       const payload = await res.json().catch(() => ({}))
@@ -87,14 +135,20 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
       }
       const data = payload.data ?? payload
       if (data.pricing) {
-        setPricingTotal(data.pricing.total)
+        setPricingResult({
+          currency: data.pricing.currency,
+          subtotal: Number(data.pricing.subtotal) || 0,
+          fees: Number(data.pricing.fees) || 0,
+          discounts: Number(data.pricing.discounts) || 0,
+          total: Number(data.pricing.total) || 0,
+        })
       }
     } catch {
-      setPricingTotal(null)
+      setPricingResult(null)
     } finally {
       setPricingLoading(false)
     }
-  }, [tour.id, adults, children, infants, isPerGroup, totalTravelers])
+  }, [tour.id, travelersPayload])
 
   const pricingFetched = useRef(false)
   useEffect(() => {
@@ -105,47 +159,43 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
     doFetchPricing(tomorrow.toISOString().slice(0, 10))
   }, [tour.id, doFetchPricing])
 
+  // Auto-refresh the real-time price when the date or traveler mix changes
+  // (Viator re-checks on date+pax selection). Debounced so +/- taps don't
+  // hammer the API; the manual Update button still forces an immediate check.
+  const [priceUpdated, setPriceUpdated] = useState(false)
+  const lastShownTotal = useRef<number | null>(null)
   useEffect(() => {
     if (!selectedDate) return
-    doFetchPricing(selectedDate.toISOString().slice(0, 10))
-  }, [selectedDate, adults, children, infants, doFetchPricing])
+    const timer = setTimeout(() => {
+      doFetchPricing(selectedDate.toISOString().slice(0, 10), selectedTime)
+    }, 400)
+    return () => clearTimeout(timer)
+  }, [selectedDate, selectedTime, travelersPayload, doFetchPricing])
 
-  const groupSizeBands = useMemo(() => tour.groupSizePricing || [], [tour.groupSizePricing])
+  // Surface a changed total after a background refresh so the traveler knows
+  // the price they see now reflects the latest availability/rate.
+  useEffect(() => {
+    if (pricingResult == null) return
+    if (lastShownTotal.current != null && lastShownTotal.current !== pricingResult.total) {
+      setPriceUpdated(true)
+    }
+    lastShownTotal.current = pricingResult.total
+  }, [pricingResult])
 
-  const travelerGroups = useMemo(() => {
-    const pricing = tour.travelerPricing || []
-    if (pricing.length > 0) return pricing
-    return [{ label: 'Adult', price: tour.price || 0, minAge: null, maxAge: null }]
-  }, [tour.travelerPricing, tour.price])
+  const adultGroup = travelerGroups.find((g) => /adult/i.test(g.label))
 
-  const findGroup = (key: string): TravelerPricing | undefined =>
-    travelerGroups.find((g) => new RegExp(key, 'i').test(g.label))
-
-  const adultGroup = findGroup('adult')
-  const childGroup = findGroup('child')
-  const infantGroup = findGroup('infant')
-
-  // Note: when isPerGroup, the guest dropdown only renders the "adults"
-  // headcount counter (see travelerOptions below) — children/infants stay
-  // at their initial 0 and are never exposed to the user in that mode, so
-  // no explicit reset effect is needed.
-
-  // A category's per-person price can depend on the TOTAL number of
-  // travelers in the booking (GetYourGuide-style tiered pricing) —
-  // mirrors the backend's calculateTourPrice() tier-matching logic (see
-  // lib/tierPricing.ts) so the widget shows the same price the checkout
-  // call will actually charge.
-  const adultPrice = isPerGroup ? 0 : resolveTierPrice(adultGroup, totalTravelers, tour.price)
-  const childPrice = isPerGroup ? 0 : resolveTierPrice(childGroup, totalTravelers, 0)
-  const infantPrice = isPerGroup ? 0 : resolveTierPrice(infantGroup, totalTravelers, 0)
-
-  // Surface when a category's displayed price is currently coming from a
-  // tier (rather than its flat base price), so travelers understand why the
-  // per-person rate changes as they add more people to the booking.
-  const adultActiveTier = isPerGroup ? undefined : findActiveTier(adultGroup, totalTravelers)
-  const childActiveTier = isPerGroup ? undefined : findActiveTier(childGroup, totalTravelers)
-  const infantActiveTier = isPerGroup ? undefined : findActiveTier(infantGroup, totalTravelers)
-  const anyTieredPricing = !isPerGroup && (hasTieredPricing(adultGroup) || hasTieredPricing(childGroup) || hasTieredPricing(infantGroup))
+  // A category's per-person price can depend on the TOTAL number of travelers
+  // in the booking (GetYourGuide-style tiered pricing) — mirrors the backend's
+  // calculateTourPrice() tier-matching logic (see lib/tierPricing.ts) so the
+  // widget shows the same price the checkout call will actually charge.
+  const unitPriceFor = useCallback(
+    (g: TravelerPricing) => resolveTierPrice(g, totalTravelers, g.price ?? 0),
+    [totalTravelers]
+  )
+  const activeTierFor = useCallback(
+    (g: TravelerPricing) => findActiveTier(g, totalTravelers),
+    [totalTravelers]
+  )
 
   // Matching flat-rate band for the current headcount, when perGroup.
   const matchingGroupBand = useMemo(() => {
@@ -181,7 +231,7 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
   const [prevGroupBands, setPrevGroupBands] = useState(groupSizeBands)
   if (isPerGroup && groupSizeBands.length > 0 && prevGroupBands !== groupSizeBands) {
     setPrevGroupBands(groupSizeBands)
-    setAdults((prev) => clampGroupHeadcount(prev, groupSizeBands))
+    setGroupHeadcount((prev) => clampGroupHeadcount(prev, groupSizeBands))
   }
 
   const ageRangeLabel = (g?: TravelerPricing): string => {
@@ -219,25 +269,81 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
     }
   }, [showGuestSelector, showCalendar])
 
-  const totalPrice = pricingTotal ?? 0
-  const hasPricing = pricingTotal !== null
+  const totalPrice = pricingResult?.total ?? 0
+  const hasPricing = pricingResult !== null
 
-  const increment = (type: string) => {
-    if (type === 'adults') {
-      const max = isPerGroup ? groupMaxHeadcount : 50
-      if (adults < max) setAdults(adults + 1)
-    }
-    if (type === 'children' && children < 9) setChildren(children + 1)
-    if (type === 'infants' && infants < 9) setInfants(infants + 1)
+  // Client-side subtotal — mirrors what checkout will charge before any
+  // discount. Used as the displayed subtotal until the API answers.
+  const clientSubtotal = useMemo(() => {
+    if (isPerGroup) return matchingGroupBand?.price ?? 0
+    return travelerGroups.reduce((sum, g) => {
+      const count = categoryCounts[categoryKey(g.label)] ?? 0
+      return sum + (count > 0 ? unitPriceFor(g) * count : 0)
+    }, 0)
+  }, [isPerGroup, travelerGroups, categoryCounts, matchingGroupBand, unitPriceFor])
+
+  // Passenger-mix rules (Viator parity): total min/max, disallowed categories,
+  // and requires-adult supervision. Invalid mixes are surfaced and the "+"
+  // steppers are disabled so a party can never be configured that checkout
+  // would reject.
+  const mixBounds = useMemo(
+    () => ({ min: tour.minParticipants ?? null, max: tour.maxParticipants ?? null }),
+    [tour.minParticipants, tour.maxParticipants]
+  )
+  const mixIssues = useMemo(
+    () => (isPerGroup ? [] : validatePassengerMix(travelerGroups, categoryCounts, mixBounds)),
+    [isPerGroup, travelerGroups, categoryCounts, mixBounds]
+  )
+  const canAddCount = (key: string) => {
+    const category = travelerGroups.find((g) => categoryKey(g.label) === key)
+    if (category?.notAllowed) return false
+    if (mixBounds.max != null && totalTravelers >= mixBounds.max) return false
+    if (category?.needsAdult && !mixIssues.some((i) => i.type === 'needsAdult')) return false
+    // Simulate the addition and check the rules still pass.
+    const next = { ...categoryCounts, [key]: (categoryCounts[key] ?? 0) + 1 }
+    return validatePassengerMix(travelerGroups, next, mixBounds).length === 0
   }
 
-  const decrement = (type: string) => {
-    if (type === 'adults') {
-      const min = isPerGroup ? groupMinHeadcount : 1
-      if (adults > min) setAdults(adults - 1)
+  const increment = (key: string) => {
+    if (isPerGroup) {
+      if (groupHeadcount < groupMaxHeadcount) setGroupHeadcount(groupHeadcount + 1)
+      return
     }
-    if (type === 'children' && children > 0) setChildren(children - 1)
-    if (type === 'infants' && infants > 0) setInfants(infants - 1)
+    if (!canAddCount(key)) return
+    const category = travelerGroups.find((g) => categoryKey(g.label) === key)
+    const isAdultLike = category ? /adult/i.test(category.label) : false
+    const max = isAdultLike ? 50 : 9
+    setCategoryCounts((prev) => ({
+      ...prev,
+      [key]: Math.min((prev[key] ?? 0) + 1, max),
+    }))
+  }
+
+  const decrement = (key: string) => {
+    if (isPerGroup) {
+      if (groupHeadcount > groupMinHeadcount) setGroupHeadcount(groupHeadcount - 1)
+      return
+    }
+    const category = travelerGroups.find((g) => categoryKey(g.label) === key)
+    const isAdultLike = category ? /adult/i.test(category.label) : false
+    const min = isAdultLike ? 1 : 0
+    setCategoryCounts((prev) => ({
+      ...prev,
+      [key]: Math.max((prev[key] ?? 0) - 1, min),
+    }))
+  }
+
+  const getSelectedDayInfo = useCallback((date: Date | null | undefined): DayAvailabilityInfo | undefined => {
+    if (!date || !getDayInfo) return undefined
+    return getDayInfo(date)
+  }, [getDayInfo])
+
+  const formatSlotTime = (time: string): string => {
+    const [h, m] = time.split(':').map((n) => parseInt(n, 10))
+    if (!Number.isFinite(h)) return time
+    const period = h >= 12 ? 'PM' : 'AM'
+    const hour12 = h % 12 === 0 ? 12 : h % 12
+    return m ? `${hour12}:${String(m).padStart(2, '0')} ${period}` : `${hour12} ${period}`
   }
 
   const handleBookNow = useCallback(() => {
@@ -246,11 +352,22 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
       return
     }
 
-    const travelersLabel = [
-      adults > 0 && `${adults} ${adults === 1 ? 'adult' : 'adults'}`,
-      children > 0 && `${children} ${children === 1 ? 'child' : 'children'}`,
-      infants > 0 && `${infants} ${infants === 1 ? 'infant' : 'infants'}`,
-    ].filter(Boolean).join(', ')
+    const selectedDay = selectedDate ? getSelectedDayInfo(selectedDate) : undefined
+    const daySlots = selectedDay?.timeSlots?.length ? selectedDay.timeSlots : []
+    if (daySlots.length > 0 && !selectedTime) {
+      toast.error(t('booking.selectTimeFirst', 'Please select a time slot'))
+      return
+    }
+
+    const travelersLabel = isPerGroup
+      ? `${groupHeadcount} ${groupHeadcount === 1 ? 'traveler' : 'travelers'}`
+      : travelerGroups
+          .filter((g) => (categoryCounts[categoryKey(g.label)] ?? 0) > 0)
+          .map((g) => {
+            const count = categoryCounts[categoryKey(g.label)]
+            return `${count} ${g.label.toLowerCase()}${count === 1 ? '' : 's'}`
+          })
+          .join(', ')
 
     const dateLabel = selectedDate.toLocaleDateString('en-US', {
       weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
@@ -270,12 +387,13 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
         reviews: tour.reviewCount,
         date: dateLabel,
         dateISO,
-        time: '9:00 AM',
+        time: selectedTime ? formatSlotTime(selectedTime) : '9:00 AM',
+        duration: tour.duration,
         travelers: travelersLabel,
-        travelersCount: totalTravelers,
-        adults,
-        children,
-        infants,
+        travelersCount: travelersPayload,
+        adults: travelersPayload.adults || 0,
+        children: travelersPayload.children || 0,
+        infants: travelersPayload.infants || 0,
         price: isPerGroup ? (matchingGroupBand?.price ?? totalPrice) : totalPrice,
         cancellation: tour.cancellationPolicy || 'Free cancellation up to 24 hours before',
         language: tour.languages?.[0] || 'English',
@@ -296,11 +414,22 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
     setIsBooking(true)
     // Spinner on the button for a moment, then reveal the travel transition.
     setTimeout(() => setShowTransition(true), 1100)
-  }, [selectedDate, t, tour, adults, children, infants, totalPrice, isPerGroup, matchingGroupBand])
+  }, [selectedDate, selectedTime, t, tour, isPerGroup, groupHeadcount, travelerGroups, categoryCounts, travelersPayload, matchingGroupBand, totalPrice, getSelectedDayInfo])
 
   const handleTransitionDone = useCallback(() => {
     navigate('/booking', { state: pendingNavState.current })
   }, [navigate])
+
+  const handleUpdatePricing = useCallback(() => {
+    if (!selectedDate) {
+      toast.error(t('booking.selectDateFirst'))
+      return
+    }
+    // Close the picker so the recalculation spinner on the price/total is visible.
+    setShowGuestSelector(false)
+    setPriceUpdated(false)
+    doFetchPricing(selectedDate.toISOString().slice(0, 10), selectedTime)
+  }, [selectedDate, selectedTime, doFetchPricing, t])
 
   const handleApplyPromo = () => {
     const code = promoCode.trim()
@@ -328,25 +457,51 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
     return `${baseLabel} · ${t('booking.groupOf', 'Group of {{range}}', { range: tierRangeLabel(tier) })}`
   }
 
+  const anyTieredPricing = !isPerGroup && travelerGroups.some((g) => hasTieredPricing(g))
+
   const travelerOptions = isPerGroup
     ? [
         {
           label: t('booking.travelers'),
           age: matchingGroupBand ? activeGroupBandLabel : t('booking.perGroupHeadcount', 'Group headcount'),
           price: matchingGroupBand ? formatPrice(matchingGroupBand.price) : '',
-          count: adults,
-          key: 'adults' as const,
+          lineTotal: matchingGroupBand?.price ?? 0,
+          count: groupHeadcount,
+          key: 'travelers' as const,
         },
       ]
-    : [
-        { label: t('booking.adults'), age: withTierNote(ageRangeLabel(adultGroup) || t('booking.ageAdult'), adultActiveTier), price: formatPrice(adultPrice), count: adults, key: 'adults' as const },
-        { label: t('booking.children'), age: withTierNote(ageRangeLabel(childGroup) || t('booking.ageChild'), childActiveTier), price: childPrice > 0 ? formatPrice(childPrice) : t('booking.free'), count: children, key: 'children' as const },
-        { label: t('booking.infants'), age: withTierNote(ageRangeLabel(infantGroup) || t('booking.ageInfant'), infantActiveTier), price: infantPrice > 0 ? formatPrice(infantPrice) : t('booking.free'), count: infants, key: 'infants' as const },
-      ]
+    : travelerGroups.map((g) => {
+        const key = categoryKey(g.label)
+        const count = categoryCounts[key] ?? 0
+        const unit = unitPriceFor(g)
+        return {
+          label: g.label,
+          age: withTierNote(ageRangeLabel(g) || '', activeTierFor(g)),
+          price: unit > 0 ? formatPrice(unit) : t('booking.free'),
+          lineTotal: unit * count,
+          count,
+          key,
+        }
+      })
 
   const selectedDateLabel = selectedDate
     ? selectedDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
     : t('tourDetail.selectDate')
+
+  const selectedDayInfo = getSelectedDayInfo(selectedDate)
+  const selectedDaySlots = selectedDayInfo?.timeSlots?.length ? selectedDayInfo.timeSlots : []
+
+  // Warn when the chosen traveler count exceeds what's left on the selected day.
+  const remainingWarning = (() => {
+    const info = getSelectedDayInfo(selectedDate)
+    if (!info || info.capacityUnit !== 'people') return null
+    const remaining = info.remaining
+    if (remaining == null || totalTravelers <= remaining) return null
+    return t('booking.tooManyTravelers', 'Only {{count}} spot(s) left on this date', { count: Math.max(0, remaining) })
+  })()
+
+  // Authoritative figure from the API when available; client mirror before that.
+  const displayTotal = pricingResult ? pricingResult.total : clientSubtotal
 
   return (
     <div className="booking-widget-desktop">
@@ -367,11 +522,9 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
               <>
                 <span className="booking-price-from">{t('common.from')}</span>
                 <span className="booking-price-amount">
-                  {hasPricing && adultPrice > 0
-                    ? `${currency.symbol}${Math.round(convertPrice(adultPrice))}`
-                    : pricingLoading
-                      ? '...'
-                      : `${currency.symbol}${Math.round(convertPrice(tour.price))}`}
+                  {hasPricing && adultGroup && unitPriceFor(adultGroup) > 0
+                    ? `${currency.symbol}${Math.round(convertPrice(unitPriceFor(adultGroup)))}`
+                    : `${currency.symbol}${Math.round(convertPrice(tour.price))}`}
                 </span>
                 <span className="booking-price-per">{t('tourDetail.perPerson')}</span>
               </>
@@ -411,17 +564,71 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
                   <CalendarPicker
                     isOpen={showCalendar}
                     onClose={() => setShowCalendar(false)}
-                    onDateSelect={(date) => setSelectedDate(date)}
+                    onDateSelect={(date) => {
+                      setSelectedDate(date)
+                      setSelectedTime(null)
+                    }}
                     selectedDate={selectedDate}
                     getAvailability={(date) => {
                       const avail = propGetAvailability ? propGetAvailability(date) : 'available'
                       return avail
                     }}
+                    getDayCounts={(date) => {
+                      if (!getDayInfo) return null
+                      const info = getDayInfo(date)
+                      if (!info) return null
+                      return {
+                        remaining: info.remaining,
+                        capacity: info.capacity,
+                        capacityUnit: info.capacityUnit,
+                      }
+                    }}
+                    loading={availabilityLoading}
+                    onMonthChange={onMonthChange}
                   />
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
+
+          {/* Time slot selector — shown only when the selected day has fixed slots */}
+          {selectedDate && selectedDaySlots.length > 0 && (
+            <div className="booking-field">
+              <label className="booking-label">
+                <ClockIcon size={18} />
+                {t('booking.selectTime', 'Select time')}
+              </label>
+              <div className="booking-slot-grid">
+                {selectedDaySlots.map((slot) => {
+                  const slotFull = slot.remaining <= 0
+                  const isSelectedSlot = selectedTime === slot.time
+                  return (
+                    <button
+                      key={slot.time}
+                      type="button"
+                      disabled={slotFull}
+                      onClick={() => setSelectedTime(slot.time)}
+                      className={`booking-slot-chip${isSelectedSlot ? ' booking-slot-chip-active' : ''}`}
+                    >
+                      <span className="booking-slot-time">{formatSlotTime(slot.time)}</span>
+                      <span className="booking-slot-cap">
+                        {slotFull
+                          ? t('booking.soldOut', 'Sold out')
+                          : selectedDayInfo?.capacityUnit === 'groups'
+                            ? `${Math.max(0, slot.groupsRemaining ?? 0)} ${t('booking.groupSlots', 'group slots')}`
+                            : `${Math.max(0, slot.remaining)} ${t('booking.spotsLeft', 'spots left')}`}
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+              {selectedDayInfo?.capacityUnit === 'groups' && selectedDayInfo.maxGroupSize != null && (
+                <p className="booking-slot-note">
+                  {t('booking.groupBookingsNote', 'Group bookings · up to {{max}} travelers per group', { max: selectedDayInfo.maxGroupSize })}
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Guest selector */}
           <div className="booking-field" ref={guestRef}>
@@ -484,17 +691,32 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
                     <p className="booking-tier-hint">{t('booking.tierPricingHint', 'Per-person prices below depend on your total number of travelers.')}</p>
                   )}
                   {travelerOptions.map((opt) => {
-                    const canDecrement = opt.key === 'adults'
-                      ? (isPerGroup ? opt.count > groupMinHeadcount : opt.count > 1)
-                      : opt.count > 0
-                    const canIncrement = opt.key === 'adults'
-                      ? (isPerGroup ? opt.count < groupMaxHeadcount : opt.count < 50)
-                      : opt.count < 9
+                    const category = travelerGroups.find((g) => categoryKey(g.label) === opt.key)
+                    const canDecrement = isPerGroup
+                      ? groupHeadcount > groupMinHeadcount
+                      : (opt.key === 'adult'
+                          ? opt.count > 1
+                          : opt.count > 0)
+                    const canIncrement = isPerGroup
+                      ? groupHeadcount < groupMaxHeadcount
+                      : (opt.key === 'adult' ? opt.count < 50 : opt.count < 9)
+                    const addBlocked = !isPerGroup && !canAddCount(opt.key)
                     return (
                       <div key={opt.key} className="guest-type">
                         <div className="guest-type-info">
                           <span className="guest-type-label">{opt.label}</span>
                           <span className="guest-type-desc">{opt.age}</span>
+                          {category?.notAllowed && (
+                            <span className="guest-type-desc">{t('booking.notAllowed', 'Not permitted on this tour')}</span>
+                          )}
+                        </div>
+                        <div className="guest-type-price">
+                          <span className="guest-type-unit">{opt.price}</span>
+                          {!isPerGroup && opt.count > 0 && (
+                            <span className="guest-type-line">
+                              {t('booking.perPersonShort', 'per person')}
+                            </span>
+                          )}
                         </div>
                         <div className="guest-type-controls">
                           <button
@@ -509,7 +731,7 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
                           <button
                             className="guest-btn"
                             onClick={() => increment(opt.key)}
-                            disabled={!canIncrement}
+                            disabled={!canIncrement || addBlocked}
                             aria-label={`Add one ${opt.label}`}
                           >
                             <Plus size={16} />
@@ -518,29 +740,75 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
                       </div>
                     )
                   })}
+
+                  {mixBounds.min != null && mixBounds.max != null && (
+                    <p className="booking-slot-note">
+                      {t('booking.bookableRange', 'Bookable by {{min}}–{{max}} travelers', { min: mixBounds.min, max: mixBounds.max })}
+                    </p>
+                  )}
+                  {mixIssues.length > 0 && (
+                    <p className="booking-slot-warning">{mixIssues[0].message}</p>
+                  )}
+
+                  <button
+                    type="button"
+                    className="booking-update-btn"
+                    onClick={handleUpdatePricing}
+                    disabled={!selectedDate || pricingLoading}
+                  >
+                    {pricingLoading ? (
+                      <span className="booking-btn-loader">
+                        <svg className="booking-spinner" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <circle cx="12" cy="12" r="10" strokeDasharray="31.4 31.4" strokeLinecap="round" />
+                        </svg>
+                        {t('booking.checking')}
+                      </span>
+                    ) : (
+                      <>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <polyline points="23 4 23 10 17 10" />
+                          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+                        </svg>
+                        {t('booking.updatePrice', 'Update')}
+                      </>
+                    )}
+                  </button>
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
 
-          {/* Total */}
+          {/* Transparent price summary — always visible so the spinner is easy to see */}
           {(isPerGroup ? matchingGroupBand != null : tour.price > 0) && totalTravelers > 0 && (
-            <div className="booking-total">
-              <span>{isPerGroup ? t('booking.groupTotal', 'Group total') : t('booking.total', { count: totalTravelers })}</span>
-              <span className="booking-total-amount">
-                {isPerGroup
-                  ? (matchingGroupBand ? `${currency.symbol}${Math.round(convertPrice(matchingGroupBand.price))}` : pricingLoading ? '...' : '')
-                  : hasPricing
-                    ? `${currency.symbol}${Math.round(convertPrice(totalPrice))}`
-                    : pricingLoading
-                      ? '...'
-                      : `${currency.symbol}${Math.round(convertPrice(tour.price * totalTravelers))}`}
-              </span>
+            <div className="booking-summary">
+              <div className="booking-total">
+                <span>{isPerGroup ? t('booking.groupTotal', 'Group total') : t('booking.totalLabel', 'Total')}</span>
+                <span className="booking-total-amount">
+                  {pricingLoading ? (
+                    <span className="booking-price-spinner">
+                      <svg className="booking-spinner" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <circle cx="12" cy="12" r="10" strokeDasharray="31.4 31.4" strokeLinecap="round" />
+                      </svg>
+                    </span>
+                  ) : `${currency.symbol}${Math.round(convertPrice(displayTotal))}`}
+                </span>
+              </div>
+              {priceUpdated && !pricingLoading && (
+                <p className="booking-slot-note">{t('booking.priceUpdated', 'Price updated to reflect the latest availability')}</p>
+              )}
             </div>
           )}
 
           {isPerGroup && groupSizeBands.length === 0 && (
             <p className="booking-group-unavailable">{t('booking.groupPricingUnavailable')}</p>
+          )}
+
+          {remainingWarning && (
+            <p className="booking-slot-warning">{remainingWarning}</p>
+          )}
+
+          {availabilityLoading && selectedDate && (
+            <p className="booking-slot-note">{t('booking.checkingAvailability', 'Checking availability…')}</p>
           )}
 
           {/* Promo code */}
@@ -574,7 +842,7 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
           <Button
             className="booking-submit-btn"
             onClick={handleBookNow}
-            disabled={isBooking}
+            disabled={isBooking || (!!selectedDate && selectedDaySlots.length > 0 && !selectedTime) || (!isPerGroup && mixIssues.length > 0)}
           >
             {isBooking ? (
               <span className="booking-btn-loader">
