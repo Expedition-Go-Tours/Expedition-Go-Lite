@@ -394,7 +394,7 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
         adults: travelersPayload.adults || 0,
         children: travelersPayload.children || 0,
         infants: travelersPayload.infants || 0,
-        price: isPerGroup ? (matchingGroupBand?.price ?? totalPrice) : totalPrice,
+        price: isPerGroup ? (matchingGroupBand?.price ?? clientSubtotal) : (pricingResult ? totalPrice : clientSubtotal),
         cancellation: tour.cancellationPolicy || 'Free cancellation up to 24 hours before',
         language: tour.languages?.[0] || 'English',
       },
@@ -414,7 +414,7 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
     setIsBooking(true)
     // Spinner on the button for a moment, then reveal the travel transition.
     setTimeout(() => setShowTransition(true), 1100)
-  }, [selectedDate, selectedTime, t, tour, isPerGroup, groupHeadcount, travelerGroups, categoryCounts, travelersPayload, matchingGroupBand, totalPrice, getSelectedDayInfo])
+  }, [selectedDate, selectedTime, t, tour, isPerGroup, groupHeadcount, travelerGroups, categoryCounts, travelersPayload, matchingGroupBand, totalPrice, clientSubtotal, pricingResult, getSelectedDayInfo])
 
   const handleTransitionDone = useCallback(() => {
     navigate('/booking', { state: pendingNavState.current })
