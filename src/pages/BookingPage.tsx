@@ -18,6 +18,7 @@ import type { CardElementHandle } from '../components/booking/CardField'
 import { getStripePromise } from '../lib/stripe'
 import { fetchWithAuth } from '../lib/api'
 import { useCreateBooking } from '../hooks/useExpeditionBookings'
+import { buildE164Phone, isValidPhoneInput } from '../lib/phone'
 
 /* ─── Constants ─── */
 
@@ -309,7 +310,11 @@ function ContactDetailsStep({
                   onBlur={() => handleBlur('phone')}
                   placeholder="e.g. 024 123 4567"
                   valid={valid.phone}
-                  error={error('phone', 'phone number')}
+                  error={
+                    touched.phone && !valid.phone
+                      ? 'Enter a valid phone number for the selected country, e.g. 024 123 4567'
+                      : undefined
+                  }
                 />
               </div>
             </div>
@@ -775,7 +780,7 @@ function BookingSidebar({
   onChangeClick: () => void
   discount: number
   finalPrice: number
-  contact: { firstName: string; lastName: string; email: string; phone: string }
+  contact: { firstName: string; lastName: string; email: string; countryCode: string; phone: string }
   activity: { leadFirstName: string; leadLastName: string }
   step: number
 }) {
@@ -850,7 +855,7 @@ function BookingSidebar({
             <div className="text-sm text-slate-600">
               <p className="font-medium text-slate-800">{contact.firstName} {contact.lastName}</p>
               <p className="text-xs text-slate-400">{contact.email}</p>
-              <p className="text-xs text-slate-400">{contact.phone}</p>
+              <p className="text-xs text-slate-400">{buildE164Phone(contact.countryCode, contact.phone) ?? contact.phone}</p>
             </div>
           </div>
         </motion.div>
@@ -1009,9 +1014,9 @@ export default function BookingPage() {
     firstName: contact.firstName.trim().length > 1,
     lastName: contact.lastName.trim().length > 1,
     email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email),
-    phone: contact.phone.trim().length >= 7 && contact.phone.trim().length <= 20,
+    phone: isValidPhoneInput(contact.countryCode, contact.phone),
     all: contact.firstName.trim().length > 1 && contact.lastName.trim().length > 1 &&
-      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email) && contact.phone.trim().length >= 7,
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email) && isValidPhoneInput(contact.countryCode, contact.phone),
   }), [contact])
 
   const activityValid = useMemo(() => ({
@@ -1155,6 +1160,11 @@ export default function BookingPage() {
 
     setIsBooking(true)
     try {
+      const phoneNumber = buildE164Phone(contact.countryCode, contact.phone)
+      if (!phoneNumber) {
+        toast.error('Please enter a valid international phone number, e.g. +233 24 123 4567.')
+        return
+      }
       const fullName = `${activity.leadFirstName} ${activity.leadLastName}`.trim() || `${contact.firstName} ${contact.lastName}`
       const detailsName = fullName || undefined
       const details = detailsName ? [{ name: detailsName, age: 30, ageGroup: 'adult' }] : []
@@ -1166,7 +1176,7 @@ export default function BookingPage() {
           adults: editableTour.adults,
           children: editableTour.children,
           infants: editableTour.infants,
-          phoneNumber: contact.phone,
+          phoneNumber,
           location: '',
           details,
         },
@@ -1287,7 +1297,7 @@ export default function BookingPage() {
                     onChangeClick={() => setIsChangeModalOpen(true)}
                     discount={discount}
                     finalPrice={finalPrice}
-                    contact={{ firstName: contact.firstName, lastName: contact.lastName, email: contact.email, phone: contact.phone }}
+                    contact={{ firstName: contact.firstName, lastName: contact.lastName, email: contact.email, countryCode: contact.countryCode, phone: contact.phone }}
                     activity={activity}
                     step={step}
                   />
