@@ -115,12 +115,27 @@ export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate, ge
       const isToday = !isPast && date.toDateString() === today.toDateString()
       const availability: DayAvailabilityStatus = isPast ? 'past' : (getAvailability ? getAvailability(date) : 'available')
       const counts = getDayCounts ? getDayCounts(date) : null
-      const hasCounts = !isPast && counts != null && counts.remaining != null && counts.capacity != null && counts.remaining > 0 && (availability === 'available' || availability === 'limited')
+      // The backend's aggregated status can lag real bookings (a partially
+      // sold-out date may still read "available"). Derive the display status
+      // from the actual remaining counts so dates with limited spots render
+      // amber and sold-out days red, instead of green.
+      const displayAvailability: DayAvailabilityStatus =
+        availability !== 'available'
+          ? availability
+          : counts != null && counts.remaining != null && counts.capacity != null && counts.capacity > 0
+            ? counts.remaining <= 0
+              ? 'full'
+              : counts.remaining < counts.capacity
+                ? 'limited'
+                : 'available'
+            : 'available'
+      const hasCounts = !isPast && counts != null && counts.remaining != null && counts.capacity != null && counts.remaining > 0 && (displayAvailability === 'available' || displayAvailability === 'limited')
       const countUnit = counts?.capacityUnit === 'groups' ? 'groups' : 'spots'
-      const isFull = !isPast && availability === 'full'
-      const isBlocked = !isPast && availability === 'blocked'
-      const isSelectable = !isPast && !isFull && !isBlocked
-      const isSelected = day === selectedDay && isSelectable
+      const isFull = !isPast && displayAvailability === 'full'
+      const isBlocked = !isPast && displayAvailability === 'blocked'
+      // Show the chosen day with its status color even when it is full/blocked
+      // (e.g. the date became sold out after it was picked).
+      const isSelected = day === selectedDay && !isPast
       // No data for this day yet (availability still fetching) — show a
       // neutral pulse instead of a misleading "available" fallback.
       const isPending = loading && counts == null && !isPast
@@ -146,13 +161,18 @@ export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate, ge
           </div>
         )
       } else if (isFull) {
-        // Sold out — soft red pill, not selectable
+        // Sold out — soft red pill, not selectable (solid red when it is the
+        // already-chosen date).
         days.push(
           <div
             key={`day-${day}`}
             title="Sold out"
             aria-disabled="true"
-            className="w-9 h-9 text-[14px] font-medium rounded-full flex items-center justify-center bg-red-50 text-red-400 line-through cursor-not-allowed"
+            className={`w-9 h-9 text-[14px] font-medium rounded-full flex items-center justify-center cursor-not-allowed ${
+              isSelected
+                ? 'bg-gradient-to-b from-[#ef4444] to-[#dc2626] text-white font-semibold shadow-[0_4px_10px_-2px_rgba(239,68,68,0.5)] scale-105 z-10'
+                : 'bg-red-50 text-red-400 line-through'
+            }`}
           >
             {day}
           </div>
@@ -170,7 +190,7 @@ export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate, ge
           </div>
         )
       } else {
-        const title = availability === 'limited'
+        const title = displayAvailability === 'limited'
           ? `Limited availability${hasCounts ? ` · ${counts?.remaining} of ${counts?.capacity} ${countUnit} available` : ''}`
           : hasCounts
             ? `${counts?.remaining} of ${counts?.capacity} ${countUnit} available`
@@ -182,8 +202,10 @@ export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate, ge
             title={title}
             className={`relative w-9 h-9 text-[14px] font-medium rounded-full flex items-center justify-center transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#179237]/40 active:scale-95 ${
               isSelected
-                ? 'bg-gradient-to-b from-[#1a9e3d] to-[#147a2e] text-white font-semibold shadow-[0_4px_10px_-2px_rgba(23,146,55,0.5)] scale-105 z-10'
-                : availability === 'limited'
+                ? displayAvailability === 'limited'
+                  ? 'bg-gradient-to-b from-[#f59e0b] to-[#d97706] text-white font-semibold shadow-[0_4px_10px_-2px_rgba(245,158,11,0.5)] scale-105 z-10'
+                  : 'bg-gradient-to-b from-[#1a9e3d] to-[#147a2e] text-white font-semibold shadow-[0_4px_10px_-2px_rgba(23,146,55,0.5)] scale-105 z-10'
+                : displayAvailability === 'limited'
                   ? 'text-black hover:bg-amber-400/10'
                   : 'text-black hover:bg-[#179237]/10'
             } ${isToday && !isSelected ? 'ring-1 ring-inset ring-[#179237]/50 font-semibold' : ''}`}
@@ -193,7 +215,7 @@ export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate, ge
               hasCounts ? (
                 <span
                   className={`absolute bottom-[1px] left-1/2 -translate-x-1/2 text-[8px] font-bold leading-none tracking-tight whitespace-nowrap pointer-events-none ${
-                    availability === 'limited' ? 'text-amber-500' : 'text-[#179237]'
+                    displayAvailability === 'limited' ? 'text-amber-500' : 'text-[#179237]'
                   }`}
                 >
                   {counts?.remaining}/{counts?.capacity}
@@ -201,7 +223,7 @@ export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate, ge
               ) : (
                 <span
                   className={`absolute bottom-[3px] left-1/2 -translate-x-1/2 w-[5px] h-[5px] rounded-full ${
-                    availability === 'limited' ? 'bg-amber-400' : 'bg-[#179237]'
+                    displayAvailability === 'limited' ? 'bg-amber-400' : 'bg-[#179237]'
                   }`}
                 />
               )

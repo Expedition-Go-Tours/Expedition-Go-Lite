@@ -123,6 +123,7 @@ interface ExpeditionTourRecord {
     difficulty?: string | null
     cancellationPolicy?: string | null
     pickupIncluded?: boolean | null
+    accommodationIncluded?: boolean | null
     supplierName: string | null
     supplierPhoto: string | null
     bookingFlow: 'DIRECT' | 'EXTERNAL'
@@ -151,6 +152,8 @@ export interface TourCardData {
   difficulty?: string
   cancellationPolicy?: string
   pickupIncluded?: boolean
+  /** Whether the supplier offers overnight accommodation (categorization.accommodationIncluded). */
+  accommodationIncluded?: boolean
   /** Numeric equivalents for client-side filtering (All Tours page). */
   durationMinutes?: number | null
   priceValue?: number | null
@@ -606,6 +609,27 @@ function extractIsPrivateActivity(rawTour: any): boolean {
   return !!parseProductContent(rawTour)?.isPrivateActivity
 }
 
+function parseCategorization(rawTour: any): any {
+  if (!rawTour) return {}
+  try {
+    return typeof rawTour.categorization === 'string'
+      ? JSON.parse(rawTour.categorization)
+      : (rawTour.categorization || {})
+  } catch {
+    return {}
+  }
+}
+
+/**
+ * Whether the supplier offers overnight accommodation with the tour. Sourced
+ * from categorization.accommodationIncluded — set via the "Is accommodation
+ * included?" toggle in Step 02 of the supplier product builder (shown for
+ * tours 24 hours or longer). Tours where it was never answered read as false.
+ */
+function extractAccommodationIncluded(rawTour: any): boolean {
+  return !!parseCategorization(rawTour)?.accommodationIncluded
+}
+
 interface MealInfo {
   type: string
   format: string
@@ -725,6 +749,9 @@ function mapToListing(tour: ExpeditionTourRecord['tour']): TourCardData {
     difficulty: extractDifficultyFromTour(tour) || undefined,
     cancellationPolicy: extractCancellationFromTour(tour) || undefined,
     pickupIncluded: tour.pickupIncluded ?? (tour.bookingAndTickets?.pickupAvailable ?? tour.bookingAndTickets?.pickupProvided) ?? undefined,
+    // Curated records carry the enriched backfill (tour.accommodationIncluded);
+    // raw records (e.g. a direct /tours fetch) read the categorization blob.
+    accommodationIncluded: tour.accommodationIncluded === true || extractAccommodationIncluded(tour),
     durationMinutes: effectiveDuration ?? tour.durationMinutes ?? null,
     priceValue: effectivePrice != null ? effectivePrice : null,
     ratingValue: tour.averageRating != null ? Number(tour.averageRating) : null,
@@ -772,6 +799,7 @@ async function enrichExpeditionRecords(records: ExpeditionTourRecord[]): Promise
     const pickupMap = new Map<string, boolean | undefined>()
     const languagesMap = new Map<string, string[]>()
     const categoryMap = new Map<string, string | null>()
+    const accommodationMap = new Map<string, boolean>()
     for (const t of allTours) {
       const p = extractStartingPriceFromRaw(t.schedulesAndPricing)
       if (p != null) priceMap.set(t.id, p)
@@ -785,6 +813,7 @@ async function enrichExpeditionRecords(records: ExpeditionTourRecord[]): Promise
       // per-option merge extractLanguagesFromTour() returns.
       languagesMap.set(t.id, extractContentLanguage(t))
       categoryMap.set(t.id, t.category ?? null)
+      if (extractAccommodationIncluded(t)) accommodationMap.set(t.id, true)
     }
     for (const r of records) {
       // The curated /expedition/tours records carry a stored startingPrice
@@ -815,6 +844,9 @@ async function enrichExpeditionRecords(records: ExpeditionTourRecord[]): Promise
       if (r.tour.pickupIncluded == null) {
         const p = pickupMap.get(r.tour.id)
         if (p != null) r.tour.pickupIncluded = p
+      }
+      if (r.tour.accommodationIncluded == null) {
+        r.tour.accommodationIncluded = accommodationMap.get(r.tour.id) ?? false
       }
       if (!r.tour.languages?.length) {
         const fallbackLanguages = languagesMap.get(r.tour.id)
@@ -964,6 +996,11 @@ export interface TourDetailData extends Omit<TourDetail, 'guide' | 'contact' | '
    * will read false for virtually all tours until that control is added.
    */
   isPrivateActivity?: boolean
+  /**
+   * Whether the supplier offers overnight accommodation. Sourced from
+   * categorization.accommodationIncluded (Step 02 of the product builder).
+   */
+  accommodationIncluded?: boolean
   guide?: TourDetail['guide']
   contact?: TourDetail['contact']
   pricingModel?: TourDetail['pricingModel']
@@ -1063,6 +1100,7 @@ function buildTourDetailFromRawTour(rawTour: any): TourDetailData {
     guideMaterials: extractGuideMaterials(rawTour),
     petFriendly: extractPetFriendly(rawTour),
     isPrivateActivity: extractIsPrivateActivity(rawTour),
+    accommodationIncluded: extractAccommodationIncluded(rawTour),
     pricingModel: extractPricingModel(rawTour),
     pricingApproach: extractPricingApproach(rawTour),
     uniformPrice: extractUniformPrice(rawTour),
@@ -1152,6 +1190,7 @@ export function useExpeditionTour(slug: string | undefined) {
             tour.guideMaterials = extractGuideMaterials(rawTour)
             tour.petFriendly = extractPetFriendly(rawTour)
             tour.isPrivateActivity = extractIsPrivateActivity(rawTour)
+            tour.accommodationIncluded = extractAccommodationIncluded(rawTour)
             // Re-derive the cancellation policy from the raw tour's
             // bookingAndTickets.cancellationPolicy (Step 17 in the supplier
             // builder: "Standard" vs "All sales final") whenever it can be
@@ -1315,6 +1354,7 @@ export function useExpeditionTour(slug: string | undefined) {
         guideMaterials: tour.guideMaterials || undefined,
         petFriendly: !!tour.petFriendly,
         isPrivateActivity: !!tour.isPrivateActivity,
+        accommodationIncluded: !!tour.accommodationIncluded,
         pricingModel,
         pricingApproach,
         uniformPrice,
@@ -1351,6 +1391,7 @@ export function mapRawTourToListing(t: any): TourCardData {
     difficulty: extractDifficultyFromTour(t) || undefined,
     cancellationPolicy: extractCancellationFromTour(t) || undefined,
     pickupIncluded: t.pickupIncluded ?? undefined,
+    accommodationIncluded: extractAccommodationIncluded(t),
   }
 }
 

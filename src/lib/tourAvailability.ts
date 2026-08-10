@@ -28,7 +28,7 @@ export interface DayAvailabilityInfo {
   remaining: number
   baseCapacity: number
   overrideCapacity: number | null
-  overrideStatus: string | null
+  overrideStatus: DayAvailability | null
   hasOverride: boolean
   capacityUnit: 'people' | 'groups'
   groupsPerSlot: number | null

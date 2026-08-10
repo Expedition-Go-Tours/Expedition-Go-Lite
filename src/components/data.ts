@@ -13,6 +13,8 @@ export interface Tour {
   difficulty?: string
   cancellationPolicy?: string
   pickupIncluded?: boolean
+  /** Whether the supplier offers overnight accommodation (categorization.accommodationIncluded). */
+  accommodationIncluded?: boolean
   source?: 'expedition-go' | 'travio-africa'
   externalUrl?: string
   /** Real backend tour ID, present only for tours fetched from the API (not the static mock lists below). Enables wishlist backend sync. */

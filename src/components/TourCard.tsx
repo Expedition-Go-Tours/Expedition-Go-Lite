@@ -1,6 +1,6 @@
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
-import { Car, Languages as LanguagesIcon, ShieldCheck, Ban, TrendingUp } from 'lucide-react'
+import { Car, Languages as LanguagesIcon, ShieldCheck, Ban, TrendingUp, BedDouble } from 'lucide-react'
 import i18n from '../i18n/config'
 import './TourCard.css'
 import { parsePrice, getTourSlug, type Tour } from './data'
@@ -13,7 +13,7 @@ interface TourCardProps extends Tour {
   slug?: string
 }
 
-export default function TourCard({ id, title, duration, features, price, rating, reviews, location, image, discount, difficulty, cancellationPolicy, pickupIncluded, category, languages, source, externalUrl, slug }: TourCardProps) {
+export default function TourCard({ id, title, duration, features, price, rating, reviews, location, image, discount, difficulty, cancellationPolicy, pickupIncluded, accommodationIncluded, category, languages, source, externalUrl, slug }: TourCardProps) {
   const { t } = useTranslation()
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist()
   const item = toWishlistItem({ id, title, duration, features, price, rating: String(rating), reviews, location, image, source, externalUrl } as Tour)
@@ -98,6 +98,12 @@ export default function TourCard({ id, title, duration, features, price, rating,
             <span className="tour-card-badge tour-card-badge-pickup">
               <Car size={12} strokeWidth={2.2} />
               Pickup included
+            </span>
+          )}
+          {accommodationIncluded && (
+            <span className="tour-card-badge tour-card-badge-accommodation">
+              <BedDouble size={12} strokeWidth={2.2} />
+              Accommodation included
             </span>
           )}
           {languageLabel && (

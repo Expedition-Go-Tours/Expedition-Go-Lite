@@ -73,7 +73,7 @@ function mapDay(raw: RawAvailabilityDay): DayAvailabilityInfo {
     remaining: raw.remaining,
     baseCapacity: raw.baseCapacity,
     overrideCapacity: raw.overrideCapacity ?? null,
-    overrideStatus: raw.overrideStatus,
+    overrideStatus: raw.overrideStatus ? mapDayStatus(raw.overrideStatus as RawAvailabilityDay['status']) : null,
     hasOverride: raw.hasOverride,
     capacityUnit,
     groupsPerSlot: raw.groupsPerSlot ?? null,

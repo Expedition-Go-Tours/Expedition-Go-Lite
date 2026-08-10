@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import {
   CalendarCheck, Clock, UserCheck, Bus, Gauge,
   Globe, Utensils, CupSoda, PawPrint, Accessibility, User,
-  Wifi, Users,
+  Wifi, Users, BedDouble,
 } from 'lucide-react'
 import Footer from '../../components/Footer'
 import { useContinuePlanning, toContinuePlanningItem } from '../../context/ContinuePlanningContext'
@@ -89,7 +89,9 @@ export default function TourDetailPage() {
     const map = new Map<string, DayAvailability>()
     if (availabilityCalendar) {
       for (const day of availabilityCalendar) {
-        map.set(day.date, day.status)
+        // Honor the supplier's explicit per-date override (e.g. LIMITED) even
+        // when the aggregated status reads "available".
+        map.set(day.date, day.hasOverride && day.overrideStatus ? day.overrideStatus : day.status)
       }
     }
     return map
@@ -627,12 +629,29 @@ export default function TourDetailPage() {
           </>
         ),
       },
+
+      // 13. Accommodation included — sourced from
+      // categorization.accommodationIncluded (Step 02 of the supplier
+      // product builder, "Is accommodation included?"). Always shown with a
+      // red "No" when the supplier hasn't offered it.
+      {
+        icon: BedDouble,
+        title: t('tourDetail.accommodationIncluded'),
+        desc: null,
+        renderValue: () => (
+          <>
+            <p className="tour-quick-fact-title">{t('tourDetail.accommodationIncluded')}</p>
+            {yesNoBadge(!!tour?.accommodationIncluded, t('tourDetail.yesLabel'), t('tourDetail.noLabel'))}
+          </>
+        ),
+      },
     ]
   }, [
     t, tour?.difficulty, tour?.duration, tour?.languages, tour?.pickupIncluded,
     tour?.skipTheLine, tour?.cancellationPolicy, tour?.guideType, tour?.guideMaterials,
     tour?.foodProvided, tour?.drinksIncluded, tour?.meals, tour?.dietaryOptions,
     tour?.petFriendly, tour?.wheelchairAccessible, tour?.isPrivateActivity,
+    tour?.accommodationIncluded,
   ])
 
   // Short teaser shown right after the gallery (GetYourGuide-style), no heading.

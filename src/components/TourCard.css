@@ -83,6 +83,12 @@
   border-color: rgba(22, 101, 52, 0.18);
 }
 
+.tour-card-badge-accommodation {
+  color: #6d28d9;
+  background: rgba(124, 58, 237, 0.08);
+  border-color: rgba(124, 58, 237, 0.18);
+}
+
 .tour-card-badge-language {
   color: #1e40af;
   background: rgba(30, 64, 175, 0.07);

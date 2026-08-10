@@ -11,7 +11,7 @@
  */
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion, animate } from 'framer-motion'
+import { motion, AnimatePresence, animate } from 'framer-motion'
 import {
   ClipboardList, BadgeCheck, Wallet, Rocket,
   ShieldCheck, Plane, LifeBuoy,
@@ -296,7 +296,15 @@ export default function SupplierLandingPage({ onOpenAuth }: SupplierLandingPageP
   }
 
   return (
-    <div className="supplier-landing-page">
+    <AnimatePresence>
+      <motion.div
+        key="supplier-landing"
+        className="supplier-landing-page"
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -16 }}
+        transition={{ duration: 0.35, ease: 'easeOut' }}
+      >
       <Navbar onOpenAuth={onOpenAuth} />
 
       {/* Hero */}
@@ -407,6 +415,7 @@ export default function SupplierLandingPage({ onOpenAuth }: SupplierLandingPageP
       </section>
 
       <Footer />
-    </div>
+      </motion.div>
+    </AnimatePresence>
   )
 }
