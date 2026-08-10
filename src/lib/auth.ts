@@ -286,30 +286,6 @@ export function googleOneTapSupported(): boolean {
   return isBackend && Boolean(getGoogleClientId())
 }
 
-let googleScriptPromise: Promise<boolean> | null = null
-
-export function loadGoogleIdentityScript(): Promise<boolean> {
-  if (googleScriptPromise) return googleScriptPromise
-
-  googleScriptPromise = new Promise((resolve) => {
-    if (typeof window === 'undefined') return resolve(false)
-    if (window.google?.accounts?.id) return resolve(true)
-
-    const script = document.createElement('script')
-    script.src = 'https://accounts.google.com/gsi/client'
-    script.async = true
-    script.defer = true
-    script.onload = () => resolve(true)
-    script.onerror = () => {
-      googleScriptPromise = null
-      resolve(false)
-    }
-    document.head.appendChild(script)
-  })
-
-  return googleScriptPromise
-}
-
 export async function signOutUser() {
   if (isBackend) {
     try {

@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { flushSync } from "react-dom";
+import { GoogleOAuthProvider, useGoogleOneTapLogin } from "@react-oauth/google";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import { ImageSlider } from "@/components/ui/image-slider";
@@ -17,7 +18,7 @@ import {
   getAuthReturnTo,
   getGoogleClientId,
   googleOneTapSupported,
-  loadGoogleIdentityScript,
+  getStoredAuthUser,
 } from '../lib/auth'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -80,63 +81,41 @@ function useAuthSuccessRedirect(onAuthSuccess?: () => void) {
 }
 
 /**
- * Google sign-in. When One Tap is configured (VITE_GOOGLE_CLIENT_ID + backend auth),
- * shows the Google One Tap prompt and exchanges the credential for our own tokens
- * via POST /api/auth/google/onetap. Otherwise falls back to the OAuth redirect flow.
+ * Google One Tap. When configured (VITE_GOOGLE_CLIENT_ID + backend auth), this
+ * auto-prompts Google One Tap while the sign-in page is mounted and exchanges the
+ * credential for our own tokens via POST /api/auth/google/onetap. Mirrors the
+ * admin-dashboard's implementation (@react-oauth/google useGoogleOneTapLogin).
  */
+function GoogleOneTapHandler({ successMessage, onAuthSuccess }: { successMessage: string; onAuthSuccess?: () => void }) {
+  const handleAuthSuccess = useAuthSuccessRedirect(onAuthSuccess)
+
+  useGoogleOneTapLogin({
+    onSuccess: async (credentialResponse) => {
+      const credential = credentialResponse?.credential
+      if (!credential) return
+
+      try {
+        await signInWithGoogleOneTap(credential)
+        toast.success(successMessage)
+        handleAuthSuccess()
+      } catch (err: unknown) {
+        toast.error(err instanceof Error ? err.message : 'Google sign in failed')
+      }
+    },
+    onError: () => {},
+    cancel_on_tap_outside: false,
+  })
+
+  return null
+}
+
+/** Google sign-in button. Always uses the OAuth redirect flow; One Tap handles the automatic prompt. */
 function useGoogleSignIn(successMessage: string, onAuthSuccess?: () => void) {
   const [googleLoading, setGoogleLoading] = useState(false)
   const handleAuthSuccess = useAuthSuccessRedirect(onAuthSuccess)
 
-  useEffect(() => {
-    return () => {
-      try {
-        window.google?.accounts?.id?.cancel()
-      } catch {
-        /* ignore */
-      }
-    }
-  }, [])
-
   const handleGoogle = async () => {
     if (!getAuthReturnTo()) setAuthReturnTo('/')
-
-    if (googleOneTapSupported()) {
-      flushSync(() => setGoogleLoading(true))
-      const loaded = await loadGoogleIdentityScript()
-      const accounts = window.google?.accounts?.id
-      if (!loaded || !accounts) {
-        setGoogleLoading(false)
-        toast.error('Unable to load Google sign-in')
-        return
-      }
-
-      accounts.initialize({
-        client_id: getGoogleClientId(),
-        callback: async (response: GoogleOneTapResponse) => {
-          setGoogleLoading(false)
-          if (response?.error) {
-            if (response.error !== 'user_cancel' && response.error !== 'canceled') {
-              toast.error(response.error_description || 'Google sign in failed')
-            }
-            return
-          }
-          if (!response?.credential) return
-
-          try {
-            await signInWithGoogleOneTap(response.credential)
-            toast.success(successMessage)
-            handleAuthSuccess()
-          } catch (err: unknown) {
-            toast.error(err instanceof Error ? err.message : 'Google sign in failed')
-          }
-        },
-      })
-
-      accounts.prompt()
-      setTimeout(() => setGoogleLoading(false), 10000)
-      return
-    }
 
     flushSync(() => setGoogleLoading(true))
     try {
@@ -146,8 +125,8 @@ function useGoogleSignIn(successMessage: string, onAuthSuccess?: () => void) {
 
       toast.success(successMessage)
       handleAuthSuccess()
-    } catch (err: any) {
-      toast.error(err.message || 'Google sign in failed')
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Google sign in failed')
     } finally {
       setGoogleLoading(false)
     }
@@ -201,8 +180,8 @@ function SignInForm({ onSwitchToSignUp, onAuthSuccess }: { onSwitchToSignUp: () 
       await signInWithEmail(email, password)
       toast.success('Signed in successfully')
       handleAuthSuccess()
-    } catch (err: any) {
-      toast.error(err.message || 'Sign in failed')
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Sign in failed')
     } finally {
       setLoading(false)
     }
@@ -279,8 +258,8 @@ function SignUpForm({ onSwitchToSignIn, onAuthSuccess }: { onSwitchToSignIn: () 
       await registerWithEmail(name, email, password)
       toast.success('Account created successfully')
       handleAuthSuccess()
-    } catch (err: any) {
-      toast.error(err.message || 'Registration failed')
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Registration failed')
     } finally {
       setLoading(false)
     }
@@ -346,9 +325,17 @@ export default function AuthForm({ initialMode = "signin", onBack, onAuthSuccess
   const { t } = useTranslation()
   const [mode, setMode] = useState<"signin" | "signup">(initialMode);
 
+  const oneTapEnabled = googleOneTapSupported() && !getStoredAuthUser()
+  const oneTapMessage = mode === "signin" ? "Signed in successfully" : "Signed up successfully"
+
   return (
     <>
       <style>{styles}</style>
+      {oneTapEnabled && (
+        <GoogleOAuthProvider clientId={getGoogleClientId()}>
+          <GoogleOneTapHandler successMessage={oneTapMessage} onAuthSuccess={onAuthSuccess} />
+        </GoogleOAuthProvider>
+      )}
     <div className="min-h-screen w-full flex items-center justify-center p-4 relative">
       <div
         className="absolute inset-0 bg-cover bg-center lg:hidden"
