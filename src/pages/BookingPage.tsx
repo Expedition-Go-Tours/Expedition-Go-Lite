@@ -215,10 +215,10 @@ function StepCard({ children, id }: { children: React.ReactNode; id?: string }) 
 function ContactDetailsStep({
   data, onChange, onNext, valid, step, onNavigate, hasError, disabled,
 }: {
-  data: { firstName: string; lastName: string; email: string; countryCode: string; phone: string }
+  data: { firstName: string; lastName: string; email: string; countryCode: string; phone: string; location: string }
   onChange: (key: string, value: string | boolean) => void
   onNext: () => void
-  valid: { firstName: boolean; lastName: boolean; email: boolean; phone: boolean; all: boolean }
+  valid: { firstName: boolean; lastName: boolean; email: boolean; phone: boolean; location: boolean; all: boolean }
   step: number
   onNavigate: (n: number) => void
   hasError: boolean
@@ -319,6 +319,18 @@ function ContactDetailsStep({
               </div>
             </div>
 
+            <div>
+              <FieldLabel required tooltip="Where should the tour operator pick you up or drop you off? Enter your city or town.">Pickup Location</FieldLabel>
+              <TextInput
+                value={data.location}
+                onChange={(e) => onChange('location', e.target.value)}
+                onBlur={() => handleBlur('location')}
+                placeholder="e.g. Accra, Ghana"
+                valid={valid.location}
+                error={error('location', 'pickup location')}
+              />
+            </div>
+
             {!valid.all && (Object.keys(touched).length > 0 || hasError) && (
               <motion.p
                 initial={{ opacity: 0 }}
@@ -357,6 +369,7 @@ function ContactDetailsStep({
             <p className="text-sm font-semibold text-slate-900">{data.firstName} {data.lastName}</p>
             <p className="text-sm text-slate-400">{data.email}</p>
             <p className="text-sm text-slate-400">{data.countryCode} {data.phone}</p>
+            <p className="text-sm text-slate-400">{data.location}</p>
             {hasError && (
               <p className="pt-1 text-xs font-semibold text-rose-500">There are errors in this step — please review.</p>
             )}
@@ -780,7 +793,7 @@ function BookingSidebar({
   onChangeClick: () => void
   discount: number
   finalPrice: number
-  contact: { firstName: string; lastName: string; email: string; countryCode: string; phone: string }
+  contact: { firstName: string; lastName: string; email: string; countryCode: string; phone: string; location: string }
   activity: { leadFirstName: string; leadLastName: string }
   step: number
 }) {
@@ -856,6 +869,7 @@ function BookingSidebar({
               <p className="font-medium text-slate-800">{contact.firstName} {contact.lastName}</p>
               <p className="text-xs text-slate-400">{contact.email}</p>
               <p className="text-xs text-slate-400">{buildE164Phone(contact.countryCode, contact.phone) ?? contact.phone}</p>
+              {contact.location && <p className="text-xs text-slate-400">{contact.location}</p>}
             </div>
           </div>
         </motion.div>
@@ -960,7 +974,7 @@ export default function BookingPage() {
   const [promoCode, setPromoCode] = useState('')
   const [discount, setDiscount] = useState(0)
 
-  const [contact, setContact] = useState({ firstName: '', lastName: '', email: '', countryCode: '+233', phone: '' })
+  const [contact, setContact] = useState({ firstName: '', lastName: '', email: '', countryCode: '+233', phone: '', location: '' })
   const [activity, setActivity] = useState({ leadFirstName: '', leadLastName: '' })
 
   const [isChangeModalOpen, setIsChangeModalOpen] = useState(false)
@@ -989,7 +1003,7 @@ export default function BookingPage() {
       const saved = localStorage.getItem(STORAGE_KEY)
       if (saved) {
         const draft = JSON.parse(saved)
-        if (draft.contact) setContact(draft.contact)
+        if (draft.contact) setContact((prev) => ({ ...prev, ...draft.contact }))
         if (draft.activity) setActivity(draft.activity)
         if (draft.editableTour) setEditableTour(draft.editableTour)
       }
@@ -1015,8 +1029,10 @@ export default function BookingPage() {
     lastName: contact.lastName.trim().length > 1,
     email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email),
     phone: isValidPhoneInput(contact.countryCode, contact.phone),
+    location: contact.location.trim().length >= 3,
     all: contact.firstName.trim().length > 1 && contact.lastName.trim().length > 1 &&
-      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email) && isValidPhoneInput(contact.countryCode, contact.phone),
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email) && isValidPhoneInput(contact.countryCode, contact.phone) &&
+      contact.location.trim().length >= 3,
   }), [contact])
 
   const activityValid = useMemo(() => ({
@@ -1177,7 +1193,7 @@ export default function BookingPage() {
           children: editableTour.children,
           infants: editableTour.infants,
           phoneNumber,
-          location: '',
+          location: contact.location.trim(),
           details,
         },
         paymentMethodId,
@@ -1297,7 +1313,7 @@ export default function BookingPage() {
                     onChangeClick={() => setIsChangeModalOpen(true)}
                     discount={discount}
                     finalPrice={finalPrice}
-                    contact={{ firstName: contact.firstName, lastName: contact.lastName, email: contact.email, countryCode: contact.countryCode, phone: contact.phone }}
+                    contact={{ firstName: contact.firstName, lastName: contact.lastName, email: contact.email, countryCode: contact.countryCode, phone: contact.phone, location: contact.location }}
                     activity={activity}
                     step={step}
                   />
