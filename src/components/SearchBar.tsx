@@ -61,22 +61,15 @@ export default function SearchBar() {
     }
   }, [navigate])
 
-  const navigateToBestMatch = useCallback(() => {
+  const navigateToSearchPage = useCallback(() => {
     setShowDropdown(false)
-    setInputValue('')
     setHighlightedIndex(-1)
 
-    const q = inputValue.trim().toLowerCase()
+    const q = inputValue.trim()
     if (!q) return
 
-    for (const s of suggestions) {
-      if (s.type === 'tour' && s.slug) {
-        addSearch({ slug: s.slug, title: s.title, type: 'tour' })
-        navigate(`/tour/${s.slug}`)
-        return
-      }
-    }
-  }, [inputValue, suggestions, navigate, addSearch])
+    navigate(`/search?q=${encodeURIComponent(q)}`)
+  }, [inputValue, navigate])
 
   useEffect(() => {
     if (suggestions.length > 0 && inputValue.trim().length >= 2) {
@@ -167,7 +160,7 @@ export default function SearchBar() {
         if (highlightedIndex >= 0 && highlightedIndex < suggestions.length) {
           navigateToSuggestion(suggestions[highlightedIndex])
         } else {
-          navigateToBestMatch()
+          navigateToSearchPage()
         }
         break
       case 'Tab':
@@ -192,7 +185,7 @@ export default function SearchBar() {
     if (highlightedIndex >= 0 && highlightedIndex < suggestions.length) {
       navigateToSuggestion(suggestions[highlightedIndex])
     } else {
-      navigateToBestMatch()
+      navigateToSearchPage()
     }
   }
 
