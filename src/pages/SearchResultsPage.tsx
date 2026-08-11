@@ -44,12 +44,12 @@ export default function SearchResultsPage() {
               <span className="search-results-query">"{query}"</span>
             </>
           ) : (
-            t('search.title', defaultValue: 'Search Tours')
+            t('search.title', { defaultValue: 'Search Tours' })
           )}
         </h1>
         {tours.length > 0 && (
           <span className="search-results-count">
-            {tours.length} {t('search.toursFound', defaultValue: 'tours found')}
+            {tours.length} {t('search.toursFound', { defaultValue: 'tours found' })}
           </span>
         )}
       </div>
@@ -83,14 +83,14 @@ export default function SearchResultsPage() {
         ) : (
           <div className="search-results-empty">
             <Search size={48} strokeWidth={1.5} />
-            <h2>{t('search.noResults', defaultValue: 'No tours found')}</h2>
+            <h2>{t('search.noResults', { defaultValue: 'No tours found' })}</h2>
             <p>
               {t('search.noResultsHint', {
                 defaultValue: 'Try a different search term or browse all tours.',
               })}
             </p>
             <Link to="/tours" className="search-results-browse-btn">
-              {t('search.browseAll', defaultValue: 'Browse All Tours')}
+              {t('search.browseAll', { defaultValue: 'Browse All Tours' })}
             </Link>
           </div>
         )}
