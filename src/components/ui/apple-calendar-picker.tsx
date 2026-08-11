@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion'
 import type { DayAvailability } from '../../lib/tourAvailability'
 
@@ -31,6 +31,9 @@ const WEEKDAYS = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
 const getDaysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
 const getFirstDayOfMonth = (year: number, month: number) => new Date(year, month, 1).getDay();
 
+// "Today" never changes during the calendar's lifetime.
+const TODAY = new Date();
+
 type DayAvailabilityStatus = DayAvailability
 
 interface CalendarPickerProps {
@@ -53,15 +56,20 @@ interface CalendarPickerProps {
 }
 
 export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate, getAvailability, getDayCounts, loading, onMonthChange }: CalendarPickerProps) => {
-  const todayRef = useRef(new Date())
-  const today = todayRef.current
-  const defaultDate = selectedDate || today
+  const defaultDate = selectedDate || TODAY
   const [currentYear, setCurrentYear] = useState(defaultDate.getFullYear())
   const [currentMonth, setCurrentMonth] = useState(defaultDate.getMonth())
   const [selectedDay, setSelectedDay] = useState(defaultDate.getDate())
   const [showDropdown, setShowDropdown] = useState(false)
   const [direction, setDirection] = useState(0)
   const calendarRef = useRef<HTMLDivElement>(null)
+  // Touch/coarse-pointer devices have no hover, so taps drive an
+  // "inspect first, tap again to select" flow (see handleDayPress).
+  const [isTouch] = useState(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false
+    return window.matchMedia('(hover: none), (pointer: coarse)').matches
+  })
+  const [inspectDay, setInspectDay] = useState<number | null>(null)
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -75,6 +83,65 @@ export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate, ge
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [isOpen, onClose])
 
+  // Clear any open tap-to-inspect banner whenever the calendar (re)opens.
+  // React-recommended "adjust state during render" pattern, guarded so it only
+  // runs on the isOpen transition.
+  const [prevOpen, setPrevOpen] = useState(isOpen)
+  if (isOpen && prevOpen !== isOpen) {
+    setPrevOpen(isOpen)
+    setInspectDay(null)
+  }
+
+  const getDayDetails = useCallback((day: number) => {
+    const date = new Date(currentYear, currentMonth, day)
+    const startOfDay = new Date(currentYear, currentMonth, day).getTime()
+    const todayStart = new Date(TODAY.getFullYear(), TODAY.getMonth(), TODAY.getDate()).getTime()
+    const isPast = startOfDay < todayStart
+    const isToday = !isPast && date.toDateString() === TODAY.toDateString()
+    const availability: DayAvailabilityStatus = isPast ? 'past' : (getAvailability ? getAvailability(date) : 'available')
+    const counts = getDayCounts ? getDayCounts(date) : null
+    // The backend's aggregated status can lag real bookings (a partially
+    // sold-out date may still read "available"). Derive the display status
+    // from the actual remaining counts so dates with limited spots render
+    // amber and sold-out days red, instead of green.
+    const displayAvailability: DayAvailabilityStatus =
+      availability !== 'available'
+        ? availability
+        : counts != null && counts.remaining != null && counts.capacity != null && counts.capacity > 0
+          ? counts.remaining <= 0
+            ? 'full'
+            : counts.remaining < counts.capacity
+              ? 'limited'
+              : 'available'
+          : 'available'
+    const hasCounts = !isPast && counts != null && counts.remaining != null && counts.capacity != null && counts.remaining > 0 && (displayAvailability === 'available' || displayAvailability === 'limited')
+    const countUnit = counts?.capacityUnit === 'groups' ? 'groups' : 'spots'
+    const isFull = !isPast && displayAvailability === 'full'
+    const isBlocked = !isPast && displayAvailability === 'blocked'
+    const isSelected = day === selectedDay && !isPast
+    const isPending = loading && counts == null && !isPast
+    const selectable = !isPast && !isPending && (displayAvailability === 'available' || displayAvailability === 'limited')
+    const title = displayAvailability === 'limited'
+      ? `Limited availability${hasCounts ? ` · ${counts?.remaining} of ${counts?.capacity} ${countUnit} available` : ''}`
+      : hasCounts
+        ? `${counts?.remaining} of ${counts?.capacity} ${countUnit} available`
+        : displayAvailability === 'full'
+          ? 'Sold out'
+          : displayAvailability === 'blocked'
+            ? 'Not available'
+            : 'Available'
+    const dotClass = !isPast && !isPending
+      ? displayAvailability === 'limited'
+        ? 'bg-amber-400'
+        : displayAvailability === 'full'
+          ? 'bg-red-400'
+          : displayAvailability === 'blocked'
+            ? 'bg-slate-300'
+            : 'bg-[#179237]'
+      : null
+    return { date, isPast, isToday, isFull, isBlocked, isSelected, isPending, selectable, displayAvailability, hasCounts, title, dotClass }
+  }, [currentYear, currentMonth, selectedDay, getAvailability, getDayCounts, loading])
+
   if (!isOpen) return null
 
   const daysInMonth = getDaysInMonth(currentYear, currentMonth)
@@ -86,6 +153,7 @@ export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate, ge
     const m = currentMonth === 0 ? 11 : currentMonth - 1
     setCurrentMonth(m)
     setCurrentYear(y)
+    setInspectDay(null)
     onMonthChange?.(y, m)
   }
 
@@ -95,13 +163,37 @@ export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate, ge
     const m = currentMonth === 11 ? 0 : currentMonth + 1
     setCurrentMonth(m)
     setCurrentYear(y)
+    setInspectDay(null)
     onMonthChange?.(y, m)
   }
 
   const handleSelectDay = (day: number) => {
+    // Hard guard: sold-out / closed / past dates can never be selected.
+    const meta = getDayDetails(day)
+    if (!meta.selectable) return
     setSelectedDay(day)
+    setInspectDay(null)
     onDateSelect(new Date(currentYear, currentMonth, day))
     onClose()
+  }
+
+  // Desktop: one tap selects. Touch: first tap reveals the availability info
+  // (mirroring the hover tooltip), a second tap on the same date selects.
+  const handleDayPress = (day: number, meta: ReturnType<typeof getDayDetails>) => {
+    if (!meta.selectable) {
+      // Sold-out / closed dates show their reason on touch but never select.
+      if (isTouch && (meta.isFull || meta.isBlocked)) setInspectDay(day)
+      return
+    }
+    if (!isTouch) {
+      handleSelectDay(day)
+      return
+    }
+    if (inspectDay === day) {
+      handleSelectDay(day)
+    } else {
+      setInspectDay(day)
+    }
   }
 
   const renderDays = () => {
@@ -110,49 +202,23 @@ export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate, ge
       days.push(<div key={`empty-${i}`} className="w-9 h-9" />)
     }
     for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(currentYear, currentMonth, day)
-      const isPast = new Date(currentYear, currentMonth, day).setHours(0, 0, 0, 0) < new Date().setHours(0, 0, 0, 0)
-      const isToday = !isPast && date.toDateString() === today.toDateString()
-      const availability: DayAvailabilityStatus = isPast ? 'past' : (getAvailability ? getAvailability(date) : 'available')
-      const counts = getDayCounts ? getDayCounts(date) : null
-      // The backend's aggregated status can lag real bookings (a partially
-      // sold-out date may still read "available"). Derive the display status
-      // from the actual remaining counts so dates with limited spots render
-      // amber and sold-out days red, instead of green.
-      const displayAvailability: DayAvailabilityStatus =
-        availability !== 'available'
-          ? availability
-          : counts != null && counts.remaining != null && counts.capacity != null && counts.capacity > 0
-            ? counts.remaining <= 0
-              ? 'full'
-              : counts.remaining < counts.capacity
-                ? 'limited'
-                : 'available'
-            : 'available'
-      const hasCounts = !isPast && counts != null && counts.remaining != null && counts.capacity != null && counts.remaining > 0 && (displayAvailability === 'available' || displayAvailability === 'limited')
-      const countUnit = counts?.capacityUnit === 'groups' ? 'groups' : 'spots'
-      const isFull = !isPast && displayAvailability === 'full'
-      const isBlocked = !isPast && displayAvailability === 'blocked'
-      // Show the chosen day with its status color even when it is full/blocked
-      // (e.g. the date became sold out after it was picked).
-      const isSelected = day === selectedDay && !isPast
-      // No data for this day yet (availability still fetching) — show a
-      // neutral pulse instead of a misleading "available" fallback.
-      const isPending = loading && counts == null && !isPast
+      const meta = getDayDetails(day)
 
-      if (isPast) {
+      if (meta.isPast) {
         days.push(
           <div
             key={`day-${day}`}
+            data-status="past"
             className="w-9 h-9 text-[14px] font-medium rounded-full flex items-center justify-center text-gray-300 cursor-not-allowed"
           >
             {day}
           </div>
         )
-      } else if (isPending) {
+      } else if (meta.isPending) {
         days.push(
           <div
             key={`day-${day}`}
+            data-status="pending"
             title="Checking availability…"
             aria-disabled="true"
             className="w-9 h-9 rounded-full flex items-center justify-center bg-slate-100 animate-pulse cursor-default"
@@ -160,73 +226,67 @@ export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate, ge
             <span className="text-[14px] font-medium text-slate-300">{day}</span>
           </div>
         )
-      } else if (isFull) {
-        // Sold out — soft red pill, not selectable (solid red when it is the
-        // already-chosen date).
+      } else if (meta.isFull) {
+        // Sold out — soft red pill, NOT selectable. On touch, tapping only
+        // reveals the reason banner (see handleDayPress); never selects.
         days.push(
           <div
             key={`day-${day}`}
+            data-status="full"
             title="Sold out"
             aria-disabled="true"
-            className={`w-9 h-9 text-[14px] font-medium rounded-full flex items-center justify-center cursor-not-allowed ${
-              isSelected
+            onClick={() => handleDayPress(day, meta)}
+            className={`relative w-9 h-9 text-[14px] font-medium rounded-full flex items-center justify-center cursor-not-allowed ${
+              meta.isSelected
                 ? 'bg-gradient-to-b from-[#ef4444] to-[#dc2626] text-white font-semibold shadow-[0_4px_10px_-2px_rgba(239,68,68,0.5)] scale-105 z-10'
                 : 'bg-red-50 text-red-400 line-through'
             }`}
           >
             {day}
+            {!meta.isSelected && (
+              <span className="absolute bottom-[1px] left-1/2 -translate-x-1/2 w-[5px] h-[5px] rounded-full bg-red-400" />
+            )}
           </div>
         )
-      } else if (isBlocked) {
-        // Closed/blocked by the supplier — muted, not selectable
+      } else if (meta.isBlocked) {
+        // Closed/blocked by the supplier — muted, NOT selectable.
         days.push(
           <div
             key={`day-${day}`}
+            data-status="blocked"
             title="Not available"
             aria-disabled="true"
-            className="w-9 h-9 text-[14px] font-medium rounded-full flex items-center justify-center bg-slate-50 text-slate-300 cursor-not-allowed"
+            onClick={() => handleDayPress(day, meta)}
+            className="relative w-9 h-9 text-[14px] font-medium rounded-full flex items-center justify-center bg-slate-50 text-slate-300 cursor-not-allowed"
           >
             {day}
+            {!meta.isSelected && (
+              <span className="absolute bottom-[1px] left-1/2 -translate-x-1/2 w-[5px] h-[5px] rounded-full bg-slate-300" />
+            )}
           </div>
         )
       } else {
-        const title = displayAvailability === 'limited'
-          ? `Limited availability${hasCounts ? ` · ${counts?.remaining} of ${counts?.capacity} ${countUnit} available` : ''}`
-          : hasCounts
-            ? `${counts?.remaining} of ${counts?.capacity} ${countUnit} available`
-            : 'Available'
         days.push(
           <button
             key={`day-${day}`}
-            onClick={() => handleSelectDay(day)}
-            title={title}
+            data-status={meta.displayAvailability}
+            onClick={() => handleDayPress(day, meta)}
+            title={meta.title}
             className={`relative w-9 h-9 text-[14px] font-medium rounded-full flex items-center justify-center transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#179237]/40 active:scale-95 ${
-              isSelected
-                ? displayAvailability === 'limited'
+              meta.isSelected
+                ? meta.displayAvailability === 'limited'
                   ? 'bg-gradient-to-b from-[#f59e0b] to-[#d97706] text-white font-semibold shadow-[0_4px_10px_-2px_rgba(245,158,11,0.5)] scale-105 z-10'
                   : 'bg-gradient-to-b from-[#1a9e3d] to-[#147a2e] text-white font-semibold shadow-[0_4px_10px_-2px_rgba(23,146,55,0.5)] scale-105 z-10'
-                : displayAvailability === 'limited'
+                : meta.displayAvailability === 'limited'
                   ? 'text-black hover:bg-amber-400/10'
                   : 'text-black hover:bg-[#179237]/10'
-            } ${isToday && !isSelected ? 'ring-1 ring-inset ring-[#179237]/50 font-semibold' : ''}`}
+            } ${meta.isToday && !meta.isSelected ? 'ring-1 ring-inset ring-[#179237]/50 font-semibold' : ''}`}
           >
             {day}
-            {!isSelected && (
-              hasCounts ? (
-                <span
-                  className={`absolute bottom-[1px] left-1/2 -translate-x-1/2 text-[8px] font-bold leading-none tracking-tight whitespace-nowrap pointer-events-none ${
-                    displayAvailability === 'limited' ? 'text-amber-500' : 'text-[#179237]'
-                  }`}
-                >
-                  {counts?.remaining}/{counts?.capacity}
-                </span>
-              ) : (
-                <span
-                  className={`absolute bottom-[3px] left-1/2 -translate-x-1/2 w-[5px] h-[5px] rounded-full ${
-                    displayAvailability === 'limited' ? 'bg-amber-400' : 'bg-[#179237]'
-                  }`}
-                />
-              )
+            {!meta.isSelected && meta.dotClass && (
+              <span
+                className={`absolute bottom-[1px] left-1/2 -translate-x-1/2 w-[5px] h-[5px] rounded-full pointer-events-none ${meta.dotClass}`}
+              />
             )}
           </button>
         )
@@ -294,11 +354,11 @@ export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate, ge
         {showDropdown && (
           <div className="absolute inset-0 z-30 flex flex-col p-3 rounded-[16px] bg-white/98 backdrop-blur-md transition-all duration-200">
             <div className="flex items-center justify-between mb-3 border-b pb-2.5 border-black/5">
-              <button onClick={() => setCurrentYear(y => y - 1)} className="p-1.5 text-gray-500 hover:text-[#179237] hover:bg-[#179237]/8 rounded-full transition-colors">
+              <button onClick={() => { setCurrentYear(y => y - 1); setInspectDay(null) }} className="p-1.5 text-gray-500 hover:text-[#179237] hover:bg-[#179237]/8 rounded-full transition-colors">
                 <ChevronLeftIcon />
               </button>
               <span className="font-bold text-[16px] text-gray-900">{currentYear}</span>
-              <button onClick={() => setCurrentYear(y => y + 1)} className="p-1.5 text-gray-500 hover:text-[#179237] hover:bg-[#179237]/8 rounded-full transition-colors">
+              <button onClick={() => { setCurrentYear(y => y + 1); setInspectDay(null) }} className="p-1.5 text-gray-500 hover:text-[#179237] hover:bg-[#179237]/8 rounded-full transition-colors">
                 <ChevronRightIcon />
               </button>
             </div>
@@ -312,6 +372,7 @@ export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate, ge
                     onClick={() => {
                       setCurrentMonth(idx)
                       setShowDropdown(false)
+                      setInspectDay(null)
                       onMonthChange?.(currentYear, idx)
                     }}
                     className={`py-2 rounded-[10px] text-xs font-bold transition-all ${
@@ -328,6 +389,28 @@ export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate, ge
           </div>
         )}
       </div>
+
+      {/* Touch-only "inspect" banner — mirrors the desktop hover tooltip for
+          dates, since coarse-pointer devices have no hover. */}
+      {isTouch && inspectDay != null && (() => {
+        const meta = getDayDetails(inspectDay)
+        if (!meta || meta.isPast || meta.isPending) return null
+        return (
+          <div className="mt-3 flex items-start justify-between gap-3 rounded-[12px] border border-black/[0.06] bg-slate-50 px-3 py-2.5">
+            <div className="min-w-0">
+              <p className="text-[12px] font-bold text-gray-900">
+                {meta.date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+              </p>
+              <p className="text-[12px] text-gray-600">{meta.title}</p>
+            </div>
+            {meta.selectable && (
+              <span className="shrink-0 self-center text-[11px] font-semibold text-[#179237]">
+                Tap again to select
+              </span>
+            )}
+          </div>
+        )
+      })()}
 
       {/* Availability legend (single horizontal row — never wraps) */}
       {getAvailability && (

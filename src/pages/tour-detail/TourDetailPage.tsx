@@ -602,9 +602,9 @@ export default function TourDetailPage() {
         ),
       },
 
-      // 11. WiFi available — no supplier-facing field exists for this today
-      // (checked TravioAfrica-Supplier's product builder), so it always
-      // renders as a red "No" until that capability is added.
+      // 11. WiFi available — sourced from productContent.wifiIncluded (Step 11
+      // "Extra information" of the supplier product builder, "Is WiFi or
+      // internet included?"). Always shown with a red "No" when not offered.
       {
         icon: Wifi,
         title: t('tourDetail.wifiAvailable', { defaultValue: 'WiFi available' }),
@@ -612,7 +612,7 @@ export default function TourDetailPage() {
         renderValue: () => (
           <>
             <p className="tour-quick-fact-title">{t('tourDetail.wifiAvailable', { defaultValue: 'WiFi available' })}</p>
-            {yesNoBadge(false, t('tourDetail.yesLabel'), t('tourDetail.noLabel'))}
+            {yesNoBadge(!!tour?.wifiIncluded, t('tourDetail.yesLabel'), t('tourDetail.noLabel'))}
           </>
         ),
       },
@@ -650,7 +650,7 @@ export default function TourDetailPage() {
     t, tour?.difficulty, tour?.duration, tour?.languages, tour?.pickupIncluded,
     tour?.skipTheLine, tour?.cancellationPolicy, tour?.guideType, tour?.guideMaterials,
     tour?.foodProvided, tour?.drinksIncluded, tour?.meals, tour?.dietaryOptions,
-    tour?.petFriendly, tour?.wheelchairAccessible, tour?.isPrivateActivity,
+    tour?.petFriendly, tour?.wheelchairAccessible, tour?.isPrivateActivity, tour?.wifiIncluded,
     tour?.accommodationIncluded,
   ])
 

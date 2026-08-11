@@ -599,14 +599,25 @@ function extractPetFriendly(rawTour: any): boolean {
   return !!parseProductContent(rawTour)?.petFriendly
 }
 
+function extractWifiIncluded(rawTour: any): boolean {
+  return !!parseProductContent(rawTour)?.wifiIncluded
+}
+
 /**
  * Whether the tour is a private (not shared/group) experience. Sourced from
- * productContent.isPrivateActivity — note this field currently has no
- * supplier-facing UI to set it in TravioAfrica-Supplier's product builder,
- * so it will read as false/"No" for virtually all tours until that's added.
+ * the Options step of TravioAfrica-Supplier's product builder, where "Is this
+ * a private activity?" is set per option (productContent.options[].isPrivate).
+ * Falls back to the legacy product-level productContent.isPrivateActivity.
  */
 function extractIsPrivateActivity(rawTour: any): boolean {
-  return !!parseProductContent(rawTour)?.isPrivateActivity
+  try {
+    const pc = parseProductContent(rawTour)
+    const options = Array.isArray(pc?.options) ? pc.options : []
+    if (options.some((o: any) => o?.isPrivate === true)) return true
+    return !!pc?.isPrivateActivity
+  } catch {
+    return false
+  }
 }
 
 function parseCategorization(rawTour: any): any {
@@ -991,11 +1002,15 @@ export interface TourDetailData extends Omit<TourDetail, 'guide' | 'contact' | '
   petFriendly?: boolean
   /**
    * Whether the tour is a private (not shared/group) experience.
-   * Sourced from productContent.isPrivateActivity — this field currently
-   * has no supplier-facing UI to set it in TravioAfrica-Supplier, so it
-   * will read false for virtually all tours until that control is added.
+   * Sourced from productContent.options[].isPrivate (the Options step of the
+   * product builder), with a legacy fallback to productContent.isPrivateActivity.
    */
   isPrivateActivity?: boolean
+  /**
+   * Whether WiFi/internet is included. Sourced from productContent.wifiIncluded
+   * (the Extra information step of the product builder).
+   */
+  wifiIncluded?: boolean
   /**
    * Whether the supplier offers overnight accommodation. Sourced from
    * categorization.accommodationIncluded (Step 02 of the product builder).
@@ -1099,6 +1114,7 @@ function buildTourDetailFromRawTour(rawTour: any): TourDetailData {
     guideType: extractGuideType(rawTour),
     guideMaterials: extractGuideMaterials(rawTour),
     petFriendly: extractPetFriendly(rawTour),
+    wifiIncluded: extractWifiIncluded(rawTour),
     isPrivateActivity: extractIsPrivateActivity(rawTour),
     accommodationIncluded: extractAccommodationIncluded(rawTour),
     pricingModel: extractPricingModel(rawTour),
@@ -1189,6 +1205,7 @@ export function useExpeditionTour(slug: string | undefined) {
             tour.guideType = extractGuideType(rawTour)
             tour.guideMaterials = extractGuideMaterials(rawTour)
             tour.petFriendly = extractPetFriendly(rawTour)
+            tour.wifiIncluded = extractWifiIncluded(rawTour)
             tour.isPrivateActivity = extractIsPrivateActivity(rawTour)
             tour.accommodationIncluded = extractAccommodationIncluded(rawTour)
             // Re-derive the cancellation policy from the raw tour's
@@ -1353,6 +1370,7 @@ export function useExpeditionTour(slug: string | undefined) {
         guideType: tour.guideType || undefined,
         guideMaterials: tour.guideMaterials || undefined,
         petFriendly: !!tour.petFriendly,
+        wifiIncluded: !!tour.wifiIncluded,
         isPrivateActivity: !!tour.isPrivateActivity,
         accommodationIncluded: !!tour.accommodationIncluded,
         pricingModel,
