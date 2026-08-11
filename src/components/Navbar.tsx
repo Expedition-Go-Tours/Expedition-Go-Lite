@@ -110,20 +110,13 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
     }
   }, [navigate])
 
-  const navigateToBestMatch = useCallback(() => {
+  const navigateToSearchPage = useCallback(() => {
     setShowNavDropdown(false)
-    setNavSearchValue('')
     setNavHighlightedIndex(-1)
-    const q = navSearchValue.trim().toLowerCase()
+    const q = navSearchValue.trim()
     if (!q) return
-    for (const s of navSuggestions) {
-      if (s.type === 'tour' && s.slug) {
-        addSearch({ slug: s.slug, title: s.title, type: 'tour' })
-        navigate(`/tour/${s.slug}`)
-        return
-      }
-    }
-  }, [navSearchValue, navSuggestions, navigate, addSearch])
+    navigate(`/search?q=${encodeURIComponent(q)}`)
+  }, [navSearchValue, navigate])
 
   const handleListExperience = useCallback(() => {
     if (user) {
@@ -172,7 +165,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
         if (navHighlightedIndex >= 0 && navHighlightedIndex < navSuggestions.length) {
           navigateToSuggestion(navSuggestions[navHighlightedIndex])
         } else {
-          navigateToBestMatch()
+          navigateToSearchPage()
         }
         break
       case 'Tab':
@@ -246,7 +239,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
             if (navHighlightedIndex >= 0 && navHighlightedIndex < navSuggestions.length) {
               navigateToSuggestion(navSuggestions[navHighlightedIndex])
             } else {
-              navigateToBestMatch()
+              navigateToSearchPage()
             }
           }}>
             <div className="navbar-search-inner">

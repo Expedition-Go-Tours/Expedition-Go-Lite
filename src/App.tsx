@@ -8,6 +8,7 @@ import AuthForm from './pages/AuthForm'
 import DashboardLayout from './pages/dashboard/DashboardLayout'
 import TourDetailPage from './pages/tour-detail/TourDetailPage'
 import AllToursPage from './pages/AllToursPage'
+import SearchResultsPage from './pages/SearchResultsPage'
 import AllStoriesPage from './pages/AllStoriesPage'
 import StoryDetailPage from './pages/StoryDetailPage'
 import SplashScreen from './components/SplashScreen'
@@ -135,6 +136,9 @@ function AppContent() {
         } />
         <Route path="/tours" element={
           <AllToursPage onOpenAuth={handleOpenAuth} />
+        } />
+        <Route path="/search" element={
+          <SearchResultsPage />
         } />
         <Route path="/review/:tourTitle" element={
           <ReviewExperiencePage />
