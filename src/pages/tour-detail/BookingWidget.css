@@ -481,13 +481,13 @@
 
 .booking-total-amount {
   font-weight: 700;
-  font-size: 22px;
+  font-size: 25px;
   color: #166534;
 }
 
 @media (min-width: 1024px) {
   .booking-total-amount {
-    font-size: 24px;
+    font-size: 27px;
   }
 }
 

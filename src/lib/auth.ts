@@ -398,11 +398,11 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
   }
 }
 
-export async function handleGoogleCallback(): Promise<void> {
+export async function handleGoogleCallback(): Promise<boolean> {
   const params = new URLSearchParams(window.location.search)
   const accessToken = params.get('accessToken')
   const refreshToken = params.get('refreshToken')
-  if (!accessToken || !refreshToken) return
+  if (!accessToken || !refreshToken) return false
 
   const auth = getStoredAuth()
   storeAuth({ ...auth, accessToken, refreshToken })
@@ -422,4 +422,5 @@ export async function handleGoogleCallback(): Promise<void> {
   }
 
   window.history.replaceState({}, '', window.location.origin)
+  return true
 }

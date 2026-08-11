@@ -33,6 +33,17 @@ export default function TourCard({ id, title, duration, features, price, rating,
   const cancellationLabel = cancellationPolicy
     ? (isNonRefundable ? 'Non-refundable' : (cancellationPolicy.toLowerCase().includes('free') ? 'Free cancellation' : cancellationPolicy))
     : ''
+  // The Accommodation badge only applies to overnight trips — gate it on a
+  // duration of more than one day ("2 days", "3 days", ...). Hour-based
+  // durations fall back to >24h so a 48-hour trip still counts.
+  const isMultiDay = (() => {
+    if (!duration) return false
+    const days = duration.match(/(\d+(?:\.\d+)?)\s*days?/i)
+    if (days) return parseFloat(days[1]) > 1
+    const hours = duration.match(/(\d+(?:\.\d+)?)\s*hours?/i)
+    if (hours) return parseFloat(hours[1]) > 24
+    return false
+  })()
 
   const handleWishlist = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -100,7 +111,7 @@ export default function TourCard({ id, title, duration, features, price, rating,
               Pickup included
             </span>
           )}
-          {accommodationIncluded && (
+          {accommodationIncluded && isMultiDay && (
             <span className="tour-card-badge tour-card-badge-accommodation">
               <BedDouble size={12} strokeWidth={2.2} />
               Accommodation included

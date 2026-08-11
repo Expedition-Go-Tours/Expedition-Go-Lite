@@ -2,8 +2,16 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { fetchWithAuth } from '../lib/api'
 import type { DayAvailability, DayAvailabilityInfo, DayTimeSlot } from '../lib/tourAvailability'
 
-async function expeditionFetchRaw(path: string) {
-  const res = await fetchWithAuth(path)
+/**
+ * `bypassCache` skips the browser's HTTP cache for this request. Availability
+ * is edited live by suppliers, so the public calendar fetch must never be
+ * served from a browser-cached response — mirror of the tour-detail fetch
+ * hardening in useExpeditionTours.
+ */
+async function expeditionFetchRaw(path: string, bypassCache = false) {
+  const res = await fetchWithAuth(path, {
+    ...(bypassCache ? { cache: 'no-store' } : {}),
+  })
   const payload = await res.json().catch(() => ({}))
   if (!res.ok) {
     throw new Error(payload.message || `Request failed (${res.status})`)
@@ -63,11 +71,26 @@ function mapDay(raw: RawAvailabilityDay): DayAvailabilityInfo {
       }))
     : []
   const capacityUnit = raw.capacityUnit === 'groups' ? 'groups' as const : 'people' as const
+
+  // A day-limit override set BELOW the tour's default capacity limits the day.
+  // The backend only labels such days AVAILABLE (status is derived purely from
+  // the booked/capacity ratio), so mirror the supplier portal's mapCalendarDay:
+  // an override cap below the base capacity renders as "limited".
+  let status = mapDayStatus(raw.status)
+  if (
+    raw.overrideCapacity != null &&
+    raw.baseCapacity != null &&
+    raw.overrideCapacity < raw.baseCapacity &&
+    (status === 'available' || status === 'limited')
+  ) {
+    status = 'limited'
+  }
+
   return {
     date: raw.date,
     dayOfWeek: raw.dayOfWeek,
     isOperatingDay: raw.isOperatingDay,
-    status: mapDayStatus(raw.status),
+    status,
     capacity: raw.capacity,
     booked: raw.booked,
     remaining: raw.remaining,
@@ -91,13 +114,22 @@ export function useTourAvailability(
   return useQuery({
     queryKey: ['expedition', 'tours', slug, 'availability', startDate, endDate],
     enabled: !!slug && !!startDate && !!endDate,
+    // Availability is the most time-sensitive piece of the booking widget —
+    // suppliers edit it live. The global queryClient default (staleTime: 5min)
+    // would let the calendar show a stale status for up to five minutes, or
+    // indefinitely while the page stays open. Always treat it as stale and
+    // refetch on every mount and on window focus, same as useExpeditionTour.
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
     // Keep the previous window's counts visible while a new month (or a
     // background refetch) resolves, so the calendar never blanks the numbers.
     placeholderData: (prev) => prev,
     queryFn: async () => {
       const payload = await expeditionFetchRaw(
         `/expedition/tours/${encodeURIComponent(slug!)}/availability`
-        + `?startDate=${startDate!}&endDate=${endDate!}`
+        + `?startDate=${startDate!}&endDate=${endDate!}`,
+        true
       )
       const data = payload.data ?? payload
       return ((data.calendar || []) as RawAvailabilityDay[]).map(mapDay)

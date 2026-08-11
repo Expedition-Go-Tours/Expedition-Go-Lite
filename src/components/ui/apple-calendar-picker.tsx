@@ -404,9 +404,13 @@ export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate, ge
               <p className="text-[12px] text-gray-600">{meta.title}</p>
             </div>
             {meta.selectable && (
-              <span className="shrink-0 self-center text-[11px] font-semibold text-[#179237]">
-                Tap again to select
-              </span>
+              <button
+                type="button"
+                onClick={() => handleSelectDay(inspectDay)}
+                className="shrink-0 self-center rounded-lg bg-[#179237] px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-[#147a2e] active:scale-95"
+              >
+                Select this date
+              </button>
             )}
           </div>
         )
@@ -423,9 +427,6 @@ export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate, ge
           </span>
           <span className="flex items-center gap-1.5">
             <span className="w-[7px] h-[7px] rounded-full bg-red-400 shadow-[0_0_0_2px_rgba(248,113,113,0.18)]" /> Sold Out
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-[7px] h-[7px] rounded-full bg-slate-300 shadow-[0_0_0_2px_rgba(148,163,184,0.18)]" /> Closed
           </span>
         </div>
       )}

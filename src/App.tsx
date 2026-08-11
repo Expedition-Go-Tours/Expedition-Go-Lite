@@ -94,14 +94,21 @@ function AppContent() {
   }, [])
 
   useEffect(() => {
-    handleGoogleCallback().then(() => {
-      const returnTo = getAuthReturnTo()
+    // Processes the Google OAuth callback (a full page-load back from Google
+    // with ?accessToken=...&refreshToken=...) and then honors any pending
+    // return-to. Mount-only: react-router's useNavigate() returns a new
+    // function whenever the pathname changes, so listing it in the deps would
+    // re-run this on every navigation and consume the pending return-to.
+    (async () => {
+      const processed = await handleGoogleCallback()
+      const returnTo = processed ? getAuthReturnTo() : null
       if (returnTo) {
         clearAuthReturnTo()
         navigate(returnTo)
       }
-    })
-  }, [navigate])
+    })()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleOpenAuth = (mode: 'signin' | 'signup') => {
     navigate('/')
@@ -109,7 +116,7 @@ function AppContent() {
   }
   const handleGoHome = () => setCurrentPage('home')
   const location = useLocation()
-  const hideNav = currentPage === 'signin' || currentPage === 'signup' || location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/booking') || location.pathname.startsWith('/supplier/register') || location.pathname.startsWith('/supplier/list-experience')
+  const hideNav = currentPage === 'signin' || currentPage === 'signup' || location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/booking') || location.pathname.startsWith('/supplier/register') || location.pathname.startsWith('/supplier/list-experience') || location.pathname.startsWith('/login')
 
   return (
     <>
@@ -160,6 +167,13 @@ function AppContent() {
           >
             <BookingPage />
           </motion.div>
+        } />
+        <Route path="/login" element={
+          <AuthForm
+            initialMode="signin"
+            onBack={() => navigate('/')}
+            onAuthSuccess={() => navigate('/')}
+          />
         } />
         <Route path="/stories" element={<AllStoriesPage />} />
         <Route path="/stories/:slug" element={<StoryDetailPage />} />

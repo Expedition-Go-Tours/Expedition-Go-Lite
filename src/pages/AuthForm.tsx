@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { flushSync } from "react-dom";
 import { GoogleOAuthProvider, useGoogleOneTapLogin } from "@react-oauth/google";
 import { AnimatePresence, motion } from "framer-motion";
@@ -19,6 +19,7 @@ import {
   getGoogleClientId,
   googleOneTapSupported,
   getStoredAuthUser,
+  getAuthProvider,
 } from '../lib/auth'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -327,6 +328,14 @@ export default function AuthForm({ initialMode = "signin", onBack, onAuthSuccess
 
   const oneTapEnabled = googleOneTapSupported() && !getStoredAuthUser()
   const oneTapMessage = mode === "signin" ? "Signed in successfully" : "Signed up successfully"
+
+  // Surface a silent misconfiguration: backend auth with no VITE_GOOGLE_CLIENT_ID
+  // silently disables Google One Tap — warn instead of leaving a dead prompt.
+  useEffect(() => {
+    if (getAuthProvider() === 'backend' && !getGoogleClientId()) {
+      console.warn('[Auth] Google One Tap disabled: VITE_GOOGLE_CLIENT_ID is not set.')
+    }
+  }, [])
 
   return (
     <>

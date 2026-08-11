@@ -297,27 +297,30 @@ body:has(.story-detail) .navbar-compact-search {
 }
 
 /* List an Experience — desktop pill CTA. Sits inline with the icon items
-   but reads as a distinct, elevated action (filled pill instead of a bare
-   icon+label stack) since it's the primary supplier-acquisition link. */
+   but reads as a distinct, elevated action (pill instead of a bare icon+label
+   stack) since it's the primary supplier-acquisition link. Uses the same soft
+   green accent as the tour-detail quick facts (light green tint + green text)
+   rather than a solid filled button, so it stays consistent with the rest of
+   the brand's "green accent" treatment. */
 .nav-list-experience {
   display: inline-flex;
   align-items: center;
   gap: 7px;
   height: 38px;
   padding: 0 16px 0 12px;
-  border: none;
+  border: 1px solid rgba(23, 146, 55, 0.18);
   border-radius: 999px;
-  background: linear-gradient(180deg, #1ba845, #147a2e);
-  color: #fff;
+  background: linear-gradient(135deg, rgba(23, 146, 55, 0.1), rgba(23, 146, 55, 0.04));
+  color: #179237;
   text-decoration: none;
   cursor: pointer;
-  box-shadow: 0 1px 3px rgba(20, 122, 46, 0.25);
-  transition: box-shadow 0.2s ease, transform 0.15s ease, filter 0.2s ease;
+  box-shadow: 0 1px 3px rgba(23, 146, 55, 0.14);
+  transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
 }
 
 .nav-list-experience:hover {
-  filter: brightness(1.06);
-  box-shadow: 0 4px 10px rgba(20, 122, 46, 0.32);
+  background: rgba(23, 146, 55, 0.14);
+  box-shadow: 0 4px 10px rgba(23, 146, 55, 0.2);
 }
 
 .nav-list-experience:active {
@@ -331,7 +334,7 @@ body:has(.story-detail) .navbar-compact-search {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.18);
+  background: rgba(23, 146, 55, 0.12);
   flex-shrink: 0;
 }
 

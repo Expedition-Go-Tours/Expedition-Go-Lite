@@ -60,9 +60,11 @@ export default function ChangeBookingModal({ tour, isOpen, onClose, onReserve }:
     const map = new Map<string, 'available' | 'limited' | 'full' | 'blocked' | 'past'>()
     if (availabilityCalendar) {
       for (const day of availabilityCalendar) {
-        // Honor the supplier's explicit per-date override (e.g. LIMITED) even
-        // when the aggregated status reads "available".
-        map.set(day.date, day.hasOverride && day.overrideStatus ? day.overrideStatus : day.status)
+        // day.status already incorporates BLOCKED overrides (computeStatus
+        // returns BLOCKED for a blocked date) plus the supplier day-limit
+        // "limited" derivation in mapDay — never override it with the stored
+        // override status, which reads AVAILABLE for a capacity-only override.
+        map.set(day.date, day.status)
       }
     }
     return map

@@ -10,10 +10,14 @@ import logoSrc from '../assets/expo_trans.png'
 import Footer from '../components/Footer'
 import StepBadge from '../components/booking/StepBadge'
 import { FieldLabel, TextInput, SelectInput } from '../components/booking/FormFields'
+import LocationPicker from '../components/booking/LocationPicker'
 import ChangeBookingModal from '../components/booking/ChangeBookingModal'
 import BookingConfirmationDialog from '../components/booking/BookingConfirmationDialog'
 import ExpiredHoldModal from '../components/booking/ExpiredHoldModal'
+import SignInPromptModal from '../components/booking/SignInPromptModal'
 import CardField from '../components/booking/CardField'
+import { useAuthUser } from '../hooks/useAuthUser'
+import { setAuthReturnTo } from '../lib/auth'
 import type { CardElementHandle } from '../components/booking/CardField'
 import { getStripePromise } from '../lib/stripe'
 import { fetchWithAuth } from '../lib/api'
@@ -322,10 +326,10 @@ function ContactDetailsStep({
             </div>
 
             <div>
-              <FieldLabel required tooltip="Where should the tour operator pick you up or drop you off? Enter your city or town.">Pickup Location</FieldLabel>
-              <TextInput
+              <FieldLabel required tooltip="Where should the tour operator pick you up or drop you off? Search or pick a location on the map.">Pickup Location</FieldLabel>
+              <LocationPicker
                 value={data.location}
-                onChange={(e) => onChange('location', e.target.value)}
+                onChange={(v) => onChange('location', v)}
                 onBlur={() => handleBlur('location')}
                 placeholder="e.g. Accra, Ghana"
                 valid={valid.location}
@@ -969,7 +973,20 @@ export default function BookingPage() {
   const location = useLocation()
   const navigate = useNavigate()
 
-  const tour = location.state?.tour || FALLBACK_TOUR
+  // Restore the tour from router state when arriving fresh from a tour detail
+  // page, otherwise fall back to the persisted draft (refresh / sign-in
+  // round-trip) so the booking never loses its tour context.
+  const [tour] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY)
+      const draft = saved ? JSON.parse(saved) : null
+      return location.state?.tour || draft?.tour || FALLBACK_TOUR
+    } catch {
+      return location.state?.tour || FALLBACK_TOUR
+    }
+  })
+
+  const user = useAuthUser()
 
   const [step, setStep] = useState(1)
   const [attempted, setAttempted] = useState<Record<number, boolean>>({})
@@ -1009,6 +1026,7 @@ export default function BookingPage() {
 
   const [isExpired, setIsExpired] = useState(false)
   const [showExpiredModal, setShowExpiredModal] = useState(false)
+  const [showSignInPrompt, setShowSignInPrompt] = useState(false)
   const lastActivityAt = useRef(0)
   const hasLoadedDraft = useRef(false)
 
@@ -1018,21 +1036,55 @@ export default function BookingPage() {
       const saved = localStorage.getItem(STORAGE_KEY)
       if (saved) {
         const draft = JSON.parse(saved)
-        if (draft.contact) setContact((prev) => ({ ...prev, ...draft.contact }))
-        if (draft.activity) setActivity(draft.activity)
-        if (draft.editableTour) setEditableTour(draft.editableTour)
+        // Only restore the form fields when the stored draft belongs to the
+        // same tour — otherwise a draft from a previous booking would bleed
+        // its date/travelers/price into this one.
+        if (draft.tourId === (tour.id || tour.slug)) {
+          if (draft.contact) setContact((prev) => ({ ...prev, ...draft.contact }))
+          if (draft.activity) setActivity(draft.activity)
+          if (draft.editableTour) setEditableTour(draft.editableTour)
+          if (typeof draft.step === 'number' && draft.step >= 1 && draft.step <= 3) {
+            setStep(draft.step)
+            requestAnimationFrame(() => {
+              document.getElementById(`booking-step-${draft.step}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+            })
+          }
+          if (draft.payment) setPayment(draft.payment)
+        }
+      }
+      // Fresh arrival from a tour detail page: persist the full tour so a
+      // refresh or the sign-in round-trip can restore it.
+      if (location.state?.tour) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          tour: location.state.tour,
+          tourId: location.state.tour.id || location.state.tour.slug,
+          contact,
+          activity,
+          editableTour,
+          step: 1,
+          payment,
+        }))
       }
     } catch { /* ignore */ }
     hasLoadedDraft.current = true
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   /* Save draft to localStorage on field changes */
   useEffect(() => {
     if (!hasLoadedDraft.current) return
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ contact, activity, editableTour }))
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        tour,
+        tourId: tour.id || tour.slug,
+        contact,
+        activity,
+        editableTour,
+        step,
+        payment,
+      }))
     } catch { /* ignore */ }
-  }, [contact, activity, editableTour])
+  }, [tour, contact, activity, editableTour, step, payment])
 
   const clearDraft = () => {
     try { localStorage.removeItem(STORAGE_KEY) } catch { /* ignore */ }
@@ -1117,6 +1169,12 @@ export default function BookingPage() {
     trackActivity()
   }
 
+  const handleSignInPrompt = () => {
+    setShowSignInPrompt(false)
+    setAuthReturnTo('/booking')
+    navigate('/login')
+  }
+
   const handleSaveAndLeave = () => {
     clearDraft()
     navigate('/')
@@ -1187,6 +1245,10 @@ export default function BookingPage() {
 
   const handleBook = useCallback(async (paymentMethodId: string) => {
     if (isBooking || isActive) return
+    if (!user) {
+      setShowSignInPrompt(true)
+      return
+    }
     if (!paymentMethodId) {
       toast.error('Please enter your card details to continue.')
       return
@@ -1242,7 +1304,7 @@ export default function BookingPage() {
     } finally {
       setIsBooking(false)
     }
-  }, [createBooking, contact, activity, editableTour, tour, isBooking, isActive, pollBooking])
+  }, [createBooking, contact, activity, editableTour, tour, isBooking, isActive, pollBooking, user])
 
   const handleApplyPromo = useCallback(() => {
     const code = promoCode.trim().toUpperCase()
@@ -1375,6 +1437,15 @@ export default function BookingPage() {
             contact={contact}
             onRehold={handleRehold}
             onSaveAndLeave={handleSaveAndLeave}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showSignInPrompt && (
+          <SignInPromptModal
+            onSignIn={handleSignInPrompt}
+            onClose={() => setShowSignInPrompt(false)}
           />
         )}
       </AnimatePresence>

@@ -111,7 +111,7 @@ describe('CalendarPicker sold-out / closed hardening', () => {
     const cell = dayCell(7)
     fireEvent.click(cell)
     expect(screen.getByText('Sold out')).toBeInTheDocument()
-    expect(screen.queryByText(/Tap again to select/)).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /select this date/i })).not.toBeInTheDocument()
     expect(onDateSelect).not.toHaveBeenCalled()
     fireEvent.click(cell)
     expect(onDateSelect).not.toHaveBeenCalled()
@@ -119,14 +119,23 @@ describe('CalendarPicker sold-out / closed hardening', () => {
 })
 
 describe('CalendarPicker mobile tap-to-inspect', () => {
-  it('first tap inspects (banner + hint), second tap selects', () => {
+  it('first tap inspects (banner + select button), second tap selects', () => {
     stubMatchMedia(true)
     const { onDateSelect, onClose } = renderPicker()
     fireEvent.click(dayCell(5))
     expect(screen.getByText(/5 of 5 spots available/)).toBeInTheDocument()
-    expect(screen.getByText('Tap again to select')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /select this date/i })).toBeInTheDocument()
     expect(onDateSelect).not.toHaveBeenCalled()
     fireEvent.click(dayCell(5))
+    expect(onDateSelect).toHaveBeenCalledTimes(1)
+    expect(onClose).toHaveBeenCalledTimes(1)
+  })
+
+  it('selects the date when "Select this date" is clicked', () => {
+    stubMatchMedia(true)
+    const { onDateSelect, onClose } = renderPicker()
+    fireEvent.click(dayCell(5))
+    fireEvent.click(screen.getByRole('button', { name: /select this date/i }))
     expect(onDateSelect).toHaveBeenCalledTimes(1)
     expect(onClose).toHaveBeenCalledTimes(1)
   })
@@ -135,7 +144,7 @@ describe('CalendarPicker mobile tap-to-inspect', () => {
     stubMatchMedia(false)
     const { onDateSelect } = renderPicker()
     fireEvent.click(dayCell(5))
-    expect(screen.queryByText('Tap again to select')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /select this date/i })).not.toBeInTheDocument()
     expect(onDateSelect).toHaveBeenCalledTimes(1)
   })
 })
