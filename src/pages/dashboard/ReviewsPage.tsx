@@ -5,6 +5,7 @@ import { Star, Edit3, Trash2, ChevronDown, ChevronUp, Clock } from "lucide-react
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useMyReviews, useDeleteReview, type MyReviewData } from "../../hooks/useExpeditionReviews";
+import OptimizedImage from "@/components/shared/OptimizedImage";
 
 const REVIEW_DRAFT_PREFIX = "eg_review_draft:";
 
@@ -128,7 +129,7 @@ export default function ReviewsPage() {
               <div className="flex flex-col sm:flex-row sm:gap-4 sm:p-5">
                 <div className="relative w-full h-44 sm:w-[72px] sm:h-[72px] sm:rounded-lg overflow-hidden shrink-0 bg-[#f3f4f6]">
                   {review.tourImage && (
-                    <img src={review.tourImage} alt={review.tourTitle} className="w-full h-full object-cover" />
+                    <OptimizedImage src={review.tourImage} alt={review.tourTitle} className="w-full h-full object-cover" width={200} />
                   )}
                 </div>
 

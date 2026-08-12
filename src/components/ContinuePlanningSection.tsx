@@ -9,6 +9,7 @@ import { useWishlist, toWishlistItem } from '../context/WishlistContext'
 import { getCategoryMeta } from './categoryMeta'
 import i18n from '../i18n/config'
 import './ContinuePlanningSection.css'
+import OptimizedImage from '@/components/shared/OptimizedImage'
 
 const CARD_WIDTH = 490
 const GAP = 24
@@ -95,7 +96,7 @@ function ContinuePlanningCard({ item }: { item: ContinuePlanningItem }) {
             <img src="/travio_logo.png" alt="Travio Africa" />
           </div>
         )}
-        <img src={item.imageUrl} alt={item.title} loading="lazy" />
+        <OptimizedImage src={item.imageUrl} alt={item.title} width={400} />
         {categoryMeta && (
           <span className={`cp-card-type-badge cp-card-type-badge-${categoryMeta.variant}`}>
             <categoryMeta.Icon size={11} strokeWidth={2.4} />

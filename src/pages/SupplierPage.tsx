@@ -10,6 +10,7 @@ import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import { useExpeditionTours } from '../hooks/useExpeditionTours'
 import './SupplierPage.css'
+import OptimizedImage from '@/components/shared/OptimizedImage'
 
 const PAGE_SIZE = 8
 
@@ -124,7 +125,7 @@ export default function SupplierPage() {
           <div className="supplier-header-logo-wrap">
             <div className="supplier-header-logo">
               {supplierData.logo ? (
-                <img src={supplierData.logo} alt={supplierData.name} />
+                <OptimizedImage src={supplierData.logo} alt={supplierData.name} width={200} />
               ) : (
                 <span className="supplier-header-logo-fallback">
                   {supplierData.name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()}

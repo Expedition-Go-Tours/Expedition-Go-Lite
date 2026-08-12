@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import './PopularLocationCard.css'
 import type { Destination } from './data'
+import OptimizedImage from '@/components/shared/OptimizedImage'
 
 interface PopularLocationCardProps extends Destination {
   onClick?: () => void
@@ -14,7 +15,7 @@ export default function PopularLocationCard({ title, tours, image, onClick }: Po
   return (
     <div className="popular-location-card" onClick={onClick} role="link" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick?.() } }}>
       <div className="popular-location-image">
-        <img src={image} alt={title} loading="lazy" />
+        <OptimizedImage src={image} alt={title} width={400} />
         <div className="popular-location-gradient" />
         <button
           className={`popular-location-heart${liked ? ' liked' : ''}`}

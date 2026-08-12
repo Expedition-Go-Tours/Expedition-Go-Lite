@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, ChevronLeft, ChevronRight, Grid3X3 } from 'lucide-react'
 import './GalleryDialog.css'
+import OptimizedImage from '@/components/shared/OptimizedImage'
 
 interface GalleryDialogProps {
   open: boolean
@@ -113,10 +114,11 @@ export default function GalleryDialog({
                     onClick={() => { setCurrentIndex(i); setView('viewer') }}
                     className="gallery-grid-item"
                   >
-                    <img
+                    <OptimizedImage
                       src={img || fallbackImage}
                       alt={t('gallery.tourImage', { number: i + 1 })}
                       onError={onImageError}
+                      width={1200}
                     />
                   </button>
                 ))}
@@ -164,11 +166,12 @@ export default function GalleryDialog({
                     transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
                     className="gallery-viewer-image-container"
                   >
-                    <img
+                    <OptimizedImage
                       src={images[currentIndex] || fallbackImage}
                        alt={t('gallery.tourImage', { number: currentIndex + 1 })}
                       onError={onImageError}
                       className="gallery-viewer-image"
+                      width={1200}
                     />
                   </motion.div>
                 </AnimatePresence>

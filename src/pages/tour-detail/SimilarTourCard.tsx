@@ -7,6 +7,7 @@ import { parsePrice, getTourSlug, type Tour } from '../../components/data'
 import FormattedPrice from '../../components/FormattedPrice'
 import { getCategoryMeta } from '../../components/categoryMeta'
 import './SimilarTourCard.css'
+import OptimizedImage from '@/components/shared/OptimizedImage'
 
 interface SimilarTourCardProps extends Tour {
   discount?: string
@@ -76,7 +77,7 @@ export default function SimilarTourCard({
             <img src="/travio_logo.png" alt="Travio Africa" />
           </div>
         )}
-        <img src={image} alt={title} loading="lazy" />
+        <OptimizedImage src={image} alt={title} width={400} />
         <div className="similar-tour-overlay" />
         {categoryMeta && (
           <span className={`similar-tour-image-type-badge similar-tour-meta-badge-type-${categoryMeta.variant}`}>

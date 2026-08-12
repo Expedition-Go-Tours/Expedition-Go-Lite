@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import BookingTransition from '../components/BookingTransition'
 import './Wishlist.css'
+import OptimizedImage from '@/components/shared/OptimizedImage'
 
 export default function Wishlist() {
   const { t } = useTranslation()
@@ -189,7 +190,7 @@ const handleBookNow = (item: WishlistItem) => {
                   className="wishlist-card"
                 >
                   <div className="wishlist-card-image">
-                    <img src={item.imageUrl} alt={item.title} />
+                    <OptimizedImage src={item.imageUrl} alt={item.title} width={400} />
                     <button
                       className={`wishlist-remove-btn${item.source === 'travio-africa' ? '' : ' no-logo'}`}
                       onClick={() => handleRemove(item.id)}

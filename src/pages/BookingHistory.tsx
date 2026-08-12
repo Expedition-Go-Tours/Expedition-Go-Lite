@@ -9,6 +9,7 @@ import {
   type ExpeditionBookingSummary,
 } from '../hooks/useExpeditionBookings'
 import './BookingHistory.css'
+import OptimizedImage from '@/components/shared/OptimizedImage'
 
 type TabStatus = 'ALL' | 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED'
 
@@ -310,7 +311,7 @@ export default function BookingHistory() {
                   <div key={booking.id} className="booking-item">
                     <div className="booking-item-image">
                       {booking.tourImage ? (
-                        <img src={booking.tourImage} alt={booking.tourTitle} />
+                        <OptimizedImage src={booking.tourImage} alt={booking.tourTitle} width={200} />
                       ) : (
                         <div className="booking-item-image-placeholder" />
                       )}
@@ -407,7 +408,7 @@ export default function BookingHistory() {
               {/* Hero image */}
               <div className="booking-modal-hero">
                 {selectedBooking.tourImage ? (
-                  <img src={selectedBooking.tourImage} alt={selectedBooking.tourTitle} />
+                  <OptimizedImage src={selectedBooking.tourImage} alt={selectedBooking.tourTitle} width={200} />
                 ) : (
                   <div className="booking-modal-hero-placeholder" />
                 )}
