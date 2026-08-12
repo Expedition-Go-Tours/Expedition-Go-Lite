@@ -12,7 +12,7 @@ import { ArrowLeft, LoaderCircle, ShieldCheck } from "lucide-react"
 
 import { SupplierApplicationForm } from "@/components/supplier/SupplierApplicationForm"
 import { useAuthUser } from "@/hooks/useAuthUser"
-import { getSupplierApplicationStatus, type SupplierProfile } from "@/lib/supplier"
+import { getSupplierApplicationStatus, getSupplierPortalUrl, isApprovedSupplier, type SupplierProfile } from "@/lib/supplier"
 import { Button } from "@/components/ui/button"
 
 interface SupplierRegisterPageProps {
@@ -26,6 +26,7 @@ export default function SupplierRegisterPage({ onOpenAuth }: SupplierRegisterPag
   const [checking, setChecking] = useState(false)
   const [application, setApplication] = useState<SupplierProfile | null>(null)
   const [statusError, setStatusError] = useState("")
+  const [redirecting, setRedirecting] = useState(false)
 
   useEffect(() => {
     if (!user) {
@@ -39,9 +40,20 @@ export default function SupplierRegisterPage({ onOpenAuth }: SupplierRegisterPag
     setStatusError("")
 
     getSupplierApplicationStatus()
-      .then((profile) => {
+      .then(async (profile) => {
         if (cancelled) return
         setApplication(profile)
+        // Already-approved suppliers skip this page and go straight to the
+        // TravioAfrica-Supplier platform to log in securely.
+        if (profile && isApprovedSupplier(profile.status)) {
+          const portalUrl = await getSupplierPortalUrl(profile)
+          if (cancelled) return
+          if (portalUrl) {
+            setRedirecting(true)
+            window.location.replace(portalUrl)
+            return
+          }
+        }
       })
       .catch(() => {
         if (!cancelled) setStatusError("Unable to check your application status. Please try again.")
@@ -92,9 +104,14 @@ export default function SupplierRegisterPage({ onOpenAuth }: SupplierRegisterPag
           </p>
         </div>
 
-        {checking ? (
+        {checking || redirecting ? (
           <div className="flex items-center justify-center py-24">
             <LoaderCircle className="size-6 animate-spin text-primary" />
+            {redirecting && (
+              <span className="ml-3 text-sm text-slate-500">
+                {t("supplierAuth.redirectingToPortal", "Taking you to your supplier dashboard…")}
+              </span>
+            )}
           </div>
         ) : !user ? (
           <div className="rounded-[1.4rem] border border-slate-200 bg-slate-50 p-8 text-center">

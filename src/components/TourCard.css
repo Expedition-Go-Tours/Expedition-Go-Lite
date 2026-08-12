@@ -143,18 +143,21 @@
   border-color: #e5e7eb;
 }
 
-.tour-card-discount {
+.tour-card-duration {
   position: absolute;
   bottom: 8px;
   right: 8px;
-  background: #ef4444;
+  background: rgba(0, 0, 0, 0.75);
   color: #fff;
   font-family: 'Raleway', sans-serif;
-  font-size: 9px;
-  font-weight: 700;
-  padding: 2px 6px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 10px;
   border-radius: 4px;
   z-index: 2;
+  backdrop-filter: blur(4px);
+  letter-spacing: 0.2px;
+  white-space: nowrap;
 }
 
 .tour-card-wishlist {
@@ -225,12 +228,16 @@
   color: #9ca3af;
 }
 
-.tour-card-duration-badge {
+.tour-card-discount {
   flex-shrink: 0;
-  font-size: 11px;
-  font-weight: 700;
-  color: #6b7280;
   font-family: 'Raleway', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: #fff;
+  background: #ef4444;
+  padding: 2px 6px;
+  border-radius: 4px;
   white-space: nowrap;
 }
 
@@ -344,6 +351,29 @@
   .tour-card-price-value {
     font-size: 22px;
   }
+}
+
+/* "New" pill pinned to the top-left of the image — the same corner the
+   source logo badge occupies, since a tour flagged as new never shows the
+   TravioAfrica logo (see hideSourceBadge). White pill with black text so it
+   reads clearly against any photo. */
+.tour-card-new-pill {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  font-family: 'Raleway', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: #000;
+  background: #fff;
+  padding: 5px 10px;
+  border-radius: 999px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
 }
 
 .source-badge {

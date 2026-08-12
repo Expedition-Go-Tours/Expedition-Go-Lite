@@ -9,6 +9,8 @@ import { useCurrency } from '../contexts/CurrencyContext'
 import logoSrc from '../assets/expo_trans.png'
 import userSrc from '../assets/icons/User Circle.png'
 import { subscribeToAuthState, signOutUser, getStoredAuthUser, type AuthUser } from '../lib/auth'
+import { getSupplierPortalUrl } from '../lib/supplier'
+import { useSupplierStatus } from '../hooks/useSupplierStatus'
 import { useSearchAutocomplete, type SearchSuggestion } from '../hooks/useSearchAutocomplete'
 import { useRecentSearches } from '../hooks/useRecentSearches'
 import LanguageCurrencyModal from './LanguageCurrencyModal'
@@ -53,6 +55,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
   const navInputRef = useRef<HTMLInputElement>(null)
   const { suggestions: navSuggestions, isSearching: navIsSearching } = useSearchAutocomplete(navSearchValue)
   const { recentSearches, addSearch, removeSearch, clearAll } = useRecentSearches()
+  const { isApproved } = useSupplierStatus()
 
   useEffect(() => {
     const unsub = subscribeToAuthState((u) => setUser(u))
@@ -118,14 +121,21 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
     navigate(`/search?q=${encodeURIComponent(q)}`)
   }, [navSearchValue, navigate])
 
-  const handleListExperience = useCallback(() => {
-    if (user) {
-      navigate('/supplier/register')
+  const handleListExperience = useCallback(async () => {
+    if (!user) {
+      // Signed-out visitors land on the public "become a supplier" page first
+      // (how it works + FAQ) instead of being dropped straight into sign-in.
+      navigate('/supplier/list-experience')
       return
     }
-    // Signed-out visitors land on the public "become a supplier" page first
-    // (how it works + FAQ) instead of being dropped straight into sign-in.
-    navigate('/supplier/list-experience')
+    // Already-approved suppliers go straight to the TravioAfrica-Supplier
+    // platform to log in securely; everyone else continues the application.
+    const portalUrl = await getSupplierPortalUrl()
+    if (portalUrl) {
+      window.location.href = portalUrl
+      return
+    }
+    navigate('/supplier/register')
   }, [user, navigate])
 
   // Mobile "List an Experience": close the drawer so its AnimatePresence exit
@@ -412,7 +422,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
           <span className="nav-list-experience-icon">
             <Megaphone size={15} strokeWidth={2.1} />
           </span>
-          <span className="nav-list-experience-label">{t('nav.listAnExperience', 'List an Experience')}</span>
+          <span className="nav-list-experience-label">{isApproved ? t('nav.supplierDashboard') : t('nav.listAnExperience', 'List an Experience')}</span>
         </a>
 
         <div className="nav-icon-item nav-globe-trigger" onClick={() => setLangCurrencyOpen(true)}>
@@ -580,8 +590,8 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
                 <Megaphone size={19} strokeWidth={2} />
               </span>
               <span className="nav-mobile-list-experience-text">
-                <span className="nav-mobile-list-experience-title">{t('nav.listAnExperience', 'List an Experience')}</span>
-                <span className="nav-mobile-list-experience-sub">{t('nav.listAnExperienceSub', 'Become a supplier and start earning')}</span>
+                <span className="nav-mobile-list-experience-title">{isApproved ? t('nav.supplierDashboard') : t('nav.listAnExperience', 'List an Experience')}</span>
+                <span className="nav-mobile-list-experience-sub">{isApproved ? t('nav.supplierDashboardSub') : t('nav.listAnExperienceSub', 'Become a supplier and start earning')}</span>
               </span>
               <ChevronRight size={18} className="nav-mobile-list-experience-chevron" />
             </a>

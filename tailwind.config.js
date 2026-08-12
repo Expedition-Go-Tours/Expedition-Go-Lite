@@ -1,3 +1,5 @@
+import animate from 'tailwindcss-animate'
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: [
@@ -16,12 +18,20 @@ export default {
           DEFAULT: '#ef4444',
           foreground: '#ffffff',
         },
+        secondary: {
+          DEFAULT: '#f1f5f9',
+          foreground: '#0f172a',
+        },
         muted: {
           DEFAULT: '#f5f5f5',
           foreground: '#6b7280',
         },
         accent: {
           DEFAULT: '#f5f5f5',
+          foreground: '#111827',
+        },
+        popover: {
+          DEFAULT: '#ffffff',
           foreground: '#111827',
         },
         card: {
@@ -45,6 +55,6 @@ export default {
       },
     },
   },
-  plugins: [],
+  plugins: [animate],
 }
 

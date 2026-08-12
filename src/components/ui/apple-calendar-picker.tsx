@@ -261,7 +261,7 @@ export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate, ge
           >
             {day}
             {!meta.isSelected && (
-              <span className="absolute bottom-[1px] left-1/2 -translate-x-1/2 w-[5px] h-[5px] rounded-full bg-slate-300" />
+              <span className="absolute bottom-[1px] left-1/2 -translate-x-1/2 w-[5px] h-[5px] rounded-full bg-red-400" />
             )}
           </div>
         )

@@ -101,6 +101,7 @@ describe('CalendarPicker sold-out / closed hardening', () => {
     const { onDateSelect } = renderPicker()
     const cell = dayCell(8)
     expect(cell.getAttribute('data-status')).toBe('blocked')
+    expect(cell.querySelector('span')).toHaveClass('bg-red-400')
     fireEvent.click(cell)
     expect(onDateSelect).not.toHaveBeenCalled()
   })

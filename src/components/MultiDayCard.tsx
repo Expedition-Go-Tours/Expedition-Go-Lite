@@ -6,7 +6,7 @@ import './MultiDayCard.css'
 import { useWishlist, toWishlistItem } from '../context/WishlistContext'
 import FormattedPrice from './FormattedPrice'
 
-interface MultiDayCardProps extends MultiDayTour {}
+type MultiDayCardProps = MultiDayTour
 
 export default function MultiDayCard({ id, title, days, accommodation, highlights, price, rating, reviews, location, image, source, externalUrl }: MultiDayCardProps) {
   const { t } = useTranslation()

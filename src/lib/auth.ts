@@ -126,6 +126,13 @@ export async function getAuthToken(): Promise<string | null> {
   return accessToken || null
 }
 
+/** Access + refresh tokens for the current stored session (used to hand a
+ *  session over to the TravioAfrica-Supplier platform via SSO). */
+export function getStoredAuthTokens(): { accessToken: string | null; refreshToken: string | null } {
+  const { accessToken, refreshToken } = getStoredAuth()
+  return { accessToken: accessToken || null, refreshToken: refreshToken || null }
+}
+
 /**
  * Wait for an authentication token to become available
  * @param maxMs - Maximum time to wait in milliseconds (default: 5000)

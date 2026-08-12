@@ -180,45 +180,59 @@ export default function SupportChatWidget({ initialOpen }: SupportChatWidgetProp
 
   return (
     <>
-      {/* Floating Button */}
+      {/* Edge toggle */}
       <button
-        onClick={openWidget}
-        className={`support-chat-btn ${isOpen || initialOpen ? "hidden" : ""}`}
-        aria-label={t('supportChat.openChat')}
+        onClick={isOpen ? closeWidget : openWidget}
+        className={`support-chat-btn${isOpen ? " open" : ""}`}
+        aria-label={isOpen ? t('supportChat.closeChat') : t('supportChat.openChat')}
+        aria-expanded={isOpen}
       >
-        <span className="support-chat-btn-content">
-          <span className="support-chat-btn-inner">
-            <MessageCircle className="support-chat-btn-icon" />
+        <span className="support-chat-btn-body">
+          <span className="support-chat-btn-icon-wrap">
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.span
+                key={isOpen ? "close" : "open"}
+                className="support-chat-btn-icon"
+                initial={{ scale: 0.5, rotate: -90, opacity: 0 }}
+                animate={{ scale: 1, rotate: 0, opacity: 1 }}
+                exit={{ scale: 0.5, rotate: 90, opacity: 0 }}
+                transition={{ duration: 0.2, ease: [0.34, 1.56, 0.64, 1] }}
+              >
+                {isOpen ? <X size={18} /> : <MessageCircle size={18} />}
+              </motion.span>
+            </AnimatePresence>
           </span>
-          <span className="support-chat-btn-text">{t('supportChat.needHelp')}</span>
+          <span className="support-chat-btn-label">{t('supportChat.chatShort')}</span>
+          <span className="support-chat-btn-hint">{t('supportChat.chatWithUs')}</span>
+          {unread > 0 && !isOpen && (
+            <span className="support-chat-badge">{unread > 99 ? "99+" : unread}</span>
+          )}
         </span>
-        {unread > 0 && (
-          <span className="support-chat-badge">{unread > 99 ? "99+" : unread}</span>
-        )}
       </button>
 
       {/* Popup */}
       <AnimatePresence onExitComplete={() => setView("welcome")}>
         {isOpen && (
-          <motion.div
-            className="support-chat-backdrop"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            onClick={closeWidget}
-          >
             <motion.div
-              className="support-chat-popup"
-              initial={isMobile ? { y: "100%" } : { opacity: 0, y: 16, scale: 0.96 }}
-              animate={isMobile ? { y: 0 } : { opacity: 1, y: 0, scale: 1 }}
-              exit={isMobile ? { y: "100%" } : { opacity: 0, y: 24, scale: 0.94 }}
-              transition={isMobile
-                ? { type: "tween", duration: 0.34, ease: [0.4, 0, 0.2, 1] }
-                : { duration: 0.28, ease: [0.16, 1, 0.3, 1] }
-              }
-              onClick={(e) => e.stopPropagation()}
+              className="support-chat-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={closeWidget}
             >
+              <div className="support-chat-popup-wrap">
+                <motion.div
+                  className="support-chat-popup"
+                  initial={isMobile ? { y: "100%" } : { opacity: 0, y: 16, scale: 0.96 }}
+                  animate={isMobile ? { y: 0 } : { opacity: 1, y: 0, scale: 1 }}
+                  exit={isMobile ? { y: "100%" } : { opacity: 0, y: 24, scale: 0.94 }}
+                  transition={isMobile
+                    ? { type: "tween", duration: 0.34, ease: [0.4, 0, 0.2, 1] }
+                    : { duration: 0.28, ease: [0.16, 1, 0.3, 1] }
+                  }
+                  onClick={(e) => e.stopPropagation()}
+                >
               {/* Header */}
               <div className="support-chat-header">
                 <div className="support-chat-header-left">
@@ -460,8 +474,9 @@ export default function SupportChatWidget({ initialOpen }: SupportChatWidgetProp
                   </motion.div>
                 )}
               </AnimatePresence>
+              </motion.div>
+              </div>
             </motion.div>
-          </motion.div>
         )}
       </AnimatePresence>
     </>

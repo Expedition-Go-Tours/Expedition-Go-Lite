@@ -11,9 +11,11 @@ import { getCategoryMeta } from './categoryMeta'
 interface TourCardProps extends Tour {
   discount?: string
   slug?: string
+  isNew?: boolean
+  hideSourceBadge?: boolean
 }
 
-export default function TourCard({ id, title, duration, features, price, rating, reviews, location, image, discount, difficulty, cancellationPolicy, pickupIncluded, accommodationIncluded, category, languages, source, externalUrl, slug }: TourCardProps) {
+export default function TourCard({ id, title, duration, features, price, rating, reviews, location, image, discount, difficulty, cancellationPolicy, pickupIncluded, accommodationIncluded, category, languages, source, externalUrl, slug, isNew, hideSourceBadge }: TourCardProps) {
   const { t } = useTranslation()
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist()
   const item = toWishlistItem({ id, title, duration, features, price, rating: String(rating), reviews, location, image, source, externalUrl } as Tour)
@@ -72,14 +74,15 @@ export default function TourCard({ id, title, duration, features, price, rating,
   return (
     <div className="tour-card" onClick={handleCardClick} onKeyDown={handleKeyDown} role="link" tabIndex={0}>
       <div className="tour-card-image">
-        {source === 'travio-africa' && (
+        {isNew && <span className="tour-card-new-pill">New</span>}
+        {!hideSourceBadge && source === 'travio-africa' && (
           <div className="source-badge">
             <img src="/travio_logo.png" alt="Travio Africa" />
           </div>
         )}
         <img src={image} alt={title} loading="lazy" />
         <div className="tour-card-image-fade" />
-        {discount && <span className="tour-card-discount">{discount}</span>}
+        {duration && <span className="tour-card-duration">{duration}</span>}
         {categoryMeta && (
           <span className={`tour-card-image-type-badge tour-card-badge-type-${categoryMeta.variant}`}>
             <categoryMeta.Icon size={12} strokeWidth={2.4} />
@@ -101,7 +104,7 @@ export default function TourCard({ id, title, duration, features, price, rating,
             </svg>
             {location}
           </span>
-          {duration && <span className="tour-card-duration-badge">{duration}</span>}
+          {discount && <span className="tour-card-discount">{discount}</span>}
         </div>
         <h3 className="tour-card-title">{title}</h3>
         <div className="tour-card-meta">

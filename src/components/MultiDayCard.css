@@ -45,8 +45,8 @@
 
 .multiday-card-days {
   position: absolute;
-  top: 10px;
-  left: 10px;
+  bottom: 8px;
+  right: 8px;
   background: var(--primary);
   color: #fff;
   font-family: 'Raleway', sans-serif;

@@ -21,6 +21,7 @@ import MultiDayToursSection from './components/MultiDayToursSection'
 import TopRatedSection from './components/TopRatedSection'
 import SellOutSection from './components/SellOutSection'
 import LastMinuteDealsSection from './components/LastMinuteDealsSection'
+import NewExperiencesSection from './components/NewExperiencesSection'
 import CustomReviewsSection from './components/CustomReviewsSection'
 import PartnersSection from './components/PartnersSection'
 import WhyBookSection from './components/WhyBookSection'
@@ -54,6 +55,7 @@ function HomePage() {
       <MountOnView><TopRatedSection /></MountOnView>
       <MountOnView><SellOutSection /></MountOnView>
       <MountOnView><LastMinuteDealsSection /></MountOnView>
+      <MountOnView><NewExperiencesSection /></MountOnView>
       <MountOnView><CustomReviewsSection /></MountOnView>
       <MountOnView><PartnersSection /></MountOnView>
       <MountOnView><WhyBookSection /></MountOnView>

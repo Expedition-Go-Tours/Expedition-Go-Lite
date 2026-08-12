@@ -1390,13 +1390,25 @@ export function mapRawTourToListing(t: any): TourCardData {
   // Cards show only the single Step 1 content language, not every
   // per-option language merged in — see extractContentLanguage().
   const languages = extractContentLanguage(t)
+  // Feature line shown under the card title: prefer the stored column, else
+  // derive a compact summary from productContent.highlights (mirrors the
+  // curated mapping so raw-tour cards carry the same "Guide · Lunch · Fees"
+  // style highlights instead of a blank row).
+  const features = t.features
+    || (Array.isArray(parseProductContent(t)?.highlights)
+      ? parseProductContent(t).highlights.slice(0, 3).join(' · ')
+      : '')
+  // Pickup can live either in the top-level column or inside the
+  // bookingAndTickets blob — same fallback chain as mapToListing().
+  const bt = parseJsonMaybe(t.bookingAndTickets)
+  const pickupIncluded = t.pickupIncluded ?? (bt?.pickupProvided ?? bt?.pickupAvailable) ?? undefined
 
   return {
     id: t.id,
     title: t.title,
     category: t.category || '',
     duration: formatDuration(durationMinutes),
-    features: '',
+    features,
     price: formatPrice(price),
     rating: t.averageRating != null ? String(t.averageRating) : '0',
     reviews: t.reviewCount ?? t._count?.reviews ?? 0,
@@ -1408,7 +1420,7 @@ export function mapRawTourToListing(t: any): TourCardData {
     languages: languages.length ? languages : undefined,
     difficulty: extractDifficultyFromTour(t) || undefined,
     cancellationPolicy: extractCancellationFromTour(t) || undefined,
-    pickupIncluded: t.pickupIncluded ?? undefined,
+    pickupIncluded,
     accommodationIncluded: extractAccommodationIncluded(t),
   }
 }
@@ -1492,6 +1504,23 @@ export function useRecommendedTours(limit: number = 12) {
       }
 
       return merged.slice(0, limit)
+    },
+  })
+}
+
+/**
+ * Powers the homepage "New Experiences" section — the most recently
+ * published active tours from the public /tours endpoint (i.e. tours just
+ * added by suppliers on the platform). Sorted newest-first by createdAt so
+ * brand-new experiences surface immediately without waiting on curation.
+ */
+export function useNewestTours(limit: number = 10) {
+  return useQuery({
+    queryKey: ['expedition', 'tours', 'newest', limit],
+    queryFn: async (): Promise<TourCardData[]> => {
+      const payload = await expeditionFetchRaw(`/tours?limit=${limit}&sortBy=createdAt&sortOrder=desc`)
+      const rawTours: any[] = payload.data?.tours ?? payload.tours ?? []
+      return rawTours.map(mapRawTourToListing)
     },
   })
 }

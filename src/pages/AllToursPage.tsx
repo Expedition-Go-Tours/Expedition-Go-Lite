@@ -46,6 +46,7 @@ const SECTION_TITLES: Record<string, string> = {
   'Top Rated': 'Top Rated by Travellers',
   'Sell Out': 'Likely to Sell Out',
   'Last Minute Deals': 'Last Minute Deals',
+  'New Experiences': 'New Experiences',
 }
 
 /** Maps a homepage section to a client-side sort key used when the user hasn't
