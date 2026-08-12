@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import './TourGuideCard.css'
+import OptimizedImage from '@/components/shared/OptimizedImage'
 
 interface TourGuideCardProps {
   name: string
@@ -12,10 +13,11 @@ export default function TourGuideCard({ name, memberSince, avatar }: TourGuideCa
   return (
     <div className="tour-guide-card">
       <div className="tour-guide-avatar-wrapper">
-        <img 
+        <OptimizedImage 
           src={avatar} 
           alt={name}
           className="tour-guide-avatar"
+          width={100}
         />
       </div>
       

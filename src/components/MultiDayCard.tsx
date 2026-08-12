@@ -5,6 +5,7 @@ import { parsePrice, getTourSlug, type MultiDayTour } from './data'
 import './MultiDayCard.css'
 import { useWishlist, toWishlistItem } from '../context/WishlistContext'
 import FormattedPrice from './FormattedPrice'
+import OptimizedImage from '@/components/shared/OptimizedImage'
 
 type MultiDayCardProps = MultiDayTour
 
@@ -46,7 +47,7 @@ export default function MultiDayCard({ id, title, days, accommodation, highlight
             <img src="/travio_logo.png" alt="Travio Africa" />
           </div>
         )}
-        <img src={image} alt={title} loading="lazy" />
+        <OptimizedImage src={image} alt={title} width={600} />
         <div className="multiday-card-image-fade" />
         <span className="multiday-card-days">{days}</span>
         <button className={`multiday-card-wishlist${inWishlist ? ' wishlist-active' : ''}`} onClick={handleWishlist} aria-label={inWishlist ? 'Remove from wishlist' : 'Add to wishlist'}>

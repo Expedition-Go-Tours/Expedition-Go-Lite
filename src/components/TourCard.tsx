@@ -7,6 +7,7 @@ import { parsePrice, getTourSlug, type Tour } from './data'
 import { useWishlist, toWishlistItem } from '../context/WishlistContext'
 import FormattedPrice from './FormattedPrice'
 import { getCategoryMeta } from './categoryMeta'
+import OptimizedImage from '@/components/shared/OptimizedImage'
 
 interface TourCardProps extends Tour {
   discount?: string
@@ -80,7 +81,7 @@ export default function TourCard({ id, title, duration, features, price, rating,
             <img src="/travio_logo.png" alt="Travio Africa" />
           </div>
         )}
-        <img src={image} alt={title} loading="lazy" />
+        <OptimizedImage src={image} alt={title} width={600} />
         <div className="tour-card-image-fade" />
         {duration && <span className="tour-card-duration">{duration}</span>}
         {categoryMeta && (

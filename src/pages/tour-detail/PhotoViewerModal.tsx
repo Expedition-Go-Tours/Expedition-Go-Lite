@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, ChevronLeft, ChevronRight } from 'lucide-react'
 import './PhotoViewerModal.css'
+import OptimizedImage from '@/components/shared/OptimizedImage'
+import { transformImage } from '@/lib/image'
 
 interface PhotoViewerModalProps {
   images: string[]
@@ -91,7 +93,7 @@ export default function PhotoViewerModal({
         <div className="photo-viewer-content" onClick={(e) => e.stopPropagation()}>
           <motion.img
             key={currentIndex}
-            src={images[currentIndex]}
+            src={transformImage(images[currentIndex], { width: 1600, quality: 'auto:good', format: 'auto' }) ?? images[currentIndex]}
             alt={`${tourTitle} - Photo ${currentIndex + 1}`}
             className="photo-viewer-image"
             initial={{ opacity: 0, scale: 0.95 }}
@@ -136,7 +138,7 @@ export default function PhotoViewerModal({
               }}
               aria-label={`View photo ${index + 1}`}
             >
-              <img src={image} alt={`Thumbnail ${index + 1}`} />
+              <OptimizedImage src={image} alt={`Thumbnail ${index + 1}`} width={200} />
             </button>
           ))}
         </div>

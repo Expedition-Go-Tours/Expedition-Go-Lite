@@ -7,6 +7,7 @@ import type { TravelStory } from '../components/data'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import './StoryDetailPage.css'
+import OptimizedImage from '@/components/shared/OptimizedImage'
 
 interface Section {
   heading: string
@@ -153,7 +154,7 @@ function StoryDetailPage() {
       {/* Hero */}
       <header className="story-hero">
         <div className="story-hero-bg">
-          <img src={story.image} alt={story.title} />
+          <OptimizedImage src={story.image} alt={story.title} width={1200} />
           <div className="story-hero-scrim" />
           <div className="story-hero-glow story-hero-glow-1" />
           <div className="story-hero-glow story-hero-glow-2" />
@@ -308,7 +309,7 @@ function StoryDetailPage() {
                 className="story-related-card"
               >
                 <div className="story-related-image">
-                  <img src={r.image} alt={r.title} loading="lazy" />
+                  <OptimizedImage src={r.image} alt={r.title} width={400} />
                   <div className="story-related-scrim" />
                 </div>
                 <div className="story-related-body">

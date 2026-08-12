@@ -15,6 +15,7 @@ import { useSearchAutocomplete, type SearchSuggestion } from '../hooks/useSearch
 import { useRecentSearches } from '../hooks/useRecentSearches'
 import LanguageCurrencyModal from './LanguageCurrencyModal'
 import './Navbar.css'
+import OptimizedImage from '@/components/shared/OptimizedImage'
 
 const navDropdownVariants: Variants = {
   hidden: { opacity: 0, y: -6, scale: 0.985 },
@@ -394,7 +395,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
                           ) : (
                             <>
                               <div className="search-suggestion-img">
-                                <img src={suggestion.image} alt="" loading="lazy" />
+                                <OptimizedImage src={suggestion.image} alt="" width={100} />
                               </div>
                               <div className="search-suggestion-text">
                                 <span className="search-suggestion-title">{suggestion.title}</span>

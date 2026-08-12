@@ -23,6 +23,7 @@ import { getStripePromise } from '../lib/stripe'
 import { fetchWithAuth } from '../lib/api'
 import { useCreateBooking } from '../hooks/useExpeditionBookings'
 import { buildE164Phone, isValidPhoneInput } from '../lib/phone'
+import OptimizedImage from '@/components/shared/OptimizedImage'
 
 /* ─── Constants ─── */
 
@@ -100,7 +101,7 @@ function MobileSummaryCard({ tour, onChangeClick }: { tour: typeof FALLBACK_TOUR
     <motion.div variants={itemVariants} className="rounded-[1.75rem] border border-slate-200/40 bg-white p-5 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)]">
       <div className="flex items-start gap-3">
         <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-slate-100 ring-1 ring-slate-200/40">
-          <img src={tour.image} alt={tour.title} className="h-full w-full object-cover" loading="lazy" />
+          <OptimizedImage src={tour.image} alt={tour.title} className="h-full w-full object-cover" width={400} />
         </div>
         <div className="min-w-0 flex-1">
           <h3 className="text-sm font-bold leading-tight text-slate-900 line-clamp-2">{tour.title}</h3>
@@ -418,7 +419,7 @@ function ActivityDetailsStep({
     <div className="overflow-hidden rounded-xl border border-slate-200/40 bg-slate-50/30">
       <div className="flex gap-3 p-3">
         <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-slate-100 ring-1 ring-slate-200/20">
-          <img src={tour.image} alt={tour.title} className="h-full w-full object-cover" loading="lazy" />
+          <OptimizedImage src={tour.image} alt={tour.title} className="h-full w-full object-cover" width={400} />
         </div>
         <div className="min-w-0 flex-1">
           <h3 className="text-sm font-bold leading-tight text-slate-900 line-clamp-2">{tour.title}</h3>
@@ -828,7 +829,7 @@ function BookingSidebar({
             </div>
           </div>
           <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-slate-100 ring-1 ring-slate-200/40">
-            <img src={tour.image} alt={tour.title} className="h-full w-full object-cover" loading="lazy" />
+            <OptimizedImage src={tour.image} alt={tour.title} className="h-full w-full object-cover" width={400} />
           </div>
         </div>
 

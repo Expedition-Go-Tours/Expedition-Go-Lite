@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { Star, ChevronDown, ChevronRight, ChevronLeft, Phone, Mail, Globe, MapPin } from 'lucide-react'
 import TourCard from '../../components/TourCard'
 import './SupplierSection.css'
+import OptimizedImage from '@/components/shared/OptimizedImage'
 
 interface SupplierTour {
   title: string
@@ -114,7 +115,7 @@ export default function SupplierSection({
           <div className="supplier-header-left">
             <div className="supplier-logo">
               {logo ? (
-                <img src={logo} alt="" className="supplier-logo-img" />
+                <OptimizedImage src={logo} alt="" className="supplier-logo-img" width={100} />
               ) : (
                 <span className="supplier-logo-fallback">
                   {name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()}

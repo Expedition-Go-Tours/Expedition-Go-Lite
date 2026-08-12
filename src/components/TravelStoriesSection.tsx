@@ -5,6 +5,7 @@ import SectionHeading from './SectionHeading'
 import { travelStories, storySlug } from './data'
 import type { TravelStory } from './data'
 import './TravelStoriesSection.css'
+import OptimizedImage from '@/components/shared/OptimizedImage'
 
 const CARD_WIDTH = 295
 const GAP = 16
@@ -14,7 +15,7 @@ function StoryCard({ story, t }: { story: TravelStory; t: (key: string) => strin
     <div className="story-card-wrap">
       <Link to={`/stories/${storySlug(story.title)}`} className="story-card">
         <div className="story-card-image">
-          <img src={story.image} alt={story.title} loading="lazy" />
+          <OptimizedImage src={story.image} alt={story.title} width={600} />
         </div>
         <div className="story-card-body">
           <div className="story-card-meta">

@@ -7,6 +7,7 @@ import { Clock, X } from 'lucide-react'
 import { useSearchAutocomplete, type SearchSuggestion } from '../hooks/useSearchAutocomplete'
 import { useRecentSearches } from '../hooks/useRecentSearches'
 import './SearchBar.css'
+import OptimizedImage from '@/components/shared/OptimizedImage'
 
 const dropdownVariants: Variants = {
   hidden: { opacity: 0, y: -8, scale: 0.985 },
@@ -346,7 +347,7 @@ export default function SearchBar() {
                         ) : (
                           <>
                             <div className="search-suggestion-img">
-                              <img src={suggestion.image} alt="" loading="lazy" />
+                              <OptimizedImage src={suggestion.image} alt="" width={100} />
                             </div>
                             <div className="search-suggestion-text">
                               <span className="search-suggestion-title">{suggestion.title}</span>

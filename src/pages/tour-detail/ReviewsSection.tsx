@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { Star } from 'lucide-react'
 import './ReviewsSection.css'
+import OptimizedImage from '@/components/shared/OptimizedImage'
 
 interface Review {
   id: string
@@ -178,7 +179,7 @@ export default function ReviewsSection({
                     {review.photos && review.photos.length > 0 && (
                       <div className="review-card-photos">
                         {review.photos.map((url, i) => (
-                          <img key={i} src={url} alt="" className="review-card-photo" />
+                          <OptimizedImage key={i} src={url} alt="" className="review-card-photo" width={400} />
                         ))}
                       </div>
                     )}

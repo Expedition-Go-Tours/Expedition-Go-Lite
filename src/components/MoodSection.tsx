@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
+import { transformImage } from '@/lib/image'
 import './MoodSection.css'
 
 const CARD_WIDTH = 295
@@ -78,7 +79,7 @@ export default function MoodSection() {
                   <div key={`${cat.id}-${i}`} className="mood-card-wrap">
                     <button
                       className="mood-card"
-                      style={{ backgroundImage: `url(${cat.image})` }}
+                      style={{ backgroundImage: `url(${transformImage(cat.image, { width: 600, quality: 'auto:good', format: 'auto' }) ?? cat.image})` }}
                     >
                       <span className="mood-tag">{cat.tag}</span>
                       <span className="mood-count">{cat.count} {t('mood.tours')}</span>

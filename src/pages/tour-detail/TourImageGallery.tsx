@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import PhotoViewerModal from './PhotoViewerModal'
 import GalleryDialog from './GalleryDialog'
 import './TourImageGallery.css'
+import OptimizedImage from '@/components/shared/OptimizedImage'
 
 interface TourImageGalleryProps {
   images: string[]
@@ -79,10 +80,11 @@ export default function TourImageGallery({
               className={`tour-gallery-thumb ${idx === currentImageIndex ? 'active' : ''}`}
               aria-label={`Show image ${idx + 1}`}
             >
-              <img
+              <OptimizedImage
                 src={img || fallbackImage}
                 alt=""
                 onError={handleImageError}
+                width={200}
               />
             </button>
           ))}
@@ -99,12 +101,13 @@ export default function TourImageGallery({
             style={{ transform: `translateX(-${currentImageIndex * 100}%)` }}
           >
             {images.map((img, idx) => (
-              <img
+              <OptimizedImage
                 key={idx}
                 src={img || fallbackImage}
                 alt={`${title} ${idx + 1}`}
                 onError={handleImageError}
                 className="tour-gallery-main-slide"
+                width={1200}
               />
             ))}
           </div>

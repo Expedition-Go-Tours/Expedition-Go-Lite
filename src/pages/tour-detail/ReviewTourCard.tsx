@@ -1,5 +1,6 @@
 import { Star, MapPin, Clock } from 'lucide-react'
 import './ReviewTourCard.css'
+import OptimizedImage from '@/components/shared/OptimizedImage'
 
 interface ReviewTourCardProps {
   images: string[]
@@ -27,7 +28,7 @@ export default function ReviewTourCard({
   return (
     <div className="review-tour-card">
       <div className="review-tour-card-image">
-        {displayImage && <img src={displayImage} alt={title} />}
+        {displayImage && <OptimizedImage src={displayImage} alt={title} width={400} />}
       </div>
       <div className="review-tour-card-body">
         <h3 className="review-tour-card-title">{title}</h3>
@@ -38,7 +39,7 @@ export default function ReviewTourCard({
           </div>
           <div className="review-tour-card-supplier">
             {supplierLogo && (
-              <img src={supplierLogo} alt="" className="review-tour-card-supplier-logo" />
+              <OptimizedImage src={supplierLogo} alt="" className="review-tour-card-supplier-logo" width={100} />
             )}
             <span>{supplierName}</span>
           </div>

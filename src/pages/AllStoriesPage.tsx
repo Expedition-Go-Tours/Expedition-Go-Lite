@@ -8,13 +8,14 @@ import type { StorySuggestion } from '../hooks/useStorySearchAutocomplete'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import './AllStoriesPage.css'
+import OptimizedImage from '@/components/shared/OptimizedImage'
 
 function StoryCard({ story }: { story: TravelStory }) {
   return (
     <div className="story-card-wrap">
       <Link to={`/stories/${storySlug(story.title)}`} className="story-card">
         <div className="story-card-image">
-          <img src={story.image} alt={story.title} loading="lazy" />
+          <OptimizedImage src={story.image} alt={story.title} width={600} />
         </div>
         <div className="story-card-body">
           <div className="story-card-meta">
@@ -134,11 +135,11 @@ export default function AllStoriesPage() {
                       onMouseDown={() => navigateToSuggestion(suggestion)}
                       onMouseEnter={() => setHighlightedIndex(idx)}
                     >
-                      <img
+                      <OptimizedImage
                         className="all-stories-autocomplete-img"
                         src={suggestion.image}
                         alt=""
-                        loading="lazy"
+                        width={400}
                       />
                       <div className="all-stories-autocomplete-text">
                         <span className="all-stories-autocomplete-title">{suggestion.title}</span>
