@@ -105,8 +105,13 @@ export interface ItineraryDay {
   activityName?: string
   locationName?: string
   locationAddress?: string
+  locationCity?: string
+  locationCountry?: string
   locationLat?: number | null
   locationLng?: number | null
+  /** The supplier's admission rule for this stop: included in the tour price
+   *  ('yes'), paid separately ('no'), or merely passed by ('passby'). */
+  admissionIncluded?: 'yes' | 'no' | 'passby'
   isCustomLocation?: boolean
   image?: string
   activities?: string[]

@@ -85,4 +85,40 @@ describe('LocationPicker', () => {
     expect(input.className).toContain('border-rose-300')
     expect(screen.getByText('Please enter your pickup location')).toBeInTheDocument()
   })
+
+  it('lets the user use a manually typed location when there are no suggestions', () => {
+    mockAutocomplete.mockReturnValue({
+      search: vi.fn(),
+      retry: vi.fn(),
+      clear: vi.fn(),
+      results: [],
+      loading: false,
+      error: null,
+    })
+    const { onChange } = renderPicker()
+    const input = screen.getByPlaceholderText('e.g. Accra, Ghana')
+
+    fireEvent.change(input, { target: { value: 'Kaneshie Market, Accra' } })
+    fireEvent.click(screen.getByText(/Use .* as your pickup location/))
+
+    expect(onChange).toHaveBeenCalledWith('Kaneshie Market, Accra')
+  })
+
+  it('commits a manually typed location on Enter when there are no suggestions', () => {
+    mockAutocomplete.mockReturnValue({
+      search: vi.fn(),
+      retry: vi.fn(),
+      clear: vi.fn(),
+      results: [],
+      loading: false,
+      error: null,
+    })
+    const { onChange } = renderPicker()
+    const input = screen.getByPlaceholderText('e.g. Accra, Ghana')
+
+    fireEvent.change(input, { target: { value: 'Osu, Accra' } })
+    fireEvent.keyDown(input, { key: 'Enter' })
+
+    expect(onChange).toHaveBeenCalledWith('Osu, Accra')
+  })
 })

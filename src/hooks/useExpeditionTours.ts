@@ -676,6 +676,44 @@ function normalizeDurationUnit(unit: unknown): 'minute' | 'hour' | 'day' {
 }
 
 /**
+ * Resolves the supplier's meeting-point / pickup / drop-off configuration so
+ * the itinerary preview can render start/end nodes (mirroring the supplier's
+ * Step-5 itinerary preview). Reads bookingAndTickets first, falling back to
+ * productContent (the builder persists the same flat keys in both places).
+ */
+function extractMeetingInfo(rawTour: any) {
+  const bt = parseJsonMaybe(rawTour?.bookingAndTickets)
+  const pc = parseProductContent(rawTour)
+  const pick = <T,>(a: T, b: T): T => (a !== undefined && a !== null && a !== '' ? a : b)
+  const pointString = (pt: any): string | undefined => {
+    if (!pt || typeof pt !== 'object') return undefined
+    if (pt.name) return pt.address && pt.address !== pt.name ? `${pt.name} \u2014 ${pt.address}` : pt.name
+    return pt.address || undefined
+  }
+  const meetingPoint = pick(bt?.meetingPoint, pc?.meetingPoint)
+  const dropoffLocation = pick(bt?.dropoffLocation, pc?.dropoffLocation)
+
+  return {
+    meetingMode: (pick(bt?.meetingMode, pc?.meetingMode) || 'none') as 'meeting_point' | 'pickup' | 'none',
+    meetingPoint: pointString(meetingPoint) || '',
+    meetingPointAddress: typeof meetingPoint === 'object' && meetingPoint ? meetingPoint.address || undefined : undefined,
+    meetingPointDescription: pick(bt?.meetingPointDescription, pc?.meetingPointDescription) || '',
+    arrivalTimeType: (pick(bt?.arrivalTimeType, pc?.arrivalTimeType) || 'none') as
+      | 'none' | '5min' | '10min' | '15min' | '30min' | 'notified' | 'custom',
+    arrivalTimeCustom: pick(bt?.arrivalTimeCustom, pc?.arrivalTimeCustom) || '',
+    pickupType: (pick(bt?.pickupType, pc?.pickupType) || 'area') as 'area' | 'address',
+    pickupAreas: (pick(bt?.pickupAreas, pc?.pickupAreas) || []).filter((a: any) => a && (a.name || a.address)),
+    pickupLocations: (pick(bt?.pickupLocations, pc?.pickupLocations) || []).filter((l: any) => l && (l.name || l.address)),
+    pickupDescription: pick(bt?.pickupDescription, pc?.pickupDescription) || '',
+    dropoffOption: (pick(bt?.dropoffOption, pc?.dropoffOption) || 'none') as
+      | 'same_location' | 'different_location' | 'none' | 'service',
+    dropoffLocation: pointString(dropoffLocation) || '',
+    dropoffLocationAddress: typeof dropoffLocation === 'object' && dropoffLocation ? dropoffLocation.address || undefined : undefined,
+    dropoffDescription: pick(bt?.dropoffDescription, pc?.dropoffDescription) || '',
+  }
+}
+
+/**
  * Resolves the tour's itinerary. Prefers the explicit `productContent.itinerary`
  * array (structured itinerary stops created in the supplier builder); when that
  * is absent or empty, falls back to deriving stops from `productContent.locations`
@@ -686,26 +724,44 @@ function extractItinerary(rawTour: any): ItineraryDay[] {
   try {
     const pc = parseProductContent(rawTour)
     const explicit = Array.isArray(pc?.itinerary) ? pc.itinerary : []
-    if (explicit.length > 0) return explicit
+    if (explicit.length > 0) {
+      return explicit.map((stop: any) => ({
+        ...stop,
+        // Normalize the supplier's plural/free-form unit strings ('days',
+        // 'hours', 'mins', ...) to the singular labels formatItineraryDuration
+        // understands, so durations render as "2h"/"3 days" rather than "3 min".
+        durationUnit: stop.durationUnit != null ? normalizeDurationUnit(stop.durationUnit) : stop.durationUnit,
+      }))
+    }
 
     const locations = Array.isArray(pc?.locations) ? pc.locations : []
     if (locations.length === 0) return []
 
     return locations
-      .filter((loc: any) => loc && (loc.name || loc.title))
-      .map((loc: any, index: number) => ({
-        day: index + 1,
-        title: loc.name || loc.title || `Stop ${index + 1}`,
-        description: typeof loc.description === 'string' ? loc.description : '',
-        locationName: loc.name || loc.title || undefined,
-        locationAddress: loc.address || undefined,
-        locationLat: loc.lat != null ? loc.lat : null,
-        locationLng: loc.lng != null ? loc.lng : null,
-        duration: loc.timeSpent != null ? Number(loc.timeSpent) : undefined,
-        durationUnit: loc.timeSpentUnit != null ? normalizeDurationUnit(loc.timeSpentUnit) : undefined,
-        type: 'activity' as const,
-        additionalFee: loc.admissionIncluded === 'no',
-      }))
+      // A supplier may save a stop that only has an address (no name picked),
+      // so keep any location that carries at least one identifier.
+      .filter((loc: any) => loc && (loc.name || loc.title || loc.address))
+      .map((loc: any) => {
+        const name = loc.name || loc.title || loc.address || `Stop`
+        return {
+          // Preserve the day the supplier assigned (multi-day tours split
+          // stops across day 1..N); default to day 1 for legacy data.
+          day: loc.day != null ? Number(loc.day) : 1,
+          title: name,
+          description: typeof loc.description === 'string' ? loc.description : '',
+          locationName: loc.name || loc.title || undefined,
+          locationAddress: loc.address || undefined,
+          locationCity: loc.city || undefined,
+          locationCountry: loc.country || undefined,
+          locationLat: loc.lat != null ? loc.lat : null,
+          locationLng: loc.lng != null ? loc.lng : null,
+          duration: loc.timeSpent != null ? Number(loc.timeSpent) : undefined,
+          durationUnit: loc.timeSpentUnit != null ? normalizeDurationUnit(loc.timeSpentUnit) : undefined,
+          type: 'activity' as const,
+          additionalFee: loc.admissionIncluded === 'no',
+          admissionIncluded: ['yes', 'no', 'passby'].includes(loc.admissionIncluded) ? loc.admissionIncluded : undefined,
+        }
+      })
   } catch {
     return []
   }
@@ -985,6 +1041,20 @@ export interface TourDetailData extends Omit<TourDetail, 'guide' | 'contact' | '
   notAllowed: string[]
   additionalInfo: string
   meetingPoint: string
+  /** How travelers assemble at the start: a fixed meeting point, or pickup. */
+  meetingMode?: 'meeting_point' | 'pickup' | 'none'
+  meetingPointAddress?: string
+  meetingPointDescription?: string
+  arrivalTimeType?: 'none' | '5min' | '10min' | '15min' | '30min' | 'notified' | 'custom'
+  arrivalTimeCustom?: string
+  pickupType?: 'area' | 'address'
+  pickupAreas?: { name: string; time?: string; address?: string; lat?: number | null; lng?: number | null }[]
+  pickupLocations?: { name?: string; address?: string; lat?: number | null; lng?: number | null }[]
+  pickupDescription?: string
+  dropoffOption?: 'same_location' | 'different_location' | 'none' | 'service'
+  dropoffLocation?: string
+  dropoffLocationAddress?: string
+  dropoffDescription?: string
   supplierName: string
   supplierPhoto: string | null
   bookingFlow: 'DIRECT' | 'EXTERNAL'
@@ -1060,6 +1130,7 @@ function buildTourDetailFromRawTour(rawTour: any): TourDetailData {
   const skipTheLine = extractSkipTheLine(rawTour)
   const languages = extractLanguagesFromTour(rawTour)
   const itinerary = extractItinerary(rawTour)
+  const meetingInfo = extractMeetingInfo(rawTour)
 
   return {
     id: rawTour?.id || '',
@@ -1094,7 +1165,7 @@ function buildTourDetailFromRawTour(rawTour: any): TourDetailData {
     faqs: [],
     coordinates: { lat: rawTour?.latitude ?? 0, lng: rawTour?.longitude ?? 0 },
     cancellationPolicy: extractCancellationFromTour(rawTour) || 'Free cancellation up to 24 hours before',
-    meetingPoint: bt?.meetingPoint || '',
+    ...meetingInfo,
     languages,
     supplierName: rawTour?.supplier?.name || '',
     supplierPhoto: rawTour?.supplier?.photoURL || null,
@@ -1318,6 +1389,7 @@ export function useExpeditionTour(slug: string | undefined) {
           : Array.isArray(rawTourPayload?.productContent?.itinerary)
             ? rawTourPayload.productContent.itinerary
             : extractItinerary(rawTourPayload)
+      const meetingInfo = extractMeetingInfo(rawTourPayload)
 
       const result: TourDetailData = {
         id: tour.id || '',
@@ -1350,7 +1422,7 @@ export function useExpeditionTour(slug: string | undefined) {
         faqs: [],
         coordinates: { lat: 0, lng: 0 },
         cancellationPolicy: extractCancellationFromTour(tour) || 'Free cancellation up to 24 hours before',
-        meetingPoint: tour.meetingPoint || '',
+        ...meetingInfo,
         languages: Array.isArray(tour.languages) ? tour.languages : [],
         supplierName: tour.supplierName || '',
         supplierPhoto: tour.supplierPhoto || null,

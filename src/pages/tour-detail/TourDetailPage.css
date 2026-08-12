@@ -53,6 +53,70 @@
   background: #fff;
 }
 
+/* ===== Loading skeleton (image gallery + booking widget + header) ===== */
+
+.tour-detail-skeleton {
+  width: 100%;
+  background: #fff;
+  min-height: 100vh;
+  padding-top: 64px;
+}
+
+.tour-detail-skeleton .skeleton-block {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: tour-skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes tour-skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.tour-detail-gallery-skeleton {
+  display: flex;
+  gap: 12px;
+}
+
+.tour-detail-gallery-skeleton .skeleton-thumbs {
+  display: none;
+  width: 130px;
+  flex-shrink: 0;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tour-detail-gallery-skeleton .skeleton-main-image {
+  height: 300px;
+  flex: 1;
+  border-radius: 8px;
+}
+
+@media (min-width: 768px) {
+  .tour-detail-gallery-skeleton .skeleton-thumbs {
+    display: flex;
+    width: 150px;
+  }
+
+  .tour-detail-gallery-skeleton .skeleton-main-image {
+    height: 430px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .tour-detail-gallery-skeleton .skeleton-main-image {
+    height: 520px;
+  }
+}
+
+.tour-detail-widget-skeleton {
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  padding: 20px;
+}
+
 /* Short teaser description, first block of the Overview tab */
 .tour-detail-short-description-block {
   display: flex;

@@ -29,7 +29,7 @@ import OverviewSection from './OverviewSection'
 import DetailsSection, {
   buildIncludedExcludedContent,
   buildAboutContent,
-  buildMeetingContent,
+  buildMeetingPickupContent,
   buildAccessibilityContent,
   buildCancellationContent,
   buildNotSuitableContent,
@@ -44,6 +44,51 @@ import './TourDetailPage.css'
 
 function toSlug(title: string): string {
   return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+}
+
+/** Skeleton placeholder shown while the tour loads: header, image gallery and booking widget. */
+function TourDetailSkeleton() {
+  return (
+    <div className="tour-detail-skeleton" role="status" aria-label="Loading tour">
+      <div className="tour-detail-container">
+        {/* Header skeleton */}
+        <div className="tour-detail-header-row">
+          <div className="min-w-0 flex-1">
+            <div className="skeleton-block h-7 w-2/3 max-w-md rounded-lg" />
+            <div className="skeleton-block mt-3 h-4 w-1/3 max-w-xs rounded-md" />
+            <div className="skeleton-block mt-2 h-4 w-1/4 max-w-[140px] rounded-md" />
+          </div>
+        </div>
+
+        <div className="tour-detail-content">
+          {/* Image gallery skeleton */}
+          <div className="tour-detail-main">
+            <div className="tour-detail-gallery-skeleton">
+              <div className="skeleton-thumbs">
+                {[0, 1, 2, 3].map((i) => (
+                  <div key={i} className="skeleton-block flex-1 rounded-lg" />
+                ))}
+              </div>
+              <div className="skeleton-block skeleton-main-image" />
+            </div>
+          </div>
+
+          {/* Booking widget skeleton */}
+          <aside className="tour-detail-sidebar">
+            <div className="tour-detail-widget-skeleton">
+              <div className="skeleton-block h-7 w-2/3 rounded-md" />
+              <div className="skeleton-block mt-5 h-3 w-1/3 rounded" />
+              <div className="skeleton-block mt-2 h-11 w-full rounded-xl" />
+              <div className="skeleton-block mt-4 h-3 w-1/3 rounded" />
+              <div className="skeleton-block mt-2 h-11 w-full rounded-xl" />
+              <div className="skeleton-block mt-6 h-5 w-1/2 rounded" />
+              <div className="skeleton-block mt-4 h-12 w-full rounded-xl" />
+            </div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export default function TourDetailPage() {
@@ -696,7 +741,7 @@ export default function TourDetailPage() {
     {
       key: 'pickup',
       title: t('tourDetail.meetingPickup'),
-      content: buildMeetingContent('', t('tourDetail.pickupConfirmedAfterBooking')),
+      content: buildMeetingPickupContent(tour),
     },
     {
       key: 'accessibility',
@@ -708,7 +753,7 @@ export default function TourDetailPage() {
       title: t('tourDetail.cancellationPolicy'),
       content: buildCancellationContent(undefined, cancellationPolicy),
     },
-  ], [t, tour?.notSuitableFor, tour?.notAllowed, tour?.additionalInfo, cancellationPolicy])
+  ], [t, tour?.notSuitableFor, tour?.notAllowed, tour?.additionalInfo, cancellationPolicy, tour])
 
   const supplierData = useMemo(() => ({
     name: tour?.supplierName || 'Expedition-Go Tours Ltd',
@@ -757,11 +802,7 @@ export default function TourDetailPage() {
   }
 
   if (isLoading) {
-    return (
-      <div className="tour-detail-loading" style={{ padding: '60px 24px', textAlign: 'center' }}>
-        <h2>Loading tour...</h2>
-      </div>
-    )
+    return <TourDetailSkeleton />
   }
 
   if (isError || !tour) {
@@ -882,7 +923,13 @@ export default function TourDetailPage() {
                           onViewAllReviews={handleReviewsTab}
                         />
 
-                        <TourItineraryPreview itinerary={tour.itinerary} />
+                        <TourItineraryPreview
+                          itinerary={tour.itinerary}
+                          meeting={tour}
+                          dropoff={tour}
+                          accommodationIncluded={tour.accommodationIncluded}
+                          meals={tour.meals}
+                        />
 
                         <OverviewSection
                           descriptionSteps={descriptionSteps}

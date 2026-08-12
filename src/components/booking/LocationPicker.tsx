@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { Search, MapPin, Loader2, AlertTriangle, RefreshCw, Check, X } from 'lucide-react'
+import { Search, MapPin, Loader2, AlertTriangle, RefreshCw, Check, X, Pencil } from 'lucide-react'
 import { useLocationAutocomplete, type LocationSuggestion } from '../../hooks/useLocationAutocomplete'
 
 interface LocationPickerProps {
@@ -70,6 +70,17 @@ export default function LocationPicker({
     onChangeRef.current(suggestion.formatted)
   }, [])
 
+  // Manual fallback: when the location isn't in the suggestion list, the user
+  // can commit exactly what they typed as their pickup location.
+  const commitManual = useCallback((value: string) => {
+    const v = value.trim()
+    setSelected(null)
+    setQuery(v)
+    setOpen(false)
+    setHighlightedIndex(-1)
+    onChangeRef.current(v)
+  }, [])
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const v = e.target.value
     setQuery(v)
@@ -105,18 +116,25 @@ export default function LocationPicker({
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (!open || results.length === 0) return
+    if (!open) return
     switch (e.key) {
       case 'ArrowDown':
+        if (results.length === 0) break
         e.preventDefault()
         setHighlightedIndex((prev) => (prev < results.length - 1 ? prev + 1 : 0))
         break
       case 'ArrowUp':
+        if (results.length === 0) break
         e.preventDefault()
         setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : results.length - 1))
         break
       case 'Enter':
         e.preventDefault()
+        // No suggestions available → commit the manually typed location.
+        if (results.length === 0) {
+          if (query.trim().length >= 2) commitManual(query)
+          break
+        }
         if (highlightedIndex >= 0) handleSelect(results[highlightedIndex])
         break
       case 'Escape':
@@ -222,9 +240,22 @@ export default function LocationPicker({
               </li>
             )}
             {!loading && !searchError && results.length === 0 && query.trim().length >= 2 && (
-              <li className="px-4 py-3 text-sm text-slate-500">
-                No locations found.
-                <p className="mt-0.5 text-xs text-slate-400">Try a different search or type it manually.</p>
+              <li
+                role="option"
+                aria-selected={highlightedIndex === 0}
+                onClick={() => commitManual(query)}
+                onMouseEnter={() => setHighlightedIndex(0)}
+                className={`cursor-pointer px-4 py-3 text-sm ${
+                  highlightedIndex === 0 ? 'bg-emerald-50 text-emerald-900' : 'text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                <div className="flex items-start gap-2.5">
+                  <Pencil size={14} className="mt-0.5 shrink-0 text-slate-400" />
+                  <div className="min-w-0">
+                    <div className="truncate font-medium">Use “{query.trim()}” as your pickup location</div>
+                    <div className="mt-0.5 text-xs text-slate-400">Not in the list? We’ll use exactly what you typed.</div>
+                  </div>
+                </div>
               </li>
             )}
             {!loading &&

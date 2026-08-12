@@ -129,6 +129,111 @@ export function buildMeetingContent(
   )
 }
 
+interface MeetingPickupData {
+  meetingMode?: 'meeting_point' | 'pickup' | 'none'
+  meetingPoint?: string
+  meetingPointAddress?: string
+  meetingPointDescription?: string
+  arrivalTimeType?: 'none' | '5min' | '10min' | '15min' | '30min' | 'notified' | 'custom'
+  arrivalTimeCustom?: string
+  pickupType?: 'area' | 'address'
+  pickupAreas?: { name: string; time?: string; address?: string }[]
+  pickupLocations?: { name?: string; address?: string }[]
+  pickupDescription?: string
+  dropoffOption?: 'same_location' | 'different_location' | 'none' | 'service'
+  dropoffLocation?: string
+  dropoffLocationAddress?: string
+  dropoffDescription?: string
+}
+
+/** Renders the supplier's meeting-point / pickup / drop-off configuration as
+    structured detail content (wired from productContent / bookingAndTickets). */
+export function buildMeetingPickupContent(data?: MeetingPickupData): React.ReactNode {
+  const meeting = data || {}
+  const arrivalLabel = () => {
+    if (meeting.arrivalTimeType === 'custom') {
+      return meeting.arrivalTimeCustom ? i18n.t('tourDetail.arriveBy', { time: meeting.arrivalTimeCustom }) : ''
+    }
+    switch (meeting.arrivalTimeType) {
+      case '5min': return i18n.t('tourDetail.arriveBefore', { minutes: 5 })
+      case '10min': return i18n.t('tourDetail.arriveBefore', { minutes: 10 })
+      case '15min': return i18n.t('tourDetail.arriveBefore', { minutes: 15 })
+      case '30min': return i18n.t('tourDetail.arriveBefore', { minutes: 30 })
+      case 'notified': return i18n.t('tourDetail.arrivalTimeNotified')
+      default: return ''
+    }
+  }
+
+  const hasStart = meeting.meetingMode === 'meeting_point' || meeting.meetingMode === 'pickup'
+  const hasEnd = meeting.dropoffOption === 'same_location' || meeting.dropoffOption === 'different_location'
+
+  if (!hasStart && !hasEnd) {
+    return <div className="details-text"><p>{i18n.t('tourDetail.pickupConfirmedAfterBooking')}</p></div>
+  }
+
+  return (
+    <div className="details-text">
+      {meeting.meetingMode === 'meeting_point' && (
+        <>
+          {meeting.meetingPoint && <p><strong>{i18n.t('tourDetail.meetingPoint')}:</strong> {meeting.meetingPoint}</p>}
+          {meeting.meetingPointAddress && meeting.meetingPointAddress !== meeting.meetingPoint && (
+            <p className="details-mt-1">{meeting.meetingPointAddress}</p>
+          )}
+          {(arrivalLabel() || meeting.meetingPointDescription) && (
+            <p className="details-mt-1">{arrivalLabel() || meeting.meetingPointDescription}</p>
+          )}
+        </>
+      )}
+
+      {meeting.meetingMode === 'pickup' && (
+        <>
+          {meeting.pickupType === 'area' && Array.isArray(meeting.pickupAreas) && meeting.pickupAreas.length > 0 && (
+            <>
+              <p><strong>{i18n.t('tourDetail.pickupAreas')}:</strong></p>
+              <ul className="details-bullet-list">
+                {meeting.pickupAreas.map((a, i) => (
+                  <li key={i} className="details-bullet-item">
+                    <span>{a.name || a.address}</span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+          {meeting.pickupType !== 'area' && Array.isArray(meeting.pickupLocations) && meeting.pickupLocations.length > 0 && (
+            <>
+              <p><strong>{i18n.t('tourDetail.pickupLocations')}:</strong></p>
+              <ul className="details-bullet-list">
+                {meeting.pickupLocations.map((l, i) => (
+                  <li key={i} className="details-bullet-item">
+                    <span>{l.name || l.address}</span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+          {meeting.pickupDescription && <p className="details-mt-1">{meeting.pickupDescription}</p>}
+        </>
+      )}
+
+      {meeting.dropoffOption === 'same_location' && (
+        <p className="details-mt-1">
+          {meeting.meetingMode === 'pickup' ? i18n.t('tourDetail.returnsToPickupPoint') : i18n.t('tourDetail.returnsToMeetingPoint')}
+        </p>
+      )}
+
+      {meeting.dropoffOption === 'different_location' && (
+        <>
+          <p className="details-mt-1"><strong>{i18n.t('tourDetail.dropOffPoint')}:</strong> {meeting.dropoffLocation || i18n.t('tourDetail.detailsNotAvailable')}</p>
+          {meeting.dropoffLocationAddress && meeting.dropoffLocationAddress !== meeting.dropoffLocation && (
+            <p className="details-mt-1">{meeting.dropoffLocationAddress}</p>
+          )}
+          {meeting.dropoffDescription && <p className="details-mt-1">{meeting.dropoffDescription}</p>}
+        </>
+      )}
+    </div>
+  )
+}
+
 export function buildAccessibilityContent(
   accessibilityText: string,
   restrictionsText: string,

@@ -970,53 +970,105 @@ function BookingSidebar({
 
 const STORAGE_KEY = 'booking_draft'
 
+const DEFAULT_CONTACT = { firstName: '', lastName: '', email: '', countryCode: '+233', phone: '', location: '' }
+const DEFAULT_ACTIVITY = { leadFirstName: '', leadLastName: '' }
+const DEFAULT_PAYMENT = { paymentTiming: 'now', paymentMethod: 'card' }
+
+interface EditableTourState {
+  date: string
+  time: string
+  travelers: string
+  travelersCount: Record<string, number>
+  adults: number
+  children: number
+  infants: number
+  selectedDate: string
+  selectedTime: string | null
+  price: number
+}
+
+interface BookingDraftData {
+  tour?: unknown
+  tourId?: string
+  contact?: Partial<typeof DEFAULT_CONTACT>
+  activity?: Partial<typeof DEFAULT_ACTIVITY>
+  editableTour?: EditableTourState
+  step?: number
+  payment?: Partial<typeof DEFAULT_PAYMENT>
+}
+
+function readBookingDraft(): BookingDraftData | null {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY)
+    return saved ? (JSON.parse(saved) as BookingDraftData) : null
+  } catch {
+    return null
+  }
+}
+
+function buildEditableTour(tour: Record<string, unknown>): EditableTourState {
+  const travelersCount =
+    tour.travelersCount && typeof tour.travelersCount === 'object'
+      ? (tour.travelersCount as Record<string, number>)
+      : { adults: 1, children: 0, infants: 0 }
+  return {
+    date: String(tour.dateISO || tour.selectedDate || tour.date || ''),
+    time: String(tour.time || '9:00 AM'),
+    travelers: String(tour.travelers || '1 adult'),
+    travelersCount,
+    adults: Number(tour.adults) || 1,
+    children: Number(tour.children) || 0,
+    infants: Number(tour.infants) || 0,
+    selectedDate: String(tour.selectedDate || tour.dateISO || ''),
+    selectedTime: (tour.selectedTime as string | null | undefined) ?? null,
+    price: Number(tour.price) || 0,
+  }
+}
+
 export default function BookingPage() {
   const location = useLocation()
   const navigate = useNavigate()
 
+  // Read the persisted draft once so every piece of booking state can be
+  // initialized synchronously from it. Restored data is therefore present from
+  // the very first render — a refresh or the sign-in round-trip never starts
+  // the form over from empty (no fragile mount-effect restore ordering).
+  const draft = useMemo(() => readBookingDraft(), [])
+  const freshTour = location.state?.tour
+
   // Restore the tour from router state when arriving fresh from a tour detail
   // page, otherwise fall back to the persisted draft (refresh / sign-in
   // round-trip) so the booking never loses its tour context.
-  const [tour] = useState(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY)
-      const draft = saved ? JSON.parse(saved) : null
-      return location.state?.tour || draft?.tour || FALLBACK_TOUR
-    } catch {
-      return location.state?.tour || FALLBACK_TOUR
-    }
-  })
+  const [tour] = useState(() => freshTour || draft?.tour || FALLBACK_TOUR)
+
+  // Only restore the form fields when we're NOT arriving fresh (i.e. this is a
+  // sign-in/refresh round-trip) and the stored draft belongs to this tour —
+  // otherwise a draft from a previous booking would bleed its data in.
+  const canRestore = !freshTour && Boolean(draft) && draft?.tourId === (tour.id || tour.slug)
 
   const user = useAuthUser()
 
-  const [step, setStep] = useState(1)
+  const [step, setStep] = useState(() =>
+    canRestore && typeof draft?.step === 'number' && draft.step >= 1 && draft.step <= 3 ? draft.step : 1,
+  )
   const [attempted, setAttempted] = useState<Record<number, boolean>>({})
   const [promoCode, setPromoCode] = useState('')
   const [discount, setDiscount] = useState(0)
 
-  const [contact, setContact] = useState({ firstName: '', lastName: '', email: '', countryCode: '+233', phone: '', location: '' })
-  const [activity, setActivity] = useState({ leadFirstName: '', leadLastName: '' })
+  const [contact, setContact] = useState(() =>
+    canRestore && draft?.contact ? { ...DEFAULT_CONTACT, ...draft.contact } : DEFAULT_CONTACT,
+  )
+  const [activity, setActivity] = useState(() =>
+    canRestore && draft?.activity ? { ...DEFAULT_ACTIVITY, ...draft.activity } : DEFAULT_ACTIVITY,
+  )
 
   const [isChangeModalOpen, setIsChangeModalOpen] = useState(false)
-  const [editableTour, setEditableTour] = useState<{
-    date: string
-    time: string
-    travelers: string
-    travelersCount: Record<string, number>
-    adults: number
-    children: number
-    infants: number
-    selectedDate: string
-    selectedTime: string | null
-    price: number
-  }>({
-    date: String(tour.dateISO || tour.selectedDate || tour.date || ''), time: tour.time || '9:00 AM', travelers: tour.travelers || '1 adult',
-    travelersCount: (tour.travelersCount && typeof tour.travelersCount === 'object' ? tour.travelersCount : { adults: 1, children: 0, infants: 0 }) as Record<string, number>,
-    adults: Number(tour.adults) || 1, children: Number(tour.children) || 0, infants: Number(tour.infants) || 0,
-    selectedDate: String(tour.selectedDate || tour.dateISO || ''), selectedTime: tour.selectedTime || null,
-    price: Number(tour.price) || 0,
-  })
-  const [payment, setPayment] = useState({ paymentTiming: 'now', paymentMethod: 'card' })
+  const [editableTour, setEditableTour] = useState<EditableTourState>(() =>
+    canRestore && draft?.editableTour ? draft.editableTour : buildEditableTour(tour),
+  )
+  const [payment, setPayment] = useState(() =>
+    canRestore && draft?.payment ? { ...DEFAULT_PAYMENT, ...draft.payment } : DEFAULT_PAYMENT,
+  )
   const [isBooking, setIsBooking] = useState(false)
   const [bookingConfirmation, setBookingConfirmation] = useState<{
     date: string; travelers: number; bookingId?: string; tourId?: string
@@ -1029,51 +1081,20 @@ export default function BookingPage() {
   const [showExpiredModal, setShowExpiredModal] = useState(false)
   const [showSignInPrompt, setShowSignInPrompt] = useState(false)
   const lastActivityAt = useRef(0)
-  const hasLoadedDraft = useRef(false)
 
-  /* Restore draft from localStorage on mount */
+  // Bring a restored later step into view (mount-only; no state changes).
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY)
-      if (saved) {
-        const draft = JSON.parse(saved)
-        // Only restore the form fields when the stored draft belongs to the
-        // same tour — otherwise a draft from a previous booking would bleed
-        // its date/travelers/price into this one.
-        if (draft.tourId === (tour.id || tour.slug)) {
-          if (draft.contact) setContact((prev) => ({ ...prev, ...draft.contact }))
-          if (draft.activity) setActivity(draft.activity)
-          if (draft.editableTour) setEditableTour(draft.editableTour)
-          if (typeof draft.step === 'number' && draft.step >= 1 && draft.step <= 3) {
-            setStep(draft.step)
-            requestAnimationFrame(() => {
-              document.getElementById(`booking-step-${draft.step}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-            })
-          }
-          if (draft.payment) setPayment(draft.payment)
-        }
-      }
-      // Fresh arrival from a tour detail page: persist the full tour so a
-      // refresh or the sign-in round-trip can restore it.
-      if (location.state?.tour) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({
-          tour: location.state.tour,
-          tourId: location.state.tour.id || location.state.tour.slug,
-          contact,
-          activity,
-          editableTour,
-          step: 1,
-          payment,
-        }))
-      }
-    } catch { /* ignore */ }
-    hasLoadedDraft.current = true
+    if (canRestore && step > 1) {
+      requestAnimationFrame(() => {
+        document.getElementById(`booking-step-${step}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      })
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  /* Save draft to localStorage on field changes */
+  /* Save draft to localStorage on field changes (also persists the tour on
+     first arrival so a refresh / sign-in round-trip can restore it). */
   useEffect(() => {
-    if (!hasLoadedDraft.current) return
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
         tour,

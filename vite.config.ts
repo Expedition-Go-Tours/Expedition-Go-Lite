@@ -16,10 +16,17 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,webp,png,jpg,svg,ttf,otf,ico}'],
         runtimeCaching: [
           {
+            // Tour detail freshness matters: the storefront relies on the
+            // API's productContent (itinerary/locations, pricing, availability)
+            // reflecting the supplier's latest edits. StaleWhileRevalidate
+            // could serve a cached payload captured before locations were
+            // saved, hiding the itinerary. NetworkFirst hits the network first
+            // (fresh data) and only falls back to cache when offline/failing.
             urlPattern: /^https?:\/\/.*\/api\//,
-            handler: 'StaleWhileRevalidate',
+            handler: 'NetworkFirst',
             options: {
               cacheName: 'api-cache',
+              networkTimeoutSeconds: 10,
               expiration: {
                 maxEntries: 100,
                 maxAgeSeconds: 60 * 60 * 24,

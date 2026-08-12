@@ -96,6 +96,29 @@
   letter-spacing: -0.01em;
 }
 
+/* Location line (city, country, address) under the stop title — mirrors the
+   supplier's itinerary preview. */
+.itinerary-stop-simple-loc {
+  margin: 0 0 8px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: #6b7280;
+}
+
+/* "Day N" marker dot shown on the rail at the start of each day on multi-day
+   tours. Uses the same black circle as the numbered stop dots (matching the
+   pre-existing look); the day number sits in the circle and a "Day N" label
+   sits beside it, so the start of each day reads clearly while every day's
+   stops restart their numbering at 1. */
+.itinerary-day-label {
+  margin: 4px 0 0;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .itinerary-stop-simple-desc {
   margin: 0 0 8px;
   font-family: var(--font-body);
@@ -110,4 +133,99 @@
   font-family: var(--font-body);
   font-size: 13px;
   color: #000;
+}
+
+/* ───────────── Start / end nodes (meeting point, pickup, drop-off) ───────────── */
+
+.itinerary-stop-simple-marker-start {
+  background: #179237;
+}
+
+.itinerary-stop-simple-marker-end {
+  background: #b45309;
+}
+
+.itinerary-stop-simple-node-title {
+  margin: 4px 0 6px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.itinerary-stop-simple-node-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.itinerary-stop-simple-node-empty {
+  font-style: italic;
+  color: #9ca3af;
+}
+
+/* ───────────── Day logistics (overnight accommodation) ───────────── */
+
+/* ───────────── Day logistics (overnight accommodation + meals, together) ───────────── */
+
+.itinerary-day-logistics {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 28px;
+  margin: 2px 0 16px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.itinerary-day-logistics-indent {
+  padding-left: 60px;
+}
+
+.itinerary-day-logistics-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+.itinerary-day-logistics-item svg {
+  flex-shrink: 0;
+  color: #179237;
+}
+
+/* ───────────── Multi-day: day-only rail dots + connected day-stop timeline ───────────── */
+
+/* Multi-day tours render one dot per day; each day's locations are listed
+   beneath as a connected sub-timeline (small dots joined by the same rail),
+   so the whole itinerary reads as one continuous set of joining lines. */
+.itinerary-day-stops {
+  display: flex;
+  flex-direction: column;
+}
+
+.itinerary-day-stop {
+  margin-bottom: 0;
+}
+
+/* Keep the marker column the same width as the day/stop rail so the dots,
+   lines and content all stay vertically aligned with the rest of the rail. */
+.itinerary-day-stop .itinerary-stop-simple-marker-col {
+  width: 40px;
+}
+
+.itinerary-day-stop-dot {
+  width: 14px;
+  height: 14px;
+  margin-top: 6px;
+  border-radius: 50%;
+  background: #0f172a;
+  flex-shrink: 0;
 }
