@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildE164Phone, isValidPhoneInput } from './phone'
+import { buildE164Phone, isValidPhoneInput, COUNTRY_CODES, DEFAULT_COUNTRY_CODE } from './phone'
 
 describe('buildE164Phone', () => {
   it('combines a country code and national number into E.164', () => {
@@ -59,5 +59,39 @@ describe('isValidPhoneInput', () => {
     expect(isValidPhoneInput('+1', '123')).toBe(false)
     expect(isValidPhoneInput('', '241234567')).toBe(false)
     expect(isValidPhoneInput('+233', 'abc')).toBe(false)
+  })
+})
+
+describe('COUNTRY_CODES', () => {
+  it('is a comprehensive list derived from libphonenumber-js', () => {
+    expect(COUNTRY_CODES.length).toBeGreaterThanOrEqual(100)
+  })
+
+  it('covers the key travel markets', () => {
+    const values = new Set(COUNTRY_CODES.map((c) => c.value))
+    expect(values.has('+233')).toBe(true)
+    expect(values.has('+1')).toBe(true)
+    expect(values.has('+44')).toBe(true)
+    expect(values.has('+234')).toBe(true)
+    expect(values.has('+27')).toBe(true)
+  })
+
+  it('labels each option with a country name and calling code', () => {
+    expect(COUNTRY_CODES.find((c) => c.value === '+233')?.label).toBe('Ghana (+233)')
+    expect(COUNTRY_CODES.find((c) => c.value === '+44')?.label).toBe('United Kingdom (+44)')
+    for (const opt of COUNTRY_CODES) {
+      expect(opt.label).toMatch(/\([+]\d+\)$/)
+      expect(opt.value).toMatch(/^[+]\d+$/)
+    }
+  })
+
+  it('pins Ghana first as the default country', () => {
+    expect(COUNTRY_CODES[0].value).toBe(DEFAULT_COUNTRY_CODE)
+    expect(DEFAULT_COUNTRY_CODE).toBe('+233')
+  })
+
+  it('does not duplicate a calling code across entries', () => {
+    const values = COUNTRY_CODES.map((c) => c.value)
+    expect(new Set(values).size).toBe(values.length)
   })
 })

@@ -5,6 +5,8 @@ import { useLocationAutocomplete, type LocationSuggestion } from '../../hooks/us
 interface LocationPickerProps {
   value: string
   onChange: (value: string) => void
+  /** Emits the selected suggestion's coordinates, or (null, null) when cleared / typed manually. */
+  onCoordsChange?: (lat: number | null, lng: number | null) => void
   onBlur?: () => void
   valid?: boolean
   error?: string
@@ -21,6 +23,7 @@ interface LocationPickerProps {
 export default function LocationPicker({
   value,
   onChange,
+  onCoordsChange,
   onBlur,
   valid,
   error,
@@ -38,8 +41,10 @@ export default function LocationPicker({
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLUListElement>(null)
   const onChangeRef = useRef(onChange)
+  const onCoordsChangeRef = useRef(onCoordsChange)
   useEffect(() => {
     onChangeRef.current = onChange
+    onCoordsChangeRef.current = onCoordsChange
   })
 
   // Keep the local input value in sync when the parent restores it (e.g.
@@ -68,6 +73,7 @@ export default function LocationPicker({
     setOpen(false)
     setHighlightedIndex(-1)
     onChangeRef.current(suggestion.formatted)
+    onCoordsChangeRef.current?.(suggestion.latitude ?? null, suggestion.longitude ?? null)
   }, [])
 
   // Manual fallback: when the location isn't in the suggestion list, the user
@@ -79,6 +85,8 @@ export default function LocationPicker({
     setOpen(false)
     setHighlightedIndex(-1)
     onChangeRef.current(v)
+    // A manually typed location has no coordinates to pin on the map.
+    onCoordsChangeRef.current?.(null, null)
   }, [])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -86,7 +94,7 @@ export default function LocationPicker({
     setQuery(v)
     onChangeRef.current(v)
     setHighlightedIndex(-1)
-    if (v.trim().length >= 2) {
+    if (v.trim().length >= 3) {
       search(v)
       setOpen(true)
     } else {
@@ -110,6 +118,7 @@ export default function LocationPicker({
     setSelected(null)
     setQuery('')
     onChangeRef.current('')
+    onCoordsChangeRef.current?.(null, null)
     clear()
     setOpen(false)
     inputRef.current?.focus()
@@ -239,25 +248,6 @@ export default function LocationPicker({
                 </div>
               </li>
             )}
-            {!loading && !searchError && results.length === 0 && query.trim().length >= 2 && (
-              <li
-                role="option"
-                aria-selected={highlightedIndex === 0}
-                onClick={() => commitManual(query)}
-                onMouseEnter={() => setHighlightedIndex(0)}
-                className={`cursor-pointer px-4 py-3 text-sm ${
-                  highlightedIndex === 0 ? 'bg-emerald-50 text-emerald-900' : 'text-slate-700 hover:bg-slate-50'
-                }`}
-              >
-                <div className="flex items-start gap-2.5">
-                  <Pencil size={14} className="mt-0.5 shrink-0 text-slate-400" />
-                  <div className="min-w-0">
-                    <div className="truncate font-medium">Use “{query.trim()}” as your pickup location</div>
-                    <div className="mt-0.5 text-xs text-slate-400">Not in the list? We’ll use exactly what you typed.</div>
-                  </div>
-                </div>
-              </li>
-            )}
             {!loading &&
               results.map((r, index) => (
                 <li
@@ -284,6 +274,28 @@ export default function LocationPicker({
                   </div>
                 </li>
               ))}
+            {/* Manual fallback: whenever the user has typed a location, let them
+                commit exactly what they typed — even when autocomplete returned
+                nothing or the lookup failed. */}
+            {!loading && query.trim().length >= 3 && (
+              <li
+                role="option"
+                aria-selected={highlightedIndex === results.length}
+                onClick={() => commitManual(query)}
+                onMouseEnter={() => setHighlightedIndex(results.length)}
+                className={`cursor-pointer border-t border-slate-100 px-4 py-3 text-sm ${
+                  highlightedIndex === results.length ? 'bg-emerald-50 text-emerald-900' : 'text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                <div className="flex items-start gap-2.5">
+                  <Pencil size={14} className="mt-0.5 shrink-0 text-slate-400" />
+                  <div className="min-w-0">
+                    <div className="truncate font-medium">Use “{query.trim()}” as your pickup location</div>
+                    <div className="mt-0.5 text-xs text-slate-400">Not in the list? We’ll use exactly what you typed.</div>
+                  </div>
+                </div>
+              </li>
+            )}
           </ul>
         </div>
       )}

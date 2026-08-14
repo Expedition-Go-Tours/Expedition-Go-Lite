@@ -436,6 +436,12 @@ export default function TourDetailPage() {
       ? tour.languages.join(', ')
       : t('tourDetail.guideLanguage')
 
+    // Whether the itinerary spans multiple days (any stop assigned to a day
+    // beyond the first). Overnight accommodation is only meaningful on such
+    // itineraries, so the "Accommodation included" fact is gated on this.
+    const isItineraryMultiDay = Array.isArray(tour?.itinerary)
+      && tour.itinerary.some((stop) => (stop.day || 1) > 1)
+
     // Cancellation policy is dynamic per tour (bookingAndTickets.cancellationPolicy).
     // Supplier choices: "Standard" (free cancellation) vs "All sales final" (non-refundable).
     const cancellationLabel = tour?.cancellationPolicy || t('tourDetail.cancellationDefault')
@@ -679,26 +685,30 @@ export default function TourDetailPage() {
 
       // 13. Accommodation included — sourced from
       // categorization.accommodationIncluded (Step 02 of the supplier
-      // product builder, "Is accommodation included?"). Always shown with a
-      // red "No" when the supplier hasn't offered it.
-      {
-        icon: BedDouble,
-        title: t('tourDetail.accommodationIncluded'),
-        desc: null,
-        renderValue: () => (
-          <>
-            <p className="tour-quick-fact-title">{t('tourDetail.accommodationIncluded')}</p>
-            {yesNoBadge(!!tour?.accommodationIncluded, t('tourDetail.yesLabel'), t('tourDetail.noLabel'))}
-          </>
-        ),
-      },
+      // product builder, "Is accommodation included?"). Only shown when the
+      // itinerary is actually multi-day (a stop assigned to a day beyond the
+      // first), so overnight accommodation isn't claimed for tours whose
+      // itinerary has no overnight stops; red "No" when not offered.
+      ...(isItineraryMultiDay
+        ? [{
+            icon: BedDouble,
+            title: t('tourDetail.accommodationIncluded'),
+            desc: null,
+            renderValue: () => (
+              <>
+                <p className="tour-quick-fact-title">{t('tourDetail.accommodationIncluded')}</p>
+                {yesNoBadge(!!tour?.accommodationIncluded, t('tourDetail.yesLabel'), t('tourDetail.noLabel'))}
+              </>
+            ),
+          }]
+        : []),
     ]
   }, [
     t, tour?.difficulty, tour?.duration, tour?.languages, tour?.pickupIncluded,
     tour?.skipTheLine, tour?.cancellationPolicy, tour?.guideType, tour?.guideMaterials,
     tour?.foodProvided, tour?.drinksIncluded, tour?.meals, tour?.dietaryOptions,
     tour?.petFriendly, tour?.wheelchairAccessible, tour?.isPrivateActivity, tour?.wifiIncluded,
-    tour?.accommodationIncluded,
+    tour?.accommodationIncluded, tour?.itinerary,
   ])
 
   // Short teaser shown right after the gallery (GetYourGuide-style), no heading.

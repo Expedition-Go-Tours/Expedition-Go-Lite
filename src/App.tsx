@@ -34,6 +34,7 @@ import SupplierPage from './pages/SupplierPage'
 import SupplierRegisterPage from './pages/supplier/SupplierRegisterPage'
 import SupplierLandingPage from './pages/supplier/SupplierLandingPage'
 import BookingPage from './pages/BookingPage'
+import BookingConfirmationPage from './pages/BookingConfirmationPage'
 import { WishlistProvider } from './context/WishlistContext'
 import { ContinuePlanningProvider } from './context/ContinuePlanningContext'
 import SupportChatWidget from './components/SupportChatWidget'
@@ -168,6 +169,15 @@ function AppContent() {
             transition={{ duration: 0.25, ease: 'easeOut' }}
           >
             <BookingPage />
+          </motion.div>
+        } />
+        <Route path="/booking/confirmation/:bookingId" element={
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25, ease: 'easeOut' }}
+          >
+            <BookingConfirmationPage />
           </motion.div>
         } />
         <Route path="/login" element={

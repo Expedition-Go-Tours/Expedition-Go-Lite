@@ -1,10 +1,13 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
+import { useQueryClient } from '@tanstack/react-query'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence, useAnimate } from 'framer-motion'
 import { toast } from 'sonner'
 import {
-  Check, ArrowLeft, MapPin, CalendarDays, Users,
+  Check, ArrowLeft, MapPin, CalendarDays, CalendarCheck, Users, Info, X,
   Phone, MessageSquare, ShieldCheck, Star, Clock, Globe,
+  Car, CreditCard,
 } from 'lucide-react'
 import logoSrc from '../assets/expo_trans.png'
 import Footer from '../components/Footer'
@@ -12,7 +15,6 @@ import StepBadge from '../components/booking/StepBadge'
 import { FieldLabel, TextInput, SelectInput } from '../components/booking/FormFields'
 import LocationPicker from '../components/booking/LocationPicker'
 import ChangeBookingModal from '../components/booking/ChangeBookingModal'
-import BookingConfirmationDialog from '../components/booking/BookingConfirmationDialog'
 import ExpiredHoldModal from '../components/booking/ExpiredHoldModal'
 import SignInPromptModal from '../components/booking/SignInPromptModal'
 import CardField from '../components/booking/CardField'
@@ -22,28 +24,63 @@ import type { CardElementHandle } from '../components/booking/CardField'
 import { getStripePromise } from '../lib/stripe'
 import { fetchWithAuth } from '../lib/api'
 import { useCreateBooking } from '../hooks/useExpeditionBookings'
-import { buildE164Phone, isValidPhoneInput } from '../lib/phone'
+import { buildE164Phone, isValidPhoneInput, COUNTRY_CODES } from '../lib/phone'
 import OptimizedImage from '@/components/shared/OptimizedImage'
-
-/* ─── Constants ─── */
-
-const COUNTRY_CODES = [
-  { label: 'Ghana (+233)', value: '+233' },
-  { label: 'United States (+1)', value: '+1' },
-  { label: 'United Kingdom (+44)', value: '+44' },
-  { label: 'Nigeria (+234)', value: '+234' },
-  { label: 'South Africa (+27)', value: '+27' },
-  { label: 'Germany (+49)', value: '+49' },
-  { label: 'France (+33)', value: '+33' },
-  { label: 'Canada (+1)', value: '+1' },
-]
+import {
+  openingHoursForDay,
+  weeklyHoursRange,
+  formatTimeSlotList,
+  type TourScheduleInfo,
+} from '../lib/tourAvailability'
 
 /* ─── Tour data from location state ─── */
+
+// The supplier's meeting / pickup / drop-off configuration (passed from the
+// tour detail page via BookingWidget). Mirrors TourDetailData's meetingInfo.
+interface MeetingPickupInfo {
+  meetingMode?: 'meeting_point' | 'pickup' | 'none'
+  meetingPoint?: string
+  meetingPointAddress?: string
+  meetingPointDescription?: string
+  /** Coordinates of the supplier's meeting point (Step 13), for map rendering. */
+  meetingPointLat?: number | null
+  meetingPointLng?: number | null
+  /** Photo of the meeting point uploaded by the supplier (Step 13). */
+  meetingPointPicture?: string
+  arrivalTimeType?: 'none' | '5min' | '10min' | '15min' | '30min' | 'notified' | 'custom'
+  arrivalTimeCustom?: string
+  pickupType?: 'area' | 'address'
+  /** Whether pickup happens at the activity start or before it. */
+  pickupTiming?: 'at_start' | 'before_start'
+  /** When the final pickup location is communicated (day before / after selection). */
+  pickupFinalLocationTiming?: 'day_before' | 'after_selection'
+  /** Pickup reference window before the start, e.g. '0-45' (0–45 min before). */
+  referenceStartTime?: string
+  pickupAreas?: { name: string; time?: string; address?: string; lat?: number | null; lng?: number | null }[]
+  pickupLocations?: { name?: string; address?: string; lat?: number | null; lng?: number | null }[]
+  pickupDescription?: string
+  dropoffOption?: 'same_location' | 'different_location' | 'none' | 'service'
+  dropoffLocation?: string
+  dropoffLocationAddress?: string
+  dropoffDescription?: string
+  /** Supplier's Step-14 availability scheduling ("Time slots" vs "Opening hours"). */
+  scheduleType?: TourScheduleInfo['scheduleType']
+  timeSlots?: TourScheduleInfo['timeSlots']
+  weeklySchedule?: TourScheduleInfo['weeklySchedule']
+  operatingHoursStart?: string
+  operatingHoursEnd?: string
+  /** Pricing model + per-category / group data (mirrors TourDetailData). */
+  pricingModel?: 'perPerson' | 'perGroup'
+  travelerPricing?: { label: string; price: number; minAge?: number | null; maxAge?: number | null; tiers?: { from: number; to: number; pricePerPerson: number }[] }[]
+  groupSizePricing?: { from: number; to: number; price: number }[]
+}
 
 const FALLBACK_TOUR = {
   id: '',
   slug: '',
   title: 'Loading...',
+  location: '',
+  pickupIncluded: false,
   image: '',
   provider: 'Expedition GO Tours',
   rating: 0,
@@ -62,15 +99,51 @@ const FALLBACK_TOUR = {
   price: 0,
   cancellation: 'Free cancellation up to 24 hours before',
   language: 'English',
+  meetingMode: undefined as MeetingPickupInfo['meetingMode'],
+  meetingPoint: '',
+  meetingPointAddress: '',
+  meetingPointDescription: '',
+  meetingPointPicture: '',
+  meetingPointLat: null as number | null,
+  meetingPointLng: null as number | null,
+  arrivalTimeType: 'none' as MeetingPickupInfo['arrivalTimeType'],
+  arrivalTimeCustom: '',
+  pickupType: 'area' as MeetingPickupInfo['pickupType'],
+  pickupTiming: 'at_start' as MeetingPickupInfo['pickupTiming'],
+  pickupFinalLocationTiming: 'day_before' as MeetingPickupInfo['pickupFinalLocationTiming'],
+  referenceStartTime: '',
+  pickupAreas: [] as MeetingPickupInfo['pickupAreas'],
+  pickupLocations: [] as MeetingPickupInfo['pickupLocations'],
+  pickupDescription: '',
+  dropoffOption: 'none' as MeetingPickupInfo['dropoffOption'],
+  dropoffLocation: '',
+  dropoffLocationAddress: '',
+  dropoffDescription: '',
+  scheduleType: undefined as MeetingPickupInfo['scheduleType'],
+  timeSlots: [] as NonNullable<MeetingPickupInfo['timeSlots']>,
+  weeklySchedule: {} as NonNullable<MeetingPickupInfo['weeklySchedule']>,
+  operatingHoursStart: '',
+  operatingHoursEnd: '',
+  pricingModel: 'perPerson' as MeetingPickupInfo['pricingModel'],
+  travelerPricing: [] as NonNullable<MeetingPickupInfo['travelerPricing']>,
+  groupSizePricing: [] as NonNullable<MeetingPickupInfo['groupSizePricing']>,
 }
 
-function formatDate(value: string): string {
-  if (!value) return ''
-  // Accept ISO (YYYY-MM-DD) or a pre-formatted label unchanged.
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return value
-  const d = new Date(`${value}T00:00:00`)
-  if (Number.isNaN(d.getTime())) return value
-  return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+// Time label for the date/time summary rows: time-slot tours show the chosen
+// slot; opening-hours tours show the selected day's opening hours, falling back
+// to the weekly range so the supplier's choice is never hidden behind a fake
+// "9:00 AM" default.
+function scheduleTimeLabel(tour: typeof FALLBACK_TOUR): string {
+  if (tour.scheduleType === 'operatingHours') {
+    if (tour.dateISO) {
+      const dayHours = openingHoursForDay(tour, new Date(`${tour.dateISO}T00:00:00`))
+      if (dayHours) return dayHours
+    }
+    const range = weeklyHoursRange(tour)
+    if (range) return range
+    return 'Flexible time'
+  }
+  return tour.time || '9:00 AM'
 }
 
 /* ─── Page entrance variants ─── */
@@ -95,30 +168,6 @@ const stepContentVariants = {
 }
 
 /* ─── Mobile Summary Card ─── */
-
-function MobileSummaryCard({ tour, onChangeClick }: { tour: typeof FALLBACK_TOUR; onChangeClick: () => void }) {
-  return (
-    <motion.div variants={itemVariants} className="rounded-[1.75rem] border border-slate-200/40 bg-white p-5 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)]">
-      <div className="flex items-start gap-3">
-        <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-slate-100 ring-1 ring-slate-200/40">
-          <OptimizedImage src={tour.image} alt={tour.title} className="h-full w-full object-cover" width={400} />
-        </div>
-        <div className="min-w-0 flex-1">
-          <h3 className="text-sm font-bold leading-tight text-slate-900 line-clamp-2">{tour.title}</h3>
-          <p className="mt-0.5 text-xs text-slate-400">{formatDate(tour.date)} &bull; {tour.time}</p>
-          <p className="mt-0.5 text-xs text-slate-400">{tour.travelers}</p>
-        </div>
-        <button onClick={onChangeClick} className="shrink-0 text-xs font-semibold text-emerald-600 hover:text-emerald-700 transition-colors">
-          Change
-        </button>
-      </div>
-      <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-4">
-        <span className="text-sm font-semibold text-slate-700">Total</span>
-        <span className="text-xl font-bold text-slate-900 tracking-tight">${tour.price.toFixed(2)}</span>
-      </div>
-    </motion.div>
-  )
-}
 
 /* ─── Hold Timer ─── */
 
@@ -217,15 +266,390 @@ function StepCard({ children, id }: { children: React.ReactNode; id?: string }) 
   )
 }
 
+/* ─── Meeting & Pickup card ─── */
+
+// Pickup reference windows mirror the supplier's Step 13 options
+// (PICKUP_TIME_OPTIONS): how long before the activity start pickup happens.
+const PICKUP_REF_LABELS: Record<string, string> = {
+  '0-15': 'Pickup 0–15 min before the activity starts',
+  '0-30': 'Pickup 0–30 min before the activity starts',
+  '0-45': 'Pickup 0–45 min before the activity starts',
+  '0-60': 'Pickup up to 1 hour before the activity starts',
+  '0-90': 'Pickup up to 1.5 hours before the activity starts',
+  '0-120': 'Pickup up to 2 hours before the activity starts',
+}
+function referenceStartLabel(value?: string): string {
+  if (!value) return ''
+  return PICKUP_REF_LABELS[value] || `Pickup ${value} before the activity starts`
+}
+
+// Renders exactly how travellers get to (and leave) the activity, mirroring
+// the supplier's Step 13 "Meeting point or pickup" configuration:
+//   meeting_point → travellers go to the starting point themselves
+//   pickup       → travellers are picked up (areas / locations + description)
+//   none / n/a   → neutral note (pickup arranged after booking, if any)
+// Drop-off is appended when the supplier configured one.
+// `embedded` renders it as a sub-section (no outer card border/background) so
+// it can sit inside the tour summary card without a nested box.
+function MeetingPickupCard({ tour, embedded = false }: { tour: typeof FALLBACK_TOUR; embedded?: boolean }) {
+  const mode = tour.meetingMode
+  const [showPhoto, setShowPhoto] = useState(false)
+
+  const arrivalLabel = () => {
+    if (mode !== 'meeting_point') return ''
+    if (tour.arrivalTimeType === 'custom') {
+      return tour.arrivalTimeCustom ? `Arrive by ${tour.arrivalTimeCustom}` : ''
+    }
+    switch (tour.arrivalTimeType) {
+      case '5min': return 'Arrive 5 minutes before the activity'
+      case '10min': return 'Arrive 10 minutes before the activity'
+      case '15min': return 'Arrive 15 minutes before the activity'
+      case '30min': return 'Arrive 30 minutes before the activity'
+      case 'notified': return 'Arrival time will be notified'
+      default: return ''
+    }
+  }
+
+  const hasStart = mode === 'meeting_point' || mode === 'pickup'
+
+  const pickupAreas = Array.isArray(tour.pickupAreas) ? tour.pickupAreas.filter((a) => a && (a.name || a.address)) : []
+  const pickupLocations = Array.isArray(tour.pickupLocations) ? tour.pickupLocations.filter((l) => l && (l.name || l.address)) : []
+
+  const hasMeetingPoint = mode === 'meeting_point' && !!(tour.meetingPoint || tour.meetingPointAddress || tour.meetingPointPicture || arrivalLabel() || tour.meetingPointDescription)
+  const hasPickup = mode === 'pickup' && (pickupAreas.length > 0 || pickupLocations.length > 0 || !!tour.pickupDescription || !!tour.referenceStartTime)
+
+  // No meeting point / pickup configured at all — fall back to the neutral note.
+  if (!hasStart) {
+    if (embedded) {
+      return <p className="text-sm text-slate-400">Pickup details will be provided after booking confirmation.</p>
+    }
+    return (
+      <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/20 p-4">
+        <p className="text-sm text-slate-400">Pickup details will be provided after booking confirmation.</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className={embedded ? 'px-3 pt-3 pb-3' : 'overflow-hidden rounded-xl border border-slate-200/40 bg-slate-50/30'}>
+      <div className={`space-y-3 text-sm text-slate-600 ${embedded ? '' : 'px-4 py-3'}`}>
+        {/* Meeting point photo — rendered whenever present, independent of the
+            mode gate, so it can never be dropped by a mode mismatch. Tapping it
+            opens the full-size image. */}
+        {tour.meetingPointPicture && (
+          <>
+            <button
+              type="button"
+              onClick={() => setShowPhoto(true)}
+              className="block w-full cursor-zoom-in overflow-hidden rounded-lg border border-slate-200/60"
+              aria-label="View meeting point photo"
+            >
+              <OptimizedImage
+                src={tour.meetingPointPicture}
+                alt="Meeting point"
+                width={800}
+                className="max-h-40 w-full object-cover"
+              />
+            </button>
+            <AnimatePresence>
+              {showPhoto && (
+                <motion.div
+                  className="fixed inset-0 z-[300] flex items-center justify-center bg-black/80 p-4"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onClick={() => setShowPhoto(false)}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setShowPhoto(false)}
+                    className="absolute right-4 top-4 grid size-10 place-items-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
+                    aria-label="Close photo"
+                  >
+                    <X size={20} />
+                  </button>
+                  <img
+                    src={tour.meetingPointPicture}
+                    alt="Meeting point"
+                    className="max-h-full max-w-full rounded-lg object-contain"
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </>
+        )}
+
+        {mode === 'meeting_point' && hasMeetingPoint && (
+          <div className="space-y-2">
+            {tour.meetingPoint && (
+              <p className="flex items-start gap-2">
+                <MapPin className="mt-0.5 size-3.5 shrink-0 text-emerald-600" />
+                <span><strong className="font-semibold text-slate-800">Meeting point:</strong> {tour.meetingPoint}</span>
+              </p>
+            )}
+            {tour.meetingPointAddress && tour.meetingPointAddress !== tour.meetingPoint && !tour.meetingPoint?.includes(tour.meetingPointAddress) && (
+              <p className="pl-[22px] text-slate-400">{tour.meetingPointAddress}</p>
+            )}
+            {arrivalLabel() && (
+              <div className="space-y-1">
+                <p className="flex items-center gap-2 font-semibold text-slate-700">
+                  <Clock className="size-3.5 text-emerald-600" />
+                  Arrival time
+                </p>
+                <p className="pl-[22px] text-slate-500">{arrivalLabel()}</p>
+              </div>
+            )}
+            {tour.meetingPointDescription && (
+              <p className="pl-[22px] leading-relaxed text-slate-500">{tour.meetingPointDescription}</p>
+            )}
+            </div>
+        )}
+
+        {mode === 'pickup' && hasPickup && (
+          <div className="space-y-2">
+            {pickupAreas.length > 0 && (
+              <div>
+                <p className="mb-1 flex items-center gap-2 font-semibold text-slate-700">
+                  <Car className="size-3.5 text-emerald-600" />
+                  Pickup areas
+                </p>
+                <ul className="space-y-1.5 pl-[22px]">
+                  {pickupAreas.map((a, i) => (
+                    <li key={i}>
+                      <p className="font-medium text-slate-700">{a.name || a.address}</p>
+                      {a.address && a.address !== a.name && <p className="text-slate-400">{a.address}</p>}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {pickupLocations.length > 0 && (
+              <div>
+                <p className="mb-1 flex items-center gap-2 font-semibold text-slate-700">
+                  <Car className="size-3.5 text-emerald-600" />
+                  Pickup locations
+                </p>
+                <ul className="space-y-1.5 pl-[22px]">
+                  {pickupLocations.map((l, i) => (
+                    <li key={i}>
+                      <p className="font-medium text-slate-700">{l.name || l.address}</p>
+                      {l.address && l.address !== l.name && <p className="text-slate-400">{l.address}</p>}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {tour.pickupDescription && (
+              <div className="space-y-1">
+                <p className="flex items-center gap-2 font-semibold text-slate-700">
+                  <Info className="size-3.5 text-emerald-600" />
+                  Pickup info
+                </p>
+                <p className="flex items-start gap-2 pl-[22px] leading-relaxed text-slate-500">
+                  <span className="mt-[7px] size-1.5 shrink-0 rounded-full bg-[#179237]" />
+                  <span>{tour.pickupDescription}</span>
+                </p>
+              </div>
+            )}
+            {referenceStartLabel(tour.referenceStartTime) && (
+              <p className="flex items-start gap-2 pl-[22px] text-slate-500">
+                <span className="mt-[7px] size-1.5 shrink-0 rounded-full bg-[#179237]" />
+                <span>{referenceStartLabel(tour.referenceStartTime)}</span>
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+/* ─── Location map (meeting point / pickup) ─── */
+
+// Classic map pin (filled body + white center dot), colored per marker.
+function MapPinIcon({ color }: { color: string }) {
+  return (
+    <svg width="26" height="34" viewBox="0 0 26 34" aria-hidden="true" className="drop-shadow">
+      <path d="M13 0C5.8 0 0 5.8 0 13c0 9.75 13 21 13 21s13-11.25 13-21C26 5.8 20.2 0 13 0z" fill={color} />
+      <circle cx="13" cy="13" r="5" fill="#fff" />
+    </svg>
+  )
+}
+
+// Read-only map showing the tour's meeting point / pickup locations (green)
+// plus the traveller's typed pickup location (blue). The base map is
+// OpenStreetMap's official embed (key-free, iframe-friendly), and the pins are
+// drawn as overlays on top so each marker can have its own color.
+function LocationMap({ tour, userMarker }: { tour: typeof FALLBACK_TOUR; userMarker?: { lat: number | null; lng: number | null } | null }) {
+  const [osmFailed, setOsmFailed] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [containerWidth, setContainerWidth] = useState(0)
+
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    const update = () => setContainerWidth(el.clientWidth)
+    update()
+    const ro = new ResizeObserver(update)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
+  const toNumber = (v: unknown): number | null => {
+    const n = Number(v)
+    return Number.isFinite(n) ? n : null
+  }
+
+  // Markers from the supplier's Step-13 config: the meeting point (meeting
+  // point mode) or the pickup areas/locations (pickup mode).
+  const tourMarkers = useMemo(() => {
+    const pts: { lat: number; lng: number }[] = []
+    if (tour.meetingMode === 'meeting_point') {
+      const lat = toNumber(tour.meetingPointLat)
+      const lng = toNumber(tour.meetingPointLng)
+      if (lat != null && lng != null) pts.push({ lat, lng })
+    }
+    if (tour.meetingMode === 'pickup') {
+      for (const a of tour.pickupAreas || []) {
+        if (!a) continue
+        const lat = toNumber(a.lat)
+        const lng = toNumber(a.lng)
+        if (lat != null && lng != null) pts.push({ lat, lng })
+      }
+      for (const l of tour.pickupLocations || []) {
+        if (!l) continue
+        const lat = toNumber(l.lat)
+        const lng = toNumber(l.lng)
+        if (lat != null && lng != null) pts.push({ lat, lng })
+      }
+    }
+    return pts
+  }, [tour.meetingMode, tour.meetingPointLat, tour.meetingPointLng, tour.pickupAreas, tour.pickupLocations])
+
+  // The traveller's typed pickup location (blue pin).
+  const userPoint = useMemo(() => {
+    const lat = toNumber(userMarker?.lat)
+    const lng = toNumber(userMarker?.lng)
+    return lat != null && lng != null ? { lat, lng } : null
+  }, [userMarker?.lat, userMarker?.lng])
+
+  const markers = useMemo(
+    () => [...tourMarkers, ...(userPoint ? [userPoint] : [])],
+    [tourMarkers, userPoint],
+  )
+
+  // Textual fallback when the supplier only entered names/addresses (no
+  // coordinates): still render a map by asking Google to locate the address.
+  const fallbackQuery = useMemo(() => {
+    if (tour.meetingMode === 'meeting_point') {
+      return tour.meetingPointAddress || tour.meetingPoint || ''
+    }
+    if (tour.meetingMode === 'pickup') {
+      const area = (tour.pickupAreas || []).find((a) => a && (a.address || a.name))
+      if (area) return area.address || area.name || ''
+      const loc = (tour.pickupLocations || []).find((l) => l && (l.address || l.name))
+      if (loc) return loc.address || loc.name || ''
+      return tour.pickupDescription || ''
+    }
+    return ''
+  }, [tour.meetingMode, tour.meetingPointAddress, tour.meetingPoint, tour.pickupAreas, tour.pickupLocations, tour.pickupDescription])
+
+  // Build a bbox that matches the container's aspect ratio (so the OSM embed
+  // fills the frame exactly) and compute each pin's position within it.
+  const mapView = useMemo(() => {
+    if (markers.length === 0 || containerWidth <= 0) return null
+    const H = 200
+    const W = containerWidth
+    const lats = markers.map((m) => m.lat)
+    const lngs = markers.map((m) => m.lng)
+    const minLat = Math.min(...lats)
+    const maxLat = Math.max(...lats)
+    const minLng = Math.min(...lngs)
+    const maxLng = Math.max(...lngs)
+    const cLat = (minLat + maxLat) / 2
+    const cLng = (minLng + maxLng) / 2
+    // Degrees-per-pixel must be equal in both axes so the bbox matches the
+    // container aspect; use the larger of the two so every marker fits.
+    const wDeg = Math.max(maxLng - minLng, 0.001) + 0.01
+    const hDeg = Math.max(maxLat - minLat, 0.001) + 0.01
+    const dpp = Math.max(wDeg / W, hDeg / H)
+    const bbW = dpp * W
+    const bbH = dpp * H
+    const bbMinLng = cLng - bbW / 2
+    const bbMaxLng = cLng + bbW / 2
+    const bbMinLat = cLat - bbH / 2
+    const bbMaxLat = cLat + bbH / 2
+    const bbox = `${bbMinLng}%2C${bbMinLat}%2C${bbMaxLng}%2C${bbMaxLat}`
+    const embedUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik`
+    const pins = markers.map((m) => ({
+      lat: m.lat,
+      lng: m.lng,
+      x: ((m.lng - bbMinLng) / bbW) * 100,
+      y: (1 - (m.lat - bbMinLat) / bbH) * 100,
+      isUser: userPoint != null && m.lat === userPoint.lat && m.lng === userPoint.lng,
+    }))
+    return { embedUrl, pins }
+  }, [markers, containerWidth, userPoint])
+
+  const mapsLink = markers.length > 0
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${markers[0].lat},${markers[0].lng}`)}`
+    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fallbackQuery || tour.meetingPointAddress || tour.meetingPoint || '')}`
+
+  if (markers.length === 0 && !fallbackQuery) return null
+
+  return (
+    <div className="border-t border-slate-100/60 p-3">
+      <div ref={containerRef} className="relative h-[200px] w-full overflow-hidden rounded-lg border border-slate-200/40">
+        {mapView && !osmFailed ? (
+          <>
+            <iframe
+              title="Location map"
+              src={mapView.embedUrl}
+              className="absolute inset-0 h-full w-full"
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              onError={() => setOsmFailed(true)}
+            />
+            {mapView.pins.map((p, i) => (
+              <span
+                key={i}
+                className="absolute z-10"
+                style={{ left: `${p.x}%`, top: `${p.y}%`, transform: 'translate(-50%, -100%)' }}
+              >
+                <MapPinIcon color={p.isUser ? '#2563eb' : '#179237'} />
+              </span>
+            ))}
+          </>
+        ) : (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-slate-50 px-4 text-center">
+            <MapPin className="size-5 shrink-0 text-slate-300" />
+            <p className="text-xs leading-relaxed text-slate-500">
+              {tour.meetingPointAddress || tour.meetingPoint || fallbackQuery || 'Meeting location will be confirmed after booking.'}
+            </p>
+            <a
+              href={mapsLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs font-semibold text-emerald-700 underline underline-offset-2 hover:text-emerald-800"
+            >
+              Open in Google Maps
+            </a>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 /* ─── Step 1 – Contact Details ─── */
 
 function ContactDetailsStep({
   data, onChange, onNext, valid, step, onNavigate, hasError, disabled,
 }: {
-  data: { firstName: string; lastName: string; email: string; countryCode: string; phone: string; location: string }
+  data: { firstName: string; lastName: string; email: string; countryCode: string; phone: string }
   onChange: (key: string, value: string | boolean) => void
   onNext: () => void
-  valid: { firstName: boolean; lastName: boolean; email: boolean; phone: boolean; location: boolean; all: boolean }
+  valid: { firstName: boolean; lastName: boolean; email: boolean; phone: boolean; all: boolean }
   step: number
   onNavigate: (n: number) => void
   hasError: boolean
@@ -326,18 +750,6 @@ function ContactDetailsStep({
               </div>
             </div>
 
-            <div>
-              <FieldLabel required tooltip="Where should the tour operator pick you up or drop you off? Search or pick a location on the map.">Pickup Location</FieldLabel>
-              <LocationPicker
-                value={data.location}
-                onChange={(v) => onChange('location', v)}
-                onBlur={() => handleBlur('location')}
-                placeholder="e.g. Accra, Ghana"
-                valid={valid.location}
-                error={error('location', 'pickup location')}
-              />
-            </div>
-
             {!valid.all && (Object.keys(touched).length > 0 || hasError) && (
               <motion.p
                 initial={{ opacity: 0 }}
@@ -376,7 +788,6 @@ function ContactDetailsStep({
             <p className="text-sm font-semibold text-slate-900">{data.firstName} {data.lastName}</p>
             <p className="text-sm text-slate-400">{data.email}</p>
             <p className="text-sm text-slate-400">{data.countryCode} {data.phone}</p>
-            <p className="text-sm text-slate-400">{data.location}</p>
             {hasError && (
               <p className="pt-1 text-xs font-semibold text-rose-500">There are errors in this step — please review.</p>
             )}
@@ -394,16 +805,21 @@ function ContactDetailsStep({
 
 function ActivityDetailsStep({
   data, onChange, tour, onNext, valid, step, onNavigate, hasError, disabled,
+  contact, onContactChange, showPickupLocation, locationValid,
 }: {
-  data: { leadFirstName: string; leadLastName: string }
+  data: { leadFirstName: string; leadLastName: string; leadCountryCode: string; leadPhone: string }
   onChange: (key: string, value: string) => void
   tour: typeof FALLBACK_TOUR
   onNext: () => void
-  valid: { leadFirstName: boolean; leadLastName: boolean; all: boolean }
+  valid: { leadFirstName: boolean; leadLastName: boolean; leadPhone: boolean; all: boolean }
   step: number
   onNavigate: (n: number) => void
   hasError: boolean
   disabled?: boolean
+  contact: { location: string; pickupLater: boolean; pickupLat: number | null; pickupLng: number | null }
+  onContactChange: (key: string, value: string | boolean | number | null) => void
+  showPickupLocation: boolean
+  locationValid: boolean
 }) {
   const isActive = step === 2
   const isCompleted = step > 2
@@ -417,64 +833,13 @@ function ActivityDetailsStep({
 
   const tourSummaryCard = (
     <div className="overflow-hidden rounded-xl border border-slate-200/40 bg-slate-50/30">
-      <div className="flex gap-3 p-3">
-        <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-slate-100 ring-1 ring-slate-200/20">
-          <OptimizedImage src={tour.image} alt={tour.title} className="h-full w-full object-cover" width={400} />
-        </div>
-        <div className="min-w-0 flex-1">
-          <h3 className="text-sm font-bold leading-tight text-slate-900 line-clamp-2">{tour.title}</h3>
-          <p className="mt-0.5 text-xs text-slate-400">By <span className="font-semibold text-slate-600">{tour.provider}</span></p>
-          {Number.isFinite(Number(tour.rating)) && Number(tour.rating) > 0 && (
-            <div className="mt-1 flex items-center gap-1">
-              <span className="text-sm font-bold text-slate-900">{tour.rating}</span>
-              <div className="flex items-center gap-0.5">
-                {Array.from({ length: 5 }, (_, i) => (
-                  <Star
-                    key={i}
-                    className={`size-3 ${i < Math.round(Number(tour.rating)) ? 'fill-emerald-500 text-emerald-500' : 'text-slate-200'}`}
-                  />
-                ))}
-              </div>
-              <span className="text-xs text-slate-400">({tour.reviews})</span>
-            </div>
-          )}
-        </div>
-      </div>
+      {/* Meeting & pickup — embedded so the summary card carries the start/end
+          details; the timing/hours are already shown in the date row above. */}
+      <MeetingPickupCard tour={tour} embedded />
 
-      <div className="space-y-2 border-t border-slate-100/60 px-3 py-3">
-        <div className="flex items-center gap-2 text-xs text-slate-500">
-          <CalendarDays className="size-3.5 shrink-0 text-slate-300" />
-          <span>{tour.date} &bull; {tour.time}</span>
-        </div>
-        {tour.duration && (
-          <div className="flex items-center gap-2 text-xs text-slate-500">
-            <Clock className="size-3.5 shrink-0 text-slate-300" />
-            <span>{tour.duration}</span>
-          </div>
-        )}
-        {tour.travelers && (
-          <div className="flex items-center gap-2 text-xs text-slate-500">
-            <Users className="size-3.5 shrink-0 text-slate-300" />
-            <span>{tour.travelers}</span>
-          </div>
-        )}
-        {tour.language && (
-          <div className="flex items-center gap-2 text-xs text-slate-500">
-            <Globe className="size-3.5 shrink-0 text-slate-300" />
-            <span>{tour.language}</span>
-          </div>
-        )}
-        {tour.cancellation && (
-          <div className="flex items-start gap-2 text-xs text-slate-500">
-            <ShieldCheck className="mt-0.5 size-3.5 shrink-0 text-emerald-600" />
-            <span>{tour.cancellation}</span>
-          </div>
-        )}
-        <div className="flex items-center justify-between border-t border-slate-100 pt-2">
-          <span className="text-xs font-semibold text-slate-500">Total</span>
-          <span className="text-base font-bold text-slate-900">${tour.price.toFixed(2)}</span>
-        </div>
-      </div>
+      {/* Location map — shows the meeting point / pickup locations on arrival,
+          plus the traveller's picked pickup location when one is selected. */}
+      <LocationMap tour={tour} userMarker={{ lat: contact.pickupLat, lng: contact.pickupLng }} />
     </div>
   )
 
@@ -484,12 +849,23 @@ function ActivityDetailsStep({
         <button
           type="button"
           onClick={() => onNavigate(2)}
-          aria-label="Go to Activity Details"
+          aria-label="Go to Meeting and Pickup Info"
           className="flex w-full items-start gap-4 text-left transition-opacity hover:opacity-80"
         >
           <StepBadge number={2} active={isActive} completed={isCompleted} error={hasError} />
           <div className="pt-0.5">
-            <h2 className="text-lg font-bold text-slate-900 tracking-tight">Activity Details</h2>
+            <div className="flex flex-wrap items-center gap-2.5">
+              <h2 className="text-lg font-bold text-slate-900 tracking-tight">Meeting and Pickup Info</h2>
+              {tour.meetingMode === 'pickup' || tour.meetingMode === 'meeting_point' ? (
+                <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${
+                  tour.meetingMode === 'pickup'
+                    ? 'bg-amber-50 text-amber-700'
+                    : 'bg-emerald-50 text-emerald-700'
+                }`}>
+                  {tour.meetingMode === 'pickup' ? 'Pickup' : 'Meeting point'}
+                </span>
+              ) : null}
+            </div>
           </div>
         </button>
       </div>
@@ -505,6 +881,47 @@ function ActivityDetailsStep({
             className="space-y-5 p-7 sm:p-9"
           >
             {tourSummaryCard}
+
+            {showPickupLocation && (
+              <div>
+                <FieldLabel required={!contact.pickupLater} tooltip="Where should the tour operator pick you up or drop you off? Search or pick a location on the map.">Pickup Location</FieldLabel>
+                {contact.pickupLater ? (
+                  <div className="space-y-2">
+                    <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50/20 px-4 py-3 text-sm text-slate-400">
+                      Pickup location will be chosen later.
+                    </p>
+                    <p className="rounded-xl border border-emerald-200/60 bg-emerald-50/60 px-4 py-3 text-sm font-medium text-emerald-800">
+                      Please remember to verify your pickup location before the activity/experience date.
+                    </p>
+                  </div>
+                ) : (
+                  <LocationPicker
+                    value={contact.location}
+                    onChange={(v) => onContactChange('location', v)}
+                    onCoordsChange={(lat, lng) => {
+                      onContactChange('pickupLat', lat)
+                      onContactChange('pickupLng', lng)
+                    }}
+                    onBlur={() => handleBlur('location')}
+                    placeholder="e.g. Accra, Ghana"
+                    valid={locationValid}
+                    error={touched.location && !locationValid ? 'Please enter your pickup location' : undefined}
+                  />
+                )}
+                <label className="mt-3 flex cursor-pointer items-start gap-2.5">
+                  <input
+                    type="checkbox"
+                    checked={!!contact.pickupLater}
+                    onChange={(e) => {
+                      if (e.target.checked) onContactChange('location', '')
+                      onContactChange('pickupLater', e.target.checked)
+                    }}
+                    className="mt-0.5 size-4 shrink-0 rounded border-slate-300 bg-white text-[#179237] accent-[#179237] [color-scheme:light] focus:ring-[#179237]/20"
+                  />
+                  <span className="text-sm text-slate-600">Choose a pick up location later</span>
+                </label>
+              </div>
+            )}
 
             <div>
               <p className="mb-3 text-sm font-semibold text-slate-800">Lead Traveler</p>
@@ -534,14 +951,30 @@ function ActivityDetailsStep({
               </div>
             </div>
 
+            <div>
+              <FieldLabel required tooltip="The tour operator may contact the lead traveler about pickup or last-minute changes.">Lead Traveler Phone</FieldLabel>
+              <div className="grid gap-3 sm:grid-cols-[1.2fr_2fr]">
+                <SelectInput value={data.leadCountryCode} onChange={(e) => onChange('leadCountryCode', e.target.value)} options={COUNTRY_CODES} />
+                <TextInput
+                  type="tel"
+                  value={data.leadPhone}
+                  onChange={(e) => onChange('leadPhone', e.target.value.replace(/\D/g, ''))}
+                  onBlur={() => handleBlur('leadPhone')}
+                  placeholder="e.g. 024 123 4567"
+                  valid={valid.leadPhone}
+                  error={
+                    touched.leadPhone && !valid.leadPhone
+                      ? 'Enter a valid phone number for the selected country, e.g. 024 123 4567'
+                      : undefined
+                  }
+                />
+              </div>
+            </div>
+
             <div className="flex items-center gap-2.5 rounded-xl border border-slate-200/40 bg-slate-50/30 px-4 py-3">
               <Globe className="size-4 text-slate-400" />
               <span className="text-sm font-semibold text-slate-700">Tour Language</span>
               <span className="text-sm text-slate-400">{tour.language}</span>
-            </div>
-
-            <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50/20 p-4">
-              <p className="text-xs text-slate-400">Pickup details will be provided after booking confirmation.</p>
             </div>
 
             {!valid.all && (Object.keys(touched).length > 0 || hasError) && (
@@ -787,81 +1220,149 @@ function PaymentDetailsStep({
   )
 }
 
-/* ─── Sidebar ─── */
+/* ─── Tour card ─── */
+
+function BookingTourCard({ tour, onChangeClick }: { tour: typeof FALLBACK_TOUR; onChangeClick: () => void }) {
+  const { t } = useTranslation()
+  const stars = useMemo(() => {
+    const full = Math.floor(tour.rating)
+    return Array.from({ length: 5 }, (_, i) => i < full)
+  }, [tour.rating])
+
+  return (
+    <div className="overflow-hidden rounded-[1.75rem] border border-slate-200/40 bg-white shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)]">
+      <div className="flex gap-4 p-5">
+        <div className="min-w-0 flex-1">
+          <h3 className="text-sm font-bold leading-tight text-slate-900 line-clamp-2">{tour.title}</h3>
+          <p className="mt-0.5 text-xs text-slate-400">By <span className="font-semibold text-slate-600">{tour.provider}</span></p>
+          <div className="mt-2 flex items-center gap-1">
+            <span className="text-sm font-bold text-slate-900">{tour.rating}</span>
+            <div className="flex items-center gap-0.5">
+              {stars.map((filled, i) => (
+                <Star key={i} className={`size-3 ${filled ? 'fill-emerald-500 text-emerald-500' : 'text-slate-200'}`} />
+              ))}
+            </div>
+            <span className="text-xs text-slate-400">({tour.reviews})</span>
+          </div>
+        </div>
+        <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-slate-100 ring-1 ring-slate-200/40">
+          <OptimizedImage src={tour.image} alt={tour.title} className="h-full w-full object-cover" width={400} />
+        </div>
+      </div>
+
+      <div className="border-t border-slate-100/60 px-5 py-3 space-y-2">
+        <div className="flex items-start gap-2 text-xs text-slate-400">
+          <MapPin className="mt-0.5 size-3.5 shrink-0 text-emerald-600" />
+          <span className="line-clamp-2">{tour.location || t('tourDetail.defaultLocation')}</span>
+        </div>
+        <div className="flex items-center gap-2 text-xs text-slate-500">
+          <CalendarDays className="size-3.5 shrink-0 text-emerald-600" />
+          <p className="text-xs leading-relaxed text-slate-500">
+            <span className="font-semibold text-slate-700">Date</span>
+            <span className="text-slate-400"> · {tour.date}</span>
+          </p>
+        </div>
+        <div className="flex items-center gap-2 text-xs text-slate-500">
+          <Clock className="size-3.5 shrink-0 text-emerald-600" />
+          <span className="font-semibold text-slate-700">
+            {tour.scheduleType === 'fixedTimeSlot' ? 'Time slots' : 'Opening hours'}
+          </span>
+          <span>
+            {tour.scheduleType === 'fixedTimeSlot'
+              ? (formatTimeSlotList(tour.timeSlots) || scheduleTimeLabel(tour))
+              : scheduleTimeLabel(tour)}
+          </span>
+        </div>
+        {tour.duration && (
+          <div className="flex items-center gap-2 text-xs text-slate-500">
+            <Clock className="size-3.5 shrink-0 text-emerald-600" />
+            <p className="text-xs leading-relaxed text-slate-500">
+              <span className="font-semibold text-slate-700">Duration</span>
+              <span className="text-slate-400"> · {tour.duration}</span>
+            </p>
+          </div>
+        )}
+        {tour.travelers && (
+          <div className="flex items-center gap-2 text-xs text-slate-500">
+            <Users className="size-3.5 shrink-0 text-emerald-600" />
+            <p className="text-xs leading-relaxed text-slate-500">
+              <span className="font-semibold text-slate-700">Travelers</span>
+              <span className="text-slate-400"> · {tour.travelers}</span>
+            </p>
+          </div>
+        )}
+        {tour.language && (
+          <div className="flex items-center gap-2 text-xs text-slate-500">
+            <Globe className="size-3.5 shrink-0 text-emerald-600" />
+            <p className="text-xs leading-relaxed text-slate-500">
+              <span className="font-semibold text-slate-700">Language</span>
+              <span className="text-slate-400"> · {tour.language}</span>
+            </p>
+          </div>
+        )}
+      </div>
+
+      <div className="flex items-center justify-between border-t border-slate-100/60 px-5 py-3">
+        <span className="text-sm font-semibold text-slate-700">Total</span>
+        <span className="text-2xl font-extrabold text-slate-900 tracking-tight">${tour.price.toFixed(2)}</span>
+      </div>
+
+      <div className="border-t border-slate-100/60 px-5 py-3">
+        <button onClick={onChangeClick} className="text-sm font-semibold text-emerald-600 underline underline-offset-2 hover:text-emerald-700">
+          Change
+        </button>
+      </div>
+
+      <div className="border-t border-slate-100/60 px-5 py-3 space-y-3">
+        <div className="flex items-start gap-2">
+          <ShieldCheck className="mt-0.5 size-4 shrink-0 text-emerald-600" />
+          <p className="text-xs leading-relaxed text-slate-500">
+            <span className="font-semibold text-slate-700">Cancellation policy</span>
+            {' • '}
+            <span>{tour.cancellation}</span>
+          </p>
+        </div>
+        <div className="flex items-start gap-2">
+          <CreditCard className="mt-0.5 size-4 shrink-0 text-emerald-600" />
+          <p className="text-xs leading-relaxed text-slate-500">
+            <span className="font-semibold text-slate-700">Reserve now, pay later</span>
+            {' • '}
+            <span>Book your spot and pay nothing today</span>
+          </p>
+        </div>
+        <div className="flex items-start gap-2">
+          <CalendarCheck className="mt-0.5 size-4 shrink-0 text-emerald-600" />
+          <p className="text-xs leading-relaxed text-slate-500">
+            <span className="font-semibold text-slate-700">Book ahead</span>
+            {' • '}
+            <span>Reserve now to secure your preferred date and time</span>
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/* ─── Sidebar (contact / pricing summary) ─── */
 
 function BookingSidebar({
-  tour, promoCode, setPromoCode, onApplyPromo, onChangeClick, discount, finalPrice,
+  tour, promoCode, setPromoCode, onApplyPromo, discount, finalPrice,
   contact, activity, step,
 }: {
   tour: typeof FALLBACK_TOUR
   promoCode: string
   setPromoCode: (v: string) => void
   onApplyPromo: () => void
-  onChangeClick: () => void
   discount: number
   finalPrice: number
-  contact: { firstName: string; lastName: string; email: string; countryCode: string; phone: string; location: string }
-  activity: { leadFirstName: string; leadLastName: string }
+  contact: { firstName: string; lastName: string; email: string; countryCode: string; phone: string; location: string; pickupLater: boolean }
+  activity: { leadFirstName: string; leadLastName: string; leadCountryCode: string; leadPhone: string }
   step: number
 }) {
-  const stars = useMemo(() => {
-    const full = Math.floor(tour.rating)
-    return Array.from({ length: 5 }, (_, i) => i < full)
-  }, [tour.rating])
-
   const showPricing = step === 3
 
   return (
     <motion.div variants={itemVariants} className="space-y-4">
-      <div className="overflow-hidden rounded-[1.75rem] border border-slate-200/40 bg-white shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)]">
-        <div className="flex gap-4 p-5">
-          <div className="min-w-0 flex-1">
-            <h3 className="text-sm font-bold leading-tight text-slate-900 line-clamp-2">{tour.title}</h3>
-            <p className="mt-0.5 text-xs text-slate-400">By <span className="font-semibold text-slate-600">{tour.provider}</span></p>
-            <div className="mt-2 flex items-center gap-1">
-              <span className="text-sm font-bold text-slate-900">{tour.rating}</span>
-              <div className="flex items-center gap-0.5">
-                {stars.map((filled, i) => (
-                  <Star key={i} className={`size-3 ${filled ? 'fill-emerald-500 text-emerald-500' : 'text-slate-200'}`} />
-                ))}
-              </div>
-              <span className="text-xs text-slate-400">({tour.reviews})</span>
-            </div>
-          </div>
-          <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-slate-100 ring-1 ring-slate-200/40">
-            <OptimizedImage src={tour.image} alt={tour.title} className="h-full w-full object-cover" width={400} />
-          </div>
-        </div>
-
-        <div className="border-t border-slate-100/60 px-5 py-3 space-y-2">
-          <div className="flex items-start gap-2 text-xs text-slate-400">
-            <MapPin className="mt-0.5 size-3.5 shrink-0 text-slate-300" />
-            <span className="line-clamp-2">{tour.title}</span>
-          </div>
-          <div className="flex items-center gap-2 text-xs text-slate-400">
-            <CalendarDays className="size-3.5 shrink-0 text-slate-300" />
-            <span>{tour.date} &bull; {tour.time}</span>
-          </div>
-          <div className="flex items-center gap-2 text-xs text-slate-400">
-            <Users className="size-3.5 shrink-0 text-slate-300" />
-            <span>{tour.travelers}</span>
-          </div>
-        </div>
-
-        <div className="border-t border-slate-100/60 px-5 py-3">
-          <button onClick={onChangeClick} className="text-sm font-semibold text-emerald-600 underline underline-offset-2 hover:text-emerald-700">
-            Change
-          </button>
-        </div>
-
-        <div className="border-t border-slate-100/60 px-5 py-3">
-          <div className="flex items-start gap-2">
-            <ShieldCheck className="mt-0.5 size-4 shrink-0 text-emerald-600" />
-            <p className="text-xs text-slate-500">{tour.cancellation}</p>
-          </div>
-        </div>
-      </div>
-
       {step > 1 && contact.firstName && (
         <motion.div
           initial={{ opacity: 0, y: 12 }}
@@ -877,6 +1378,9 @@ function BookingSidebar({
               <p className="text-xs text-slate-400">{contact.email}</p>
               <p className="text-xs text-slate-400">{buildE164Phone(contact.countryCode, contact.phone) ?? contact.phone}</p>
               {contact.location && <p className="text-xs text-slate-400">{contact.location}</p>}
+              {contact.pickupLater && !contact.location && (
+                <p className="text-xs text-slate-400">Pickup location: to be chosen later</p>
+              )}
             </div>
           </div>
         </motion.div>
@@ -894,6 +1398,9 @@ function BookingSidebar({
             <Check className="mt-0.5 size-4 shrink-0 text-emerald-500" />
             <div className="text-sm text-slate-600">
               <p className="font-medium text-slate-800">{activity.leadFirstName} {activity.leadLastName}</p>
+              {isValidPhoneInput(activity.leadCountryCode, activity.leadPhone) && (
+                <p className="text-xs text-slate-400">{buildE164Phone(activity.leadCountryCode, activity.leadPhone)}</p>
+              )}
             </div>
           </div>
         </motion.div>
@@ -934,7 +1441,7 @@ function BookingSidebar({
         >
           <div className="flex items-center justify-between">
             <span className="text-sm font-semibold text-slate-800">Total</span>
-            <span className="text-xl font-bold text-slate-900 tracking-tight">${tour.price.toFixed(2)}</span>
+            <span className="text-2xl font-extrabold text-slate-900 tracking-tight">${tour.price.toFixed(2)}</span>
           </div>
           {discount > 0 && (
             <>
@@ -944,7 +1451,7 @@ function BookingSidebar({
               </div>
               <div className="mt-2 flex items-center justify-between border-t border-dashed border-slate-200 pt-2">
                 <span className="text-sm font-semibold text-slate-700">Final total</span>
-                <span className="text-xl font-bold text-emerald-600 tracking-tight">${finalPrice.toFixed(2)}</span>
+                <span className="text-2xl font-extrabold text-emerald-600 tracking-tight">${finalPrice.toFixed(2)}</span>
               </div>
             </>
           )}
@@ -970,8 +1477,8 @@ function BookingSidebar({
 
 const STORAGE_KEY = 'booking_draft'
 
-const DEFAULT_CONTACT = { firstName: '', lastName: '', email: '', countryCode: '+233', phone: '', location: '' }
-const DEFAULT_ACTIVITY = { leadFirstName: '', leadLastName: '' }
+const DEFAULT_CONTACT = { firstName: '', lastName: '', email: '', countryCode: '+233', phone: '', location: '', pickupLater: false, pickupLat: null as number | null, pickupLng: null as number | null }
+const DEFAULT_ACTIVITY = { leadFirstName: '', leadLastName: '', leadCountryCode: '+233', leadPhone: '' }
 const DEFAULT_PAYMENT = { paymentTiming: 'now', paymentMethod: 'card' }
 
 interface EditableTourState {
@@ -1006,14 +1513,14 @@ function readBookingDraft(): BookingDraftData | null {
   }
 }
 
-function buildEditableTour(tour: Record<string, unknown>): EditableTourState {
+function buildEditableTour(tour: typeof FALLBACK_TOUR): EditableTourState {
   const travelersCount =
     tour.travelersCount && typeof tour.travelersCount === 'object'
       ? (tour.travelersCount as Record<string, number>)
       : { adults: 1, children: 0, infants: 0 }
   return {
     date: String(tour.dateISO || tour.selectedDate || tour.date || ''),
-    time: String(tour.time || '9:00 AM'),
+    time: scheduleTimeLabel(tour),
     travelers: String(tour.travelers || '1 adult'),
     travelersCount,
     adults: Number(tour.adults) || 1,
@@ -1028,6 +1535,7 @@ function buildEditableTour(tour: Record<string, unknown>): EditableTourState {
 export default function BookingPage() {
   const location = useLocation()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
 
   // Read the persisted draft once so every piece of booking state can be
   // initialized synchronously from it. Restored data is therefore present from
@@ -1070,10 +1578,6 @@ export default function BookingPage() {
     canRestore && draft?.payment ? { ...DEFAULT_PAYMENT, ...draft.payment } : DEFAULT_PAYMENT,
   )
   const [isBooking, setIsBooking] = useState(false)
-  const [bookingConfirmation, setBookingConfirmation] = useState<{
-    date: string; travelers: number; bookingId?: string; tourId?: string
-    tour: { title: string; image: string; rating: number; reviews: number; duration: string }
-  } | null>(null)
 
   const [isActive, setIsActive] = useState(false)
 
@@ -1113,26 +1617,38 @@ export default function BookingPage() {
   }
 
   /* Validation */
+  // The pickup location option only renders for tours where pickup is included
+  // (the supplier's Step-13 "pickup" mode or the pickupIncluded flag).
+  // Meeting-point / self-guided tours ('meeting_point' or 'none') have
+  // travellers make their own way, so the field is hidden there.
+  const showPickupLocation = tour.meetingMode === 'pickup' || tour.pickupIncluded === true
+
   const contactValid = useMemo(() => ({
     firstName: contact.firstName.trim().length > 1,
     lastName: contact.lastName.trim().length > 1,
     email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email),
     phone: isValidPhoneInput(contact.countryCode, contact.phone),
-    location: contact.location.trim().length >= 3,
     all: contact.firstName.trim().length > 1 && contact.lastName.trim().length > 1 &&
-      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email) && isValidPhoneInput(contact.countryCode, contact.phone) &&
-      contact.location.trim().length >= 3,
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact.email) && isValidPhoneInput(contact.countryCode, contact.phone),
   }), [contact])
 
+  // The pickup location lives in the Meeting and Pickup Info step, so it's
+  // validated here rather than in Contact Details.
   const activityValid = useMemo(() => ({
     leadFirstName: activity.leadFirstName.trim().length > 1,
     leadLastName: activity.leadLastName.trim().length > 1,
-    all: activity.leadFirstName.trim().length > 1 && activity.leadLastName.trim().length > 1,
-  }), [activity])
+    leadPhone: isValidPhoneInput(activity.leadCountryCode, activity.leadPhone),
+    // A pickup location isn't required when the traveller opts to choose it later.
+    location: !showPickupLocation || contact.pickupLater || contact.location.trim().length >= 3,
+    all: activity.leadFirstName.trim().length > 1 &&
+      activity.leadLastName.trim().length > 1 &&
+      isValidPhoneInput(activity.leadCountryCode, activity.leadPhone) &&
+      (!showPickupLocation || contact.pickupLater || contact.location.trim().length >= 3),
+  }), [activity, contact, showPickupLocation])
 
   const trackActivity = () => { lastActivityAt.current = Date.now() }
 
-  const handleContactChange = (key: string, value: string | boolean) => {
+  const handleContactChange = (key: string, value: string | boolean | number | null) => {
     trackActivity()
     setContact((prev) => ({ ...prev, [key]: value }))
   }
@@ -1230,22 +1746,8 @@ export default function BookingPage() {
           if (paymentStatus === 'SUCCEEDED' || status === 'CONFIRMED') {
             toast.success('Booking confirmed!')
             clearDraft()
-            setBookingConfirmation({
-              tour: {
-                title: tour.title,
-                image: tour.image,
-                rating: tour.rating,
-                reviews: tour.reviews,
-                duration: tour.duration,
-              },
-              date: editableTour.date,
-              travelers: Object.values(editableTour.travelersCount || {}).reduce(
-                (sum, v) => sum + (typeof v === 'number' && v > 0 ? v : 0),
-                0
-              ),
-              bookingId: booking.id,
-              tourId: tour.id,
-            })
+            queryClient.invalidateQueries({ queryKey: ['expedition', 'bookings'] })
+            navigate(`/booking/confirmation/${encodeURIComponent(booking.id)}`)
             return
           }
           if (paymentStatus === 'FAILED' || status === 'CANCELLED') {
@@ -1263,7 +1765,7 @@ export default function BookingPage() {
     } finally {
       setIsActive(false)
     }
-  }, [editableTour, tour])
+  }, [navigate, queryClient])
 
   const handleBook = useCallback(async (paymentMethodId: string) => {
     if (isBooking || isActive) return
@@ -1278,7 +1780,10 @@ export default function BookingPage() {
 
     setIsBooking(true)
     try {
-      const phoneNumber = buildE164Phone(contact.countryCode, contact.phone)
+      // Lead traveler's phone (Activity Details) is the primary booking
+      // contact; fall back to the Step-1 contact phone when left blank.
+      const phoneNumber = buildE164Phone(activity.leadCountryCode, activity.leadPhone)
+        ?? buildE164Phone(contact.countryCode, contact.phone)
       if (!phoneNumber) {
         toast.error('Please enter a valid international phone number, e.g. +233 24 123 4567.')
         return
@@ -1299,7 +1804,10 @@ export default function BookingPage() {
         travelers: {
           ...counts,
           phoneNumber,
-          location: contact.location.trim(),
+          // Only send a pickup location when one was collected (pickup-mode
+          // tours); meeting-point tours leave it out entirely.
+          ...(contact.location.trim() ? { location: contact.location.trim() } : {}),
+          ...(contact.pickupLater ? { pickupLater: true } : {}),
           details,
         },
         paymentMethodId,
@@ -1368,13 +1876,16 @@ export default function BookingPage() {
             initial="hidden"
             animate="visible"
           >
-            <div className="sticky top-0 z-10 mb-6 space-y-3 bg-[#f9fafb] pt-4 md:hidden">
+            <div className="sticky top-0 z-10 mb-6 bg-[#f9fafb] pt-4 md:hidden">
               <HoldTimer onExpire={handleExpire} lastActivityAt={lastActivityAt} isExpired={isExpired} />
-              <MobileSummaryCard tour={activeTour} onChangeClick={() => setIsChangeModalOpen(true)} />
             </div>
 
             <div className="grid gap-8 md:grid-cols-[1fr_380px]">
               <div className="min-w-0 space-y-6">
+                {/* On mobile the tour card leads, then the form follows. */}
+                <div className="md:hidden">
+                  <BookingTourCard tour={activeTour} onChangeClick={() => setIsChangeModalOpen(true)} />
+                </div>
                 <ContactDetailsStep
                   data={contact}
                   onChange={handleContactChange}
@@ -1395,6 +1906,10 @@ export default function BookingPage() {
                   onNavigate={goToStep}
                   hasError={activityHasError}
                   disabled={isExpired}
+                  contact={{ location: contact.location, pickupLater: contact.pickupLater, pickupLat: contact.pickupLat, pickupLng: contact.pickupLng }}
+                  onContactChange={handleContactChange}
+                  showPickupLocation={showPickupLocation}
+                  locationValid={activityValid.location}
                 />
                 <PaymentDetailsStep
                   data={payment}
@@ -1408,18 +1923,22 @@ export default function BookingPage() {
                 />
               </div>
 
-              <aside className="hidden md:block">
-                <div className="sticky top-28 space-y-4">
-                  <HoldTimer onExpire={handleExpire} lastActivityAt={lastActivityAt} isExpired={isExpired} />
+              <aside className="md:sticky md:top-28 md:self-start">
+                <div className="space-y-4">
+                  <div className="hidden md:block">
+                    <HoldTimer onExpire={handleExpire} lastActivityAt={lastActivityAt} isExpired={isExpired} />
+                  </div>
+                  <div className="hidden md:block">
+                    <BookingTourCard tour={activeTour} onChangeClick={() => setIsChangeModalOpen(true)} />
+                  </div>
                   <BookingSidebar
                     tour={activeTour}
                     promoCode={promoCode}
                     setPromoCode={setPromoCode}
                     onApplyPromo={handleApplyPromo}
-                    onChangeClick={() => setIsChangeModalOpen(true)}
                     discount={discount}
                     finalPrice={finalPrice}
-                    contact={{ firstName: contact.firstName, lastName: contact.lastName, email: contact.email, countryCode: contact.countryCode, phone: contact.phone, location: contact.location }}
+                    contact={{ firstName: contact.firstName, lastName: contact.lastName, email: contact.email, countryCode: contact.countryCode, phone: contact.phone, location: contact.location, pickupLater: contact.pickupLater }}
                     activity={activity}
                     step={step}
                   />
@@ -1437,21 +1956,26 @@ export default function BookingPage() {
             tour={activeTour}
             isOpen={isChangeModalOpen}
             onClose={() => setIsChangeModalOpen(false)}
-            onReserve={(updates) => setEditableTour((prev) => ({
-              ...prev,
-              ...updates,
-              // The modal reports a total traveler count; fold it into the
-              // canonical map (adults) so the confirm payload stays a valid
-              // per-category shape.
-              travelersCount: { ...(prev.travelersCount || {}), adults: updates.travelersCount || 1 },
-              adults: updates.travelersCount || prev.adults,
-              price: updates.price,
-            }))}
+            initialTravelers={(activeTour.adults || 0) + (activeTour.children || 0) + (activeTour.infants || 0)}
+            initialDate={editableTour.selectedDate || ''}
+            travelersCount={editableTour.travelersCount}
+            onReserve={(updates) => setEditableTour((prev) => {
+              // The modal prices a specific travellers mix; use that exact
+              // payload so the displayed total matches what gets confirmed.
+              const payload = updates.travelersPayload ?? { ...(prev.travelersCount || {}), adults: updates.travelersCount || 1 }
+              return {
+                ...prev,
+                ...updates,
+                travelersCount: payload,
+                adults: typeof payload.adults === 'number' ? payload.adults : (prev.adults || 0),
+                children: typeof payload.children === 'number' ? payload.children : (prev.children || 0),
+                infants: typeof payload.infants === 'number' ? payload.infants : (prev.infants || 0),
+                price: updates.price,
+              }
+            })}
           />
         )}
       </AnimatePresence>
-
-      <BookingConfirmationDialog data={bookingConfirmation} onClose={() => setBookingConfirmation(null)} />
 
       <AnimatePresence>
         {showExpiredModal && (

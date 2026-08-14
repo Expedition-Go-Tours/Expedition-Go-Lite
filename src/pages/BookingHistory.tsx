@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, MapPin, Calendar, Users, Ticket, CreditCard, Phone, Info, AlertTriangle } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { X, MapPin, Calendar, Users, Ticket, CreditCard, Phone, Info, AlertTriangle, Clock } from 'lucide-react'
 import { Button } from '../components/ui/button'
 import {
   useMyExpeditionBookings,
@@ -8,6 +9,8 @@ import {
   useCancelBooking,
   type ExpeditionBookingSummary,
 } from '../hooks/useExpeditionBookings'
+import { extractMeetingInfo, extractAvailabilitySchedule } from '../hooks/useExpeditionTours'
+import { formatTime12h, weeklyHoursRange, openingHoursForDay, formatTimeSlotList } from '../lib/tourAvailability'
 import './BookingHistory.css'
 import OptimizedImage from '@/components/shared/OptimizedImage'
 
@@ -30,6 +33,7 @@ interface TravelersJson {
 }
 
 export default function BookingHistory() {
+  const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<TabStatus>('ALL')
   const [selectedBooking, setSelectedBooking] = useState<ExpeditionBookingSummary | null>(null)
   const [modalTab, setModalTab] = useState<'tour' | 'travelers'>('tour')
@@ -55,6 +59,47 @@ export default function BookingHistory() {
   const participantCount =
     travelers.details?.length ??
     (travelers.adults || 0) + (travelers.children || 0) + (travelers.infants || 0)
+
+  const detailTour = detail?.tour
+  const meeting = useMemo(() => extractMeetingInfo(detailTour ?? {}), [detailTour])
+  const schedule = useMemo(() => extractAvailabilitySchedule(detailTour ?? {}), [detailTour])
+
+  const timeLabel = (() => {
+    if (detail?.selectedTime) return formatTime12h(detail.selectedTime)
+    if (schedule.scheduleType === 'operatingHours') {
+      const day = detail?.selectedDate ? openingHoursForDay(schedule, new Date(detail.selectedDate)) : ''
+      if (day) return day
+      const range = weeklyHoursRange(schedule)
+      if (range) return range
+    }
+    if (schedule.timeSlots.length > 0) return formatTimeSlotList(schedule.timeSlots)
+    return 'Flexible'
+  })()
+
+  const arrivalLabel = (() => {
+    if (meeting.meetingMode !== 'meeting_point') return ''
+    if (meeting.arrivalTimeType === 'custom') return meeting.arrivalTimeCustom ? `Arrive by ${meeting.arrivalTimeCustom}` : ''
+    switch (meeting.arrivalTimeType) {
+      case '5min': return 'Arrive 5 minutes before the activity'
+      case '10min': return 'Arrive 10 minutes before the activity'
+      case '15min': return 'Arrive 15 minutes before the activity'
+      case '30min': return 'Arrive 30 minutes before the activity'
+      case 'notified': return 'Arrival time will be notified'
+      default: return ''
+    }
+  })()
+
+  const hasMeeting = meeting.meetingMode === 'meeting_point' && (meeting.meetingPoint || meeting.meetingPointAddress || arrivalLabel)
+  const pickupAreas = (meeting.pickupAreas || []).filter((a: { name?: string; address?: string }) => a && (a.name || a.address))
+  const pickupLocations = (meeting.pickupLocations || []).filter((l: { name?: string; address?: string }) => l && (l.name || l.address))
+  const hasPickup = meeting.meetingMode === 'pickup' && (pickupAreas.length > 0 || pickupLocations.length > 0 || meeting.pickupDescription)
+
+  const price = (v?: number | string | null) => {
+    const n = Number(v)
+    return Number.isFinite(n) ? n : 0
+  }
+  const sym = (c?: string) => (c === 'GHS' ? 'GH₵' : c === 'EUR' ? '€' : c === 'GBP' ? '£' : '$')
+  const showBreakdown = detail && (price(detail.subtotal) > 0 || price(detail.taxes) > 0 || price(detail.fees) > 0 || price(detail.discounts) > 0)
 
   const openBooking = (booking: ExpeditionBookingSummary) => {
     setModalTab('tour')
@@ -457,49 +502,96 @@ export default function BookingHistory() {
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: -16 }}
                       transition={{ duration: 0.22, ease: 'easeInOut' }}
-                      className="booking-modal-grid"
+                      className="booking-modal-tour"
                     >
-                      <div className="booking-modal-detail">
-                        <div className="booking-modal-detail-icon"><Ticket size={16} /></div>
-                        <div>
-                          <span className="booking-modal-detail-label">Confirmation</span>
-                          <span className="booking-modal-detail-value">{selectedBooking.bookingNumber}</span>
+                      <div className="booking-modal-grid">
+                        <div className="booking-modal-detail">
+                          <div className="booking-modal-detail-icon"><Ticket size={16} /></div>
+                          <div>
+                            <span className="booking-modal-detail-label">Confirmation</span>
+                            <span className="booking-modal-detail-value">{selectedBooking.bookingNumber}</span>
+                          </div>
+                        </div>
+                        <div className="booking-modal-detail">
+                          <div className="booking-modal-detail-icon"><Calendar size={16} /></div>
+                          <div>
+                            <span className="booking-modal-detail-label">Date</span>
+                            <span className="booking-modal-detail-value">
+                              {new Date(selectedBooking.selectedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="booking-modal-detail">
+                          <div className="booking-modal-detail-icon"><Clock size={16} /></div>
+                          <div>
+                            <span className="booking-modal-detail-label">{schedule.scheduleType === 'fixedTimeSlot' ? 'Time slots' : 'Opening hours'}</span>
+                            <span className="booking-modal-detail-value">{timeLabel}</span>
+                          </div>
+                        </div>
+                        <div className="booking-modal-detail">
+                          <div className="booking-modal-detail-icon"><MapPin size={16} /></div>
+                          <div>
+                            <span className="booking-modal-detail-label">Location</span>
+                            <span className="booking-modal-detail-value">{selectedBooking.tourLocation || '—'}</span>
+                          </div>
+                        </div>
+                        <div className="booking-modal-detail">
+                          <div className="booking-modal-detail-icon"><Users size={16} /></div>
+                          <div>
+                            <span className="booking-modal-detail-label">Participants</span>
+                            <span className="booking-modal-detail-value">
+                              {detailLoading ? '…' : `${participantCount} ${participantCount === 1 ? 'Person' : 'People'}`}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="booking-modal-detail">
+                          <div className="booking-modal-detail-icon"><CreditCard size={16} /></div>
+                          <div>
+                            <span className="booking-modal-detail-label">Total Paid</span>
+                            <span className="booking-modal-detail-value booking-modal-price">
+                              {selectedBooking.currency === 'GHS' ? 'GH₵' : '$'}{selectedBooking.total.toFixed(2)}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                      <div className="booking-modal-detail">
-                        <div className="booking-modal-detail-icon"><Calendar size={16} /></div>
-                        <div>
-                          <span className="booking-modal-detail-label">Date</span>
-                          <span className="booking-modal-detail-value">
-                            {new Date(selectedBooking.selectedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                          </span>
+
+                      {(hasMeeting || hasPickup) && (
+                        <div className="booking-modal-section">
+                          <span className="booking-modal-section-title">Meeting &amp; Pickup</span>
+                          {hasMeeting && (
+                            <p className="booking-modal-text">
+                              <strong>{meeting.meetingPoint}</strong>
+                              {meeting.meetingPointAddress && meeting.meetingPointAddress !== meeting.meetingPoint ? ` — ${meeting.meetingPointAddress}` : ''}
+                            </p>
+                          )}
+                          {arrivalLabel && <p className="booking-modal-text">{arrivalLabel}</p>}
+                          {meeting.meetingPointDescription && <p className="booking-modal-text">{meeting.meetingPointDescription}</p>}
+                          {pickupAreas.length > 0 && (
+                            <p className="booking-modal-text">Pickup areas: {pickupAreas.map((a: { name?: string; address?: string }) => a.name || a.address).join(', ')}</p>
+                          )}
+                          {pickupLocations.length > 0 && (
+                            <p className="booking-modal-text">Pickup locations: {pickupLocations.map((l: { name?: string; address?: string }) => l.name || l.address).join(', ')}</p>
+                          )}
                         </div>
-                      </div>
-                      <div className="booking-modal-detail">
-                        <div className="booking-modal-detail-icon"><MapPin size={16} /></div>
-                        <div>
-                          <span className="booking-modal-detail-label">Location</span>
-                          <span className="booking-modal-detail-value">{selectedBooking.tourLocation || '—'}</span>
+                      )}
+
+                      {showBreakdown && (
+                        <div className="booking-modal-section">
+                          <span className="booking-modal-section-title">Price Breakdown</span>
+                          <div className="booking-modal-price-grid">
+                            <span>Subtotal</span><span>{sym(detail.currency)}{price(detail.subtotal).toFixed(2)}</span>
+                            {price(detail.fees) > 0 && (<><span>Fees</span><span>{sym(detail.currency)}{price(detail.fees).toFixed(2)}</span></>)}
+                            {price(detail.taxes) > 0 && (<><span>Taxes</span><span>{sym(detail.currency)}{price(detail.taxes).toFixed(2)}</span></>)}
+                            {price(detail.discounts) > 0 && (<><span>Discount</span><span>-{sym(detail.currency)}{price(detail.discounts).toFixed(2)}</span></>)}
+                            <span className="booking-modal-price-total">Total</span>
+                            <span className="booking-modal-price-total">{sym(detail.currency)}{price(detail.total).toFixed(2)}</span>
+                          </div>
                         </div>
-                      </div>
-                      <div className="booking-modal-detail">
-                        <div className="booking-modal-detail-icon"><Users size={16} /></div>
-                        <div>
-                          <span className="booking-modal-detail-label">Participants</span>
-                          <span className="booking-modal-detail-value">
-                            {detailLoading ? '…' : `${participantCount} ${participantCount === 1 ? 'Person' : 'People'}`}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="booking-modal-detail">
-                        <div className="booking-modal-detail-icon"><CreditCard size={16} /></div>
-                        <div>
-                          <span className="booking-modal-detail-label">Total Paid</span>
-                          <span className="booking-modal-detail-value booking-modal-price">
-                            {selectedBooking.currency === 'GHS' ? 'GH₵' : '$'}{selectedBooking.total.toFixed(2)}
-                          </span>
-                        </div>
-                      </div>
+                      )}
+
+                      <button className="booking-modal-view-confirmation" onClick={() => navigate(`/booking/confirmation/${selectedBooking.id}`)}>
+                        View full confirmation →
+                      </button>
                     </motion.div>
                   ) : (
                     <motion.div

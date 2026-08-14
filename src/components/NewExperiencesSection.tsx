@@ -62,7 +62,7 @@ export default function NewExperiencesSection() {
             <div className="newexp-carousel" ref={scrollRef}>
               {items.map((tour, i) => (
                 <div key={`${tour.id ?? tour.title}-${i}`} className="newexp-card-wrap">
-                  <TourCard {...tour} isNew hideSourceBadge />
+                  <TourCard {...tour} isNew hideSourceBadge hideFeatures />
                 </div>
               ))}
             </div>

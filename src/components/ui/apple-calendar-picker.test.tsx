@@ -149,3 +149,76 @@ describe('CalendarPicker mobile tap-to-inspect', () => {
     expect(onDateSelect).toHaveBeenCalledTimes(1)
   })
 })
+
+describe('CalendarPicker requireConfirmation (desktop two-step)', () => {
+  it('first click inspects (banner + slot counts + select button), does not select', () => {
+    stubMatchMedia(false)
+    const { onDateSelect } = renderPicker({ requireConfirmation: true })
+    fireEvent.click(dayCell(5))
+    expect(screen.getByText(/5 of 5 spots available/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /select this date/i })).toBeInTheDocument()
+    expect(onDateSelect).not.toHaveBeenCalled()
+  })
+
+  it('selects the date when "Select this date" is clicked', () => {
+    stubMatchMedia(false)
+    const { onDateSelect, onClose } = renderPicker({ requireConfirmation: true })
+    fireEvent.click(dayCell(5))
+    fireEvent.click(screen.getByRole('button', { name: /select this date/i }))
+    expect(onDateSelect).toHaveBeenCalledTimes(1)
+    expect(onClose).toHaveBeenCalledTimes(1)
+  })
+
+  it('selects on a second click of the same date', () => {
+    stubMatchMedia(false)
+    const { onDateSelect, onClose } = renderPicker({ requireConfirmation: true })
+    fireEvent.click(dayCell(5))
+    expect(onDateSelect).not.toHaveBeenCalled()
+    fireEvent.click(dayCell(5))
+    expect(onDateSelect).toHaveBeenCalledTimes(1)
+    expect(onClose).toHaveBeenCalledTimes(1)
+  })
+
+  it('shows a "Sold out" banner but never selects', () => {
+    stubMatchMedia(false)
+    const { onDateSelect } = renderPicker({ requireConfirmation: true })
+    const cell = dayCell(7)
+    fireEvent.click(cell)
+    expect(screen.getByText('Sold out')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /select this date/i })).not.toBeInTheDocument()
+    fireEvent.click(cell)
+    expect(onDateSelect).not.toHaveBeenCalled()
+  })
+})
+
+describe('CalendarPicker footer + keep-open', () => {
+  it('renders the footer content inside the panel', () => {
+    stubMatchMedia(false)
+    renderPicker({ footer: <div>Pick a time</div> })
+    expect(screen.getByText('Pick a time')).toBeInTheDocument()
+  })
+
+  it('keeps the panel open when getKeepOpenOnSelect returns true', () => {
+    stubMatchMedia(false)
+    const { onDateSelect, onClose } = renderPicker({ getKeepOpenOnSelect: () => true })
+    fireEvent.click(dayCell(5))
+    expect(onDateSelect).toHaveBeenCalledTimes(1)
+    expect(onClose).not.toHaveBeenCalled()
+  })
+
+  it('closes the panel when getKeepOpenOnSelect returns false', () => {
+    stubMatchMedia(false)
+    const { onDateSelect, onClose } = renderPicker({ getKeepOpenOnSelect: () => false })
+    fireEvent.click(dayCell(5))
+    expect(onDateSelect).toHaveBeenCalledTimes(1)
+    expect(onClose).toHaveBeenCalledTimes(1)
+  })
+
+  it('closes the panel by default when getKeepOpenOnSelect is omitted', () => {
+    stubMatchMedia(false)
+    const { onDateSelect, onClose } = renderPicker()
+    fireEvent.click(dayCell(5))
+    expect(onDateSelect).toHaveBeenCalledTimes(1)
+    expect(onClose).toHaveBeenCalledTimes(1)
+  })
+})

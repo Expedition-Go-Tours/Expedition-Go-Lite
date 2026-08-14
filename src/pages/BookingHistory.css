@@ -756,6 +756,68 @@
   gap: 14px;
 }
 
+.booking-modal-tour {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.booking-modal-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  background: #f9fafb;
+  border: 1px solid var(--border, #e5e4e7);
+  border-radius: 12px;
+}
+
+.booking-modal-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.booking-modal-text {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #475569;
+  margin: 0;
+}
+
+.booking-modal-price-grid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px 16px;
+  font-size: 13px;
+  color: #475569;
+}
+
+.booking-modal-price-total {
+  font-weight: 800;
+  color: #0f172a;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 8px;
+  margin-top: 2px;
+}
+
+.booking-modal-view-confirmation {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--dash-accent, #179237);
+  cursor: pointer;
+}
+
+.booking-modal-view-confirmation:hover {
+  text-decoration: underline;
+}
+
 .booking-modal-detail {
   display: flex;
   align-items: flex-start;

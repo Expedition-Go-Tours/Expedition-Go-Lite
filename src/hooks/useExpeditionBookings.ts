@@ -186,7 +186,7 @@ interface ConfirmBookingInput {
   tourId: string
   selectedDate: string
   selectedTime?: string | null
-  travelers: Record<string, number | string | { name: string; age: number; ageGroup: string; specialRequests?: string }[] | undefined>
+  travelers: Record<string, number | string | boolean | { name: string; age: number; ageGroup: string; specialRequests?: string }[] | undefined>
   paymentMethodId: string
   specialRequests?: string
 }
@@ -288,6 +288,27 @@ export function useMyExpeditionBookings(page: number = 1, status?: string, limit
       const data = payload.data ?? payload
       const records: RawBookingListRecord[] = data.bookings || []
       return records.map(mapBookingSummary)
+    },
+  })
+}
+
+/**
+ * Total number of the customer's bookings matching `status` (default
+ * CONFIRMED) — a lightweight count used for the navbar "Bookings" counter.
+ * Fetches one record and reads the list endpoint's pagination totalCount, so
+ * it never transfers the full booking history.
+ */
+export function useMyBookingsCount(status: string = 'CONFIRMED', enabled = true) {
+  return useQuery({
+    queryKey: ['expedition', 'bookings', 'count', status],
+    enabled,
+    queryFn: async (): Promise<number> => {
+      const payload = await expeditionFetchRaw(
+        `/expedition/bookings?page=1&limit=1&status=${encodeURIComponent(status)}`
+      )
+      const data = payload.data ?? payload
+      const total = data?.pagination?.totalCount ?? payload?.pagination?.totalCount ?? 0
+      return typeof total === 'number' ? total : Number(total) || 0
     },
   })
 }

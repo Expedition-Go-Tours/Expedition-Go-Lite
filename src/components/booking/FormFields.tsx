@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Check, HelpCircle, ChevronRight } from 'lucide-react'
+import { Check, HelpCircle, ChevronDown } from 'lucide-react'
 
 export function FieldLabel({ children, required, tooltip }: { children: React.ReactNode; required?: boolean; tooltip?: string }) {
   const [showTooltip, setShowTooltip] = useState(false)
@@ -99,7 +99,7 @@ export function SelectInput({ value, onChange, options, error }: SelectInputProp
       <select
         value={value}
         onChange={onChange}
-        className={`w-full appearance-none rounded-xl border bg-white px-4 py-3 pr-10 text-sm text-slate-900 shadow-sm outline-none transition focus:ring-2 ${
+        className={`w-full appearance-none rounded-xl border bg-white px-4 py-3 pr-10 text-sm text-slate-900 shadow-sm outline-none transition focus:ring-2 [color-scheme:light] ${
           error
             ? 'border-rose-300 focus:border-rose-400 focus:ring-rose-100'
             : 'border-slate-200 focus:border-[#179237] focus:ring-[#179237]/15'
@@ -111,7 +111,7 @@ export function SelectInput({ value, onChange, options, error }: SelectInputProp
           </option>
         ))}
       </select>
-      <ChevronRight className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 rotate-90 text-slate-400" />
+      <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
       {error && (
         <p className="mt-1 text-xs text-rose-500">{error}</p>
       )}

@@ -1,14 +1,16 @@
 ﻿import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-import type { TourDetail, TravelerPricing } from '../../lib/tourTypes'
+import type { TravelerPricing } from '../../lib/tourTypes'
+import type { TourDetailData } from '../../hooks/useExpeditionTours'
 import { Button } from '../../components/ui/button'
 import { CalendarPicker } from '../../components/ui/apple-calendar-picker'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CalendarDays, Users, Minus, Plus, MessageSquare, Clock as ClockIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { useCurrency } from '../../contexts/CurrencyContext'
-import type { DayAvailability, DayAvailabilityInfo } from '../../lib/tourAvailability'
+import type { DayAvailability, DayAvailabilityInfo, DayTimeSlot } from '../../lib/tourAvailability'
+import { openingHoursForDay } from '../../lib/tourAvailability'
 import {
   clampGroupHeadcount,
   groupBandLabel,
@@ -23,7 +25,7 @@ import { fetchWithAuth } from '../../lib/api'
 import './BookingWidget.css'
 
 interface BookingWidgetProps {
-  tour: TourDetail
+  tour: TourDetailData
   getAvailability?: (date: Date) => DayAvailability
   getDayInfo?: (date: Date) => DayAvailabilityInfo | undefined
   availabilityLoading?: boolean
@@ -77,6 +79,12 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
   const [groupHeadcount, setGroupHeadcount] = useState(2)
   const guestRef = useRef<HTMLDivElement>(null)
   const calendarRef = useRef<HTMLDivElement>(null)
+
+  // Opening-hours tours have no fixed slots on the calendar, so surface the
+  // supplier's Step-14 opening hours for the chosen day instead.
+  const openingHoursLabel = tour.scheduleType === 'operatingHours' && selectedDate
+    ? openingHoursForDay(tour, selectedDate)
+    : ''
 
   // Pricing model straight from the supplier's Step 14 builder choices:
   // 'perGroup' means a flat price per headcount band (no per-traveler-type
@@ -381,13 +389,15 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
         id: tour.id,
         slug: tour.slug,
         title: tour.title,
+        location: tour.location,
+        pickupIncluded: tour.pickupIncluded,
         image: tour.images?.[0] || '',
         provider: 'Expedition GO Tours',
         rating: tour.rating,
         reviews: tour.reviewCount,
         date: dateLabel,
         dateISO,
-        time: selectedTime ? formatSlotTime(selectedTime) : '9:00 AM',
+        time: selectedTime ? formatSlotTime(selectedTime) : (openingHoursLabel ? `Open ${openingHoursLabel}` : 'Flexible time'),
         duration: tour.duration,
         travelers: travelersLabel,
         travelersCount: travelersPayload,
@@ -397,6 +407,41 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
         price: isPerGroup ? (matchingGroupBand?.price ?? clientSubtotal) : (pricingResult ? totalPrice : clientSubtotal),
         cancellation: tour.cancellationPolicy || 'Free cancellation up to 24 hours before',
         language: tour.languages?.[0] || 'English',
+        // Meeting / pickup / drop-off configuration so the booking page can
+        // render exactly how travellers get to (and leave) the activity.
+        meetingMode: tour.meetingMode,
+        meetingPoint: tour.meetingPoint,
+        meetingPointAddress: tour.meetingPointAddress,
+        meetingPointDescription: tour.meetingPointDescription,
+        meetingPointPicture: tour.meetingPointPicture,
+        meetingPointLat: tour.meetingPointLat,
+        meetingPointLng: tour.meetingPointLng,
+        arrivalTimeType: tour.arrivalTimeType,
+        arrivalTimeCustom: tour.arrivalTimeCustom,
+        pickupType: tour.pickupType,
+        pickupTiming: tour.pickupTiming,
+        pickupFinalLocationTiming: tour.pickupFinalLocationTiming,
+        referenceStartTime: tour.referenceStartTime,
+        pickupAreas: tour.pickupAreas,
+        pickupLocations: tour.pickupLocations,
+        pickupDescription: tour.pickupDescription,
+        dropoffOption: tour.dropoffOption,
+        dropoffLocation: tour.dropoffLocation,
+        dropoffLocationAddress: tour.dropoffLocationAddress,
+        dropoffDescription: tour.dropoffDescription,
+        // Availability scheduling so the booking page can render the supplier's
+        // "Time slots" vs "Opening hours" choice accurately.
+        scheduleType: tour.scheduleType,
+        timeSlots: tour.timeSlots,
+        weeklySchedule: tour.weeklySchedule,
+        operatingHoursStart: tour.operatingHoursStart,
+        operatingHoursEnd: tour.operatingHoursEnd,
+        // Pricing model + per-category / group data so the booking page can
+        // show an accurate client-side total (mirroring the widget's own
+        // fallback) when the checkout API is unavailable / rate-limited.
+        pricingModel: tour.pricingModel,
+        travelerPricing: tour.travelerPricing,
+        groupSizePricing: tour.groupSizePricing,
       },
     }
 
@@ -414,7 +459,7 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
     setIsBooking(true)
     // Spinner on the button for a moment, then reveal the travel transition.
     setTimeout(() => setShowTransition(true), 1100)
-  }, [selectedDate, selectedTime, t, tour, isPerGroup, groupHeadcount, travelerGroups, categoryCounts, travelersPayload, matchingGroupBand, totalPrice, clientSubtotal, pricingResult, getSelectedDayInfo])
+  }, [selectedDate, selectedTime, t, tour, isPerGroup, groupHeadcount, travelerGroups, categoryCounts, travelersPayload, matchingGroupBand, totalPrice, clientSubtotal, pricingResult, getSelectedDayInfo, openingHoursLabel])
 
   const handleTransitionDone = useCallback(() => {
     navigate('/booking', { state: pendingNavState.current })
@@ -487,9 +532,27 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
   const selectedDateLabel = selectedDate
     ? selectedDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
     : t('tourDetail.selectDate')
+  // Once a slot is picked (or opening hours shown) inside the calendar, surface
+  // the chosen time on the date field so it stays visible after the panel closes.
+  const selectedTimeLabel = selectedTime
+    ? formatSlotTime(selectedTime)
+    : (openingHoursLabel ? `${t('booking.openingHours', 'Opening hours')}: ${openingHoursLabel}` : '')
 
   const selectedDayInfo = getSelectedDayInfo(selectedDate)
-  const selectedDaySlots = selectedDayInfo?.timeSlots?.length ? selectedDayInfo.timeSlots : []
+  // Time slots for the selected date come from the availability calendar; when
+  // the backend returns none (some tours only carry the schedule's static
+  // slots), fall back to the supplier's configured time slots so the traveller
+  // can still see and pick the actual start times.
+  const selectedDaySlots: DayTimeSlot[] = (() => {
+    if (selectedDayInfo?.timeSlots?.length) return selectedDayInfo.timeSlots
+    if (tour.scheduleType === 'fixedTimeSlot' && Array.isArray(tour.timeSlots) && tour.timeSlots.length > 0) {
+      return tour.timeSlots
+        .slice()
+        .sort((a, b) => a.startTime.localeCompare(b.startTime))
+        .map((s) => ({ time: s.startTime, capacity: 0, booked: 0, remaining: null }))
+    }
+    return []
+  })()
 
   // Warn when the chosen traveler count exceeds what's left on the selected day.
   const remainingWarning = (() => {
@@ -545,7 +608,10 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
               onClick={() => { setShowCalendar((v) => !v); setShowGuestSelector(false) }}
               aria-expanded={showCalendar}
             >
-              <span>{selectedDateLabel}</span>
+              <span className="booking-input-main">
+                <span className="booking-input-date">{selectedDateLabel}</span>
+                {selectedTimeLabel && <span className="booking-selected-time">{selectedTimeLabel}</span>}
+              </span>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <polyline points="6 9 12 15 18 9" />
               </svg>
@@ -585,50 +651,80 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
                     }}
                     loading={availabilityLoading}
                     onMonthChange={onMonthChange}
+                    requireConfirmation
+                    getKeepOpenOnSelect={(date) => {
+                      const info = getDayInfo ? getDayInfo(date) : undefined
+                      const hasSlots = !!info?.timeSlots?.length
+                        || (tour.scheduleType === 'fixedTimeSlot' && !!tour.timeSlots?.length)
+                      const hasHours = tour.scheduleType === 'operatingHours' && openingHoursForDay(tour, date) !== ''
+                      return hasSlots || hasHours
+                    }}
+                    footer={
+                      selectedDate && (
+                        selectedDaySlots.length > 0 ? (
+                          <div className="booking-calendar-slots">
+                            <div className="booking-label booking-calendar-footer-label">
+                              <ClockIcon size={15} />
+                              {t('booking.selectTime', 'Select time')}
+                            </div>
+                            <div className="booking-slot-grid booking-slot-grid-compact">
+                              {selectedDaySlots.map((slot) => {
+                                const slotFull = slot.remaining != null && slot.remaining <= 0
+                                const isSelectedSlot = selectedTime === slot.time
+                                return (
+                                  <button
+                                    key={slot.time}
+                                    type="button"
+                                    disabled={slotFull}
+                                    onClick={() => {
+                                      setSelectedTime(slot.time)
+                                      setShowCalendar(false)
+                                    }}
+                                    className={`booking-slot-chip${isSelectedSlot ? ' booking-slot-chip-active' : ''}`}
+                                  >
+                                    <span className="booking-slot-time">{formatSlotTime(slot.time)}</span>
+                                    {slot.remaining != null && (
+                                      <span className="booking-slot-cap">
+                                        {slotFull
+                                          ? t('booking.soldOut', 'Sold out')
+                                          : selectedDayInfo?.capacityUnit === 'groups'
+                                            ? `${Math.max(0, slot.groupsRemaining ?? 0)} ${t('booking.groupSlots', 'group slots')}`
+                                            : `${Math.max(0, slot.remaining)} ${t('booking.spotsLeft', 'spots left')}`}
+                                      </span>
+                                    )}
+                                  </button>
+                                )
+                              })}
+                            </div>
+                            {selectedDayInfo?.capacityUnit === 'groups' && selectedDayInfo.maxGroupSize != null && (
+                              <p className="booking-slot-note">
+                                {t('booking.groupBookingsNote', 'Group bookings · up to {{max}} travelers per group', { max: selectedDayInfo.maxGroupSize })}
+                              </p>
+                            )}
+                          </div>
+                        ) : openingHoursLabel ? (
+                          <div className="booking-calendar-hours">
+                            <div className="booking-label booking-calendar-footer-label">
+                              <ClockIcon size={15} />
+                              {t('booking.openingHours', 'Opening hours')}
+                            </div>
+                            <p className="booking-slot-note">{openingHoursLabel}</p>
+                            <button
+                              type="button"
+                              className="booking-calendar-done-btn"
+                              onClick={() => setShowCalendar(false)}
+                            >
+                              {t('booking.done', 'Done')}
+                            </button>
+                          </div>
+                        ) : null
+                      )
+                    }
                   />
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
-
-          {/* Time slot selector — shown only when the selected day has fixed slots */}
-          {selectedDate && selectedDaySlots.length > 0 && (
-            <div className="booking-field">
-              <label className="booking-label">
-                <ClockIcon size={18} />
-                {t('booking.selectTime', 'Select time')}
-              </label>
-              <div className="booking-slot-grid">
-                {selectedDaySlots.map((slot) => {
-                  const slotFull = slot.remaining <= 0
-                  const isSelectedSlot = selectedTime === slot.time
-                  return (
-                    <button
-                      key={slot.time}
-                      type="button"
-                      disabled={slotFull}
-                      onClick={() => setSelectedTime(slot.time)}
-                      className={`booking-slot-chip${isSelectedSlot ? ' booking-slot-chip-active' : ''}`}
-                    >
-                      <span className="booking-slot-time">{formatSlotTime(slot.time)}</span>
-                      <span className="booking-slot-cap">
-                        {slotFull
-                          ? t('booking.soldOut', 'Sold out')
-                          : selectedDayInfo?.capacityUnit === 'groups'
-                            ? `${Math.max(0, slot.groupsRemaining ?? 0)} ${t('booking.groupSlots', 'group slots')}`
-                            : `${Math.max(0, slot.remaining)} ${t('booking.spotsLeft', 'spots left')}`}
-                      </span>
-                    </button>
-                  )
-                })}
-              </div>
-              {selectedDayInfo?.capacityUnit === 'groups' && selectedDayInfo.maxGroupSize != null && (
-                <p className="booking-slot-note">
-                  {t('booking.groupBookingsNote', 'Group bookings · up to {{max}} travelers per group', { max: selectedDayInfo.maxGroupSize })}
-                </p>
-              )}
-            </div>
-          )}
 
           {/* Guest selector */}
           <div className="booking-field" ref={guestRef}>

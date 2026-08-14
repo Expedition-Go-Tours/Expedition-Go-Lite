@@ -1,6 +1,7 @@
 "use client";
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion'
+import type { ReactNode } from 'react'
 import type { DayAvailability } from '../../lib/tourAvailability'
 
 const ChevronLeftIcon = () => (
@@ -53,9 +54,27 @@ interface CalendarPickerProps {
   loading?: boolean
   /** Fired whenever the user navigates to a different month (used to refetch availability for that window). */
   onMonthChange?: (year: number, month: number) => void
+  /**
+   * When true, every device uses the inspect-then-select flow (tap a day to see
+   * availability / slot counts + a "Select this date" confirm button) instead of
+   * selecting on the first click. Touch devices already behave this way.
+   */
+  requireConfirmation?: boolean
+  /**
+   * Extra content rendered inside the panel (below the availability legend).
+   * Used to surface per-day time slots / opening hours for the chosen date
+   * without leaving the calendar area.
+   */
+  footer?: ReactNode
+  /**
+   * When set and returns true for a date, selecting that date keeps the panel
+   * open (after onDateSelect fires) so the parent can render `footer` content
+   * for it. Omit (or return false) to keep the default close-on-select.
+   */
+  getKeepOpenOnSelect?: (date: Date) => boolean
 }
 
-export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate, getAvailability, getDayCounts, loading, onMonthChange }: CalendarPickerProps) => {
+export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate, getAvailability, getDayCounts, loading, onMonthChange, requireConfirmation = false, footer, getKeepOpenOnSelect }: CalendarPickerProps) => {
   const defaultDate = selectedDate || TODAY
   const [currentYear, setCurrentYear] = useState(defaultDate.getFullYear())
   const [currentMonth, setCurrentMonth] = useState(defaultDate.getMonth())
@@ -69,6 +88,9 @@ export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate, ge
     if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false
     return window.matchMedia('(hover: none), (pointer: coarse)').matches
   })
+  // The inspect-then-select flow applies on touch by default and on any device
+  // when requireConfirmation is set (e.g. the booking widget on desktop).
+  const confirmBeforeSelect = isTouch || requireConfirmation
   const [inspectDay, setInspectDay] = useState<number | null>(null)
 
   useEffect(() => {
@@ -173,19 +195,26 @@ export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate, ge
     if (!meta.selectable) return
     setSelectedDay(day)
     setInspectDay(null)
-    onDateSelect(new Date(currentYear, currentMonth, day))
-    onClose()
+    const date = new Date(currentYear, currentMonth, day)
+    onDateSelect(date)
+    // When the parent wants to render per-date content (e.g. time slots) for
+    // the just-selected date, keep the panel open until that flow completes.
+    if (!getKeepOpenOnSelect?.(date)) {
+      onClose()
+    }
   }
 
-  // Desktop: one tap selects. Touch: first tap reveals the availability info
-  // (mirroring the hover tooltip), a second tap on the same date selects.
+  // Default: one tap selects. With confirmation required (touch by default,
+  // or requireConfirmation set), the first tap reveals the availability info
+  // (mirroring the hover tooltip) plus a "Select this date" button, and a
+  // second tap on the same date — or that button — selects.
   const handleDayPress = (day: number, meta: ReturnType<typeof getDayDetails>) => {
     if (!meta.selectable) {
-      // Sold-out / closed dates show their reason on touch but never select.
-      if (isTouch && (meta.isFull || meta.isBlocked)) setInspectDay(day)
+      // Sold-out / closed dates show their reason on tap but never select.
+      if (confirmBeforeSelect && (meta.isFull || meta.isBlocked)) setInspectDay(day)
       return
     }
-    if (!isTouch) {
+    if (!confirmBeforeSelect) {
       handleSelectDay(day)
       return
     }
@@ -390,9 +419,16 @@ export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate, ge
         )}
       </div>
 
-      {/* Touch-only "inspect" banner — mirrors the desktop hover tooltip for
-          dates, since coarse-pointer devices have no hover. */}
-      {isTouch && inspectDay != null && (() => {
+      {/* Per-date content (e.g. time slots / opening hours) for the selected
+          day — rendered on the next line right under the date grid. */}
+      {footer && (
+        <div className="mt-4 border-t border-black/[0.06] pt-4">{footer}</div>
+      )}
+
+      {/* Inspect banner — mirrors the desktop hover tooltip for dates (coarse
+          pointers have no hover) and doubles as the confirm step on devices /
+          pickers that require confirmation before a date is selected. */}
+      {confirmBeforeSelect && inspectDay != null && (() => {
         const meta = getDayDetails(inspectDay)
         if (!meta || meta.isPast || meta.isPending) return null
         return (
@@ -430,6 +466,7 @@ export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate, ge
           </span>
         </div>
       )}
+
     </div>
   )
 }

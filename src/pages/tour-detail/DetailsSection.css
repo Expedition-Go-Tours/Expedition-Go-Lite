@@ -193,7 +193,7 @@
 
 .details-about-item {
   margin-bottom: 8px;
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.75;
   color: #000;
 }
@@ -206,7 +206,7 @@
 
 /* Text content */
 .details-text {
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.75;
   color: #000;
 }
@@ -214,12 +214,6 @@
 @media (min-width: 640px) {
   .details-text {
     font-size: 16px;
-  }
-}
-
-@media (min-width: 1024px) {
-  .details-text {
-    font-size: 18px;
   }
 }
 

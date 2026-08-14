@@ -26,7 +26,7 @@ export interface LocationSuggestion {
   region: string
 }
 
-const MAX_CACHE_SIZE = 50
+const MAX_CACHE_SIZE = 100
 const cache = new Map<string, LocationResult[]>()
 
 function getCached(query: string): LocationResult[] | null {
@@ -119,7 +119,7 @@ export function useLocationAutocomplete() {
     setError(null)
     timerRef.current = setTimeout(() => {
       executeSearch(trimmed)
-    }, 400)
+    }, 500)
   }, [executeSearch])
 
   const retry = useCallback(() => {

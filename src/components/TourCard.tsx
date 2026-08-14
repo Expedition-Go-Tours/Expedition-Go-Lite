@@ -14,9 +14,10 @@ interface TourCardProps extends Tour {
   slug?: string
   isNew?: boolean
   hideSourceBadge?: boolean
+  hideFeatures?: boolean
 }
 
-export default function TourCard({ id, title, duration, features, price, rating, reviews, location, image, discount, difficulty, cancellationPolicy, pickupIncluded, accommodationIncluded, category, languages, source, externalUrl, slug, isNew, hideSourceBadge }: TourCardProps) {
+export default function TourCard({ id, title, duration, features, price, rating, reviews, location, image, discount, difficulty, cancellationPolicy, pickupIncluded, accommodationIncluded, category, languages, source, externalUrl, slug, isNew, hideSourceBadge, hideFeatures }: TourCardProps) {
   const { t } = useTranslation()
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist()
   const item = toWishlistItem({ id, title, duration, features, price, rating: String(rating), reviews, location, image, source, externalUrl } as Tour)
@@ -140,7 +141,7 @@ export default function TourCard({ id, title, duration, features, price, rating,
             </span>
           )}
         </div>
-        <div className="tour-card-features">{features}</div>
+        {!hideFeatures && <div className="tour-card-features">{features}</div>}
         <div className="tour-card-bottom">
           <div className="tour-card-rating">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="#39AD6C" stroke="#39AD6C" strokeWidth="1">

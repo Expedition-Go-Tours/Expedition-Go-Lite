@@ -499,6 +499,96 @@ function extractGroupSizePricing(rawTour: any): GroupSizeBand[] {
   }
 }
 
+export type ScheduleType = 'fixedTimeSlot' | 'operatingHours'
+
+export interface AvailabilityScheduleInfo {
+  scheduleType: ScheduleType
+  timeSlots: { startTime: string; endTime?: string }[]
+  weeklySchedule: Record<string, { startTime: string; endTime: string }[]>
+  operatingHoursStart?: string
+  operatingHoursEnd?: string
+}
+
+function hasWeeklyHours(ws: unknown): boolean {
+  return !!ws && typeof ws === 'object' &&
+    Object.values(ws).some((slots) => Array.isArray(slots) && slots.length > 0)
+}
+
+function normalizeHoursList(slots: unknown): { startTime: string; endTime: string }[] {
+  return (Array.isArray(slots) ? slots : [])
+    .map((h: unknown): { startTime: string; endTime: string } => {
+      if (typeof h === 'string') return { startTime: h, endTime: '' }
+      if (h && typeof h === 'object' && 'startTime' in h) {
+        const rec = h as { startTime?: unknown; endTime?: unknown }
+        return {
+          startTime: typeof rec.startTime === 'string' ? rec.startTime : '',
+          endTime: typeof rec.endTime === 'string' ? rec.endTime : '',
+        }
+      }
+      return { startTime: '', endTime: '' }
+    })
+    .filter((h: { startTime: string }) => Boolean(h.startTime))
+}
+
+/**
+ * Resolves the supplier's Step-14 availability scheduling choice: whether the
+ * activity runs at fixed "time slots" (scheduleType: 'fixedTimeSlot') or within
+ * "opening hours" (scheduleType: 'operatingHours'). Read from the aggregate
+ * `schedulesAndPricing.availability` block, falling back to the first pricing
+ * schedule for tours whose per-schedule editor left the aggregate empty.
+ */
+export function extractAvailabilitySchedule(rawTour: any): AvailabilityScheduleInfo {
+  try {
+    const sp = typeof rawTour?.schedulesAndPricing === 'string'
+      ? JSON.parse(rawTour.schedulesAndPricing)
+      : rawTour?.schedulesAndPricing
+    const avail = sp?.availability || {}
+    const schedules = Array.isArray(sp?.pricingSchedules?.schedules) ? sp.pricingSchedules.schedules : []
+    const firstSched = schedules[0] || {}
+
+    const scheduleType: ScheduleType = avail.scheduleType === 'fixedTimeSlot' ? 'fixedTimeSlot' : 'operatingHours'
+
+    const timeSlots = (Array.isArray(avail.timeSlots) && avail.timeSlots.length > 0
+      ? avail.timeSlots
+      : (Array.isArray(firstSched.timeSlots) ? firstSched.timeSlots : []))
+      .map((t: unknown): { startTime: string; endTime?: string } => {
+        if (typeof t === 'string') return { startTime: t }
+        if (t && typeof t === 'object' && 'startTime' in t) {
+          const rec = t as { startTime?: unknown; endTime?: unknown }
+          return {
+            startTime: typeof rec.startTime === 'string' ? rec.startTime : '',
+            endTime: typeof rec.endTime === 'string' ? rec.endTime : undefined,
+          }
+        }
+        return { startTime: '' }
+      })
+      .filter((s: { startTime: string }) => Boolean(s.startTime))
+
+    const rawWeekly = hasWeeklyHours(avail.weeklySchedule)
+      ? avail.weeklySchedule
+      : (hasWeeklyHours(firstSched.weeklySchedule) ? firstSched.weeklySchedule : {})
+    const weeklySchedule: Record<string, { startTime: string; endTime: string }[]> = {}
+    for (const day of Object.keys(rawWeekly)) {
+      const hours = normalizeHoursList(rawWeekly[day])
+      if (hours.length > 0) weeklySchedule[day] = hours
+    }
+
+    return {
+      scheduleType,
+      timeSlots,
+      weeklySchedule,
+      operatingHoursStart: avail.operatingHoursStart || undefined,
+      operatingHoursEnd: avail.operatingHoursEnd || undefined,
+    }
+  } catch {
+    return {
+      scheduleType: 'operatingHours',
+      timeSlots: [],
+      weeklySchedule: {},
+    }
+  }
+}
+
 function extractSkipTheLine(rawTour: any): string | null {
   try {
     const pc = typeof rawTour?.productContent === 'string'
@@ -681,7 +771,7 @@ function normalizeDurationUnit(unit: unknown): 'minute' | 'hour' | 'day' {
  * Step-5 itinerary preview). Reads bookingAndTickets first, falling back to
  * productContent (the builder persists the same flat keys in both places).
  */
-function extractMeetingInfo(rawTour: any) {
+export function extractMeetingInfo(rawTour: any) {
   const bt = parseJsonMaybe(rawTour?.bookingAndTickets)
   const pc = parseProductContent(rawTour)
   const pick = <T,>(a: T, b: T): T => (a !== undefined && a !== null && a !== '' ? a : b)
@@ -698,10 +788,28 @@ function extractMeetingInfo(rawTour: any) {
     meetingPoint: pointString(meetingPoint) || '',
     meetingPointAddress: typeof meetingPoint === 'object' && meetingPoint ? meetingPoint.address || undefined : undefined,
     meetingPointDescription: pick(bt?.meetingPointDescription, pc?.meetingPointDescription) || '',
+    meetingPointLat: meetingPoint && typeof meetingPoint === 'object' && meetingPoint.lat != null ? Number(meetingPoint.lat) : null,
+    meetingPointLng: meetingPoint && typeof meetingPoint === 'object' && meetingPoint.lng != null ? Number(meetingPoint.lng) : null,
+    // The supplier can store the meeting point photo as a plain URL string or
+    // as an object ({ url }). Normalize to a usable string so it always renders.
+    meetingPointPicture: (() => {
+      const raw = pick(bt?.meetingPointPicture, pc?.meetingPointPicture)
+      if (typeof raw === 'string' && raw.trim()) return raw
+      if (raw && typeof raw === 'object') {
+        const url = (raw as { url?: string })?.url
+        if (typeof url === 'string' && url.trim()) return url
+        if (Array.isArray(raw) && typeof raw[0] === 'string' && raw[0].trim()) return raw[0]
+      }
+      return ''
+    })(),
     arrivalTimeType: (pick(bt?.arrivalTimeType, pc?.arrivalTimeType) || 'none') as
       | 'none' | '5min' | '10min' | '15min' | '30min' | 'notified' | 'custom',
     arrivalTimeCustom: pick(bt?.arrivalTimeCustom, pc?.arrivalTimeCustom) || '',
     pickupType: (pick(bt?.pickupType, pc?.pickupType) || 'area') as 'area' | 'address',
+    pickupTiming: (pick(bt?.pickupTiming, pc?.pickupTiming) || 'at_start') as 'at_start' | 'before_start',
+    pickupFinalLocationTiming: (pick(bt?.pickupFinalLocationTiming, pc?.pickupFinalLocationTiming) || 'day_before') as
+      | 'day_before' | 'after_selection',
+    referenceStartTime: pick(bt?.referenceStartTime, pc?.referenceStartTime) || '',
     pickupAreas: (pick(bt?.pickupAreas, pc?.pickupAreas) || []).filter((a: any) => a && (a.name || a.address)),
     pickupLocations: (pick(bt?.pickupLocations, pc?.pickupLocations) || []).filter((l: any) => l && (l.name || l.address)),
     pickupDescription: pick(bt?.pickupDescription, pc?.pickupDescription) || '',
@@ -1045,9 +1153,20 @@ export interface TourDetailData extends Omit<TourDetail, 'guide' | 'contact' | '
   meetingMode?: 'meeting_point' | 'pickup' | 'none'
   meetingPointAddress?: string
   meetingPointDescription?: string
+  /** Coordinates of the supplier's meeting point (Step 13), for map rendering. */
+  meetingPointLat?: number | null
+  meetingPointLng?: number | null
+  /** Photo of the meeting point uploaded by the supplier (Step 13). */
+  meetingPointPicture?: string
   arrivalTimeType?: 'none' | '5min' | '10min' | '15min' | '30min' | 'notified' | 'custom'
   arrivalTimeCustom?: string
   pickupType?: 'area' | 'address'
+  /** Whether pickup happens at the activity start or before it. */
+  pickupTiming?: 'at_start' | 'before_start'
+  /** When the final pickup location is communicated (day before / after selection). */
+  pickupFinalLocationTiming?: 'day_before' | 'after_selection'
+  /** Pickup reference window before the start, e.g. '0-45' (0–45 min before). */
+  referenceStartTime?: string
   pickupAreas?: { name: string; time?: string; address?: string; lat?: number | null; lng?: number | null }[]
   pickupLocations?: { name?: string; address?: string; lat?: number | null; lng?: number | null }[]
   pickupDescription?: string
@@ -1095,6 +1214,12 @@ export interface TourDetailData extends Omit<TourDetail, 'guide' | 'contact' | '
   /** Supplier capacity bounds for the whole party (Viator pax-mix parity). */
   minParticipants?: number | null
   maxParticipants?: number | null
+  /** Supplier's Step-14 availability type: fixed start times or opening hours. */
+  scheduleType?: ScheduleType
+  timeSlots?: { startTime: string; endTime?: string }[]
+  weeklySchedule?: Record<string, { startTime: string; endTime: string }[]>
+  operatingHoursStart?: string
+  operatingHoursEnd?: string
 }
 
 /**
@@ -1166,6 +1291,7 @@ function buildTourDetailFromRawTour(rawTour: any): TourDetailData {
     coordinates: { lat: rawTour?.latitude ?? 0, lng: rawTour?.longitude ?? 0 },
     cancellationPolicy: extractCancellationFromTour(rawTour) || 'Free cancellation up to 24 hours before',
     ...meetingInfo,
+    ...extractAvailabilitySchedule(rawTour),
     languages,
     supplierName: rawTour?.supplier?.name || '',
     supplierPhoto: rawTour?.supplier?.photoURL || null,
@@ -1250,6 +1376,14 @@ export function useExpeditionTour(slug: string | undefined) {
       let uniformPrice: number | null = null
       let groupSizePricing: GroupSizeBand[] = []
 
+      // The curated /expedition/tours/:slug endpoint only returns a handful of
+      // top-level fields (its tourData omits the productContent/bookingAndTickets/
+      // schedulesAndPricing JSON blobs). The meeting/pickup config and the
+      // availability schedule live inside those blobs, so they're resolved from
+      // the raw /tours/:id fetch below and hoisted here for the final mapping.
+      let rawMeetingInfo: ReturnType<typeof extractMeetingInfo> | null = null
+      let rawSchedule: AvailabilityScheduleInfo | null = null
+
       // Fetch raw tour data to get excluded and other missing fields
       if (tour.id) {
         try {
@@ -1261,6 +1395,8 @@ export function useExpeditionTour(slug: string | undefined) {
           if (rawRes.ok) {
             const rawPayload = await rawRes.json()
             const rawTour = rawPayload.data?.tour ?? rawPayload.tour ?? rawPayload
+            rawMeetingInfo = extractMeetingInfo(rawTour)
+            rawSchedule = extractAvailabilitySchedule(rawTour)
             travelerPricing = extractTravelerPricing(rawTour)
             skipTheLine = extractSkipTheLine(rawTour)
             pricingModel = extractPricingModel(rawTour)
@@ -1389,7 +1525,7 @@ export function useExpeditionTour(slug: string | undefined) {
           : Array.isArray(rawTourPayload?.productContent?.itinerary)
             ? rawTourPayload.productContent.itinerary
             : extractItinerary(rawTourPayload)
-      const meetingInfo = extractMeetingInfo(rawTourPayload)
+      const meetingInfo = rawMeetingInfo ?? extractMeetingInfo(rawTourPayload)
 
       const result: TourDetailData = {
         id: tour.id || '',
@@ -1423,6 +1559,7 @@ export function useExpeditionTour(slug: string | undefined) {
         coordinates: { lat: 0, lng: 0 },
         cancellationPolicy: extractCancellationFromTour(tour) || 'Free cancellation up to 24 hours before',
         ...meetingInfo,
+        ...(rawSchedule ?? extractAvailabilitySchedule(tour)),
         languages: Array.isArray(tour.languages) ? tour.languages : [],
         supplierName: tour.supplierName || '',
         supplierPhoto: tour.supplierPhoto || null,

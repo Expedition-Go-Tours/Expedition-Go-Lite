@@ -1,8 +1,11 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { X, CalendarDays, Users, ShieldCheck, CreditCard, Info, Clock } from 'lucide-react'
 import { CalendarPicker } from '../ui/apple-calendar-picker'
-import { useTourAvailability } from '../../hooks/useExpeditionBookings'
+import { useTourAvailability, useCalculateCheckout } from '../../hooks/useExpeditionBookings'
+import { matchGroupBand } from '../../lib/groupPricing'
+import { resolveTierPrice } from '../../lib/tierPricing'
+import { categoryPayloadKey } from '../../lib/travelerBuckets'
 
 interface ChangeBookingModalProps {
   tour: {
@@ -11,10 +14,21 @@ interface ChangeBookingModalProps {
     title: string
     price: number
     time?: string
+    pricingModel?: 'perPerson' | 'perGroup'
+    travelerPricing?: { label: string; price: number; minAge?: number | null; maxAge?: number | null; tiers?: { from: number; to: number; pricePerPerson: number }[] }[]
+    groupSizePricing?: { from: number; to: number; price: number }[]
   }
   isOpen: boolean
   onClose: () => void
-  onReserve: (updates: { date: string; dateISO: string; time: string; selectedDate: string; selectedTime?: string | null; travelers: string; travelersCount: number; price: number }) => void
+  /** The traveller count already chosen for the booking, used to seed the stepper. */
+  initialTravelers?: number
+  /** The booking's original date (YYYY-MM-DD), so an unchanged selection prices
+   *  the exact date the tour detail page quoted. */
+  initialDate?: string
+  /** The current per-category breakdown (adults/children/infants), used to build
+   *  the exact travellers payload for the authoritative checkout calculation. */
+  travelersCount?: Record<string, number>
+  onReserve: (updates: { date: string; dateISO: string; time: string; selectedDate: string; selectedTime?: string | null; travelers: string; travelersCount: number; travelersPayload: Record<string, number>; price: number }) => void
 }
 
 const formatSlotTime = (time: string): string => {
@@ -28,15 +42,101 @@ const formatSlotTime = (time: string): string => {
 const toDateKey = (date: Date): string =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 
-export default function ChangeBookingModal({ tour, isOpen, onClose, onReserve }: ChangeBookingModalProps) {
+const currencySymbol = (currency?: string): string => {
+  if (currency === 'GHS') return 'GH₵'
+  if (currency === 'EUR') return '€'
+  if (currency === 'GBP') return '£'
+  return '$'
+}
+
+export default function ChangeBookingModal({ tour, isOpen, onClose, onReserve, initialTravelers, initialDate, travelersCount }: ChangeBookingModalProps) {
   const [selectedDate, setSelectedDate] = useState(() => {
+    if (initialDate) return initialDate
     const d = new Date()
     d.setDate(d.getDate() + 1)
     return toDateKey(d)
   })
   const [showCalendar, setShowCalendar] = useState(false)
-  const [travelers, setTravelers] = useState(1)
+  const [travelers, setTravelers] = useState(Math.max(1, initialTravelers ?? 1))
   const [selectedTime, setSelectedTime] = useState<string | null>(null)
+
+  // Authoritative price for the selected date + traveller mix — the same
+  // checkout calculation the tour detail page uses. Debounced so rapid
+  // stepper/date changes don't trip the endpoint's rate limiter, and backed by
+  // a client-side subtotal (mirroring the widget) so a price always shows even
+  // when the API is unavailable.
+  const calculateCheckout = useCalculateCheckout()
+  const [pricing, setPricing] = useState<{ total: number; currency: string } | null>(null)
+  const [dateUnavailable, setDateUnavailable] = useState(false)
+  const [priceNote, setPriceNote] = useState<string | null>(null)
+
+  // The travellers mix to price. When the stepper is unchanged from the
+  // original total, price the exact original breakdown so the total matches the
+  // tour detail page; otherwise adjust adults (keeping children/infants) the
+  // same way the confirm payload will be folded.
+  const origTotal = useMemo(
+    () => (travelersCount ? Object.values(travelersCount).reduce((s, v) => s + (typeof v === 'number' ? v : 0), 0) : 0),
+    [travelersCount]
+  )
+  const pricingTravelers = useMemo(() => {
+    if (travelers === origTotal && travelersCount && Object.keys(travelersCount).length > 0) {
+      return travelersCount
+    }
+    return { ...(travelersCount || {}), adults: travelers }
+  }, [travelers, travelersCount, origTotal])
+
+  // Client-side subtotal for the current payload — the same calculation the
+  // tour detail widget uses as its own fallback, so the change summary price
+  // matches the tour detail page even when the API can't be reached.
+  const clientSubtotal = useMemo(() => {
+    if (tour.pricingModel === 'perGroup') {
+      return matchGroupBand(travelers, tour.groupSizePricing || [])?.price ?? 0
+    }
+    const cats = tour.travelerPricing || []
+    const total = Object.values(pricingTravelers).reduce((s, v) => s + (typeof v === 'number' ? v : 0), 0)
+    if (cats.length === 0) return (tour.price || 0) * (pricingTravelers.adults ?? 0)
+    let sum = 0
+    for (const [key, count] of Object.entries(pricingTravelers)) {
+      if (typeof count !== 'number' || count <= 0) continue
+      // travelersCount keys are plural payload keys ("adults") while pricing
+      // category labels are singular ("Adult") — match via the payload key.
+      const cat = cats.find((c) => categoryPayloadKey(c.label) === key)
+      sum += (cat ? resolveTierPrice(cat, total, cat.price) : (tour.price || 0)) * count
+    }
+    return sum
+  }, [tour.pricingModel, tour.travelerPricing, tour.groupSizePricing, pricingTravelers, travelers, tour.price])
+
+  useEffect(() => {
+    if (!isOpen || !tour.id) return
+    const tourId = tour.id
+    let cancelled = false
+    const timer = setTimeout(() => {
+      calculateCheckout
+        .mutateAsync({ tourId, selectedDate, travelers: pricingTravelers })
+        .then((res) => {
+          if (cancelled) return
+          if (!res.available) {
+            setDateUnavailable(true)
+            setPricing(null)
+            setPriceNote(null)
+          } else {
+            setDateUnavailable(false)
+            setPricing({ total: res.pricing.total, currency: res.pricing.currency })
+            setPriceNote(null)
+          }
+        })
+        .catch(() => {
+          if (cancelled) return
+          setDateUnavailable(false)
+          setPricing(null)
+          setPriceNote('Showing an estimate — the final price is confirmed at checkout.')
+        })
+    }, 500)
+    return () => {
+      cancelled = true
+      clearTimeout(timer)
+    }
+  }, [isOpen, tour.id, selectedDate, pricingTravelers, calculateCheckout])
 
   const [viewMonth, setViewMonth] = useState(() => {
     const now = new Date()
@@ -78,14 +178,19 @@ export default function ChangeBookingModal({ tour, isOpen, onClose, onReserve }:
   const daySlots = selectedDayInfo?.timeSlots?.length ? selectedDayInfo.timeSlots : []
 
   // Effective slot — default to the day's first open slot when none is chosen.
-  const effectiveTime = selectedTime ?? daySlots.find((s) => s.remaining > 0)?.time ?? null
+  const effectiveTime = selectedTime ?? daySlots.find((s) => s.remaining != null && s.remaining > 0)?.time ?? null
 
   const formattedDate = useMemo(() => {
     const d = new Date(`${selectedDate}T00:00:00`)
     return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
   }, [selectedDate])
 
-  const total = tour.price * travelers
+  const total = pricing?.total ?? clientSubtotal
+  const displayCurrency = pricing?.currency
+  const travelerMixLabel = Object.entries(pricingTravelers)
+    .filter(([, v]) => typeof v === 'number' && v > 0)
+    .map(([k, v]) => `${v} ${k.charAt(0).toUpperCase() + k.slice(1)}`)
+    .join(', ')
 
   if (!isOpen) return null
 
@@ -152,9 +257,15 @@ export default function ChangeBookingModal({ tour, isOpen, onClose, onReserve }:
             <h3 className="text-sm font-bold text-slate-900">{tour.title}</h3>
             <p className="mt-1 text-xs text-slate-500">Pickup included</p>
             <div className="mt-3 space-y-1">
-              <p className="text-xs text-slate-600">{travelers} Adult x ${tour.price.toFixed(2)}</p>
-              <p className="text-sm font-bold text-slate-900">Total ${total.toFixed(2)}</p>
-              <p className="text-[11px] text-slate-400">Includes all taxes and fees</p>
+              <p className="text-xs text-slate-600">{travelerMixLabel || `${travelers} ${travelers === 1 ? 'Adult' : 'Adults'}`}</p>
+              <p className="text-sm font-bold text-slate-900">
+                Total {currencySymbol(displayCurrency)}{total.toFixed(2)}
+              </p>
+              {dateUnavailable && (
+                <p className="text-[11px] font-medium text-rose-500">This date is no longer available. Please pick another date.</p>
+              )}
+              {!dateUnavailable && priceNote && <p className="text-[11px] text-slate-500">{priceNote}</p>}
+              {!dateUnavailable && !priceNote && <p className="text-[11px] text-slate-400">Includes all taxes and fees</p>}
             </div>
           </div>
 
@@ -194,6 +305,7 @@ export default function ChangeBookingModal({ tour, isOpen, onClose, onReserve }:
                       }
                     }}
                     onMonthChange={(year, month) => setViewMonth({ year, month })}
+                    requireConfirmation
                   />
                 </div>
               )}
@@ -208,7 +320,7 @@ export default function ChangeBookingModal({ tour, isOpen, onClose, onReserve }:
               </label>
               <div className="flex flex-wrap gap-2">
                 {daySlots.map((slot) => {
-                  const slotFull = slot.remaining <= 0
+                  const slotFull = slot.remaining != null && slot.remaining <= 0
                   const isSelected = effectiveTime === slot.time
                   return (
                     <button
@@ -225,9 +337,11 @@ export default function ChangeBookingModal({ tour, isOpen, onClose, onReserve }:
                       }`}
                     >
                       {formatSlotTime(slot.time)}
-                      <span className={`ml-1.5 ${isSelected ? 'text-[#179237]/70' : 'text-slate-400'}`}>
-                        {slotFull ? 'sold out' : `${Math.max(0, slot.remaining)} left`}
-                      </span>
+                      {slot.remaining != null && (
+                        <span className={`ml-1.5 ${isSelected ? 'text-[#179237]/70' : 'text-slate-400'}`}>
+                          {slotFull ? 'sold out' : `${Math.max(0, slot.remaining)} left`}
+                        </span>
+                      )}
                     </button>
                   )
                 })}
@@ -258,22 +372,28 @@ export default function ChangeBookingModal({ tour, isOpen, onClose, onReserve }:
         {/* Footer */}
         <div className="border-t border-slate-100 px-6 py-4">
           <button
+            disabled={dateUnavailable}
             onClick={() => {
               onReserve({
                 date: formattedDate,
                 dateISO: selectedDate,
                 selectedDate,
-                time: effectiveTime ? formatSlotTime(effectiveTime) : (tour.time || '9:00 AM'),
+                time: effectiveTime ? formatSlotTime(effectiveTime) : (tour.time || 'Flexible'),
                 selectedTime: effectiveTime,
                 travelers: `${travelers} ${travelers === 1 ? 'adult' : 'adults'}`,
                 travelersCount: travelers,
-                price: total,
+                travelersPayload: pricingTravelers,
+                price: pricing?.total ?? clientSubtotal,
               })
               onClose()
             }}
-            className="w-full rounded-full bg-[#179237] py-3.5 text-sm font-bold text-white shadow-sm transition hover:brightness-110 active:scale-[0.98]"
+            className={`w-full rounded-full py-3.5 text-sm font-bold text-white shadow-sm transition active:scale-[0.98] ${
+              dateUnavailable
+                ? 'cursor-not-allowed bg-slate-300'
+                : 'bg-[#179237] hover:brightness-110'
+            }`}
           >
-            Reserve Now
+            {dateUnavailable ? 'Unavailable' : 'Reserve Now'}
           </button>
         </div>
       </motion.div>

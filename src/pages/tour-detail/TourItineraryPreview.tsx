@@ -70,6 +70,11 @@ export default function TourItineraryPreview({
   // (the supplier assigns stops to day 1..N on the platform).
   const isMultiDay = itinerary.some((stop) => (stop.day || 1) > 1)
 
+  // The meals/logistics strip is only shown when the itinerary itself carries
+  // the data (a stop with meals assigned), so supplier toggles on tours whose
+  // itinerary has no meal stops don't fabricate a meals pill.
+  const itineraryHasMeals = itinerary.some((stop) => Array.isArray(stop.meals) && stop.meals.length > 0)
+
   // Group stops by day so multi-day tours can render one dot per day (with the
   // day's locations listed beneath) instead of a dot per location.
   const days = (() => {
@@ -164,7 +169,14 @@ export default function TourItineraryPreview({
     if (meeting.meetingMode === 'meeting_point') {
       return {
         title: t('tourDetail.meetingPoint'),
-        lines: [meeting.meetingPoint, meeting.meetingPointAddress].filter((x): x is string => Boolean(x)),
+        // meetingPoint already carries "name — address", so only show the
+        // separate address when it isn't already embedded (no repeated line).
+        lines: [
+          meeting.meetingPoint,
+          meeting.meetingPointAddress && meeting.meetingPointAddress !== meeting.meetingPoint && !meeting.meetingPoint?.includes(meeting.meetingPointAddress)
+            ? meeting.meetingPointAddress
+            : undefined,
+        ].filter((x): x is string => Boolean(x)),
         note: arrivalLabel() || meeting.meetingPointDescription || '',
       }
     }
@@ -183,7 +195,12 @@ export default function TourItineraryPreview({
     if (dropoff.dropoffOption === 'different_location') {
       return {
         title: t('tourDetail.dropOffPoint'),
-        lines: [dropoff.dropoffLocation, dropoff.dropoffLocationAddress].filter((x): x is string => Boolean(x)),
+        lines: [
+          dropoff.dropoffLocation,
+          dropoff.dropoffLocationAddress && dropoff.dropoffLocationAddress !== dropoff.dropoffLocation && !dropoff.dropoffLocation?.includes(dropoff.dropoffLocationAddress)
+            ? dropoff.dropoffLocationAddress
+            : undefined,
+        ].filter((x): x is string => Boolean(x)),
         note: dropoff.dropoffDescription || '',
       }
     }
@@ -239,7 +256,7 @@ export default function TourItineraryPreview({
             <p className="itinerary-stop-simple-desc">{stop.description}</p>
           )}
           {stopMeta(stop) && (
-            <p className="itinerary-stop-simple-meta">{stopMeta(stop)}</p>
+            <p className="itinerary-stop-simple-meta itinerary-stop-simple-meta-pill">{stopMeta(stop)}</p>
           )}
         </div>
       </div>
@@ -295,7 +312,7 @@ export default function TourItineraryPreview({
                 {displayTitle && <p className="itinerary-stop-simple-title">{displayTitle}</p>}
                 {locLine && <p className="itinerary-stop-simple-loc">{locLine}</p>}
                 {stop.description && <p className="itinerary-stop-simple-desc">{stop.description}</p>}
-                {meta && <p className="itinerary-stop-simple-meta">{meta}</p>}
+                {meta && <p className="itinerary-stop-simple-meta itinerary-stop-simple-meta-pill">{meta}</p>}
               </div>
             </div>
           )
@@ -344,17 +361,22 @@ export default function TourItineraryPreview({
 
   // Overnight accommodation + meals rendered together in one logistics strip,
   // mirroring the supplier's itinerary preview (each item is a labeled span).
+  // Both items are gated on the itinerary actually reflecting them: overnight
+  // accommodation only makes sense on a multi-day itinerary, and meals only
+  // show when an itinerary stop carries meal data.
   const renderDayLogistics = (indented: boolean) => {
-    if (!accommodationIncluded && !mealsLine) return null
+    const showAccommodation = accommodationIncluded && isMultiDay
+    const showMeals = !!mealsLine && itineraryHasMeals
+    if (!showAccommodation && !showMeals) return null
     return (
       <div className={`itinerary-day-logistics${indented ? ' itinerary-day-logistics-indent' : ''}`}>
-        {accommodationIncluded && (
+        {showAccommodation && (
           <span className="itinerary-day-logistics-item">
             <Bed size={13} strokeWidth={2.4} />
             {t('tourDetail.overnightAccommodationIncluded')}
           </span>
         )}
-        {mealsLine && (
+        {showMeals && (
           <span className="itinerary-day-logistics-item">
             <UtensilsCrossed size={13} strokeWidth={2.4} />
             {t('tourDetail.mealsLabel')}: {mealsLine}
@@ -384,9 +406,7 @@ export default function TourItineraryPreview({
                       exit={{ opacity: 0, height: 0 }}
                       transition={{ duration: 0.3, ease: 'easeOut' }}
                     >
-                      <div className="itinerary-stops-simple">
-                        {extraDays.map((dayData) => renderDay(dayData))}
-                      </div>
+                      {extraDays.map((dayData) => renderDay(dayData))}
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -403,9 +423,7 @@ export default function TourItineraryPreview({
                       exit={{ opacity: 0, height: 0 }}
                       transition={{ duration: 0.3, ease: 'easeOut' }}
                     >
-                      <div className="itinerary-stops-simple">
-                        {extraStops.map((_, i) => renderStopAt(PREVIEW_COUNT + i))}
-                      </div>
+                      {extraStops.map((_, i) => renderStopAt(PREVIEW_COUNT + i))}
                     </motion.div>
                   )}
                 </AnimatePresence>

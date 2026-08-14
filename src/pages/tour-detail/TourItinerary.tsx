@@ -59,6 +59,11 @@ export default function TourItinerary({
 
   const isMultiDay = itinerary.some((stop) => (stop.day || 1) > 1)
 
+  // The logistics strip only reflects the itinerary: overnight accommodation
+  // requires a multi-day itinerary, and meals only show when a stop carries
+  // meal data (so supplier toggles on tours without meal stops are ignored).
+  const itineraryHasMeals = itinerary.some((stop) => Array.isArray(stop.meals) && stop.meals.length > 0)
+
   // 1-based position of each stop within its own day (day markers are a
   // separate rail node, so every day's stops restart at 1).
   const perDayNumber = (() => {
@@ -118,7 +123,14 @@ export default function TourItinerary({
     if (meeting.meetingMode === 'meeting_point') {
       return {
         title: t('tourDetail.meetingPoint'),
-        lines: [meeting.meetingPoint, meeting.meetingPointAddress].filter((x): x is string => Boolean(x)),
+        // meetingPoint already carries "name — address", so only show the
+        // separate address when it isn't already embedded (no repeated line).
+        lines: [
+          meeting.meetingPoint,
+          meeting.meetingPointAddress && meeting.meetingPointAddress !== meeting.meetingPoint && !meeting.meetingPoint?.includes(meeting.meetingPointAddress)
+            ? meeting.meetingPointAddress
+            : undefined,
+        ].filter((x): x is string => Boolean(x)),
         note: arrivalLabel() || meeting.meetingPointDescription || '',
       }
     }
@@ -137,7 +149,12 @@ export default function TourItinerary({
     if (dropoff.dropoffOption === 'different_location') {
       return {
         title: t('tourDetail.dropOffPoint'),
-        lines: [dropoff.dropoffLocation, dropoff.dropoffLocationAddress].filter((x): x is string => Boolean(x)),
+        lines: [
+          dropoff.dropoffLocation,
+          dropoff.dropoffLocationAddress && dropoff.dropoffLocationAddress !== dropoff.dropoffLocation && !dropoff.dropoffLocation?.includes(dropoff.dropoffLocationAddress)
+            ? dropoff.dropoffLocationAddress
+            : undefined,
+        ].filter((x): x is string => Boolean(x)),
         note: dropoff.dropoffDescription || '',
       }
     }
@@ -179,17 +196,22 @@ export default function TourItinerary({
 
   // Overnight accommodation + meals rendered together in one logistics strip,
   // mirroring the supplier's itinerary preview (each item is a labeled span).
+  // Both items are gated on the itinerary actually reflecting them: overnight
+  // accommodation only makes sense on a multi-day itinerary, and meals only
+  // show when an itinerary stop carries meal data.
   const renderDayLogistics = (indented: boolean) => {
-    if (!accommodationIncluded && !mealsLine) return null
+    const showAccommodation = accommodationIncluded && isMultiDay
+    const showMeals = !!mealsLine && itineraryHasMeals
+    if (!showAccommodation && !showMeals) return null
     return (
       <div className={`itinerary-day-logistics${indented ? ' itinerary-day-logistics-indent' : ''}`}>
-        {accommodationIncluded && (
+        {showAccommodation && (
           <span className="itinerary-day-logistics-item">
             <Bed size={13} strokeWidth={2.4} />
             {t('tourDetail.overnightAccommodationIncluded')}
           </span>
         )}
-        {mealsLine && (
+        {showMeals && (
           <span className="itinerary-day-logistics-item">
             <UtensilsCrossed size={13} strokeWidth={2.4} />
             {t('tourDetail.mealsLabel')}: {mealsLine}
@@ -275,7 +297,7 @@ export default function TourItinerary({
                     <p className="itinerary-stop-simple-desc">{stop.description}</p>
                   )}
                   {metaParts.length > 0 && (
-                    <p className="itinerary-stop-simple-meta">{metaParts.join(' \u2022 ')}</p>
+                    <p className="itinerary-stop-simple-meta itinerary-stop-simple-meta-pill">{metaParts.join(' \u2022 ')}</p>
                   )}
                 </div>
               </div>

@@ -11,6 +11,7 @@ import userSrc from '../assets/icons/User Circle.png'
 import { subscribeToAuthState, signOutUser, getStoredAuthUser, type AuthUser } from '../lib/auth'
 import { getSupplierPortalUrl } from '../lib/supplier'
 import { useSupplierStatus } from '../hooks/useSupplierStatus'
+import { useMyBookingsCount } from '../hooks/useExpeditionBookings'
 import { useSearchAutocomplete, type SearchSuggestion } from '../hooks/useSearchAutocomplete'
 import { useRecentSearches } from '../hooks/useRecentSearches'
 import LanguageCurrencyModal from './LanguageCurrencyModal'
@@ -57,6 +58,8 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
   const { suggestions: navSuggestions, isSearching: navIsSearching } = useSearchAutocomplete(navSearchValue)
   const { recentSearches, addSearch, removeSearch, clearAll } = useRecentSearches()
   const { isApproved } = useSupplierStatus()
+  // Counter of the user's confirmed bookings shown on the "Bookings" menu item.
+  const { data: bookingsCount = 0 } = useMyBookingsCount('CONFIRMED', !!user)
 
   useEffect(() => {
     const unsub = subscribeToAuthState((u) => setUser(u))
@@ -511,6 +514,9 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
                         </svg>
                       )}
                       {link.label}
+                      {link.key === 'Bookings' && bookingsCount > 0 && (
+                        <span className="nav-dropdown-badge">{bookingsCount}</span>
+                      )}
                     </a>
                   ))}
 
@@ -633,6 +639,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
                   <path d="M16 10a4 4 0 0 1-8 0" />
                 </svg>
                 {t('nav.bookings')}
+                {bookingsCount > 0 && <span className="nav-mobile-badge">{bookingsCount}</span>}
               </a>
             )}
             {user && (

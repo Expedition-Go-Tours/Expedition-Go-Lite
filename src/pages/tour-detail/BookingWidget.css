@@ -171,6 +171,21 @@
   flex-shrink: 0;
 }
 
+/* Date field content: date on its own line, chosen time / opening hours below it */
+.booking-input-main {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  line-height: 1.25;
+  min-width: 0;
+}
+
+.booking-input-date {
+  font-size: 15px;
+  color: #0f172a;
+}
+
 /* Guest Selector Dropdown */
 .guest-selector-dropdown {
   position: absolute;
@@ -448,6 +463,71 @@
   color: #64748b;
   margin: 6px 0 0;
   line-height: 1.4;
+}
+
+/* Selected time / opening hours shown on its own line under the date on the date field */
+.booking-selected-time {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #166534;
+}
+
+/* Time-slot / opening-hours sections rendered inside the calendar panel */
+.booking-calendar-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 170px;
+  overflow-y: auto;
+}
+
+.booking-calendar-footer-label {
+  gap: 6px;
+  font-size: 13px;
+}
+
+.booking-calendar-footer-label svg {
+  width: 15px;
+  height: 15px;
+}
+
+.booking-slot-grid-compact {
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+}
+
+.booking-slot-grid-compact .booking-slot-chip {
+  padding: 8px 8px;
+}
+
+.booking-calendar-hours {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.booking-calendar-hours .booking-slot-note {
+  margin: 0;
+}
+
+.booking-calendar-done-btn {
+  width: 100%;
+  margin-top: 2px;
+  padding: 10px 16px;
+  background: #166534;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.booking-calendar-done-btn:hover {
+  background: #14532d;
 }
 
 .booking-slot-warning {
