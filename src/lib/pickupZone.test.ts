@@ -99,6 +99,23 @@ describe('findPickupAreaForAddress', () => {
     expect(match?.name).toBe('Cantonments')
   })
 
+  it('matches a location-only area by proximity to its saved point', () => {
+    const pointArea: PickupAreaShape = { name: 'Kumasi', lat: 6.6871, lng: -1.6219 }
+    const match = findPickupAreaForAddress({ lat: 6.6971, lng: -1.6219, name: 'Some Rd' }, [pointArea])
+    expect(match?.name).toBe('Kumasi')
+  })
+
+  it('does not match a location-only area beyond the radius', () => {
+    const pointArea: PickupAreaShape = { name: 'Kumasi', lat: 6.6871, lng: -1.6219 }
+    expect(findPickupAreaForAddress({ lat: 6.0, lng: -1.6219, name: 'Some Rd' }, [pointArea])).toBeNull()
+  })
+
+  it('exact name still matches a location-only area beyond the radius', () => {
+    const pointArea: PickupAreaShape = { name: 'Kumasi', lat: 6.6871, lng: -1.6219 }
+    const match = findPickupAreaForAddress({ lat: 6.0, lng: -1.6219, name: 'Kumasi' }, [pointArea])
+    expect(match?.name).toBe('Kumasi')
+  })
+
   it('legacy name fallback never matches a name inside a drawn shape', () => {
     const match = findPickupAreaForAddress({ lat: 5.56, lng: -0.185, name: 'Osu' }, [AREA_OSU])
     expect(match?.name).toBe('Osu')
@@ -126,8 +143,18 @@ describe('pickupZoneStatus', () => {
     expect(pickupZoneStatus(undefined, [AREA_OSU])).toBe('no_coords')
   })
 
-  it('is no_zones when no area has a drawn shape', () => {
-    expect(pickupZoneStatus({ lat: 5.56, lng: -0.185 }, [{ name: 'Legacy' }])).toBe('no_zones')
+  it('is no_zones when there are no pickup areas at all', () => {
+    expect(pickupZoneStatus({ lat: 5.56, lng: -0.185 }, [])).toBe('no_zones')
+  })
+
+  it('is in_area for a location-only area within the radius', () => {
+    const pointArea: PickupAreaShape = { name: 'Kumasi', lat: 6.6871, lng: -1.6219 }
+    expect(pickupZoneStatus({ lat: 6.6971, lng: -1.6219 }, [pointArea])).toBe('in_area')
+  })
+
+  it('is outside for a location-only area beyond the radius', () => {
+    const pointArea: PickupAreaShape = { name: 'Kumasi', lat: 6.6871, lng: -1.6219 }
+    expect(pickupZoneStatus({ lat: 6.0, lng: -1.6219 }, [pointArea])).toBe('outside')
   })
 })
 

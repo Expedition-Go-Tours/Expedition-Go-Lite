@@ -11,6 +11,13 @@
  * server verdict must never disagree.
  */
 
+/**
+ * Radius (meters) around a location-only pickup area (saved as a point, no
+ * drawn geoshape) within which a customer address is considered inside the
+ * area. Must match the backend's LOCATION_AREA_RADIUS_M in geoUtils.js.
+ */
+export const LOCATION_AREA_RADIUS_M = 5000
+
 export type LatLng = [number, number]
 
 export interface PickupAreaShape {
@@ -99,8 +106,14 @@ export function findPickupAreaForAddress(
 
   for (const area of pickupAreas) {
     if (!hasDrawnShape(area)) {
-      // Legacy area without a drawn geoshape: match by name only (old
-      // dropdown behaviour) so pre-geoshape products keep working.
+      // Legacy area without a drawn geoshape: match the saved location
+      // point by proximity, or fall back to the old exact-name match for
+      // areas without coordinates so pre-geoshape products keep working.
+      const aLat = typeof area.lat === 'number' ? area.lat : NaN
+      const aLng = typeof area.lng === 'number' ? area.lng : NaN
+      if (Number.isFinite(aLat) && Number.isFinite(aLng) && distanceMeters(address.lat, address.lng, aLat, aLng) <= LOCATION_AREA_RADIUS_M) {
+        return area
+      }
       if (NORMALIZE_NAME(address.name) === NORMALIZE_NAME(area.name)) return area
       continue
     }
@@ -133,7 +146,7 @@ export function pickupZoneStatus(
   if (!address || address.lat == null || address.lng == null || !Number.isFinite(address.lat) || !Number.isFinite(address.lng)) {
     return 'no_coords'
   }
-  if (!areas.some(hasDrawnShape)) return 'no_zones'
+  if (areas.length === 0) return 'no_zones'
   const match = findPickupAreaForAddress({ lat: address.lat, lng: address.lng, name: address.name }, areas)
   if (!match) return 'outside'
   return match._excluded ? 'excluded' : 'in_area'
