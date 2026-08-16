@@ -2,6 +2,7 @@
 import { motion } from 'framer-motion'
 import { Bed, UtensilsCrossed, MapPin, Navigation } from 'lucide-react'
 import type { ItineraryDay } from '../../lib/tourTypes'
+import type { PickupAreaShape, PickupLocationShape } from '../../lib/pickupZone'
 import { formatItineraryDuration } from '../../lib/tourTypes'
 import './TourItinerary.css'
 
@@ -13,8 +14,8 @@ interface MeetingNodeData {
   arrivalTimeType?: 'none' | '5min' | '10min' | '15min' | '30min' | 'notified' | 'custom'
   arrivalTimeCustom?: string
   pickupType?: 'area' | 'address'
-  pickupAreas?: { name: string; time?: string; address?: string }[]
-  pickupLocations?: { name?: string; address?: string }[]
+  pickupAreas?: PickupAreaShape[]
+  pickupLocations?: PickupLocationShape[]
   pickupDescription?: string
 }
 

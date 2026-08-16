@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ChevronDown, ChevronUp, Bed, UtensilsCrossed, MapPin, Navigation } from 'lucide-react'
 import type { ItineraryDay } from '../../lib/tourTypes'
+import type { PickupAreaShape, PickupLocationShape } from '../../lib/pickupZone'
 import { formatItineraryDuration } from '../../lib/tourTypes'
 // Shared black rounded marker/timeline styles (.itinerary-stop-simple-*)
 // live in TourItinerary.css, whose only other consumer (TourItinerary.tsx)
@@ -21,8 +22,8 @@ interface MeetingNodeData {
   arrivalTimeType?: 'none' | '5min' | '10min' | '15min' | '30min' | 'notified' | 'custom'
   arrivalTimeCustom?: string
   pickupType?: 'area' | 'address'
-  pickupAreas?: { name: string; time?: string; address?: string }[]
-  pickupLocations?: { name?: string; address?: string }[]
+  pickupAreas?: PickupAreaShape[]
+  pickupLocations?: PickupLocationShape[]
   pickupDescription?: string
 }
 

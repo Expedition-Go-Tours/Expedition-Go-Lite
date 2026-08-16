@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import type { TourDetail, TravelerPricing, GroupSizeBand, PricingTier, ItineraryDay } from '../lib/tourTypes'
 import { fetchWithAuth } from '../lib/api'
+import type { PickupAreaShape, PickupLocationShape } from '../lib/pickupZone'
 
 /**
  * `bypassCache` skips the browser's HTTP cache for this request. The tour
@@ -810,8 +811,8 @@ export function extractMeetingInfo(rawTour: any) {
     pickupFinalLocationTiming: (pick(bt?.pickupFinalLocationTiming, pc?.pickupFinalLocationTiming) || 'day_before') as
       | 'day_before' | 'after_selection',
     referenceStartTime: pick(bt?.referenceStartTime, pc?.referenceStartTime) || '',
-    pickupAreas: (pick(bt?.pickupAreas, pc?.pickupAreas) || []).filter((a: any) => a && (a.name || a.address)),
-    pickupLocations: (pick(bt?.pickupLocations, pc?.pickupLocations) || []).filter((l: any) => l && (l.name || l.address)),
+    pickupAreas: (pick(bt?.pickupAreas, pc?.pickupAreas) || []).filter((a: any) => a && (a.name || a.address)) as PickupAreaShape[],
+    pickupLocations: (pick(bt?.pickupLocations, pc?.pickupLocations) || []).filter((l: any) => l && (l.name || l.address)) as PickupLocationShape[],
     pickupDescription: pick(bt?.pickupDescription, pc?.pickupDescription) || '',
     dropoffOption: (pick(bt?.dropoffOption, pc?.dropoffOption) || 'none') as
       | 'same_location' | 'different_location' | 'none' | 'service',
@@ -1083,7 +1084,7 @@ export function useAllExpeditionTours() {
     queryFn: async (): Promise<TourCardData[]> => {
       const records: ExpeditionTourRecord[] = []
       let page = 1
-      let totalPages = 1
+      let totalPages: number
 
       do {
         const payload = await expeditionFetchRaw(`/expedition/tours?page=${page}&limit=${CATALOG_PAGE_SIZE}`)
@@ -1167,8 +1168,8 @@ export interface TourDetailData extends Omit<TourDetail, 'guide' | 'contact' | '
   pickupFinalLocationTiming?: 'day_before' | 'after_selection'
   /** Pickup reference window before the start, e.g. '0-45' (0–45 min before). */
   referenceStartTime?: string
-  pickupAreas?: { name: string; time?: string; address?: string; lat?: number | null; lng?: number | null }[]
-  pickupLocations?: { name?: string; address?: string; lat?: number | null; lng?: number | null }[]
+  pickupAreas?: PickupAreaShape[]
+  pickupLocations?: PickupLocationShape[]
   pickupDescription?: string
   dropoffOption?: 'same_location' | 'different_location' | 'none' | 'service'
   dropoffLocation?: string

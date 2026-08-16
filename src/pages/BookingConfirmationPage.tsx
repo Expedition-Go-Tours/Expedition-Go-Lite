@@ -54,6 +54,15 @@ interface ConfirmationBooking {
   paidAt?: string | null
   createdAt?: string
   tour?: ConfirmationTour
+  /** Resolved pickup selection snapshotted at booking time (server-validated). */
+  pickup?: {
+    mode?: string
+    areaName?: string
+    locationName?: string
+    address?: { name?: string; address?: string } | null
+    time?: string
+    instructions?: string
+  } | null
 }
 
 function formatDate(value?: string): string {
@@ -327,9 +336,29 @@ export default function BookingConfirmationPage() {
         </div>
 
         {/* Meeting & pickup */}
-        {(hasMeeting || hasPickup) && (
+        {(hasMeeting || hasPickup || b.pickup) && (
           <div className="confirmation-card">
             <div className="confirmation-section-title">{t('confirmation.meetingPoint')}</div>
+            {b.pickup && (
+              <div className="confirmation-grid">
+                <div className="confirmation-grid-item confirmation-grid-item-wide">
+                  <MapPin size={16} />
+                  <div>
+                    <span className="confirmation-grid-label">{b.pickup.areaName ? t('tourDetail.pickupAreas') : t('confirmation.meetingPointLabel')}</span>
+                    <span className="confirmation-grid-value">
+                      {b.pickup.areaName || b.pickup.locationName || b.pickup.address?.name || b.pickup.address?.address || 'Pickup arranged after booking'}
+                    </span>
+                    {b.pickup.time && <span className="confirmation-grid-sub">Pickup {b.pickup.time}</span>}
+                    {b.pickup.instructions && <span className="confirmation-grid-sub">{b.pickup.instructions}</span>}
+                    {!b.pickup.areaName && !b.pickup.locationName && !b.pickup.address?.name && (
+                      <span className="confirmation-grid-sub">
+                        The tour operator will confirm your exact pickup point and time directly.
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
             {hasMeeting && (
               <div className="confirmation-grid">
                 <div className="confirmation-grid-item confirmation-grid-item-wide">

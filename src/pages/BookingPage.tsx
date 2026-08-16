@@ -25,6 +25,9 @@ import { getStripePromise } from '../lib/stripe'
 import { fetchWithAuth } from '../lib/api'
 import { useCreateBooking } from '../hooks/useExpeditionBookings'
 import { buildE164Phone, isValidPhoneInput, COUNTRY_CODES } from '../lib/phone'
+import { findPickupAreaForAddress, pickupZoneStatus, type PickupAreaShape } from '../lib/pickupZone'
+import { Map as MapLibreMap, Marker as MapLibreMarker, LngLatBounds as MapLibreLngLatBounds, NavigationControl as MapLibreNavigationControl, type GeoJSONSource } from 'maplibre-gl'
+import 'maplibre-gl/dist/maplibre-gl.css'
 import OptimizedImage from '@/components/shared/OptimizedImage'
 import {
   openingHoursForDay,
@@ -56,7 +59,7 @@ interface MeetingPickupInfo {
   pickupFinalLocationTiming?: 'day_before' | 'after_selection'
   /** Pickup reference window before the start, e.g. '0-45' (0–45 min before). */
   referenceStartTime?: string
-  pickupAreas?: { name: string; time?: string; address?: string; lat?: number | null; lng?: number | null }[]
+  pickupAreas?: PickupAreaShape[]
   pickupLocations?: { name?: string; address?: string; lat?: number | null; lng?: number | null }[]
   pickupDescription?: string
   dropoffOption?: 'same_location' | 'different_location' | 'none' | 'service'
@@ -476,24 +479,66 @@ function MapPinIcon({ color }: { color: string }) {
   )
 }
 
-// Read-only map showing the tour's meeting point / pickup locations (green)
-// plus the traveller's typed pickup location (blue). The base map is
-// OpenStreetMap's official embed (key-free, iframe-friendly), and the pins are
-// drawn as overlays on top so each marker can have its own color.
-function LocationMap({ tour, userMarker }: { tour: typeof FALLBACK_TOUR; userMarker?: { lat: number | null; lng: number | null } | null }) {
-  const [osmFailed, setOsmFailed] = useState(false)
-  const containerRef = useRef<HTMLDivElement>(null)
-  const [containerWidth, setContainerWidth] = useState(0)
+// Key-free base map (same style the supplier's pickup geoshape drawer uses).
+const TILE_STYLE = 'https://tiles.openfreemap.org/styles/liberty'
 
+const ZONE_FILL = 'rgba(23, 146, 55, 0.14)'
+const ZONE_LINE = '#179237'
+const EXCL_FILL = 'rgba(220, 38, 38, 0.10)'
+const EXCL_LINE = '#dc2626'
+
+type LatLngTuple = [number, number]
+
+function polygonFeature(poly: LatLngTuple[]) {
+  return {
+    type: 'Feature' as const,
+    properties: {} as Record<string, never>,
+    geometry: {
+      type: 'Polygon' as const,
+      // GeoJSON uses [lng, lat]; the supplier stores vertices as [lat, lng].
+      coordinates: [poly.map(([lat, lng]) => [lng, lat] as [number, number])],
+    },
+  }
+}
+
+function polyListToFeatureCollection(polys: LatLngTuple[][]) {
+  return { type: 'FeatureCollection' as const, features: polys.map(polygonFeature) }
+}
+
+/**
+ * Zone map for the booking form. When the tour carries any coordinates
+ * (drawn geoshapes, meeting point or pickup pins, or the traveller's chosen
+ * location) it renders a MapLibre map with the supplier's service zones in
+ * green, exclusion zones hatched red, and the traveller's point in blue —
+ * GetYourGuide-style.
+ *
+ * Legacy tours with names/addresses only fall back to the OSM embed looked
+ * up by the address string.
+ */
+function LocationMap({
+  tour,
+  userMarker,
+  onUserPointChange,
+}: {
+  tour: typeof FALLBACK_TOUR
+  userMarker?: { lat: number | null; lng: number | null } | null
+  /** Drag-end write-back so the traveller can reposition the blue pin directly on the map. */
+  onUserPointChange?: (lat: number, lng: number) => void
+}) {
+  const [osmFailed, setOsmFailed] = useState(false)
+  const [mapReady, setMapReady] = useState(false)
+  const [mapFailed, setMapFailed] = useState(false)
+  const [containerWidth, setContainerWidth] = useState(0)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const embedRef = useRef<HTMLDivElement>(null)
+  const mapRef = useRef<MapLibreMap | null>(null)
+  const markersRef = useRef<MapLibreMarker[]>([])
+  const mapReadyRef = useRef(false)
+  const mapFailTimerRef = useRef<number | null>(null)
+  const onUserPointChangeRef = useRef(onUserPointChange)
   useEffect(() => {
-    const el = containerRef.current
-    if (!el) return
-    const update = () => setContainerWidth(el.clientWidth)
-    update()
-    const ro = new ResizeObserver(update)
-    ro.observe(el)
-    return () => ro.disconnect()
-  }, [])
+    onUserPointChangeRef.current = onUserPointChange
+  }, [onUserPointChange])
 
   const toNumber = (v: unknown): number | null => {
     const n = Number(v)
@@ -533,10 +578,21 @@ function LocationMap({ tour, userMarker }: { tour: typeof FALLBACK_TOUR; userMar
     return lat != null && lng != null ? { lat, lng } : null
   }, [userMarker?.lat, userMarker?.lng])
 
-  const markers = useMemo(
-    () => [...tourMarkers, ...(userPoint ? [userPoint] : [])],
-    [tourMarkers, userPoint],
+  // Drawn geoshapes + exclusion zones (supplier's Step-13 zone drawer).
+  const zones = useMemo(
+    () => (tour.pickupAreas || []).filter((a): a is PickupAreaShape & { polygon: LatLngTuple[] } =>
+      !!a && Array.isArray(a.polygon) && a.polygon.length >= 3),
+    [tour.pickupAreas],
   )
+  const exclusions = useMemo(
+    () => (tour.pickupAreas || [])
+      .flatMap((a) => (Array.isArray(a?.exclusions) ? a.exclusions : []))
+      .filter((e): e is LatLngTuple[] => Array.isArray(e) && e.length >= 3),
+    [tour.pickupAreas],
+  )
+
+  // Anything with real coordinates → render the MapLibre zone map.
+  const hasMapData = zones.length > 0 || exclusions.length > 0 || tourMarkers.length > 0 || userPoint != null
 
   // Textual fallback when the supplier only entered names/addresses (no
   // coordinates): still render a map by asking Google to locate the address.
@@ -554,10 +610,123 @@ function LocationMap({ tour, userMarker }: { tour: typeof FALLBACK_TOUR; userMar
     return ''
   }, [tour.meetingMode, tour.meetingPointAddress, tour.meetingPoint, tour.pickupAreas, tour.pickupLocations, tour.pickupDescription])
 
-  // Build a bbox that matches the container's aspect ratio (so the OSM embed
-  // fills the frame exactly) and compute each pin's position within it.
+  // MapLibre: build once, live-update overlays on selection changes.
+  useEffect(() => {
+    if (mapFailed || !hasMapData || !containerRef.current) return
+    if (mapRef.current) return
+
+    let map: MapLibreMap
+    try {
+      map = new MapLibreMap({
+        container: containerRef.current,
+        style: TILE_STYLE,
+        center: [tourMarkers[0]?.lng ?? userPoint?.lng ?? -0.187, tourMarkers[0]?.lat ?? userPoint?.lat ?? 5.6037],
+        zoom: 5,
+      })
+    } catch {
+      // No WebGL / unsupported device → degrade to the textual fallback.
+      window.setTimeout(() => setMapFailed(true), 0)
+      return
+    }
+
+    map.addControl(new MapLibreNavigationControl({ showCompass: false }), 'top-right')
+
+    map.on('load', () => {
+      if (!mapRef.current) return
+      if (mapFailTimerRef.current != null) {
+        window.clearTimeout(mapFailTimerRef.current)
+        mapFailTimerRef.current = null
+      }
+      map.addSource('gz-zones', { type: 'geojson', data: polyListToFeatureCollection(zones.map((z) => z.polygon)) })
+      map.addLayer({ id: 'gz-zones-fill', type: 'fill', source: 'gz-zones', paint: { 'fill-color': ZONE_FILL } })
+      map.addLayer({ id: 'gz-zones-line', type: 'line', source: 'gz-zones', paint: { 'line-color': ZONE_LINE, 'line-width': 2 } })
+
+      map.addSource('gz-excl', { type: 'geojson', data: polyListToFeatureCollection(exclusions) })
+      map.addLayer({ id: 'gz-excl-fill', type: 'fill', source: 'gz-excl', paint: { 'fill-color': EXCL_FILL } })
+      map.addLayer({
+        id: 'gz-excl-line',
+        type: 'line',
+        source: 'gz-excl',
+        paint: { 'line-color': EXCL_LINE, 'line-width': 2, 'line-dasharray': [2, 1] },
+      })
+
+      const bounds = new MapLibreLngLatBounds()
+      for (const z of zones) for (const [lat, lng] of z.polygon) bounds.extend([lng, lat])
+      for (const e of exclusions) for (const [lat, lng] of e) bounds.extend([lng, lat])
+      for (const m of [...tourMarkers, ...(userPoint ? [userPoint] : [])]) bounds.extend([m.lng, m.lat])
+      if (!bounds.isEmpty()) {
+        map.fitBounds(bounds, { padding: 50, maxZoom: 15, duration: 0 })
+      }
+
+      mapReadyRef.current = true
+      setMapReady(true)
+    })
+
+    // Base tiles can 404 occasionally (overlays still render over the blank
+    // base), but a failing style/server should not leave a permanent blank
+    // box in the checkout — degrade to the textual fallback instead.
+    map.on('error', () => {
+      if (!mapReadyRef.current && mapFailTimerRef.current == null) {
+        mapFailTimerRef.current = window.setTimeout(() => setMapFailed(true), 8000)
+      }
+    })
+
+    mapRef.current = map
+    return () => {
+      if (mapFailTimerRef.current != null) {
+        window.clearTimeout(mapFailTimerRef.current)
+        mapFailTimerRef.current = null
+      }
+      markersRef.current.forEach((m) => m.remove())
+      markersRef.current = []
+      map.remove()
+      mapRef.current = null
+      mapReadyRef.current = false
+      setMapReady(false)
+    }
+    // Zone/pin sources are managed by the live-update effect below.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mapFailed, hasMapData])
+
+  // Live-update the overlays as the traveller picks a location.
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !mapReady || !hasMapData) return
+
+    const zoneSource = map.getSource('gz-zones') as GeoJSONSource | undefined
+    if (zoneSource) {
+      zoneSource.setData(polyListToFeatureCollection(zones.map((z) => z.polygon)))
+    }
+    const exclSource = map.getSource('gz-excl') as GeoJSONSource | undefined
+    if (exclSource) {
+      exclSource.setData(polyListToFeatureCollection(exclusions))
+    }
+
+    // Refresh the traveller's blue pin (draggable — repositioning updates
+    // the live zone verdict, mirroring the GetYourGuide pickup map).
+    markersRef.current.forEach((m) => m.remove())
+    markersRef.current = []
+    if (userPoint) {
+      const el = document.createElement('div')
+      el.style.cssText = 'filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.3)); cursor: grab;'
+      el.innerHTML = `<svg width="26" height="34" viewBox="0 0 26 34" xmlns="http://www.w3.org/2000/svg"><path d="M13 0C5.8 0 0 5.8 0 13c0 9.75 13 21 13 21s13-11.25 13-21C26 5.8 20.2 0 13 0z" fill="#2563eb"/><circle cx="13" cy="13" r="5" fill="#fff"/></svg>`
+      const marker = new MapLibreMarker({ element: el, anchor: 'bottom', draggable: true })
+      marker.on('dragend', () => {
+        const { lat, lng } = marker.getLngLat()
+        onUserPointChangeRef.current?.(lat, lng)
+      })
+      markersRef.current.push(marker.setLngLat([userPoint.lng, userPoint.lat]).addTo(map))
+    }
+  }, [zones, exclusions, userPoint, mapReady, hasMapData])
+
+  // Legacy name/address-only config: OSM embed, located by the address text.
+  const markers = useMemo(() => [...tourMarkers, ...(userPoint ? [userPoint] : [])], [tourMarkers, userPoint])
+  // Identity key for the traveller's pin (avoids re-narrowing the guarded
+  // `userPoint` binding inside the mapView closure below).
+  const userPointKey = userPoint ? `${userPoint.lat.toFixed(6)},${userPoint.lng.toFixed(6)}` : ''
+
   const mapView = useMemo(() => {
-    if (markers.length === 0 || containerWidth <= 0) return null
+    if (hasMapData || markers.length === 0 || containerWidth <= 0) return null
     const H = 200
     const W = containerWidth
     const lats = markers.map((m) => m.lat)
@@ -581,26 +750,55 @@ function LocationMap({ tour, userMarker }: { tour: typeof FALLBACK_TOUR; userMar
     const bbMaxLat = cLat + bbH / 2
     const bbox = `${bbMinLng}%2C${bbMinLat}%2C${bbMaxLng}%2C${bbMaxLat}`
     const embedUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik`
-    const pins = markers.map((m) => ({
-      lat: m.lat,
-      lng: m.lng,
-      x: ((m.lng - bbMinLng) / bbW) * 100,
-      y: (1 - (m.lat - bbMinLat) / bbH) * 100,
-      isUser: userPoint != null && m.lat === userPoint.lat && m.lng === userPoint.lng,
-    }))
+    const pins = markers.map((m) => {
+      const isUser = userPointKey === `${m.lat.toFixed(6)},${m.lng.toFixed(6)}`
+      return {
+        lat: m.lat,
+        lng: m.lng,
+        x: ((m.lng - bbMinLng) / bbW) * 100,
+        y: (1 - (m.lat - bbMinLat) / bbH) * 100,
+        isUser,
+      }
+    })
     return { embedUrl, pins }
-  }, [markers, containerWidth, userPoint])
+  }, [hasMapData, markers, containerWidth, userPointKey])
 
-  const mapsLink = markers.length > 0
-    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${markers[0].lat},${markers[0].lng}`)}`
+  const mapPoint = userPoint ?? markers[0] ?? null
+  const mapsLink = mapPoint
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${mapPoint.lat},${mapPoint.lng}`)}`
     : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fallbackQuery || tour.meetingPointAddress || tour.meetingPoint || '')}`
 
-  if (markers.length === 0 && !fallbackQuery) return null
+  useEffect(() => {
+    if (hasMapData) return
+    const el = embedRef.current
+    if (!el) return
+    const update = () => setContainerWidth(el.clientWidth)
+    update()
+    const ro = new ResizeObserver(update)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [hasMapData])
+
+  if (!hasMapData && !fallbackQuery) return null
 
   return (
     <div className="border-t border-slate-100/60 p-3">
-      <div ref={containerRef} className="relative h-[200px] w-full overflow-hidden rounded-lg border border-slate-200/40">
-        {mapView && !osmFailed ? (
+      <div className="relative h-[220px] w-full overflow-hidden rounded-lg border border-slate-200/40">
+        {hasMapData && !mapFailed ? (
+          <>
+            <div ref={containerRef} className="absolute inset-0 z-0" />
+            {mapReady && (
+              <div className="absolute left-2 top-2 z-10 flex flex-col gap-1.5 rounded-lg bg-white/90 px-2.5 py-2 text-[10px] font-medium text-slate-700 shadow-sm backdrop-blur-sm">
+                <span className="flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-sm" style={{ background: ZONE_LINE }} /> Pickup zone
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-sm" style={{ background: EXCL_LINE }} /> No pickup
+                </span>
+              </div>
+            )}
+          </>
+        ) : mapView && !osmFailed ? (
           <>
             <iframe
               title="Location map"
@@ -621,7 +819,7 @@ function LocationMap({ tour, userMarker }: { tour: typeof FALLBACK_TOUR; userMar
             ))}
           </>
         ) : (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-slate-50 px-4 text-center">
+          <div ref={embedRef} className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-slate-50 px-4 text-center">
             <MapPin className="size-5 shrink-0 text-slate-300" />
             <p className="text-xs leading-relaxed text-slate-500">
               {tour.meetingPointAddress || tour.meetingPoint || fallbackQuery || 'Meeting location will be confirmed after booking.'}
@@ -816,7 +1014,7 @@ function ActivityDetailsStep({
   onNavigate: (n: number) => void
   hasError: boolean
   disabled?: boolean
-  contact: { location: string; pickupLater: boolean; pickupLat: number | null; pickupLng: number | null }
+  contact: { location: string; pickupLater: boolean; pickupLat: number | null; pickupLng: number | null; pickupArea: string }
   onContactChange: (key: string, value: string | boolean | number | null) => void
   showPickupLocation: boolean
   locationValid: boolean
@@ -831,6 +1029,52 @@ function ActivityDetailsStep({
       ? `Please enter the ${field.toLowerCase()}`
       : undefined
 
+  // Zone-aware pickup feedback — mirrors the backend's geoUtils verdict.
+  const pickupAreasList = useMemo(
+    () => (Array.isArray(tour.pickupAreas) ? tour.pickupAreas.filter((a): a is PickupAreaShape & { name: string } => !!a && !!a.name) : []),
+    [tour.pickupAreas],
+  )
+  const zonesDrawn = useMemo(
+    () => pickupAreasList.some((a) => !!a && Array.isArray(a.polygon) && a.polygon.length >= 3),
+    [pickupAreasList],
+  )
+  const zoneStatus = useMemo(
+    () =>
+      showPickupLocation && !contact.pickupLater
+        ? pickupZoneStatus({ name: contact.location, lat: contact.pickupLat, lng: contact.pickupLng }, tour.pickupAreas || [])
+        : 'none',
+    [showPickupLocation, contact.pickupLater, contact.location, contact.pickupLat, contact.pickupLng, tour.pickupAreas],
+  )
+  const matchedArea = useMemo(
+    () =>
+      contact.pickupLat != null && contact.pickupLng != null && (zoneStatus === 'in_area' || zoneStatus === 'excluded')
+        ? findPickupAreaForAddress({ lat: contact.pickupLat, lng: contact.pickupLng, name: contact.location }, tour.pickupAreas || [])
+        : null,
+    [zoneStatus, contact.pickupLat, contact.pickupLng, contact.location, tour.pickupAreas],
+  )
+  const compactTime = (t?: string) => (t ? t.replace('-', '–') : '')
+
+  const locationInvalidMessage = !locationValid && touched.location
+    ? zoneStatus === 'excluded'
+      ? `This address is inside a no-pickup zone${matchedArea?.name ? ` for \u201C${matchedArea.name}\u201D` : ''} — choose a different address or pickup zone.`
+      : zoneStatus === 'no_coords' && zonesDrawn && contact.location.trim().length >= 3
+        ? 'Pick an address from the suggestions so we can confirm it is inside a pickup zone.'
+        : zonesDrawn
+          ? 'Enter the pickup address or choose a pickup zone below.'
+          : 'Please enter your pickup location'
+    : undefined
+
+  const handlePickupAreaSelect = (name: string) => {
+    if (contact.pickupArea === name) {
+      onContactChange('pickupArea', '')
+    } else {
+      onContactChange('pickupArea', name)
+      onContactChange('location', '')
+      onContactChange('pickupLat', null)
+      onContactChange('pickupLng', null)
+    }
+  }
+
   const tourSummaryCard = (
     <div className="overflow-hidden rounded-xl border border-slate-200/40 bg-slate-50/30">
       {/* Meeting & pickup — embedded so the summary card carries the start/end
@@ -839,7 +1083,15 @@ function ActivityDetailsStep({
 
       {/* Location map — shows the meeting point / pickup locations on arrival,
           plus the traveller's picked pickup location when one is selected. */}
-      <LocationMap tour={tour} userMarker={{ lat: contact.pickupLat, lng: contact.pickupLng }} />
+      <LocationMap
+        tour={tour}
+        userMarker={{ lat: contact.pickupLat, lng: contact.pickupLng }}
+        onUserPointChange={(lat, lng) => {
+          onContactChange('pickupLat', lat)
+          onContactChange('pickupLng', lng)
+          onContactChange('pickupArea', '')
+        }}
+      />
     </div>
   )
 
@@ -883,37 +1135,138 @@ function ActivityDetailsStep({
             {tourSummaryCard}
 
             {showPickupLocation && (
-              <div>
-                <FieldLabel required={!contact.pickupLater} tooltip="Where should the tour operator pick you up or drop you off? Search or pick a location on the map.">Pickup Location</FieldLabel>
-                {contact.pickupLater ? (
-                  <div className="space-y-2">
-                    <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50/20 px-4 py-3 text-sm text-slate-400">
-                      Pickup location will be chosen later.
-                    </p>
-                    <p className="rounded-xl border border-emerald-200/60 bg-emerald-50/60 px-4 py-3 text-sm font-medium text-emerald-800">
-                      Please remember to verify your pickup location before the activity/experience date.
-                    </p>
+              <div className="space-y-4">
+                {/* GetYourGuide-style pickup zone selection — the supplier's
+                    drawn zones are selectable; the address is validated
+                    against the same geoshapes the server checks. */}
+                {!contact.pickupLater && zonesDrawn && pickupAreasList.length > 0 && (
+                  <div>
+                    <FieldLabel tooltip="Pick the zone closest to where you are staying — the exact pickup point is confirmed with you directly.">Choose your pickup zone</FieldLabel>
+                    <div className="flex flex-wrap gap-2">
+                      {pickupAreasList.map((a) => {
+                        const selected = contact.pickupArea === a.name
+                        return (
+                          <button
+                            key={a.name}
+                            type="button"
+                            onClick={() => handlePickupAreaSelect(a.name)}
+                            aria-pressed={selected}
+                            className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
+                              selected
+                                ? 'border-[#179237] bg-[#179237] text-white shadow-sm'
+                                : 'border-slate-200 bg-white text-slate-700 hover:border-[#179237]/60 hover:text-[#179237]'
+                            }`}
+                          >
+                            <MapPin className="size-3.5 shrink-0" />
+                            {a.name}
+                            {a.time && !selected && (
+                              <span className="text-[10px] font-semibold text-slate-400">pickup {compactTime(a.time)} min before</span>
+                            )}
+                            {a.time && selected && (
+                              <span className="text-[10px] font-semibold text-white/80">pickup {compactTime(a.time)} min before</span>
+                            )}
+                          </button>
+                        )
+                      })}
+                    </div>
                   </div>
-                ) : (
-                  <LocationPicker
-                    value={contact.location}
-                    onChange={(v) => onContactChange('location', v)}
-                    onCoordsChange={(lat, lng) => {
-                      onContactChange('pickupLat', lat)
-                      onContactChange('pickupLng', lng)
-                    }}
-                    onBlur={() => handleBlur('location')}
-                    placeholder="e.g. Accra, Ghana"
-                    valid={locationValid}
-                    error={touched.location && !locationValid ? 'Please enter your pickup location' : undefined}
-                  />
                 )}
-                <label className="mt-3 flex cursor-pointer items-start gap-2.5">
+
+                <div>
+                  <FieldLabel required={!contact.pickupLater} tooltip="Where should the tour operator pick you up? Search for your address and pick a suggestion so we can confirm you are inside a pickup zone.">Pickup Location</FieldLabel>
+                  {contact.pickupLater ? (
+                    <div className="space-y-2">
+                      <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50/20 px-4 py-3 text-sm text-slate-400">
+                        Pickup location will be chosen later.
+                      </p>
+                      <p className="rounded-xl border border-emerald-200/60 bg-emerald-50/60 px-4 py-3 text-sm font-medium text-emerald-800">
+                        Please remember to verify your pickup location before the activity/experience date.
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      <LocationPicker
+                        value={contact.location}
+                        onChange={(v) => onContactChange('location', v)}
+                        onCoordsChange={(lat, lng) => {
+                          onContactChange('pickupLat', lat)
+                          onContactChange('pickupLng', lng)
+                          // A chosen address supersedes any picked zone.
+                          if (lat != null && lng != null) onContactChange('pickupArea', '')
+                        }}
+                        onBlur={() => handleBlur('location')}
+                        placeholder="e.g. Accra, Ghana"
+                        valid={locationValid}
+                        error={locationInvalidMessage}
+                      />
+
+                      {/* Live zone verdict — GetYourGuide-style reassurance. */}
+                      {!contact.pickupArea && zoneStatus === 'in_area' && matchedArea && (
+                        <div className="flex items-start gap-2.5 rounded-xl border border-emerald-200/60 bg-emerald-50/60 px-3.5 py-2.5">
+                          <Check className="mt-0.5 size-4 shrink-0 text-[#179237]" />
+                          <div className="text-sm text-emerald-900">
+                            <p className="font-semibold">
+                              Good news — you{'’'}re in the <span className="underline underline-offset-2">{matchedArea.name}</span> pickup zone!
+                            </p>
+                            {matchedArea.time && (
+                              <p className="mt-0.5 text-xs text-emerald-700">
+                                Pickup {compactTime(matchedArea.time)} min before the activity starts
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      {!contact.pickupArea && zoneStatus === 'outside' && (
+                        <div className="flex items-start gap-2.5 rounded-xl border border-rose-200/70 bg-rose-50/60 px-3.5 py-2.5">
+                          <MapPin className="mt-0.5 size-4 shrink-0 text-rose-500" />
+                          <p className="text-sm text-rose-700">
+                            This address isn{'’'}t inside any of the pickup zones. Pick a zone above or choose an address we cover.
+                          </p>
+                        </div>
+                      )}
+                      {!contact.pickupArea && zoneStatus === 'excluded' && matchedArea && (
+                        <div className="flex items-start gap-2.5 rounded-xl border border-rose-200/70 bg-rose-50/60 px-3.5 py-2.5">
+                          <MapPin className="mt-0.5 size-4 shrink-0 text-rose-500" />
+                          <p className="text-sm text-rose-700">
+                            This address falls inside a no-pickup zone{matchedArea.name ? ` for \u201C${matchedArea.name}\u201D` : ''} — choose a different address or zone.
+                          </p>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+
+                {!contact.pickupLater && contact.pickupArea && (
+                  <div className="flex items-start gap-2.5 rounded-xl border border-emerald-200/60 bg-emerald-50/60 px-3.5 py-2.5">
+                    <MapPin className="mt-0.5 size-4 shrink-0 text-[#179237]" />
+                    <div className="min-w-0 flex-1 text-sm text-emerald-900">
+                      <p className="font-semibold">
+                        Pickup zone: <span className="underline underline-offset-2">{contact.pickupArea}</span>
+                      </p>
+                      <p className="mt-0.5 text-xs text-emerald-700">
+                        The exact pickup point and time are confirmed with you directly.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handlePickupAreaSelect(contact.pickupArea)}
+                      className="shrink-0 rounded p-1 text-emerald-500 transition-colors hover:bg-emerald-100 hover:text-emerald-700"
+                      aria-label={`Remove pickup zone ${contact.pickupArea}`}
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                )}
+
+                <label className="flex cursor-pointer items-start gap-2.5">
                   <input
                     type="checkbox"
                     checked={!!contact.pickupLater}
                     onChange={(e) => {
-                      if (e.target.checked) onContactChange('location', '')
+                      if (e.target.checked) {
+                        onContactChange('location', '')
+                        onContactChange('pickupArea', '')
+                      }
                       onContactChange('pickupLater', e.target.checked)
                     }}
                     className="mt-0.5 size-4 shrink-0 rounded border-slate-300 bg-white text-[#179237] accent-[#179237] [color-scheme:light] focus:ring-[#179237]/20"
@@ -1355,7 +1708,7 @@ function BookingSidebar({
   onApplyPromo: () => void
   discount: number
   finalPrice: number
-  contact: { firstName: string; lastName: string; email: string; countryCode: string; phone: string; location: string; pickupLater: boolean }
+  contact: { firstName: string; lastName: string; email: string; countryCode: string; phone: string; location: string; pickupLater: boolean; pickupArea: string }
   activity: { leadFirstName: string; leadLastName: string; leadCountryCode: string; leadPhone: string }
   step: number
 }) {
@@ -1378,6 +1731,7 @@ function BookingSidebar({
               <p className="text-xs text-slate-400">{contact.email}</p>
               <p className="text-xs text-slate-400">{buildE164Phone(contact.countryCode, contact.phone) ?? contact.phone}</p>
               {contact.location && <p className="text-xs text-slate-400">{contact.location}</p>}
+              {contact.pickupArea && !contact.location && <p className="text-xs text-slate-400">Pickup zone: {contact.pickupArea}</p>}
               {contact.pickupLater && !contact.location && (
                 <p className="text-xs text-slate-400">Pickup location: to be chosen later</p>
               )}
@@ -1477,7 +1831,7 @@ function BookingSidebar({
 
 const STORAGE_KEY = 'booking_draft'
 
-const DEFAULT_CONTACT = { firstName: '', lastName: '', email: '', countryCode: '+233', phone: '', location: '', pickupLater: false, pickupLat: null as number | null, pickupLng: null as number | null }
+const DEFAULT_CONTACT = { firstName: '', lastName: '', email: '', countryCode: '+233', phone: '', location: '', pickupLater: false, pickupLat: null as number | null, pickupLng: null as number | null, pickupArea: '' }
 const DEFAULT_ACTIVITY = { leadFirstName: '', leadLastName: '', leadCountryCode: '+233', leadPhone: '' }
 const DEFAULT_PAYMENT = { paymentTiming: 'now', paymentMethod: 'card' }
 
@@ -1623,6 +1977,31 @@ export default function BookingPage() {
   // travellers make their own way, so the field is hidden there.
   const showPickupLocation = tour.meetingMode === 'pickup' || tour.pickupIncluded === true
 
+  // Geoshape-aware pickup validation (mirrors the backend's geoUtils verdict):
+  // once the supplier has drawn service zones, a typed address only counts
+  // when it resolves inside a zone (or the traveller picks a named zone).
+  // Legacy tours without drawn zones keep the old name-only rule.
+  const zonesDrawn = useMemo(
+    () => (tour.pickupAreas || []).some((a: PickupAreaShape) => !!a && Array.isArray(a.polygon) && a.polygon.length >= 3),
+    [tour.pickupAreas],
+  )
+  const pickupZoneStatusValue = useMemo(
+    () =>
+      showPickupLocation && !contact.pickupLater
+        ? pickupZoneStatus({ name: contact.location, lat: contact.pickupLat, lng: contact.pickupLng }, tour.pickupAreas || [])
+        : 'none',
+    [showPickupLocation, contact.pickupLater, contact.location, contact.pickupLat, contact.pickupLng, tour.pickupAreas],
+  )
+  const pickupLocationValid = useMemo(
+    () =>
+      !showPickupLocation ||
+      contact.pickupLater ||
+      contact.pickupArea.trim().length > 0 ||
+      (!zonesDrawn && contact.location.trim().length >= 3) ||
+      pickupZoneStatusValue === 'in_area',
+    [showPickupLocation, contact.pickupLater, contact.pickupArea, zonesDrawn, contact.location, pickupZoneStatusValue],
+  )
+
   const contactValid = useMemo(() => ({
     firstName: contact.firstName.trim().length > 1,
     lastName: contact.lastName.trim().length > 1,
@@ -1639,12 +2018,12 @@ export default function BookingPage() {
     leadLastName: activity.leadLastName.trim().length > 1,
     leadPhone: isValidPhoneInput(activity.leadCountryCode, activity.leadPhone),
     // A pickup location isn't required when the traveller opts to choose it later.
-    location: !showPickupLocation || contact.pickupLater || contact.location.trim().length >= 3,
+    location: pickupLocationValid,
     all: activity.leadFirstName.trim().length > 1 &&
       activity.leadLastName.trim().length > 1 &&
       isValidPhoneInput(activity.leadCountryCode, activity.leadPhone) &&
-      (!showPickupLocation || contact.pickupLater || contact.location.trim().length >= 3),
-  }), [activity, contact, showPickupLocation])
+      pickupLocationValid,
+  }), [activity, pickupLocationValid])
 
   const trackActivity = () => { lastActivityAt.current = Date.now() }
 
@@ -1797,10 +2176,30 @@ export default function BookingPage() {
       // own rate on confirm.
       const counts: Record<string, number> = editableTour.travelersCount || { adults: 1, children: 0, infants: 0 }
 
+      // Resolved pickup selection, validated and snapshotted server-side by
+      // confirmBooking (resolvePickupSelection). A named zone is sent when the
+      // traveller picked one of the supplier's zones; otherwise the
+      // autocomplete-resolved address + coordinates (coords stay out of the
+      // legacy travelers payload on purpose).
+      const hasPickupAddress = contact.pickupLat != null && contact.pickupLng != null && contact.location.trim().length > 0
+      const pickupSelection =
+        showPickupLocation && !contact.pickupLater && (contact.pickupArea || hasPickupAddress)
+          ? {
+              // Drawn geoshapes mean the server validates against zone
+              // polygons (area mode) — never the location-list mode.
+              mode: zonesDrawn ? 'area' : tour.pickupType || 'area',
+              ...(!hasPickupAddress && contact.pickupArea ? { areaName: contact.pickupArea } : {}),
+              ...(hasPickupAddress
+                ? { address: { name: contact.location.trim(), address: contact.location.trim(), lat: contact.pickupLat, lng: contact.pickupLng } }
+                : {}),
+            }
+          : undefined
+
       const payload = {
         tourId: tour.id || tour.slug,
         selectedDate: editableTour.selectedDate || editableTour.date,
         ...(editableTour.selectedTime ? { selectedTime: editableTour.selectedTime } : {}),
+        ...(pickupSelection ? { pickup: pickupSelection } : {}),
         travelers: {
           ...counts,
           phoneNumber,
@@ -1834,7 +2233,7 @@ export default function BookingPage() {
     } finally {
       setIsBooking(false)
     }
-  }, [createBooking, contact, activity, editableTour, tour, isBooking, isActive, pollBooking, user])
+  }, [createBooking, contact, activity, editableTour, tour, showPickupLocation, zonesDrawn, isBooking, isActive, pollBooking, user])
 
   const handleApplyPromo = useCallback(() => {
     const code = promoCode.trim().toUpperCase()
@@ -1906,7 +2305,7 @@ export default function BookingPage() {
                   onNavigate={goToStep}
                   hasError={activityHasError}
                   disabled={isExpired}
-                  contact={{ location: contact.location, pickupLater: contact.pickupLater, pickupLat: contact.pickupLat, pickupLng: contact.pickupLng }}
+                  contact={{ location: contact.location, pickupLater: contact.pickupLater, pickupLat: contact.pickupLat, pickupLng: contact.pickupLng, pickupArea: contact.pickupArea }}
                   onContactChange={handleContactChange}
                   showPickupLocation={showPickupLocation}
                   locationValid={activityValid.location}
@@ -1938,7 +2337,7 @@ export default function BookingPage() {
                     onApplyPromo={handleApplyPromo}
                     discount={discount}
                     finalPrice={finalPrice}
-                    contact={{ firstName: contact.firstName, lastName: contact.lastName, email: contact.email, countryCode: contact.countryCode, phone: contact.phone, location: contact.location, pickupLater: contact.pickupLater }}
+                    contact={{ firstName: contact.firstName, lastName: contact.lastName, email: contact.email, countryCode: contact.countryCode, phone: contact.phone, location: contact.location, pickupLater: contact.pickupLater, pickupArea: contact.pickupArea }}
                     activity={activity}
                     step={step}
                   />

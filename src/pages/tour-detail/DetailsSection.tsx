@@ -1,6 +1,7 @@
 import i18n from '../../i18n/config'
 import { motion } from 'framer-motion'
 import { Check, X } from 'lucide-react'
+import type { PickupAreaShape, PickupLocationShape } from '../../lib/pickupZone'
 import './DetailsSection.css'
 
 interface InfoSection {
@@ -137,8 +138,8 @@ interface MeetingPickupData {
   arrivalTimeType?: 'none' | '5min' | '10min' | '15min' | '30min' | 'notified' | 'custom'
   arrivalTimeCustom?: string
   pickupType?: 'area' | 'address'
-  pickupAreas?: { name: string; time?: string; address?: string }[]
-  pickupLocations?: { name?: string; address?: string }[]
+  pickupAreas?: PickupAreaShape[]
+  pickupLocations?: PickupLocationShape[]
   pickupDescription?: string
   dropoffOption?: 'same_location' | 'different_location' | 'none' | 'service'
   dropoffLocation?: string
