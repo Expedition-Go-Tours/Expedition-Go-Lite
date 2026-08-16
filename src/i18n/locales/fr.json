@@ -327,6 +327,8 @@
     "clickForGoogleMaps": "Cliquez pour voir sur Google Maps",
     "contactForAccessibility": "Contactez l'opérateur pour obtenir des informations sur l'accessibilité.",
     "defaultLocation": "Accra, Ghana",
+    "destination": "Destination",
+    "destinationHost": "Hôte de la destination",
     "details": "Détails",
     "admissionTicketIncluded": "Billet d'entrée inclus",
     "admissionPaySeparately": "Payer séparément",

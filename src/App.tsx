@@ -16,8 +16,6 @@ import ContinuePlanningSection from './components/ContinuePlanningSection'
 import MoodSection from './components/MoodSection'
 import RecommendSection from './components/RecommendSection'
 import PopularLocations from './components/PopularLocations'
-import DayToursSection from './components/DayToursSection'
-import MultiDayToursSection from './components/MultiDayToursSection'
 import TopRatedSection from './components/TopRatedSection'
 import SellOutSection from './components/SellOutSection'
 import LastMinuteDealsSection from './components/LastMinuteDealsSection'
@@ -51,8 +49,6 @@ function HomePage() {
       <MoodSection />
       <RecommendSection />
       <PopularLocations />
-      <MountOnView><DayToursSection /></MountOnView>
-      <MountOnView><MultiDayToursSection /></MountOnView>
       <MountOnView><TopRatedSection /></MountOnView>
       <MountOnView><SellOutSection /></MountOnView>
       <MountOnView><LastMinuteDealsSection /></MountOnView>

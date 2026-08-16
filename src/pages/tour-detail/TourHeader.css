@@ -3,6 +3,8 @@
 }
 
 .tour-header-title {
+  position: relative;
+  padding-left: 16px;
   font-size: clamp(1.35rem, 2vw + 0.9rem, 2.5rem);
   font-weight: 900;
   line-height: 1.2;
@@ -10,6 +12,17 @@
   color: #000;
   margin: 0;
   max-width: 64rem;
+}
+
+.tour-header-title::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  border-radius: 4px;
+  background: #179237;
 }
 
 .tour-header-meta {
@@ -126,10 +139,41 @@
 .tour-header-supplier {
   display: inline-flex;
   align-items: center;
+  gap: 4px;
   font-size: 13px;
   font-weight: 600;
   color: #475569;
   white-space: nowrap;
+}
+
+.tour-header-supplier-icon {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  color: #f97316;
+}
+
+@media (min-width: 1024px) {
+  .tour-header-supplier-icon {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+.tour-header-location-icon {
+  flex-shrink: 0;
+  color: #179237;
+}
+
+@media (min-width: 1024px) {
+  .tour-header-location-icon {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+.tour-header-label {
+  font-weight: 700;
 }
 
 @media (min-width: 640px) {

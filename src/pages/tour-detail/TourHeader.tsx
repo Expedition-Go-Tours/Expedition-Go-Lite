@@ -11,6 +11,32 @@ interface TourHeaderProps {
   onReviewsClick: () => void
 }
 
+function RosetteIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={className}
+      aria-hidden="true"
+      fill="currentColor"
+    >
+      {[0, 45, 90, 135, 180, 225, 270, 315].map((angle) => {
+        const rad = (angle * Math.PI) / 180
+        return (
+          <circle
+            key={angle}
+            cx={12 + 7 * Math.cos(rad)}
+            cy={12 + 7 * Math.sin(rad)}
+            r={4}
+          />
+        )
+      })}
+      <circle cx="12" cy="12" r="5.5" fill="#fff" />
+      <path d="M9.4 16.9 7.8 21.3l2.3-.9Z" />
+      <path d="M14.6 16.9l1.6 4.4-2.3-.9Z" />
+    </svg>
+  )
+}
+
 export default function TourHeader({
   title,
   rating,
@@ -36,17 +62,28 @@ export default function TourHeader({
         >
           {reviewCount} {t('sections.reviews')}
         </button>
-        <span className="tour-header-divider" aria-hidden />
-        <span className="tour-header-location">
-          <MapPin size={14} />
-          <span>{location || t('tourDetail.defaultLocation')}</span>
-        </span>
         {supplierName && (
           <>
             <span className="tour-header-divider" aria-hidden />
-            <span className="tour-header-supplier">{supplierName}</span>
+            <span className="tour-header-supplier">
+              <RosetteIcon className="tour-header-supplier-icon" />
+              <span>
+                <span className="tour-header-label">
+                  {t('tourDetail.destinationHost')}:
+                </span>{' '}
+                {supplierName}
+              </span>
+            </span>
           </>
         )}
+        <span className="tour-header-divider" aria-hidden />
+        <span className="tour-header-location">
+          <MapPin size={14} className="tour-header-location-icon" />
+          <span>
+            <span className="tour-header-label">{t('tourDetail.destination')}:</span>{' '}
+            {location || t('tourDetail.defaultLocation')}
+          </span>
+        </span>
       </div>
     </header>
   )

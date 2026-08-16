@@ -7,7 +7,7 @@ import { toast } from 'sonner'
 import {
   Check, ArrowLeft, MapPin, CalendarDays, CalendarCheck, Users, Info, X,
   Phone, MessageSquare, ShieldCheck, Star, Clock, Globe,
-  Car, CreditCard,
+  Car, CreditCard, Ticket,
 } from 'lucide-react'
 import logoSrc from '../assets/expo_trans.png'
 import Footer from '../components/Footer'
@@ -33,6 +33,7 @@ import {
   openingHoursForDay,
   weeklyHoursRange,
   formatTimeSlotList,
+  formatTime12h,
   type TourScheduleInfo,
 } from '../lib/tourAvailability'
 
@@ -130,6 +131,7 @@ const FALLBACK_TOUR = {
   pricingModel: 'perPerson' as MeetingPickupInfo['pricingModel'],
   travelerPricing: [] as NonNullable<MeetingPickupInfo['travelerPricing']>,
   groupSizePricing: [] as NonNullable<MeetingPickupInfo['groupSizePricing']>,
+  ticketValidity: undefined as string | undefined,
 }
 
 // Time label for the date/time summary rows: time-slot tours show the chosen
@@ -296,7 +298,6 @@ function referenceStartLabel(value?: string): string {
 // it can sit inside the tour summary card without a nested box.
 function MeetingPickupCard({ tour, embedded = false }: { tour: typeof FALLBACK_TOUR; embedded?: boolean }) {
   const mode = tour.meetingMode
-  const [showPhoto, setShowPhoto] = useState(false)
 
   const arrivalLabel = () => {
     if (mode !== 'meeting_point') return ''
@@ -318,7 +319,7 @@ function MeetingPickupCard({ tour, embedded = false }: { tour: typeof FALLBACK_T
   const pickupAreas = Array.isArray(tour.pickupAreas) ? tour.pickupAreas.filter((a) => a && (a.name || a.address)) : []
   const pickupLocations = Array.isArray(tour.pickupLocations) ? tour.pickupLocations.filter((l) => l && (l.name || l.address)) : []
 
-  const hasMeetingPoint = mode === 'meeting_point' && !!(tour.meetingPoint || tour.meetingPointAddress || tour.meetingPointPicture || arrivalLabel() || tour.meetingPointDescription)
+  const hasMeetingPoint = mode === 'meeting_point' && !!(tour.meetingPoint || tour.meetingPointAddress || arrivalLabel() || tour.meetingPointDescription)
   const hasPickup = mode === 'pickup' && (pickupAreas.length > 0 || pickupLocations.length > 0 || !!tour.pickupDescription || !!tour.referenceStartTime)
 
   // No meeting point / pickup configured at all — fall back to the neutral note.
@@ -336,52 +337,6 @@ function MeetingPickupCard({ tour, embedded = false }: { tour: typeof FALLBACK_T
   return (
     <div className={embedded ? 'px-3 pt-3 pb-3' : 'overflow-hidden rounded-xl border border-slate-200/40 bg-slate-50/30'}>
       <div className={`space-y-3 text-sm text-slate-600 ${embedded ? '' : 'px-4 py-3'}`}>
-        {/* Meeting point photo — rendered whenever present, independent of the
-            mode gate, so it can never be dropped by a mode mismatch. Tapping it
-            opens the full-size image. */}
-        {tour.meetingPointPicture && (
-          <>
-            <button
-              type="button"
-              onClick={() => setShowPhoto(true)}
-              className="block w-full cursor-zoom-in overflow-hidden rounded-lg border border-slate-200/60"
-              aria-label="View meeting point photo"
-            >
-              <OptimizedImage
-                src={tour.meetingPointPicture}
-                alt="Meeting point"
-                width={800}
-                className="max-h-40 w-full object-cover"
-              />
-            </button>
-            <AnimatePresence>
-              {showPhoto && (
-                <motion.div
-                  className="fixed inset-0 z-[300] flex items-center justify-center bg-black/80 p-4"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  onClick={() => setShowPhoto(false)}
-                >
-                  <button
-                    type="button"
-                    onClick={() => setShowPhoto(false)}
-                    className="absolute right-4 top-4 grid size-10 place-items-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
-                    aria-label="Close photo"
-                  >
-                    <X size={20} />
-                  </button>
-                  <img
-                    src={tour.meetingPointPicture}
-                    alt="Meeting point"
-                    className="max-h-full max-w-full rounded-lg object-contain"
-                  />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </>
-        )}
-
         {mode === 'meeting_point' && hasMeetingPoint && (
           <div className="space-y-2">
             {tour.meetingPoint && (
@@ -410,37 +365,11 @@ function MeetingPickupCard({ tour, embedded = false }: { tour: typeof FALLBACK_T
 
         {mode === 'pickup' && hasPickup && (
           <div className="space-y-2">
-            {pickupAreas.length > 0 && (
-              <div>
-                <p className="mb-1 flex items-center gap-2 font-semibold text-slate-700">
-                  <Car className="size-3.5 text-emerald-600" />
-                  Pickup areas
-                </p>
-                <ul className="space-y-1.5 pl-[22px]">
-                  {pickupAreas.map((a, i) => (
-                    <li key={i}>
-                      <p className="font-medium text-slate-700">{a.name || a.address}</p>
-                      {a.address && a.address !== a.name && <p className="text-slate-400">{a.address}</p>}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            {pickupLocations.length > 0 && (
-              <div>
-                <p className="mb-1 flex items-center gap-2 font-semibold text-slate-700">
-                  <Car className="size-3.5 text-emerald-600" />
-                  Pickup locations
-                </p>
-                <ul className="space-y-1.5 pl-[22px]">
-                  {pickupLocations.map((l, i) => (
-                    <li key={i}>
-                      <p className="font-medium text-slate-700">{l.name || l.address}</p>
-                      {l.address && l.address !== l.name && <p className="text-slate-400">{l.address}</p>}
-                    </li>
-                  ))}
-                </ul>
-              </div>
+            {pickupAreas.length + pickupLocations.length > 0 && (
+              <p className="flex items-center gap-2 font-semibold text-slate-700">
+                <Car className="size-3.5 text-emerald-600" />
+                Pickup locations ({pickupAreas.length + pickupLocations.length})
+              </p>
             )}
             {tour.pickupDescription && (
               <div className="space-y-1">
@@ -463,6 +392,59 @@ function MeetingPickupCard({ tour, embedded = false }: { tour: typeof FALLBACK_T
           </div>
         )}
       </div>
+    </div>
+  )
+}
+
+/* ─── Meeting point / pickup photo ─── */
+
+// Meeting-point / pickup photo uploaded by the supplier (Step 13). Rendered
+// separately from the meeting/pickup info so it can sit after the map. Tapping
+// it opens the full-size image. Renders nothing when no photo is configured.
+function MeetingPointPhoto({ src }: { src?: string }) {
+  const [showPhoto, setShowPhoto] = useState(false)
+  if (!src) return null
+
+  return (
+    <div className="space-y-2">
+      <button
+        type="button"
+        onClick={() => setShowPhoto(true)}
+        className="block w-full cursor-zoom-in overflow-hidden rounded-lg border border-slate-200/60"
+        aria-label="View meeting point photo"
+      >
+        <OptimizedImage
+          src={src}
+          alt="Meeting point"
+          width={800}
+          className="max-h-40 w-full object-cover"
+        />
+      </button>
+      <AnimatePresence>
+        {showPhoto && (
+          <motion.div
+            className="fixed inset-0 z-[300] flex items-center justify-center bg-black/80 p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowPhoto(false)}
+          >
+            <button
+              type="button"
+              onClick={() => setShowPhoto(false)}
+              className="absolute right-4 top-4 grid size-10 place-items-center rounded-full bg-white/10 text-white transition hover:bg-white/20"
+              aria-label="Close photo"
+            >
+              <X size={20} />
+            </button>
+            <img
+              src={src}
+              alt="Meeting point"
+              className="max-h-full max-w-full rounded-lg object-contain"
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
@@ -782,7 +764,7 @@ function LocationMap({
   if (!hasMapData && !fallbackQuery) return null
 
   return (
-    <div className="border-t border-slate-100/60 p-3">
+    <div className="p-3">
       <div className="relative h-[220px] w-full overflow-hidden rounded-lg border border-slate-200/40">
         {hasMapData && !mapFailed ? (
           <>
@@ -839,7 +821,7 @@ function LocationMap({
   )
 }
 
-/* ─── Step 1 – Contact Details ─── */
+/* ─── Step 1 – Lead Traveler Details ─── */
 
 function ContactDetailsStep({
   data, onChange, onNext, valid, step, onNavigate, hasError, disabled,
@@ -869,13 +851,13 @@ function ContactDetailsStep({
         <button
           type="button"
           onClick={() => onNavigate(1)}
-          aria-label="Go to Contact Details"
+          aria-label="Go to Lead Traveler Details"
           className="flex w-full items-start gap-4 text-left transition-opacity hover:opacity-80"
         >
           <StepBadge number={1} active={isActive} completed={isCompleted} error={hasError} />
           <div className="pt-0.5">
-            <h2 className="text-lg font-bold text-slate-900 tracking-tight">Contact Details</h2>
-            <p className="mt-0.5 text-sm text-slate-400">Confirmation will be sent here</p>
+            <h2 className="text-lg font-bold text-slate-900 tracking-tight">Lead Traveler Details</h2>
+            <p className="mt-0.5 text-sm text-slate-400">The lead traveler&apos;s name and contact details</p>
           </div>
         </button>
       </div>
@@ -1002,14 +984,11 @@ function ContactDetailsStep({
 /* ─── Step 2 – Activity Details ─── */
 
 function ActivityDetailsStep({
-  data, onChange, tour, onNext, valid, step, onNavigate, hasError, disabled,
+  tour, onNext, step, onNavigate, hasError, disabled,
   contact, onContactChange, showPickupLocation, locationValid,
 }: {
-  data: { leadFirstName: string; leadLastName: string; leadCountryCode: string; leadPhone: string }
-  onChange: (key: string, value: string) => void
   tour: typeof FALLBACK_TOUR
   onNext: () => void
-  valid: { leadFirstName: boolean; leadLastName: boolean; leadPhone: boolean; all: boolean }
   step: number
   onNavigate: (n: number) => void
   hasError: boolean
@@ -1023,11 +1002,6 @@ function ActivityDetailsStep({
   const isCompleted = step > 2
   const [touched, setTouched] = useState<Record<string, boolean>>({})
   const handleBlur = (key: string) => setTouched((prev) => ({ ...prev, [key]: true }))
-
-  const error = (key: string, field: string) =>
-    touched[key] && !valid[key as keyof typeof valid]
-      ? `Please enter the ${field.toLowerCase()}`
-      : undefined
 
   // Zone-aware pickup feedback — mirrors the backend's geoUtils verdict.
   const pickupAreasList = useMemo(
@@ -1075,25 +1049,29 @@ function ActivityDetailsStep({
     }
   }
 
-  const tourSummaryCard = (
+  const meetingSummaryCard = (
     <div className="overflow-hidden rounded-xl border border-slate-200/40 bg-slate-50/30">
       {/* Meeting & pickup — embedded so the summary card carries the start/end
           details; the timing/hours are already shown in the date row above. */}
       <MeetingPickupCard tour={tour} embedded />
-
-      {/* Location map — shows the meeting point / pickup locations on arrival,
-          plus the traveller's picked pickup location when one is selected. */}
-      <LocationMap
-        tour={tour}
-        userMarker={{ lat: contact.pickupLat, lng: contact.pickupLng }}
-        onUserPointChange={(lat, lng) => {
-          onContactChange('pickupLat', lat)
-          onContactChange('pickupLng', lng)
-          onContactChange('pickupArea', '')
-        }}
-      />
     </div>
   )
+
+  // Location map — shows the supplier's pickup zones / meeting point, plus the
+  // traveller's picked pickup location when one is selected.
+  const locationMap = (
+    <LocationMap
+      tour={tour}
+      userMarker={{ lat: contact.pickupLat, lng: contact.pickupLng }}
+      onUserPointChange={(lat, lng) => {
+        onContactChange('pickupLat', lat)
+        onContactChange('pickupLng', lng)
+        onContactChange('pickupArea', '')
+      }}
+    />
+  )
+
+  const pickupPhoto = <MeetingPointPhoto src={tour.meetingPointPicture} />
 
   return (
     <StepCard id="booking-step-2">
@@ -1132,7 +1110,7 @@ function ActivityDetailsStep({
             exit="exit"
             className="space-y-5 p-7 sm:p-9"
           >
-            {tourSummaryCard}
+            {meetingSummaryCard}
 
             {showPickupLocation && (
               <div className="space-y-4">
@@ -1276,53 +1254,8 @@ function ActivityDetailsStep({
               </div>
             )}
 
-            <div>
-              <p className="mb-3 text-sm font-semibold text-slate-800">Lead Traveler</p>
-              <div className="grid gap-5 sm:grid-cols-2">
-                <div>
-                  <FieldLabel required tooltip="The main participant for this tour. This name will be used on the booking confirmation.">First Name</FieldLabel>
-                  <TextInput
-                    value={data.leadFirstName}
-                    onChange={(e) => onChange('leadFirstName', e.target.value)}
-                    onBlur={() => handleBlur('leadFirstName')}
-                    placeholder="e.g. Richard"
-                    valid={valid.leadFirstName}
-                    error={error('leadFirstName', 'lead traveler first name')}
-                  />
-                </div>
-                <div>
-                  <FieldLabel required tooltip="The main participant's surname or family name.">Last Name</FieldLabel>
-                  <TextInput
-                    value={data.leadLastName}
-                    onChange={(e) => onChange('leadLastName', e.target.value)}
-                    onBlur={() => handleBlur('leadLastName')}
-                    placeholder="e.g. Boochie"
-                    valid={valid.leadLastName}
-                    error={error('leadLastName', 'lead traveler last name')}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <FieldLabel required tooltip="The tour operator may contact the lead traveler about pickup or last-minute changes.">Lead Traveler Phone</FieldLabel>
-              <div className="grid gap-3 sm:grid-cols-[1.2fr_2fr]">
-                <SelectInput value={data.leadCountryCode} onChange={(e) => onChange('leadCountryCode', e.target.value)} options={COUNTRY_CODES} />
-                <TextInput
-                  type="tel"
-                  value={data.leadPhone}
-                  onChange={(e) => onChange('leadPhone', e.target.value.replace(/\D/g, ''))}
-                  onBlur={() => handleBlur('leadPhone')}
-                  placeholder="e.g. 024 123 4567"
-                  valid={valid.leadPhone}
-                  error={
-                    touched.leadPhone && !valid.leadPhone
-                      ? 'Enter a valid phone number for the selected country, e.g. 024 123 4567'
-                      : undefined
-                  }
-                />
-              </div>
-            </div>
+            {locationMap}
+            {pickupPhoto}
 
             <div className="flex items-center gap-2.5 rounded-xl border border-slate-200/40 bg-slate-50/30 px-4 py-3">
               <Globe className="size-4 text-slate-400" />
@@ -1330,7 +1263,7 @@ function ActivityDetailsStep({
               <span className="text-sm text-slate-400">{tour.language}</span>
             </div>
 
-            {!valid.all && (Object.keys(touched).length > 0 || hasError) && (
+            {!locationValid && (Object.keys(touched).length > 0 || hasError) && (
               <motion.p
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -1343,10 +1276,10 @@ function ActivityDetailsStep({
             <div className="flex justify-end pt-2">
               <motion.button
                 onClick={onNext}
-                disabled={!valid.all || disabled}
+                disabled={!locationValid || disabled}
                 whileTap={{ scale: 0.97 }}
                 className={`inline-flex items-center gap-2 rounded-full px-8 py-3 text-sm font-semibold shadow-sm transition ${
-                  valid.all && !disabled
+                  locationValid && !disabled
                     ? 'bg-emerald-600 text-white hover:brightness-110 cursor-pointer'
                     : 'cursor-not-allowed bg-slate-200 text-white'
                 }`}
@@ -1365,7 +1298,9 @@ function ActivityDetailsStep({
             animate="visible"
             className="space-y-3 p-7 sm:p-9"
           >
-            {tourSummaryCard}
+            {meetingSummaryCard}
+            {locationMap}
+            {pickupPhoto}
             {hasError && (
               <p className="pt-1 text-xs font-semibold text-rose-500">There are errors in this step — please review.</p>
             )}
@@ -1618,12 +1553,16 @@ function BookingTourCard({ tour, onChangeClick }: { tour: typeof FALLBACK_TOUR; 
         <div className="flex items-center gap-2 text-xs text-slate-500">
           <Clock className="size-3.5 shrink-0 text-emerald-600" />
           <span className="font-semibold text-slate-700">
-            {tour.scheduleType === 'fixedTimeSlot' ? 'Time slots' : 'Opening hours'}
+            {tour.scheduleType === 'fixedTimeSlot' && tour.selectedTime
+              ? 'Time'
+              : tour.scheduleType === 'fixedTimeSlot' ? 'Time slots' : 'Opening hours'}
           </span>
           <span>
-            {tour.scheduleType === 'fixedTimeSlot'
-              ? (formatTimeSlotList(tour.timeSlots) || scheduleTimeLabel(tour))
-              : scheduleTimeLabel(tour)}
+            {tour.scheduleType === 'fixedTimeSlot' && tour.selectedTime
+              ? formatTime12h(tour.selectedTime)
+              : tour.scheduleType === 'fixedTimeSlot'
+                ? (formatTimeSlotList(tour.timeSlots) || scheduleTimeLabel(tour))
+                : scheduleTimeLabel(tour)}
           </span>
         </div>
         {tour.duration && (
@@ -1650,6 +1589,15 @@ function BookingTourCard({ tour, onChangeClick }: { tour: typeof FALLBACK_TOUR; 
             <p className="text-xs leading-relaxed text-slate-500">
               <span className="font-semibold text-slate-700">Language</span>
               <span className="text-slate-400"> · {tour.language}</span>
+            </p>
+          </div>
+        )}
+        {tour.ticketValidity && (
+          <div className="flex items-center gap-2 text-xs text-slate-500">
+            <Ticket className="size-3.5 shrink-0 text-emerald-600" />
+            <p className="text-xs leading-relaxed text-slate-500">
+              <span className="font-semibold text-slate-700">Ticket validity</span>
+              <span className="text-slate-400"> · {tour.ticketValidity}</span>
             </p>
           </div>
         )}
@@ -1700,7 +1648,7 @@ function BookingTourCard({ tour, onChangeClick }: { tour: typeof FALLBACK_TOUR; 
 
 function BookingSidebar({
   tour, promoCode, setPromoCode, onApplyPromo, discount, finalPrice,
-  contact, activity, step,
+  contact, step,
 }: {
   tour: typeof FALLBACK_TOUR
   promoCode: string
@@ -1709,7 +1657,6 @@ function BookingSidebar({
   discount: number
   finalPrice: number
   contact: { firstName: string; lastName: string; email: string; countryCode: string; phone: string; location: string; pickupLater: boolean; pickupArea: string }
-  activity: { leadFirstName: string; leadLastName: string; leadCountryCode: string; leadPhone: string }
   step: number
 }) {
   const showPricing = step === 3
@@ -1723,7 +1670,7 @@ function BookingSidebar({
           transition={{ type: 'spring' as const, stiffness: 100, damping: 20 }}
           className="rounded-[1.75rem] border border-slate-200/40 bg-white p-5 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)]"
         >
-          <p className="text-xs font-semibold text-slate-400 mb-3 uppercase tracking-wide">Contact Details</p>
+          <p className="text-xs font-semibold text-slate-400 mb-3 uppercase tracking-wide">Lead Traveler Details</p>
           <div className="flex items-start gap-2">
             <Check className="mt-0.5 size-4 shrink-0 text-emerald-500" />
             <div className="text-sm text-slate-600">
@@ -1734,26 +1681,6 @@ function BookingSidebar({
               {contact.pickupArea && !contact.location && <p className="text-xs text-slate-400">Pickup zone: {contact.pickupArea}</p>}
               {contact.pickupLater && !contact.location && (
                 <p className="text-xs text-slate-400">Pickup location: to be chosen later</p>
-              )}
-            </div>
-          </div>
-        </motion.div>
-      )}
-
-      {step > 2 && activity.leadFirstName && (
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ type: 'spring' as const, stiffness: 100, damping: 20 }}
-          className="rounded-[1.75rem] border border-slate-200/40 bg-white p-5 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)]"
-        >
-          <p className="text-xs font-semibold text-slate-400 mb-3 uppercase tracking-wide">Lead Traveler</p>
-          <div className="flex items-start gap-2">
-            <Check className="mt-0.5 size-4 shrink-0 text-emerald-500" />
-            <div className="text-sm text-slate-600">
-              <p className="font-medium text-slate-800">{activity.leadFirstName} {activity.leadLastName}</p>
-              {isValidPhoneInput(activity.leadCountryCode, activity.leadPhone) && (
-                <p className="text-xs text-slate-400">{buildE164Phone(activity.leadCountryCode, activity.leadPhone)}</p>
               )}
             </div>
           </div>
@@ -1832,7 +1759,6 @@ function BookingSidebar({
 const STORAGE_KEY = 'booking_draft'
 
 const DEFAULT_CONTACT = { firstName: '', lastName: '', email: '', countryCode: '+233', phone: '', location: '', pickupLater: false, pickupLat: null as number | null, pickupLng: null as number | null, pickupArea: '' }
-const DEFAULT_ACTIVITY = { leadFirstName: '', leadLastName: '', leadCountryCode: '+233', leadPhone: '' }
 const DEFAULT_PAYMENT = { paymentTiming: 'now', paymentMethod: 'card' }
 
 interface EditableTourState {
@@ -1852,7 +1778,6 @@ interface BookingDraftData {
   tour?: unknown
   tourId?: string
   contact?: Partial<typeof DEFAULT_CONTACT>
-  activity?: Partial<typeof DEFAULT_ACTIVITY>
   editableTour?: EditableTourState
   step?: number
   payment?: Partial<typeof DEFAULT_PAYMENT>
@@ -1920,9 +1845,6 @@ export default function BookingPage() {
   const [contact, setContact] = useState(() =>
     canRestore && draft?.contact ? { ...DEFAULT_CONTACT, ...draft.contact } : DEFAULT_CONTACT,
   )
-  const [activity, setActivity] = useState(() =>
-    canRestore && draft?.activity ? { ...DEFAULT_ACTIVITY, ...draft.activity } : DEFAULT_ACTIVITY,
-  )
 
   const [isChangeModalOpen, setIsChangeModalOpen] = useState(false)
   const [editableTour, setEditableTour] = useState<EditableTourState>(() =>
@@ -1958,13 +1880,12 @@ export default function BookingPage() {
         tour,
         tourId: tour.id || tour.slug,
         contact,
-        activity,
         editableTour,
         step,
         payment,
       }))
     } catch { /* ignore */ }
-  }, [tour, contact, activity, editableTour, step, payment])
+  }, [tour, contact, editableTour, step, payment])
 
   const clearDraft = () => {
     try { localStorage.removeItem(STORAGE_KEY) } catch { /* ignore */ }
@@ -2012,28 +1933,16 @@ export default function BookingPage() {
   }), [contact])
 
   // The pickup location lives in the Meeting and Pickup Info step, so it's
-  // validated here rather than in Contact Details.
-  const activityValid = useMemo(() => ({
-    leadFirstName: activity.leadFirstName.trim().length > 1,
-    leadLastName: activity.leadLastName.trim().length > 1,
-    leadPhone: isValidPhoneInput(activity.leadCountryCode, activity.leadPhone),
-    // A pickup location isn't required when the traveller opts to choose it later.
-    location: pickupLocationValid,
-    all: activity.leadFirstName.trim().length > 1 &&
-      activity.leadLastName.trim().length > 1 &&
-      isValidPhoneInput(activity.leadCountryCode, activity.leadPhone) &&
-      pickupLocationValid,
-  }), [activity, pickupLocationValid])
+  // validated here rather than in the Lead Traveler Details step. A pickup
+  // location isn't required when the traveller opts to choose it later, or for
+  // tours without pickup (meeting-point / self-guided).
+  const locationValid = pickupLocationValid
 
   const trackActivity = () => { lastActivityAt.current = Date.now() }
 
   const handleContactChange = (key: string, value: string | boolean | number | null) => {
     trackActivity()
     setContact((prev) => ({ ...prev, [key]: value }))
-  }
-  const handleActivityChange = (key: string, value: string) => {
-    trackActivity()
-    setActivity((prev) => ({ ...prev, [key]: value }))
   }
   const handlePaymentChange = (key: string, value: string) => {
     trackActivity()
@@ -2059,7 +1968,7 @@ export default function BookingPage() {
         scrollToStep(1)
         return
       }
-      if (target > 2 && !activityValid.all) {
+      if (target > 2 && !locationValid) {
         setAttempted((p) => ({ ...p, 2: true }))
         setStep(2)
         scrollToStep(2)
@@ -2072,7 +1981,7 @@ export default function BookingPage() {
   }
 
   const contactHasError = !contactValid.all && attempted[1] === true
-  const activityHasError = !activityValid.all && attempted[2] === true
+  const meetingHasError = !locationValid && attempted[2] === true
 
   const handleExpire = () => {
     setIsExpired(true)
@@ -2159,15 +2068,14 @@ export default function BookingPage() {
 
     setIsBooking(true)
     try {
-      // Lead traveler's phone (Activity Details) is the primary booking
-      // contact; fall back to the Step-1 contact phone when left blank.
-      const phoneNumber = buildE164Phone(activity.leadCountryCode, activity.leadPhone)
-        ?? buildE164Phone(contact.countryCode, contact.phone)
+      // Lead traveler's phone (Lead Traveler Details step) is the booking
+      // contact for pickup and last-minute updates.
+      const phoneNumber = buildE164Phone(contact.countryCode, contact.phone)
       if (!phoneNumber) {
         toast.error('Please enter a valid international phone number, e.g. +233 24 123 4567.')
         return
       }
-      const fullName = `${activity.leadFirstName} ${activity.leadLastName}`.trim() || `${contact.firstName} ${contact.lastName}`
+      const fullName = `${contact.firstName} ${contact.lastName}`.trim()
       const detailsName = fullName || undefined
       const details = detailsName ? [{ name: detailsName, age: 30, ageGroup: 'adult' }] : []
 
@@ -2233,7 +2141,7 @@ export default function BookingPage() {
     } finally {
       setIsBooking(false)
     }
-  }, [createBooking, contact, activity, editableTour, tour, showPickupLocation, zonesDrawn, isBooking, isActive, pollBooking, user])
+  }, [createBooking, contact, editableTour, tour, showPickupLocation, zonesDrawn, isBooking, isActive, pollBooking, user])
 
   const handleApplyPromo = useCallback(() => {
     const code = promoCode.trim().toUpperCase()
@@ -2296,19 +2204,16 @@ export default function BookingPage() {
                   disabled={isExpired}
                 />
                 <ActivityDetailsStep
-                  data={activity}
-                  onChange={handleActivityChange}
                   tour={activeTour}
                   onNext={() => goToStep(3)}
-                  valid={activityValid}
                   step={step}
                   onNavigate={goToStep}
-                  hasError={activityHasError}
+                  hasError={meetingHasError}
                   disabled={isExpired}
                   contact={{ location: contact.location, pickupLater: contact.pickupLater, pickupLat: contact.pickupLat, pickupLng: contact.pickupLng, pickupArea: contact.pickupArea }}
                   onContactChange={handleContactChange}
                   showPickupLocation={showPickupLocation}
-                  locationValid={activityValid.location}
+                  locationValid={locationValid}
                 />
                 <PaymentDetailsStep
                   data={payment}
@@ -2338,7 +2243,6 @@ export default function BookingPage() {
                     discount={discount}
                     finalPrice={finalPrice}
                     contact={{ firstName: contact.firstName, lastName: contact.lastName, email: contact.email, countryCode: contact.countryCode, phone: contact.phone, location: contact.location, pickupLater: contact.pickupLater, pickupArea: contact.pickupArea }}
-                    activity={activity}
                     step={step}
                   />
                 </div>

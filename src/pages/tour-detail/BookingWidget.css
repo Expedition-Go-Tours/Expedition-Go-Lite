@@ -465,6 +465,16 @@
   line-height: 1.4;
 }
 
+/* Change-booking modal scrollable body: hide the scrollbar while keeping it scrollable */
+.change-booking-body {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.change-booking-body::-webkit-scrollbar {
+  display: none;
+}
+
 /* Selected time / opening hours shown on its own line under the date on the date field */
 .booking-selected-time {
   font-size: 12.5px;

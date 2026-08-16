@@ -65,12 +65,12 @@ function TourDetailSkeleton() {
           {/* Image gallery skeleton */}
           <div className="tour-detail-main">
             <div className="tour-detail-gallery-skeleton">
-              <div className="skeleton-thumbs">
-                {[0, 1, 2, 3].map((i) => (
-                  <div key={i} className="skeleton-block flex-1 rounded-lg" />
+              <div className="skeleton-block skeleton-main-image" />
+              <div className="skeleton-filmstrip">
+                {[0, 1, 2, 3, 4].map((i) => (
+                  <div key={i} className="skeleton-block skeleton-filmstrip-tile" />
                 ))}
               </div>
-              <div className="skeleton-block skeleton-main-image" />
             </div>
           </div>
 

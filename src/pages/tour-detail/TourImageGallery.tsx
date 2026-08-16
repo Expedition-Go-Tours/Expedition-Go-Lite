@@ -1,5 +1,4 @@
 import { useState, useRef, useCallback } from 'react'
-import { useTranslation } from 'react-i18next'
 import { ChevronLeft, ChevronRight, Image, Upload, Heart, ArrowLeft } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import PhotoViewerModal from './PhotoViewerModal'
@@ -26,7 +25,6 @@ export default function TourImageGallery({
   onShare,
   showStickyHeader,
 }: TourImageGalleryProps) {
-  const { t } = useTranslation()
   const navigate = useNavigate()
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [isGalleryOpen, setIsGalleryOpen] = useState(false)
@@ -70,26 +68,6 @@ export default function TourImageGallery({
   return (
     <>
       <div className="tour-image-gallery-new">
-        {/* Desktop thumbnail strip */}
-        <div className="tour-gallery-thumbnails">
-          {thumbnailImages.map((img, idx) => (
-            <button
-              key={idx}
-              type="button"
-              onClick={() => setCurrentImageIndex(idx)}
-              className={`tour-gallery-thumb ${idx === currentImageIndex ? 'active' : ''}`}
-              aria-label={`Show image ${idx + 1}`}
-            >
-              <OptimizedImage
-                src={img || fallbackImage}
-                alt=""
-                onError={handleImageError}
-                width={200}
-              />
-            </button>
-          ))}
-        </div>
-
         {/* Main image */}
         <div
           className="tour-gallery-main-image"
@@ -166,16 +144,6 @@ export default function TourImageGallery({
             <ChevronRight size={24} />
           </button>
 
-          {/* View all button */}
-          <button
-            type="button"
-            onClick={() => setIsGalleryOpen(true)}
-            className="tour-gallery-view-all"
-          >
-            <Image size={14} />
-            {t('sections.viewAll')}
-          </button>
-
           {/* Mobile dot pagination */}
           <div className="tour-gallery-dots">
             {images.map((_, idx) => (
@@ -188,6 +156,46 @@ export default function TourImageGallery({
               />
             ))}
           </div>
+        </div>
+
+        {/* Thumbnail filmstrip */}
+        <div className="tour-gallery-thumbnails">
+          {thumbnailImages.map((img, idx) => (
+            <button
+              key={idx}
+              type="button"
+              onClick={() => setCurrentImageIndex(idx)}
+              className={`tour-gallery-thumb ${idx === currentImageIndex ? 'active' : ''}`}
+              aria-label={`Show image ${idx + 1}`}
+            >
+              <OptimizedImage
+                src={img || fallbackImage}
+                alt=""
+                onError={handleImageError}
+                width={200}
+              />
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => {
+              setCurrentImageIndex(Math.min(4, images.length - 1))
+              setIsGalleryOpen(true)
+            }}
+            className="tour-gallery-thumb tour-gallery-count-tile"
+            aria-label={`View all ${images.length} photos`}
+          >
+            <OptimizedImage
+              src={images[4] || images[0] || fallbackImage}
+              alt=""
+              onError={handleImageError}
+              width={200}
+            />
+            <span className="tour-gallery-count-overlay">
+              <Image size={14} />
+              <span>{images.length}</span>
+            </span>
+          </button>
         </div>
       </div>
 

@@ -1,23 +1,32 @@
 import { useState, useMemo, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
-import { X, CalendarDays, Users, ShieldCheck, CreditCard, Info, Clock } from 'lucide-react'
+import { X, CalendarDays, Users, ShieldCheck, CreditCard, Info, Clock, Minus, Plus } from 'lucide-react'
 import { CalendarPicker } from '../ui/apple-calendar-picker'
 import { useTourAvailability, useCalculateCheckout } from '../../hooks/useExpeditionBookings'
-import { matchGroupBand } from '../../lib/groupPricing'
-import { resolveTierPrice } from '../../lib/tierPricing'
-import { categoryPayloadKey } from '../../lib/travelerBuckets'
+import { useTravelerSelection } from '../../hooks/useTravelerSelection'
+import type { DayTimeSlot } from '../../lib/tourAvailability'
+import { openingHoursForDay } from '../../lib/tourAvailability'
+import { categoryKey, categoryPayloadKey } from '../../lib/travelerBuckets'
+import '../../pages/tour-detail/BookingWidget.css'
+
+interface ChangeBookingTour {
+  id?: string
+  slug?: string
+  title: string
+  price: number
+  time?: string
+  scheduleType?: 'fixedTimeSlot' | 'operatingHours'
+  timeSlots?: { startTime: string; endTime?: string }[]
+  pricingModel?: 'perPerson' | 'perGroup'
+  travelerPricing?: { label: string; price: number; minAge?: number | null; maxAge?: number | null; tiers?: { from: number; to: number; pricePerPerson: number }[] }[]
+  groupSizePricing?: { from: number; to: number; price: number }[]
+  minParticipants?: number | null
+  maxParticipants?: number | null
+}
 
 interface ChangeBookingModalProps {
-  tour: {
-    id?: string
-    slug?: string
-    title: string
-    price: number
-    time?: string
-    pricingModel?: 'perPerson' | 'perGroup'
-    travelerPricing?: { label: string; price: number; minAge?: number | null; maxAge?: number | null; tiers?: { from: number; to: number; pricePerPerson: number }[] }[]
-    groupSizePricing?: { from: number; to: number; price: number }[]
-  }
+  tour: ChangeBookingTour
   isOpen: boolean
   onClose: () => void
   /** The traveller count already chosen for the booking, used to seed the stepper. */
@@ -25,6 +34,9 @@ interface ChangeBookingModalProps {
   /** The booking's original date (YYYY-MM-DD), so an unchanged selection prices
    *  the exact date the tour detail page quoted. */
   initialDate?: string
+  /** The booking's current time slot (HH:mm), preselected so an unchanged
+   *  selection keeps the same slot without re-picking it. */
+  initialTime?: string | null
   /** The current per-category breakdown (adults/children/infants), used to build
    *  the exact travellers payload for the authoritative checkout calculation. */
   travelersCount?: Record<string, number>
@@ -49,7 +61,8 @@ const currencySymbol = (currency?: string): string => {
   return '$'
 }
 
-export default function ChangeBookingModal({ tour, isOpen, onClose, onReserve, initialTravelers, initialDate, travelersCount }: ChangeBookingModalProps) {
+export default function ChangeBookingModal({ tour, isOpen, onClose, onReserve, initialTravelers, initialDate, initialTime, travelersCount }: ChangeBookingModalProps) {
+  const { t } = useTranslation()
   const [selectedDate, setSelectedDate] = useState(() => {
     if (initialDate) return initialDate
     const d = new Date()
@@ -57,8 +70,7 @@ export default function ChangeBookingModal({ tour, isOpen, onClose, onReserve, i
     return toDateKey(d)
   })
   const [showCalendar, setShowCalendar] = useState(false)
-  const [travelers, setTravelers] = useState(Math.max(1, initialTravelers ?? 1))
-  const [selectedTime, setSelectedTime] = useState<string | null>(null)
+  const [selectedTime, setSelectedTime] = useState<string | null>(initialTime || null)
 
   // Authoritative price for the selected date + traveller mix — the same
   // checkout calculation the tour detail page uses. Debounced so rapid
@@ -70,41 +82,45 @@ export default function ChangeBookingModal({ tour, isOpen, onClose, onReserve, i
   const [dateUnavailable, setDateUnavailable] = useState(false)
   const [priceNote, setPriceNote] = useState<string | null>(null)
 
-  // The travellers mix to price. When the stepper is unchanged from the
-  // original total, price the exact original breakdown so the total matches the
-  // tour detail page; otherwise adjust adults (keeping children/infants) the
-  // same way the confirm payload will be folded.
+  // Seed the traveler picker from the current booking's exact per-category mix
+  // (or its total headcount for per-group tours) so an unchanged selection
+  // keeps the same travelers.
   const origTotal = useMemo(
     () => (travelersCount ? Object.values(travelersCount).reduce((s, v) => s + (typeof v === 'number' ? v : 0), 0) : 0),
     [travelersCount]
   )
-  const pricingTravelers = useMemo(() => {
-    if (travelers === origTotal && travelersCount && Object.keys(travelersCount).length > 0) {
-      return travelersCount
+  const initialCounts = useMemo(() => {
+    const counts: Record<string, number> = {}
+    const pricing = tour.travelerPricing || []
+    const groups = pricing.length > 0 ? pricing : [{ label: 'Adult', price: tour.price || 0, minAge: null, maxAge: null }]
+    for (const g of groups) {
+      counts[categoryKey(g.label)] = travelersCount?.[categoryPayloadKey(g.label)] ?? 0
     }
-    return { ...(travelersCount || {}), adults: travelers }
-  }, [travelers, travelersCount, origTotal])
+    return counts
+  }, [tour.travelerPricing, tour.price, travelersCount])
 
-  // Client-side subtotal for the current payload — the same calculation the
-  // tour detail widget uses as its own fallback, so the change summary price
-  // matches the tour detail page even when the API can't be reached.
-  const clientSubtotal = useMemo(() => {
-    if (tour.pricingModel === 'perGroup') {
-      return matchGroupBand(travelers, tour.groupSizePricing || [])?.price ?? 0
-    }
-    const cats = tour.travelerPricing || []
-    const total = Object.values(pricingTravelers).reduce((s, v) => s + (typeof v === 'number' ? v : 0), 0)
-    if (cats.length === 0) return (tour.price || 0) * (pricingTravelers.adults ?? 0)
-    let sum = 0
-    for (const [key, count] of Object.entries(pricingTravelers)) {
-      if (typeof count !== 'number' || count <= 0) continue
-      // travelersCount keys are plural payload keys ("adults") while pricing
-      // category labels are singular ("Adult") — match via the payload key.
-      const cat = cats.find((c) => categoryPayloadKey(c.label) === key)
-      sum += (cat ? resolveTierPrice(cat, total, cat.price) : (tour.price || 0)) * count
-    }
-    return sum
-  }, [tour.pricingModel, tour.travelerPricing, tour.groupSizePricing, pricingTravelers, travelers, tour.price])
+  const {
+    isPerGroup,
+    groupSizeBands,
+    travelerGroups,
+    groupHeadcount,
+    totalTravelers,
+    travelersPayload,
+    groupMinHeadcount,
+    groupMaxHeadcount,
+    mixBounds,
+    mixIssues,
+    canAddCount,
+    increment,
+    decrement,
+    clientSubtotal,
+    anyTieredPricing,
+    formatPrice,
+    travelerOptions,
+  } = useTravelerSelection(tour, {
+    initialCounts,
+    initialHeadcount: origTotal || initialTravelers || 1,
+  })
 
   useEffect(() => {
     if (!isOpen || !tour.id) return
@@ -112,7 +128,7 @@ export default function ChangeBookingModal({ tour, isOpen, onClose, onReserve, i
     let cancelled = false
     const timer = setTimeout(() => {
       calculateCheckout
-        .mutateAsync({ tourId, selectedDate, travelers: pricingTravelers })
+        .mutateAsync({ tourId, selectedDate, travelers: travelersPayload })
         .then((res) => {
           if (cancelled) return
           if (!res.available) {
@@ -136,7 +152,7 @@ export default function ChangeBookingModal({ tour, isOpen, onClose, onReserve, i
       cancelled = true
       clearTimeout(timer)
     }
-  }, [isOpen, tour.id, selectedDate, pricingTravelers, calculateCheckout])
+  }, [isOpen, tour.id, selectedDate, travelersPayload, calculateCheckout])
 
   const [viewMonth, setViewMonth] = useState(() => {
     const now = new Date()
@@ -175,10 +191,26 @@ export default function ChangeBookingModal({ tour, isOpen, onClose, onReserve, i
     return availabilityCalendar.find((d) => d.date === selectedDate)
   }, [availabilityCalendar, selectedDate])
 
-  const daySlots = selectedDayInfo?.timeSlots?.length ? selectedDayInfo.timeSlots : []
+  // Time slots for the selected date come from the availability calendar; when
+  // the backend returns none (some tours only carry the schedule's static
+  // slots), fall back to the supplier's configured time slots so the traveller
+  // can still see and pick the actual start times.
+  const selectedDaySlots: DayTimeSlot[] = useMemo(() => {
+    if (selectedDayInfo?.timeSlots?.length) return selectedDayInfo.timeSlots
+    if (tour.scheduleType === 'fixedTimeSlot' && Array.isArray(tour.timeSlots) && tour.timeSlots.length > 0) {
+      return tour.timeSlots
+        .slice()
+        .sort((a, b) => a.startTime.localeCompare(b.startTime))
+        .map((s) => ({ time: s.startTime, capacity: 0, booked: 0, remaining: null }))
+    }
+    return []
+  }, [selectedDayInfo, tour.scheduleType, tour.timeSlots])
 
-  // Effective slot — default to the day's first open slot when none is chosen.
-  const effectiveTime = selectedTime ?? daySlots.find((s) => s.remaining != null && s.remaining > 0)?.time ?? null
+  // Opening-hours tours have no fixed slots, so surface the supplier's Step-14
+  // opening hours for the chosen day in the calendar footer instead.
+  const openingHoursLabel = tour.scheduleType === 'operatingHours'
+    ? openingHoursForDay(tour, new Date(`${selectedDate}T00:00:00`))
+    : ''
 
   const formattedDate = useMemo(() => {
     const d = new Date(`${selectedDate}T00:00:00`)
@@ -187,10 +219,16 @@ export default function ChangeBookingModal({ tour, isOpen, onClose, onReserve, i
 
   const total = pricing?.total ?? clientSubtotal
   const displayCurrency = pricing?.currency
-  const travelerMixLabel = Object.entries(pricingTravelers)
+  const travelerMixLabel = Object.entries(travelersPayload)
     .filter(([, v]) => typeof v === 'number' && v > 0)
     .map(([k, v]) => `${v} ${k.charAt(0).toUpperCase() + k.slice(1)}`)
     .join(', ')
+
+  // Same rules as the tour detail page: a fixed-slot day requires an explicit
+  // slot, and an invalid passenger mix can't be reserved.
+  const needTime = selectedDaySlots.length > 0 && !selectedTime
+  const mixBlocked = !isPerGroup && mixIssues.length > 0
+  const reserveBlocked = dateUnavailable || needTime || mixBlocked
 
   if (!isOpen) return null
 
@@ -215,7 +253,7 @@ export default function ChangeBookingModal({ tour, isOpen, onClose, onReserve, i
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700">
                 <Users className="size-3.5 text-slate-500" />
-                {travelers}
+                {totalTravelers}
               </span>
             </div>
           </div>
@@ -228,7 +266,7 @@ export default function ChangeBookingModal({ tour, isOpen, onClose, onReserve, i
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+        <div className="change-booking-body flex-1 overflow-y-auto px-6 py-5 space-y-5">
           <div className="space-y-3 rounded-xl bg-slate-50/70 p-4">
             <div className="flex items-start gap-2.5 text-xs text-slate-600">
               <ShieldCheck className="mt-0.5 size-4 shrink-0 text-[#179237]" />
@@ -257,7 +295,7 @@ export default function ChangeBookingModal({ tour, isOpen, onClose, onReserve, i
             <h3 className="text-sm font-bold text-slate-900">{tour.title}</h3>
             <p className="mt-1 text-xs text-slate-500">Pickup included</p>
             <div className="mt-3 space-y-1">
-              <p className="text-xs text-slate-600">{travelerMixLabel || `${travelers} ${travelers === 1 ? 'Adult' : 'Adults'}`}</p>
+              <p className="text-xs text-slate-600">{travelerMixLabel || `${totalTravelers} ${totalTravelers === 1 ? 'Adult' : 'Adults'}`}</p>
               <p className="text-sm font-bold text-slate-900">
                 Total {currencySymbol(displayCurrency)}{total.toFixed(2)}
               </p>
@@ -288,7 +326,6 @@ export default function ChangeBookingModal({ tour, isOpen, onClose, onReserve, i
                     onDateSelect={(date) => {
                       setSelectedDate(toDateKey(date))
                       setSelectedTime(null)
-                      setShowCalendar(false)
                     }}
                     selectedDate={selectedDate ? new Date(`${selectedDate}T00:00:00`) : null}
                     getAvailability={(date) => {
@@ -306,65 +343,173 @@ export default function ChangeBookingModal({ tour, isOpen, onClose, onReserve, i
                     }}
                     onMonthChange={(year, month) => setViewMonth({ year, month })}
                     requireConfirmation
+                    getKeepOpenOnSelect={(date) => {
+                      const key = toDateKey(date)
+                      const info = availabilityCalendar?.find((d) => d.date === key)
+                      const hasSlots = !!info?.timeSlots?.length
+                        || (tour.scheduleType === 'fixedTimeSlot' && !!tour.timeSlots?.length)
+                      const hasHours = tour.scheduleType === 'operatingHours' && openingHoursForDay(tour, date) !== ''
+                      return hasSlots || hasHours
+                    }}
+                    footer={
+                      selectedDate && (
+                        selectedDaySlots.length > 0 ? (
+                          <div className="booking-calendar-slots">
+                            <div className="booking-label booking-calendar-footer-label">
+                              <Clock size={15} />
+                              {t('booking.selectTime', 'Select time')}
+                            </div>
+                            <div className="booking-slot-grid booking-slot-grid-compact">
+                              {selectedDaySlots.map((slot) => {
+                                const slotFull = slot.remaining != null && slot.remaining <= 0
+                                const isSelectedSlot = selectedTime === slot.time
+                                return (
+                                  <button
+                                    key={slot.time}
+                                    type="button"
+                                    disabled={slotFull}
+                                    onClick={() => {
+                                      setSelectedTime(slot.time)
+                                      setShowCalendar(false)
+                                    }}
+                                    className={`booking-slot-chip${isSelectedSlot ? ' booking-slot-chip-active' : ''}`}
+                                  >
+                                    <span className="booking-slot-time">{formatSlotTime(slot.time)}</span>
+                                    {slot.remaining != null && (
+                                      <span className="booking-slot-cap">
+                                        {slotFull
+                                          ? t('booking.soldOut', 'Sold out')
+                                          : selectedDayInfo?.capacityUnit === 'groups'
+                                            ? `${Math.max(0, slot.groupsRemaining ?? 0)} ${t('booking.groupSlots', 'group slots')}`
+                                            : `${Math.max(0, slot.remaining)} ${t('booking.spotsLeft', 'spots left')}`}
+                                      </span>
+                                    )}
+                                  </button>
+                                )
+                              })}
+                            </div>
+                            {selectedDayInfo?.capacityUnit === 'groups' && selectedDayInfo.maxGroupSize != null && (
+                              <p className="booking-slot-note">
+                                {t('booking.groupBookingsNote', 'Group bookings · up to {{max}} travelers per group', { max: selectedDayInfo.maxGroupSize })}
+                              </p>
+                            )}
+                          </div>
+                        ) : openingHoursLabel ? (
+                          <div className="booking-calendar-hours">
+                            <div className="booking-label booking-calendar-footer-label">
+                              <Clock size={15} />
+                              {t('booking.openingHours', 'Opening hours')}
+                            </div>
+                            <p className="booking-slot-note">{openingHoursLabel}</p>
+                            <button
+                              type="button"
+                              className="booking-calendar-done-btn"
+                              onClick={() => setShowCalendar(false)}
+                            >
+                              {t('booking.done', 'Done')}
+                            </button>
+                          </div>
+                        ) : null
+                      )
+                    }
                   />
                 </div>
               )}
             </div>
           </div>
 
-          {daySlots.length > 0 && (
-            <div>
-              <label className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-slate-700">
-                <Clock className="size-4 text-slate-400" />
-                Select Time
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {daySlots.map((slot) => {
-                  const slotFull = slot.remaining != null && slot.remaining <= 0
-                  const isSelected = effectiveTime === slot.time
+          <div>
+            <label className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-slate-700">
+              <Users className="size-4 text-slate-400" />
+              {t('booking.travelers')}
+            </label>
+            <div className="rounded-xl border border-slate-200 bg-white p-3">
+              {isPerGroup && groupSizeBands.length > 0 && (
+                <div className="group-size-bands">
+                  {groupSizeBands
+                    .slice()
+                    .sort((a, b) => a.from - b.from)
+                    .map((band, i) => {
+                      const isActive = totalTravelers >= band.from && totalTravelers <= band.to
+                      const rangeLabel = band.from === band.to
+                        ? `${band.from}`
+                        : (Number.isFinite(band.to) ? `${band.from}-${band.to}` : `${band.from}+`)
+                      return (
+                        <div
+                          key={i}
+                          className={`group-size-band${isActive ? ' group-size-band-active' : ''}`}
+                        >
+                          <span>{t('booking.groupOf', 'Group of {{range}}', { range: rangeLabel })}</span>
+                          <span className="group-size-band-price">{formatPrice(band.price)}</span>
+                        </div>
+                      )
+                    })}
+                </div>
+              )}
+              {anyTieredPricing && (
+                <p className="booking-tier-hint">{t('booking.tierPricingHint', 'Per-person prices below depend on your total number of travelers.')}</p>
+              )}
+              <div>
+                {travelerOptions.map((opt) => {
+                  const category = travelerGroups.find((g) => categoryKey(g.label) === opt.key)
+                  const canDecrement = isPerGroup
+                    ? groupHeadcount > groupMinHeadcount
+                    : (opt.key === 'adult'
+                        ? opt.count > 1
+                        : opt.count > 0)
+                  const canIncrement = isPerGroup
+                    ? groupHeadcount < groupMaxHeadcount
+                    : (opt.key === 'adult' ? opt.count < 50 : opt.count < 9)
+                  const addBlocked = !isPerGroup && !canAddCount(opt.key)
                   return (
-                    <button
-                      key={slot.time}
-                      type="button"
-                      disabled={slotFull}
-                      onClick={() => setSelectedTime(slot.time)}
-                      className={`rounded-full border px-4 py-1.5 text-xs font-semibold transition ${
-                        isSelected
-                          ? 'border-[#179237] bg-[#f0fdf4] text-[#179237]'
-                          : slotFull
-                            ? 'border-slate-100 bg-slate-50 text-slate-300 cursor-not-allowed'
-                            : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300'
-                      }`}
-                    >
-                      {formatSlotTime(slot.time)}
-                      {slot.remaining != null && (
-                        <span className={`ml-1.5 ${isSelected ? 'text-[#179237]/70' : 'text-slate-400'}`}>
-                          {slotFull ? 'sold out' : `${Math.max(0, slot.remaining)} left`}
-                        </span>
-                      )}
-                    </button>
+                    <div key={opt.key} className="guest-type">
+                      <div className="guest-type-info">
+                        <span className="guest-type-label">{opt.label}</span>
+                        <span className="guest-type-desc">{opt.age}</span>
+                        {category?.notAllowed && (
+                          <span className="guest-type-desc">{t('booking.notAllowed', 'Not permitted on this tour')}</span>
+                        )}
+                      </div>
+                      <div className="guest-type-price">
+                        <span className="guest-type-unit">{opt.price}</span>
+                        {!isPerGroup && opt.count > 0 && (
+                          <span className="guest-type-line">
+                            {t('booking.perPersonShort', 'per person')}
+                          </span>
+                        )}
+                      </div>
+                      <div className="guest-type-controls">
+                        <button
+                          className="guest-btn"
+                          onClick={() => decrement(opt.key)}
+                          disabled={!canDecrement}
+                          aria-label={`Remove one ${opt.label}`}
+                        >
+                          <Minus size={16} />
+                        </button>
+                        <span className="guest-count">{opt.count}</span>
+                        <button
+                          className="guest-btn"
+                          onClick={() => increment(opt.key)}
+                          disabled={!canIncrement || addBlocked}
+                          aria-label={`Add one ${opt.label}`}
+                        >
+                          <Plus size={16} />
+                        </button>
+                      </div>
+                    </div>
                   )
                 })}
               </div>
-            </div>
-          )}
 
-          <div>
-            <label className="mb-2 block text-sm font-semibold text-slate-700">Travelers</label>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setTravelers((t) => Math.max(1, t - 1))}
-                className="grid size-10 place-items-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-slate-300"
-              >
-                &minus;
-              </button>
-              <span className="min-w-[2rem] text-center text-lg font-bold text-slate-900">{travelers}</span>
-              <button
-                onClick={() => setTravelers((t) => Math.min(20, t + 1))}
-                className="grid size-10 place-items-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-slate-300"
-              >
-                +
-              </button>
+              {mixBounds.min != null && mixBounds.max != null && (
+                <p className="booking-slot-note">
+                  {t('booking.bookableRange', 'Bookable by {{min}}–{{max}} travelers', { min: mixBounds.min, max: mixBounds.max })}
+                </p>
+              )}
+              {mixIssues.length > 0 && (
+                <p className="booking-slot-warning">{mixIssues[0].message}</p>
+              )}
             </div>
           </div>
         </div>
@@ -372,29 +517,34 @@ export default function ChangeBookingModal({ tour, isOpen, onClose, onReserve, i
         {/* Footer */}
         <div className="border-t border-slate-100 px-6 py-4">
           <button
-            disabled={dateUnavailable}
+            disabled={reserveBlocked}
             onClick={() => {
               onReserve({
                 date: formattedDate,
                 dateISO: selectedDate,
                 selectedDate,
-                time: effectiveTime ? formatSlotTime(effectiveTime) : (tour.time || 'Flexible'),
-                selectedTime: effectiveTime,
-                travelers: `${travelers} ${travelers === 1 ? 'adult' : 'adults'}`,
-                travelersCount: travelers,
-                travelersPayload: pricingTravelers,
+                time: selectedTime
+                  ? formatSlotTime(selectedTime)
+                  : (openingHoursLabel ? `Open ${openingHoursLabel}` : (tour.time || 'Flexible')),
+                selectedTime: selectedTime || null,
+                travelers: `${totalTravelers} ${totalTravelers === 1 ? 'adult' : 'adults'}`,
+                travelersCount: totalTravelers,
+                travelersPayload,
                 price: pricing?.total ?? clientSubtotal,
               })
               onClose()
             }}
             className={`w-full rounded-full py-3.5 text-sm font-bold text-white shadow-sm transition active:scale-[0.98] ${
-              dateUnavailable
+              reserveBlocked
                 ? 'cursor-not-allowed bg-slate-300'
                 : 'bg-[#179237] hover:brightness-110'
             }`}
           >
-            {dateUnavailable ? 'Unavailable' : 'Reserve Now'}
+            {dateUnavailable ? 'Unavailable' : (needTime ? t('booking.selectTimeFirst', 'Please select a time slot') : 'Reserve Now')}
           </button>
+          {mixBlocked && (
+            <p className="mt-2 text-center text-xs text-rose-500">{mixIssues[0]?.message}</p>
+          )}
         </div>
       </motion.div>
     </div>

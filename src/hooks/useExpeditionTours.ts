@@ -605,6 +605,44 @@ function extractSkipTheLine(rawTour: any): string | null {
   }
 }
 
+/**
+ * Human-readable label for an option's ticket validity, mirroring the
+ * supplier's ProductDetailPage validityLabel() (TravioAfrica-Supplier):
+ *   from_activation → "Valid N days from first use"
+ *   period          → "Valid N days from booking"
+ *   date_picked     → "Valid on selected date"
+ *   open_ended      → "Valid anytime"
+ */
+function ticketValidityLabel(option: { validityType?: string | null; validity?: number | null; validityUnit?: string | null } | null | undefined): string | null {
+  if (!option) return null
+  const v = option.validityType
+  if (v === 'open_ended') return 'Valid anytime'
+  if (v === 'from_activation') return `Valid ${option.validity || 1} ${option.validityUnit || 'days'} from first use`
+  if (v === 'period') return `Valid ${option.validity || 1} ${option.validityUnit || 'days'} from booking`
+  if (v === 'date_picked') return 'Valid on selected date'
+  return null
+}
+
+/**
+ * Ticket validity from the supplier's Step-12 "Booking Options"
+ * (productContent.options[].validityType / validity / validityUnit). The
+ * primary (first) option drives booking pricing/availability, so its validity
+ * is the one surfaced on the booking page.
+ */
+function extractTicketValidity(rawTour: { productContent?: unknown }): string | null {
+  try {
+    const pc = typeof rawTour?.productContent === 'string'
+      ? JSON.parse(rawTour.productContent)
+      : rawTour?.productContent
+    const options = Array.isArray(pc?.options) ? pc.options : []
+    if (options.length === 0) return null
+    const label = ticketValidityLabel(options[0])
+    return label || null
+  } catch {
+    return null
+  }
+}
+
 function parseProductContent(rawTour: any): any {
   if (!rawTour) return {}
   try {
@@ -1182,6 +1220,12 @@ export interface TourDetailData extends Omit<TourDetail, 'guide' | 'contact' | '
   startingPrice: number | null
   travelerPricing: TravelerPricing[]
   skipTheLine?: string | null
+  /**
+   * Supplier's Step-12 "Booking Options" ticket validity label (from
+   * productContent.options[].validityType/validity/validityUnit), e.g.
+   * "Valid on selected date" or "Valid 2 days from booking".
+   */
+  ticketValidity?: string
   wheelchairAccessible?: boolean
   foodProvided?: boolean
   drinksIncluded?: boolean
@@ -1304,6 +1348,7 @@ function buildTourDetailFromRawTour(rawTour: any): TourDetailData {
     pickupIncluded: !!(bt?.pickupProvided ?? bt?.pickupAvailable),
     travelerPricing,
     skipTheLine,
+    ticketValidity: extractTicketValidity(rawTour) || undefined,
     wheelchairAccessible: extractWheelchairAccessible(rawTour),
     foodProvided: extractFoodProvided(rawTour),
     drinksIncluded: extractDrinksIncluded(rawTour),
@@ -1376,6 +1421,7 @@ export function useExpeditionTour(slug: string | undefined) {
       let pricingApproach: 'sameForEveryone' | 'dependsOnAge' = 'dependsOnAge'
       let uniformPrice: number | null = null
       let groupSizePricing: GroupSizeBand[] = []
+      let ticketValidity: string | null = null
 
       // The curated /expedition/tours/:slug endpoint only returns a handful of
       // top-level fields (its tourData omits the productContent/bookingAndTickets/
@@ -1404,6 +1450,7 @@ export function useExpeditionTour(slug: string | undefined) {
             pricingApproach = extractPricingApproach(rawTour)
             uniformPrice = extractUniformPrice(rawTour)
             groupSizePricing = extractGroupSizePricing(rawTour)
+            ticketValidity = extractTicketValidity(rawTour)
             // Dynamic per-option / inclusion facts selected by the supplier
             tour.wheelchairAccessible = extractWheelchairAccessible(rawTour)
             tour.foodProvided = extractFoodProvided(rawTour)
@@ -1572,6 +1619,7 @@ export function useExpeditionTour(slug: string | undefined) {
         pickupIncluded: !!tour.pickupIncluded,
         travelerPricing,
         skipTheLine,
+        ticketValidity: ticketValidity || undefined,
         wheelchairAccessible: !!tour.wheelchairAccessible,
         foodProvided: !!tour.foodProvided,
         drinksIncluded: !!tour.drinksIncluded,

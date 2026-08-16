@@ -327,6 +327,8 @@
     "clickForGoogleMaps": "Haz clic para ver en Google Maps",
     "contactForAccessibility": "Comunícate con el operador para obtener información sobre accesibilidad.",
     "defaultLocation": "Acra, Ghana",
+    "destination": "Destino",
+    "destinationHost": "Anfitrión del destino",
     "details": "Detalles",
     "admissionTicketIncluded": "Entrada incluida",
     "admissionPaySeparately": "Pagar por separado",
