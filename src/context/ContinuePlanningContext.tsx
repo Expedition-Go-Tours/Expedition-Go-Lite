@@ -39,6 +39,7 @@ function generateId(title: string, location: string): string {
   return btoa(`${title}|${location}`).replace(/=/g, '')
 }
 
+ 
 export function toContinuePlanningItem(tour: Tour | (MultiDayTour & { days?: string })): ContinuePlanningItem {
   const m = tour as MultiDayTour & { days?: string }
   const hasDuration = 'duration' in tour && typeof tour.duration === 'string'
@@ -86,9 +87,9 @@ function loadStorage(): ContinuePlanningItem[] {
 export function ContinuePlanningProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<ContinuePlanningItem[]>(loadStorage)
   const itemsRef = useRef(items)
-  itemsRef.current = items
 
   useEffect(() => {
+    itemsRef.current = items
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
   }, [items])
 
@@ -128,6 +129,7 @@ export function ContinuePlanningProvider({ children }: { children: ReactNode }) 
   )
 }
 
+ 
 export function useContinuePlanning(): ContinuePlanningContextValue {
   const ctx = useContext(ContinuePlanningContext)
   if (!ctx) throw new Error('useContinuePlanning must be used within a ContinuePlanningProvider')

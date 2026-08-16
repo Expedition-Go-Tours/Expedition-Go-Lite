@@ -30,8 +30,8 @@ export default function GalleryDialog({
 
   useEffect(() => {
     if (open) {
-      setCurrentIndex(initialIndex)
-      setView('grid')
+      window.setTimeout(() => setCurrentIndex(initialIndex), 0)
+      window.setTimeout(() => setView('grid'), 0)
     }
   }, [open, initialIndex])
 

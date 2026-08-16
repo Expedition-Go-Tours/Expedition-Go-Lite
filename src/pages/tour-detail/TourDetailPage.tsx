@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next'
 import { useExpeditionTour, useSimilarTours } from '../../hooks/useExpeditionTours'
 import { useExpeditionTourReviews, useCreateReview } from '../../hooks/useExpeditionReviews'
 import { useTourAvailability, useReviewableBookingForTour } from '../../hooks/useExpeditionBookings'
+import type { Tour } from '../../components/data'
 import type { DayAvailability, DayAvailabilityInfo } from '../../lib/tourAvailability'
 
 import TourImageGallery from './TourImageGallery'
@@ -154,8 +155,8 @@ export default function TourDetailPage() {
     return map
   }, [availabilityCalendar])
 
-  const reviews = reviewsData?.reviews || []
-  const relatedTours = similarTours || []
+  const reviews = useMemo(() => reviewsData?.reviews || [], [reviewsData])
+  const relatedTours = useMemo(() => similarTours || [], [similarTours])
 
   const mergedImages = useMemo(() => {
     const seen = new Set<string>()
@@ -192,7 +193,7 @@ export default function TourDetailPage() {
         pickupIncluded: tour.pickupIncluded,
         languages: tour.languages,
         slug: tour.slug,
-      } as any))
+      } as Tour))
     }
   }, [tour, addToContinuePlanning, mergedImages])
 
@@ -226,7 +227,7 @@ export default function TourDetailPage() {
   const pricingRef = useRef<HTMLDivElement>(null)
   const reviewsRef = useRef<HTMLDivElement>(null)
   const [activeTab, setActiveTab] = useState('overview')
-  const [reviewDetail, setReviewDetail] = useState<any>(null)
+  const [reviewDetail, setReviewDetail] = useState<{ name: string; date: string; rating: number; text: string } | null>(null)
   const [isWriteReviewOpen, setIsWriteReviewOpen] = useState(false)
   const [reviewStarFilter, setReviewStarFilter] = useState<number | null>(null)
   const [supplierInfoOpen, setSupplierInfoOpen] = useState(false)
@@ -238,15 +239,15 @@ export default function TourDetailPage() {
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 768px)')
-    setIsMobile(mq.matches)
+    window.setTimeout(() => setIsMobile(mq.matches), 0)
     const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
     mq.addEventListener('change', handler)
     return () => mq.removeEventListener('change', handler)
   }, [])
 
   useEffect(() => {
-    setActiveTab('overview')
-    setReviewStarFilter(null)
+    window.setTimeout(() => setActiveTab('overview'), 0)
+    window.setTimeout(() => setReviewStarFilter(null), 0)
   }, [tourId])
 
   const isExternal = tour?.bookingFlow === 'EXTERNAL'
@@ -385,7 +386,7 @@ export default function TourDetailPage() {
     }))
   }, [allReviewCards])
 
-  const difficultyColorMap: Record<string, string> = {
+  const difficultyColorMap = useMemo<Record<string, string>>(() => ({
     'Easy': '#22c55e',
     'Moderate': '#f59e0b',
     'Challenging': '#ef4444',
@@ -393,7 +394,7 @@ export default function TourDetailPage() {
     'Hard': '#ef4444',
     'Extreme': '#dc2626',
     'Expert': '#dc2626',
-  }
+  }), [])
 
   const tourQuickFacts = useMemo(() => {
     // Reusable badge renderer — used for every Yes/No style quick fact so
@@ -704,11 +705,7 @@ export default function TourDetailPage() {
         : []),
     ]
   }, [
-    t, tour?.difficulty, tour?.duration, tour?.languages, tour?.pickupIncluded,
-    tour?.skipTheLine, tour?.cancellationPolicy, tour?.guideType, tour?.guideMaterials,
-    tour?.foodProvided, tour?.drinksIncluded, tour?.meals, tour?.dietaryOptions,
-    tour?.petFriendly, tour?.wheelchairAccessible, tour?.isPrivateActivity, tour?.wifiIncluded,
-    tour?.accommodationIncluded, tour?.itinerary,
+    t, tour, difficultyColorMap,
   ])
 
   // Short teaser shown right after the gallery (GetYourGuide-style), no heading.
@@ -718,7 +715,7 @@ export default function TourDetailPage() {
     return tour.description.length > 250
       ? tour.description.slice(0, 250) + '...'
       : tour.description
-  }, [tour?.shortDescription, tour?.description])
+  }, [tour])
 
   const highlights = tour?.highlights || []
   const cancellationPolicy = tour?.cancellationPolicy || 'Free cancellation up to 24 hours before'
@@ -763,7 +760,7 @@ export default function TourDetailPage() {
       title: t('tourDetail.cancellationPolicy'),
       content: buildCancellationContent(undefined, cancellationPolicy),
     },
-  ], [t, tour?.notSuitableFor, tour?.notAllowed, tour?.additionalInfo, cancellationPolicy, tour])
+  ], [t, cancellationPolicy, tour])
 
   const supplierData = useMemo(() => ({
     name: tour?.supplierName || 'Expedition-Go Tours Ltd',
@@ -886,7 +883,7 @@ export default function TourDetailPage() {
                 </div>
               ) : (
                 <BookingWidget
-                  tour={tour as any}
+                  tour={tour}
                   getAvailability={(date: Date) => {
                     const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
                     return availabilityMap.get(key) || 'available'

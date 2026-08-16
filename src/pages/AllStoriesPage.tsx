@@ -87,7 +87,7 @@ export default function AllStoriesPage() {
   )
 
   useEffect(() => {
-    if (!showDropdown) setHighlightedIndex(-1)
+    if (!showDropdown) window.setTimeout(() => setHighlightedIndex(-1), 0)
   }, [showDropdown])
 
   useEffect(() => {

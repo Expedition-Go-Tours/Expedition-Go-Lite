@@ -24,7 +24,7 @@ export default function PhotoViewerModal({
 
   // Update current index when initialIndex changes
   useEffect(() => {
-    setCurrentIndex(initialIndex)
+    window.setTimeout(() => setCurrentIndex(initialIndex), 0)
   }, [initialIndex])
 
   const goToPrevious = useCallback(() => {

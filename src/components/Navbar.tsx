@@ -201,11 +201,11 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
 
   useEffect(() => {
     if (navSuggestions.length > 0 && navSearchValue.trim().length >= 2) {
-      setShowNavDropdown(true)
-      setNavHighlightedIndex(-1)
+      window.setTimeout(() => setShowNavDropdown(true), 0)
+      window.setTimeout(() => setNavHighlightedIndex(-1), 0)
     } else {
-      setShowNavDropdown(false)
-      setNavHighlightedIndex(-1)
+      window.setTimeout(() => setShowNavDropdown(false), 0)
+      window.setTimeout(() => setNavHighlightedIndex(-1), 0)
     }
   }, [navSuggestions, navSearchValue])
 

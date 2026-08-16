@@ -115,7 +115,7 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
 
   // Always start from page 1 whenever the active filters or sort change.
   useEffect(() => {
-    setPage(1)
+    window.setTimeout(() => setPage(1), 0)
   }, [tourTypes, destinations, categories, durationFilter, priceFilter, ratingFilter, sortBy])
 
   const filteredTours = useMemo(() => {

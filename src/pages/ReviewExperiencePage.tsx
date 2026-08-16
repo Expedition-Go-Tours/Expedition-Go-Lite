@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { Link, useParams, useNavigate, useLocation } from 'react-router-dom'
 import {
   ChevronRight, ArrowLeft, Calendar, Camera, Image, Info,
@@ -28,22 +28,22 @@ function readDraft(key: string) {
   } catch { return null }
 }
 
-function writeDraft(key: string, data: any) {
-  try { sessionStorage.setItem(key, JSON.stringify(data)) } catch { }
+function writeDraft(key: string, data: unknown) {
+  try { sessionStorage.setItem(key, JSON.stringify(data)) } catch { console.warn('Failed to save review draft') }
 }
 
 function clearDraft(key: string) {
-  try { sessionStorage.removeItem(key) } catch { }
+  try { sessionStorage.removeItem(key) } catch { console.warn('Failed to clear review draft') }
 }
 
-function writeSubmittedHandoff(tourTitle: string, tourId: string | null, review: any) {
+function writeSubmittedHandoff(tourTitle: string, tourId: string | null, review: unknown) {
   try {
     const keys = [
       tourId ? `${REVIEW_SUBMISSION_PREFIX}tour:${tourId}` : null,
       tourTitle ? `${REVIEW_SUBMISSION_PREFIX}title:${encodeURIComponent(tourTitle)}` : null,
     ].filter(Boolean)
     keys.forEach((k) => sessionStorage.setItem(k!, JSON.stringify(review)))
-  } catch { }
+  } catch { console.warn('Failed to write submitted review handoff') }
 }
 
 function StarRating({ value, onChange, count = 5 }: { value: number; onChange: (v: number) => void; count?: number }) {
@@ -91,7 +91,7 @@ export default function ReviewExperiencePage() {
   const stateBookingId: string | undefined = location.state?.bookingId
   const editingReviewId: string | undefined = location.state?.editingReviewId
 
-  const tour = stateTour || {
+  const tour = useMemo(() => stateTour || {
     title: tourSlugParam ? decodeURIComponent(tourSlugParam).replace(/-/g, ' ') : 'Tour',
     rating: 4.8,
     reviews: 248,
@@ -102,7 +102,7 @@ export default function ReviewExperiencePage() {
     slug: tourSlugParam || '',
     supplierName: 'Expedition-Go Tours Ltd',
     supplierLogo: 'https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?auto=format&fit=crop&w=120&q=80',
-  }
+  }, [stateTour, tourSlugParam])
 
   const tourCardImages = [tour.image, ...(Array.isArray(tour.images) ? tour.images : [])].filter(Boolean)
 
@@ -127,13 +127,13 @@ export default function ReviewExperiencePage() {
   useEffect(() => {
     const draft = readDraft(getDraftKey(draftKey))
     if (draft) {
-      if (draft.overallRating) setOverallRating(draft.overallRating)
-      if (draft.subRatings) setSubRatings(draft.subRatings)
-      if (draft.selectedDate) setSelectedDate(new Date(draft.selectedDate))
-      if (draft.companions) setCompanions(draft.companions)
-      if (draft.reviewText) setReviewText(draft.reviewText)
-      if (draft.reviewTitle) setReviewTitle(draft.reviewTitle)
-      if (draft.certified) setCertified(draft.certified)
+      if (draft.overallRating) window.setTimeout(() => setOverallRating(draft.overallRating), 0)
+      if (draft.subRatings) window.setTimeout(() => setSubRatings(draft.subRatings), 0)
+      if (draft.selectedDate) window.setTimeout(() => setSelectedDate(new Date(draft.selectedDate)), 0)
+      if (draft.companions) window.setTimeout(() => setCompanions(draft.companions), 0)
+      if (draft.reviewText) window.setTimeout(() => setReviewText(draft.reviewText), 0)
+      if (draft.reviewTitle) window.setTimeout(() => setReviewTitle(draft.reviewTitle), 0)
+      if (draft.certified) window.setTimeout(() => setCertified(draft.certified), 0)
     }
   }, [draftKey])
 
@@ -227,8 +227,8 @@ export default function ReviewExperiencePage() {
         replace: true,
         state: { submittedReview, submittedReviewTourId: tour.tourId || tour.id, submittedReviewTourTitle: tour.title },
       })
-    } catch (err: any) {
-      toast.error(err?.message || t('reviews.submitError'))
+    } catch (err) {
+      toast.error(err instanceof Error && err.message ? err.message : t('reviews.submitError'))
     } finally {
       setIsSubmitting(false)
     }

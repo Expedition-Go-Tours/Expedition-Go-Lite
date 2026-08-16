@@ -92,8 +92,9 @@ export default function ChatPage() {
 
   // Clean up any pending reply timers on unmount
   useEffect(() => {
+    const timers = replyTimers.current;
     return () => {
-      replyTimers.current.forEach(clearTimeout);
+      timers.forEach(clearTimeout);
     };
   }, []);
 

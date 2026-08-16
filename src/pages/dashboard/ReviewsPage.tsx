@@ -15,8 +15,8 @@ function getDraftKey(tourTitle: string) {
   return `${REVIEW_DRAFT_PREFIX}${encodeURIComponent(tourTitle || "unknown-tour")}`;
 }
 
-function getTimeLeft(submittedAt: string): string | null {
-  const elapsed = Date.now() - new Date(submittedAt).getTime();
+function getTimeLeft(now: number, submittedAt: string): string | null {
+  const elapsed = now - new Date(submittedAt).getTime();
   const remaining = EDIT_WINDOW_MS - elapsed;
   if (remaining <= 0) return null;
   const mins = Math.floor(remaining / 60000);
@@ -30,10 +30,10 @@ export default function ReviewsPage() {
   const { data: reviews = [], isLoading, isError } = useMyReviews();
   const deleteReview = useDeleteReview();
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [, forceUpdate] = useState(0);
+  const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
-    const timer = setInterval(() => forceUpdate((c) => c + 1), 1000);
+    const timer = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(timer);
   }, []);
 
@@ -47,7 +47,7 @@ export default function ReviewsPage() {
   };
 
   const handleEdit = (review: MyReviewData) => {
-    const elapsed = Date.now() - new Date(review.createdAt).getTime();
+    const elapsed = now - new Date(review.createdAt).getTime();
     if (elapsed > EDIT_WINDOW_MS) {
       toast.error("Edit window has expired. Reviews can only be edited within 15 minutes of posting.");
       return;
@@ -59,7 +59,7 @@ export default function ReviewsPage() {
     };
     try {
       sessionStorage.setItem(getDraftKey(review.tourTitle), JSON.stringify(draftData));
-    } catch {}
+    } catch { console.warn("Failed to save draft"); }
 
     const tour = {
       title: review.tourTitle,
@@ -113,8 +113,8 @@ export default function ReviewsPage() {
     <div className="w-full max-w-4xl mx-auto space-y-4">
       <AnimatePresence mode="popLayout">
         {reviews.map((review) => {
-          const canEdit = Date.now() - new Date(review.createdAt).getTime() <= EDIT_WINDOW_MS;
-          const timeLeft = canEdit ? getTimeLeft(review.createdAt) : null;
+          const canEdit = now - new Date(review.createdAt).getTime() <= EDIT_WINDOW_MS;
+          const timeLeft = canEdit ? getTimeLeft(now, review.createdAt) : null;
 
           return (
             <motion.div

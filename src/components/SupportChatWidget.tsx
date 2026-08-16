@@ -70,8 +70,9 @@ export default function SupportChatWidget({ initialOpen }: SupportChatWidgetProp
 
   // Clean up pending reply timers on unmount
   useEffect(() => {
+    const timers = replyTimers.current;
     return () => {
-      replyTimers.current.forEach(clearTimeout);
+      timers.forEach(clearTimeout);
     };
   }, []);
 

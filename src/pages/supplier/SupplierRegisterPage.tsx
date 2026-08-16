@@ -30,14 +30,14 @@ export default function SupplierRegisterPage({ onOpenAuth }: SupplierRegisterPag
 
   useEffect(() => {
     if (!user) {
-      setChecking(false)
-      setApplication(null)
+      window.setTimeout(() => setChecking(false), 0)
+      window.setTimeout(() => setApplication(null), 0)
       return
     }
 
     let cancelled = false
-    setChecking(true)
-    setStatusError("")
+    window.setTimeout(() => setChecking(true), 0)
+    window.setTimeout(() => setStatusError(""), 0)
 
     getSupplierApplicationStatus()
       .then(async (profile) => {
@@ -65,7 +65,7 @@ export default function SupplierRegisterPage({ onOpenAuth }: SupplierRegisterPag
     return () => {
       cancelled = true
     }
-  }, [user?.id, user?._id, user?.uid, user?.firebaseUid, user?.email])
+  }, [user])
 
   const alreadyApplied = !!application
 

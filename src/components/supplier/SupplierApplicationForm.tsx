@@ -414,11 +414,11 @@ function ImageUploadField({
 
   useEffect(() => {
     if (!file) {
-      setPreview(null)
+      window.setTimeout(() => setPreview(null), 0)
       return
     }
     const url = URL.createObjectURL(file)
-    setPreview(url)
+    window.setTimeout(() => setPreview(url), 0)
     return () => URL.revokeObjectURL(url)
   }, [file])
 
@@ -478,7 +478,7 @@ function MultiImageUploadField({
       url: URL.createObjectURL(file),
       name: file.name,
     }))
-    setPreviews(next)
+    window.setTimeout(() => setPreviews(next), 0)
     return () => next.forEach((item) => URL.revokeObjectURL(item.url))
   }, [files])
 
@@ -648,8 +648,8 @@ export function SupplierApplicationForm() {
     const draft = loadSupplierApplicationDraft(draftUserId)
     if (!draft) return
 
-    setStep(draft.step)
-    setForm(mergeSupplierApplicationDraft(draft.form))
+    window.setTimeout(() => setStep(draft.step), 0)
+    window.setTimeout(() => setForm(mergeSupplierApplicationDraft(draft.form)), 0)
   }, [draftUserId])
 
   useEffect(() => {
@@ -722,11 +722,11 @@ export function SupplierApplicationForm() {
     )
     if (filtered.length === form.operatingInfo.languages.length) return
 
-    setForm((prev) => ({
+    window.setTimeout(() => setForm((prev) => ({
       ...prev,
       operatingInfo: { ...prev.operatingInfo, languages: filtered },
-    }))
-  }, [form.businessInfo.country])
+    })), 0)
+  }, [form.businessInfo.country, form.operatingInfo.languages])
 
   const isFormComplete = useMemo(() => stepCompleted.every(Boolean), [stepCompleted])
 

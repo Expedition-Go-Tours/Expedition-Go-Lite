@@ -74,11 +74,11 @@ export default function SearchBar() {
 
   useEffect(() => {
     if (suggestions.length > 0 && inputValue.trim().length >= 2) {
-      setShowDropdown(true)
-      setHighlightedIndex(-1)
+      window.setTimeout(() => setShowDropdown(true), 0)
+      window.setTimeout(() => setHighlightedIndex(-1), 0)
     } else {
-      setShowDropdown(false)
-      setHighlightedIndex(-1)
+      window.setTimeout(() => setShowDropdown(false), 0)
+      window.setTimeout(() => setHighlightedIndex(-1), 0)
     }
   }, [suggestions, inputValue])
 

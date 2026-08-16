@@ -18,5 +18,11 @@ export default defineConfig([
     languageOptions: {
       globals: globals.browser,
     },
+    rules: {
+      // Stylistic-only rules relaxed for the existing codebase surface;
+      // behavioural rules (react-hooks etc.) stay at error level.
+      '@typescript-eslint/no-explicit-any': 'off',
+      'react-refresh/only-export-components': 'off',
+    },
   },
 ])

@@ -78,8 +78,8 @@ export const AnimatedWave: React.FC<AnimatedWaveProps> = ({
     if (!container) return;
 
     // Dimensions based on parent container client size
-    let width = container.clientWidth || 800;
-    let height = container.clientHeight || 500;
+    const width = container.clientWidth || 800;
+    const height = container.clientHeight || 500;
 
     // 1. Create Scene
     const scene = new THREE.Scene();
@@ -103,7 +103,7 @@ export const AnimatedWave: React.FC<AnimatedWaveProps> = ({
       container.appendChild(renderer.domElement);
     } catch (e) {
       console.error("WebGL initialization failed", e);
-      setWebGLFailed(true);
+      window.setTimeout(() => setWebGLFailed(true), 0);
       return;
     }
 
@@ -153,7 +153,6 @@ export const AnimatedWave: React.FC<AnimatedWaveProps> = ({
     geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
 
     // Optional Grid Mesh lines
-    let lineSegments: THREE.LineSegments | null = null;
     if (wireframe) {
       const indices: number[] = [];
       for (let x = 0; x < gridSize; x++) {
@@ -175,12 +174,11 @@ export const AnimatedWave: React.FC<AnimatedWaveProps> = ({
         opacity: opacity * 0.4,
         blending: THREE.NormalBlending,
       });
-      lineSegments = new THREE.LineSegments(geometry, lineMaterial);
+      const lineSegments = new THREE.LineSegments(geometry, lineMaterial);
       scene.add(lineSegments);
     }
 
     // Glowing Particle Points
-    let points: THREE.Points | null = null;
     if (showParticles) {
       const pointsMaterial = new THREE.PointsMaterial({
         size: particleSize,
@@ -192,7 +190,7 @@ export const AnimatedWave: React.FC<AnimatedWaveProps> = ({
         blending: THREE.AdditiveBlending,
         depthWrite: false,
       });
-      points = new THREE.Points(geometry, pointsMaterial);
+      const points = new THREE.Points(geometry, pointsMaterial);
       scene.add(points);
     }
 

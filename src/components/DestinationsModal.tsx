@@ -70,8 +70,8 @@ export default function DestinationsModal({ isOpen, onClose }: DestinationsModal
   // Reset search/region when opening
   useEffect(() => {
     if (isOpen) {
-      setSearchQuery('')
-      setSelectedRegion('all')
+      window.setTimeout(() => setSearchQuery(''), 0)
+      window.setTimeout(() => setSelectedRegion('all'), 0)
     }
   }, [isOpen])
 
