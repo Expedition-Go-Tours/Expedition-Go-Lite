@@ -151,3 +151,41 @@ export function pickupZoneStatus(
   if (!match) return 'outside'
   return match._excluded ? 'excluded' : 'in_area'
 }
+
+/**
+ * True when the tour has any location-only pickup area — saved as a point
+ * with coordinates but no drawn geoshape (the proximity-match mode).
+ */
+export function hasLocationOnlyAreas(areas: PickupAreaShape[]): boolean {
+  return Array.isArray(areas) && areas.some(
+    (a) => !hasDrawnShape(a) && typeof a.lat === 'number' && typeof a.lng === 'number' &&
+      Number.isFinite(a.lat) && Number.isFinite(a.lng),
+  )
+}
+
+/**
+ * The checkout "pickup location" completeness rule, shared by the step UI
+ * and its validation gate.
+ *
+ * A location is satisfied when the traveller defers it, picks a named zone,
+ * or their address resolves in a pickup area. Tours with no geographic data
+ * at all (no drawn zones, no location-only points) keep the legacy rule
+ * where any typed text of 3+ characters counts, so old name-only products
+ * keep working.
+ */
+export interface PickupLocationInputState {
+  pickupLater: boolean
+  pickedArea: string
+  typed: string
+  status: PickupZoneStatus
+  zonesDrawn: boolean
+  hasLocationOnlyAreas: boolean
+}
+
+export function isPickupLocationSatisfied(state: PickupLocationInputState): boolean {
+  if (state.pickupLater) return true
+  if (state.pickedArea.trim().length > 0) return true
+  if (state.status === 'in_area') return true
+  if (!state.zonesDrawn && !state.hasLocationOnlyAreas && state.typed.trim().length >= 3) return true
+  return false
+}

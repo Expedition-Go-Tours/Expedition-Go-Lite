@@ -25,7 +25,7 @@ import { getStripePromise } from '../lib/stripe'
 import { fetchWithAuth } from '../lib/api'
 import { useCreateBooking } from '../hooks/useExpeditionBookings'
 import { buildE164Phone, isValidPhoneInput, COUNTRY_CODES } from '../lib/phone'
-import { findPickupAreaForAddress, pickupZoneStatus, type PickupAreaShape } from '../lib/pickupZone'
+import { findPickupAreaForAddress, hasLocationOnlyAreas, isPickupLocationSatisfied, pickupZoneStatus, type PickupAreaShape } from '../lib/pickupZone'
 import { Map as MapLibreMap, Marker as MapLibreMarker, LngLatBounds as MapLibreLngLatBounds, NavigationControl as MapLibreNavigationControl, type GeoJSONSource } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import OptimizedImage from '@/components/shared/OptimizedImage'
@@ -1012,6 +1012,8 @@ function ActivityDetailsStep({
     () => pickupAreasList.some((a) => !!a && Array.isArray(a.polygon) && a.polygon.length >= 3),
     [pickupAreasList],
   )
+  const hasPointAreas = useMemo(() => hasLocationOnlyAreas(tour.pickupAreas || []), [tour.pickupAreas])
+  const geofenced = zonesDrawn || hasPointAreas
   const zoneStatus = useMemo(
     () =>
       showPickupLocation && !contact.pickupLater
@@ -1031,11 +1033,13 @@ function ActivityDetailsStep({
   const locationInvalidMessage = !locationValid && touched.location
     ? zoneStatus === 'excluded'
       ? `This address is inside a no-pickup zone${matchedArea?.name ? ` for \u201C${matchedArea.name}\u201D` : ''} — choose a different address or pickup zone.`
-      : zoneStatus === 'no_coords' && zonesDrawn && contact.location.trim().length >= 3
-        ? 'Pick an address from the suggestions so we can confirm it is inside a pickup zone.'
-        : zonesDrawn
-          ? 'Enter the pickup address or choose a pickup zone below.'
-          : 'Please enter your pickup location'
+      : zoneStatus === 'outside'
+        ? 'This address is not inside your pickup area — choose a different address.'
+        : zoneStatus === 'no_coords' && geofenced && contact.location.trim().length >= 3
+          ? 'Pick an address from the suggestions so we can confirm it is inside a pickup zone.'
+          : geofenced
+            ? 'Enter the pickup address or choose a pickup zone below.'
+            : 'Please enter your pickup location'
     : undefined
 
   const handlePickupAreaSelect = (name: string) => {
@@ -1906,6 +1910,10 @@ export default function BookingPage() {
     () => (tour.pickupAreas || []).some((a: PickupAreaShape) => !!a && Array.isArray(a.polygon) && a.polygon.length >= 3),
     [tour.pickupAreas],
   )
+  const hasPointAreas = useMemo(
+    () => hasLocationOnlyAreas(tour.pickupAreas || []),
+    [tour.pickupAreas],
+  )
   const pickupZoneStatusValue = useMemo(
     () =>
       showPickupLocation && !contact.pickupLater
@@ -1916,11 +1924,15 @@ export default function BookingPage() {
   const pickupLocationValid = useMemo(
     () =>
       !showPickupLocation ||
-      contact.pickupLater ||
-      contact.pickupArea.trim().length > 0 ||
-      (!zonesDrawn && contact.location.trim().length >= 3) ||
-      pickupZoneStatusValue === 'in_area',
-    [showPickupLocation, contact.pickupLater, contact.pickupArea, zonesDrawn, contact.location, pickupZoneStatusValue],
+      isPickupLocationSatisfied({
+        pickupLater: contact.pickupLater,
+        pickedArea: contact.pickupArea,
+        typed: contact.location,
+        status: pickupZoneStatusValue,
+        zonesDrawn,
+        hasLocationOnlyAreas: hasPointAreas,
+      }),
+    [showPickupLocation, contact.pickupLater, contact.pickupArea, contact.location, pickupZoneStatusValue, zonesDrawn, hasPointAreas],
   )
 
   const contactValid = useMemo(() => ({

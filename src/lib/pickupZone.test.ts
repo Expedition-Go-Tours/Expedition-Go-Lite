@@ -5,6 +5,8 @@ import {
   findPickupAreaForAddress,
   pickupZoneStatus,
   hasDrawnShape,
+  hasLocationOnlyAreas,
+  isPickupLocationSatisfied,
   type PickupAreaShape,
 } from './pickupZone'
 
@@ -164,5 +166,58 @@ describe('hasDrawnShape', () => {
     expect(hasDrawnShape({ name: 'x' })).toBe(false)
     expect(hasDrawnShape({ polygon: [[1, 1], [2, 2]] })).toBe(false)
     expect(hasDrawnShape({ polygon: null })).toBe(false)
+  })
+})
+
+describe('hasLocationOnlyAreas', () => {
+  it('is true when an area has no drawn shape but finite coordinates', () => {
+    expect(hasLocationOnlyAreas([{ name: 'Kumasi', lat: 6.6871, lng: -1.6219 }])).toBe(true)
+  })
+
+  it('is false for drawn-zone areas, name-only areas, and empty lists', () => {
+    expect(hasLocationOnlyAreas([AREA_OSU])).toBe(false)
+    expect(hasLocationOnlyAreas([{ name: 'Legacy' }])).toBe(false)
+    expect(hasLocationOnlyAreas([{ name: 'NoCoords', lat: null, lng: null }])).toBe(false)
+    expect(hasLocationOnlyAreas([])).toBe(false)
+  })
+})
+
+describe('isPickupLocationSatisfied', () => {
+  const satisfied = (over: Partial<Parameters<typeof isPickupLocationSatisfied>[0]> = {}) =>
+    isPickupLocationSatisfied({
+      pickupLater: false,
+      pickedArea: '',
+      typed: '',
+      status: 'no_coords',
+      zonesDrawn: false,
+      hasLocationOnlyAreas: false,
+      ...over,
+    })
+
+  it('is satisfied when the traveller defers pickup or picks a zone', () => {
+    expect(satisfied({ pickupLater: true })).toBe(true)
+    expect(satisfied({ pickedArea: 'Osu' })).toBe(true)
+  })
+
+  it('is satisfied when the address resolves inside an area', () => {
+    expect(satisfied({ status: 'in_area' })).toBe(true)
+  })
+
+  it('blocks a typed address outside the area when location-only areas exist', () => {
+    expect(satisfied({ typed: 'Ejisu', status: 'outside', hasLocationOnlyAreas: true })).toBe(false)
+  })
+
+  it('accepts a typed address in a location-only area by proximity or exact name', () => {
+    expect(satisfied({ typed: 'Kumasi', status: 'in_area', hasLocationOnlyAreas: true })).toBe(true)
+  })
+
+  it('keeps the legacy 3-character rule when the tour has no geographic data', () => {
+    expect(satisfied({ typed: 'xyz', status: 'outside' })).toBe(true)
+    expect(satisfied({ typed: 'xy', status: 'outside' })).toBe(false)
+  })
+
+  it('never accepts short typed text when geofenced', () => {
+    expect(satisfied({ typed: 'xy', status: 'outside', zonesDrawn: true })).toBe(false)
+    expect(satisfied({ typed: 'xy', status: 'outside', hasLocationOnlyAreas: true })).toBe(false)
   })
 })
