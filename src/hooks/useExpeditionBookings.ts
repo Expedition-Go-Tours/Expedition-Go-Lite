@@ -188,6 +188,7 @@ interface ConfirmBookingInput {
   selectedTime?: string | null
   travelers: Record<string, number | string | boolean | { name: string; age: number; ageGroup: string; specialRequests?: string }[] | undefined>
   paymentMethodId: string
+  paymentTiming?: 'now' | 'later'
   specialRequests?: string
 }
 

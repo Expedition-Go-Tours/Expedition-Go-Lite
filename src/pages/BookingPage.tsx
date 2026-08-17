@@ -1453,7 +1453,7 @@ function PaymentDetailsStep({
   data: { paymentTiming: string; paymentMethod: string }
   onChange: (key: string, value: string) => void
   tour: typeof FALLBACK_TOUR
-  onBook: (paymentMethodId: string) => void
+  onBook: (paymentMethodId: string, timing?: 'now' | 'later') => void
   step: number
   onNavigate: (n: number) => void
   disabled?: boolean
@@ -1581,7 +1581,7 @@ function PaymentDetailsStep({
                     toast.error(error?.message || 'Please check your card details and try again.')
                     return
                   }
-                  onBook(paymentMethod.id)
+                  onBook(paymentMethod.id, data.paymentTiming as 'now' | 'later')
                 } finally {
                   setCreating(false)
                 }
@@ -1891,7 +1891,7 @@ function BookingSidebar({
 const STORAGE_KEY = 'booking_draft'
 
 const DEFAULT_CONTACT = { firstName: '', lastName: '', email: '', countryCode: '+233', phone: '', location: '', pickupLater: false, pickupLat: null as number | null, pickupLng: null as number | null, pickupArea: '' }
-const DEFAULT_PAYMENT = { paymentTiming: 'now', paymentMethod: 'card' }
+const DEFAULT_PAYMENT = { paymentTiming: 'now' as 'now' | 'later', paymentMethod: 'card' }
 
 interface EditableTourState {
   date: string
@@ -2195,7 +2195,7 @@ export default function BookingPage() {
     }
   }, [navigate, queryClient])
 
-  const handleBook = useCallback(async (paymentMethodId: string) => {
+  const handleBook = useCallback(async (paymentMethodId: string, timing?: 'now' | 'later') => {
     if (isBooking || isActive) return
     if (!user) {
       setShowSignInPrompt(true)
@@ -2205,6 +2205,7 @@ export default function BookingPage() {
       toast.error('Please enter your card details to continue.')
       return
     }
+    const paymentTiming = timing ?? payment.paymentTiming ?? 'now'
 
     setIsBooking(true)
     try {
@@ -2258,6 +2259,7 @@ export default function BookingPage() {
           details,
         },
         paymentMethodId,
+        paymentTiming,
         specialRequests: '',
       }
 
@@ -2281,7 +2283,7 @@ export default function BookingPage() {
     } finally {
       setIsBooking(false)
     }
-  }, [createBooking, contact, editableTour, tour, showPickupLocation, zonesDrawn, isBooking, isActive, pollBooking, user])
+  }, [createBooking, contact, editableTour, tour, showPickupLocation, zonesDrawn, isBooking, isActive, pollBooking, user, payment.paymentTiming])
 
   const handleApplyPromo = useCallback(() => {
     const code = promoCode.trim().toUpperCase()
