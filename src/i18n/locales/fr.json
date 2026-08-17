@@ -54,9 +54,12 @@
     "loading": "Chargement...",
     "addedToWishlist": "Ajouté aux favoris",
     "removedFromWishlist": "Retiré des favoris",
+    "addToWishlist": "Ajouter aux favoris",
+    "removeFromWishlist": "Retirer des favoris",
     "you": "Vous",
     "optional": "Facultatif",
-    "submitting": "Envoi en cours..."
+    "submitting": "Envoi en cours...",
+    "viewDetails": "Voir les détails"
   },
   "destinations": {
     "allRegions": "Toutes les régions",
@@ -183,6 +186,8 @@
   },
   "sections": {
     "allToursTitle": "Circuits",
+    "attractionsBadge": "Attractions",
+    "attractionsShowingAll": "Affichage de toutes les attractions (position indisponible)",
     "continuePlanning": "Continuer la Planification",
     "dayTours": "Circuits d'un Jour",
     "destinations": "Destinations populaires",
@@ -195,6 +200,7 @@
     "recommendedTitle": "Recommandé pour Vous",
     "reviews": "Avis",
     "topRatedTitle": "Circuits les Mieux Notés",
+    "topAttractionsNearby": "Attractions à Proximité",
     "travelStories": "Histoires et Actualités de Voyage",
     "viewAll": "Voir Tout",
     "toursIn": "Circuits à {{location}}"
@@ -328,7 +334,7 @@
     "contactForAccessibility": "Contactez l'opérateur pour obtenir des informations sur l'accessibilité.",
     "defaultLocation": "Accra, Ghana",
     "destination": "Destination",
-    "destinationHost": "Hôte de la destination",
+    "destinationHost": "Hôte de l'expérience",
     "details": "Détails",
     "admissionTicketIncluded": "Billet d'entrée inclus",
     "admissionPaySeparately": "Payer séparément",

@@ -45,7 +45,8 @@ const SECTION_TITLES: Record<string, string> = {
   'Multi-Day Tours': 'Multi-Day Tours',
   'Top Rated': 'Top Rated by Travellers',
   'Sell Out': 'Likely to Sell Out',
-  'Last Minute Deals': 'Last Minute Deals',
+  'Last Minute Deals': 'Special Offers',
+  'Top Attractions Nearby': 'Top Attractions Nearby',
   'New Experiences': 'New Experiences',
 }
 

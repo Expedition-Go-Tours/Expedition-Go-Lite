@@ -54,9 +54,12 @@
     "loading": "Laden...",
     "addedToWishlist": "Toegevoegd aan verlanglijst",
     "removedFromWishlist": "Verwijderd van verlanglijst",
+    "addToWishlist": "Toevoegen aan verlanglijst",
+    "removeFromWishlist": "Verwijderen van verlanglijst",
     "you": "Jij",
     "optional": "Optioneel",
-    "submitting": "Bezig met verzenden..."
+    "submitting": "Bezig met verzenden...",
+    "viewDetails": "Details bekijken"
   },
   "destinations": {
     "allRegions": "Alle regio's",
@@ -183,10 +186,12 @@
   },
   "sections": {
     "allToursTitle": "Tours",
+    "attractionsBadge": "Attracties",
+    "attractionsShowingAll": "Alle attracties weergeven (locatie niet beschikbaar)",
     "continuePlanning": "Verder Plannen",
     "dayTours": "Dagtours",
     "destinations": "Populaire bestemmingen",
-    "lastMinuteDeals": "Last Minute Aanbiedingen",
+    "lastMinuteDeals": "Speciale Aanbiedingen",
     "newExperiences": "Nieuwe Ervaringen",
     "likelyToSellOut": "Waarschijnlijk Uitverkocht",
     "multiDayTours": "Meerdaagse Tours",
@@ -195,6 +200,7 @@
     "recommendedTitle": "Aanbevolen voor Jou",
     "reviews": "Beoordelingen",
     "topRatedTitle": "Best Beoordeelde Tours",
+    "topAttractionsNearby": "Top Attracties in de Buurt",
     "travelStories": "Reisverhalen en Nieuws",
     "viewAll": "Alles Bekijken",
     "toursIn": "Rondleidingen in {{location}}"
@@ -328,7 +334,7 @@
     "contactForAccessibility": "Neem contact op met de exploitant voor toegankelijkheidsinformatie.",
     "defaultLocation": "Accra, Ghana",
     "destination": "Bestemming",
-    "destinationHost": "Gastheer van de bestemming",
+    "destinationHost": "Gastheer van de ervaring",
     "details": "Details",
     "admissionTicketIncluded": "Toegangsticket inbegrepen",
     "admissionPaySeparately": "Apart betalen",

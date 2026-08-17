@@ -1,14 +1,17 @@
-import { useState, useRef, useCallback } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useState, useMemo } from 'react'
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import {
   ArrowLeft, Heart, MessageSquare, Star, Shield, Users, Headset,
-  Phone, Mail, Globe, MapPin, ChevronDown, Leaf, Award, Route,
+  Phone, Mail, Globe, MapPin, ChevronDown,
 } from 'lucide-react'
 import TourCard from '../components/TourCard'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
-import { useExpeditionTours } from '../hooks/useExpeditionTours'
+import { mapRawTourToListing, type TourCardData } from '../hooks/useExpeditionTours'
+import { mapSupplierProfile, normalizeWebsiteUrl, type SupplierProfileData } from '../lib/supplierProfile'
+import { apiFetch, fetchWithAuth } from '../lib/api'
 import './SupplierPage.css'
 import OptimizedImage from '@/components/shared/OptimizedImage'
 
@@ -21,12 +24,6 @@ const TRUST_BADGES = [
   { icon: Headset, title: 'Customer Support', desc: "We're here to help" },
 ]
 
-const FEATURES = [
-  { icon: Leaf, heading: 'Local Expertise', desc: 'Experienced guides who know Ghana' },
-  { icon: Award, heading: 'Authentic & Immersive', desc: "Real local experiences you'll remember" },
-  { icon: Route, heading: 'Sustainable Travel', desc: 'Supporting communities and protecting nature' },
-]
-
 const containerVariants = {
   hidden: {},
   visible: { transition: { staggerChildren: 0.08 } },
@@ -37,53 +34,115 @@ const itemVariants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: 'easeOut' as const } },
 }
 
+/** Fetch a raw tour by id/slug; returns null (not an error) when missing. */
+async function fetchRawTourByIdOrSlug(idOrSlug: string): Promise<any | null> {
+  try {
+    const res = await fetchWithAuth(`/tours/${encodeURIComponent(idOrSlug)}`)
+    if (!res.ok) return null
+    const payload = await res.json().catch(() => ({}))
+    return payload.data?.tour ?? payload.tour ?? payload ?? null
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Resolves the raw tour that carries the supplier block. Prefers the linking
+ * tour's id (passed in router state from the tour-detail supplier section);
+ * on a direct URL visit it scans the active catalog for a supplier-name match.
+ */
+function useSupplierProfile(tourId: string | undefined, name: string) {
+  return useQuery({
+    queryKey: ['supplier', 'profile', tourId || name],
+    enabled: !!(tourId || name),
+    queryFn: async () => {
+      if (tourId) {
+        const tour = await fetchRawTourByIdOrSlug(tourId)
+        if (tour) return tour
+      }
+      if (!name) return null
+      try {
+        const payload: any = await apiFetch('/tours?limit=500')
+        const tours: any[] = Array.isArray(payload.tours) ? payload.tours : []
+        const needle = name.toLowerCase().trim()
+        return tours.find((t) => (t.supplier?.name || '').toLowerCase().trim() === needle) || null
+      } catch {
+        return null
+      }
+    },
+    staleTime: 5 * 60_000,
+  })
+}
+
+/** All active tours belonging to a supplier, fetched by supplier id. */
+function useSupplierTours(supplierId: string | null) {
+  return useQuery({
+    queryKey: ['supplier', 'tours', supplierId],
+    enabled: !!supplierId,
+    queryFn: async (): Promise<TourCardData[]> => {
+      const payload: any = await apiFetch(`/tours?supplierId=${encodeURIComponent(supplierId!)}&limit=100`)
+      const tours: any[] = Array.isArray(payload.tours) ? payload.tours : []
+      return tours.map(mapRawTourToListing)
+    },
+    staleTime: 30_000,
+  })
+}
+
 export default function SupplierPage() {
   const { supplierName } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
   const decodedName = supplierName ? decodeURIComponent(supplierName) : ''
+  const tourId = (location.state as { tourId?: string } | null)?.tourId
 
-  const { data: toursData } = useExpeditionTours({ limit: 50 })
-  const fetchedTours = toursData?.tours || []
+  const { data: rawTour, isLoading: profileLoading } = useSupplierProfile(tourId, decodedName)
+  const supplierData: SupplierProfileData | null = useMemo(
+    () => (rawTour ? mapSupplierProfile({ tour: rawTour }) : null),
+    [rawTour],
+  )
+  const supplierId = supplierData?.supplierId || null
+  const { data: supplierTours = [], isLoading: toursLoading } = useSupplierTours(supplierId)
 
-  const supplierTours = fetchedTours
+  const totalTours = supplierTours.length
+  const profileName = supplierData?.name || decodedName || 'Expedition-Go Tours Ltd'
+  const ratingDisplay = supplierData?.rating != null && !Number.isNaN(Number(supplierData.rating))
+    ? Number(supplierData.rating).toFixed(1)
+    : null
+  const websiteHref = normalizeWebsiteUrl(supplierData?.website)
 
   const [page, setPage] = useState(1)
-  const [activeFeature, setActiveFeature] = useState(0)
-  const featuresRef = useRef<HTMLDivElement>(null)
-
-  const handleFeaturesScroll = useCallback(() => {
-    const el = featuresRef.current
-    if (!el) return
-    const idx = Math.round(el.scrollLeft / el.clientWidth)
-    setActiveFeature(Math.min(idx, FEATURES.length - 1))
-  }, [])
-
-  const scrollToFeature = (index: number) => {
-    featuresRef.current?.children[index]?.scrollIntoView({ behavior: 'smooth', inline: 'start' })
-  }
 
   const startIdx = 0
   const endIdx = page * PAGE_SIZE
   const visibleTours = supplierTours.slice(startIdx, endIdx)
   const hasMore = endIdx < supplierTours.length
 
-  const supplierData = {
-    name: decodedName || 'Expedition-Go Tours Ltd',
-    logo: 'https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?auto=format&fit=crop&w=240&q=80',
-    description: `${decodedName || 'Expedition-Go Tours Ltd'} offers authentic guided experiences across Ghana, showcasing the country's rich culture, history, and natural beauty.`,
-    rating: 4.8,
-    reviewCount: 15,
-    totalTours: supplierTours.length,
-    verified: true,
-    phone: '+233 20 123 4567',
-    email: 'info@expeditiongo.com',
-    website: 'https://expeditiongo.com',
-    address: 'Accra, Ghana',
+  if (profileLoading) {
+    return (
+      <motion.div className="min-h-screen bg-white" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
+        <Navbar />
+        <div className="supplier-page-nav-offset" aria-hidden />
+        <div className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center gap-4 px-4">
+          <p className="text-sm text-slate-500">Loading supplier...</p>
+        </div>
+      </motion.div>
+    )
   }
 
-  const ratingDisplay = supplierData.rating != null
-    ? supplierData.rating.toFixed(1)
-    : null
+  if (!supplierData) {
+    return (
+      <motion.div className="min-h-screen bg-white" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
+        <Navbar />
+        <div className="supplier-page-nav-offset" aria-hidden />
+        <div className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center gap-4 px-4">
+          <p className="text-sm text-slate-500">Supplier not found</p>
+          <Link to="/" className="text-sm font-semibold text-emerald-600 hover:underline">
+            Back to Home
+          </Link>
+        </div>
+      </motion.div>
+    )
+  }
 
   return (
     <motion.div
@@ -125,45 +184,32 @@ export default function SupplierPage() {
           <div className="supplier-header-logo-wrap">
             <div className="supplier-header-logo">
               {supplierData.logo ? (
-                <OptimizedImage src={supplierData.logo} alt={supplierData.name} width={200} />
+                <OptimizedImage src={supplierData.logo} alt={profileName} width={200} />
               ) : (
                 <span className="supplier-header-logo-fallback">
-                  {supplierData.name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()}
+                  {profileName.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()}
                 </span>
               )}
             </div>
-            {supplierData.verified && (
-              <div className="supplier-header-verified">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-              </div>
-            )}
+            <div className="supplier-header-verified">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </div>
           </div>
           <div className="supplier-header-info">
-            <h1 className="supplier-header-name">{supplierData.name}</h1>
+            <h1 className="supplier-header-name">{profileName}</h1>
             <div className="supplier-header-meta">
-              <Star size={22} className="supplier-header-star" fill="#179237" />
-              <span className="supplier-header-rating">{ratingDisplay}</span>
-              <span className="supplier-header-dot">&bull;</span>
-              <span className="supplier-header-tours">{supplierData.totalTours} tours</span>
+              {ratingDisplay && (
+                <>
+                  <Star size={22} className="supplier-header-star" fill="#179237" />
+                  <span className="supplier-header-rating">{ratingDisplay}</span>
+                  <span className="supplier-header-dot">&bull;</span>
+                </>
+              )}
+              <span className="supplier-header-tours">{totalTours} tours</span>
             </div>
           </div>
-        </motion.div>
-
-        {/* Trust Badges */}
-        <motion.div variants={itemVariants} className="supplier-trust-badges">
-          {TRUST_BADGES.map((badge) => (
-            <div key={badge.title} className="supplier-trust-badge">
-              <div className="supplier-trust-badge-icon">
-                <badge.icon size={22} />
-              </div>
-              <div className="supplier-trust-badge-text">
-                <span className="supplier-trust-badge-title">{badge.title}</span>
-                <span className="supplier-trust-badge-desc">{badge.desc}</span>
-              </div>
-            </div>
-          ))}
         </motion.div>
 
         {/* About + Contact — Two Column */}
@@ -172,36 +218,21 @@ export default function SupplierPage() {
           <div className="supplier-about-card">
             <h2 className="supplier-about-heading">About this supplier</h2>
             <div className="supplier-about-description">
-              {supplierData.description.split('\n\n').map((p, i) => (
+              {supplierData.description ? supplierData.description.split('\n\n').map((p, i) => (
                 <p key={i}>{p}</p>
-              ))}
+              )) : <p>{profileName} offers guided experiences.</p>}
             </div>
-            <div
-              ref={featuresRef}
-              className="supplier-features"
-              onScroll={handleFeaturesScroll}
-            >
-              {FEATURES.map((feature) => (
-                <div key={feature.heading} className="supplier-feature">
-                  <div className="supplier-feature-icon">
-                    <feature.icon size={20} />
+            <div className="supplier-about-features">
+              {TRUST_BADGES.map((badge) => (
+                <div key={badge.title} className="supplier-trust-badge">
+                  <div className="supplier-trust-badge-icon">
+                    <badge.icon size={22} />
                   </div>
-                  <div className="supplier-feature-text">
-                    <span className="supplier-feature-heading">{feature.heading}</span>
-                    <span className="supplier-feature-desc">{feature.desc}</span>
+                  <div className="supplier-trust-badge-text">
+                    <span className="supplier-trust-badge-title">{badge.title}</span>
+                    <span className="supplier-trust-badge-desc">{badge.desc}</span>
                   </div>
                 </div>
-              ))}
-            </div>
-            <div className="supplier-features-dots">
-              {FEATURES.map((_, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  className={`supplier-features-dot ${i === activeFeature ? 'active' : ''}`}
-                  onClick={() => scrollToFeature(i)}
-                  aria-label={`Go to feature ${i + 1}`}
-                />
               ))}
             </div>
           </div>
@@ -210,56 +241,70 @@ export default function SupplierPage() {
           <div className="supplier-contact-card">
             <h3 className="supplier-contact-heading">Contact Information</h3>
             <div className="supplier-contact-list">
-              <div className="supplier-contact-row">
-                <div className="supplier-contact-icon-wrap">
-                  <Phone size={16} />
+              {supplierData.phone && (
+                <>
+                  <div className="supplier-contact-row">
+                    <div className="supplier-contact-icon-wrap">
+                      <Phone size={16} />
+                    </div>
+                    <div className="supplier-contact-detail">
+                      <span className="supplier-contact-label">Phone</span>
+                      <a href={`tel:${supplierData.phone.replace(/\s/g, '')}`} className="supplier-contact-value">
+                        {supplierData.phone}
+                      </a>
+                    </div>
+                  </div>
+                  <div className="supplier-contact-divider" />
+                </>
+              )}
+              {supplierData.email && (
+                <>
+                  <div className="supplier-contact-row">
+                    <div className="supplier-contact-icon-wrap">
+                      <Mail size={16} />
+                    </div>
+                    <div className="supplier-contact-detail">
+                      <span className="supplier-contact-label">Email</span>
+                      <a href={`mailto:${supplierData.email}`} className="supplier-contact-value">
+                        {supplierData.email}
+                      </a>
+                    </div>
+                  </div>
+                  <div className="supplier-contact-divider" />
+                </>
+              )}
+              {websiteHref && (
+                <>
+                  <div className="supplier-contact-row">
+                    <div className="supplier-contact-icon-wrap">
+                      <Globe size={16} />
+                    </div>
+                    <div className="supplier-contact-detail">
+                      <span className="supplier-contact-label">Website</span>
+                      <a
+                        href={websiteHref}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="supplier-contact-value"
+                      >
+                        {supplierData.website}
+                      </a>
+                    </div>
+                  </div>
+                  <div className="supplier-contact-divider" />
+                </>
+              )}
+              {supplierData.address && (
+                <div className="supplier-contact-row">
+                  <div className="supplier-contact-icon-wrap">
+                    <MapPin size={16} />
+                  </div>
+                  <div className="supplier-contact-detail">
+                    <span className="supplier-contact-label">Location</span>
+                    <span className="supplier-contact-value">{supplierData.address}</span>
+                  </div>
                 </div>
-                <div className="supplier-contact-detail">
-                  <span className="supplier-contact-label">Phone</span>
-                  <a href={`tel:${supplierData.phone.replace(/\s/g, '')}`} className="supplier-contact-value">
-                    {supplierData.phone}
-                  </a>
-                </div>
-              </div>
-              <div className="supplier-contact-divider" />
-              <div className="supplier-contact-row">
-                <div className="supplier-contact-icon-wrap">
-                  <Mail size={16} />
-                </div>
-                <div className="supplier-contact-detail">
-                  <span className="supplier-contact-label">Email</span>
-                  <a href={`mailto:${supplierData.email}`} className="supplier-contact-value">
-                    {supplierData.email}
-                  </a>
-                </div>
-              </div>
-              <div className="supplier-contact-divider" />
-              <div className="supplier-contact-row">
-                <div className="supplier-contact-icon-wrap">
-                  <Globe size={16} />
-                </div>
-                <div className="supplier-contact-detail">
-                  <span className="supplier-contact-label">Website</span>
-                  <a
-                    href={supplierData.website.startsWith('http') ? supplierData.website : `https://${supplierData.website}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="supplier-contact-value"
-                  >
-                    {supplierData.website}
-                  </a>
-                </div>
-              </div>
-              <div className="supplier-contact-divider" />
-              <div className="supplier-contact-row">
-                <div className="supplier-contact-icon-wrap">
-                  <MapPin size={16} />
-                </div>
-                <div className="supplier-contact-detail">
-                  <span className="supplier-contact-label">Location</span>
-                  <span className="supplier-contact-value">{supplierData.address}</span>
-                </div>
-              </div>
+              )}
             </div>
           </div>
         </motion.div>
@@ -269,7 +314,7 @@ export default function SupplierPage() {
           <div className="supplier-tours-header">
             <h2 className="supplier-tours-heading">
               All tours by this supplier
-              <span className="supplier-tours-count">({supplierData.totalTours} tours)</span>
+              <span className="supplier-tours-count">({totalTours} tours)</span>
             </h2>
             <div className="supplier-tours-sort">
               <span className="supplier-tours-sort-label">Sort by:</span>
@@ -278,8 +323,12 @@ export default function SupplierPage() {
             </div>
           </div>
 
+          {toursLoading && totalTours === 0 && (
+            <p className="mt-4 text-sm text-slate-400">Loading tours...</p>
+          )}
+
           <div className="supplier-tours-grid">
-            {visibleTours.map((tour: any, i: number) => (
+            {visibleTours.map((tour, i) => (
               <TourCard key={`${tour.title}-${i}`} {...tour} />
             ))}
           </div>
@@ -291,7 +340,7 @@ export default function SupplierPage() {
                 onClick={() => setPage((p) => p + 1)}
                 className="supplier-tours-view-all"
               >
-                View all {supplierData.totalTours} tours
+                View all {totalTours} tours
                 <ChevronDown size={16} style={{ transform: 'rotate(-90deg)' }} />
               </button>
             </div>

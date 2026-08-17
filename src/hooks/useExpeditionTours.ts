@@ -617,9 +617,16 @@ function ticketValidityLabel(option: { validityType?: string | null; validity?: 
   if (!option) return null
   const v = option.validityType
   if (v === 'open_ended') return 'Valid anytime'
-  if (v === 'from_activation') return `Valid ${option.validity || 1} ${option.validityUnit || 'days'} from first use`
-  if (v === 'period') return `Valid ${option.validity || 1} ${option.validityUnit || 'days'} from booking`
   if (v === 'date_picked') return 'Valid on selected date'
+  if (v === 'from_activation' || v === 'period') {
+    const count = option.validity && Number(option.validity) > 0 ? Number(option.validity) : 1
+    const unit = (option.validityUnit || 'days').trim().toLowerCase()
+    const unitLabel = count === 1
+      ? (unit.replace(/s$/, '') || 'day')
+      : (/s$/.test(unit) ? unit : `${unit}s`)
+    const suffix = v === 'from_activation' ? 'from first use' : 'from booking'
+    return `Valid ${count} ${unitLabel} ${suffix}`
+  }
   return null
 }
 
@@ -1176,6 +1183,53 @@ export function useExpeditionFeaturedTours() {
   })
 }
 
+export interface SupplierProfileBlock {
+  id: string | null
+  name: string | null
+  photoURL: string | null
+  logoUrl: string | null
+  email?: string | null
+  phone?: string | null
+  website?: string | null
+  supplierProfile?: {
+    averageRating?: number | null
+    totalBookings?: number | null
+    businessInfo?: Record<string, unknown> | null
+    operatingInfo?: Record<string, unknown> | null
+    representativeInfo?: Record<string, unknown> | null
+  } | null
+}
+
+/**
+ * Carries the tour's full supplier block (id, name, photo, businessInfo —
+ * phone/website/address) through to the detail page so the "About this
+ * supplier" card and supplier page can render real data without an extra
+ * request. Sourced from the raw /tours/:id payload's `supplier` object.
+ */
+function extractSupplierProfile(rawTour: any): SupplierProfileBlock | undefined {
+  const sup = rawTour?.supplier
+  if (!sup) return undefined
+  const sp = typeof sup.supplierProfile === 'string'
+    ? (() => { try { return JSON.parse(sup.supplierProfile) } catch { return null } })()
+    : sup.supplierProfile
+  return {
+    id: sup.id ?? null,
+    name: sup.name ?? null,
+    photoURL: sup.photoURL ?? null,
+    logoUrl: sup.logoUrl ?? null,
+    email: sup.email ?? null,
+    phone: sup.phone ?? null,
+    website: sup.website ?? null,
+    supplierProfile: sp ? {
+      averageRating: sp.averageRating != null ? Number(sp.averageRating) : null,
+      totalBookings: sp.totalBookings ?? null,
+      businessInfo: sp.businessInfo ?? null,
+      operatingInfo: sp.operatingInfo ?? null,
+      representativeInfo: sp.representativeInfo ?? null,
+    } : undefined,
+  }
+}
+
 export interface TourDetailData extends Omit<TourDetail, 'guide' | 'contact' | 'difficulty'> {
   coverPhoto: string | null
   category: string
@@ -1215,6 +1269,9 @@ export interface TourDetailData extends Omit<TourDetail, 'guide' | 'contact' | '
   dropoffDescription?: string
   supplierName: string
   supplierPhoto: string | null
+  /** Raw supplier block (id, name, photo, businessInfo) for the "About this
+      supplier" card — populated from the raw /tours/:id payload. */
+  supplierProfile?: SupplierProfileBlock
   bookingFlow: 'DIRECT' | 'EXTERNAL'
   externalUrl: string | null
   startingPrice: number | null
@@ -1339,7 +1396,8 @@ function buildTourDetailFromRawTour(rawTour: any): TourDetailData {
     ...extractAvailabilitySchedule(rawTour),
     languages,
     supplierName: rawTour?.supplier?.name || '',
-    supplierPhoto: rawTour?.supplier?.photoURL || null,
+    supplierPhoto: rawTour?.supplier?.logoUrl || rawTour?.supplier?.photoURL || null,
+    supplierProfile: extractSupplierProfile(rawTour),
     bookingFlow: 'DIRECT',
     externalUrl: null,
     groupSize: 15,
@@ -1463,6 +1521,7 @@ export function useExpeditionTour(slug: string | undefined) {
             tour.wifiIncluded = extractWifiIncluded(rawTour)
             tour.isPrivateActivity = extractIsPrivateActivity(rawTour)
             tour.accommodationIncluded = extractAccommodationIncluded(rawTour)
+            tour.supplierProfile = extractSupplierProfile(rawTour)
             // Re-derive the cancellation policy from the raw tour's
             // bookingAndTickets.cancellationPolicy (Step 17 in the supplier
             // builder: "Standard" vs "All sales final") whenever it can be
@@ -1611,6 +1670,7 @@ export function useExpeditionTour(slug: string | undefined) {
         languages: Array.isArray(tour.languages) ? tour.languages : [],
         supplierName: tour.supplierName || '',
         supplierPhoto: tour.supplierPhoto || null,
+        supplierProfile: tour.supplierProfile || undefined,
         bookingFlow: 'DIRECT',
         externalUrl: null,
         groupSize: 15,
@@ -1642,7 +1702,12 @@ export function useExpeditionTour(slug: string | undefined) {
 }
 
 export function mapRawTourToListing(t: any): TourCardData {
-  const location = [t.city, t.country].filter(Boolean).join(', ')
+  // The listing's city/country columns can be null (the real values live in
+  // productContent.locations) — backfill them so cards like the supplier page's
+  // "tours by this supplier" always show a location.
+  const city = t.city || extractCityFromTour(t)
+  const country = t.country || extractCountryFromTour(t)
+  const location = [city, country].filter(Boolean).join(', ')
   const price = extractStartingPriceFromRaw(t.schedulesAndPricing)
   const durationMinutes = t.durationMinutes ?? extractDurationFromTour(t)
   // Cards show only the single Step 1 content language, not every

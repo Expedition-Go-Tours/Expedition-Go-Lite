@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import {
   CalendarCheck, Clock, UserCheck, Bus, Gauge,
   Globe, Utensils, CupSoda, PawPrint, Accessibility, User,
-  Wifi, Users, BedDouble,
+  Wifi, Users, BedDouble, Heart, Upload,
 } from 'lucide-react'
 import Footer from '../../components/Footer'
 import { useContinuePlanning, toContinuePlanningItem } from '../../context/ContinuePlanningContext'
@@ -14,6 +14,8 @@ import { useTranslation } from 'react-i18next'
 import { useExpeditionTour, useSimilarTours } from '../../hooks/useExpeditionTours'
 import { useExpeditionTourReviews, useCreateReview } from '../../hooks/useExpeditionReviews'
 import { useTourAvailability, useReviewableBookingForTour } from '../../hooks/useExpeditionBookings'
+import { freeCancellationDateLabel } from '../../lib/cancellationLabel'
+import { mapSupplierProfile } from '../../lib/supplierProfile'
 import type { Tour } from '../../components/data'
 import type { DayAvailability, DayAvailabilityInfo } from '../../lib/tourAvailability'
 
@@ -230,10 +232,11 @@ export default function TourDetailPage() {
   const [reviewDetail, setReviewDetail] = useState<{ name: string; date: string; rating: number; text: string } | null>(null)
   const [isWriteReviewOpen, setIsWriteReviewOpen] = useState(false)
   const [reviewStarFilter, setReviewStarFilter] = useState<number | null>(null)
-  const [supplierInfoOpen, setSupplierInfoOpen] = useState(false)
+  const [supplierInfoOpen, setSupplierInfoOpen] = useState(true)
   const [hasMoreReviews, setHasMoreReviews] = useState(false)
   const [loadingMoreReviews, setLoadingMoreReviews] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
+  const [widgetSelectedDate, setWidgetSelectedDate] = useState<Date | null>(null)
 
   const createReview = useCreateReview()
 
@@ -445,7 +448,12 @@ export default function TourDetailPage() {
 
     // Cancellation policy is dynamic per tour (bookingAndTickets.cancellationPolicy).
     // Supplier choices: "Standard" (free cancellation) vs "All sales final" (non-refundable).
-    const cancellationLabel = tour?.cancellationPolicy || t('tourDetail.cancellationDefault')
+    // Once the traveller picks a date in the booking widget, windowed free-cancellation
+    // policies render with the concrete cutoff date (e.g. "before Aug 21st (local time)").
+    const cancellationLabel = freeCancellationDateLabel(
+      tour?.cancellationPolicy || t('tourDetail.cancellationDefault'),
+      widgetSelectedDate ? widgetSelectedDate.toISOString().slice(0, 10) : '',
+    )
     const isNonRefundableCancellation = /non[- ]?refundable|no refunds?|all sales final/i.test(cancellationLabel)
 
     // Food & drinks: build a descriptive label from meals / dietary options
@@ -705,7 +713,7 @@ export default function TourDetailPage() {
         : []),
     ]
   }, [
-    t, tour, difficultyColorMap,
+    t, tour, difficultyColorMap, widgetSelectedDate,
   ])
 
   // Short teaser shown right after the gallery (GetYourGuide-style), no heading.
@@ -762,17 +770,29 @@ export default function TourDetailPage() {
     },
   ], [t, cancellationPolicy, tour])
 
-  const supplierData = useMemo(() => ({
-    name: tour?.supplierName || 'Expedition-Go Tours Ltd',
-    logo: tour?.supplierPhoto || '',
-    description: `${tour?.supplierName || 'This supplier'} offers authentic guided experiences.`,
-    rating: tour?.rating || null,
-    totalTours: relatedTours.length,
-    phone: '',
-    email: '',
-    website: '',
-    address: tour?.location || '',
-  }), [tour, relatedTours])
+  const supplierData = useMemo(() => {
+    const mapped = mapSupplierProfile({
+      supplier: tour?.supplierProfile,
+      fallback: {
+        name: tour?.supplierName || 'Expedition-Go Tours Ltd',
+        logo: tour?.supplierPhoto || '',
+        description: tour?.supplierName ? `${tour.supplierName} offers authentic guided experiences.` : null,
+        rating: tour?.rating,
+        toursCount: relatedTours.length,
+      },
+    })
+    return {
+      name: mapped.name || tour?.supplierName || 'Expedition-Go Tours Ltd',
+      logo: mapped.logo || tour?.supplierPhoto || '',
+      description: mapped.description || (tour?.supplierName ? `${tour.supplierName} offers authentic guided experiences.` : ''),
+      rating: mapped.rating ?? (tour?.rating ?? null),
+      totalTours: relatedTours.length,
+      phone: mapped.phone || '',
+      email: mapped.email || '',
+      website: mapped.website || '',
+      address: mapped.address || tour?.location || '',
+    }
+  }, [tour, relatedTours])
 
   const supplierTours = useMemo(() => relatedTours.map((t) => ({
     title: t.title,
@@ -824,25 +844,43 @@ export default function TourDetailPage() {
   return (
     <TourDetailErrorBoundary>
     <>
-      <StickyNavHeader show={showStickyTitle} title={selectedTourTitle} />
+      <StickyNavHeader show={showStickyTitle} title={selectedTourTitle} onWriteReview={handleWriteReview} />
       <div className="tour-detail-page">
         <div className="tour-detail-container">
           <div className="tour-detail-header-row">
             <TourHeader
               title={selectedTourTitle}
-              rating={selectedTourRating}
               reviewCount={selectedTourReviews}
               location={tour.location}
               supplierName={tour.supplierName}
               onReviewsClick={handleReviewsTab}
             />
-            <button
-              type="button"
-              onClick={handleWriteReview}
-              className="tour-detail-write-review-btn"
-            >
-              {t('reviews.writeAReview')}
-            </button>
+            <div className="tour-detail-header-actions">
+              <button
+                type="button"
+                onClick={() => handleWishlistToggle(true)}
+                className="tour-detail-action-btn tour-detail-wishlist-btn"
+                aria-label={isFavorited ? t('common.removeFromWishlist') : t('common.addToWishlist')}
+                aria-pressed={isFavorited}
+              >
+                <Heart size={20} className={isFavorited ? 'wishlist-active' : ''} />
+              </button>
+              <button
+                type="button"
+                onClick={handleShare}
+                className="tour-detail-action-btn"
+                aria-label={t('common.share', { defaultValue: 'Share' })}
+              >
+                <Upload size={20} />
+              </button>
+              <button
+                type="button"
+                onClick={handleWriteReview}
+                className="tour-detail-write-review-btn"
+              >
+                {t('reviews.writeAReview')}
+              </button>
+            </div>
           </div>
 
           <div className="tour-detail-content">
@@ -851,9 +889,6 @@ export default function TourDetailPage() {
                 images={mergedImages}
                 title={selectedTourTitle}
                 fallbackImage={mergedImages[0]}
-                isFavorited={isFavorited}
-                onWishlistToggle={() => handleWishlistToggle(true)}
-                onShare={handleShare}
               />
             </div>
 
@@ -894,6 +929,7 @@ export default function TourDetailPage() {
                   }}
                   availabilityLoading={availabilityLoading}
                   onMonthChange={handleAvailabilityMonthChange}
+                  onSelectedDateChange={setWidgetSelectedDate}
                 />
               )}
             </aside>
@@ -992,6 +1028,7 @@ export default function TourDetailPage() {
                       website={supplierData.website}
                       address={supplierData.address}
                       tours={supplierTours}
+                      tourId={tour?.id}
                       infoOpen={supplierInfoOpen}
                       onToggleInfo={() => setSupplierInfoOpen((v) => !v)}
                       onOpenInfo={() => setSupplierInfoOpen(true)}

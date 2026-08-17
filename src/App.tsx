@@ -20,6 +20,7 @@ import TopRatedSection from './components/TopRatedSection'
 import SellOutSection from './components/SellOutSection'
 import LastMinuteDealsSection from './components/LastMinuteDealsSection'
 import NewExperiencesSection from './components/NewExperiencesSection'
+import TopAttractionsNearbySection from './components/TopAttractionsNearbySection'
 import CustomReviewsSection from './components/CustomReviewsSection'
 import PartnersSection from './components/PartnersSection'
 import WhyBookSection from './components/WhyBookSection'
@@ -53,9 +54,10 @@ function HomePage() {
       <MountOnView><SellOutSection /></MountOnView>
       <MountOnView><LastMinuteDealsSection /></MountOnView>
       <MountOnView><NewExperiencesSection /></MountOnView>
+      <MountOnView><TopAttractionsNearbySection /></MountOnView>
       <MountOnView><CustomReviewsSection /></MountOnView>
-      <MountOnView><PartnersSection /></MountOnView>
       <MountOnView><WhyBookSection /></MountOnView>
+      <MountOnView><PartnersSection /></MountOnView>
       <MountOnView><TravelStoriesSection /></MountOnView>
       <MountOnView><NewsletterSection /></MountOnView>
       <Footer />
@@ -115,6 +117,18 @@ function AppContent() {
   }
   const handleGoHome = () => setCurrentPage('home')
   const location = useLocation()
+
+  // Land at the top of the page on every route change (e.g. clicking a supplier
+  // link deep in a tour page shouldn't drop you mid-way down the next page).
+  useEffect(() => {
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual'
+    }
+  }, [])
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [location.pathname])
+
   const hideNav = currentPage === 'signin' || currentPage === 'signup' || location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/booking') || location.pathname.startsWith('/supplier/register') || location.pathname.startsWith('/supplier/list-experience') || location.pathname.startsWith('/login')
 
   return (

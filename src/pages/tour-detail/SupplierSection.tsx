@@ -33,6 +33,9 @@ interface SupplierSectionProps {
   website?: string
   address?: string
   tours: SupplierTour[]
+  /** Id of the tour this section is rendered on — passed to the supplier page
+      so it can resolve the real supplier profile without a name-only lookup. */
+  tourId?: string
   onOpenInfo: () => void
   infoOpen: boolean
   onToggleInfo: () => void
@@ -53,6 +56,7 @@ export default function SupplierSection({
   website,
   address,
   tours,
+  tourId,
   infoOpen,
   onToggleInfo,
 }: SupplierSectionProps) {
@@ -157,7 +161,7 @@ export default function SupplierSection({
             </button>
             <button
               type="button"
-              onClick={() => navigate(`/supplier/${encodeURIComponent(name)}`)}
+              onClick={() => navigate(`/supplier/${encodeURIComponent(name)}`, { state: { tourId } })}
               className="supplier-view-more"
             >
               {t('supplier.viewMore')}

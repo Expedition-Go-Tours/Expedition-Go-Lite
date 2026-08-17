@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from 'react'
-import { ChevronLeft, ChevronRight, Image, Upload, Heart, ArrowLeft } from 'lucide-react'
+import { ChevronLeft, ChevronRight, ArrowLeft, Images } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import PhotoViewerModal from './PhotoViewerModal'
 import GalleryDialog from './GalleryDialog'
@@ -10,9 +10,6 @@ interface TourImageGalleryProps {
   images: string[]
   title: string
   fallbackImage?: string
-  isFavorited?: boolean
-  onWishlistToggle?: () => void
-  onShare?: () => void
   showStickyHeader?: boolean
 }
 
@@ -20,9 +17,6 @@ export default function TourImageGallery({
   images,
   title,
   fallbackImage,
-  isFavorited,
-  onWishlistToggle,
-  onShare,
   showStickyHeader,
 }: TourImageGalleryProps) {
   const navigate = useNavigate()
@@ -102,30 +96,6 @@ export default function TourImageGallery({
             </button>
           </div>
 
-          {/* Overlay action buttons */}
-          <div className="tour-gallery-overlay-top-right">
-            <button
-              type="button"
-              onClick={onShare}
-              className="tour-gallery-overlay-btn"
-              aria-label="Share"
-            >
-              <Upload size={20} />
-            </button>
-            <button
-              type="button"
-              onClick={onWishlistToggle}
-              className="tour-gallery-overlay-btn tour-gallery-wishlist-btn"
-              aria-label={isFavorited ? 'Remove from wishlist' : 'Add to wishlist'}
-              aria-pressed={isFavorited}
-            >
-              <Heart
-                size={24}
-                className={isFavorited ? 'wishlist-active' : ''}
-              />
-            </button>
-          </div>
-
           {/* Nav arrows */}
           <button
             type="button"
@@ -192,8 +162,8 @@ export default function TourImageGallery({
               width={200}
             />
             <span className="tour-gallery-count-overlay">
-              <Image size={14} />
-              <span>{images.length}</span>
+              <Images size={28} strokeWidth={2} />
+              <span>{images.length}+</span>
             </span>
           </button>
         </div>

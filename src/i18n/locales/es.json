@@ -54,9 +54,12 @@
     "loading": "Cargando...",
     "addedToWishlist": "Añadido a favoritos",
     "removedFromWishlist": "Eliminado de favoritos",
+    "addToWishlist": "Añadir a favoritos",
+    "removeFromWishlist": "Eliminar de favoritos",
     "you": "Tú",
     "optional": "Opcional",
-    "submitting": "Enviando..."
+    "submitting": "Enviando...",
+    "viewDetails": "Ver detalles"
   },
   "destinations": {
     "allRegions": "Todas las regiones",
@@ -183,6 +186,8 @@
   },
   "sections": {
     "allToursTitle": "Tours",
+    "attractionsBadge": "Atracciones",
+    "attractionsShowingAll": "Mostrando todas las atracciones (ubicación no disponible)",
     "continuePlanning": "Continuar Planificando",
     "dayTours": "Tours de Día",
     "destinations": "Destinos populares",
@@ -195,6 +200,7 @@
     "recommendedTitle": "Recomendado para Ti",
     "reviews": "Reseñas",
     "topRatedTitle": "Tours Mejor Valorados",
+    "topAttractionsNearby": "Atracciones Cercanas",
     "travelStories": "Historias y Noticias de Viajes",
     "viewAll": "Ver Todos",
     "toursIn": "Tours en {{location}}"
@@ -328,7 +334,7 @@
     "contactForAccessibility": "Comunícate con el operador para obtener información sobre accesibilidad.",
     "defaultLocation": "Acra, Ghana",
     "destination": "Destino",
-    "destinationHost": "Anfitrión del destino",
+    "destinationHost": "Anfitrión de la experiencia",
     "details": "Detalles",
     "admissionTicketIncluded": "Entrada incluida",
     "admissionPaySeparately": "Pagar por separado",

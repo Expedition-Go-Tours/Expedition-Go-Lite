@@ -36,6 +36,7 @@ import {
   formatTime12h,
   type TourScheduleInfo,
 } from '../lib/tourAvailability'
+import { freeCancellationDateLabel } from '../lib/cancellationLabel'
 
 /* ─── Tour data from location state ─── */
 
@@ -149,6 +150,36 @@ function scheduleTimeLabel(tour: typeof FALLBACK_TOUR): string {
     return 'Flexible time'
   }
   return tour.time || '9:00 AM'
+}
+
+const DAY_MONTH_YEAR_MONTHS = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+]
+
+// Day-Month-Year label for the summary card's Date row, e.g.
+// "2026-08-20" → "20 Aug 2026". Returns null for empty/invalid input.
+function formatDayMonthYear(dateISO: string): string | null {
+  if (!dateISO) return null
+  const date = new Date(`${dateISO}T12:00:00`)
+  if (Number.isNaN(date.getTime())) return null
+  return `${date.getDate()} ${DAY_MONTH_YEAR_MONTHS[date.getMonth()]} ${date.getFullYear()}`
+}
+
+// Guards against stale persisted/cached validity labels (e.g. an old booking
+// draft storing "Valid 1 days from booking") by re-pluralizing the unit to
+// match the count ("Valid 1 day from booking").
+function normalizeTicketValidity(label?: string): string {
+  if (!label) return ''
+  return label.replace(
+    /\b(\d+)\s+(days?|weeks?|months?)\b/gi,
+    (full, n: string, unit: string) => {
+      void full
+      const count = parseInt(n, 10)
+      const base = unit.replace(/s$/i, '')
+      return `${n} ${count === 1 ? base : `${base}s`}`
+    },
+  )
 }
 
 /* ─── Page entrance variants ─── */
@@ -296,7 +327,12 @@ function referenceStartLabel(value?: string): string {
 // Drop-off is appended when the supplier configured one.
 // `embedded` renders it as a sub-section (no outer card border/background) so
 // it can sit inside the tour summary card without a nested box.
-function MeetingPickupCard({ tour, embedded = false }: { tour: typeof FALLBACK_TOUR; embedded?: boolean }) {
+function MeetingPickupCard({ tour, embedded = false, onOpenMap }: {
+  tour: typeof FALLBACK_TOUR
+  embedded?: boolean
+  /** Opens the map modal (a pin per pickup spot). */
+  onOpenMap?: () => void
+}) {
   const mode = tour.meetingMode
 
   const arrivalLabel = () => {
@@ -366,10 +402,18 @@ function MeetingPickupCard({ tour, embedded = false }: { tour: typeof FALLBACK_T
         {mode === 'pickup' && hasPickup && (
           <div className="space-y-2">
             {pickupAreas.length + pickupLocations.length > 0 && (
-              <p className="flex items-center gap-2 font-semibold text-slate-700">
-                <Car className="size-3.5 text-emerald-600" />
-                Pickup locations ({pickupAreas.length + pickupLocations.length})
-              </p>
+              <button
+                type="button"
+                onClick={onOpenMap}
+                className="flex w-full items-center gap-2 font-semibold text-slate-700 transition-colors hover:text-emerald-700"
+              >
+                <Car className="size-3.5 shrink-0 text-emerald-600" />
+                <span>Pickup locations ({pickupAreas.length + pickupLocations.length})</span>
+                <span className="ml-auto inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 underline underline-offset-2">
+                  Show on map
+                  <MapPin className="size-3.5" />
+                </span>
+              </button>
             )}
             {tour.pickupDescription && (
               <div className="space-y-1">
@@ -594,6 +638,7 @@ function LocationMap({
 
   // MapLibre: build once, live-update overlays on selection changes.
   useEffect(() => {
+    console.log('[locmap] effect run', { mapFailed, hasMapData, hasRef: !!containerRef.current })
     if (mapFailed || !hasMapData || !containerRef.current) return
     if (mapRef.current) return
 
@@ -614,34 +659,40 @@ function LocationMap({
     map.addControl(new MapLibreNavigationControl({ showCompass: false }), 'top-right')
 
     map.on('load', () => {
+      console.log('[locmap] load fired', { hasMapRef: !!mapRef.current })
       if (!mapRef.current) return
       if (mapFailTimerRef.current != null) {
         window.clearTimeout(mapFailTimerRef.current)
         mapFailTimerRef.current = null
       }
-      map.addSource('gz-zones', { type: 'geojson', data: polyListToFeatureCollection(zones.map((z) => z.polygon)) })
-      map.addLayer({ id: 'gz-zones-fill', type: 'fill', source: 'gz-zones', paint: { 'fill-color': ZONE_FILL } })
-      map.addLayer({ id: 'gz-zones-line', type: 'line', source: 'gz-zones', paint: { 'line-color': ZONE_LINE, 'line-width': 2 } })
+      try {
+        map.addSource('gz-zones', { type: 'geojson', data: polyListToFeatureCollection(zones.map((z) => z.polygon)) })
+        map.addLayer({ id: 'gz-zones-fill', type: 'fill', source: 'gz-zones', paint: { 'fill-color': ZONE_FILL } })
+        map.addLayer({ id: 'gz-zones-line', type: 'line', source: 'gz-zones', paint: { 'line-color': ZONE_LINE, 'line-width': 2 } })
 
-      map.addSource('gz-excl', { type: 'geojson', data: polyListToFeatureCollection(exclusions) })
-      map.addLayer({ id: 'gz-excl-fill', type: 'fill', source: 'gz-excl', paint: { 'fill-color': EXCL_FILL } })
-      map.addLayer({
-        id: 'gz-excl-line',
-        type: 'line',
-        source: 'gz-excl',
-        paint: { 'line-color': EXCL_LINE, 'line-width': 2, 'line-dasharray': [2, 1] },
-      })
+        map.addSource('gz-excl', { type: 'geojson', data: polyListToFeatureCollection(exclusions) })
+        map.addLayer({ id: 'gz-excl-fill', type: 'fill', source: 'gz-excl', paint: { 'fill-color': EXCL_FILL } })
+        map.addLayer({
+          id: 'gz-excl-line',
+          type: 'line',
+          source: 'gz-excl',
+          paint: { 'line-color': EXCL_LINE, 'line-width': 2, 'line-dasharray': [2, 1] },
+        })
 
-      const bounds = new MapLibreLngLatBounds()
-      for (const z of zones) for (const [lat, lng] of z.polygon) bounds.extend([lng, lat])
-      for (const e of exclusions) for (const [lat, lng] of e) bounds.extend([lng, lat])
-      for (const m of [...tourMarkers, ...(userPoint ? [userPoint] : [])]) bounds.extend([m.lng, m.lat])
-      if (!bounds.isEmpty()) {
-        map.fitBounds(bounds, { padding: 50, maxZoom: 15, duration: 0 })
+        const bounds = new MapLibreLngLatBounds()
+        for (const z of zones) for (const [lat, lng] of z.polygon) bounds.extend([lng, lat])
+        for (const e of exclusions) for (const [lat, lng] of e) bounds.extend([lng, lat])
+        for (const m of [...tourMarkers, ...(userPoint ? [userPoint] : [])]) bounds.extend([m.lng, m.lat])
+        if (!bounds.isEmpty()) {
+          map.fitBounds(bounds, { padding: 50, maxZoom: 15, duration: 0 })
+        }
+
+        mapReadyRef.current = true
+        setMapReady(true)
+        console.log('[locmap] READY')
+      } catch (e) {
+        console.log('[locmap] load handler error', (e as Error).message)
       }
-
-      mapReadyRef.current = true
-      setMapReady(true)
     })
 
     // Base tiles can 404 occasionally (overlays still render over the blank
@@ -670,6 +721,21 @@ function LocationMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapFailed, hasMapData])
 
+  // Keep the map sized when its container changes — e.g. when the map opens
+  // inside the pickup-locations modal (or after entrance animations). Mirrors
+  // the supplier platform's PickupGeoshapePreview resize handling so tiles and
+  // pins always render instead of showing a blank box.
+  useEffect(() => {
+    const el = containerRef.current
+    const map = mapRef.current
+    if (!el || !map || !mapReady) return undefined
+    const resize = () => map.resize()
+    resize()
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(resize) : null
+    ro?.observe(el)
+    return () => ro?.disconnect()
+  }, [mapReady])
+
   // Live-update the overlays as the traveller picks a location.
   useEffect(() => {
     const map = mapRef.current
@@ -684,10 +750,17 @@ function LocationMap({
       exclSource.setData(polyListToFeatureCollection(exclusions))
     }
 
-    // Refresh the traveller's blue pin (draggable — repositioning updates
-    // the live zone verdict, mirroring the GetYourGuide pickup map).
+    // Refresh all pins — a green pin per supplier pickup spot (areas/locations),
+    // plus the traveller's draggable blue pin.
     markersRef.current.forEach((m) => m.remove())
     markersRef.current = []
+    for (const p of tourMarkers) {
+      const el = document.createElement('div')
+      el.style.cssText = 'filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.3)); cursor: default;'
+      el.innerHTML = `<svg width="26" height="34" viewBox="0 0 26 34" xmlns="http://www.w3.org/2000/svg"><path d="M13 0C5.8 0 0 5.8 0 13c0 9.75 13 21 13 21s13-11.25 13-21C26 5.8 20.2 0 13 0z" fill="#179237"/><circle cx="13" cy="13" r="5" fill="#fff"/></svg>`
+      const marker = new MapLibreMarker({ element: el, anchor: 'bottom' })
+      markersRef.current.push(marker.setLngLat([p.lng, p.lat]).addTo(map))
+    }
     if (userPoint) {
       const el = document.createElement('div')
       el.style.cssText = 'filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.3)); cursor: grab;'
@@ -699,7 +772,7 @@ function LocationMap({
       })
       markersRef.current.push(marker.setLngLat([userPoint.lng, userPoint.lat]).addTo(map))
     }
-  }, [zones, exclusions, userPoint, mapReady, hasMapData])
+  }, [zones, exclusions, tourMarkers, userPoint, mapReady, hasMapData])
 
   // Legacy name/address-only config: OSM embed, located by the address text.
   const markers = useMemo(() => [...tourMarkers, ...(userPoint ? [userPoint] : [])], [tourMarkers, userPoint])
@@ -765,10 +838,14 @@ function LocationMap({
 
   return (
     <div className="p-3">
-      <div className="relative h-[220px] w-full overflow-hidden rounded-lg border border-slate-200/40">
+      <div className="relative overflow-hidden rounded-lg border border-slate-200/40">
         {hasMapData && !mapFailed ? (
           <>
-            <div ref={containerRef} className="absolute inset-0 z-0" />
+            {/* MapLibre adds `position: relative` to the container via its own
+                stylesheet, which would override Tailwind's `absolute` and collapse
+                `absolute inset-0` to 0 height. Use an explicit-height block instead
+                (same pattern as the supplier platform's map previews). */}
+            <div ref={containerRef} className="h-[400px] w-full" />
             {mapReady && (
               <div className="absolute left-2 top-2 z-10 flex flex-col gap-1.5 rounded-lg bg-white/90 px-2.5 py-2 text-[10px] font-medium text-slate-700 shadow-sm backdrop-blur-sm">
                 <span className="flex items-center gap-1.5">
@@ -1053,11 +1130,17 @@ function ActivityDetailsStep({
     }
   }
 
+  // The pickup-locations map lives in a modal; the "Pickup locations (N)" link
+  // opens it (a pin per pickup spot) via the MapLibre LocationMap below.
+  const [showMapModal, setShowMapModal] = useState(false)
+  const handleOpenMap = () => setShowMapModal(true)
+  const handleCloseMap = () => setShowMapModal(false)
+
   const meetingSummaryCard = (
     <div className="overflow-hidden rounded-xl border border-slate-200/40 bg-slate-50/30">
       {/* Meeting & pickup — embedded so the summary card carries the start/end
           details; the timing/hours are already shown in the date row above. */}
-      <MeetingPickupCard tour={tour} embedded />
+      <MeetingPickupCard tour={tour} embedded onOpenMap={handleOpenMap} />
     </div>
   )
 
@@ -1075,9 +1158,13 @@ function ActivityDetailsStep({
     />
   )
 
+  const pickupSpotCount = (Array.isArray(tour.pickupAreas) ? tour.pickupAreas.filter((a) => a && (a.name || a.address)).length : 0)
+    + (Array.isArray(tour.pickupLocations) ? tour.pickupLocations.filter((l) => l && (l.name || l.address)).length : 0)
+
   const pickupPhoto = <MeetingPointPhoto src={tour.meetingPointPicture} />
 
   return (
+    <>
     <StepCard id="booking-step-2">
       <div className="border-b border-slate-100/60 px-7 py-6 sm:px-9">
         <button
@@ -1258,7 +1345,6 @@ function ActivityDetailsStep({
               </div>
             )}
 
-            {locationMap}
             {pickupPhoto}
 
             <div className="flex items-center gap-2.5 rounded-xl border border-slate-200/40 bg-slate-50/30 px-4 py-3">
@@ -1303,7 +1389,6 @@ function ActivityDetailsStep({
             className="space-y-3 p-7 sm:p-9"
           >
             {meetingSummaryCard}
-            {locationMap}
             {pickupPhoto}
             {hasError && (
               <p className="pt-1 text-xs font-semibold text-rose-500">There are errors in this step — please review.</p>
@@ -1316,7 +1401,47 @@ function ActivityDetailsStep({
           </motion.div>
         )}
       </AnimatePresence>
-    </StepCard>
+      </StepCard>
+
+      {/* Pickup locations map modal — opens from the "Pickup locations (N)" link. */}
+      <AnimatePresence>
+        {showMapModal && (
+          <motion.div
+            className="fixed inset-0 z-[300] flex items-center justify-center bg-black/70 p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={handleCloseMap}
+          >
+            <motion.div
+              className="w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-xl"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 12 }}
+              transition={{ duration: 0.2 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+                <h3 className="text-base font-bold text-slate-900">
+                  Pickup locations ({pickupSpotCount})
+                </h3>
+                <button
+                  type="button"
+                  onClick={handleCloseMap}
+                  className="grid size-9 place-items-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+                  aria-label="Close map"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+              <div className="p-3">
+                {locationMap}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   )
 }
 
@@ -1430,7 +1555,7 @@ function PaymentDetailsStep({
               <p className="text-2xl font-bold text-slate-900 tracking-tight">${tour.price.toFixed(2)}</p>
               <div className="mt-2 flex items-center justify-center gap-1.5 text-xs text-slate-500">
                 <ShieldCheck className="size-3.5 text-emerald-600" />
-                {tour.cancellation}
+                {freeCancellationDateLabel(tour.cancellation || '', tour.selectedDate || tour.dateISO || '')}
               </div>
             </div>
 
@@ -1537,21 +1662,24 @@ function BookingTourCard({ tour, onChangeClick }: { tour: typeof FALLBACK_TOUR; 
             <span className="text-xs text-slate-400">({tour.reviews})</span>
           </div>
         </div>
-        <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-slate-100 ring-1 ring-slate-200/40">
+        <div className="h-28 w-28 shrink-0 overflow-hidden rounded-xl bg-slate-100 ring-1 ring-slate-200/40">
           <OptimizedImage src={tour.image} alt={tour.title} className="h-full w-full object-cover" width={400} />
         </div>
       </div>
 
       <div className="border-t border-slate-100/60 px-5 py-3 space-y-2">
-        <div className="flex items-start gap-2 text-xs text-slate-400">
+        <div className="flex items-start gap-2 text-xs text-slate-500">
           <MapPin className="mt-0.5 size-3.5 shrink-0 text-emerald-600" />
-          <span className="line-clamp-2">{tour.location || t('tourDetail.defaultLocation')}</span>
+          <p className="text-xs leading-relaxed text-slate-500">
+            <span className="font-semibold text-slate-700">Destination</span>
+            <span className="text-slate-400"> · {tour.location || t('tourDetail.defaultLocation')}</span>
+          </p>
         </div>
         <div className="flex items-center gap-2 text-xs text-slate-500">
           <CalendarDays className="size-3.5 shrink-0 text-emerald-600" />
           <p className="text-xs leading-relaxed text-slate-500">
             <span className="font-semibold text-slate-700">Date</span>
-            <span className="text-slate-400"> · {tour.date}</span>
+            <span className="text-slate-400"> · {formatDayMonthYear(tour.selectedDate || tour.dateISO || '') || tour.date}</span>
           </p>
         </div>
         <div className="flex items-center gap-2 text-xs text-slate-500">
@@ -1601,7 +1729,7 @@ function BookingTourCard({ tour, onChangeClick }: { tour: typeof FALLBACK_TOUR; 
             <Ticket className="size-3.5 shrink-0 text-emerald-600" />
             <p className="text-xs leading-relaxed text-slate-500">
               <span className="font-semibold text-slate-700">Ticket validity</span>
-              <span className="text-slate-400"> · {tour.ticketValidity}</span>
+              <span className="text-slate-400"> · {normalizeTicketValidity(tour.ticketValidity)}</span>
             </p>
           </div>
         )}
@@ -1624,7 +1752,7 @@ function BookingTourCard({ tour, onChangeClick }: { tour: typeof FALLBACK_TOUR; 
           <p className="text-xs leading-relaxed text-slate-500">
             <span className="font-semibold text-slate-700">Cancellation policy</span>
             {' • '}
-            <span>{tour.cancellation}</span>
+            <span>{freeCancellationDateLabel(tour.cancellation || '', tour.selectedDate || tour.dateISO || '')}</span>
           </p>
         </div>
         <div className="flex items-start gap-2">
@@ -2172,21 +2300,29 @@ export default function BookingPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-white">
-      <div className="flex items-center justify-center sm:justify-between px-4 sm:px-6 lg:px-8 pt-5">
+      <div className="relative flex items-center justify-center px-4 pt-5 sm:justify-between sm:px-6 lg:px-8">
+        <motion.button
+          onClick={() => navigate(-1)}
+          whileTap={{ scale: 0.97 }}
+          aria-label="Back"
+          className="absolute left-4 top-1/2 -translate-y-1/2 inline-flex size-10 items-center justify-center rounded-full border border-slate-200/60 bg-white text-slate-400 shadow-sm transition hover:border-emerald-200 hover:text-emerald-600 sm:hidden"
+        >
+          <ArrowLeft className="size-4" />
+        </motion.button>
         <a href="/" className="inline-flex items-center gap-2">
           <img src={logoSrc} alt="Expedition-GO" className="h-[140px] w-auto sm:h-[110px]" />
         </a>
       </div>
 
       <main className="flex-1">
-        <div className="mx-auto max-w-[1200px] px-4 pb-20 pt-5 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-[1200px] px-4 pb-20 pt-1 sm:px-6 lg:px-8">
           <motion.button
             onClick={() => navigate(-1)}
             whileTap={{ scale: 0.97 }}
-            className="mb-6 inline-flex items-center justify-center rounded-full border border-slate-200/60 bg-white text-slate-400 shadow-sm transition hover:border-emerald-200 hover:text-emerald-600 sm:gap-2 sm:px-5 sm:py-2 sm:text-sm sm:font-medium size-10 sm:size-auto"
+            aria-label="Back"
+            className="mb-2 hidden size-10 items-center justify-center rounded-full border border-slate-200/60 bg-white text-slate-400 shadow-sm transition hover:border-emerald-200 hover:text-emerald-600 sm:inline-flex"
           >
-            <ArrowLeft className="size-4 transition group-hover:-translate-x-0.5" />
-            <span className="hidden sm:inline">Back</span>
+            <ArrowLeft className="size-4" />
           </motion.button>
 
           <div className="rounded-[2.5rem] bg-[#f9fafb] p-4 sm:p-6 lg:p-8">

@@ -76,9 +76,12 @@
     "scrollRight": "Scroll right",
     "addedToWishlist": "Added to wishlist",
     "removedFromWishlist": "Removed from wishlist",
+    "addToWishlist": "Add to wishlist",
+    "removeFromWishlist": "Remove from wishlist",
     "you": "You",
     "optional": "Optional",
-    "submitting": "Submitting..."
+    "submitting": "Submitting...",
+    "viewDetails": "View details"
   },
   "destinations": {
     "allRegions": "All Regions",
@@ -207,10 +210,12 @@
   },
   "sections": {
     "allToursTitle": "Tours",
+    "attractionsBadge": "Attractions",
+    "attractionsShowingAll": "Showing all attractions (location unavailable)",
     "continuePlanning": "Continue Planning Your Trip",
     "dayTours": "Day Tours",
     "destinations": "Popular Destinations",
-    "lastMinuteDeals": "Last Minute Deals",
+    "lastMinuteDeals": "Special Offers",
     "newExperiences": "New Experiences",
     "likelyToSellOut": "Likely To Sell Out",
     "multiDayTours": "Multi-Day Tours",
@@ -219,6 +224,7 @@
     "recommendedTitle": "Recommended For You",
     "reviews": "Reviews",
     "topRatedTitle": "Top Rated Tours",
+    "topAttractionsNearby": "Top Attractions Nearby",
     "travelStories": "Travel Stories & News",
     "viewAll": "View All",
     "toursIn": "Tours in {{location}}"
@@ -352,7 +358,7 @@
     "contactForAccessibility": "Contact the operator for accessibility information.",
     "defaultLocation": "Accra, Ghana",
     "destination": "Destination",
-    "destinationHost": "Destination host",
+    "destinationHost": "Experience Host",
     "details": "Details",
     "admissionTicketIncluded": "Admission Ticket Included",
     "admissionPaySeparately": "Pay separately",

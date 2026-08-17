@@ -248,18 +248,25 @@
   font-weight: 600;
 }
 
-/* ===== TRUST BADGES ===== */
+/* ===== TRUST BADGES (inside About card) ===== */
 
-.supplier-trust-badges {
+.supplier-about-features {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 16px;
-  margin-bottom: 48px;
+  padding-top: 24px;
+  border-top: 1px solid #f1f5f9;
 }
 
-@media (min-width: 640px) {
-  .supplier-trust-badges {
+@media (min-width: 1024px) {
+  .supplier-about-features {
     grid-template-columns: repeat(4, 1fr);
+  }
+
+  /* Keep the narrow 4-across cards compact & centered. */
+  .supplier-about-features .supplier-trust-badge {
+    flex-direction: column;
+    text-align: center;
   }
 }
 
@@ -379,106 +386,6 @@
 
 .supplier-about-description p:last-child {
   margin-bottom: 0;
-}
-
-.supplier-features {
-  display: flex;
-  gap: 0;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  padding-top: 24px;
-  border-top: 1px solid #f1f5f9;
-  padding-bottom: 4px;
-}
-
-.supplier-features::-webkit-scrollbar {
-  display: none;
-}
-
-.supplier-feature {
-  flex: 0 0 100%;
-  scroll-snap-align: start;
-}
-
-.supplier-features-dots {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 16px;
-}
-
-.supplier-features-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  border: none;
-  background: #d1d5db;
-  padding: 0;
-  cursor: pointer;
-  transition: background 0.2s, width 0.2s;
-}
-
-.supplier-features-dot.active {
-  width: 24px;
-  border-radius: 4px;
-  background: #179237;
-}
-
-@media (min-width: 640px) {
-  .supplier-features {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
-    overflow-x: visible;
-    scroll-snap-type: none;
-    -webkit-overflow-scrolling: auto;
-    padding-bottom: 0;
-  }
-
-  .supplier-feature {
-    flex: none;
-    scroll-snap-align: none;
-  }
-
-  .supplier-features-dots {
-    display: none;
-  }
-}
-
-.supplier-feature {
-  text-align: center;
-}
-
-.supplier-feature-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  background: #f0fdf4;
-  display: grid;
-  place-items: center;
-  margin: 0 auto 10px;
-  color: #179237;
-}
-
-.supplier-feature-text {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.supplier-feature-heading {
-  font-size: 15px;
-  font-weight: 700;
-  color: #0f172a;
-}
-
-.supplier-feature-desc {
-  font-size: 13px;
-  color: #64748b;
-  line-height: 1.4;
 }
 
 /* Right Card — Contact */

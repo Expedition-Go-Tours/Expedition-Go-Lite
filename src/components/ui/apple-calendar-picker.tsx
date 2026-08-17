@@ -358,7 +358,7 @@ export const CalendarPicker = ({ isOpen, onClose, onDateSelect, selectedDate, ge
       </div>
 
       {/* Days Grid + Month/Year Dropdown */}
-      <div className="relative h-[240px] mb-4">
+      <div className="relative h-[264px] mb-4">
         <div className="absolute w-full z-10">
           <AnimatePresence mode="wait" custom={direction}>
             <motion.div

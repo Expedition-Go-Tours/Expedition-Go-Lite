@@ -23,6 +23,9 @@ interface BookingWidgetProps {
   getDayInfo?: (date: Date) => DayAvailabilityInfo | undefined
   availabilityLoading?: boolean
   onMonthChange?: (year: number, month: number) => void
+  /** Reports the traveller's selected date up to the page (e.g. so the
+      quick-facts cancellation badge can show the concrete cutoff date). */
+  onSelectedDateChange?: (date: Date | null) => void
 }
 
 interface PricingResult {
@@ -39,7 +42,7 @@ const dropdownVariants = {
   exit: { opacity: 0, y: -8, scale: 0.96 },
 }
 
-export default function BookingWidget({ tour, getAvailability: propGetAvailability, getDayInfo, availabilityLoading, onMonthChange }: BookingWidgetProps) {
+export default function BookingWidget({ tour, getAvailability: propGetAvailability, getDayInfo, availabilityLoading, onMonthChange, onSelectedDateChange }: BookingWidgetProps) {
   const { t } = useTranslation()
   const { currency, convertPrice } = useCurrency()
   const navigate = useNavigate()
@@ -459,6 +462,7 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
                     onClose={() => setShowCalendar(false)}
                     onDateSelect={(date) => {
                       setSelectedDate(date)
+                      onSelectedDateChange?.(date)
                       setSelectedTime(null)
                     }}
                     selectedDate={selectedDate}

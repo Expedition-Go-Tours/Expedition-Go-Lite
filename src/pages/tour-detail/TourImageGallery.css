@@ -52,9 +52,10 @@
   gap: 2px;
   background: rgba(2, 6, 23, 0.55);
   color: #fff;
-  font-size: 16px;
-  font-weight: 800;
+  font-size: 13px;
+  font-weight: 700;
   line-height: 1;
+  letter-spacing: 0.3px;
 }
 
 .tour-gallery-count-tile:hover .tour-gallery-count-overlay {

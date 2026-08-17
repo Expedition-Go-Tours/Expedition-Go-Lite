@@ -25,177 +25,133 @@
   background: #179237;
 }
 
-.tour-header-meta {
+/* ── 3-column info row ────────────────────────────────────────────── */
+
+.tour-header-info-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: 14px;
+  border-top: 1px solid rgba(15, 23, 42, 0.08);
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.tour-header-info-item {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 8px;
+  gap: 4px;
+  padding: 12px 8px;
+  text-align: center;
+}
+
+.tour-header-info-item + .tour-header-info-item {
+  border-left: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.tour-header-info-icon {
+  flex-shrink: 0;
+  margin-bottom: 2px;
+}
+
+.tour-header-info-label {
+  font-family: 'Raleway', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6b7280;
+  line-height: 1;
+}
+
+.tour-header-info-value {
+  font-family: 'Raleway', sans-serif;
   font-size: 13px;
   font-weight: 600;
   color: #0f172a;
+  line-height: 1.2;
 }
 
-@media (min-width: 640px) {
-  .tour-header-meta {
-    gap: 10px;
-    font-size: 14px;
-  }
-}
-
-@media (min-width: 1024px) {
-  .tour-header-meta {
-    gap: 16px;
-    font-size: 16px;
-  }
-}
-
-.tour-header-rating {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  color: #00b67a;
-}
-
-.tour-header-star {
-  fill: currentColor;
-}
-
-@media (min-width: 1024px) {
-  .tour-header-star {
-    width: 20px;
-    height: 20px;
-  }
-}
-
-.tour-header-reviews-btn {
+.tour-header-info-reviews-btn {
   border: none;
   background: none;
   padding: 0;
   cursor: pointer;
+  font-family: inherit;
   font-size: inherit;
   font-weight: inherit;
   color: inherit;
-  text-underline-offset: 2px;
-  font-family: var(--font-body);
-  white-space: nowrap;
+  line-height: 1.2;
 }
 
-.tour-header-reviews-btn:hover {
+.tour-header-info-reviews-btn:hover {
   text-decoration: underline;
 }
 
-.tour-header-divider {
-  display: block;
-  width: 1px;
-  height: 14px;
-  background: rgba(15, 23, 42, 0.65);
-}
-
-@media (min-width: 640px) {
-  .tour-header-divider {
-    height: 16px;
-  }
-}
-
-@media (min-width: 1024px) {
-  .tour-header-divider {
-    height: 24px;
-  }
-}
-
-.tour-header-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  white-space: nowrap;
-}
-
-.tour-header-badge-icon {
-  display: grid;
-  width: 14px;
-  height: 14px;
-  place-items: center;
-  border-radius: 50%;
-  background: #e7583f;
-  color: #fff;
-}
-
-@media (min-width: 1024px) {
-  .tour-header-badge-icon {
-    width: 20px;
-    height: 20px;
-  }
-}
-
-.tour-header-location {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 13px;
-  color: #475569;
-}
-
-.tour-header-supplier {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 13px;
-  font-weight: 600;
-  color: #475569;
-  white-space: nowrap;
-}
-
-.tour-header-supplier-icon {
-  flex-shrink: 0;
-  width: 18px;
-  height: 18px;
+.tour-header-info-icon-star {
   color: #f97316;
+  fill: #f97316;
 }
 
-@media (min-width: 1024px) {
-  .tour-header-supplier-icon {
-    width: 20px;
-    height: 20px;
-  }
-}
-
-.tour-header-location-icon {
-  flex-shrink: 0;
+.tour-header-info-icon-pin {
   color: #179237;
 }
 
-@media (min-width: 1024px) {
-  .tour-header-location-icon {
-    width: 16px;
-    height: 16px;
-  }
+.tour-header-info-icon-rosette {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
 }
 
-.tour-header-label {
-  font-weight: 700;
-}
+/* ── Responsive ───────────────────────────────────────────────────── */
 
 @media (min-width: 640px) {
-  .tour-header-supplier {
+  .tour-header-info-row {
+    margin-top: 16px;
+  }
+
+  .tour-header-info-item {
+    padding: 14px 12px;
+  }
+
+  .tour-header-info-label {
+    font-size: 11px;
+  }
+
+  .tour-header-info-value {
     font-size: 14px;
+  }
+
+  .tour-header-info-icon-rosette {
+    width: 20px;
+    height: 20px;
   }
 }
 
 @media (min-width: 1024px) {
-  .tour-header-supplier {
-    font-size: 16px;
+  .tour-header-info-row {
+    margin-top: 18px;
   }
-}
 
-@media (min-width: 640px) {
-  .tour-header-location {
-    font-size: 14px;
+  .tour-header-info-item {
+    padding: 16px 16px;
   }
-}
 
-@media (min-width: 1024px) {
-  .tour-header-location {
-    font-size: 16px;
+  .tour-header-info-label {
+    font-size: 12px;
+  }
+
+  .tour-header-info-value {
+    font-size: 15px;
+  }
+
+  .tour-header-info-icon-star,
+  .tour-header-info-icon-pin {
+    width: 18px;
+    height: 18px;
+  }
+
+  .tour-header-info-icon-rosette {
+    width: 22px;
+    height: 22px;
   }
 }

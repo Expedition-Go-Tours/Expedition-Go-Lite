@@ -216,20 +216,94 @@
   }
 
   .tour-detail-header-row {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 16px;
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    align-items: start;
+    gap: 32px;
   }
 
   .tour-detail-header-row .tour-header-new {
-    flex: 1;
     min-width: 0;
+  }
+}
+
+@media (min-width: 1400px) {
+  .tour-detail-header-row {
+    grid-template-columns: 1fr 400px;
   }
 }
 
 .tour-detail-write-review-btn:hover {
   background: rgba(22, 101, 52, 0.05);
+}
+
+/* Header action group — wishlist, share and write-a-review sit together,
+   outside the image gallery. */
+.tour-detail-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.tour-detail-header-actions .tour-detail-write-review-btn {
+  width: auto;
+  flex: 1;
+  margin-top: 0;
+  padding: 12px 16px;
+  font-size: 15px;
+}
+
+.tour-detail-action-btn {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #334155;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, transform 0.1s;
+}
+
+.tour-detail-action-btn:hover {
+  background: #f8fafc;
+  color: #166534;
+}
+
+.tour-detail-action-btn:active {
+  transform: scale(0.95);
+}
+
+.tour-detail-action-btn .wishlist-active {
+  color: #166534;
+  fill: currentColor;
+}
+
+.tour-detail-wishlist-btn:hover {
+  background: #179237;
+  color: #fff;
+  border-color: #179237;
+}
+
+.tour-detail-wishlist-btn:hover .wishlist-active {
+  color: #fff;
+}
+
+@media (min-width: 1024px) {
+  .tour-detail-header-actions {
+    margin-top: 0;
+    flex-shrink: 0;
+    justify-content: flex-end;
+  }
+
+  .tour-detail-header-actions .tour-detail-write-review-btn {
+    flex: none;
+    padding: 12px 24px;
+    font-size: 16px;
+  }
 }
 
 /* Tab Content Area */
