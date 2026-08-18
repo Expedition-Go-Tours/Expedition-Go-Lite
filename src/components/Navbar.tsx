@@ -59,7 +59,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
   const { recentSearches, addSearch, removeSearch, clearAll } = useRecentSearches()
   const { isApproved } = useSupplierStatus()
   // Counter of the user's confirmed bookings shown on the "Bookings" menu item.
-  const { data: bookingsCount = 0 } = useMyBookingsCount('CONFIRMED', !!user)
+  const { data: bookingsCount = 0 } = useMyBookingsCount('CONFIRMED,PENDING', !!user)
 
   useEffect(() => {
     const unsub = subscribeToAuthState((u) => setUser(u))

@@ -141,7 +141,9 @@ export default function BookingConfirmationPage() {
   const image = tour.coverPhoto || tour.photos?.[0] || ''
   const location = [tour.city, tour.country].filter(Boolean).join(', ')
 
-  const isPaid = b.paymentStatus === 'SUCCEEDED' || b.status === 'CONFIRMED'
+  // Paid only when payment actually settled. Reserve-now-pay-later bookings are
+  // PENDING/unpaid until the deferred charge lands, so they show as "Reserved".
+  const isPaid = b.paymentStatus === 'SUCCEEDED'
   const statusLabel = isPaid ? t('confirmation.statusConfirmed') : t('confirmation.statusReserved')
 
   const arrivalLabel = (() => {

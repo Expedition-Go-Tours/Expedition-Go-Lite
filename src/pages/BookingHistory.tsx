@@ -363,6 +363,9 @@ export default function BookingHistory() {
                       <span className={`booking-status-badge ${getStatusColor(booking.status)}`}>
                         {statusLabel(booking.status)}
                       </span>
+                      {booking.paymentTiming === 'later' && booking.paymentStatus !== 'SUCCEEDED' && (
+                        <span className="booking-awaiting-payment">Awaiting payment</span>
+                      )}
                     </div>
 
                     <div className="booking-item-content">

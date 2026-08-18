@@ -755,13 +755,14 @@ function ActivityDetailsStep({
 const pickupSpotCount = (Array.isArray(tour.pickupAreas) ? tour.pickupAreas.filter((a) => a && (a.name || a.address)).length : 0)
     + (Array.isArray(tour.pickupLocations) ? tour.pickupLocations.filter((l) => l && (l.name || l.address)).length : 0)
 
-  // Location-only tours (a saved point, no drawn zone) are shown as a
-  // selectable list instead of a pins-only map ("bare land"). The zone map
-  // renders for drawn-zone tours and meeting-point tours.
+  // The map preview renders for meeting-point tours and any pickup tour that
+  // has geographic data (drawn zones or location-only points). Location-only
+  // tours keep their selectable list — the map is the pin preview + draggable
+  // pickup pin + live zone verdict. Pickup tours with no areas render no map.
   const showZoneMap =
     tour.meetingMode === 'meeting_point' ||
     zonesDrawn ||
-    (tour.meetingMode === 'pickup' && !hasPointAreas)
+    (tour.meetingMode === 'pickup' && hasPointAreas)
 
   const pickupPhoto = <MeetingPointPhoto src={tour.meetingPointPicture} />
 
@@ -809,8 +810,9 @@ const pickupSpotCount = (Array.isArray(tour.pickupAreas) ? tour.pickupAreas.filt
               <div className="space-y-4">
                 {/* GetYourGuide-style pickup selection — drawn zones are selectable
                     chips; location-only areas (a saved point, no zone) are a
-                    list, since there's no shape to preview. The address is
-                    validated against the same geoshapes the server checks. */}
+                    list. The map preview below shows a pin per spot. The
+                    address is validated against the same geoshapes the server
+                    checks. */}
                 {!contact.pickupLater && (zonesDrawn || hasPointAreas) && pickupAreasList.length > 0 && (
                   <div>
                     <FieldLabel tooltip={
@@ -1797,13 +1799,15 @@ export default function BookingPage() {
   // Poll the backend until the webhook reconciles the booking after the
   // server-side Stripe confirm. We do NOT optimistically show success: a
   // card that needs 3DS can still fail, and the webhook arrives async.
+  // Reserve-now-pay-later reservations count as success once the booking is
+  // committed (PENDING until the deferred charge is collected).
   const pollBooking = useCallback(async (bookingId: string) => {
     if (!bookingId) return
     setIsActive(true)
     const maxAttempts = 30
     try {
       for (let i = 0; i < maxAttempts; i++) {
-        let booking: { status?: string; paymentStatus?: string; id: string } | null = null
+        let booking: { status?: string; paymentStatus?: string; paymentTiming?: 'now' | 'later'; id: string } | null = null
         try {
           const res = await fetchWithAuth(`/expedition/bookings/${encodeURIComponent(bookingId)}`)
           const payload = await res.json().catch(() => ({}))
@@ -1816,9 +1820,13 @@ export default function BookingPage() {
         }
 
         if (booking) {
-          const { status, paymentStatus } = booking
-          if (paymentStatus === 'SUCCEEDED' || status === 'CONFIRMED') {
-            toast.success('Booking confirmed!')
+          const { status, paymentStatus, paymentTiming } = booking
+          // Success: paid, confirmed, OR a reserve-now-pay-later reservation
+          // that's secured (status PENDING / paymentStatus PENDING until the
+          // deferred charge lands).
+          const payLaterReserved = paymentTiming === 'later' && status === 'PENDING' && paymentStatus === 'PENDING'
+          if (paymentStatus === 'SUCCEEDED' || status === 'CONFIRMED' || payLaterReserved) {
+            toast.success(payLaterReserved ? 'Reservation confirmed!' : 'Booking confirmed!')
             clearDraft()
             queryClient.invalidateQueries({ queryKey: ['expedition', 'bookings'] })
             navigate(`/booking/confirmation/${encodeURIComponent(booking.id)}`)
