@@ -3,11 +3,52 @@ import * as maplibregl from 'maplibre-gl'
 /**
  * Shared helpers for the storefront maps (booking-page location map, pickup
  * map modal, tour-detail location map). Maps are rendered with MapLibre GL
- * using free OpenFreeMap tiles — the same approach as the supplier's
- * LocationMapPicker — so no API key is required.
+ * using free OSM raster tiles — no API key required.
+ *
+ * Note: the maps previously used OpenFreeMap vector tiles
+ * (tiles.openfreemap.org/planet/*.pbf). That endpoint began returning empty
+ * (0-byte) tiles while the style JSON kept loading, which MapLibre treats as
+ * valid-but-empty (no `error` event), leaving a permanently blank basemap.
+ * OSM raster tiles are served by a separate, stable service.
  */
 
-export const TILE_STYLE = 'https://tiles.openfreemap.org/styles/liberty'
+export const TILE_STYLE: maplibregl.StyleSpecification = {
+  version: 8,
+  sources: {
+    osm: {
+      type: 'raster',
+      tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+      tileSize: 256,
+      maxzoom: 19,
+      attribution: '© OpenStreetMap contributors',
+    },
+  },
+  layers: [{ id: 'osm', type: 'raster', source: 'osm' }],
+}
+
+/** Default camera fallback — Accra, the platform's origin market. */
+export const DEFAULT_CENTER: [number, number] = [-0.187, 5.6037]
+
+let warmResourcesStarted = false
+
+/**
+ * Idempotent warm-up for the free tile service: a preconnect hint to the tile
+ * host so the first map opens fast instead of cold-starting against the CDN.
+ * Idempotent: runs once per page load.
+ */
+export function warmMapResources(): void {
+  if (warmResourcesStarted || typeof document === 'undefined') return
+  warmResourcesStarted = true
+  try {
+    const link = document.createElement('link')
+    link.rel = 'preconnect'
+    link.href = 'https://tile.openstreetmap.org'
+    link.crossOrigin = 'anonymous'
+    document.head.appendChild(link)
+  } catch {
+    /* warm-up is best-effort */
+  }
+}
 
 /** Supplier's default pin colour (green) for pickup / meeting points. */
 export const TOUR_PIN_COLOR = '#047857'
@@ -109,4 +150,66 @@ export function fitMapToPoints(map: maplibregl.Map, points: MapPoint[], padding 
   const bounds = new maplibregl.LngLatBounds()
   for (const p of points) bounds.extend([p.lng, p.lat])
   map.fitBounds(bounds, { padding, maxZoom: 15 })
+}
+
+/** GeoJSON FeatureCollection from polygon rings ordered as [lat, lng]. */
+export function ringsToFeatureCollection(rings: [number, number][][]): {
+  type: 'FeatureCollection'
+  features: {
+    type: 'Feature'
+    properties: Record<string, never>
+    geometry: { type: 'Polygon'; coordinates: [number, number][][] }
+  }[]
+} {
+  return {
+    type: 'FeatureCollection',
+    features: rings.map((ring) => ({
+      type: 'Feature',
+      properties: {},
+      geometry: {
+        type: 'Polygon',
+        coordinates: [ring.map(([lat, lng]) => [lng, lat])],
+      },
+    })),
+  }
+}
+
+export interface GeoCamera {
+  center?: [number, number]
+  zoom?: number
+  bounds?: maplibregl.LngLatBounds
+  padding?: number
+  maxZoom?: number
+}
+
+/**
+ * Camera for the booking pickup map: fits every zone/exclusion ring and point,
+ * zooms to 13 for a lone coordinate, and falls back to the platform origin.
+ * Mirrors the supplier dashboard's cameraFromGeoshape.
+ */
+export function cameraFromGeoData(options: {
+  zones: [number, number][][]
+  rings: [number, number][][]
+  points: MapPoint[]
+  userPoint?: { lat: number; lng: number } | null
+}): GeoCamera {
+  const coords: [number, number][] = []
+  const push = (lat: number, lng: number): void => {
+    if (Number.isFinite(lat) && Number.isFinite(lng)) coords.push([lat, lng])
+  }
+  for (const ring of options.zones) for (const [lat, lng] of ring) push(lat, lng)
+  for (const ring of options.rings) for (const [lat, lng] of ring) push(lat, lng)
+  for (const p of options.points) push(p.lat, p.lng)
+  if (options.userPoint) push(options.userPoint.lat, options.userPoint.lng)
+
+  if (coords.length === 0) return { center: DEFAULT_CENTER, zoom: 6 }
+  const [firstLat, firstLng] = coords[0]
+  const lone = coords.every(
+    ([lat, lng]) => Math.abs(lat - firstLat) < 1e-6 && Math.abs(lng - firstLng) < 1e-6,
+  )
+  if (lone) return { center: [firstLng, firstLat], zoom: 13 }
+
+  const bounds = new maplibregl.LngLatBounds()
+  for (const [lat, lng] of coords) bounds.extend([lng, lat])
+  return { bounds, padding: 50, maxZoom: 15 }
 }

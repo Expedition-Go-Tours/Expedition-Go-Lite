@@ -27,6 +27,9 @@ import {
   BadgeCheck,
   Upload,
   X,
+  Car,
+  Plus,
+  Trash2,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -39,7 +42,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { applyAsSupplier } from "@/lib/supplier"
+import { applyAsSupplier, SUPPLIER_TYPES, supplierTypeLabel, documentRequirementsFor, VEHICLE_DOC_TYPES, GUIDE_DOC_TYPES, documentTypeLabel } from "@/lib/supplier"
 import { getAuthUserId } from "@/lib/auth"
 import { useAuthUser } from "@/hooks/useAuthUser"
 import GhanaDestinationSelect from "@/components/supplier/GhanaDestinationSelect"
@@ -57,6 +60,7 @@ import {
 } from "@/lib/supplierApplicationDraft"
 
 const STEPS = [
+  { key: "type", label: "Supplier Type", icon: BadgeCheck },
   { key: "business", label: "Business Info", icon: Building2 },
   { key: "operating", label: "Operating Info", icon: Briefcase },
   { key: "representative", label: "Representative", icon: UserCircle },
@@ -164,6 +168,10 @@ const TOUR_CATEGORIES_OPTIONS = [
 ]
 
 function getStepValidationError(stepKey: StepKey, form: SupplierApplicationForm): string | null {
+  if (stepKey === "type") {
+    if (!form.supplierType) return "Select the type of supplier you are"
+  }
+
   if (stepKey === "business") {
     const b = form.businessInfo
     if (!b.legalBusinessName.trim()) return "Legal business name is required"
@@ -198,14 +206,44 @@ function getStepValidationError(stepKey: StepKey, form: SupplierApplicationForm)
     if (!r.address.state.trim()) return "Representative state / province is required"
     if (!r.address.postalCode.trim()) return "Representative postal code is required"
     if (!r.idType) return "ID type is required"
-    if (!r.idDocument) return "ID document image is required"
   }
 
   if (stepKey === "documents") {
-    const d = form.businessDocuments
-    if (!d.registrationDocument) return "Business registration document is required"
-    if (!d.taxDocument) return "Tax document is required"
-    if (!d.proofOfAddress) return "Proof of address document is required"
+    const required = documentRequirementsFor(form.supplierType, form.businessInfo.country)
+    const docs = form.verificationDocuments.filter((d) => d.ownerType === "SUPPLIER")
+    const uploadedTypes = new Set(docs.filter((d) => d.file).map((d) => d.type))
+    for (const reqType of required) {
+      if (!uploadedTypes.has(reqType)) return `${documentTypeLabel(reqType)} is required`
+    }
+
+    const wantsVehicles =
+      form.supplierType === "TRANSPORTATION_PROVIDER" || form.supplierType === "VEHICLE_OPERATOR"
+    if (wantsVehicles && form.vehicles.length === 0) {
+      return "Add at least one vehicle with its documents"
+    }
+    for (const v of form.vehicles) {
+      if (!v.make.trim() || !v.model.trim() || !v.registrationNumber.trim()) {
+        return "Every vehicle needs a make, model and registration number"
+      }
+      for (const dt of VEHICLE_DOC_TYPES) {
+        const has = form.verificationDocuments.some(
+          (d) => d.ownerType === "VEHICLE" && d.ownerKey === v.key && d.type === dt.type && d.file
+        )
+        if (!has) return `Add ${dt.label} for ${v.make} ${v.model}`
+      }
+    }
+
+    if (form.supplierType === "TOUR_COMPANY") {
+      for (const g of form.guides) {
+        if (!g.fullName.trim()) return "Every guide needs a full name"
+        for (const dt of GUIDE_DOC_TYPES) {
+          const has = form.verificationDocuments.some(
+            (d) => d.ownerType === "GUIDE" && d.ownerKey === g.key && d.type === dt.type && d.file
+          )
+          if (!has) return `Add ${dt.label} for ${g.fullName}`
+        }
+      }
+    }
   }
 
   if (stepKey === "compliance") {
@@ -216,6 +254,7 @@ function getStepValidationError(stepKey: StepKey, form: SupplierApplicationForm)
 }
 
 const STEP_FIELDS: Record<StepKey, { path: string; message: string }[]> = {
+  type: [{ path: "supplierType", message: "Select the type of supplier you are" }],
   business: [
     { path: "businessInfo.legalBusinessName", message: "Legal business name is required" },
     { path: "businessInfo.displayName", message: "Display name is required" },
@@ -244,12 +283,9 @@ const STEP_FIELDS: Record<StepKey, { path: string; message: string }[]> = {
     { path: "representativeInfo.address.state", message: "Representative state / province is required" },
     { path: "representativeInfo.address.postalCode", message: "Representative postal code is required" },
     { path: "representativeInfo.idType", message: "ID type is required" },
-    { path: "representativeInfo.idDocument", message: "ID document image is required" },
   ],
   documents: [
-    { path: "businessDocuments.registrationDocument", message: "Business registration document is required" },
-    { path: "businessDocuments.taxDocument", message: "Tax document is required" },
-    { path: "businessDocuments.proofOfAddress", message: "Proof of address document is required" },
+    { path: "verificationDocuments", message: "Upload all required documents" },
   ],
   compliance: [
     { path: "compliance.acceptedTerms", message: "You must accept the terms and conditions" },
@@ -663,7 +699,7 @@ export function SupplierApplicationForm() {
   }, [step, form, draftUserId, success])
 
   const updateForm = useCallback(
-    (section: keyof SupplierApplicationForm, key: string, value: unknown) => {
+    (section: "businessInfo" | "operatingInfo" | "representativeInfo" | "businessDocuments" | "compliance", key: string, value: unknown) => {
       const fieldPath = `${section}.${key}`
       clearFieldError(fieldPath)
 
@@ -694,6 +730,141 @@ export function SupplierApplicationForm() {
     [clearFieldError]
   )
 
+  const ensureRequiredDocuments = useCallback((type: string, country: string) => {
+    if (!type) return
+    const required = documentRequirementsFor(type, country)
+    setForm((prev) => {
+      const existingTypes = new Set(
+        prev.verificationDocuments.filter((d) => d.ownerType === "SUPPLIER").map((d) => d.type)
+      )
+      const missing = required
+        .filter((t) => !existingTypes.has(t))
+        .map((t) => ({
+          key: `sup-${t}-${Math.random().toString(36).slice(2, 8)}`,
+          type: t,
+          ownerType: "SUPPLIER" as const,
+          file: null,
+        }))
+      if (missing.length === 0) return prev
+      return { ...prev, verificationDocuments: [...prev.verificationDocuments, ...missing] }
+    })
+  }, [])
+
+  const handleSelectType = useCallback(
+    (type: string) => {
+      setForm((prev) => {
+        if (prev.supplierType === type) return prev
+        const required = documentRequirementsFor(type, prev.businessInfo.country)
+        const existingTypes = new Set(
+          prev.verificationDocuments.filter((d) => d.ownerType === "SUPPLIER").map((d) => d.type)
+        )
+        const missing = required
+          .filter((t) => !existingTypes.has(t))
+          .map((t) => ({
+            key: `sup-${t}-${Math.random().toString(36).slice(2, 8)}`,
+            type: t,
+            ownerType: "SUPPLIER" as const,
+            file: null,
+          }))
+        return { ...prev, supplierType: type, verificationDocuments: [...prev.verificationDocuments, ...missing] }
+      })
+    },
+    []
+  )
+
+  const setVerificationDocFile = useCallback((key: string, file: File | null) => {
+    setForm((prev) => ({
+      ...prev,
+      verificationDocuments: prev.verificationDocuments.map((d) =>
+        d.key === key ? { ...d, file } : d
+      ),
+    }))
+  }, [])
+
+  const removeVerificationDoc = useCallback((key: string) => {
+    setForm((prev) => ({
+      ...prev,
+      verificationDocuments: prev.verificationDocuments.filter((d) => d.key !== key),
+    }))
+  }, [])
+
+  const addVehicle = useCallback(() => {
+    const key = `vehicle-${Math.random().toString(36).slice(2, 8)}`
+    setForm((prev) => ({
+      ...prev,
+      vehicles: [...prev.vehicles, { key, make: "", model: "", year: "", registrationNumber: "", photos: [] }],
+      verificationDocuments: [
+        ...prev.verificationDocuments,
+        ...VEHICLE_DOC_TYPES.map((dt) => ({
+          key: `${key}-${dt.type}`,
+          type: dt.type,
+          ownerType: "VEHICLE" as const,
+          ownerKey: key,
+          file: null,
+        })),
+      ],
+    }))
+  }, [])
+
+  const updateVehicle = useCallback((key: string, field: "make" | "model" | "year" | "registrationNumber", value: string) => {
+    setForm((prev) => ({
+      ...prev,
+      vehicles: prev.vehicles.map((v) => (v.key === key ? { ...v, [field]: value } : v)),
+    }))
+  }, [])
+
+  const setVehiclePhotos = useCallback((key: string, photos: File[]) => {
+    setForm((prev) => ({
+      ...prev,
+      vehicles: prev.vehicles.map((v) => (v.key === key ? { ...v, photos } : v)),
+    }))
+  }, [])
+
+  const removeVehicle = useCallback((key: string) => {
+    setForm((prev) => ({
+      ...prev,
+      vehicles: prev.vehicles.filter((v) => v.key !== key),
+      verificationDocuments: prev.verificationDocuments.filter(
+        (d) => !(d.ownerType === "VEHICLE" && d.ownerKey === key)
+      ),
+    }))
+  }, [])
+
+  const addGuide = useCallback(() => {
+    const key = `guide-${Math.random().toString(36).slice(2, 8)}`
+    setForm((prev) => ({
+      ...prev,
+      guides: [...prev.guides, { key, fullName: "", phone: "", email: "" }],
+      verificationDocuments: [
+        ...prev.verificationDocuments,
+        ...GUIDE_DOC_TYPES.map((dt) => ({
+          key: `${key}-${dt.type}`,
+          type: dt.type,
+          ownerType: "GUIDE" as const,
+          ownerKey: key,
+          file: null,
+        })),
+      ],
+    }))
+  }, [])
+
+  const updateGuide = useCallback((key: string, field: "fullName" | "phone" | "email", value: string) => {
+    setForm((prev) => ({
+      ...prev,
+      guides: prev.guides.map((g) => (g.key === key ? { ...g, [field]: value } : g)),
+    }))
+  }, [])
+
+  const removeGuide = useCallback((key: string) => {
+    setForm((prev) => ({
+      ...prev,
+      guides: prev.guides.filter((g) => g.key !== key),
+      verificationDocuments: prev.verificationDocuments.filter(
+        (d) => !(d.ownerType === "GUIDE" && d.ownerKey === key)
+      ),
+    }))
+  }, [])
+
   const languageOptions = useMemo(
     () => getLanguagesForCountry(form.businessInfo.country),
     [form.businessInfo.country]
@@ -713,7 +884,8 @@ export function SupplierApplicationForm() {
         languages: filterLanguagesForCountry(prev.operatingInfo.languages, countryCode),
       },
     }))
-  }, [])
+    ensureRequiredDocuments(form.supplierType, countryCode)
+  }, [form.supplierType, ensureRequiredDocuments])
 
   useEffect(() => {
     const filtered = filterLanguagesForCountry(
@@ -800,11 +972,12 @@ export function SupplierApplicationForm() {
       setSuccess("")
 
       try {
-        const docs = form.businessDocuments
         const rep = form.representativeInfo
 
         // Build multipart/form-data payload (matches backend route/multer design)
         const payload = new FormData()
+
+        payload.append("supplierType", form.supplierType)
 
         // JSON sections as strings (required by backend Swagger spec)
         payload.append(
@@ -847,22 +1020,61 @@ export function SupplierApplicationForm() {
 
         payload.append("compliance", JSON.stringify(form.compliance))
 
-        // Actual file uploads (processed by multer → Cloudinary)
-        if (docs.registrationDocument) {
-          payload.append("registrationDocument", docs.registrationDocument)
+        // Generic per-type verification documents (paired with documentMeta).
+        const documentMeta: { type: string; ownerType: string; ownerKey?: string }[] = []
+        for (const d of form.verificationDocuments) {
+          if (!d.file) continue
+          payload.append("documents", d.file)
+          documentMeta.push({
+            type: d.type,
+            ownerType: d.ownerType,
+            ...(d.ownerType !== "SUPPLIER" && d.ownerKey ? { ownerKey: d.ownerKey } : {}),
+          })
         }
-        if (docs.taxDocument) {
-          payload.append("taxDocument", docs.taxDocument)
+        if (documentMeta.length > 0) {
+          payload.append("documentMeta", JSON.stringify(documentMeta))
         }
-        if (docs.proofOfAddress) {
-          payload.append("proofOfAddress", docs.proofOfAddress)
+
+        // Vehicles (JSON) + photos (paired with vehiclePhotoMeta).
+        if (form.vehicles.length > 0) {
+          payload.append(
+            "vehicles",
+            JSON.stringify(
+              form.vehicles.map((v) => ({
+                key: v.key,
+                make: v.make,
+                model: v.model,
+                year: v.year ? parseInt(v.year, 10) : null,
+                registrationNumber: v.registrationNumber,
+              }))
+            )
+          )
+          const photoMeta: { vehicleKey: string }[] = []
+          for (const v of form.vehicles) {
+            for (const p of v.photos) {
+              photoMeta.push({ vehicleKey: v.key })
+              payload.append("vehiclePhotos", p)
+            }
+          }
+          if (photoMeta.length > 0) {
+            payload.append("vehiclePhotoMeta", JSON.stringify(photoMeta))
+          }
         }
-        if (rep.idDocument) {
-          payload.append("idDocument", rep.idDocument)
+
+        // Guides (JSON) — their documents travel in the generic `documents` list.
+        if (form.guides.length > 0) {
+          payload.append(
+            "guides",
+            JSON.stringify(
+              form.guides.map((g) => ({
+                key: g.key,
+                fullName: g.fullName,
+                phone: g.phone,
+                email: g.email,
+              }))
+            )
+          )
         }
-        docs.licenses.forEach((file) => {
-          payload.append("licenses", file)
-        })
 
         await applyAsSupplier(payload)
         clearSupplierApplicationDraft(draftUserId)
@@ -876,6 +1088,47 @@ export function SupplierApplicationForm() {
       }
     },
     [form, validateAllSteps, draftUserId]
+  )
+
+  const renderType = () => (
+    <FormSection
+      title="What type of supplier are you?"
+      description="Pick the category that fits you best. We'll ask for the right documents for this category."
+    >
+      <div data-field="supplierType" className="grid gap-3 sm:grid-cols-2">
+        {SUPPLIER_TYPES.map((type) => {
+          const selected = form.supplierType === type.value
+          const icon =
+            type.value === "TOUR_GUIDE" ? <UserCircle className="size-5" /> :
+            type.value === "TOUR_COMPANY" ? <Building2 className="size-5" /> :
+            type.value === "TRANSPORTATION_PROVIDER" || type.value === "VEHICLE_OPERATOR" ? <Car className="size-5" /> :
+            <Globe className="size-5" />
+          return (
+            <button
+              key={type.value}
+              type="button"
+              onClick={() => {
+                handleSelectType(type.value)
+                clearFieldError("supplierType")
+              }}
+              aria-pressed={selected}
+              className={`flex items-start gap-3 rounded-[1.4rem] border p-4 text-left transition-all ${selected ? "border-primary/50 bg-primary/5 ring-4 ring-primary/10" : "border-slate-200 bg-slate-50 hover:border-primary/30 hover:bg-white"}`}
+            >
+              <span className={`mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full ${selected ? "bg-primary text-white" : "bg-slate-200 text-slate-500"}`}>
+                {icon}
+              </span>
+              <span className="min-w-0">
+                <span className={`block text-sm font-semibold ${selected ? "text-primary" : "text-slate-900"}`}>
+                  {type.label}
+                </span>
+                <span className="mt-0.5 block text-xs leading-relaxed text-slate-500">{type.description}</span>
+              </span>
+            </button>
+          )
+        })}
+      </div>
+      <FieldError message={fieldErrors["supplierType"]} />
+    </FormSection>
   )
 
   const renderBusinessInfo = () => (
@@ -1223,14 +1476,9 @@ export function SupplierApplicationForm() {
           <FieldError message={fieldErrors["representativeInfo.idType"]} />
         </div>
 
-        <div className="sm:col-span-2" data-field="representativeInfo.idDocument">
-          <ImageUploadField
-            label="ID Document"
-            file={form.representativeInfo.idDocument}
-            onChange={(file) => updateForm("representativeInfo", "idDocument", file)}
-            required
-          />
-          <FieldError message={fieldErrors["representativeInfo.idDocument"]} />
+        <div className="sm:col-span-2 rounded-[1.4rem] border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+          You'll upload a photo of your ID (Ghana Card or National ID) in the{" "}
+          <span className="font-semibold text-slate-900">Documents</span> step based on your supplier type.
         </div>
 
         <div className="sm:col-span-2" data-field="representativeInfo.address.line1">
@@ -1296,52 +1544,190 @@ export function SupplierApplicationForm() {
     </FormSection>
   )
 
-  const renderDocuments = () => (
-    <FormSection
-      title="Documents"
-      description="Upload images of your business verification documents. You will be able to add your payout method after your application is approved."
-    >
-      <div className="space-y-6">
-        <div data-field="businessDocuments.registrationDocument">
-          <ImageUploadField
-            label="Business Registration Document"
-            file={form.businessDocuments.registrationDocument}
-            onChange={(file) => updateForm("businessDocuments", "registrationDocument", file)}
-            required
-          />
-          <FieldError message={fieldErrors["businessDocuments.registrationDocument"]} />
-        </div>
+  const renderDocuments = () => {
+    const supplierDocs = form.verificationDocuments.filter((d) => d.ownerType === "SUPPLIER")
+    const wantsVehicles =
+      form.supplierType === "TRANSPORTATION_PROVIDER" || form.supplierType === "VEHICLE_OPERATOR"
+    const wantsGuides = form.supplierType === "TOUR_COMPANY"
 
-        <div data-field="businessDocuments.taxDocument">
-          <ImageUploadField
-            label="Tax Document"
-            file={form.businessDocuments.taxDocument}
-            onChange={(file) => updateForm("businessDocuments", "taxDocument", file)}
-            required
-          />
-          <FieldError message={fieldErrors["businessDocuments.taxDocument"]} />
-        </div>
+    return (
+      <FormSection
+        title="Documents"
+        description={`Upload the documents required for a ${supplierTypeLabel(form.supplierType).toLowerCase()}. Each document is reviewed individually before you can go live.`}
+      >
+        <div className="space-y-6">
+          <div className="space-y-3">
+            <h4 className="text-sm font-bold text-slate-900">Required documents</h4>
+            {supplierDocs.map((doc) => (
+              <div key={doc.key} data-field={`verificationDocuments.${doc.key}`} className="flex items-start gap-3">
+                <div className="min-w-0 flex-1">
+                  <ImageUploadField
+                    label={documentTypeLabel(doc.type)}
+                    file={doc.file}
+                    onChange={(file) => setVerificationDocFile(doc.key, file)}
+                    required
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => removeVerificationDoc(doc.key)}
+                  className="mt-8 flex size-9 shrink-0 items-center justify-center rounded-full border border-slate-200 text-slate-400 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-500"
+                  aria-label={`Remove ${documentTypeLabel(doc.type)}`}
+                >
+                  <Trash2 className="size-4" />
+                </button>
+              </div>
+            ))}
+          </div>
 
-        <div data-field="businessDocuments.proofOfAddress">
-          <ImageUploadField
-            label="Proof of Address"
-            file={form.businessDocuments.proofOfAddress}
-            onChange={(file) => updateForm("businessDocuments", "proofOfAddress", file)}
-            required
-          />
-          <FieldError message={fieldErrors["businessDocuments.proofOfAddress"]} />
-        </div>
+          {wantsVehicles && (
+            <div className="space-y-3 border-t border-slate-200 pt-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-sm font-bold text-slate-900">Vehicles</h4>
+                  <p className="text-xs text-slate-500">Each vehicle needs its registration, ownership, roadworthiness and insurance documents.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={addVehicle}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-primary/90"
+                >
+                  <Plus className="size-3.5" /> Add vehicle
+                </button>
+              </div>
+              {form.vehicles.length === 0 && (
+                <p className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-center text-sm text-slate-500">
+                  No vehicles yet — add at least one to continue.
+                </p>
+              )}
+              {form.vehicles.map((v, idx) => {
+                const vehicleDocs = form.verificationDocuments.filter(
+                  (d) => d.ownerType === "VEHICLE" && d.ownerKey === v.key
+                )
+                return (
+                  <div key={v.key} className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-semibold text-slate-900">Vehicle {idx + 1}</p>
+                      <button
+                        type="button"
+                        onClick={() => removeVehicle(v.key)}
+                        className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-2.5 py-1 text-xs text-slate-500 transition hover:border-rose-200 hover:text-rose-500"
+                      >
+                        <Trash2 className="size-3" /> Remove
+                      </button>
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div>
+                        <FieldLabel required>Make</FieldLabel>
+                        <Input placeholder="e.g. Toyota" value={v.make} onChange={(e) => updateVehicle(v.key, "make", e.target.value)} />
+                      </div>
+                      <div>
+                        <FieldLabel required>Model</FieldLabel>
+                        <Input placeholder="e.g. Hiace" value={v.model} onChange={(e) => updateVehicle(v.key, "model", e.target.value)} />
+                      </div>
+                      <div>
+                        <FieldLabel>Year</FieldLabel>
+                        <Input placeholder="e.g. 2022" value={v.year} onChange={(e) => updateVehicle(v.key, "year", e.target.value)} />
+                      </div>
+                      <div>
+                        <FieldLabel required>Registration number</FieldLabel>
+                        <Input placeholder="e.g. GR 1234-20" value={v.registrationNumber} onChange={(e) => updateVehicle(v.key, "registrationNumber", e.target.value)} />
+                      </div>
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {vehicleDocs.map((doc) => (
+                        <div key={doc.key}>
+                          <ImageUploadField
+                            label={documentTypeLabel(doc.type)}
+                            file={doc.file}
+                            onChange={(file) => setVerificationDocFile(doc.key, file)}
+                            required
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    <MultiImageUploadField
+                      label="Vehicle photos"
+                      files={v.photos}
+                      onChange={(photos) => setVehiclePhotos(v.key, photos)}
+                    />
+                  </div>
+                )
+              })}
+            </div>
+          )}
 
-        <div data-field="businessDocuments.licenses">
-          <MultiImageUploadField
-            label="Business Licenses"
-            files={form.businessDocuments.licenses}
-            onChange={(value) => updateForm("businessDocuments", "licenses", value)}
-          />
+          {wantsGuides && (
+            <div className="space-y-3 border-t border-slate-200 pt-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-sm font-bold text-slate-900">Your guides</h4>
+                  <p className="text-xs text-slate-500">Each guide gets their own verified profile and licence documents.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={addGuide}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-primary/90"
+                >
+                  <Plus className="size-3.5" /> Add guide
+                </button>
+              </div>
+              {form.guides.length === 0 && (
+                <p className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-center text-sm text-slate-500">
+                  No guides yet. Add the guides who will lead your tours.
+                </p>
+              )}
+              {form.guides.map((g, idx) => {
+                const guideDocs = form.verificationDocuments.filter(
+                  (d) => d.ownerType === "GUIDE" && d.ownerKey === g.key
+                )
+                return (
+                  <div key={g.key} className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-semibold text-slate-900">Guide {idx + 1}</p>
+                      <button
+                        type="button"
+                        onClick={() => removeGuide(g.key)}
+                        className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-2.5 py-1 text-xs text-slate-500 transition hover:border-rose-200 hover:text-rose-500"
+                      >
+                        <Trash2 className="size-3" /> Remove
+                      </button>
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div>
+                        <FieldLabel required>Full name</FieldLabel>
+                        <Input placeholder="e.g. Kofi Mensah" value={g.fullName} onChange={(e) => updateGuide(g.key, "fullName", e.target.value)} />
+                      </div>
+                      <div>
+                        <FieldLabel>Phone</FieldLabel>
+                        <Input placeholder="+233..." value={g.phone} onChange={(e) => updateGuide(g.key, "phone", e.target.value)} />
+                      </div>
+                      <div className="sm:col-span-2">
+                        <FieldLabel>Email</FieldLabel>
+                        <Input placeholder="guide@example.com" value={g.email} onChange={(e) => updateGuide(g.key, "email", e.target.value)} />
+                      </div>
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {guideDocs.map((doc) => (
+                        <div key={doc.key}>
+                          <ImageUploadField
+                            label={documentTypeLabel(doc.type)}
+                            file={doc.file}
+                            onChange={(file) => setVerificationDocFile(doc.key, file)}
+                            required
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
-      </div>
-    </FormSection>
-  )
+      </FormSection>
+    )
+  }
 
   const renderCompliance = () => (
     <FormSection
@@ -1357,6 +1743,24 @@ export function SupplierApplicationForm() {
               {form.businessInfo.legalBusinessName || "—"}
             </span>
           </div>
+          <div className="flex justify-between">
+            <span>Supplier type:</span>
+            <span className="font-semibold text-slate-900">
+              {supplierTypeLabel(form.supplierType) || "—"}
+            </span>
+          </div>
+          {form.vehicles.length > 0 && (
+            <div className="flex justify-between">
+              <span>Vehicles:</span>
+              <span className="font-semibold text-slate-900">{form.vehicles.length}</span>
+            </div>
+          )}
+          {form.guides.length > 0 && (
+            <div className="flex justify-between">
+              <span>Guides:</span>
+              <span className="font-semibold text-slate-900">{form.guides.length}</span>
+            </div>
+          )}
           <div className="flex justify-between">
             <span>Display Name:</span>
             <span className="font-semibold text-slate-900">
@@ -1441,6 +1845,8 @@ export function SupplierApplicationForm() {
 
   const renderStepContent = () => {
     switch (STEPS[step].key) {
+      case "type":
+        return renderType()
       case "business":
         return renderBusinessInfo()
       case "operating":

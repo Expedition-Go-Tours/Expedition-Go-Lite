@@ -26,8 +26,7 @@ import { fetchWithAuth } from '../lib/api'
 import { useCreateBooking } from '../hooks/useExpeditionBookings'
 import { buildE164Phone, isValidPhoneInput, COUNTRY_CODES } from '../lib/phone'
 import { findPickupAreaForAddress, hasLocationOnlyAreas, isPickupLocationSatisfied, pickupZoneStatus, type PickupAreaShape } from '../lib/pickupZone'
-import { Map as MapLibreMap, Marker as MapLibreMarker, LngLatBounds as MapLibreLngLatBounds, NavigationControl as MapLibreNavigationControl, type GeoJSONSource } from 'maplibre-gl'
-import 'maplibre-gl/dist/maplibre-gl.css'
+import PickupZoneMap from '../components/booking/PickupZoneMap'
 import OptimizedImage from '@/components/shared/OptimizedImage'
 import {
   openingHoursForDay,
@@ -493,6 +492,7 @@ function MeetingPointPhoto({ src }: { src?: string }) {
   )
 }
 
+<<<<<<< HEAD
 /* ─── Location map (meeting point / pickup) ─── */
 
 // Classic map pin (filled body + white center dot), colored per marker.
@@ -918,6 +918,8 @@ function LocationMap({
   )
 }
 
+=======
+>>>>>>> 6b3f240f6498d388a71ba84fa6d60598c7efac67
 /* ─── Step 1 – Lead Traveler Details ─── */
 
 function ContactDetailsStep({
@@ -1151,7 +1153,7 @@ function ActivityDetailsStep({
   }
 
   // The pickup-locations map lives in a modal; the "Pickup locations (N)" link
-  // opens it (a pin per pickup spot) via the MapLibre LocationMap below.
+  // opens it (a pin per pickup spot) via the PickupZoneMap below.
   const [showMapModal, setShowMapModal] = useState(false)
   const handleOpenMap = () => setShowMapModal(true)
   const handleCloseMap = () => setShowMapModal(false)
@@ -1167,7 +1169,7 @@ function ActivityDetailsStep({
   // Location map — shows the supplier's pickup zones / meeting point, plus the
   // traveller's picked pickup location when one is selected.
   const locationMap = (
-    <LocationMap
+    <PickupZoneMap
       tour={tour}
       userMarker={{ lat: contact.pickupLat, lng: contact.pickupLng }}
       onUserPointChange={(lat, lng) => {
@@ -1178,8 +1180,16 @@ function ActivityDetailsStep({
     />
   )
 
-  const pickupSpotCount = (Array.isArray(tour.pickupAreas) ? tour.pickupAreas.filter((a) => a && (a.name || a.address)).length : 0)
+const pickupSpotCount = (Array.isArray(tour.pickupAreas) ? tour.pickupAreas.filter((a) => a && (a.name || a.address)).length : 0)
     + (Array.isArray(tour.pickupLocations) ? tour.pickupLocations.filter((l) => l && (l.name || l.address)).length : 0)
+
+  // Location-only tours (a saved point, no drawn zone) are shown as a
+  // selectable list instead of a pins-only map ("bare land"). The zone map
+  // renders for drawn-zone tours and meeting-point tours.
+  const showZoneMap =
+    tour.meetingMode === 'meeting_point' ||
+    zonesDrawn ||
+    (tour.meetingMode === 'pickup' && !hasPointAreas)
 
   const pickupPhoto = <MeetingPointPhoto src={tour.meetingPointPicture} />
 
@@ -1225,39 +1235,81 @@ function ActivityDetailsStep({
 
             {showPickupLocation && (
               <div className="space-y-4">
-                {/* GetYourGuide-style pickup zone selection — the supplier's
-                    drawn zones are selectable; the address is validated
-                    against the same geoshapes the server checks. */}
-                {!contact.pickupLater && zonesDrawn && pickupAreasList.length > 0 && (
+                {/* GetYourGuide-style pickup selection — drawn zones are selectable
+                    chips; location-only areas (a saved point, no zone) are a
+                    list, since there's no shape to preview. The address is
+                    validated against the same geoshapes the server checks. */}
+                {!contact.pickupLater && (zonesDrawn || hasPointAreas) && pickupAreasList.length > 0 && (
                   <div>
-                    <FieldLabel tooltip="Pick the zone closest to where you are staying — the exact pickup point is confirmed with you directly.">Choose your pickup zone</FieldLabel>
-                    <div className="flex flex-wrap gap-2">
-                      {pickupAreasList.map((a) => {
-                        const selected = contact.pickupArea === a.name
-                        return (
-                          <button
-                            key={a.name}
-                            type="button"
-                            onClick={() => handlePickupAreaSelect(a.name)}
-                            aria-pressed={selected}
-                            className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
-                              selected
-                                ? 'border-[#179237] bg-[#179237] text-white shadow-sm'
-                                : 'border-slate-200 bg-white text-slate-700 hover:border-[#179237]/60 hover:text-[#179237]'
-                            }`}
-                          >
-                            <MapPin className="size-3.5 shrink-0" />
-                            {a.name}
-                            {a.time && !selected && (
-                              <span className="text-[10px] font-semibold text-slate-400">pickup {compactTime(a.time)} min before</span>
-                            )}
-                            {a.time && selected && (
-                              <span className="text-[10px] font-semibold text-white/80">pickup {compactTime(a.time)} min before</span>
-                            )}
-                          </button>
-                        )
-                      })}
-                    </div>
+                    <FieldLabel tooltip={
+                      zonesDrawn
+                        ? 'Pick the zone closest to where you are staying — the exact pickup point is confirmed with you directly.'
+                        : 'Pick the pickup point closest to where you are staying — the exact pickup time is confirmed with you directly.'
+                    }>
+                      {zonesDrawn ? 'Choose your pickup zone' : 'Choose your pickup point'}
+                    </FieldLabel>
+                    {zonesDrawn ? (
+                      <div className="flex flex-wrap gap-2">
+                        {pickupAreasList.map((a) => {
+                          const selected = contact.pickupArea === a.name
+                          return (
+                            <button
+                              key={a.name}
+                              type="button"
+                              onClick={() => handlePickupAreaSelect(a.name)}
+                              aria-pressed={selected}
+                              className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
+                                selected
+                                  ? 'border-[#179237] bg-[#179237] text-white shadow-sm'
+                                  : 'border-slate-200 bg-white text-slate-700 hover:border-[#179237]/60 hover:text-[#179237]'
+                              }`}
+                            >
+                              <MapPin className="size-3.5 shrink-0" />
+                              {a.name}
+                              {a.time && !selected && (
+                                <span className="text-[10px] font-semibold text-slate-400">pickup {compactTime(a.time)} min before</span>
+                              )}
+                              {a.time && selected && (
+                                <span className="text-[10px] font-semibold text-white/80">pickup {compactTime(a.time)} min before</span>
+                              )}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    ) : (
+                      <ul className="space-y-2">
+                        {pickupAreasList.map((a) => {
+                          const selected = contact.pickupArea === a.name
+                          return (
+                            <li key={a.name}>
+                              <button
+                                type="button"
+                                onClick={() => handlePickupAreaSelect(a.name)}
+                                aria-pressed={selected}
+                                className={`flex w-full items-start gap-3 rounded-xl border p-3 text-left transition-colors ${
+                                  selected
+                                    ? 'border-[#179237] bg-[#179237]/5 ring-1 ring-[#179237]/40'
+                                    : 'border-slate-200 bg-white hover:border-[#179237]/50'
+                                }`}
+                              >
+                                <MapPin className={`mt-0.5 size-4 shrink-0 ${selected ? 'text-[#179237]' : 'text-slate-400'}`} />
+                                <span className="min-w-0 flex-1">
+                                  <span className={`block text-sm font-semibold ${selected ? 'text-[#179237]' : 'text-slate-800'}`}>{a.name}</span>
+                                  {a.address && a.address !== a.name && (
+                                    <span className="block truncate text-xs text-slate-500">{a.address}</span>
+                                  )}
+                                </span>
+                                {a.time && (
+                                  <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${selected ? 'bg-[#179237]/10 text-[#179237]' : 'bg-slate-100 text-slate-600'}`}>
+                                    pickup {compactTime(a.time)} min before
+                                  </span>
+                                )}
+                              </button>
+                            </li>
+                          )
+                        })}
+                      </ul>
+                    )}
                   </div>
                 )}
 
@@ -1365,6 +1417,7 @@ function ActivityDetailsStep({
               </div>
             )}
 
+            {showZoneMap && locationMap}
             {pickupPhoto}
 
             <div className="flex items-center gap-2.5 rounded-xl border border-slate-200/40 bg-slate-50/30 px-4 py-3">
@@ -1409,6 +1462,7 @@ function ActivityDetailsStep({
             className="space-y-3 p-7 sm:p-9"
           >
             {meetingSummaryCard}
+            {showZoneMap && locationMap}
             {pickupPhoto}
             {hasError && (
               <p className="pt-1 text-xs font-semibold text-rose-500">There are errors in this step — please review.</p>

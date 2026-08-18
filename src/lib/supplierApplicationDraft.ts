@@ -7,6 +7,7 @@
  */
 
 export interface SupplierApplicationForm {
+  supplierType: string
   businessInfo: {
     legalBusinessName: string
     displayName: string
@@ -50,10 +51,38 @@ export interface SupplierApplicationForm {
     proofOfAddress: File | null
     licenses: File[]
   }
+  verificationDocuments: VerificationDocumentDraft[]
+  vehicles: VehicleDraft[]
+  guides: GuideDraft[]
   compliance: {
     acceptedTerms: boolean
     agreedToPayoutTerms: boolean
   }
+}
+
+/** One verification document entry (paired with `documentMeta` on submit). */
+export interface VerificationDocumentDraft {
+  key: string
+  type: string
+  ownerType: 'SUPPLIER' | 'VEHICLE' | 'GUIDE'
+  ownerKey?: string
+  file: File | null
+}
+
+export interface VehicleDraft {
+  key: string
+  make: string
+  model: string
+  year: string
+  registrationNumber: string
+  photos: File[]
+}
+
+export interface GuideDraft {
+  key: string
+  fullName: string
+  phone: string
+  email: string
 }
 
 interface StoredDraft {
@@ -64,7 +93,7 @@ interface StoredDraft {
 
 const DRAFT_PREFIX = 'supplier_application_draft:'
 const LAST_DRAFT_USER_KEY = 'supplier_application_draft_last_user'
-const STEPS_COUNT = 5
+const STEPS_COUNT = 6
 
 const STORAGES: { name: string; get: () => Storage }[] = [
   { name: 'session', get: () => sessionStorage },
@@ -73,6 +102,7 @@ const STORAGES: { name: string; get: () => Storage }[] = [
 
 export function createEmptySupplierApplicationForm(): SupplierApplicationForm {
   return {
+    supplierType: '',
     businessInfo: {
       legalBusinessName: '',
       displayName: '',
@@ -116,6 +146,9 @@ export function createEmptySupplierApplicationForm(): SupplierApplicationForm {
       proofOfAddress: null,
       licenses: [],
     },
+    verificationDocuments: [],
+    vehicles: [],
+    guides: [],
     compliance: {
       acceptedTerms: false,
       agreedToPayoutTerms: false,
@@ -231,6 +264,8 @@ function serializeFormForDraft(form: SupplierApplicationForm): SupplierApplicati
       proofOfAddress: null,
       licenses: [],
     },
+    verificationDocuments: form.verificationDocuments.map((d) => ({ ...d, file: null })),
+    vehicles: form.vehicles.map((v) => ({ ...v, photos: [] })),
   }
 }
 
@@ -275,6 +310,7 @@ export function mergeSupplierApplicationDraft(saved?: unknown): SupplierApplicat
   const savedForm = saved as Partial<SupplierApplicationForm>
 
   return {
+    supplierType: typeof savedForm.supplierType === 'string' ? savedForm.supplierType : empty.supplierType,
     businessInfo: {
       ...empty.businessInfo,
       ...savedForm.businessInfo,
@@ -301,6 +337,13 @@ export function mergeSupplierApplicationDraft(saved?: unknown): SupplierApplicat
       },
     },
     businessDocuments: { ...empty.businessDocuments },
+    verificationDocuments: Array.isArray(savedForm.verificationDocuments)
+      ? savedForm.verificationDocuments.map((d) => ({ ...d, file: null }))
+      : [],
+    vehicles: Array.isArray(savedForm.vehicles)
+      ? savedForm.vehicles.map((v) => ({ ...v, photos: [] }))
+      : [],
+    guides: Array.isArray(savedForm.guides) ? savedForm.guides : [],
     compliance: { ...empty.compliance, ...savedForm.compliance },
   }
 }

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Star, ChevronDown, ChevronRight, ChevronLeft, Phone, Mail, Globe, MapPin } from 'lucide-react'
 import TourCard from '../../components/TourCard'
+import { supplierTypeLabel } from '../../lib/supplier'
 import './SupplierSection.css'
 import OptimizedImage from '@/components/shared/OptimizedImage'
 
@@ -32,6 +33,8 @@ interface SupplierSectionProps {
   email?: string
   website?: string
   address?: string
+  verified?: boolean
+  supplierType?: string | null
   tours: SupplierTour[]
   /** Id of the tour this section is rendered on — passed to the supplier page
       so it can resolve the real supplier profile without a name-only lookup. */
@@ -55,6 +58,8 @@ export default function SupplierSection({
   email,
   website,
   address,
+  verified,
+  supplierType,
   tours,
   tourId,
   infoOpen,
@@ -128,7 +133,20 @@ export default function SupplierSection({
             </div>
             <div>
               <h2 className="supplier-name">{name}</h2>
+              {verified && (
+                <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  Verified supplier
+                </span>
+              )}
               <div className="supplier-meta">
+                {supplierType && (
+                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500">
+                    {supplierTypeLabel(supplierType)}
+                  </span>
+                )}
                 {displayRating && (
                   <>
                     <Star size={14} className="supplier-star" />
