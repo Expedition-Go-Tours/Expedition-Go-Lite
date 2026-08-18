@@ -9,7 +9,7 @@ export default function CustomReviewsSection() {
       <div className="reviews-container">
         <div className="reviews-viewport">
           <SectionHeading
-            title={t('sections.reviews')}
+            title={t('sections.whatTravellersAreSaying')}
             viewAllLink="https://www.tripadvisor.co.uk/Attraction_Review-g293797-d24155300-Reviews-Expedition_Go_Tours_Ltd-Accra_Greater_Accra.html"
           />
 

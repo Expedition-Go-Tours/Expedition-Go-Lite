@@ -203,7 +203,8 @@
     "topAttractionsNearby": "Atracciones Cercanas",
     "travelStories": "Historias y Noticias de Viajes",
     "viewAll": "Ver Todos",
-    "toursIn": "Tours en {{location}}"
+    "toursIn": "Tours en {{location}}",
+    "whatTravellersAreSaying": "Lo que dicen los viajeros"
   },
   "splash": {
     "alt": "Expedition-Go Tours Limited",

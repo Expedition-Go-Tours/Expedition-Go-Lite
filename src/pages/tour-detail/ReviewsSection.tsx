@@ -72,7 +72,7 @@ export default function ReviewsSection({
       {/* Reviews Section */}
       <section className="reviews-section-content">
         <div className="reviews-header">
-          <h2 className="reviews-title">{t('sections.reviews')}</h2>
+          <h2 className="reviews-title">{t('sections.whatTravellersAreSaying')}</h2>
           <button type="button" onClick={onWriteReview} className="reviews-write-btn">
             {t('reviews.writeAReview')}
           </button>
