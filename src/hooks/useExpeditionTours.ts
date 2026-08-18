@@ -1191,9 +1191,12 @@ export interface SupplierProfileBlock {
   email?: string | null
   phone?: string | null
   website?: string | null
+  verified: boolean
+  supplierType: string | null
   supplierProfile?: {
     averageRating?: number | null
     totalBookings?: number | null
+    status?: string | null
     businessInfo?: Record<string, unknown> | null
     operatingInfo?: Record<string, unknown> | null
     representativeInfo?: Record<string, unknown> | null
@@ -1220,9 +1223,12 @@ function extractSupplierProfile(rawTour: any): SupplierProfileBlock | undefined 
     email: sup.email ?? null,
     phone: sup.phone ?? null,
     website: sup.website ?? null,
+    verified: (sup.verified ?? sp?.verified) ?? (sp?.status === 'ACTIVE' || sp?.status === 'APPROVED'),
+    supplierType: sup.supplierType ?? sp?.supplierType ?? null,
     supplierProfile: sp ? {
       averageRating: sp.averageRating != null ? Number(sp.averageRating) : null,
       totalBookings: sp.totalBookings ?? null,
+      status: sp.status ?? null,
       businessInfo: sp.businessInfo ?? null,
       operatingInfo: sp.operatingInfo ?? null,
       representativeInfo: sp.representativeInfo ?? null,
@@ -1269,6 +1275,10 @@ export interface TourDetailData extends Omit<TourDetail, 'guide' | 'contact' | '
   dropoffDescription?: string
   supplierName: string
   supplierPhoto: string | null
+  /** Whether the backend reports the supplier as verified (docs approved). */
+  supplierVerified: boolean
+  /** Supplier category, e.g. TOUR_GUIDE | TOUR_COMPANY (null when unknown). */
+  supplierType: string | null
   /** Raw supplier block (id, name, photo, businessInfo) for the "About this
       supplier" card — populated from the raw /tours/:id payload. */
   supplierProfile?: SupplierProfileBlock
@@ -1397,6 +1407,8 @@ function buildTourDetailFromRawTour(rawTour: any): TourDetailData {
     languages,
     supplierName: rawTour?.supplier?.name || '',
     supplierPhoto: rawTour?.supplier?.logoUrl || rawTour?.supplier?.photoURL || null,
+    supplierVerified: rawTour?.supplier?.verified ?? false,
+    supplierType: rawTour?.supplier?.supplierType ?? rawTour?.supplier?.supplierProfile?.supplierType ?? null,
     supplierProfile: extractSupplierProfile(rawTour),
     bookingFlow: 'DIRECT',
     externalUrl: null,
@@ -1670,6 +1682,8 @@ export function useExpeditionTour(slug: string | undefined) {
         languages: Array.isArray(tour.languages) ? tour.languages : [],
         supplierName: tour.supplierName || '',
         supplierPhoto: tour.supplierPhoto || null,
+        supplierVerified: !!tour.supplierVerified,
+        supplierType: tour.supplierType || tour.supplierProfile?.supplierType || null,
         supplierProfile: tour.supplierProfile || undefined,
         bookingFlow: 'DIRECT',
         externalUrl: null,

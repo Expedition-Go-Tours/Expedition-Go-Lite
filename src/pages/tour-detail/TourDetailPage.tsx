@@ -791,6 +791,8 @@ export default function TourDetailPage() {
       email: mapped.email || '',
       website: mapped.website || '',
       address: mapped.address || tour?.location || '',
+      verified: mapped.verified,
+      supplierType: mapped.supplierType,
     }
   }, [tour, relatedTours])
 
@@ -1027,6 +1029,8 @@ export default function TourDetailPage() {
                       email={supplierData.email}
                       website={supplierData.website}
                       address={supplierData.address}
+                      verified={supplierData.verified}
+                      supplierType={supplierData.supplierType}
                       tours={supplierTours}
                       tourId={tour?.id}
                       infoOpen={supplierInfoOpen}

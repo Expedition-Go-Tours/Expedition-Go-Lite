@@ -21,6 +21,8 @@ export interface SupplierProfileData {
   description: string | null
   rating: number | null
   toursCount: number
+  verified: boolean
+  supplierType: string | null
 }
 
 interface SupplierBlock {
@@ -31,9 +33,14 @@ interface SupplierBlock {
   email?: string | null
   phone?: string | null
   website?: string | null
+  verified?: boolean | null
+  supplierType?: string | null
   supplierProfile?: {
     averageRating?: number | string | null
     totalBookings?: number | null
+    status?: string | null
+    supplierType?: string | null
+    verified?: boolean | null
     businessInfo?: Record<string, unknown> | null
     operatingInfo?: Record<string, unknown> | null
     representativeInfo?: Record<string, unknown> | null
@@ -116,6 +123,8 @@ export function mapSupplierProfile({ tour, supplier, fallback }: SupplierProfile
     description: sup?.supplierProfile ? buildSupplierDescription(businessInfo, operatingInfo) || null : (fallback?.description || null),
     rating,
     toursCount: profile?.totalBookings ?? fallback?.toursCount ?? 0,
+    verified: (sup?.verified ?? profile?.verified) ?? (profile?.status === 'ACTIVE' || profile?.status === 'APPROVED'),
+    supplierType: sup?.supplierType ?? profile?.supplierType ?? fallback?.supplierType ?? null,
   }
 }
 

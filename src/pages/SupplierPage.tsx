@@ -110,6 +110,12 @@ export default function SupplierPage() {
     : null
   const websiteHref = normalizeWebsiteUrl(supplierData?.website)
 
+  const trustBadges = TRUST_BADGES.map((badge) =>
+    badge.title === 'Trusted Local Operator'
+      ? { ...badge, desc: supplierData?.verified ? 'Verified & vetted' : 'Verification in progress' }
+      : badge
+  )
+
   const [page, setPage] = useState(1)
 
   const startIdx = 0
@@ -181,22 +187,24 @@ export default function SupplierPage() {
 
         {/* Supplier Header */}
         <motion.div variants={itemVariants} className="supplier-header-section">
-          <div className="supplier-header-logo-wrap">
-            <div className="supplier-header-logo">
-              {supplierData.logo ? (
-                <OptimizedImage src={supplierData.logo} alt={profileName} width={200} />
-              ) : (
-                <span className="supplier-header-logo-fallback">
-                  {profileName.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()}
-                </span>
+            <div className="supplier-header-logo-wrap">
+              <div className="supplier-header-logo">
+                {supplierData.logo ? (
+                  <OptimizedImage src={supplierData.logo} alt={profileName} width={200} />
+                ) : (
+                  <span className="supplier-header-logo-fallback">
+                    {profileName.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()}
+                  </span>
+                )}
+              </div>
+              {supplierData.verified && (
+                <div className="supplier-header-verified" title="Verified supplier">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                </div>
               )}
             </div>
-            <div className="supplier-header-verified">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-            </div>
-          </div>
           <div className="supplier-header-info">
             <h1 className="supplier-header-name">{profileName}</h1>
             <div className="supplier-header-meta">
@@ -223,7 +231,7 @@ export default function SupplierPage() {
               )) : <p>{profileName} offers guided experiences.</p>}
             </div>
             <div className="supplier-about-features">
-              {TRUST_BADGES.map((badge) => (
+              {trustBadges.map((badge) => (
                 <div key={badge.title} className="supplier-trust-badge">
                   <div className="supplier-trust-badge-icon">
                     <badge.icon size={22} />
