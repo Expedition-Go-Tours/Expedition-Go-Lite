@@ -234,6 +234,8 @@ export interface ExpeditionBookingSummary {
   tourDurationMinutes: number | null
   selectedDate: string
   status: string
+  paymentTiming?: 'now' | 'later'
+  paymentStatus?: string
   total: number
   currency: string
   createdAt: string
@@ -243,6 +245,8 @@ interface RawBookingListRecord {
   id: string
   bookingNumber: string
   status: string
+  paymentTiming?: 'now' | 'later'
+  paymentStatus?: string
   total: number | string
   currency: string
   createdAt: string
@@ -271,6 +275,8 @@ function mapBookingSummary(b: RawBookingListRecord): ExpeditionBookingSummary {
     tourDurationMinutes: b.tour?.durationMinutes ?? null,
     selectedDate: b.selectedDate,
     status: b.status,
+    paymentTiming: b.paymentTiming,
+    paymentStatus: b.paymentStatus,
     total: Number(b.total),
     currency: b.currency,
     createdAt: b.createdAt,
@@ -295,11 +301,12 @@ export function useMyExpeditionBookings(page: number = 1, status?: string, limit
 
 /**
  * Total number of the customer's bookings matching `status` (default
- * CONFIRMED) — a lightweight count used for the navbar "Bookings" counter.
- * Fetches one record and reads the list endpoint's pagination totalCount, so
- * it never transfers the full booking history.
+ * CONFIRMED + PENDING, which includes reserve-now-pay-later reservations) — a
+ * lightweight count used for the navbar "Bookings" counter. Fetches one record
+ * and reads the list endpoint's pagination totalCount, so it never transfers
+ * the full booking history.
  */
-export function useMyBookingsCount(status: string = 'CONFIRMED', enabled = true) {
+export function useMyBookingsCount(status: string = 'CONFIRMED,PENDING', enabled = true) {
   return useQuery({
     queryKey: ['expedition', 'bookings', 'count', status],
     enabled,
