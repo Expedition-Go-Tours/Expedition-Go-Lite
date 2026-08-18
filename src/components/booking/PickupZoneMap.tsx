@@ -151,10 +151,6 @@ export default function PickupZoneMap({
 
     map.on('load', () => {
       if (!mapRef.current) return
-      if (mapFailTimerRef.current != null) {
-        window.clearTimeout(mapFailTimerRef.current)
-        mapFailTimerRef.current = null
-      }
 
       if (zones.length > 0) {
         map.addSource('pz-zones', { type: 'geojson', data: ringsToFeatureCollection(zones) })
@@ -190,10 +186,13 @@ export default function PickupZoneMap({
       setMapReady(true)
     })
 
-    // A failing style/tile CDN should not leave a permanent blank box in the
+    // A failing style/tile CDN must not leave a permanent blank box in the
     // checkout — degrade to the OSM/textual fallback after a grace period.
+    // Armed on ANY error (pre- or post-load): raster tile failures fire
+    // 'error' even after a successful load, so mid-session tile/network
+    // outages also reach the fallback instead of a blank map.
     map.on('error', () => {
-      if (!mapReadyRef.current && mapFailTimerRef.current == null) {
+      if (mapFailTimerRef.current == null) {
         mapFailTimerRef.current = window.setTimeout(() => setMapFailed(true), 8000)
       }
     })

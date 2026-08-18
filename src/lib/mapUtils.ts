@@ -3,11 +3,28 @@ import * as maplibregl from 'maplibre-gl'
 /**
  * Shared helpers for the storefront maps (booking-page location map, pickup
  * map modal, tour-detail location map). Maps are rendered with MapLibre GL
- * using free OpenFreeMap tiles — the same approach as the supplier's
- * LocationMapPicker — so no API key is required.
+ * using free OSM raster tiles — no API key required.
+ *
+ * Note: the maps previously used OpenFreeMap vector tiles
+ * (tiles.openfreemap.org/planet/*.pbf). That endpoint began returning empty
+ * (0-byte) tiles while the style JSON kept loading, which MapLibre treats as
+ * valid-but-empty (no `error` event), leaving a permanently blank basemap.
+ * OSM raster tiles are served by a separate, stable service.
  */
 
-export const TILE_STYLE = 'https://tiles.openfreemap.org/styles/liberty'
+export const TILE_STYLE: maplibregl.StyleSpecification = {
+  version: 8,
+  sources: {
+    osm: {
+      type: 'raster',
+      tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
+      tileSize: 256,
+      maxzoom: 19,
+      attribution: '© OpenStreetMap contributors',
+    },
+  },
+  layers: [{ id: 'osm', type: 'raster', source: 'osm' }],
+}
 
 /** Default camera fallback — Accra, the platform's origin market. */
 export const DEFAULT_CENTER: [number, number] = [-0.187, 5.6037]
@@ -15,27 +32,21 @@ export const DEFAULT_CENTER: [number, number] = [-0.187, 5.6037]
 let warmResourcesStarted = false
 
 /**
- * Idempotent warm-up for the free tile service: a preconnect hint plus a
- * force-cached fetch of the style JSON, so the first map opens fast instead
- * of cold-starting against OpenFreeMap. Mirrors the supplier dashboard's
- * mapConfig warm-up.
+ * Idempotent warm-up for the free tile service: a preconnect hint to the tile
+ * host so the first map opens fast instead of cold-starting against the CDN.
+ * Idempotent: runs once per page load.
  */
-export function warmMapResources(style: string = TILE_STYLE): void {
+export function warmMapResources(): void {
   if (warmResourcesStarted || typeof document === 'undefined') return
   warmResourcesStarted = true
   try {
     const link = document.createElement('link')
     link.rel = 'preconnect'
-    link.href = 'https://tiles.openfreemap.org'
+    link.href = 'https://tile.openstreetmap.org'
     link.crossOrigin = 'anonymous'
     document.head.appendChild(link)
   } catch {
     /* warm-up is best-effort */
-  }
-  try {
-    void fetch(style, { cache: 'force-cache', mode: 'cors' }).catch(() => undefined)
-  } catch {
-    /* ignore */
   }
 }
 
