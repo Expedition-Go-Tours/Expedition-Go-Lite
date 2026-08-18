@@ -636,9 +636,36 @@ function LocationMap({
     return ''
   }, [tour.meetingMode, tour.meetingPointAddress, tour.meetingPoint, tour.pickupAreas, tour.pickupLocations, tour.pickupDescription])
 
+  // Add/refresh the map pins: a green pin per supplier pickup spot (areas +
+  // locations) plus the traveller's draggable blue pin. Keyed off the map
+  // object only — not `mapReady` — so pins render as soon as the map exists,
+  // even if the tile style's `load` event is delayed or lost (which otherwise
+  // leaves a bare map with no markers).
+  const addPins = useCallback((map: MapLibreMap) => {
+    markersRef.current.forEach((m) => m.remove())
+    markersRef.current = []
+    for (const p of tourMarkers) {
+      const el = document.createElement('div')
+      el.style.cssText = 'filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.3)); cursor: default;'
+      el.innerHTML = `<svg width="26" height="34" viewBox="0 0 26 34" xmlns="http://www.w3.org/2000/svg"><path d="M13 0C5.8 0 0 5.8 0 13c0 9.75 13 21 13 21s13-11.25 13-21C26 5.8 20.2 0 13 0z" fill="#179237"/><circle cx="13" cy="13" r="5" fill="#fff"/></svg>`
+      const marker = new MapLibreMarker({ element: el, anchor: 'bottom' })
+      markersRef.current.push(marker.setLngLat([p.lng, p.lat]).addTo(map))
+    }
+    if (userPoint) {
+      const el = document.createElement('div')
+      el.style.cssText = 'filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.3)); cursor: grab;'
+      el.innerHTML = `<svg width="26" height="34" viewBox="0 0 26 34" xmlns="http://www.w3.org/2000/svg"><path d="M13 0C5.8 0 0 5.8 0 13c0 9.75 13 21 13 21s13-11.25 13-21C26 5.8 20.2 0 13 0z" fill="#2563eb"/><circle cx="13" cy="13" r="5" fill="#fff"/></svg>`
+      const marker = new MapLibreMarker({ element: el, anchor: 'bottom', draggable: true })
+      marker.on('dragend', () => {
+        const { lat, lng } = marker.getLngLat()
+        onUserPointChangeRef.current?.(lat, lng)
+      })
+      markersRef.current.push(marker.setLngLat([userPoint.lng, userPoint.lat]).addTo(map))
+    }
+  }, [tourMarkers, userPoint])
+
   // MapLibre: build once, live-update overlays on selection changes.
   useEffect(() => {
-    console.log('[locmap] effect run', { mapFailed, hasMapData, hasRef: !!containerRef.current })
     if (mapFailed || !hasMapData || !containerRef.current) return
     if (mapRef.current) return
 
@@ -658,26 +685,35 @@ function LocationMap({
 
     map.addControl(new MapLibreNavigationControl({ showCompass: false }), 'top-right')
 
+    // Add the pins as soon as the map object exists — markers render once
+    // tiles load, so they must not wait on the style `load` event below
+    // (a slow/hung tile server would otherwise leave a bare map with no pins).
+    addPins(map)
+
     map.on('load', () => {
-      console.log('[locmap] load fired', { hasMapRef: !!mapRef.current })
       if (!mapRef.current) return
       if (mapFailTimerRef.current != null) {
         window.clearTimeout(mapFailTimerRef.current)
         mapFailTimerRef.current = null
       }
       try {
-        map.addSource('gz-zones', { type: 'geojson', data: polyListToFeatureCollection(zones.map((z) => z.polygon)) })
-        map.addLayer({ id: 'gz-zones-fill', type: 'fill', source: 'gz-zones', paint: { 'fill-color': ZONE_FILL } })
-        map.addLayer({ id: 'gz-zones-line', type: 'line', source: 'gz-zones', paint: { 'line-color': ZONE_LINE, 'line-width': 2 } })
-
-        map.addSource('gz-excl', { type: 'geojson', data: polyListToFeatureCollection(exclusions) })
-        map.addLayer({ id: 'gz-excl-fill', type: 'fill', source: 'gz-excl', paint: { 'fill-color': EXCL_FILL } })
-        map.addLayer({
-          id: 'gz-excl-line',
-          type: 'line',
-          source: 'gz-excl',
-          paint: { 'line-color': EXCL_LINE, 'line-width': 2, 'line-dasharray': [2, 1] },
-        })
+        // Guard the source/layer adds so a re-entry (StrictMode remount or a
+        // second load pass) can never throw and block readiness.
+        if (!map.getSource('gz-zones')) {
+          map.addSource('gz-zones', { type: 'geojson', data: polyListToFeatureCollection(zones.map((z) => z.polygon)) })
+          map.addLayer({ id: 'gz-zones-fill', type: 'fill', source: 'gz-zones', paint: { 'fill-color': ZONE_FILL } })
+          map.addLayer({ id: 'gz-zones-line', type: 'line', source: 'gz-zones', paint: { 'line-color': ZONE_LINE, 'line-width': 2 } })
+        }
+        if (!map.getSource('gz-excl')) {
+          map.addSource('gz-excl', { type: 'geojson', data: polyListToFeatureCollection(exclusions) })
+          map.addLayer({ id: 'gz-excl-fill', type: 'fill', source: 'gz-excl', paint: { 'fill-color': EXCL_FILL } })
+          map.addLayer({
+            id: 'gz-excl-line',
+            type: 'line',
+            source: 'gz-excl',
+            paint: { 'line-color': EXCL_LINE, 'line-width': 2, 'line-dasharray': [2, 1] },
+          })
+        }
 
         const bounds = new MapLibreLngLatBounds()
         for (const z of zones) for (const [lat, lng] of z.polygon) bounds.extend([lng, lat])
@@ -686,13 +722,14 @@ function LocationMap({
         if (!bounds.isEmpty()) {
           map.fitBounds(bounds, { padding: 50, maxZoom: 15, duration: 0 })
         }
-
-        mapReadyRef.current = true
-        setMapReady(true)
-        console.log('[locmap] READY')
-      } catch (e) {
-        console.log('[locmap] load handler error', (e as Error).message)
+      } catch {
+        // A source/layer failure must not block readiness — the pins added
+        // above already render and the map stays usable without the overlays.
       }
+
+      mapReadyRef.current = true
+      setMapReady(true)
+      map.resize()
     })
 
     // Base tiles can 404 occasionally (overlays still render over the blank
@@ -724,22 +761,23 @@ function LocationMap({
   // Keep the map sized when its container changes — e.g. when the map opens
   // inside the pickup-locations modal (or after entrance animations). Mirrors
   // the supplier platform's PickupGeoshapePreview resize handling so tiles and
-  // pins always render instead of showing a blank box.
+  // pins always render instead of showing a blank box. Runs off the map
+  // object (not `mapReady`) so it works even before the style's `load` event.
   useEffect(() => {
     const el = containerRef.current
     const map = mapRef.current
-    if (!el || !map || !mapReady) return undefined
+    if (!el || !map || !hasMapData) return undefined
     const resize = () => map.resize()
     resize()
     const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(resize) : null
     ro?.observe(el)
     return () => ro?.disconnect()
-  }, [mapReady])
+  }, [hasMapData])
 
   // Live-update the overlays as the traveller picks a location.
   useEffect(() => {
     const map = mapRef.current
-    if (!map || !mapReady || !hasMapData) return
+    if (!map || !hasMapData) return
 
     const zoneSource = map.getSource('gz-zones') as GeoJSONSource | undefined
     if (zoneSource) {
@@ -751,28 +789,10 @@ function LocationMap({
     }
 
     // Refresh all pins — a green pin per supplier pickup spot (areas/locations),
-    // plus the traveller's draggable blue pin.
-    markersRef.current.forEach((m) => m.remove())
-    markersRef.current = []
-    for (const p of tourMarkers) {
-      const el = document.createElement('div')
-      el.style.cssText = 'filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.3)); cursor: default;'
-      el.innerHTML = `<svg width="26" height="34" viewBox="0 0 26 34" xmlns="http://www.w3.org/2000/svg"><path d="M13 0C5.8 0 0 5.8 0 13c0 9.75 13 21 13 21s13-11.25 13-21C26 5.8 20.2 0 13 0z" fill="#179237"/><circle cx="13" cy="13" r="5" fill="#fff"/></svg>`
-      const marker = new MapLibreMarker({ element: el, anchor: 'bottom' })
-      markersRef.current.push(marker.setLngLat([p.lng, p.lat]).addTo(map))
-    }
-    if (userPoint) {
-      const el = document.createElement('div')
-      el.style.cssText = 'filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.3)); cursor: grab;'
-      el.innerHTML = `<svg width="26" height="34" viewBox="0 0 26 34" xmlns="http://www.w3.org/2000/svg"><path d="M13 0C5.8 0 0 5.8 0 13c0 9.75 13 21 13 21s13-11.25 13-21C26 5.8 20.2 0 13 0z" fill="#2563eb"/><circle cx="13" cy="13" r="5" fill="#fff"/></svg>`
-      const marker = new MapLibreMarker({ element: el, anchor: 'bottom', draggable: true })
-      marker.on('dragend', () => {
-        const { lat, lng } = marker.getLngLat()
-        onUserPointChangeRef.current?.(lat, lng)
-      })
-      markersRef.current.push(marker.setLngLat([userPoint.lng, userPoint.lat]).addTo(map))
-    }
-  }, [zones, exclusions, tourMarkers, userPoint, mapReady, hasMapData])
+    // plus the traveller's draggable blue pin. Not gated on `mapReady`: the
+    // map object alone is enough, so pins render as soon as tiles do.
+    addPins(map)
+  }, [zones, exclusions, addPins, hasMapData])
 
   // Legacy name/address-only config: OSM embed, located by the address text.
   const markers = useMemo(() => [...tourMarkers, ...(userPoint ? [userPoint] : [])], [tourMarkers, userPoint])

@@ -921,6 +921,29 @@ function extractItinerary(rawTour: any): ItineraryDay[] {
   }
 }
 
+/**
+ * Reconciles the itinerary's day assignments with the tour's actual duration.
+ * The tour's total duration is the source of truth: a tour under 24 hours is
+ * single-day and every stop must sit on day 1, while multi-day tours clamp any
+ * stop assigned beyond the declared day count (ceil(duration/24h)). Guards
+ * against stale supplier data (e.g. a tour built as 2 days then shortened to
+ * 6 hours) rendering as a fake multi-day itinerary.
+ */
+function normalizeItineraryDays(itinerary: ItineraryDay[], durationMinutes: number | null | undefined): ItineraryDay[] {
+  if (!Array.isArray(itinerary) || itinerary.length === 0) return itinerary
+  const minutes = Number(durationMinutes)
+  if (!Number.isFinite(minutes) || minutes <= 0) return itinerary
+  if (minutes < 1440) {
+    const hasOffDay = itinerary.some((stop) => (stop.day || 1) > 1)
+    if (!hasOffDay) return itinerary
+    return itinerary.map((stop) => ({ ...stop, day: 1 }))
+  }
+  const dayCount = Math.max(1, Math.ceil(minutes / 1440))
+  const hasExcess = itinerary.some((stop) => (stop.day || 1) > dayCount)
+  if (!hasExcess) return itinerary
+  return itinerary.map((stop) => ({ ...stop, day: Math.min(stop.day || 1, dayCount) }))
+}
+
 function mapToListing(tour: ExpeditionTourRecord['tour']): TourCardData {
   const location = [tour.city, tour.country].filter(Boolean).join(', ')
   const isExternal = tour.bookingFlow === 'EXTERNAL'
@@ -1356,7 +1379,7 @@ function buildTourDetailFromRawTour(rawTour: any): TourDetailData {
   const travelerPricing = extractTravelerPricing(rawTour)
   const skipTheLine = extractSkipTheLine(rawTour)
   const languages = extractLanguagesFromTour(rawTour)
-  const itinerary = extractItinerary(rawTour)
+  const itinerary = normalizeItineraryDays(extractItinerary(rawTour), durationMinutes)
   const meetingInfo = extractMeetingInfo(rawTour)
 
   return {
@@ -1564,14 +1587,16 @@ export function useExpeditionTour(slug: string | undefined) {
             }
             // Extract itinerary from raw productContent (explicit itinerary
             // first, falling back to the locations list for tours that never
-            // filled in a dedicated itinerary).
+            // filled in a dedicated itinerary). Days are reconciled against the
+            // tour's actual duration so single-day tours never render as
+            // multi-day from stale day assignments.
             if (!Array.isArray(tour.itinerary) || tour.itinerary.length === 0) {
               const pc = rawTour?.productContent
               const rawItin = pc?.itinerary
               if (Array.isArray(rawItin) && rawItin.length > 0) {
-                tour.itinerary = rawItin
+                tour.itinerary = normalizeItineraryDays(rawItin, tour.durationMinutes)
               } else {
-                const derived = extractItinerary(rawTour)
+                const derived = normalizeItineraryDays(extractItinerary(rawTour), tour.durationMinutes)
                 if (derived.length > 0) {
                   tour.itinerary = derived
                 }
@@ -1626,12 +1651,14 @@ export function useExpeditionTour(slug: string | undefined) {
       const loc = [tour.city, tour.country].filter(Boolean).join(', ')
 
       const rawTourPayload = wrapper
-      const rawItinerary =
+      const rawItinerary = normalizeItineraryDays(
         Array.isArray(tour.itinerary) && tour.itinerary.length > 0
           ? tour.itinerary
           : Array.isArray(rawTourPayload?.productContent?.itinerary)
             ? rawTourPayload.productContent.itinerary
-            : extractItinerary(rawTourPayload)
+            : extractItinerary(rawTourPayload),
+        tour.durationMinutes,
+      )
       const meetingInfo = rawMeetingInfo ?? extractMeetingInfo(rawTourPayload)
 
       const result: TourDetailData = {
