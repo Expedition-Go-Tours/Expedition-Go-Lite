@@ -26,7 +26,7 @@ import { fetchWithAuth } from '../lib/api'
 import { useCreateBooking } from '../hooks/useExpeditionBookings'
 import { buildE164Phone, isValidPhoneInput, COUNTRY_CODES } from '../lib/phone'
 import { findPickupAreaForAddress, hasLocationOnlyAreas, isPickupLocationSatisfied, pickupZoneStatus, type PickupAreaShape } from '../lib/pickupZone'
-import PickupZoneMap from '../components/booking/PickupZoneMap'
+import LocationMap from '../components/booking/LocationMap'
 import OptimizedImage from '@/components/shared/OptimizedImage'
 import {
   openingHoursForDay,
@@ -739,15 +739,21 @@ function ActivityDetailsStep({
   )
 
   // Location map — shows the supplier's pickup zones / meeting point, plus the
-  // traveller's picked pickup location when one is selected.
+  // traveller's picked pickup location when one is selected. Renders Google
+  // Maps when a valid key is configured, falling back to MapLibre + OSM tiles.
   const locationMap = (
-    <PickupZoneMap
+    <LocationMap
       tour={tour}
       userMarker={{ lat: contact.pickupLat, lng: contact.pickupLng }}
       onUserPointChange={(lat, lng) => {
         onContactChange('pickupLat', lat)
         onContactChange('pickupLng', lng)
         onContactChange('pickupArea', '')
+      }}
+      onUserAddressChange={(address) => {
+        // Map-click reverse geocode — keep the address text in sync with the
+        // pinned coordinates (the LocationPicker re-syncs from its value prop).
+        onContactChange('location', address)
       }}
     />
   )

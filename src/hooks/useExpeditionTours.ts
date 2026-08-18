@@ -868,15 +868,49 @@ export function extractMeetingInfo(rawTour: any) {
 }
 
 /**
- * Resolves the tour's itinerary. Prefers the explicit `productContent.itinerary`
- * array (structured itinerary stops created in the supplier builder); when that
- * is absent or empty, falls back to deriving stops from `productContent.locations`
- * (the ordered list of places the tour visits), so tours that never filled in a
- * dedicated itinerary still show an itinerary section on the detail page.
+ * Resolves the tour's itinerary. Prefers the authoritative `productContent.locations`
+ * (the ordered list of places the tour visits) whenever it carries identifiable
+ * stops — the supplier's modern itinerary source. Falls back to the legacy free-form
+ * `productContent.itinerary` array only when locations are absent or yield nothing,
+ * so stale legacy blobs (e.g. outdated "Day 1"/"Day 2" text from an old multi-day
+ * version) never shadow the tour's current stops.
  */
-function extractItinerary(rawTour: any): ItineraryDay[] {
+export function extractItinerary(rawTour: any): ItineraryDay[] {
   try {
     const pc = parseProductContent(rawTour)
+
+    // Modern, authoritative source: derive stops from locations first.
+    const locations = Array.isArray(pc?.locations) ? pc.locations : []
+    if (locations.length > 0) {
+      const derived = locations
+        // A supplier may save a stop that only has an address (no name picked),
+        // so keep any location that carries at least one identifier.
+        .filter((loc: any) => loc && (loc.name || loc.title || loc.address))
+        .map((loc: any) => {
+          const name = loc.name || loc.title || loc.address || `Stop`
+          return {
+            // Preserve the day the supplier assigned (multi-day tours split
+            // stops across day 1..N); default to day 1 for legacy data.
+            day: loc.day != null ? Number(loc.day) : 1,
+            title: name,
+            description: typeof loc.description === 'string' ? loc.description : '',
+            locationName: loc.name || loc.title || undefined,
+            locationAddress: loc.address || undefined,
+            locationCity: loc.city || undefined,
+            locationCountry: loc.country || undefined,
+            locationLat: loc.lat != null ? loc.lat : null,
+            locationLng: loc.lng != null ? loc.lng : null,
+            duration: loc.timeSpent != null ? Number(loc.timeSpent) : undefined,
+            durationUnit: loc.timeSpentUnit != null ? normalizeDurationUnit(loc.timeSpentUnit) : undefined,
+            type: 'activity' as const,
+            additionalFee: loc.admissionIncluded === 'no',
+            admissionIncluded: ['yes', 'no', 'passby'].includes(loc.admissionIncluded) ? loc.admissionIncluded : undefined,
+          }
+        })
+      if (derived.length > 0) return derived
+    }
+
+    // Legacy fallback: structured itinerary stops created in the old builder.
     const explicit = Array.isArray(pc?.itinerary) ? pc.itinerary : []
     if (explicit.length > 0) {
       return explicit.map((stop: any) => ({
@@ -888,34 +922,7 @@ function extractItinerary(rawTour: any): ItineraryDay[] {
       }))
     }
 
-    const locations = Array.isArray(pc?.locations) ? pc.locations : []
-    if (locations.length === 0) return []
-
-    return locations
-      // A supplier may save a stop that only has an address (no name picked),
-      // so keep any location that carries at least one identifier.
-      .filter((loc: any) => loc && (loc.name || loc.title || loc.address))
-      .map((loc: any) => {
-        const name = loc.name || loc.title || loc.address || `Stop`
-        return {
-          // Preserve the day the supplier assigned (multi-day tours split
-          // stops across day 1..N); default to day 1 for legacy data.
-          day: loc.day != null ? Number(loc.day) : 1,
-          title: name,
-          description: typeof loc.description === 'string' ? loc.description : '',
-          locationName: loc.name || loc.title || undefined,
-          locationAddress: loc.address || undefined,
-          locationCity: loc.city || undefined,
-          locationCountry: loc.country || undefined,
-          locationLat: loc.lat != null ? loc.lat : null,
-          locationLng: loc.lng != null ? loc.lng : null,
-          duration: loc.timeSpent != null ? Number(loc.timeSpent) : undefined,
-          durationUnit: loc.timeSpentUnit != null ? normalizeDurationUnit(loc.timeSpentUnit) : undefined,
-          type: 'activity' as const,
-          additionalFee: loc.admissionIncluded === 'no',
-          admissionIncluded: ['yes', 'no', 'passby'].includes(loc.admissionIncluded) ? loc.admissionIncluded : undefined,
-        }
-      })
+    return []
   } catch {
     return []
   }
@@ -1597,21 +1604,15 @@ export function useExpeditionTour(slug: string | undefined) {
                 tour.excluded = pc.excluded
               }
             }
-            // Extract itinerary from raw productContent (explicit itinerary
-            // first, falling back to the locations list for tours that never
-            // filled in a dedicated itinerary). Days are reconciled against the
-            // tour's actual duration so single-day tours never render as
-            // multi-day from stale day assignments.
+            // Extract itinerary from raw productContent (locations-first, with a
+            // legacy free-form itinerary fallback for tours that only carry the
+            // old blob). Days are reconciled against the tour's actual duration
+            // so single-day tours never render as multi-day from stale day
+            // assignments.
             if (!Array.isArray(tour.itinerary) || tour.itinerary.length === 0) {
-              const pc = rawTour?.productContent
-              const rawItin = pc?.itinerary
-              if (Array.isArray(rawItin) && rawItin.length > 0) {
-                tour.itinerary = normalizeItineraryDays(rawItin, tour.durationMinutes)
-              } else {
-                const derived = normalizeItineraryDays(extractItinerary(rawTour), tour.durationMinutes)
-                if (derived.length > 0) {
-                  tour.itinerary = derived
-                }
+              const derived = normalizeItineraryDays(extractItinerary(rawTour), tour.durationMinutes)
+              if (derived.length > 0) {
+                tour.itinerary = derived
               }
             }
             // Extract short description (productContent.shortSummary)
@@ -1666,9 +1667,7 @@ export function useExpeditionTour(slug: string | undefined) {
       const rawItinerary = normalizeItineraryDays(
         Array.isArray(tour.itinerary) && tour.itinerary.length > 0
           ? tour.itinerary
-          : Array.isArray(rawTourPayload?.productContent?.itinerary)
-            ? rawTourPayload.productContent.itinerary
-            : extractItinerary(rawTourPayload),
+          : extractItinerary(rawTourPayload),
         tour.durationMinutes,
       )
       const meetingInfo = rawMeetingInfo ?? extractMeetingInfo(rawTourPayload)

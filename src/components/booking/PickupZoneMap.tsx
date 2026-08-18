@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import * as maplibregl from 'maplibre-gl'
-import { MapPin } from 'lucide-react'
+import { MapPin, RefreshCw } from 'lucide-react'
 import 'maplibre-gl/dist/maplibre-gl.css'
+import { reverseGeocode } from '@/lib/locations'
 import {
   DEFAULT_CENTER,
   TILE_STYLE,
@@ -23,7 +24,7 @@ import type { PickupAreaShape } from '@/lib/pickupZone'
  * The booking page's tour object — the supplier's meeting/pickup config with
  * the drawn geoshapes that PickupMapSource doesn't declare.
  */
-interface PickupZoneMapTour {
+export interface PickupZoneMapTour {
   meetingMode?: 'meeting_point' | 'pickup' | 'none'
   meetingPoint?: string
   meetingPointAddress?: string
@@ -55,10 +56,13 @@ export default function PickupZoneMap({
   tour,
   userMarker,
   onUserPointChange,
+  onUserAddressChange,
 }: {
   tour: PickupZoneMapTour
   userMarker?: { lat: number | null; lng: number | null } | null
   onUserPointChange?: (lat: number, lng: number) => void
+  /** Reverse-geocoded formatted address for a point picked on the map. */
+  onUserAddressChange?: (address: string) => void
 }) {
   const [osmFailed, setOsmFailed] = useState(false)
   const [mapReady, setMapReady] = useState(false)
@@ -72,9 +76,11 @@ export default function PickupZoneMap({
   const mapReadyRef = useRef(false)
   const mapFailTimerRef = useRef<number | null>(null)
   const onUserPointChangeRef = useRef(onUserPointChange)
+  const onUserAddressChangeRef = useRef(onUserAddressChange)
   useEffect(() => {
     onUserPointChangeRef.current = onUserPointChange
-  }, [onUserPointChange])
+    onUserAddressChangeRef.current = onUserAddressChange
+  }, [onUserPointChange, onUserAddressChange])
 
   // Supplier's pickup/meeting points (green pins) + the traveller's pin.
   const tourPoints = useMemo(() => buildTourPoints(tour as PickupMapSource), [tour])
@@ -149,8 +155,27 @@ export default function PickupZoneMap({
 
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right')
 
+    // Click-to-pick (mirrors the supplier's LocationMapPicker): sets the
+    // traveller's pickup coordinates, drops the pin and zooms to street level.
+    const onClick = (e: maplibregl.MapMouseEvent): void => {
+      const { lat, lng } = e.lngLat
+      onUserPointChangeRef.current?.(lat, lng)
+      map.flyTo({ center: [lng, lat], zoom: 15, duration: 900 })
+      // Fire-and-forget: fill the pickup address with the closest place name.
+      void reverseGeocode(lat, lng).then((r) => {
+        if (r?.formatted) onUserAddressChangeRef.current?.(r.formatted)
+      })
+    }
+    map.on('click', onClick)
+
     map.on('load', () => {
       if (!mapRef.current) return
+      // Style loaded — a success beats any pre-load error, so disarm the
+      // failover timer before drawing overlays.
+      if (mapFailTimerRef.current != null) {
+        window.clearTimeout(mapFailTimerRef.current)
+        mapFailTimerRef.current = null
+      }
 
       if (zones.length > 0) {
         map.addSource('pz-zones', { type: 'geojson', data: ringsToFeatureCollection(zones) })
@@ -188,10 +213,11 @@ export default function PickupZoneMap({
 
     // A failing style/tile CDN must not leave a permanent blank box in the
     // checkout — degrade to the OSM/textual fallback after a grace period.
-    // Armed on ANY error (pre- or post-load): raster tile failures fire
-    // 'error' even after a successful load, so mid-session tile/network
-    // outages also reach the fallback instead of a blank map.
+    // The timer is armed only while the style has NOT loaded: once 'load'
+    // fires, transient tile/network errors are ignored so a single raster
+    // tile 404 no longer collapses a working map (tiles self-heal on refetch).
     map.on('error', () => {
+      if (mapReadyRef.current) return
       if (mapFailTimerRef.current == null) {
         mapFailTimerRef.current = window.setTimeout(() => setMapFailed(true), 8000)
       }
@@ -209,6 +235,7 @@ export default function PickupZoneMap({
         userPinRef.current.remove()
         userPinRef.current = null
       }
+      map.off('click', onClick)
       map.remove()
       mapRef.current = null
       mapReadyRef.current = false
@@ -318,6 +345,12 @@ export default function PickupZoneMap({
                 </span>
               </div>
             )}
+            {mapReady && (
+              <div className="absolute inset-x-0 bottom-0 z-10 flex items-center justify-center gap-1.5 border-t border-slate-100 bg-white/85 px-3 py-1.5 text-[11px] font-medium text-slate-500 backdrop-blur-sm">
+                <MapPin size={11} className="shrink-0 text-[#179237]" />
+                Click the map to set your pickup location
+              </div>
+            )}
           </>
         ) : mapView && !osmFailed ? (
           <>
@@ -353,6 +386,19 @@ export default function PickupZoneMap({
             >
               Open in Google Maps
             </a>
+            {mapFailed && (
+              <button
+                type="button"
+                onClick={() => {
+                  setMapFailed(false)
+                  setMapReady(false)
+                }}
+                className="mt-1 flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
+              >
+                <RefreshCw size={12} />
+                Retry map
+              </button>
+            )}
           </div>
         )}
       </div>

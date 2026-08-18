@@ -131,7 +131,7 @@
 }
 
 .details-bullet-item {
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.6;
   color: #000;
 }
@@ -139,12 +139,6 @@
 @media (min-width: 640px) {
   .details-bullet-item {
     font-size: 16px;
-  }
-}
-
-@media (min-width: 1024px) {
-  .details-bullet-item {
-    font-size: 18px;
   }
 }
 
@@ -161,7 +155,7 @@
 }
 
 .details-empty {
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.75;
   color: #000;
 }
@@ -169,12 +163,6 @@
 @media (min-width: 640px) {
   .details-empty {
     font-size: 16px;
-  }
-}
-
-@media (min-width: 1024px) {
-  .details-empty {
-    font-size: 18px;
   }
 }
 

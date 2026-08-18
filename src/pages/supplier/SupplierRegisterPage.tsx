@@ -69,6 +69,20 @@ export default function SupplierRegisterPage({ onOpenAuth }: SupplierRegisterPag
 
   const alreadyApplied = !!application
 
+  // "Sign in here" — verified suppliers go straight to their dashboard login
+  // (SSO into the TravioAfrica-Supplier platform). Anyone else falls back to
+  // the normal sign-in prompt.
+  const handleSignInHere = async () => {
+    if (application && isApprovedSupplier(application.status)) {
+      const portalUrl = await getSupplierPortalUrl(application)
+      if (portalUrl) {
+        window.location.replace(portalUrl)
+        return
+      }
+    }
+    onOpenAuth?.("signin")
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -164,8 +178,8 @@ export default function SupplierRegisterPage({ onOpenAuth }: SupplierRegisterPag
           {t("supplierAuth.alreadyHaveAccount", "Already have a supplier account?")}{" "}
           <button
             type="button"
-            onClick={(e) => e.preventDefault()}
-            className="cursor-default bg-transparent p-0 font-semibold text-primary hover:no-underline"
+            onClick={handleSignInHere}
+            className="bg-transparent p-0 font-semibold text-primary hover:underline"
           >
             {t("supplierAuth.signInHere", "Sign in here")}
           </button>

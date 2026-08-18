@@ -113,6 +113,11 @@ export function pinSvg(color: string): string {
   return `<svg width="32" height="40" viewBox="0 0 32 40" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M16 0C7.16 0 0 7.16 0 16c0 12 16 24 16 24s16-12 16-24C32 7.16 24.84 0 16 0z" fill="${color}"/><circle cx="16" cy="16" r="6" fill="white" stroke="${color}" stroke-width="2"/></svg>`
 }
 
+/** Encodes a marker SVG into a data URI usable as a Google Maps Marker icon. */
+export function svgDataUri(svg: string): string {
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
+}
+
 /** Builds a MapLibre marker element showing the pin in the given colour. */
 export function maplibrePinEl(color: string): HTMLDivElement {
   const el = document.createElement('div')
