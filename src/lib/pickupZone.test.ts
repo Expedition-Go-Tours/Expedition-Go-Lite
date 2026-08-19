@@ -7,6 +7,9 @@ import {
   hasDrawnShape,
   hasLocationOnlyAreas,
   isPickupLocationSatisfied,
+  circleRing,
+  pickupZoneRings,
+  LOCATION_AREA_RADIUS_M,
   type PickupAreaShape,
 } from './pickupZone'
 
@@ -157,6 +160,79 @@ describe('pickupZoneStatus', () => {
   it('is outside for a location-only area beyond the radius', () => {
     const pointArea: PickupAreaShape = { name: 'Kumasi', lat: 6.6871, lng: -1.6219 }
     expect(pickupZoneStatus({ lat: 6.0, lng: -1.6219 }, [pointArea])).toBe('outside')
+  })
+})
+
+describe('circleRing', () => {
+  const CENTER = { lat: 5.55, lng: -0.2 }
+  const ring = circleRing(CENTER.lat, CENTER.lng, LOCATION_AREA_RADIUS_M)
+
+  it('returns a closed ring with the requested number of segments', () => {
+    expect(ring).toHaveLength(65)
+    expect(ring[0]).toEqual(ring[ring.length - 1])
+    expect(ring.every((v) => v.length === 2 && v.every((n) => Number.isFinite(n)))).toBe(true)
+  })
+
+  it('keeps the centre inside the ring and points near the edge on the correct side', () => {
+    expect(pointInPolygon(CENTER.lat, CENTER.lng, ring)).toBe(true)
+    // ~4.5 km north of the centre — inside the 5 km radius.
+    expect(pointInPolygon(CENTER.lat + 4500 / 6371000 * (180 / Math.PI), CENTER.lng, ring)).toBe(true)
+    // ~5.5 km north of the centre — outside the 5 km radius.
+    expect(pointInPolygon(CENTER.lat + 5500 / 6371000 * (180 / Math.PI), CENTER.lng, ring)).toBe(false)
+  })
+
+  it('places every vertex at the haversine radius from the centre', () => {
+    for (const [lat, lng] of ring) {
+      const d = distanceMeters(CENTER.lat, CENTER.lng, lat, lng)
+      expect(d).toBeGreaterThan(LOCATION_AREA_RADIUS_M - 100)
+      expect(d).toBeLessThan(LOCATION_AREA_RADIUS_M + 100)
+    }
+  })
+})
+
+describe('pickupZoneRings', () => {
+  it('returns drawn polygons unchanged', () => {
+    const rings = pickupZoneRings([AREA_OSU])
+    expect(rings).toHaveLength(1)
+    expect(rings[0]).toEqual(OSU_SQUARE)
+  })
+
+  it('adds a radius circle when a location-only area is the only pickup location', () => {
+    const rings = pickupZoneRings([{ name: 'Kumasi', lat: 6.6871, lng: -1.6219 }])
+    expect(rings).toHaveLength(1)
+    expect(rings[0]).toHaveLength(65)
+    expect(pointInPolygon(6.6871, -1.6219, rings[0])).toBe(true)
+  })
+
+  it('skips the circle when the tour has more than one pickup location', () => {
+    // Two location-only areas → the green pins represent each spot, no blobs.
+    const rings = pickupZoneRings([
+      { name: 'Kumasi', lat: 6.6871, lng: -1.6219 },
+      { name: 'Accra', lat: 5.6037, lng: -0.187 },
+    ])
+    expect(rings).toHaveLength(0)
+    // A drawn zone plus a location-only area → only the drawn polygon renders.
+    const mixed = pickupZoneRings([AREA_OSU, { name: 'Kumasi', lat: 6.6871, lng: -1.6219 }])
+    expect(mixed).toHaveLength(1)
+    expect(mixed[0]).toEqual(OSU_SQUARE)
+  })
+
+  it('skips the circle when separate pickup locations exist alongside the area', () => {
+    // E.g. the Accra Full Day Tour: one location-only area + one pickup
+    // location → two pickup spots total, so no geofence blob.
+    const rings = pickupZoneRings([{ name: 'Accra Mall, Tetteh Quarshie Road', lat: 5.6221843, lng: -0.1729361 }], 1)
+    expect(rings).toHaveLength(0)
+    // Same area with NO separate locations → the single-spot circle stays.
+    const single = pickupZoneRings([{ name: 'Accra Mall, Tetteh Quarshie Road', lat: 5.6221843, lng: -0.1729361 }], 0)
+    expect(single).toHaveLength(1)
+  })
+
+  it('skips areas without coordinates or a drawn shape, and null entries', () => {
+    expect(pickupZoneRings([{ name: 'Legacy' }])).toHaveLength(0)
+    expect(pickupZoneRings([null, undefined])).toHaveLength(0)
+    expect(pickupZoneRings([{ name: 'NoCoords', lat: null, lng: null }])).toHaveLength(0)
+    expect(pickupZoneRings([])).toHaveLength(0)
+    expect(pickupZoneRings(undefined)).toHaveLength(0)
   })
 })
 

@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next'
 import * as maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import {
-  createMapLibreMap, maplibrePinEl, TILE_STYLE, TOUR_PIN_COLOR, type MapPoint,
+  buildTileStyle, createMapLibreMap, maplibrePinEl, resolveTileProvider, TOUR_PIN_COLOR, type MapPoint,
+  type TileProvider,
 } from '../../lib/mapUtils'
 import './TourLocationMap.css'
 
@@ -21,13 +22,25 @@ export default function TourLocationMap({ coordinates, location, title }: TourLo
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
   const [mapState, setMapState] = useState<'loading' | 'ready' | 'error'>('loading')
+  const [tileProvider, setTileProvider] = useState<TileProvider | null>(null)
 
   const hasCoords = Number.isFinite(coordinates.lat) && Number.isFinite(coordinates.lng)
   const googleMapsUrl = `https://www.google.com/maps?q=${coordinates.lat},${coordinates.lng}`
 
   useEffect(() => {
+    if (!hasCoords) return
+    let cancelled = false
+    void resolveTileProvider().then((provider) => {
+      if (!cancelled) setTileProvider(provider)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [hasCoords])
+
+  useEffect(() => {
     const el = containerRef.current
-    if (!el || !hasCoords) return
+    if (!el || !hasCoords || !tileProvider) return
 
     const existing = mapRef.current
     if (existing) {
@@ -55,7 +68,7 @@ export default function TourLocationMap({ coordinates, location, title }: TourLo
     }
 
     const createdMap = createMapLibreMap(el, {
-      style: TILE_STYLE,
+      style: buildTileStyle(tileProvider),
       center: [coordinates.lng, coordinates.lat],
       zoom: 13,
     })
@@ -89,7 +102,7 @@ export default function TourLocationMap({ coordinates, location, title }: TourLo
       createdMap.remove()
       mapRef.current = null
     }
-  }, [coordinates.lat, coordinates.lng, hasCoords])
+  }, [coordinates.lat, coordinates.lng, hasCoords, tileProvider])
 
   return (
     <section className="tour-location-map" id="tour-location">

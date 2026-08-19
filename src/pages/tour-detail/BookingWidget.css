@@ -109,6 +109,71 @@
   }
 }
 
+/* Special offers (applied on the supplier platform) */
+.booking-offers {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: 4px;
+}
+
+.booking-offer-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  max-width: 100%;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.35;
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.booking-offer-chip svg {
+  flex-shrink: 0;
+}
+
+.booking-offer-chip-limited_time {
+  background: #eff6ff;
+  color: #1e40af;
+  border-color: #bfdbfe;
+}
+
+.booking-offer-chip-early_bird {
+  background: #fffbeb;
+  color: #92400e;
+  border-color: #fde68a;
+}
+
+.booking-offer-chip-last_minute {
+  background: #fff7ed;
+  color: #9a3412;
+  border-color: #fed7aa;
+}
+
+.booking-offer-chip-promo {
+  background: #f5f3ff;
+  color: #5b21b6;
+  border-color: #ddd6fe;
+}
+
+.booking-offer-chip-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.booking-offer-chip-discount {
+  opacity: 0.85;
+  white-space: nowrap;
+}
+
 /* Form */
 .booking-form {
   display: flex;
@@ -558,6 +623,35 @@
   border-top: 1px solid #e2e8f0;
 }
 
+/* Pre-total breakdown: struck subtotal + applied special-offer / promo saving */
+.booking-savings {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.booking-savings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.booking-savings-strike {
+  text-decoration: line-through;
+  color: #94a3b8;
+}
+
+.booking-savings-discount {
+  color: #166534;
+  font-weight: 600;
+}
+
+.booking-savings-amount {
+  font-weight: 700;
+}
+
 /* Total */.booking-total {
   display: flex;
   align-items: center;
@@ -674,6 +768,13 @@
 .booking-promo-btn:hover {
   border-color: #166534;
   color: #166534;
+}
+
+.booking-promo-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  border-color: #e2e8f0;
+  color: #94a3b8;
 }
 
 .booking-promo-error {

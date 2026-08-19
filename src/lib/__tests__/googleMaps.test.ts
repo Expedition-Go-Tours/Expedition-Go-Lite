@@ -4,7 +4,9 @@ import {
   GoogleMapsLoadError,
   isGoogleMapsAuthFailed,
   loadGoogleMaps,
+  recordGoogleMapsFailure,
   resetGoogleMapsLoader,
+  shouldAttemptGoogleMaps,
 } from '../googleMaps'
 
 const CALLBACK_KEY = '__expeditionGoMapsCallback'
@@ -174,5 +176,36 @@ describe('googleMaps loader', () => {
     ;(window as unknown as Win).google = { maps: { foo: 'bar' } }
     fireCallback()
     await expect(promise).resolves.toEqual({ foo: 'bar' })
+  })
+
+  it('shouldAttemptGoogleMaps reflects key availability and the cached outcome', () => {
+    vi.stubEnv('VITE_GOOGLE_MAPS_API_KEY', '')
+    expect(shouldAttemptGoogleMaps()).toBe(false)
+
+    vi.stubEnv('VITE_GOOGLE_MAPS_API_KEY', 'test-key-123')
+    expect(shouldAttemptGoogleMaps()).toBe(true)
+
+    // A recent remembered failure short-circuits (no network attempt).
+    window.localStorage.setItem(
+      GOOGLE_MAPS_OUTCOME_KEY,
+      JSON.stringify({ ok: false, ts: Date.now(), key: 'test-key-123' }),
+    )
+    expect(shouldAttemptGoogleMaps()).toBe(false)
+
+    // A remembered success keeps the attempt green.
+    window.localStorage.setItem(
+      GOOGLE_MAPS_OUTCOME_KEY,
+      JSON.stringify({ ok: true, ts: Date.now(), key: 'test-key-123' }),
+    )
+    expect(shouldAttemptGoogleMaps()).toBe(true)
+  })
+
+  it('recordGoogleMapsFailure sticks and disables future attempts', () => {
+    vi.stubEnv('VITE_GOOGLE_MAPS_API_KEY', 'test-key-123')
+    expect(shouldAttemptGoogleMaps()).toBe(true)
+
+    recordGoogleMapsFailure()
+    expect(isGoogleMapsAuthFailed()).toBe(true)
+    expect(shouldAttemptGoogleMaps()).toBe(false)
   })
 })

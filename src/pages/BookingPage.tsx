@@ -6,7 +6,7 @@ import { motion, AnimatePresence, useAnimate } from 'framer-motion'
 import { toast } from 'sonner'
 import {
   Check, ArrowLeft, MapPin, CalendarDays, CalendarCheck, Users, Info, X,
-  Phone, MessageSquare, ShieldCheck, Star, Clock, Globe,
+  Phone, MessageSquare, ShieldCheck, Star, Clock, Globe, Loader2,
   Car, CreditCard, Ticket,
 } from 'lucide-react'
 import logoSrc from '../assets/expo_trans.png'
@@ -27,6 +27,14 @@ import { useCreateBooking } from '../hooks/useExpeditionBookings'
 import { buildE164Phone, isValidPhoneInput, COUNTRY_CODES } from '../lib/phone'
 import { findPickupAreaForAddress, hasLocationOnlyAreas, isPickupLocationSatisfied, pickupZoneStatus, type PickupAreaShape } from '../lib/pickupZone'
 import LocationMap from '../components/booking/LocationMap'
+import MapErrorBoundary from '../components/booking/MapErrorBoundary'
+import PickupSelectModal from '../components/booking/PickupSelectModal'
+import TravelTimeChip from '../components/booking/TravelTimeChip'
+import { toNumber } from '../lib/mapUtils'
+import { useResolvedTourPoints } from '../hooks/useResolvedTourPoints'
+import { useCustomPickupPoints } from '../hooks/useCustomPickupPoints'
+import type { ResolveTourSource, ResolvedTourPoint } from '../lib/resolvePoints'
+import type { PickupZoneMapTour } from '../components/booking/PickupZoneMap'
 import OptimizedImage from '@/components/shared/OptimizedImage'
 import {
   openingHoursForDay,
@@ -705,7 +713,9 @@ function ActivityDetailsStep({
     ? zoneStatus === 'excluded'
       ? `This address is inside a no-pickup zone${matchedArea?.name ? ` for \u201C${matchedArea.name}\u201D` : ''} — choose a different address or pickup zone.`
       : zoneStatus === 'outside'
-        ? 'This address is not inside your pickup area — choose a different address.'
+        ? geofenced
+          ? 'This location is out of range from the pickup zone — choose a location inside the zone.'
+          : 'This address is not inside your pickup area — choose a different address.'
         : zoneStatus === 'no_coords' && geofenced && contact.location.trim().length >= 3
           ? 'Pick an address from the suggestions so we can confirm it is inside a pickup zone.'
           : geofenced
@@ -716,11 +726,16 @@ function ActivityDetailsStep({
   const handlePickupAreaSelect = (name: string) => {
     if (contact.pickupArea === name) {
       onContactChange('pickupArea', '')
+      onContactChange('pickupLat', null)
+      onContactChange('pickupLng', null)
     } else {
       onContactChange('pickupArea', name)
       onContactChange('location', '')
-      onContactChange('pickupLat', null)
-      onContactChange('pickupLng', null)
+      // Pin the picked location on the map — the blue pin shows the
+      // traveller's chosen pickup spot.
+      const area = pickupAreasList.find((a) => a.name === name)
+      onContactChange('pickupLat', area && area.lat != null ? area.lat : null)
+      onContactChange('pickupLng', area && area.lng != null ? area.lng : null)
     }
   }
 
@@ -729,6 +744,42 @@ function ActivityDetailsStep({
   const [showMapModal, setShowMapModal] = useState(false)
   const handleOpenMap = () => setShowMapModal(true)
   const handleCloseMap = () => setShowMapModal(false)
+
+  // Geocode pipeline — resolves every meeting/pickup point to exact lat/lng
+  // (forward-geocoding entries that only have a name/address), so the maps
+  // always render pins at the exact locations.
+  const { points: resolvedPoints, mapTour, loading: resolvingPoints } = useResolvedTourPoints(tour as ResolveTourSource)
+
+  // The tour's meeting point coordinates (when the supplier provided them) —
+  // feeds the ETA chip that shows how long the traveller's pickup location is
+  // from the meeting point.
+  const meetingPointCoords = useMemo(() => {
+    const lat = toNumber(tour.meetingPointLat)
+    const lng = toNumber(tour.meetingPointLng)
+    return lat != null && lng != null ? { lat, lng } : null
+  }, [tour.meetingPointLat, tour.meetingPointLng])
+
+  // Traveller-added pickup spots — double-clicking the map inside a pickup
+  // zone appends a violet entry to the pickup list below.
+  const { points: customPoints, addPoint, removePoint } = useCustomPickupPoints(tour.pickupAreas)
+
+  const handleDoubleClickPoint = async (lat: number, lng: number): Promise<void> => {
+    const res = await addPoint(lat, lng)
+    if (res.status === 'added') {
+      // Auto-select: commit the new spot as the traveller's pickup location.
+      onContactChange('location', res.point.address)
+      onContactChange('pickupLat', res.point.lat)
+      onContactChange('pickupLng', res.point.lng)
+      onContactChange('pickupArea', '')
+    }
+  }
+
+  const handleCustomRowSelect = (p: ResolvedTourPoint) => {
+    onContactChange('location', p.address)
+    onContactChange('pickupLat', p.lat)
+    onContactChange('pickupLng', p.lng)
+    onContactChange('pickupArea', '')
+  }
 
   const meetingSummaryCard = (
     <div className="overflow-hidden rounded-xl border border-slate-200/40 bg-slate-50/30">
@@ -739,36 +790,59 @@ function ActivityDetailsStep({
   )
 
   // Location map — shows the supplier's pickup zones / meeting point, plus the
-  // traveller's picked pickup location when one is selected. Renders Google
-  // Maps when a valid key is configured, falling back to MapLibre + OSM tiles.
+  // traveller's picked pickup location when one is selected. Renders the
+  // Google map first (falling back to Mapbox/MapLibre/OSM), with the ETA chip
+  // (pickup → meeting point) underneath when both coordinates exist.
   const locationMap = (
-    <LocationMap
-      tour={tour}
-      userMarker={{ lat: contact.pickupLat, lng: contact.pickupLng }}
-      onUserPointChange={(lat, lng) => {
-        onContactChange('pickupLat', lat)
-        onContactChange('pickupLng', lng)
-        onContactChange('pickupArea', '')
-      }}
-      onUserAddressChange={(address) => {
-        // Map-click reverse geocode — keep the address text in sync with the
-        // pinned coordinates (the LocationPicker re-syncs from its value prop).
-        onContactChange('location', address)
-      }}
+    <MapErrorBoundary resetKey={mapTour || tour}>
+      <LocationMap
+        tour={(mapTour || tour) as PickupZoneMapTour}
+        userMarker={{ lat: contact.pickupLat, lng: contact.pickupLng }}
+        onUserPointChange={(lat, lng) => {
+          onContactChange('pickupLat', lat)
+          onContactChange('pickupLng', lng)
+          onContactChange('pickupArea', '')
+          // Surface the out-of-range verdict right away when the marker is
+          // placed outside the supplier's pickup zone.
+          setTouched((t) => ({ ...t, location: true }))
+        }}
+        onUserAddressChange={(address) => {
+          // Map-click reverse geocode — keep the address text in sync with the
+          // pinned coordinates (the LocationPicker re-syncs from its value prop).
+          onContactChange('location', address)
+        }}
+        onDoubleClickPoint={(lat, lng) => {
+          void handleDoubleClickPoint(lat, lng)
+        }}
+      />
+    </MapErrorBoundary>
+  )
+
+  const travelTimeChip = (
+    <TravelTimeChip
+      from={
+        contact.pickupLat != null && contact.pickupLng != null
+          ? { lat: contact.pickupLat, lng: contact.pickupLng }
+          : null
+      }
+      to={meetingPointCoords}
+      destinationLabel="the meeting point"
     />
   )
 
-const pickupSpotCount = (Array.isArray(tour.pickupAreas) ? tour.pickupAreas.filter((a) => a && (a.name || a.address)).length : 0)
-    + (Array.isArray(tour.pickupLocations) ? tour.pickupLocations.filter((l) => l && (l.name || l.address)).length : 0)
-
   // The map preview renders for meeting-point tours and any pickup tour that
-  // has geographic data (drawn zones or location-only points). Location-only
-  // tours keep their selectable list — the map is the pin preview + draggable
-  // pickup pin + live zone verdict. Pickup tours with no areas render no map.
+  // has geographic data (drawn zones, location-only points, or points resolved
+  // to coordinates by the geocode pipeline). Location-only tours keep their
+  // selectable list — the map is the pin preview + draggable pickup pin +
+  // live zone verdict. Pickup tours with no areas render no map.
   const showZoneMap =
     tour.meetingMode === 'meeting_point' ||
     zonesDrawn ||
-    (tour.meetingMode === 'pickup' && hasPointAreas)
+    hasPointAreas ||
+    resolvedPoints.some((p) => p.lat != null && p.lng != null) ||
+    !!(tour.meetingPoint || tour.meetingPointAddress) ||
+    (tour.pickupAreas?.length ?? 0) > 0 ||
+    (tour.pickupLocations?.length ?? 0) > 0
 
   const pickupPhoto = <MeetingPointPhoto src={tour.meetingPointPicture} />
 
@@ -826,7 +900,17 @@ const pickupSpotCount = (Array.isArray(tour.pickupAreas) ? tour.pickupAreas.filt
                         ? 'Pick the zone closest to where you are staying — the exact pickup point is confirmed with you directly.'
                         : 'Pick the pickup point closest to where you are staying — the exact pickup time is confirmed with you directly.'
                     }>
-                      {zonesDrawn ? 'Choose your pickup zone' : 'Choose your pickup point'}
+                      <span className="inline-flex items-center gap-2">
+                        {zonesDrawn ? 'Choose your pickup zone' : 'Choose your pickup point'}
+                        <button
+                          type="button"
+                          onClick={handleOpenMap}
+                          className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 underline underline-offset-2 transition-colors hover:text-emerald-700"
+                        >
+                          <MapPin className="size-3.5" />
+                          Choose on map
+                        </button>
+                      </span>
                     </FieldLabel>
                     {zonesDrawn ? (
                       <div className="flex flex-wrap gap-2">
@@ -893,6 +977,66 @@ const pickupSpotCount = (Array.isArray(tour.pickupAreas) ? tour.pickupAreas.filt
                   </div>
                 )}
 
+                {/* Traveller-added spots — violet rows, removable; selecting one
+                    commits it as the pickup location like a picker selection. */}
+                {!contact.pickupLater && customPoints.length > 0 && (
+                  <div>
+                    <p className="flex items-center gap-1.5 px-1 text-[10px] font-bold uppercase tracking-wider text-violet-500">
+                      <MapPin className="size-3" /> Added on map
+                      <span className="font-semibold text-slate-300">({customPoints.length})</span>
+                    </p>
+                    <ul className="mt-1.5 space-y-2">
+                      {customPoints.map((p) => {
+                        const selected = contact.pickupArea === '' && contact.location === p.address && contact.pickupLat === p.lat
+                        return (
+                          <li key={p.id}>
+                            <div
+                              role="button"
+                              tabIndex={0}
+                              aria-pressed={selected}
+                              onClick={() => handleCustomRowSelect(p)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                  e.preventDefault()
+                                  handleCustomRowSelect(p)
+                                }
+                              }}
+                              className={`flex w-full items-start gap-3 rounded-xl border p-3 text-left transition-colors ${
+                                selected
+                                  ? 'border-violet-400 bg-violet-50 ring-1 ring-violet-400/40'
+                                  : 'border-slate-200 bg-white hover:border-violet-300'
+                              }`}
+                            >
+                              <MapPin className={`mt-0.5 size-4 shrink-0 ${selected ? 'text-violet-600' : 'text-violet-400'}`} />
+                              <span className="min-w-0 flex-1">
+                                <span className={`block text-sm font-semibold ${selected ? 'text-violet-700' : 'text-slate-800'}`}>
+                                  {p.address || 'Added point'}
+                                </span>
+                                {p.lat != null && p.lng != null && (
+                                  <span className="block font-mono text-[10px] text-slate-400">
+                                    {p.lat.toFixed(5)}, {p.lng.toFixed(5)}
+                                  </span>
+                                )}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  removePoint(p.id)
+                                }}
+                                aria-label={`Remove ${p.address || 'added point'}`}
+                                className="shrink-0 rounded p-1 text-slate-400 transition-colors hover:bg-violet-100 hover:text-violet-600"
+                              >
+                                <X size={14} />
+                              </button>
+                            </div>
+                          </li>
+                        )
+                      })}
+                    </ul>
+                  </div>
+                )}
+
                 <div>
                   <FieldLabel required={!contact.pickupLater} tooltip="Where should the tour operator pick you up? Search for your address and pick a suggestion so we can confirm you are inside a pickup zone.">Pickup Location</FieldLabel>
                   {contact.pickupLater ? (
@@ -913,7 +1057,12 @@ const pickupSpotCount = (Array.isArray(tour.pickupAreas) ? tour.pickupAreas.filt
                           onContactChange('pickupLat', lat)
                           onContactChange('pickupLng', lng)
                           // A chosen address supersedes any picked zone.
-                          if (lat != null && lng != null) onContactChange('pickupArea', '')
+                          if (lat != null && lng != null) {
+                            onContactChange('pickupArea', '')
+                            // Show the out-of-range verdict immediately when a
+                            // suggestion lands outside the supplier's zone.
+                            setTouched((t) => ({ ...t, location: true }))
+                          }
                         }}
                         onBlur={() => handleBlur('location')}
                         placeholder="e.g. Accra, Ghana"
@@ -997,7 +1146,18 @@ const pickupSpotCount = (Array.isArray(tour.pickupAreas) ? tour.pickupAreas.filt
               </div>
             )}
 
-            {showZoneMap && locationMap}
+            {showZoneMap && (
+              <div className="space-y-1">
+                {resolvingPoints && (
+                  <p className="flex items-center gap-1.5 px-1 text-[11px] font-medium text-slate-400">
+                    <Loader2 className="size-3 animate-spin" />
+                    Locating pickup points…
+                  </p>
+                )}
+                {locationMap}
+                {travelTimeChip}
+              </div>
+            )}
             {pickupPhoto}
 
             <div className="flex items-center gap-2.5 rounded-xl border border-slate-200/40 bg-slate-50/30 px-4 py-3">
@@ -1042,7 +1202,18 @@ const pickupSpotCount = (Array.isArray(tour.pickupAreas) ? tour.pickupAreas.filt
             className="space-y-3 p-7 sm:p-9"
           >
             {meetingSummaryCard}
-            {showZoneMap && locationMap}
+            {showZoneMap && (
+              <div className="space-y-1">
+                {resolvingPoints && (
+                  <p className="flex items-center gap-1.5 px-1 text-[11px] font-medium text-slate-400">
+                    <Loader2 className="size-3 animate-spin" />
+                    Locating pickup points…
+                  </p>
+                )}
+                {locationMap}
+                {travelTimeChip}
+              </div>
+            )}
             {pickupPhoto}
             {hasError && (
               <p className="pt-1 text-xs font-semibold text-rose-500">There are errors in this step — please review.</p>
@@ -1057,44 +1228,24 @@ const pickupSpotCount = (Array.isArray(tour.pickupAreas) ? tour.pickupAreas.filt
       </AnimatePresence>
       </StepCard>
 
-      {/* Pickup locations map modal — opens from the "Pickup locations (N)" link. */}
-      <AnimatePresence>
-        {showMapModal && (
-          <motion.div
-            className="fixed inset-0 z-[300] flex items-center justify-center bg-black/70 p-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={handleCloseMap}
-          >
-            <motion.div
-              className="w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-xl"
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 12 }}
-              transition={{ duration: 0.2 }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
-                <h3 className="text-base font-bold text-slate-900">
-                  Pickup locations ({pickupSpotCount})
-                </h3>
-                <button
-                  type="button"
-                  onClick={handleCloseMap}
-                  className="grid size-9 place-items-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
-                  aria-label="Close map"
-                >
-                  <X size={18} />
-                </button>
-              </div>
-              <div className="p-3">
-                {locationMap}
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Pickup/meeting selection modal — opens from the "Pickup locations (N)"
+          link or "Choose on map". Browse the map, tap a pin or a row to select
+          a pickup zone/point; the exact address is resolved from the point's
+          coordinates and written back into the form on Confirm. The error
+          boundary keeps a Google-library crash (e.g. quota-limited API) from
+          blanking the page when the modal mounts or unmounts. */}
+      <MapErrorBoundary>
+        <PickupSelectModal
+          open={showMapModal}
+          onClose={handleCloseMap}
+          tour={tour}
+          points={resolvedPoints}
+          mapTour={mapTour}
+          contact={contact}
+          onContactChange={onContactChange}
+          loading={resolvingPoints}
+        />
+      </MapErrorBoundary>
     </>
   )
 }
@@ -1433,13 +1584,16 @@ function BookingTourCard({ tour, onChangeClick }: { tour: typeof FALLBACK_TOUR; 
 /* ─── Sidebar (contact / pricing summary) ─── */
 
 function BookingSidebar({
-  tour, promoCode, setPromoCode, onApplyPromo, discount, finalPrice,
+  tour, promoCode, setPromoCode, onApplyPromo, promoLoading, promoError, appliedPromo, discount, finalPrice,
   contact, step,
 }: {
   tour: typeof FALLBACK_TOUR
   promoCode: string
   setPromoCode: (v: string) => void
   onApplyPromo: () => void
+  promoLoading: boolean
+  promoError: string
+  appliedPromo: { name: string; discountAmount: number } | null
   discount: number
   finalPrice: number
   contact: { firstName: string; lastName: string; email: string; countryCode: string; phone: string; location: string; pickupLater: boolean; pickupArea: string }
@@ -1485,17 +1639,27 @@ function BookingSidebar({
             <input
               type="text"
               value={promoCode}
-              onChange={(e) => setPromoCode(e.target.value)}
+              onChange={(e) => {
+                setPromoCode(e.target.value.toUpperCase())
+              }}
               placeholder="Enter promo code"
               className="flex-1 rounded-xl border border-slate-200/60 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
             />
             <button
               onClick={onApplyPromo}
-              className="rounded-full border border-slate-200/60 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 shadow-sm transition hover:border-emerald-400 hover:text-emerald-600"
+              disabled={promoLoading}
+              className="rounded-full border border-slate-200/60 bg-white px-5 py-2.5 text-sm font-semibold text-slate-600 shadow-sm transition hover:border-emerald-400 hover:text-emerald-600 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Apply
+              {promoLoading ? 'Checking…' : 'Apply'}
             </button>
           </div>
+          {promoError && <p className="mt-2 text-xs text-red-500">{promoError}</p>}
+          {appliedPromo && !promoError && (
+            <p className="mt-2 text-xs font-medium text-emerald-600">
+              {appliedPromo.name} applied
+              {appliedPromo.discountAmount > 0 && ` · you save $${appliedPromo.discountAmount.toFixed(2)}`}
+            </p>
+          )}
         </motion.div>
       )}
 
@@ -1513,7 +1677,7 @@ function BookingSidebar({
           {discount > 0 && (
             <>
               <div className="mt-1 flex items-center justify-between text-sm">
-                <span className="text-emerald-600">Promo discount</span>
+                <span className="text-emerald-600">{appliedPromo ? `${appliedPromo.name} discount` : 'Promo discount'}</span>
                 <span className="font-semibold text-emerald-600">-${discount.toFixed(2)}</span>
               </div>
               <div className="mt-2 flex items-center justify-between border-t border-dashed border-slate-200 pt-2">
@@ -1625,7 +1789,12 @@ export default function BookingPage() {
     canRestore && typeof draft?.step === 'number' && draft.step >= 1 && draft.step <= 3 ? draft.step : 1,
   )
   const [attempted, setAttempted] = useState<Record<number, boolean>>({})
-  const [promoCode, setPromoCode] = useState('')
+  // Prefill with a promo code validated on the tour detail page (the widget
+  // passes it through router state); it is re-validated against the backend.
+  const [promoCode, setPromoCode] = useState(() => String((freshTour as any)?.promoCode || ''))
+  const [promoLoading, setPromoLoading] = useState(false)
+  const [promoError, setPromoError] = useState('')
+  const [appliedPromo, setAppliedPromo] = useState<{ name: string; discountAmount: number } | null>(null)
   const [discount, setDiscount] = useState(0)
 
   const [contact, setContact] = useState(() =>
@@ -1921,6 +2090,9 @@ export default function BookingPage() {
         paymentMethodId,
         paymentTiming,
         specialRequests: '',
+        // Only forward a code that was validated against the backend; the
+        // confirm endpoint re-prices authoritatively with it.
+        ...(appliedPromo ? { promoCode: promoCode.trim().toUpperCase() } : {}),
       }
 
       const result = await createBooking.mutateAsync(payload)
@@ -1943,22 +2115,86 @@ export default function BookingPage() {
     } finally {
       setIsBooking(false)
     }
-  }, [createBooking, contact, editableTour, tour, showPickupLocation, zonesDrawn, isBooking, isActive, pollBooking, user, payment.paymentTiming])
+  }, [createBooking, contact, editableTour, tour, showPickupLocation, zonesDrawn, isBooking, isActive, pollBooking, user, payment.paymentTiming, appliedPromo, promoCode])
 
-  const handleApplyPromo = useCallback(() => {
+  const handleApplyPromo = useCallback(async () => {
     const code = promoCode.trim().toUpperCase()
-    if (code === 'SAVE10') {
-      setDiscount(Math.min(editableTour.price * 0.1, editableTour.price))
-    } else if (code === 'SAVE20') {
-      setDiscount(Math.min(editableTour.price * 0.2, editableTour.price))
-    } else {
-      setDiscount(0)
-      if (code) toast.error('Invalid promo code')
+    if (!code) return
+    if (code.length < 3) {
+      setPromoError('Promo code must be at least 3 characters')
+      return
     }
-  }, [promoCode, editableTour.price])
+    const selectedDate = editableTour.selectedDate || editableTour.date
+    if (!selectedDate) {
+      setPromoError('Select a date first to validate the code')
+      return
+    }
+    setPromoLoading(true)
+    setPromoError('')
+    try {
+      // Real validation against the backend special-offer engine — the same
+      // endpoint the tour detail widget uses (POST /tours/offers/validate-promo).
+      const quantity = Object.values(editableTour.travelersCount || {}).reduce(
+        (sum, n) => sum + (typeof n === 'number' ? n : 0), 0,
+      )
+      const res = await fetchWithAuth('/tours/offers/validate-promo', {
+        method: 'POST',
+        body: JSON.stringify({
+          promoCode: code,
+          tourId: tour.id || tour.slug,
+          selectedDate,
+          quantity: Math.max(quantity, 1),
+        }),
+      })
+      const payload = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        throw new Error(payload.message || `Promo validation failed (${res.status})`)
+      }
+      const data = payload.data ?? payload
+      if (!data.valid) {
+        setDiscount(0)
+        setAppliedPromo(null)
+        setPromoError(data.message || 'This promo code is not valid for this tour and date')
+        return
+      }
+      setDiscount(Math.min(Number(data.discount?.amount) || 0, editableTour.price))
+      setAppliedPromo({
+        name: data.offer?.name || code,
+        discountAmount: Number(data.discount?.amount) || 0,
+      })
+      setPromoError('')
+      toast.success('Promo code applied')
+    } catch (err) {
+      setDiscount(0)
+      setAppliedPromo(null)
+      setPromoError(err instanceof Error ? err.message : 'This promo code is not valid for this tour and date')
+    } finally {
+      setPromoLoading(false)
+    }
+  }, [promoCode, editableTour, tour.id, tour.slug])
+
+  // A promo code carried over from the tour detail widget is auto-validated
+  // once on arrival so the sidebar shows the discount the widget quoted.
+  // Deferred off the synchronous effect body so the validation's setState
+  // calls never cascade from within the effect itself.
+  const autoPromoRef = useRef(false)
+  useEffect(() => {
+    if (autoPromoRef.current) return
+    if ((freshTour as any)?.promoCode) {
+      autoPromoRef.current = true
+      const timer = setTimeout(() => {
+        handleApplyPromo()
+      }, 0)
+      return () => clearTimeout(timer)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const finalPrice = editableTour.price - discount
-  const activeTour = { ...tour, ...editableTour, price: finalPrice }
+  const activeTour = useMemo(
+    () => ({ ...tour, ...editableTour, price: finalPrice }),
+    [tour, editableTour, finalPrice],
+  )
 
   return (
     <div className="flex min-h-screen flex-col bg-white">
@@ -2048,8 +2284,18 @@ export default function BookingPage() {
                   <BookingSidebar
                     tour={activeTour}
                     promoCode={promoCode}
-                    setPromoCode={setPromoCode}
+                    setPromoCode={(v) => {
+                      // Editing the code releases the previously applied
+                      // discount until the new code is validated.
+                      setPromoCode(v)
+                      setDiscount(0)
+                      setAppliedPromo(null)
+                      setPromoError('')
+                    }}
                     onApplyPromo={handleApplyPromo}
+                    promoLoading={promoLoading}
+                    promoError={promoError}
+                    appliedPromo={appliedPromo}
                     discount={discount}
                     finalPrice={finalPrice}
                     contact={{ firstName: contact.firstName, lastName: contact.lastName, email: contact.email, countryCode: contact.countryCode, phone: contact.phone, location: contact.location, pickupLater: contact.pickupLater, pickupArea: contact.pickupArea }}

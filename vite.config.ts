@@ -74,4 +74,12 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  optimizeDeps: {
+    // maplibre-gl spawns its render worker via `new URL('./maplibre-gl-worker.mjs',
+    // import.meta.url)`; pre-bundling would resolve it inside .vite/deps where
+    // the worker is never emitted, leaving every map blank in dev. Serving the
+    // package un-bundled keeps that URL pointing at the real worker file.
+    // mapbox-gl's ESM build does the same with its `worker.js` chunk.
+    exclude: ['maplibre-gl', 'mapbox-gl'],
+  },
 })

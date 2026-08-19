@@ -5,6 +5,13 @@
  * VITE_GOOGLE_MAPS_API_KEY is present. Any load/auth failure rejects with a
  * typed reason so the caller can degrade to the free MapLibre + OSM raster
  * tiles (then a text + Google Maps link) instead of leaving a blank box.
+ *
+ * The loader also backs the Google-enhanced booking features (Place
+ * Autocomplete on the pickup input, device-location reverse geocoding, ETA
+ * directions and Places Nearby Search) via loadGoogleMapsLibrary. When the
+ * Maps JS API was already loaded by the @vis.gl/react-google-maps APIProvider
+ * (the booking map's primary renderer), the loader reuses that namespace and
+ * lazily imports the extra library instead of injecting a second script.
  */
 
 export type GoogleMapsFailureReason = 'NO_KEY' | 'SCRIPT_ERROR' | 'AUTH_FAILURE' | 'TIMEOUT'
@@ -95,8 +102,13 @@ function writeOutcome(ok: boolean, key: string): void {
  * it instead of re-injecting the script. A recent failure (e.g. billing not
  * enabled) short-circuits without touching the network, so the Maps API's own
  * console error stops repeating on every navigation.
+ *
+ * `libraries` lists the import libraries requested from the API (preload
+ * hints). When the API is already present on the page (loaded by the
+ * @vis.gl APIProvider), no script tag is injected at all — extra libraries
+ * are fetched lazily by loadGoogleMapsLibrary.
  */
-export function loadGoogleMaps(): Promise<typeof google.maps> {
+export function loadGoogleMaps(libraries: string[] = ['marker']): Promise<typeof google.maps> {
   if (authFailed) return Promise.reject(new GoogleMapsLoadError('AUTH_FAILURE'))
   const key = getGoogleMapsApiKey()
   if (!key) return Promise.reject(new GoogleMapsLoadError('NO_KEY'))
@@ -159,7 +171,7 @@ export function loadGoogleMaps(): Promise<typeof google.maps> {
     // loading=async + the marker library: the documented best-practice load
     // pattern, and the import library required for AdvancedMarkerElement
     // (google.maps.Marker is deprecated).
-    script.src = `${API_URL}?key=${encodeURIComponent(key)}&v=weekly&loading=async&libraries=marker&callback=${CALLBACK_KEY}`
+    script.src = `${API_URL}?key=${encodeURIComponent(key)}&v=weekly&loading=async&libraries=${libraries.join(',')}&callback=${CALLBACK_KEY}`
     script.async = true
     script.onerror = () => {
       writeOutcome(false, key)
@@ -180,4 +192,40 @@ export function resetGoogleMapsLoader(): void {
   } catch {
     /* best-effort */
   }
+}
+
+/**
+ * True when the app may attempt Google Maps right now: a key is configured and
+ * the last attempt with this key did not fail recently. Non-blocking — used to
+ * decide whether to render the Google map as primary, attach Place Autocomplete
+ * to the pickup input, or show ETA directions, without loading the script.
+ */
+export function shouldAttemptGoogleMaps(): boolean {
+  if (authFailed) return false
+  const key = getGoogleMapsApiKey()
+  if (!key) return false
+  const outcome = readOutcome(key)
+  if (outcome && !outcome.ok && Date.now() - outcome.ts < FAIL_RETRY_MS) return false
+  return true
+}
+
+/**
+ * Persists a Google Maps failure (e.g. an auth/billing error surfaced by the
+ * @vis.gl APIProvider) so later mounts skip Google for the retry window —
+ * mirroring the script-loader's own outcome bookkeeping.
+ */
+export function recordGoogleMapsFailure(): void {
+  authFailed = true
+  writeOutcome(false, getGoogleMapsApiKey())
+}
+
+/**
+ * Lazily imports a Google Maps library (e.g. 'places', 'routes', 'geometry').
+ * Works whether the base API was loaded by this loader or by the @vis.gl
+ * APIProvider: once `google.maps` exists, importLibrary resolves on demand.
+ */
+export function loadGoogleMapsLibrary<K extends keyof google.maps.ImportLibraryMap>(
+  name: K,
+): Promise<google.maps.ImportLibraryMap[K]> {
+  return loadGoogleMaps().then(() => window.google.maps.importLibrary(name))
 }

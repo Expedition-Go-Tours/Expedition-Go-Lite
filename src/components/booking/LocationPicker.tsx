@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { Search, MapPin, Loader2, AlertTriangle, RefreshCw, Check, X, Pencil } from 'lucide-react'
+import { Search, MapPin, Loader2, AlertTriangle, RefreshCw, Check, X, Pencil, LocateFixed } from 'lucide-react'
+import { toast } from 'sonner'
 import { useLocationAutocomplete, type LocationSuggestion } from '../../hooks/useLocationAutocomplete'
+import { reverseGeocode } from '../../lib/locations'
 
 interface LocationPickerProps {
   value: string
@@ -15,10 +17,14 @@ interface LocationPickerProps {
 }
 
 /**
- * Location picker for the booking form: debounced autocomplete against the
- * backend location service. Emits the human-readable formatted label only —
- * coordinates stay client-side (numeric coords must never enter the
- * travelers payload).
+ * Location picker for the booking form. Suggestions come from Geoapify
+ * straight from the browser (client-side VITE_GEOAPIFY_API_KEY, OSM data),
+ * with the backend location service (GET /api/locations/autocomplete) as a
+ * fallback — plus a "use my current location" button (geolocation → reverse
+ * geocode).
+ *
+ * Emits the human-readable formatted label only — coordinates stay client-side
+ * (numeric coords must never enter the travelers payload).
  */
 export default function LocationPicker({
   value,
@@ -36,6 +42,7 @@ export default function LocationPicker({
   const [open, setOpen] = useState(false)
   const [highlightedIndex, setHighlightedIndex] = useState(-1)
   const [selected, setSelected] = useState<LocationSuggestion | null>(null)
+  const [locating, setLocating] = useState(false)
 
   const containerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -74,6 +81,40 @@ export default function LocationPicker({
     setHighlightedIndex(-1)
     onChangeRef.current(suggestion.formatted)
     onCoordsChangeRef.current?.(suggestion.latitude ?? null, suggestion.longitude ?? null)
+  }, [])
+
+  // "Use my current location": geolocation → coords; the address is
+  // reverse-geocoded through the backend location service (Geoapify-first).
+  const handleUseMyLocation = useCallback(() => {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      toast.error('Geolocation is not supported on this device.')
+      return
+    }
+    setLocating(true)
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude, longitude } = pos.coords
+        const r = await reverseGeocode(latitude, longitude)
+        const address = r?.formatted ?? ''
+        const label = address || `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`
+        setSelected({ formatted: label, latitude, longitude, city: '', country: '', region: '' })
+        setQuery(label)
+        setOpen(false)
+        setHighlightedIndex(-1)
+        onChangeRef.current(label)
+        onCoordsChangeRef.current?.(latitude, longitude)
+        setLocating(false)
+      },
+      (err) => {
+        setLocating(false)
+        toast.error(
+          err.code === err.PERMISSION_DENIED
+            ? 'Location permission denied — enable location access to use your current position.'
+            : 'Could not get your current location. Please try again.',
+        )
+      },
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 },
+    )
   }, [])
 
   // Manual fallback: when the location isn't in the suggestion list, the user
@@ -213,7 +254,18 @@ export default function LocationPicker({
 
       {error && <p className="mt-1 text-xs text-rose-500">{error}</p>}
 
-      {/* Suggestions dropdown */}
+      {/* Use my current location — geolocation → reverse geocode. */}
+      <button
+        type="button"
+        onClick={handleUseMyLocation}
+        disabled={locating || disabled}
+        className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm transition-colors hover:border-[#179237]/50 hover:text-[#179237] disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {locating ? <Loader2 size={13} className="animate-spin text-[#179237]" /> : <LocateFixed size={13} className="text-[#179237]" />}
+        {locating ? 'Locating…' : 'Use my current location'}
+      </button>
+
+      {/* Geoapify suggestions dropdown. */}
       {open && (
         <div className="relative z-20">
           <ul

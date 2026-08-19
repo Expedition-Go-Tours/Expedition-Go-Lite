@@ -121,4 +121,9 @@ describe('LocationPicker', () => {
 
     expect(onChange).toHaveBeenCalledWith('Osu, Accra')
   })
+
+  it('renders the "Use my current location" button (geolocation entry point)', () => {
+    renderPicker()
+    expect(screen.getByRole('button', { name: 'Use my current location' })).toBeInTheDocument()
+  })
 })

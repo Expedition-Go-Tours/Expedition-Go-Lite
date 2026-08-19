@@ -44,6 +44,64 @@ export interface PickupLocationShape {
 export type PickupZoneMatch = PickupAreaShape & { _excluded?: true }
 
 /**
+ * Generates a closed [lat, lng] ring approximating a circle of `radiusM`
+ * metres around a centre point (destination-point formula, so the ring stays
+ * accurate at any latitude). Used to visualise the geofence of location-only
+ * pickup areas, which are validated as a circle of LOCATION_AREA_RADIUS_M.
+ */
+export function circleRing(lat: number, lng: number, radiusM: number, segments = 64): LatLng[] {
+  const R = 6371000
+  const toRad = (d: number) => (d * Math.PI) / 180
+  const toDeg = (r: number) => (r * 180) / Math.PI
+  const angular = radiusM / R
+  const lat1 = toRad(lat)
+  const lng1 = toRad(lng)
+  const ring: LatLng[] = []
+  for (let i = 0; i < segments; i += 1) {
+    const bearing = (2 * Math.PI * i) / segments
+    const sinLat = Math.sin(lat1) * Math.cos(angular) + Math.cos(lat1) * Math.sin(angular) * Math.cos(bearing)
+    const pLat = Math.asin(sinLat)
+    const pLng = lng1 + Math.atan2(
+      Math.sin(bearing) * Math.sin(angular) * Math.cos(lat1),
+      Math.cos(angular) - Math.sin(lat1) * sinLat,
+    )
+    ring.push([toDeg(pLat), toDeg(pLng)])
+  }
+  // Close the ring so GeoJSON polygon rendering never leaves a gap.
+  ring.push(ring[0])
+  return ring
+}
+
+/**
+ * All drawable pickup-zone rings for a tour: the drawn polygons, plus a
+ * LOCATION_AREA_RADIUS_M circle around a location-only area (saved as a point
+ * with coordinates but no drawn geoshape). The circle is only drawn when the
+ * location-only area is the tour's ONE pickup spot — i.e. there are no other
+ * pickup areas and no separate pickup locations (pass their count via
+ * `locationSpots`). With multiple pickup locations the green pins represent
+ * each spot and a geofence blob around one of them would be misleading.
+ * Drawn polygons always render.
+ */
+export function pickupZoneRings(
+  areas?: (PickupAreaShape | null | undefined)[],
+  locationSpots = 0,
+): LatLng[][] {
+  const list = Array.isArray(areas) ? areas.filter((a): a is PickupAreaShape => !!a) : []
+  const rings: LatLng[][] = []
+  for (const area of list) {
+    if (hasDrawnShape(area)) {
+      rings.push(area.polygon as LatLng[])
+    }
+  }
+  const totalSpots = list.length + locationSpots
+  if (totalSpots === 1 && hasLocationOnlyAreas(list)) {
+    const area = list[0]
+    rings.push(circleRing(area.lat as number, area.lng as number, LOCATION_AREA_RADIUS_M))
+  }
+  return rings
+}
+
+/**
  * Ray-casting point-in-polygon test.
  * @param lat point latitude
  * @param lng point longitude

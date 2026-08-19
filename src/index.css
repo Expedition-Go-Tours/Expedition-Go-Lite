@@ -289,12 +289,59 @@ body {
   }
 }
 
+/* Hide the scrollbar while keeping scrolling (pickup locations list,
+   suggestion dropdowns). */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Pulsating glow halo behind pickup/meeting point pins on the booking maps.
+   The colour is supplied per pin via --pin-color (defaults to the brand
+   green). The halo radiates from the pin's tip. */
+.pin-glow {
+  position: absolute;
+  left: 50%;
+  bottom: 2px;
+  width: 26px;
+  height: 26px;
+  transform: translateX(-50%);
+  border-radius: 9999px;
+  background: color-mix(in srgb, var(--pin-color, #179237) 35%, transparent);
+  animation: pin-glow-pulse 2.2s ease-out infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes pin-glow-pulse {
+  0% {
+    transform: translateX(-50%) scale(0.45);
+    opacity: 0.85;
+  }
+  70% {
+    transform: translateX(-50%) scale(1.9);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(-50%) scale(1.9);
+    opacity: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .search-skeleton-icon,
   .search-skeleton-line,
   .hero-search-wrap.searching .hero-search-bar,
-  .navbar-compact-search.searching .navbar-search-form {
+  .navbar-compact-search.searching .navbar-search-form,
+  .pin-glow {
     animation: none;
+  }
+  .pin-glow {
+    opacity: 0.35;
+    transform: translateX(-50%) scale(0.8);
   }
 }
 

@@ -80,6 +80,36 @@ function parseJsonMaybe(value: unknown): any {
   return value
 }
 
+/** Customer-facing special offer, projected by GET /tours/:id (the backend
+    already filters to ACTIVE offers whose date window includes today). */
+export interface SpecialOfferData {
+  id: string
+  name: string
+  offerType: 'LIMITED_TIME' | 'EARLY_BIRD' | 'LAST_MINUTE'
+  discountType: 'PERCENTAGE' | 'FIXED_AMOUNT'
+  discountPercentage: number | null
+  fixedDiscountValue: number | null
+  startDate: string | null
+  endDate: string | null
+}
+
+function mapSpecialOffers(rawTour: any): SpecialOfferData[] | undefined {
+  const offers = rawTour?.specialOffers
+  if (!Array.isArray(offers) || offers.length === 0) return undefined
+  return offers
+    .filter((o: any) => o && typeof o === 'object')
+    .map((o: any) => ({
+      id: o.id,
+      name: o.name || '',
+      offerType: o.offerType,
+      discountType: o.discountType,
+      discountPercentage: o.discountPercentage != null ? Number(o.discountPercentage) : null,
+      fixedDiscountValue: o.fixedDiscountValue != null ? Number(o.fixedDiscountValue) : null,
+      startDate: o.startDate || null,
+      endDate: o.endDate || null,
+    }))
+}
+
 export function formatDuration(minutes: number | null): string {
   if (!minutes) return ''
   if (minutes >= 1440) {
@@ -1362,6 +1392,13 @@ export interface TourDetailData extends Omit<TourDetail, 'guide' | 'contact' | '
   weeklySchedule?: Record<string, { startTime: string; endTime: string }[]>
   operatingHoursStart?: string
   operatingHoursEnd?: string
+  /**
+   * Special offers a supplier has applied to this tour on the supplier
+   * platform (projected by GET /tours/:id — only ACTIVE, in-window offers).
+   * The checkout engine auto-applies the best one to the total; these are
+   * for display in the booking widget.
+   */
+  specialOffers?: SpecialOfferData[]
 }
 
 /**
@@ -1466,6 +1503,7 @@ function buildTourDetailFromRawTour(rawTour: any): TourDetailData {
     groupSizePricing: extractGroupSizePricing(rawTour),
     minParticipants: extractParticipantsBound(rawTour, 'minParticipants'),
     maxParticipants: extractParticipantsBound(rawTour, 'maxParticipants'),
+    specialOffers: mapSpecialOffers(rawTour),
   }
 }
 
@@ -1530,6 +1568,7 @@ export function useExpeditionTour(slug: string | undefined) {
       // the raw /tours/:id fetch below and hoisted here for the final mapping.
       let rawMeetingInfo: ReturnType<typeof extractMeetingInfo> | null = null
       let rawSchedule: AvailabilityScheduleInfo | null = null
+      let rawSpecialOffers: SpecialOfferData[] | undefined
 
       // Fetch raw tour data to get excluded and other missing fields
       if (tour.id) {
@@ -1544,6 +1583,7 @@ export function useExpeditionTour(slug: string | undefined) {
             const rawTour = rawPayload.data?.tour ?? rawPayload.tour ?? rawPayload
             rawMeetingInfo = extractMeetingInfo(rawTour)
             rawSchedule = extractAvailabilitySchedule(rawTour)
+            rawSpecialOffers = mapSpecialOffers(rawTour)
             travelerPricing = extractTravelerPricing(rawTour)
             skipTheLine = extractSkipTheLine(rawTour)
             pricingModel = extractPricingModel(rawTour)
@@ -1735,6 +1775,7 @@ export function useExpeditionTour(slug: string | undefined) {
         pricingApproach,
         uniformPrice,
         groupSizePricing,
+        specialOffers: rawSpecialOffers ?? mapSpecialOffers(rawTourPayload),
       }
       return result
     },

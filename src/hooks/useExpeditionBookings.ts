@@ -190,6 +190,8 @@ interface ConfirmBookingInput {
   paymentMethodId: string
   paymentTiming?: 'now' | 'later'
   specialRequests?: string
+  /** Validated promo code — the backend re-prices with it (expeditionController.confirmBooking). */
+  promoCode?: string
 }
 
 interface ConfirmBookingResponse {
