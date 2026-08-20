@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Check, CalendarDays, Clock, Users, MapPin, CreditCard, ShieldCheck, Phone, Mail, Printer, Star, Ticket, Globe } from 'lucide-react'
@@ -41,6 +41,7 @@ interface ConfirmationBooking {
   bookingNumber?: string
   status?: string
   paymentStatus?: string
+  paymentTiming?: 'now' | 'later'
   selectedDate?: string
   selectedTime?: string | null
   travelers?: TravelerRecord
@@ -90,7 +91,33 @@ export default function BookingConfirmationPage() {
   const { t } = useTranslation()
   const user = useAuthUser()
 
-  const { data: booking, isLoading, isError } = useExpeditionBookingDetail(bookingId)
+  const { data: booking, isLoading, isError, refetch } = useExpeditionBookingDetail(bookingId)
+
+  // Pay-now bookings arrive here straight from Stripe's redirect (success_url)
+  // before the checkout.session.completed webhook has landed. Poll briefly so
+  // the page flips from "Reserved" to "Confirmed" without a manual refresh.
+  const [pollStopped, setPollStopped] = useState(false)
+  const confirmingPayment =
+    !!booking &&
+    booking.status === 'PENDING' &&
+    booking.paymentStatus === 'PENDING' &&
+    booking.paymentTiming !== 'later' && // reserve-now-pay-later stays PENDING on purpose
+    !pollStopped
+
+  useEffect(() => {
+    if (!confirmingPayment) return
+    let attempts = 0
+    const timer = setInterval(() => {
+      attempts += 1
+      if (attempts > 15) {
+        clearInterval(timer)
+        setPollStopped(true)
+        return
+      }
+      void refetch()
+    }, 2000)
+    return () => clearInterval(timer)
+  }, [confirmingPayment, refetch])
 
   const meeting = useMemo(() => extractMeetingInfo(booking?.tour ?? {}), [booking])
   const schedule = useMemo(() => extractAvailabilitySchedule(booking?.tour ?? {}), [booking])
@@ -226,6 +253,11 @@ export default function BookingConfirmationPage() {
                 {statusLabel}
               </span>
             </div>
+            {confirmingPayment && (
+              <p className="confirmation-note confirmation-pending-note">
+                {t('confirmation.confirmingPayment')}
+              </p>
+            )}
           </div>
         </div>
 

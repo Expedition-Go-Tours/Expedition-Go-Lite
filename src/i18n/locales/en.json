@@ -501,6 +501,7 @@
     "status": "Status",
     "statusConfirmed": "Confirmed",
     "statusReserved": "Reserved — pay later",
+    "confirmingPayment": "Confirming payment…",
     "tourDetails": "Tour Details",
     "schedule": "Schedule",
     "date": "Date",

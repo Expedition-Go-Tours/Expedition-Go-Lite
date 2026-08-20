@@ -234,6 +234,12 @@
   padding: 10px 12px;
 }
 
+.confirmation-pending-note {
+  color: #047857;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+}
+
 .confirmation-price {
   display: flex;
   flex-direction: column;

@@ -187,7 +187,8 @@ interface ConfirmBookingInput {
   selectedDate: string
   selectedTime?: string | null
   travelers: Record<string, number | string | boolean | { name: string; age: number; ageGroup: string; specialRequests?: string }[] | undefined>
-  paymentMethodId: string
+  /** Required for reserve-now-pay-later (card captured for auto-charge). Pay-now redirects to Stripe's hosted Checkout and never sends a card. */
+  paymentMethodId?: string
   paymentTiming?: 'now' | 'later'
   specialRequests?: string
   /** Validated promo code — the backend re-prices with it (expeditionController.confirmBooking). */
@@ -202,6 +203,12 @@ interface ConfirmBookingResponse {
     total: number
     currency: string
   }
+  /** Pay-now: hosted Stripe Checkout redirect. The frontend navigates the browser to `checkout.url`. */
+  checkout?: {
+    id: string
+    url: string
+  }
+  /** Reserve-now-pay-later: uncharged PaymentIntent (captured by the auto-charge sweep near the activity date). */
   clientSecret?: string
   paymentIntent?: {
     id: string
