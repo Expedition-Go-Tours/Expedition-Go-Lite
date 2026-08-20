@@ -21,7 +21,6 @@ import CardField from '../components/booking/CardField'
 import { useAuthUser } from '../hooks/useAuthUser'
 import { setAuthReturnTo } from '../lib/auth'
 import type { CardElementHandle } from '../components/booking/CardField'
-import { getStripePromise } from '../lib/stripe'
 import { fetchWithAuth } from '../lib/api'
 import { useCreateBooking } from '../hooks/useExpeditionBookings'
 import { buildE164Phone, isValidPhoneInput, COUNTRY_CODES } from '../lib/phone'
@@ -1300,7 +1299,7 @@ function PaymentDetailsStep({
   data: { paymentTiming: string; paymentMethod: string }
   onChange: (key: string, value: string) => void
   tour: typeof FALLBACK_TOUR
-  onBook: (paymentMethodId: string, timing?: 'now' | 'later') => void
+  onBook: (paymentMethodId: string | undefined, timing?: 'now' | 'later') => void
   step: number
   onNavigate: (n: number) => void
   disabled?: boolean
@@ -1406,7 +1405,14 @@ function PaymentDetailsStep({
               </div>
             </div>
 
-            <CardField onReady={setCardHandle} />
+            {data.paymentTiming === 'now' ? (
+              <div className="flex items-center justify-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50/50 px-4 py-3 text-sm text-emerald-700">
+                <ShieldCheck className="size-4 shrink-0" />
+                <span>You'll be redirected to Stripe's secure checkout to complete payment.</span>
+              </div>
+            ) : (
+              <CardField onReady={setCardHandle} />
+            )}
 
             <p className="text-xs leading-relaxed text-slate-400">
               By clicking &quot;{buttonLabel}&quot;, you agree to our{' '}
@@ -1417,20 +1423,26 @@ function PaymentDetailsStep({
 
             <motion.button
               onClick={async () => {
-                if (!cardHandle) {
-                  toast.error('Please enter your card details to continue.')
-                  return
-                }
-                setCreating(true)
-                try {
-                  const { paymentMethod, error } = await cardHandle.createPaymentMethod()
-                  if (error || !paymentMethod) {
-                    toast.error(error?.message || 'Please check your card details and try again.')
+                if (data.paymentTiming === 'later') {
+                  if (!cardHandle) {
+                    toast.error('Please enter your card details to continue.')
                     return
                   }
-                  onBook(paymentMethod.id, data.paymentTiming as 'now' | 'later')
-                } finally {
-                  setCreating(false)
+                  setCreating(true)
+                  try {
+                    const { paymentMethod, error } = await cardHandle.createPaymentMethod()
+                    if (error || !paymentMethod) {
+                      toast.error(error?.message || 'Please check your card details and try again.')
+                      return
+                    }
+                    onBook(paymentMethod.id, 'later')
+                  } finally {
+                    setCreating(false)
+                  }
+                } else {
+                  // Pay now — no card element. The backend returns a hosted
+                  // Stripe Checkout URL and the page redirects there.
+                  onBook(undefined, 'now')
                 }
               }}
               disabled={disabled || creating || isBooking}
@@ -2066,17 +2078,17 @@ export default function BookingPage() {
     }
   }, [navigate, queryClient])
 
-  const handleBook = useCallback(async (paymentMethodId: string, timing?: 'now' | 'later') => {
+  const handleBook = useCallback(async (paymentMethodId: string | undefined, timing?: 'now' | 'later') => {
     if (isBooking || isActive) return
     if (!user) {
       setShowSignInPrompt(true)
       return
     }
-    if (!paymentMethodId) {
+    const paymentTiming = timing ?? payment.paymentTiming ?? 'now'
+    if (paymentTiming === 'later' && !paymentMethodId) {
       toast.error('Please enter your card details to continue.')
       return
     }
-    const paymentTiming = timing ?? payment.paymentTiming ?? 'now'
 
     setIsBooking(true)
     try {
@@ -2129,27 +2141,34 @@ export default function BookingPage() {
           ...(contact.pickupLater ? { pickupLater: true } : {}),
           details,
         },
-        paymentMethodId,
+        ...(paymentMethodId ? { paymentMethodId } : {}),
         paymentTiming,
         specialRequests: '',
+        // Lead traveler details from the "Lead Traveler Details" step so the
+        // supplier dashboard and confirmation emails show the traveler rather
+        // than the booking-owner account.
+        leadTraveler: {
+          name: fullName,
+          email: contact.email,
+          phone: phoneNumber,
+        },
         // Only forward a code that was validated against the backend; the
         // confirm endpoint re-prices authoritatively with it.
         ...(appliedPromo ? { promoCode: promoCode.trim().toUpperCase() } : {}),
       }
 
       const result = await createBooking.mutateAsync(payload)
-      const intent = result?.paymentIntent
 
-      // If the backend needs a 3DS challenge, complete it client-side before
-      // polling for the settled booking state.
-      if (intent?.requiresAction && intent.clientSecret) {
-        toast('Please complete the 3D Secure verification…')
-        const stripe = await getStripePromise()
-        if (stripe) {
-          await stripe.handleCardAction(intent.clientSecret)
-        }
+      // Pay now: the backend returned a hosted Stripe Checkout URL. Hand the
+      // browser over to Stripe — the checkout.session.completed webhook settles
+      // the booking and the confirmation page polls until it lands.
+      if (result?.checkout?.url) {
+        window.location.assign(result.checkout.url)
+        return
       }
 
+      // Reserve-now-pay-later: booking is committed PENDING until the deferred
+      // auto-charge (payLaterSweep) settles it near the activity date.
       await pollBooking(result?.booking?.id)
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Booking failed. Please try again.'
