@@ -1,3 +1,4 @@
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
 import { Car, Languages as LanguagesIcon, ShieldCheck, Ban, TrendingUp, BedDouble } from 'lucide-react'
@@ -15,9 +16,13 @@ interface TourCardProps extends Tour {
   isNew?: boolean
   hideSourceBadge?: boolean
   hideFeatures?: boolean
+  /** Plain Bootstrap-style card: clean image on top (no fade overlay, no
+      floating pills/badges/heart), with the duration/category shown as a
+      subtitle and the wishlist inline in the body. */
+  imageClean?: boolean
 }
 
-export default function TourCard({ id, title, duration, features, price, rating, reviews, location, image, discount, difficulty, cancellationPolicy, pickupIncluded, accommodationIncluded, category, languages, source, externalUrl, slug, isNew, hideSourceBadge, hideFeatures }: TourCardProps) {
+export default function TourCard({ id, title, duration, features, price, rating, reviews, location, image, photos, discount, difficulty, cancellationPolicy, pickupIncluded, accommodationIncluded, category, languages, source, externalUrl, slug, isNew, hideSourceBadge, hideFeatures, imageClean }: TourCardProps) {
   const { t } = useTranslation()
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist()
   const item = toWishlistItem({ id, title, duration, features, price, rating: String(rating), reviews, location, image, source, externalUrl } as Tour)
@@ -62,7 +67,63 @@ export default function TourCard({ id, title, duration, features, price, rating,
 
   const tourSlug = slug || getTourSlug(title)
 
+  // Image carousel — all tour photos, falling back to the single cover image.
+  // Single-photo cards render the plain image (no dots/arrows/swipe).
+  const slides = useMemo(() => {
+    const list = Array.isArray(photos) && photos.length > 0 ? photos : [image]
+    return list.filter((src): src is string => typeof src === 'string' && src.length > 0)
+  }, [photos, image])
+  const isCarousel = slides.length > 1
+  const [current, setCurrent] = useState(0)
+
+  // Reset to the first slide whenever the photo set changes (a new tour can
+  // replace the card, or photos arrive async) — render-phase adjustment, so no
+  // effect is needed.
+  const slidesKey = slides.join('|')
+  const [prevSlidesKey, setPrevSlidesKey] = useState(slidesKey)
+  if (prevSlidesKey !== slidesKey) {
+    setPrevSlidesKey(slidesKey)
+    setCurrent(0)
+  }
+
+  const goPrev = useCallback(() => {
+    setCurrent((c) => (c - 1 + slides.length) % slides.length)
+  }, [slides.length])
+  const goNext = useCallback(() => {
+    setCurrent((c) => (c + 1) % slides.length)
+  }, [slides.length])
+
+  // Mobile swipe on the image area. Vertical scrolling is preserved by
+  // `touch-action: pan-y` on the image container — the browser keeps panning
+  // the page; we only read start/end positions and never preventDefault.
+  const touchStartX = useRef<number | null>(null)
+  const swipeJustHappened = useRef(false)
+  const onImageTouchStart = (e: React.TouchEvent): void => {
+    if (!isCarousel) return
+    touchStartX.current = e.touches[0]?.clientX ?? null
+  }
+  const onImageTouchEnd = (e: React.TouchEvent): void => {
+    if (!isCarousel) return
+    const start = touchStartX.current
+    touchStartX.current = null
+    if (start == null) return
+    const end = e.changedTouches[0]?.clientX ?? start
+    const dx = end - start
+    if (Math.abs(dx) > 40) {
+      // The browser fires a click after a touch — suppress the resulting
+      // card navigation so a photo swipe doesn't open the tour.
+      swipeJustHappened.current = true
+      if (dx > 0) goPrev()
+      else goNext()
+    }
+  }
+
   const handleCardClick = () => {
+    // A horizontal swipe on the image ends with a click — don't navigate.
+    if (swipeJustHappened.current) {
+      swipeJustHappened.current = false
+      return
+    }
     window.open(`/tour/${tourSlug}`, '_blank', 'noopener')
   }
 
@@ -74,22 +135,78 @@ export default function TourCard({ id, title, duration, features, price, rating,
   }
 
   return (
-    <div className="tour-card" onClick={handleCardClick} onKeyDown={handleKeyDown} role="link" tabIndex={0}>
-      <div className="tour-card-image">
-        {isNew && <span className="tour-card-new-pill">New</span>}
-        {!hideSourceBadge && source === 'travio-africa' && (
+    <div className={`tour-card${imageClean ? ' tour-card-clean' : ''}`} onClick={handleCardClick} onKeyDown={handleKeyDown} role="link" tabIndex={0}>
+      <div className={`tour-card-image${isCarousel ? ' tour-card-has-carousel' : ''}`}>
+        {!imageClean && isNew && <span className="tour-card-new-pill">New</span>}
+        {!imageClean && !hideSourceBadge && source === 'travio-africa' && (
           <div className="source-badge">
             <img src="/travio_logo.png" alt="Travio Africa" />
           </div>
         )}
-        <OptimizedImage src={image} alt={title} width={600} />
-        <div className="tour-card-image-fade" />
+        <div
+          className="tour-card-slides"
+          style={{ transform: `translateX(-${current * 100}%)` }}
+          onTouchStart={onImageTouchStart}
+          onTouchEnd={onImageTouchEnd}
+        >
+          {slides.map((src, i) => (
+            <div key={`${src}-${i}`} className={`tour-card-slide${i === current ? ' tour-card-slide-active' : ''}`}>
+              <OptimizedImage src={src} alt={title} width={600} />
+            </div>
+          ))}
+        </div>
+        {!imageClean && <div className="tour-card-image-fade" />}
         {duration && <span className="tour-card-duration">{duration}</span>}
         {categoryMeta && (
           <span className={`tour-card-image-type-badge tour-card-badge-type-${categoryMeta.variant}`}>
             <categoryMeta.Icon size={12} strokeWidth={2.4} />
             {categoryMeta.label}
           </span>
+        )}
+        {isCarousel && (
+          <>
+            <button
+              type="button"
+              className="tour-card-arrow tour-card-arrow-prev"
+              aria-label="Previous photo"
+              onClick={(e) => {
+                e.stopPropagation()
+                goPrev()
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              className="tour-card-arrow tour-card-arrow-next"
+              aria-label="Next photo"
+              onClick={(e) => {
+                e.stopPropagation()
+                goNext()
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </button>
+            <div className="tour-card-dots">
+              {slides.map((_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  className={`tour-card-dot${i === current ? ' tour-card-dot-active' : ''}`}
+                  aria-label={`Go to photo ${i + 1}`}
+                  aria-current={i === current}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setCurrent(i)
+                  }}
+                />
+              ))}
+            </div>
+          </>
         )}
         <button className={`tour-card-wishlist${inWishlist ? ' wishlist-active' : ''}`} onClick={handleWishlist} aria-label={inWishlist ? 'Remove from wishlist' : 'Add to wishlist'}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill={inWishlist ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

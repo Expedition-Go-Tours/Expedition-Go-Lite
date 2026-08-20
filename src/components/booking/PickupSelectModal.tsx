@@ -80,6 +80,16 @@ function PickupSelectModalContent({
   onContactChange,
   loading,
 }: PickupSelectModalProps) {
+  // Lock the page scroll while the modal is open (and during its exit
+  // animation) so the page underneath never scrolls/taps through.
+  useEffect(() => {
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prevOverflow
+    }
+  }, [])
+
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [addressPreview, setAddressPreview] = useState('')
   const [nearbyState, setNearbyState] = useState<NearbyState | null>(null)
@@ -95,6 +105,8 @@ function PickupSelectModalContent({
   const [searchCommitted, setSearchCommitted] = useState(false)
   /** True when the searched address falls outside the supplier's pickup zone. */
   const [searchOutOfRange, setSearchOutOfRange] = useState(false)
+  /** True when the searched address is confirmed inside a pickup zone. */
+  const [searchInZone, setSearchInZone] = useState(false)
   const searchRef = useRef<HTMLDivElement>(null)
 
   // Dragging the blue pin on the map asks the traveller to confirm the spot
@@ -189,11 +201,15 @@ function PickupSelectModalContent({
     // Tours with a supplier-set pickup zone only accept addresses inside it.
     if (suggestion.latitude != null && suggestion.longitude != null && !isInPickupArea(suggestion.latitude, suggestion.longitude)) {
       setSearchOutOfRange(true)
+      setSearchInZone(false)
       setSearchOpen(false)
       setSearchHighlight(-1)
       return
     }
     setSearchOutOfRange(false)
+    // Only surface the "within the pickup zone" confirmation when the tour
+    // actually has a geofenced zone the address could be inside.
+    setSearchInZone(geofenced)
     setSelectedId(null)
     setSearchQuery('')
     setSearchOpen(false)
@@ -220,6 +236,7 @@ function PickupSelectModalContent({
     setSearchOpen(false)
     setSearchHighlight(-1)
     setSearchOutOfRange(false)
+    setSearchInZone(false)
     setDragPreview(null)
     setDragAddress('')
     setAddressPreview(v)
@@ -232,6 +249,7 @@ function PickupSelectModalContent({
     setSearchMarker(null)
     setSearchCommitted(false)
     setSearchOutOfRange(false)
+    setSearchInZone(false)
     setDragPreview(null)
     setDragAddress('')
     if (v.trim().length >= 3) {
@@ -297,6 +315,7 @@ function PickupSelectModalContent({
     setSearchMarker(null)
     setSearchCommitted(false)
     setSearchOutOfRange(false)
+    setSearchInZone(false)
     setDragPreview(null)
     setDragAddress('')
     clear()
@@ -666,10 +685,23 @@ function PickupSelectModalContent({
 
           {/* Out-of-range inline error for the searched address. */}
           {searchOutOfRange && (
-            <p className="mt-2 flex items-start gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-medium leading-relaxed text-rose-600">
-              <AlertTriangle className="mt-0.5 size-3.5 shrink-0" />
-              This location is out of range from the pickup zone — choose a location inside the zone.
-            </p>
+            <div>
+              <p className="mt-2 flex items-start gap-1.5 text-sm font-medium leading-relaxed text-rose-600">
+                <AlertTriangle className="mt-0.5 size-4 shrink-0 text-rose-500" />
+                This location is out of range from the pickup zone — choose a location inside the zone.
+              </p>
+              <p className="mt-1.5 text-xs font-medium leading-relaxed text-amber-700">
+                Kindly choose a pickup area later and ensure you update the pickup location before the tour date.
+              </p>
+              <label className="mt-2 flex cursor-pointer items-start gap-2">
+                <input
+                  type="checkbox"
+                  onChange={() => handlePickupLater()}
+                  className="mt-0.5 size-4 shrink-0 rounded border-slate-300 bg-white text-[#179237] accent-[#179237] [color-scheme:light] focus:ring-[#179237]/20"
+                />
+                <span className="text-sm font-medium text-slate-700">Choose a pickup location later</span>
+              </label>
+            </div>
           )}
         </div>
         )}
@@ -739,6 +771,12 @@ function PickupSelectModalContent({
                     </div>
                   </li>
                 </ul>
+                {searchInZone && (
+                  <p className="mt-2 flex items-start gap-1.5 rounded-lg border border-emerald-200/60 bg-emerald-50/60 px-3 py-2 text-sm font-medium leading-relaxed text-emerald-800">
+                    <Check className="mt-0.5 size-4 shrink-0 text-[#179237]" />
+                    Great, your location is within the pickup zone.
+                  </p>
+                )}
               </div>
             )}
             {group(zones.length > 0 ? 'Pickup zones' : 'Pickup points', 'car', zones)}
@@ -866,29 +904,50 @@ function PickupSelectModalContent({
                 <div className="pointer-events-none absolute inset-x-0 bottom-2 z-40 flex justify-center px-3">
                   <div
                     className={`pointer-events-auto w-full max-w-sm rounded-xl border bg-white/95 p-3 shadow-lg backdrop-blur-sm ${
-                      dragOutOfRange ? 'border-rose-300 shadow-rose-900/10' : 'border-blue-200 shadow-blue-900/10'
+                      dragOutOfRange ? 'border-slate-200 shadow-slate-900/5' : 'border-blue-200 shadow-blue-900/10'
                     }`}
                   >
                     <p className="text-xs font-semibold text-slate-800">Use this as your pickup location?</p>
                     {dragOutOfRange ? (
-                      <p className="mt-1.5 flex items-start gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-2 text-xs font-medium leading-relaxed text-rose-600">
-                        <AlertTriangle className="mt-0.5 size-3.5 shrink-0" />
-                        This location is out of range from the pickup zone — choose a location inside the zone.
-                      </p>
+                      <div>
+                        <p className="mt-1.5 flex items-start gap-1.5 text-sm font-medium leading-relaxed text-rose-600">
+                          <AlertTriangle className="mt-0.5 size-4 shrink-0 text-rose-500" />
+                          This location is out of range from the pickup zone — choose a location inside the zone.
+                        </p>
+                        <p className="mt-1.5 text-xs font-medium leading-relaxed text-amber-700">
+                          Kindly choose a pickup area later and ensure you update the pickup location before the tour date.
+                        </p>
+                        <label className="mt-2 flex cursor-pointer items-start gap-2">
+                          <input
+                            type="checkbox"
+                            onChange={() => handlePickupLater()}
+                            className="mt-0.5 size-4 shrink-0 rounded border-slate-300 bg-white text-[#179237] accent-[#179237] [color-scheme:light] focus:ring-[#179237]/20"
+                          />
+                          <span className="text-sm font-medium text-slate-700">Choose a pickup location later</span>
+                        </label>
+                      </div>
                     ) : (
-                      <p className="mt-0.5 flex items-center gap-1.5 text-sm font-medium break-words text-blue-700">
-                        {dragAddress ? (
-                          <>
-                            <MapPin className="size-3.5 shrink-0" />
-                            {dragAddress}
-                          </>
-                        ) : (
-                          <>
-                            <Loader2 className="size-3.5 shrink-0 animate-spin" />
-                            Looking up address…
-                          </>
+                      <div>
+                        <p className="mt-0.5 flex items-center gap-1.5 text-sm font-medium break-words text-blue-700">
+                          {dragAddress ? (
+                            <>
+                              <MapPin className="size-3.5 shrink-0" />
+                              {dragAddress}
+                            </>
+                          ) : (
+                            <>
+                              <Loader2 className="size-3.5 shrink-0 animate-spin" />
+                              Looking up address…
+                            </>
+                          )}
+                        </p>
+                        {geofenced && (
+                          <p className="mt-1.5 flex items-start gap-1.5 rounded-lg border border-emerald-200/60 bg-emerald-50/60 px-2.5 py-1.5 text-xs font-medium leading-relaxed text-emerald-800">
+                            <Check className="mt-0.5 size-3.5 shrink-0 text-[#179237]" />
+                            Great, your location is within the pickup zone.
+                          </p>
                         )}
-                      </p>
+                      </div>
                     )}
                     <div className="mt-2.5 flex items-center justify-end gap-2">
                       <button

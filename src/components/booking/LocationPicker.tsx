@@ -252,7 +252,9 @@ export default function LocationPicker({
         ) : null}
       </div>
 
-      {error && <p className="mt-1 text-xs text-rose-500">{error}</p>}
+      {error && (
+        <p className={`mt-1 text-sm font-medium ${error.includes('out of range from the pickup zone') ? 'text-rose-600' : 'text-slate-600'}`}>{error}</p>
+      )}
 
       {/* Use my current location — geolocation → reverse geocode. */}
       <button

@@ -53,10 +53,10 @@
 .story-card {
   display: flex;
   flex-direction: column;
-  border-radius: 12px;
+  border-radius: 8px;
   background: #fff;
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.125);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   overflow: hidden;
   height: 100%;
   text-decoration: none;
@@ -67,7 +67,7 @@
 
 .story-card-image {
   width: 100%;
-  height: 160px;
+  height: 200px;
   overflow: hidden;
 }
 
@@ -177,5 +177,9 @@
   .story-card-wrap {
     width: 280px;
     min-width: 280px;
+  }
+
+  .story-card-image {
+    height: 180px;
   }
 }

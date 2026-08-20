@@ -60,7 +60,7 @@ export default function TopRatedSection() {
             <div className="toprated-carousel" ref={scrollRef}>
               {items.map((tour, i) => (
                 <div key={`${tour.title}-${i}`} className="toprated-card-wrap">
-                  <TourCard {...tour} />
+                  <TourCard {...tour} imageClean hideFeatures />
                 </div>
               ))}
             </div>

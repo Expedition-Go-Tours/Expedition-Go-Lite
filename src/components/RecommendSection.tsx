@@ -66,7 +66,7 @@ export default function RecommendSection() {
             <div className="recommend-carousel" ref={scrollRef}>
               {items.map((tour, i) => (
                 <div key={`${tour.title}-${i}`} className="carousel-card-wrap">
-                  <TourCard {...tour} />
+                  <TourCard {...tour} imageClean hideFeatures />
                 </div>
               ))}
             </div>

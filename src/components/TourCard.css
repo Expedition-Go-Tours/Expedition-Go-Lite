@@ -23,6 +23,101 @@
   overflow: hidden;
   background: #f1f1f1;
   flex-shrink: 0;
+  /* The page owns vertical panning; JS handles horizontal swipes (carousel). */
+  touch-action: pan-y;
+}
+
+/* Image carousel — slides translate horizontally inside the fixed image box.
+   Vertical scrolling is untouched (touch-action: pan-y above). */
+.tour-card-slides {
+  display: flex;
+  height: 100%;
+  transition: transform 0.35s ease;
+  will-change: transform;
+}
+
+.tour-card-slide {
+  flex: 0 0 100%;
+  height: 100%;
+  min-width: 0;
+  position: relative;
+}
+
+/* The visible slide stacks above its neighbours so its hover zoom isn't
+   clipped/painted under the next photo. */
+.tour-card-slide-active {
+  z-index: 1;
+}
+
+.tour-card-slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+/* Photo carousel chevrons — shown on hover on desktop, hidden on mobile. */
+.tour-card-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 4;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  color: #374151;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+  opacity: 0;
+  transition: opacity 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.tour-card-arrow-prev {
+  left: 6px;
+}
+
+.tour-card-arrow-next {
+  right: 6px;
+}
+
+.tour-card-image:hover .tour-card-arrow,
+.tour-card:hover .tour-card-arrow {
+  opacity: 1;
+}
+
+/* Carousel dots — bottom-center, one per photo. */
+.tour-card-dots {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 7px;
+  z-index: 3;
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  pointer-events: none;
+}
+
+.tour-card-dot {
+  width: 7px;
+  height: 7px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.55);
+  cursor: pointer;
+  pointer-events: auto;
+  transition: background 0.2s ease, width 0.2s ease;
+}
+
+.tour-card-dot.tour-card-dot-active {
+  background: #fff;
+  width: 18px;
 }
 
 .tour-card-image img {
@@ -33,7 +128,7 @@
   transition: transform 0.5s;
 }
 
-.tour-card:hover .tour-card-image img {
+.tour-card:hover .tour-card-slide-active img {
   transform: scale(1.1);
 }
 
@@ -243,7 +338,7 @@
 
 .tour-card-title {
   font-family: 'Raleway', sans-serif;
-  font-weight: 600;
+  font-weight: 800;
   font-size: 15px;
   color: #111827;
   margin: 0;
@@ -351,6 +446,11 @@
   .tour-card-price-value {
     font-size: 22px;
   }
+
+  /* Mobile: swipe + dots only — no chevron buttons. */
+  .tour-card-arrow {
+    display: none;
+  }
 }
 
 /* "New" pill pinned to the top-left of the image — the same corner the
@@ -436,4 +536,29 @@
 
 .tour-card-image-type-badge.tour-card-badge-type-default {
   background: rgba(55, 65, 81, 0.85);
+}
+
+/* Plain Bootstrap-style card variant (opt-in via `imageClean`): clean image on
+   top, no dark fade / floating pills over the photo, simple bordered box.
+   Duration and product type relocate to a muted subtitle in the body and the
+   wishlist heart sits in the image's top-right corner. Used by the homepage
+   carousels (New Experiences, Recommended, Top Rated, Sell Out, Deals). */
+.tour-card-clean {
+  border: 1px solid rgba(0, 0, 0, 0.125);
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.tour-card-clean .tour-card-image {
+  height: 205px;
+}
+
+.tour-card-clean .tour-card-body {
+  padding: 14px;
+}
+
+@media (max-width: 768px) {
+  .tour-card-clean .tour-card-image {
+    height: 180px;
+  }
 }

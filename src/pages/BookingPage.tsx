@@ -709,6 +709,17 @@ function ActivityDetailsStep({
   )
   const compactTime = (t?: string) => (t ? t.replace('-', '–') : '')
 
+  // When the traveller defers their pickup, the pickup location must be
+  // confirmed the day BEFORE the tour/activity date — show that deadline.
+  const deferredPickupDate = useMemo(() => {
+    const activityISO = tour.selectedDate || tour.dateISO || ''
+    if (!activityISO) return null
+    const d = new Date(`${activityISO}T12:00:00`)
+    if (Number.isNaN(d.getTime())) return null
+    d.setDate(d.getDate() - 1)
+    return `${d.getDate()} ${DAY_MONTH_YEAR_MONTHS[d.getMonth()]} ${d.getFullYear()}`
+  }, [tour.selectedDate, tour.dateISO])
+
   const locationInvalidMessage = !locationValid && touched.location
     ? zoneStatus === 'excluded'
       ? `This address is inside a no-pickup zone${matchedArea?.name ? ` for \u201C${matchedArea.name}\u201D` : ''} — choose a different address or pickup zone.`
@@ -722,6 +733,11 @@ function ActivityDetailsStep({
             ? 'Enter the pickup address or choose a pickup zone below.'
             : 'Please enter your pickup location'
     : undefined
+
+  // The out-of-range verdict — under it we suggest picking the location later
+  // so the traveller can still proceed without a valid address right now.
+  const locationOutOfRange =
+    !locationValid && touched.location && zoneStatus === 'outside' && geofenced
 
   const handlePickupAreaSelect = (name: string) => {
     if (contact.pickupArea === name) {
@@ -1041,8 +1057,9 @@ function ActivityDetailsStep({
                   <FieldLabel required={!contact.pickupLater} tooltip="Where should the tour operator pick you up? Search for your address and pick a suggestion so we can confirm you are inside a pickup zone.">Pickup Location</FieldLabel>
                   {contact.pickupLater ? (
                     <div className="space-y-2">
-                      <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50/20 px-4 py-3 text-sm text-slate-400">
-                        Pickup location will be chosen later.
+                      <p className="rounded-xl border border-amber-200/70 bg-amber-50/60 px-4 py-3 text-sm font-medium leading-relaxed text-amber-800">
+                        Pickup location deferred to the day before the tour/activity date
+                        {deferredPickupDate ? ` — ${deferredPickupDate}` : ''}.
                       </p>
                       <p className="rounded-xl border border-emerald-200/60 bg-emerald-50/60 px-4 py-3 text-sm font-medium text-emerald-800">
                         Please remember to verify your pickup location before the activity/experience date.
@@ -1070,13 +1087,38 @@ function ActivityDetailsStep({
                         error={locationInvalidMessage}
                       />
 
+                      {/* Under the out-of-range error — suggest deferring the
+                          pickup so the traveller can still proceed. */}
+                      {locationOutOfRange && (
+                        <div className="mt-2 rounded-xl border border-amber-200/70 bg-amber-50/60 px-3.5 py-2.5">
+                          <p className="text-sm font-medium leading-relaxed text-amber-800">
+                            Kindly choose a pickup area later and ensure you update the pickup location before the tour date.
+                          </p>
+                          <label className="mt-2 flex cursor-pointer items-start gap-2">
+                            <input
+                              type="checkbox"
+                              checked={!!contact.pickupLater}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  onContactChange('location', '')
+                                  onContactChange('pickupArea', '')
+                                }
+                                onContactChange('pickupLater', e.target.checked)
+                              }}
+                              className="mt-0.5 size-4 shrink-0 rounded border-slate-300 bg-white text-[#179237] accent-[#179237] [color-scheme:light] focus:ring-[#179237]/20"
+                            />
+                            <span className="text-sm font-medium text-slate-700">Choose a pickup location later</span>
+                          </label>
+                        </div>
+                      )}
+
                       {/* Live zone verdict — GetYourGuide-style reassurance. */}
                       {!contact.pickupArea && zoneStatus === 'in_area' && matchedArea && (
                         <div className="flex items-start gap-2.5 rounded-xl border border-emerald-200/60 bg-emerald-50/60 px-3.5 py-2.5">
                           <Check className="mt-0.5 size-4 shrink-0 text-[#179237]" />
                           <div className="text-sm text-emerald-900">
                             <p className="font-semibold">
-                              Good news — you{'’'}re in the <span className="underline underline-offset-2">{matchedArea.name}</span> pickup zone!
+                              Great, your location is within the <span className="underline underline-offset-2">{matchedArea.name}</span> pickup zone.
                             </p>
                             {matchedArea.time && (
                               <p className="mt-0.5 text-xs text-emerald-700">

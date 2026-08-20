@@ -11,7 +11,7 @@ import i18n from '../i18n/config'
 import './ContinuePlanningSection.css'
 import OptimizedImage from '@/components/shared/OptimizedImage'
 
-const CARD_WIDTH = 490
+const CARD_WIDTH = 560
 const GAP = 24
 
 function shortCancellation(policy?: string): string {

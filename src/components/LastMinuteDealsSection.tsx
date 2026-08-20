@@ -60,7 +60,7 @@ export default function LastMinuteDealsSection() {
             <div className="lastminute-carousel" ref={scrollRef}>
               {items.map((tour, i) => (
                 <div key={`${tour.title}-${i}`} className="lastminute-card-wrap">
-                  <TourCard {...tour} discount={tour.discount} />
+                  <TourCard {...tour} discount={tour.discount} imageClean hideFeatures />
                 </div>
               ))}
             </div>

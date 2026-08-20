@@ -39,28 +39,16 @@
 }
 
 .continue-planning-card-wrap {
-  width: 490px;
-  min-width: 490px;
+  width: 560px;
+  min-width: 560px;
   flex-shrink: 0;
   scroll-snap-align: start;
   display: flex;
   align-items: stretch;
 }
 
-/* Center the cards whenever they don't fill the viewport (e.g. a single
-   saved tour). Auto margins absorb the leftover space, and collapse to 0
-   the moment the row overflows — at which point the carousel scrolls/swipes
-   normally again. */
-.continue-planning-carousel > :first-child {
-  margin-left: auto;
-}
-
-.continue-planning-carousel > :last-child {
-  margin-right: auto;
-}
-
-/* Chevrons only make sense once the row actually overflows — a centered
-   card or a non-scrolling row gets no arrows at all. */
+/* Chevrons only make sense once the row actually overflows — a single card
+   or a non-scrolling row gets no arrows at all. */
 .continue-planning-section .section-arrows {
   display: none;
 }
@@ -86,9 +74,9 @@
 
 .cp-card-media {
   position: relative;
-  width: 112px;
-  min-width: 112px;
-  min-height: 86px;
+  width: 150px;
+  min-width: 150px;
+  min-height: 132px;
   border-radius: 8px;
   overflow: hidden;
   background: #f1f1f1;
@@ -356,8 +344,8 @@
   }
 
   .continue-planning-card-wrap {
-    width: min(94%, 460px);
-    min-width: min(94%, 460px);
+    width: min(94%, 520px);
+    min-width: min(94%, 520px);
   }
 
   /* Mobile never shows chevrons — the row is swiped instead, even when it
@@ -373,9 +361,9 @@
   }
 
   .cp-card-media {
-    width: 104px;
-    min-width: 104px;
-    min-height: 0;
+    width: 128px;
+    min-width: 128px;
+    min-height: 96px;
   }
 
   .cp-card-title {

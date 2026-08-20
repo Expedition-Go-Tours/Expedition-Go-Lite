@@ -5,11 +5,12 @@ import type { TourDetailData, SpecialOfferData } from '../../hooks/useExpedition
 import { Button } from '../../components/ui/button'
 import { CalendarPicker } from '../../components/ui/apple-calendar-picker'
 import { motion, AnimatePresence } from 'framer-motion'
-import { CalendarDays, Users, Minus, Plus, MessageSquare, Clock as ClockIcon, BadgePercent } from 'lucide-react'
+import { CalendarDays, Users, Minus, Plus, MessageSquare, Clock as ClockIcon, BadgePercent, ShieldCheck } from 'lucide-react'
 import { toast } from 'sonner'
 import { useCurrency } from '../../contexts/CurrencyContext'
 import type { DayAvailability, DayAvailabilityInfo, DayTimeSlot } from '../../lib/tourAvailability'
 import { openingHoursForDay } from '../../lib/tourAvailability'
+import { freeCancellationDateLabel } from '../../lib/cancellationLabel'
 import { categoryKey } from '../../lib/travelerBuckets'
 import { useTravelerSelection } from '../../hooks/useTravelerSelection'
 import SupportChatWidget from '../../components/SupportChatWidget'
@@ -431,6 +432,14 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
   const selectedDateLabel = selectedDate
     ? selectedDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
     : t('tourDetail.selectDate')
+
+  // Same date-specific cancellation label the Quick facts section shows
+  // (e.g. "Free Cancellation before Aug 22nd (local time)") — surfaced under
+  // the Book now button so the traveller sees the exact cutoff at purchase.
+  const cancellationNote = freeCancellationDateLabel(
+    tour.cancellationPolicy || t('tourDetail.cancellationDefault'),
+    selectedDate ? selectedDate.toISOString().slice(0, 10) : '',
+  )
   // Once a slot is picked (or opening hours shown) inside the calendar, surface
   // the chosen time on the date field so it stays visible after the panel closes.
   const selectedTimeLabel = selectedTime
@@ -917,6 +926,15 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
               t('tourDetail.bookNow')
             )}
           </Button>
+
+          {/* Date-specific cancellation cutoff — matches the Quick facts
+              label, shown right after Book now. */}
+          {cancellationNote && (
+            <p className="booking-cancel-note">
+              <ShieldCheck size={14} />
+              {cancellationNote}
+            </p>
+          )}
 
           {/* Assistance */}
           <div className="booking-assistance">

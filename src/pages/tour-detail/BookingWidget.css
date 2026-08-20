@@ -202,6 +202,28 @@
   flex-shrink: 0;
 }
 
+/* Date-specific cancellation cutoff shown under the Book now button (same
+   text as the Quick facts section, e.g. "Free Cancellation before Aug 22nd
+   (local time)"). */
+.booking-cancel-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #166534;
+  line-height: 1.4;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.booking-cancel-note svg {
+  flex-shrink: 0;
+  color: #166534;
+}
+
 .booking-input {
   width: 100%;
   display: flex;

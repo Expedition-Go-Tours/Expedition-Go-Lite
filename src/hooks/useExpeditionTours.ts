@@ -176,6 +176,8 @@ export interface TourCardData {
   reviews: number
   location: string
   image: string
+  /** All tour photos (the card's image carousel). */
+  photos?: string[]
   source: 'expedition-go' | 'travio-africa'
   externalUrl?: string
   slug: string
@@ -1023,6 +1025,7 @@ function mapToListing(tour: ExpeditionTourRecord['tour']): TourCardData {
     reviews: tour.reviewCount,
     location,
     image: tour.coverPhoto || tour.photos?.[0] || '',
+    photos: Array.isArray(tour.photos) && tour.photos.length > 0 ? tour.photos : undefined,
     source: isExternal ? 'travio-africa' : 'expedition-go',
     externalUrl: isExternal ? (tour.externalUrl || undefined) : undefined,
     slug: tour.slug,
@@ -1818,6 +1821,7 @@ export function mapRawTourToListing(t: any): TourCardData {
     reviews: t.reviewCount ?? t._count?.reviews ?? 0,
     location,
     image: t.coverPhoto || t.photos?.[0] || '',
+    photos: Array.isArray(t.photos) && t.photos.length > 0 ? t.photos : undefined,
     source: 'expedition-go',
     externalUrl: undefined,
     slug: t.slug,

@@ -8,6 +8,8 @@ export interface Tour {
   reviews: number
   location: string
   image: string
+  /** Additional tour photos — drives the image carousel on the tour card. */
+  photos?: string[]
   discount?: string
   languages?: string[]
   difficulty?: string

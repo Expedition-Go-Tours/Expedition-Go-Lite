@@ -311,9 +311,13 @@ export function maplibrePinEl(color: string): HTMLDivElement {
  */
 export function pulsingPinElement(color: string, cursor = 'pointer'): HTMLDivElement {
   const el = document.createElement('div')
-  // Both engine marker classes provide the same absolute positioning.
+  // Both engine marker classes provide the same absolute positioning. The
+  // position MUST be explicit inline: `relative` would keep each marker in
+  // the canvas container's normal flow, so the 2nd+ markers stack below the
+  // first (offset by a multiple of the pin's ~40px height) and every pin
+  // lands displaced from its real coordinate, carrying its glow with it.
   el.className = 'maplibregl-marker mapboxgl-marker'
-  el.style.cssText = `position: relative; cursor: ${cursor};`
+  el.style.cssText = `position: absolute; top: 0; left: 0; cursor: ${cursor};`
   const glow = document.createElement('span')
   glow.className = 'pin-glow'
   glow.style.setProperty('--pin-color', color)

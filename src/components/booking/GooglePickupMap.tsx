@@ -62,7 +62,7 @@ interface GooglePickupMapProps {
   onPinClick?: (label: string) => void
   /** Fired when the map is double-clicked at a spot (to add a pickup location). */
   onDoubleClickPoint?: (lat: number, lng: number) => void
-  /** Fired when the API fatally fails (auth/billing/script) — the layered
+  /** Fired when the API fatally fails (auth/billing/script) â€” the layered
       LocationMap then falls back to Mapbox/MapLibre/text. */
   onFatalFailure?: () => void
   /** Height classes for the map container (defaults to the standard booking height). */
@@ -70,7 +70,7 @@ interface GooglePickupMapProps {
 }
 
 /**
- * Google Maps renderer for the checkout pickup map — the PRIMARY provider on
+ * Google Maps renderer for the checkout pickup map â€” the PRIMARY provider on
  * the booking page once the Maps JavaScript API loads (billing required).
  * Built on @vis.gl/react-google-maps: declarative `<Map>`, `<AdvancedMarker>`
  * and `<Polygon>` components, plus imperative bits (info windows, camera
@@ -79,7 +79,7 @@ interface GooglePickupMapProps {
  * Mirrors the MapLibre + OSM `PickupZoneMap` visuals: green service zones, red
  * exclusions, green tour pins and a draggable blue pin for the traveller's
  * location. A fatal API failure (auth/billing) is reported to the parent so
- * the fallback stack (Mapbox → MapLibre → text) takes over.
+ * the fallback stack (Mapbox â†’ MapLibre â†’ text) takes over.
  */
 export default function GooglePickupMap({ tour, userMarker, onUserPointChange, onUserAddressChange, extraPoints, onPinClick, onDoubleClickPoint, onFatalFailure, mapHeight = 'h-[320px] sm:h-[340px]' }: GooglePickupMapProps) {
   const apiKey = getGoogleMapsApiKey()
@@ -116,7 +116,7 @@ export default function GooglePickupMap({ tour, userMarker, onUserPointChange, o
 
 function GooglePickupMapInner({ tour, userMarker, onUserPointChange, onUserAddressChange, extraPoints, onPinClick, onDoubleClickPoint, onFatalFailure, mapHeight = 'h-[320px] sm:h-[340px]' }: GooglePickupMapProps) {
   const [mapReady, setMapReady] = useState(false)
-  /** True right after the draggable pin is dropped — a ghost map click after
+  /** True right after the draggable pin is dropped â€” a ghost map click after
       a marker drag must not re-trigger click-to-pick (camera jump / prompt). */
   const dragJustEndedRef = useRef(false)
   const onFatalFailureRef = useRef(onFatalFailure)
@@ -141,7 +141,7 @@ function GooglePickupMapInner({ tour, userMarker, onUserPointChange, onUserAddre
 
   // Drawn geoshapes + exclusion zones from the supplier's Step-13 config.
   // Location-only areas (a saved point, no drawn polygon) render as a
-  // LOCATION_AREA_RADIUS_M circle — only when it's the tour's single pickup
+  // LOCATION_AREA_RADIUS_M circle â€” only when it's the tour's single pickup
   // spot (no other areas and no pickup locations), so the map matches the
   // "Pickup zone" legend without blobbing multi-location tours.
   const zones = useMemo(
@@ -179,7 +179,7 @@ function GooglePickupMapInner({ tour, userMarker, onUserPointChange, onUserAddre
   // Click-to-pick (mirrors the supplier's LocationMapPicker): sets the
   // traveller's pickup coordinates, drops the pin and zooms to street level.
   const handleMapClick = (e: MapMouseEvent): void => {
-    // A mouseup right after dropping the draggable pin can fire a ghost click —
+    // A mouseup right after dropping the draggable pin can fire a ghost click â€”
     // skip it so the camera doesn't jump right after the drop.
     if (dragJustEndedRef.current) {
       dragJustEndedRef.current = false
@@ -196,7 +196,7 @@ function GooglePickupMapInner({ tour, userMarker, onUserPointChange, onUserAddre
     })
   }
 
-  // Double-click → add a custom pickup spot. `stop()` suppresses Google's
+  // Double-click â†’ add a custom pickup spot. `stop()` suppresses Google's
   // default double-click zoom so the gesture only adds the location.
   const handleMapDoubleClick = (e: MapMouseEvent): void => {
     e.stop()
@@ -207,7 +207,7 @@ function GooglePickupMapInner({ tour, userMarker, onUserPointChange, onUserAddre
   if (!hasMapData) return null
 
   return (
-    <div className="p-3">
+    <div className="px-0 py-3">
       <div className={`relative ${mapHeight} w-full touch-none overflow-hidden rounded-xl border border-slate-200/40 shadow-[0_1px_3px_rgba(0,0,0,0.04)]`}>
         <Map
           mapId={getGoogleMapsMapId() || 'DEMO_MAP_ID'}
@@ -373,7 +373,7 @@ function RecenterButton({ points }: { points: google.maps.LatLngLiteral[] }) {
   )
 }
 
-/** Supplier's pickup/meeting pins (green) — taps bubble the label up. The
+/** Supplier's pickup/meeting pins (green) â€” taps bubble the label up. The
     pulsating glow halo marks the pickup/meeting points on the map. */
 function TourPin({ point, onPinClick }: { point: MapPoint; onPinClick?: (label: string) => void }) {
   const onClickRef = useRef(onPinClick)
@@ -397,7 +397,7 @@ function TourPin({ point, onPinClick }: { point: MapPoint; onPinClick?: (label: 
   )
 }
 
-/** Extra (landmark) pins — tapping opens an InfoWindow with place details. */
+/** Extra (landmark) pins â€” tapping opens an InfoWindow with place details. */
 function ExtraPin({ point }: { point: MapPoint }) {
   const [markerRef, marker] = useAdvancedMarkerRef()
   const [open, setOpen] = useState(false)
@@ -456,7 +456,7 @@ function ExtraPin({ point }: { point: MapPoint }) {
   )
 }
 
-/** The traveller's draggable blue pin — repositioning updates the live
+/** The traveller's draggable blue pin â€” repositioning updates the live
     verdict. It carries the same pulsating glow as the tour pins. */
 function UserPin({
   point,
