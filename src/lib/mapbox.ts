@@ -1,12 +1,13 @@
 import * as mapboxgl from 'mapbox-gl/esm'
-import mapboxWorkerUrl from 'mapbox-gl/dist/esm/worker.js?url'
 
-// mapbox-gl's ESM build loads its render worker from `new URL('worker.js',
-// import.meta.url)` when no worker URL is set — a pattern bundlers cannot
-// statically emit. Importing the worker with Vite's `?url` suffix produces a
-// real, bundled URL in dev and build alike; pinning it here (before any map is
-// created) makes both environments load the same worker chunk.
-mapboxgl.setWorkerUrl(mapboxWorkerUrl)
+// The mapbox render worker is served from `/mapbox-gl/worker.js` — a copy of
+// `mapbox-gl/dist/esm/worker.js` placed in `public/` by the
+// `copy-mapbox-worker` Vite plugin (see vite.config.ts). It is loaded raw and
+// untransformed in both dev and production: Vite's build rewrites a `?url`
+// import of that file into a module that statically imports `./shared.js`
+// (never emitted), which silently kills the worker in production and leaves
+// the map waiting on the failover watchdogs before it ever paints.
+mapboxgl.setWorkerUrl('/mapbox-gl/worker.js')
 
 /** The Maps access token — VITE_MAPBOX_ACCESS_TOKEN from .env. */
 export function getMapboxToken(): string {

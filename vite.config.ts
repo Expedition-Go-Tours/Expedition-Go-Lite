@@ -1,14 +1,49 @@
-import { defineConfig } from 'vite'
+import { defineConfig, type Plugin } from 'vite'
 import react, { reactCompilerPreset } from '@vitejs/plugin-react'
 import babel from '@rolldown/plugin-babel'
 import { VitePWA } from 'vite-plugin-pwa'
 import path from 'path'
+import { copyFileSync, mkdirSync } from 'node:fs'
+import { resolve } from 'node:path'
+
+// mapbox-gl's ESM worker (`dist/esm/worker.js`) must be served VERBATIM with
+// its whole module closure: Vite's production build rewrites its `?url` asset
+// into a module that statically imports `./shared.js` (and dynamically
+// `./raster_array.worker.js`), none of which get emitted — the worker 404s and
+// the Mapbox map can't paint tiles (it only appears after the failover
+// watchdogs, the "map takes very long to load" on Vercel). Serving the raw
+// worker + its shared/worker chunks from `public/` keeps every relative import
+// resolvable and untransformed in dev and production alike.
+function copyMapboxWorker(): Plugin {
+  const files = [
+    'worker.js',
+    'shared.js',
+    'hd.worker.js',
+    'standard.worker.js',
+    'raster_array.worker.js',
+    'hd.shared.js',
+    'standard.shared.js',
+    'hd_standard.model.js',
+    'raster_array.shared.js',
+  ]
+  return {
+    name: 'copy-mapbox-worker',
+    configResolved() {
+      const outDir = resolve(__dirname, 'public/mapbox-gl')
+      mkdirSync(outDir, { recursive: true })
+      for (const f of files) {
+        copyFileSync(resolve(__dirname, 'node_modules/mapbox-gl/dist/esm', f), resolve(outDir, f))
+      }
+    },
+  }
+}
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react(),
     babel({ presets: [reactCompilerPreset()] }),
+    copyMapboxWorker(),
     VitePWA({
       registerType: 'autoUpdate',
       workbox: {
