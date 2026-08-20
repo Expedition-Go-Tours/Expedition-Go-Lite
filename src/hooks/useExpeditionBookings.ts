@@ -193,6 +193,13 @@ interface ConfirmBookingInput {
   specialRequests?: string
   /** Validated promo code — the backend re-prices with it (expeditionController.confirmBooking). */
   promoCode?: string
+  /** Lead traveler entered on the storefront "Lead Traveler Details" step. Sent so the
+   * supplier dashboard and confirmation emails show the traveler (not the booking-owner account). */
+  leadTraveler?: {
+    name: string
+    email: string
+    phone: string
+  }
 }
 
 interface ConfirmBookingResponse {

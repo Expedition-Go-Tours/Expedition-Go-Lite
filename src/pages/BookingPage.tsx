@@ -2102,6 +2102,14 @@ export default function BookingPage() {
         ...(paymentMethodId ? { paymentMethodId } : {}),
         paymentTiming,
         specialRequests: '',
+        // Lead traveler details from the "Lead Traveler Details" step so the
+        // supplier dashboard and confirmation emails show the traveler rather
+        // than the booking-owner account.
+        leadTraveler: {
+          name: fullName,
+          email: contact.email,
+          phone: phoneNumber,
+        },
         // Only forward a code that was validated against the backend; the
         // confirm endpoint re-prices authoritatively with it.
         ...(appliedPromo ? { promoCode: promoCode.trim().toUpperCase() } : {}),
