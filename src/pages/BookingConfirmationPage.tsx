@@ -170,8 +170,15 @@ export default function BookingConfirmationPage() {
 
   // Paid only when payment actually settled. Reserve-now-pay-later bookings are
   // PENDING/unpaid until the deferred charge lands, so they show as "Reserved".
+  // A PAID booking still PENDING (manual-confirmation tour) is awaiting the
+  // supplier's acceptance — show that instead of "Confirmed".
   const isPaid = b.paymentStatus === 'SUCCEEDED'
-  const statusLabel = isPaid ? t('confirmation.statusConfirmed') : t('confirmation.statusReserved')
+  const awaitingConfirmation = isPaid && b.status === 'PENDING'
+  const statusLabel = awaitingConfirmation
+    ? t('confirmation.statusAwaiting')
+    : isPaid
+      ? t('confirmation.statusConfirmed')
+      : t('confirmation.statusReserved')
 
   const arrivalLabel = (() => {
     if (meeting.meetingMode !== 'meeting_point') return ''
@@ -253,6 +260,11 @@ export default function BookingConfirmationPage() {
                 {statusLabel}
               </span>
             </div>
+            {awaitingConfirmation && (
+              <p className="confirmation-note confirmation-awaiting-note">
+                {t('confirmation.awaitingConfirmation')}
+              </p>
+            )}
             {confirmingPayment && (
               <p className="confirmation-note confirmation-pending-note">
                 {t('confirmation.confirmingPayment')}

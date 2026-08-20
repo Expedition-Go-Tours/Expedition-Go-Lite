@@ -240,6 +240,12 @@
   border: 1px solid #a7f3d0;
 }
 
+.confirmation-awaiting-note {
+  color: #92400e;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+}
+
 .confirmation-price {
   display: flex;
   flex-direction: column;
