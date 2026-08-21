@@ -2169,7 +2169,9 @@ export default function BookingPage() {
 
       // Reserve-now-pay-later: booking is committed PENDING until the deferred
       // auto-charge (payLaterSweep) settles it near the activity date.
-      await pollBooking(result?.booking?.id)
+      if (result?.booking?.id) {
+        await pollBooking(result.booking.id)
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Booking failed. Please try again.'
       toast.error(msg)

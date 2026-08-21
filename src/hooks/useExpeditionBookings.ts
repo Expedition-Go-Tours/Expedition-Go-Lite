@@ -203,7 +203,8 @@ interface ConfirmBookingInput {
 }
 
 interface ConfirmBookingResponse {
-  booking: {
+  /** Pay-later: booking created immediately. Pay-now: absent (no booking until webhook). */
+  booking?: {
     id: string
     bookingNumber: string
     status: string
@@ -235,6 +236,45 @@ export function useCreateBooking() {
       const payload = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(payload.message || `Request failed (${res.status})`)
       return (payload.data ?? payload) as ConfirmBookingResponse
+    },
+  })
+}
+
+/** Response shape for GET /expedition/bookings/by-session/:sessionId */
+interface BookingBySessionResponse {
+  status: 'HOLDING' | 'PAID' | 'EXPIRED' | 'REFUNDED'
+  expiresAt: string
+  createdAt: string
+  booking?: {
+    id: string
+    bookingNumber: string
+    status: string
+    total: number
+    currency: string
+    tour: { id: string; title: string; slug: string; coverPhoto: string | null }
+    customer: { id: string; name: string; email: string }
+  }
+}
+
+/**
+ * Polls the checkout status for a pay-now session. Returns the status
+ * and, once materialized, the booking itself.
+ */
+export function useBookingBySession(sessionId: string | null) {
+  return useQuery<BookingBySessionResponse>({
+    queryKey: ['expedition', 'booking-by-session', sessionId],
+    queryFn: async () => {
+      const res = await fetchWithAuth(`/expedition/bookings/by-session/${encodeURIComponent(sessionId!)}`)
+      const payload = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(payload.message || `Request failed (${res.status})`)
+      return (payload.data ?? payload) as BookingBySessionResponse
+    },
+    enabled: !!sessionId,
+    refetchInterval: (query) => {
+      // Stop polling once the session is no longer in-flight.
+      const status = query.state.data?.status
+      if (status === 'PAID' || status === 'EXPIRED' || status === 'REFUNDED') return false
+      return 2000
     },
   })
 }
