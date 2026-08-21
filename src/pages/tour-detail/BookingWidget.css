@@ -86,6 +86,19 @@
   line-height: 1;
 }
 
+/* Offer pricing: the original unit price is struck through (smaller, gray)
+   and the discounted promo price is shown in red next to it. */
+.booking-price-amount--strike {
+  font-size: 18px;
+  font-weight: 600;
+  color: #94a3b8;
+  text-decoration: line-through;
+}
+
+.booking-price-amount--promo {
+  color: #dc2626;
+}
+
 @media (min-width: 1024px) {
   .booking-price-amount {
     font-size: 32px;

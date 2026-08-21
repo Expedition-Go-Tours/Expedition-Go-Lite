@@ -14,9 +14,26 @@
 /**
  * Radius (meters) around a location-only pickup area (saved as a point, no
  * drawn geoshape) within which a customer address is considered inside the
- * area. Must match the backend's LOCATION_AREA_RADIUS_M in geoUtils.js.
+ * area. Must match the backend's LOCATION_AREA_RADIUS_M in geoUtils.js
+ * (1000 m) — it is the DEFAULT used when the area doesn't carry its own
+ * radiusKm. The storefront verdict and the server verdict must never
+ * disagree: a client-side 5 km default would bless addresses the server
+ * rejects at booking.
  */
-export const LOCATION_AREA_RADIUS_M = 5000
+export const LOCATION_AREA_RADIUS_M = 1000
+
+/**
+ * The effective geofence radius for a location-only area: the supplier's
+ * configured `radiusKm` when present (e.g. "Oasis Park Residences, 15" is a
+ * 15km zone), falling back to LOCATION_AREA_RADIUS_M for areas without one.
+ * Mirrors the backend exactly (Number.isFinite(radiusKm) ? radiusKm * 1000
+ * : LOCATION_AREA_RADIUS_M) so the checkout verdict never disagrees with
+ * the server's.
+ */
+export function locationAreaRadiusM(area: PickupAreaShape): number {
+  const km = area?.radiusKm
+  return Number.isFinite(km) ? (km as number) * 1000 : LOCATION_AREA_RADIUS_M
+}
 
 export type LatLng = [number, number]
 
@@ -31,6 +48,8 @@ export interface PickupAreaShape {
   polygon?: LatLng[] | null
   /** Drawn exclusion zones (each an ordered [lat, lng] polygon). */
   exclusions?: LatLng[][] | null
+  /** Geofence radius (km) for a location-only area (no drawn geoshape). */
+  radiusKm?: number | null
 }
 
 export interface PickupLocationShape {
@@ -96,7 +115,9 @@ export function pickupZoneRings(
   const totalSpots = list.length + locationSpots
   if (totalSpots === 1 && hasLocationOnlyAreas(list)) {
     const area = list[0]
-    rings.push(circleRing(area.lat as number, area.lng as number, LOCATION_AREA_RADIUS_M))
+    // Draw the circle at the area's configured radius (radiusKm) so the map
+    // matches the validation verdict — never a mismatched fixed size.
+    rings.push(circleRing(area.lat as number, area.lng as number, locationAreaRadiusM(area)))
   }
   return rings
 }
@@ -165,11 +186,12 @@ export function findPickupAreaForAddress(
   for (const area of pickupAreas) {
     if (!hasDrawnShape(area)) {
       // Legacy area without a drawn geoshape: match the saved location
-      // point by proximity, or fall back to the old exact-name match for
-      // areas without coordinates so pre-geoshape products keep working.
+      // point by proximity (honouring the area's configured radiusKm), or
+      // fall back to the old exact-name match for areas without coordinates
+      // so pre-geoshape products keep working.
       const aLat = typeof area.lat === 'number' ? area.lat : NaN
       const aLng = typeof area.lng === 'number' ? area.lng : NaN
-      if (Number.isFinite(aLat) && Number.isFinite(aLng) && distanceMeters(address.lat, address.lng, aLat, aLng) <= LOCATION_AREA_RADIUS_M) {
+      if (Number.isFinite(aLat) && Number.isFinite(aLng) && distanceMeters(address.lat, address.lng, aLat, aLng) <= locationAreaRadiusM(area)) {
         return area
       }
       if (NORMALIZE_NAME(address.name) === NORMALIZE_NAME(area.name)) return area

@@ -11,178 +11,17 @@ import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url'
 maplibregl.setWorkerUrl(maplibreWorkerUrl)
 
 /**
- * Shared helpers for the storefront maps (booking-page location map, pickup
+ * Shared helpers for the storefront maps (booking-page pickup map, pickup
  * map modal, tour-detail location map). Maps are rendered with MapLibre GL
- * using free raster tile providers — no API key required.
- *
- * Provider history: the maps previously used OpenFreeMap vector tiles
- * (tiles.openfreemap.org/planet/*.pbf). That endpoint began returning empty
- * (0-byte) tiles while the style JSON kept loading, which MapLibre treats as
- * valid-but-empty (no `error` event), leaving a permanently blank basemap.
- * OSM raster tiles then started returning an "Access denied" placeholder as a
- * 200 (x-blocked header) — again silent for MapLibre. Because both failures
- * are silent, a one-tile pixel probe picks a healthy provider up front
- * (Carto first), with OSM and Esri as fallbacks, before the map is built.
+ * using OpenFreeMap's "Liberty" style — free, keyless OSM vector tiles — the
+ * same style the supplier platform's maps use, so both platforms match.
+ * The Mapbox GL map remains available as a token-gated fallback layer.
  */
 
-export interface TileProvider {
-  id: string
-  name: string
-  /** MapLibre raster tile URL templates ({z}/{x}/{y}). */
-  tiles: string[]
-  /** License-required attribution shown on the map. */
-  attribution: string
-  /** A known-land tile (z7, southern Ghana) used for the health probe. */
-  probeUrl: string
-}
+/** OpenFreeMap "Liberty" vector style (keyless OSM tiles). */
+export const TILE_STYLE = 'https://tiles.openfreemap.org/styles/liberty'
 
-export const TILE_PROVIDERS: TileProvider[] = [
-  {
-    id: 'carto',
-    name: 'CARTO Voyager',
-    tiles: ['https://basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png'],
-    attribution: '© OpenStreetMap contributors © CARTO',
-    probeUrl: 'https://basemaps.cartocdn.com/rastertiles/voyager/7/63/62.png',
-  },
-  {
-    id: 'osm',
-    name: 'OpenStreetMap',
-    tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
-    attribution: '© OpenStreetMap contributors',
-    probeUrl: 'https://tile.openstreetmap.org/7/63/62.png',
-  },
-  {
-    id: 'esri',
-    name: 'Esri World Street Map',
-    // Note: Esri's tile path is {z}/{y}/{x}, unlike OSM-style providers.
-    tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}'],
-    attribution: '© OpenStreetMap contributors © Esri',
-    probeUrl: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/7/62/63',
-  },
-]
-
-/** A minimal raster style for the given tile provider. */
-export function buildTileStyle(provider: TileProvider): maplibregl.StyleSpecification {
-  return {
-    version: 8,
-    sources: {
-      tiles: {
-        type: 'raster',
-        tiles: provider.tiles,
-        tileSize: 256,
-        maxzoom: 19,
-        attribution: provider.attribution,
-      },
-    },
-    layers: [{ id: 'tiles', type: 'raster', source: 'tiles' }],
-  }
-}
-
-/** Mean squared deviation of the sampled luminances (0 = flat colour). */
-export function tileVariance(samples: number[]): number {
-  if (samples.length === 0) return 0
-  const mean = samples.reduce((a, b) => a + b, 0) / samples.length
-  return samples.reduce((acc, s) => acc + (s - mean) ** 2, 0) / samples.length
-}
-
-/**
- * True when the sampled tile is essentially one flat colour — the signature
- * of the placeholder images tile servers return when a request is blocked
- * (e.g. OSM's "Access denied" tile), which MapLibre paints silently.
- */
-export function isSolidTile(samples: number[]): boolean {
-  return tileVariance(samples) < 1
-}
-
-/** Loads an image cross-origin for canvas inspection, or null on any failure. */
-export function loadProbeImage(url: string, timeoutMs = 4000): Promise<HTMLImageElement | null> {
-  return new Promise((resolve) => {
-    if (typeof Image === 'undefined') {
-      resolve(null)
-      return
-    }
-    const img = new Image()
-    img.crossOrigin = 'anonymous'
-    let settled = false
-    const finish = (ok: boolean): void => {
-      if (settled) return
-      settled = true
-      window.clearTimeout(timer)
-      resolve(ok && img.naturalWidth > 0 ? img : null)
-    }
-    const timer = window.setTimeout(() => finish(false), timeoutMs)
-    img.onload = () => finish(true)
-    img.onerror = () => finish(false)
-    img.src = url
-  })
-}
-
-/** Downsamples the tile to a 64×64 canvas and returns luminance samples. */
-export function sampleTilePixels(img: HTMLImageElement): number[] {
-  const size = 64
-  const canvas = document.createElement('canvas')
-  canvas.width = size
-  canvas.height = size
-  const ctx = canvas.getContext('2d', { willReadFrequently: true })
-  if (!ctx) return []
-  try {
-    ctx.drawImage(img, 0, 0, size, size)
-    const data = ctx.getImageData(0, 0, size, size).data
-    const samples: number[] = []
-    for (let y = 0; y < size; y += 8) {
-      for (let x = 0; x < size; x += 8) {
-        const i = (y * size + x) * 4
-        samples.push(0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2])
-      }
-    }
-    return samples
-  } catch {
-    return []
-  }
-}
-
-/**
- * True when the provider serves a real basemap tile: the probe image loads
- * and paints more than a flat colour. A tainted canvas or load failure is
- * treated as unhealthy (MapLibre raster tiles need CORS anyway).
- */
-export async function probeTileProvider(
-  provider: TileProvider,
-  options: { loadImage?: typeof loadProbeImage; sample?: typeof sampleTilePixels } = {},
-): Promise<boolean> {
-  const loadImage = options.loadImage ?? loadProbeImage
-  const sample = options.sample ?? sampleTilePixels
-  const img = await loadImage(provider.probeUrl)
-  if (!img) return false
-  return !isSolidTile(sample(img))
-}
-
-let tileProviderCache: Promise<TileProvider> | undefined
-
-/** Resets the module-level provider probe cache (used by tests). */
-export function resetTileProviderCache(): void {
-  tileProviderCache = undefined
-}
-
-/**
- * Picks the first tile provider whose probe tile is healthy, falling back to
- * the first provider when every probe fails (the map-level error failover
- * then handles a genuinely dead basemap). Memoized: one probe run per page
- * load, shared by all maps.
- */
-export function resolveTileProvider(
-  providers: TileProvider[] = TILE_PROVIDERS,
-  options: { probe?: typeof probeTileProvider } = {},
-): Promise<TileProvider> {
-  const probe = options.probe ?? probeTileProvider
-  tileProviderCache ??= (async () => {
-    for (const provider of providers) {
-      if (await probe(provider)) return provider
-    }
-    return providers[0]
-  })()
-  return tileProviderCache
-}
+const TILE_ORIGIN = 'https://tiles.openfreemap.org'
 
 /** Default camera fallback — Accra, the platform's origin market. */
 export const DEFAULT_CENTER: [number, number] = [-0.187, 5.6037]
@@ -190,23 +29,28 @@ export const DEFAULT_CENTER: [number, number] = [-0.187, 5.6037]
 let warmResourcesStarted = false
 
 /**
- * Idempotent warm-up for the tile providers: preconnect hints to every tile
- * host so the first map opens fast instead of cold-starting against the CDN.
- * Runs once per page load.
+ * Idempotent warm-up for the tile style: a preconnect hint to the tile host
+ * plus a force-cached style fetch so the first map opens fast instead of
+ * cold-starting against the CDN. Runs once per page load; best-effort.
  */
 export function warmMapResources(): void {
   if (warmResourcesStarted || typeof document === 'undefined') return
   warmResourcesStarted = true
   try {
-    for (const provider of TILE_PROVIDERS) {
-      const link = document.createElement('link')
-      link.rel = 'preconnect'
-      link.href = new URL(provider.probeUrl).origin
-      link.crossOrigin = 'anonymous'
-      document.head.appendChild(link)
-    }
+    const link = document.createElement('link')
+    link.rel = 'preconnect'
+    link.href = TILE_ORIGIN
+    link.crossOrigin = 'anonymous'
+    document.head.appendChild(link)
   } catch {
     /* warm-up is best-effort */
+  }
+  if (typeof window !== 'undefined') {
+    window
+      .fetch(TILE_STYLE, { cache: 'force-cache', mode: 'cors' })
+      .catch(() => {
+        /* best-effort warm-up; a failed prefetch must never break the app */
+      })
   }
 }
 
@@ -246,8 +90,9 @@ export function toNumber(v: unknown): number | null {
   return Number.isFinite(n) ? n : null
 }
 
-/** All coordinate points from the supplier's config (meeting point, or every
-    pickup area / pickup location), labelled with the point's name/address. */
+/** Coordinate pins from the supplier's config: the meeting point, or the
+    specific pickup locations (zone-based pickup renders the zone circle
+    instead, with no pin inside the designated area). */
 export function buildTourPoints(tour: PickupMapSource): MapPoint[] {
   const pts: MapPoint[] = []
 
@@ -266,18 +111,17 @@ export function buildTourPoints(tour: PickupMapSource): MapPoint[] {
     }
   }
   if (effectiveMode === 'pickup') {
-    for (const a of tour.pickupAreas || []) {
-      const lat = toNumber(a?.lat)
-      const lng = toNumber(a?.lng)
-      if (lat != null && lng != null) {
-        pts.push({ lat, lng, label: a.name || a.address || '', kind: 'tour' })
-      }
-    }
-    for (const l of tour.pickupLocations || []) {
-      const lat = toNumber(l?.lat)
-      const lng = toNumber(l?.lng)
-      if (lat != null && lng != null) {
-        pts.push({ lat, lng, label: l.name || l.address || '', kind: 'tour' })
+    // Zone-based pickup draws the zone circle (pickupZoneRings) — no pin sits
+    // at the area's saved point inside the designated area.
+    // Area-based pickup supersedes leftover specific pickup locations — when
+    // areas exist, the location pins are stale and must not render.
+    if (!tour.pickupAreas?.length) {
+      for (const l of tour.pickupLocations || []) {
+        const lat = toNumber(l?.lat)
+        const lng = toNumber(l?.lng)
+        if (lat != null && lng != null) {
+          pts.push({ lat, lng, label: l.name || l.address || '', kind: 'tour' })
+        }
       }
     }
   }
@@ -288,6 +132,13 @@ export function buildTourPoints(tour: PickupMapSource): MapPoint[] {
     shape, recoloured per marker. Returns the SVG markup for marker elements. */
 export function pinSvg(color: string): string {
   return `<svg width="32" height="40" viewBox="0 0 32 40" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M16 0C7.16 0 0 7.16 0 16c0 12 16 24 16 24s16-12 16-24C32 7.16 24.84 0 16 0z" fill="${color}"/><circle cx="16" cy="16" r="6" fill="white" stroke="${color}" stroke-width="2"/></svg>`
+}
+
+/** "Location not included" pin: red body with a white × — shown when the
+    traveller's searched/dragged pickup location falls outside the supplier's
+    pickup zones or points. */
+export function errorPinSvg(): string {
+  return `<svg width="32" height="40" viewBox="0 0 32 40" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M16 0C7.16 0 0 7.16 0 16c0 12 16 24 16 24s16-12 16-24C32 7.16 24.84 0 16 0z" fill="#dc2626"/><circle cx="16" cy="16" r="7" fill="#fff"/><path d="M12.5 12.5l7 7M19.5 12.5l-7 7" stroke="#dc2626" stroke-width="2.5" stroke-linecap="round"/></svg>`
 }
 
 /** Encodes a marker SVG into a data URI usable as a Google Maps Marker icon. */
@@ -308,8 +159,11 @@ export function maplibrePinEl(color: string): HTMLDivElement {
  * Marker element for pickup/meeting point pins with a pulsating glow halo
  * (the `.pin-glow` animation from index.css, tinted with --pin-color).
  * Works as the `element` for both Mapbox GL and MapLibre markers.
+ *
+ * `variant: 'error'` renders the red "location not included" pin (with ×)
+ * instead of the plain coloured pin, keeping the same glow halo.
  */
-export function pulsingPinElement(color: string, cursor = 'pointer'): HTMLDivElement {
+export function pulsingPinElement(color: string, cursor = 'pointer', variant: 'default' | 'error' = 'default'): HTMLDivElement {
   const el = document.createElement('div')
   // Both engine marker classes provide the same absolute positioning. The
   // position MUST be explicit inline: `relative` would keep each marker in
@@ -320,9 +174,9 @@ export function pulsingPinElement(color: string, cursor = 'pointer'): HTMLDivEle
   el.style.cssText = `position: absolute; top: 0; left: 0; cursor: ${cursor};`
   const glow = document.createElement('span')
   glow.className = 'pin-glow'
-  glow.style.setProperty('--pin-color', color)
+  glow.style.setProperty('--pin-color', variant === 'error' ? '#dc2626' : color)
   const pin = document.createElement('div')
-  pin.innerHTML = pinSvg(color)
+  pin.innerHTML = variant === 'error' ? errorPinSvg() : pinSvg(color)
   pin.style.cssText = 'position: relative; z-index: 1; pointer-events: auto;'
   el.appendChild(glow)
   el.appendChild(pin)

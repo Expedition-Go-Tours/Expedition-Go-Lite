@@ -483,6 +483,23 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
   const subtotalAmount = pricingResult?.subtotal ?? 0
   const formatMoney = (n: number) => `${currency.symbol}${Math.round(convertPrice(n))}`
 
+  // Offer pricing for the headline "From $X" figure: when the checkout engine
+  // confirms a discount (a supplier-applied special offer or a validated promo
+  // code), strike the original unit price and show the discounted unit price
+  // in red. `savedAmount` is the total discount, so per-traveler it divides by
+  // the headcount.
+  const originalUnitPrice = isPerGroup
+    ? (lowestGroupBand?.price ?? 0)
+    : hasPricing && adultGroup && unitPriceFor(adultGroup) > 0
+      ? unitPriceFor(adultGroup)
+      : tour.price
+  const promoUnitPrice =
+    savedAmount > 0 && totalTravelers > 0 && !pricingLoading
+      ? originalUnitPrice - savedAmount / totalTravelers
+      : null
+  const showPromoPrice =
+    promoUnitPrice != null && promoUnitPrice > 0 && promoUnitPrice < originalUnitPrice
+
   // Auto-applied (non-promo) special offers — surface the engine's discount
   // only once real pricing exists so we never invent a discount.
   const appliedOffers = savedAmount > 0 ? activeOffers : []
@@ -497,20 +514,34 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
               lowestGroupBand ? (
                 <>
                   <span className="booking-price-from">{t('common.from')}</span>
-                  <span className="booking-price-amount">
-                    {`${currency.symbol}${Math.round(convertPrice(lowestGroupBand.price))}`}
-                  </span>
+                  {showPromoPrice ? (
+                    <>
+                      <span className="booking-price-amount booking-price-amount--strike">{formatMoney(originalUnitPrice)}</span>
+                      <span className="booking-price-amount booking-price-amount--promo">{formatMoney(promoUnitPrice!)}</span>
+                    </>
+                  ) : (
+                    <span className="booking-price-amount">
+                      {formatMoney(lowestGroupBand.price)}
+                    </span>
+                  )}
                   <span className="booking-price-per">{t('booking.perGroup', 'per group')}</span>
                 </>
               ) : null
             ) : tour.price > 0 ? (
               <>
                 <span className="booking-price-from">{t('common.from')}</span>
-                <span className="booking-price-amount">
-                  {hasPricing && adultGroup && unitPriceFor(adultGroup) > 0
-                    ? `${currency.symbol}${Math.round(convertPrice(unitPriceFor(adultGroup)))}`
-                    : `${currency.symbol}${Math.round(convertPrice(tour.price))}`}
-                </span>
+                {showPromoPrice ? (
+                  <>
+                    <span className="booking-price-amount booking-price-amount--strike">{formatMoney(originalUnitPrice)}</span>
+                    <span className="booking-price-amount booking-price-amount--promo">{formatMoney(promoUnitPrice!)}</span>
+                  </>
+                ) : (
+                  <span className="booking-price-amount">
+                    {hasPricing && adultGroup && unitPriceFor(adultGroup) > 0
+                      ? formatMoney(unitPriceFor(adultGroup))
+                      : formatMoney(tour.price)}
+                  </span>
+                )}
                 <span className="booking-price-per">{t('tourDetail.perPerson')}</span>
               </>
             ) : null}

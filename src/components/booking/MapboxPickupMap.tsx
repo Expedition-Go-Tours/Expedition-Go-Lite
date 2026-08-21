@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import * as mapboxgl from 'mapbox-gl/esm'
-import { MapPin, RefreshCw } from 'lucide-react'
+import { RefreshCw } from 'lucide-react'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { reverseGeocode } from '@/lib/locations'
 import {
@@ -16,7 +16,7 @@ import { getMapboxToken, MAPBOX_STYLE } from '@/lib/mapbox'
 import { pickupZoneRings } from '@/lib/pickupZone'
 import type { PickupZoneMapTour } from './PickupZoneMap'
 
-/** Pickup-area pin (green) â€” matches the app's brand accent. */
+/** Pickup-area pin (green) — matches the app's brand accent. */
 const PICKUP_PIN_COLOR = '#179237'
 /** Traveller's chosen pickup location (blue, draggable). */
 const USER_PIN_COLOR = '#2563eb'
@@ -35,7 +35,13 @@ interface MapboxPickupMapProps {
   onPinClick?: (label: string) => void
   /** Fired when the map is double-clicked at a spot (to add a pickup location). */
   onDoubleClickPoint?: (lat: number, lng: number) => void
-  /** Fired when the map fatally fails (token/style/CDN down) â€” the layered
+  /** True when the traveller's location is outside the pickup zones/points —
+      the pin renders red with an × ("location not included"). */
+  userOutOfRange?: boolean
+  /** True when the traveller has a confirmed chosen pickup location — the
+      legend shows a "Your pickup location" entry. */
+  userChosen?: boolean
+  /** Fired when the map fatally fails (token/style/CDN down) — the layered
       LocationMap then falls back to MapLibre/Google/text. */
   onFatalFailure?: () => void
   /** Height classes for the map container (defaults to the standard booking height). */
@@ -54,6 +60,8 @@ interface MapboxPickupMapProps {
 export default function MapboxPickupMap({
   tour,
   userMarker,
+  userOutOfRange,
+  userChosen,
   onUserPointChange,
   onUserAddressChange,
   extraPoints,
@@ -68,6 +76,12 @@ export default function MapboxPickupMap({
   const tourPinsRef = useRef<mapboxgl.Marker[]>([])
   const extraPinsRef = useRef<mapboxgl.Marker[]>([])
   const userPinRef = useRef<mapboxgl.Marker | null>(null)
+  /** Variant the existing user pin was built with, so a changed verdict swaps
+      the blue pin for the red × ("not included") pin (and vice versa). */
+  const userPinVariantRef = useRef<'default' | 'error'>('default')
+  /** Last out-of-range point the camera was moved to, so the jump fires only
+      once per point (not on every unrelated render). */
+  const lastOutOfRangeKeyRef = useRef('')
   const mapReadyRef = useRef(false)
   const paintedRef = useRef(false)
   const mapFailTimerRef = useRef<number | null>(null)
@@ -75,7 +89,7 @@ export default function MapboxPickupMap({
   const paintedWatchdogRef = useRef<number | null>(null)
   const resizeObserverRef = useRef<ResizeObserver | null>(null)
   const hasFittedRef = useRef(false)
-  /** True right after the draggable pin is dropped â€” the map fires a click
+  /** True right after the draggable pin is dropped — the map fires a click
       after a marker drag; that ghost click must not re-trigger click-to-pick
       (which would fly the camera off to zoom 15 / re-open the prompt). */
   const dragJustEndedRef = useRef(false)
@@ -100,12 +114,12 @@ export default function MapboxPickupMap({
   }
 
   // Pickup points and the meeting point are both green pins (the map renders
-  // one pin per pickup/meeting spot â€” no separate violet/indigo marker).
+  // one pin per pickup/meeting spot — no separate violet/indigo marker).
   const tourPoints = useMemo(() => buildTourPoints(tour as PickupMapSource), [tour])
 
   // Drawn geoshapes + exclusion zones from the supplier's Step-13 config.
   // Location-only areas (a saved point, no drawn polygon) render as a
-  // LOCATION_AREA_RADIUS_M circle â€” only when it's the tour's single pickup
+  // LOCATION_AREA_RADIUS_M circle — only when it's the tour's single pickup
   // spot (no other areas and no pickup locations), so the map matches the
   // "Pickup zone" legend without blobbing multi-location tours.
   const zones = useMemo(
@@ -136,7 +150,7 @@ export default function MapboxPickupMap({
     return coords
   }, [zones, exclusions, tourPoints, userPoint])
 
-  // Fits the camera to every zone/point â€” the initial fit AND the Re-center
+  // Fits the camera to every zone/point — the initial fit AND the Re-center
   // button (mirroring the Google map's Re-center control) share this.
   const fitToCamera = useCallback(
     (map: mapboxgl.Map): void => {
@@ -171,7 +185,7 @@ export default function MapboxPickupMap({
     // Create the map one frame after mount. React StrictMode runs effects
     // twice (mount â†’ cleanup â†’ mount); creating the map synchronously would
     // tear it down and immediately recreate it, and mapbox-gl's shared worker
-    // pool does not survive that create/remove/create cycle â€” the live map
+    // pool does not survive that create/remove/create cycle — the live map
     // silently never fetches tiles. Deferring creation to the next frame
     // collapses the double invocation into a single map build.
     let disposed = false
@@ -197,7 +211,7 @@ export default function MapboxPickupMap({
       mapRef.current = created
 
       // mapbox-gl only auto-resizes on *window* resize (no container
-      // ResizeObserver) â€” the map would stay at its initial canvas size when
+      // ResizeObserver) — the map would stay at its initial canvas size when
       // the container changes (e.g. the sm: responsive height or the step's
       // layout settling), leaving the basemap cut. Watch the container and
       // resize the map to match so it always fills the frame.
@@ -209,14 +223,14 @@ export default function MapboxPickupMap({
       ro.observe(container)
       resizeObserverRef.current = ro
 
-      // A failing style/token must not leave a permanent blank box â€” degrade
+      // A failing style/token must not leave a permanent blank box — degrade
       // to the fallback stack after a grace period.
       loadWatchdogRef.current = window.setTimeout(failMap, 12000)
 
       created.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right')
 
       const onClick = (e: mapboxgl.MapMouseEvent): void => {
-        // A mouseup right after dropping the draggable pin fires a ghost click â€”
+        // A mouseup right after dropping the draggable pin fires a ghost click —
         // skip it so the camera doesn't fly off right after the drop.
         if (dragJustEndedRef.current) {
           dragJustEndedRef.current = false
@@ -242,7 +256,7 @@ export default function MapboxPickupMap({
       created.on('dblclick', onDblclick)
 
       created.on('load', () => {
-        // Ignore late events from a stale (unmounted) instance â€” StrictMode
+        // Ignore late events from a stale (unmounted) instance — StrictMode
         // remounts effects, and a replaced map's 'load' must not mark the live
         // map ready before its own style is loaded.
         if (!mapRef.current || mapRef.current !== created) return
@@ -272,7 +286,7 @@ export default function MapboxPickupMap({
         }
 
         // Pins/zones can arrive AFTER the style loads (the geocode pipeline
-        // resolves the tour async) â€” the overlay effect below owns all overlays
+        // resolves the tour async) — the overlay effect below owns all overlays
         // and re-creates them whenever the tour data changes.
         created.jumpTo({ center: [DEFAULT_CENTER[0], DEFAULT_CENTER[1]], zoom: 6 })
 
@@ -281,7 +295,7 @@ export default function MapboxPickupMap({
 
         // Tiles-painted watchdog: 'load' can fire with only the style's
         // background rendered (e.g. tile requests failing on a dead/quota'd
-        // token) â€” if the map never paints within the grace period, degrade to
+        // token) — if the map never paints within the grace period, degrade to
         // the fallback stack instead of leaving a blank box.
         let paintedChecks = 0
         paintedWatchdogRef.current = window.setInterval(() => {
@@ -311,14 +325,14 @@ export default function MapboxPickupMap({
         }, 1000)
       })
 
-      // A dead WebGL context paints nothing and fires no map 'error' â€” fail
+      // A dead WebGL context paints nothing and fires no map 'error' — fail
       // over immediately so the fallback stack takes over.
       created.on('webglcontextlost', () => {
         if (!mapRef.current || mapRef.current !== created) return
         failMap()
       })
 
-      // A failing style/tile CDN must not leave a permanent blank box â€” degrade
+      // A failing style/tile CDN must not leave a permanent blank box — degrade
       // after a grace period. Errors on a map that HAS painted are transient
       // (single raster tile 404s self-heal); errors before the first paint mean
       // the basemap is dead and the fallback stack should take over.
@@ -378,7 +392,7 @@ export default function MapboxPickupMap({
 
   // Live-update overlays as the tour data or the traveller's location changes.
   // The geocode pipeline resolves the tour async, so zones/pins can arrive
-  // after the map built â€” this effect owns ALL overlays and re-creates them
+  // after the map built — this effect owns ALL overlays and re-creates them
   // whenever the data changes (never re-mounts the map).
   useEffect(() => {
     const map = mapRef.current
@@ -404,13 +418,13 @@ export default function MapboxPickupMap({
           }
         }
       } catch {
-        // Style not fully loaded yet â€” retried on the next data change.
+        // Style not fully loaded yet — retried on the next data change.
       }
     }
     if (zones.length > 0) ensureZoneLayer('pz-zones', zones)
     if (exclusions.length > 0) ensureZoneLayer('pz-excl', exclusions)
 
-    // Supplier pins â€” all pickup/meeting points in green with the pulsating
+    // Supplier pins — all pickup/meeting points in green with the pulsating
     // glow halo (no separate violet/indigo marker).
     tourPinsRef.current.forEach((m) => m.remove())
     tourPinsRef.current = []
@@ -419,7 +433,11 @@ export default function MapboxPickupMap({
       marker.setLngLat([p.lng, p.lat])
       if (p.label) {
         marker.setPopup(new mapboxgl.Popup({ offset: 25 }).setText(p.label))
-        marker.getElement().addEventListener('click', () => {
+        // Stop the click from bubbling to the map's click-to-pick handler —
+        // otherwise the reverse-geocoded address overwrites the selected pin
+        // name in the location search bar.
+        marker.getElement().addEventListener('click', (e: MouseEvent) => {
+          e.stopPropagation()
           onPinClickRef.current?.(p.label || '')
         })
       }
@@ -427,7 +445,7 @@ export default function MapboxPickupMap({
     }
     for (const p of tourPoints) addPin(p, PICKUP_PIN_COLOR)
 
-    // Refresh the extra (landmark) pins â€” amber dots.
+    // Refresh the extra (landmark) pins — amber dots.
     extraPinsRef.current.forEach((m) => m.remove())
     extraPinsRef.current = []
     for (const p of extraPoints || []) {
@@ -439,25 +457,40 @@ export default function MapboxPickupMap({
       extraPinsRef.current.push(marker.addTo(map))
     }
 
-    // Refresh the traveller's blue pin (draggable â€” repositioning updates the
+    // Refresh the traveller's pin (draggable — repositioning updates the
     // live zone verdict, mirroring the GetYourGuide pickup map). The existing
-    // marker is moved in place with setLngLat â€” never recreated â€” so a drop
-    // never skids the pin to a stale position.
+    // marker is moved in place with setLngLat — never recreated — so a drop
+    // never skids the pin to a stale position. When the out-of-range verdict
+    // changes, the marker element must be recreated to swap the blue pin for
+    // the red × ("not included") pin and back.
+    const pinVariant: 'default' | 'error' = userOutOfRange ? 'error' : 'default'
     if (userPinRef.current) {
       if (userPoint) {
-        userPinRef.current.setLngLat([userPoint.lng, userPoint.lat])
+        if (userPinVariantRef.current !== pinVariant) {
+          userPinRef.current.remove()
+          userPinRef.current = null
+          userPinVariantRef.current = pinVariant
+        } else {
+          userPinRef.current.setLngLat([userPoint.lng, userPoint.lat])
+        }
       } else {
         userPinRef.current.remove()
         userPinRef.current = null
       }
-    } else if (userPoint) {
-      // Blue draggable pin with the same pulsating glow as the tour pins.
-      const marker = new mapboxgl.Marker({ element: pulsingPinElement(USER_PIN_COLOR, 'grab'), anchor: 'bottom', draggable: true })
+    }
+    if (!userPinRef.current && userPoint) {
+      // Draggable pin with the same pulsating glow as the tour pins.
+      const marker = new mapboxgl.Marker({ element: pulsingPinElement(USER_PIN_COLOR, 'grab', pinVariant), anchor: 'bottom', draggable: true })
       marker.on('dragend', () => {
         const { lng, lat } = marker.getLngLat()
         onUserPointChangeRef.current?.(lat, lng)
         dragJustEndedRef.current = true
+        // Reverse geocode the new position so the search bar updates.
+        void reverseGeocode(lat, lng).then((r) => {
+          if (r?.formatted) onUserAddressChangeRef.current?.(r.formatted)
+        })
       })
+      userPinVariantRef.current = pinVariant
       userPinRef.current = marker.setLngLat([userPoint.lng, userPoint.lat]).addTo(map)
     }
 
@@ -467,13 +500,24 @@ export default function MapboxPickupMap({
       hasFittedRef.current = true
       fitToCamera(map)
     }
-  }, [zones, exclusions, userPoint, mapReady, extraPoints, tourPoints, cameraPoints, fitToCamera])
+  }, [zones, exclusions, userPoint, mapReady, extraPoints, tourPoints, cameraPoints, fitToCamera, userOutOfRange])
+
+  // Out-of-range location: move the camera to the point immediately so the
+  // red × pin is front and centre — no need to hit Re-center first.
+  useEffect(() => {
+    const m = mapRef.current
+    if (!m || !mapReady || !userOutOfRange || !userPoint) return
+    const key = `${userPoint.lat.toFixed(6)},${userPoint.lng.toFixed(6)}`
+    if (lastOutOfRangeKeyRef.current === key) return
+    lastOutOfRangeKeyRef.current = key
+    m.flyTo({ center: [userPoint.lng, userPoint.lat], zoom: 13, duration: 800 })
+  }, [mapReady, userOutOfRange, userPoint])
 
   return (
     <div className="px-0 py-3">
       <div className={`relative ${mapHeight} w-full touch-none overflow-hidden rounded-xl border border-slate-200/40 shadow-[0_1px_3px_rgba(0,0,0,0.04)]`}>
         {/* The mapbox-gl CSS forces `.mapboxgl-map { position: relative }`, which
-            defeats Tailwind's `absolute inset-0` â€” the container would collapse to
+            defeats Tailwind's `absolute inset-0` — the container would collapse to
             a few pixels instead of filling the fixed-height frame and the canvas
             ends up a mismatched size, cutting the map. Size it in flow with
             h-full/w-full instead (the frame owns the height). */}
@@ -491,11 +535,11 @@ export default function MapboxPickupMap({
         {!mapReady && (
           <div className="absolute inset-0 z-10 flex items-center justify-center bg-slate-50">
             <RefreshCw size={14} className="animate-spin text-slate-400" />
-            <span className="ml-2 text-xs font-medium text-slate-400">Loading mapâ€¦</span>
+            <span className="ml-2 text-xs font-medium text-slate-400">Loading map…</span>
           </div>
         )}
-        {mapReady && (zones.length > 0 || exclusions.length > 0 || tourPoints.length > 1) && (
-          <div className="absolute left-2 top-2 z-10 flex flex-col gap-1.5 rounded-lg bg-white/90 px-2.5 py-2 text-[10px] font-medium text-slate-700 shadow-sm backdrop-blur-sm">
+        {mapReady && (zones.length > 0 || exclusions.length > 0 || tourPoints.length > 1 || userPoint || userChosen) && (
+          <div className="pointer-events-none absolute bottom-2 left-2 z-10 flex flex-col gap-1.5 rounded-lg bg-white/90 px-2.5 py-2 text-[10px] font-medium text-slate-700 shadow-sm backdrop-blur-sm">
             {tourPoints.length > 1 && (
               <span className="flex items-center gap-1.5">
                 <svg
@@ -521,12 +565,21 @@ export default function MapboxPickupMap({
                 <span className="h-2 w-2 rounded-sm" style={{ background: '#dc2626' }} /> No pickup
               </span>
             )}
-          </div>
-        )}
-        {mapReady && (
-          <div className="absolute inset-x-0 bottom-0 z-10 flex items-center justify-center gap-1.5 border-t border-slate-100 bg-white/85 px-3 py-1.5 text-[11px] font-medium text-slate-500 backdrop-blur-sm">
-            <MapPin size={11} className="shrink-0 text-[#179237]" />
-            Click the map to set your pickup location
+            {(userPoint || userChosen) && (
+              <span className="flex items-center gap-1.5">
+                <svg
+                  viewBox="0 0 32 40"
+                  width="13"
+                  height="16"
+                  className="shrink-0"
+                  aria-hidden="true"
+                >
+                  <path d="M16 0C7.16 0 0 7.16 0 16c0 12 16 24 16 24s16-12 16-24C32 7.16 24.84 0 16 0z" fill={userOutOfRange ? '#dc2626' : USER_PIN_COLOR} />
+                  <circle cx="16" cy="16" r="6" fill="white" stroke={userOutOfRange ? '#dc2626' : USER_PIN_COLOR} strokeWidth="2" />
+                </svg>
+                Your pickup location
+              </span>
+            )}
           </div>
         )}
       </div>

@@ -1,9 +1,7 @@
 import { useMemo, useState } from 'react'
-import { recordGoogleMapsFailure, shouldAttemptGoogleMaps } from '@/lib/googleMaps'
 import { buildTourPoints, toNumber, type MapPoint, type PickupMapSource } from '@/lib/mapUtils'
 import { getMapboxToken } from '@/lib/mapbox'
 import { pickupZoneRings } from '@/lib/pickupZone'
-import GooglePickupMap from './GooglePickupMap'
 import MapboxPickupMap from './MapboxPickupMap'
 import PickupZoneMap, { type PickupZoneMapTour } from './PickupZoneMap'
 
@@ -19,30 +17,30 @@ interface LocationMapProps {
   onPinClick?: (label: string) => void
   /** Fired when the map is double-clicked at a spot (to add a pickup location). */
   onDoubleClickPoint?: (lat: number, lng: number) => void
+  /** True when the traveller's location is outside the pickup zones/points —
+      the pin renders red with an × ("location not included"). */
+  userOutOfRange?: boolean
+  /** True when the traveller has a confirmed chosen pickup location (shown as
+      "Your pickup location" in the map legend, even when the pin is hidden). */
+  userChosen?: boolean
   /** Height classes for the map container (defaults to the standard booking height). */
   mapHeight?: string
 }
 
 /**
- * Layered pickup map for the booking area — Google Maps (via the
- * @vis.gl/react-google-maps APIProvider) is the PRIMARY renderer when the
- * Maps JS API can load (key + billing); any fatal failure degrades to Mapbox
- * GL (2D), then MapLibre + OSM tiles, then the textual fallback (address +
- * Google Maps link).
+ * Layered pickup map for the booking area — MapLibre GL with OpenFreeMap
+ * "Liberty" tiles (keyless, the same stack the supplier platform uses) is
+ * the PRIMARY renderer; any fatal failure degrades to Mapbox GL (2D) when a
+ * token is configured, then the textual fallback (address + Google Maps
+ * link).
  *
- *  1. Google Maps JS API     — primary (key required; billing must be enabled)
- *  2. Mapbox GL JS (2D)      — fallback on Google fatal failure (token required)
- *  3. MapLibre + OSM tiles   — fallback on Mapbox fatal failure
- *  4. Text + Google Maps link — last resort (PickupZoneMap `mapDisabled`)
- *
- * The layered chain reuses the loader's outcome cache (localStorage): after a
- * Google failure, later mounts skip the network and go straight to Mapbox for
- * the retry window, and the map comes back automatically once billing is fixed.
+ *  1. MapLibre + OpenFreeMap Liberty — primary (no key required)
+ *  2. Mapbox GL JS (2D)              — fallback on MapLibre fatal failure (token required)
+ *  3. Text + Google Maps link        — last resort (PickupZoneMap `mapDisabled`)
  */
-export default function LocationMap({ tour, userMarker, onUserPointChange, onUserAddressChange, extraPoints, onPinClick, onDoubleClickPoint, mapHeight }: LocationMapProps) {
-  const [googleFailed, setGoogleFailed] = useState(false)
-  const [mapboxFailed, setMapboxFailed] = useState(false)
+export default function LocationMap({ tour, userMarker, onUserPointChange, onUserAddressChange, extraPoints, onPinClick, onDoubleClickPoint, mapHeight, userOutOfRange, userChosen }: LocationMapProps) {
   const [osmFailed, setOsmFailed] = useState(false)
+  const [mapboxFailed, setMapboxFailed] = useState(false)
 
   // Mapbox token — evaluated once per mount; a missing token skips layer 2.
   const mapboxToken = useMemo(() => getMapboxToken(), [])
@@ -71,7 +69,7 @@ export default function LocationMap({ tour, userMarker, onUserPointChange, onUse
     zones.length > 0 || exclusions.length > 0 || tourPoints.length > 0 || userPoint != null
 
   // No map data at all → let PickupZoneMap render its OSM-embed/text fallback
-  // (Google renders nothing without coordinates anyway).
+  // (neither renderer draws anything without coordinates anyway).
   if (!hasMapData) {
     return (
       <PickupZoneMap
@@ -83,50 +81,13 @@ export default function LocationMap({ tour, userMarker, onUserPointChange, onUse
         onPinClick={onPinClick}
         onDoubleClickPoint={onDoubleClickPoint}
         mapHeight={mapHeight}
+        userOutOfRange={userOutOfRange}
+        userChosen={userChosen}
       />
     )
   }
 
-  // 1. PRIMARY — Google Maps. A fatal API failure (auth/billing/script) falls
-  //    through to the Mapbox → MapLibre stack. The failure is recorded in the
-  //    loader's outcome cache so later mounts skip Google for the retry window.
-  if (shouldAttemptGoogleMaps() && !googleFailed) {
-    return (
-      <GooglePickupMap
-        tour={tour}
-        userMarker={userMarker}
-        onUserPointChange={onUserPointChange}
-        onUserAddressChange={onUserAddressChange}
-        extraPoints={extraPoints}
-        onPinClick={onPinClick}
-        onDoubleClickPoint={onDoubleClickPoint}
-        mapHeight={mapHeight}
-        onFatalFailure={() => {
-          recordGoogleMapsFailure()
-          setGoogleFailed(true)
-        }}
-      />
-    )
-  }
-
-  // 2. Mapbox GL (2D) when a token is configured.
-  if (mapboxToken && !mapboxFailed) {
-    return (
-      <MapboxPickupMap
-        tour={tour}
-        userMarker={userMarker}
-        onUserPointChange={onUserPointChange}
-        onUserAddressChange={onUserAddressChange}
-        extraPoints={extraPoints}
-        onPinClick={onPinClick}
-        onDoubleClickPoint={onDoubleClickPoint}
-        mapHeight={mapHeight}
-        onFatalFailure={() => setMapboxFailed(true)}
-      />
-    )
-  }
-
-  // 3. MapLibre + OSM tiles.
+  // 1. PRIMARY — MapLibre + OpenFreeMap "Liberty" (keyless, supplier stack).
   if (!osmFailed) {
     return (
       <PickupZoneMap
@@ -138,12 +99,33 @@ export default function LocationMap({ tour, userMarker, onUserPointChange, onUse
         onPinClick={onPinClick}
         onDoubleClickPoint={onDoubleClickPoint}
         mapHeight={mapHeight}
+        userOutOfRange={userOutOfRange}
+        userChosen={userChosen}
         onFatalFailure={() => setOsmFailed(true)}
       />
     )
   }
 
-  // 4. Last resort — text + Google Maps link (no map attempt, no retry loop).
+  // 2. FALLBACK — Mapbox GL (2D) when a token is configured.
+  if (mapboxToken && !mapboxFailed) {
+    return (
+      <MapboxPickupMap
+        tour={tour}
+        userMarker={userMarker}
+        userOutOfRange={userOutOfRange}
+        userChosen={userChosen}
+        onUserPointChange={onUserPointChange}
+        onUserAddressChange={onUserAddressChange}
+        extraPoints={extraPoints}
+        onPinClick={onPinClick}
+        onDoubleClickPoint={onDoubleClickPoint}
+        mapHeight={mapHeight}
+        onFatalFailure={() => setMapboxFailed(true)}
+      />
+    )
+  }
+
+  // 3. Last resort — text + Google Maps link (no map attempt, no retry loop).
   return (
     <PickupZoneMap
       tour={tour}
@@ -154,6 +136,8 @@ export default function LocationMap({ tour, userMarker, onUserPointChange, onUse
       onPinClick={onPinClick}
       onDoubleClickPoint={onDoubleClickPoint}
       mapHeight={mapHeight}
+      userOutOfRange={userOutOfRange}
+      userChosen={userChosen}
       mapDisabled
     />
   )

@@ -3,8 +3,7 @@ import { useTranslation } from 'react-i18next'
 import * as maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import {
-  buildTileStyle, createMapLibreMap, maplibrePinEl, resolveTileProvider, TOUR_PIN_COLOR, type MapPoint,
-  type TileProvider,
+  createMapLibreMap, maplibrePinEl, TILE_STYLE, TOUR_PIN_COLOR, warmMapResources, type MapPoint,
 } from '../../lib/mapUtils'
 import './TourLocationMap.css'
 
@@ -15,32 +14,22 @@ interface TourLocationMapProps {
 }
 
 /** Tour-detail location card. Renders a non-interactive MapLibre map (free
-    OpenFreeMap tiles, no API key) with a single green pin at the meeting
-    point; the whole map stays a link that opens Google Maps. */
+    OpenFreeMap "Liberty" tiles, no API key — the same stack the supplier
+    platform uses) with a single green pin at the meeting point; the whole
+    map stays a link that opens Google Maps. */
 export default function TourLocationMap({ coordinates, location, title }: TourLocationMapProps) {
   const { t } = useTranslation()
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
   const [mapState, setMapState] = useState<'loading' | 'ready' | 'error'>('loading')
-  const [tileProvider, setTileProvider] = useState<TileProvider | null>(null)
 
   const hasCoords = Number.isFinite(coordinates.lat) && Number.isFinite(coordinates.lng)
   const googleMapsUrl = `https://www.google.com/maps?q=${coordinates.lat},${coordinates.lng}`
 
   useEffect(() => {
-    if (!hasCoords) return
-    let cancelled = false
-    void resolveTileProvider().then((provider) => {
-      if (!cancelled) setTileProvider(provider)
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [hasCoords])
-
-  useEffect(() => {
     const el = containerRef.current
-    if (!el || !hasCoords || !tileProvider) return
+    if (!el || !hasCoords) return
+    warmMapResources()
 
     const existing = mapRef.current
     if (existing) {
@@ -68,7 +57,7 @@ export default function TourLocationMap({ coordinates, location, title }: TourLo
     }
 
     const createdMap = createMapLibreMap(el, {
-      style: buildTileStyle(tileProvider),
+      style: TILE_STYLE,
       center: [coordinates.lng, coordinates.lat],
       zoom: 13,
     })
@@ -102,7 +91,7 @@ export default function TourLocationMap({ coordinates, location, title }: TourLo
       createdMap.remove()
       mapRef.current = null
     }
-  }, [coordinates.lat, coordinates.lng, hasCoords, tileProvider])
+  }, [coordinates.lat, coordinates.lng, hasCoords])
 
   return (
     <section className="tour-location-map" id="tour-location">

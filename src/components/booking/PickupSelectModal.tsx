@@ -154,6 +154,10 @@ function PickupSelectModalContent({
   const isInPickupArea = (lat: number, lng: number): boolean =>
     !geofenced || pickupZoneStatus({ name: '', lat, lng }, zoneAreas) === 'in_area'
 
+  // Map pin verdict — an out-of-range search or a dragged drop outside the
+  // zone shows the red × ("location not included") pin on the map.
+  const mapUserOutOfRange = searchOutOfRange || (dragPreview ? dragOutOfRange : false)
+
   const selectPoint = (point: ResolvedTourPoint): void => {
     setSelectedId(point.id)
     setSearchMarker(null)
@@ -204,6 +208,13 @@ function PickupSelectModalContent({
       setSearchInZone(false)
       setSearchOpen(false)
       setSearchHighlight(-1)
+      // Still pin the location on the map — as the red × ("not included")
+      // pin — so the traveller sees exactly where it falls.
+      setSearchMarker({ lat: suggestion.latitude, lng: suggestion.longitude })
+      setSelectedId(null)
+      setSearchCommitted(false)
+      setDragPreview(null)
+      setDragAddress('')
       return
     }
     setSearchOutOfRange(false)
@@ -591,7 +602,7 @@ function PickupSelectModalContent({
               aria-activedescendant={searchHighlight >= 0 ? `pickup-search-option-${searchHighlight}` : undefined}
             />
             {searching ? (
-              <Loader2 className="absolute right-3 top-1/2 size-4 -translate-y-1/2 animate-spin text-[#179237]" />
+              <Loader2 className="absolute right-3 top-1/2 size-4 -mt-2 animate-spin text-[#179237]" />
             ) : searchQuery ? (
               <button
                 type="button"
@@ -883,6 +894,8 @@ function PickupSelectModalContent({
                           ? { lat: selected.lat, lng: selected.lng }
                           : { lat: contact.pickupLat, lng: contact.pickupLng }
                   }
+                  userOutOfRange={mapUserOutOfRange}
+                  userChosen={!!(searchMarker || (selected && selected.lat != null && selected.lng != null) || contact.pickupLat != null)}
                   onUserPointChange={(lat, lng) => handleDragEnd(lat, lng)}
                   extraPoints={extraPoints}
                   onPinClick={handlePinClick}
@@ -1012,7 +1025,7 @@ function PickupSelectModalContent({
             )}
 
             {/* Selection preview */}
-            {searchMarker && !selected && (
+            {searchMarker && !selected && !searchOutOfRange && (
               <div className="flex items-start gap-2 border-t border-slate-100 bg-emerald-50/50 px-4 py-2.5">
                 <Check className="mt-0.5 size-4 shrink-0 text-[#179237]" />
                 <div className="min-w-0 flex-1 text-xs text-emerald-900">

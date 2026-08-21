@@ -20,12 +20,21 @@ describe('resolveTourPoints', () => {
   it('keeps points that already have coordinates', async () => {
     const points = await resolveTourPoints({
       meetingMode: 'pickup',
+      pickupLocations: [{ name: 'Labone', lat: 5.568, lng: -0.169 }],
+    })
+    expect(points).toHaveLength(1)
+    expect(points[0]).toMatchObject({ kind: 'point', name: 'Labone', lat: 5.568, lng: -0.169, unresolved: false })
+    expect(mockFetch).not.toHaveBeenCalled()
+  })
+
+  it('drops leftover pickup locations when pickup areas exist', async () => {
+    const points = await resolveTourPoints({
+      meetingMode: 'pickup',
       pickupAreas: [{ name: 'Osu', lat: 5.555, lng: -0.187, time: '0-30' }],
       pickupLocations: [{ name: 'Labone', lat: 5.568, lng: -0.169 }],
     })
-    expect(points).toHaveLength(2)
+    expect(points).toHaveLength(1)
     expect(points[0]).toMatchObject({ kind: 'zone', name: 'Osu', lat: 5.555, lng: -0.187, unresolved: false })
-    expect(points[1]).toMatchObject({ kind: 'point', name: 'Labone', lat: 5.568, lng: -0.169, unresolved: false })
     expect(mockFetch).not.toHaveBeenCalled()
   })
 
@@ -92,7 +101,8 @@ describe('resolvedPointsToTour', () => {
     const points = await resolveTourPoints(source)
     const tour = resolvedPointsToTour(points, source)
     expect(tour.pickupAreas?.[0]).toMatchObject({ name: 'Zone A', lat: 1, lng: 2 })
-    expect(tour.pickupLocations?.[0]).toMatchObject({ name: 'Point B', lat: 3, lng: 4 })
+    // Leftover locations are dropped when areas exist (area-based wins).
+    expect(tour.pickupLocations).toEqual([])
   })
 
   it('filters out zone points with no coords and no polygon', () => {

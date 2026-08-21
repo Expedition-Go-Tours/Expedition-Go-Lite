@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { extractItinerary } from './useExpeditionTours'
+import { extractItinerary, extractMeetingInfo } from './useExpeditionTours'
 
 function tourWith(productContent: unknown): any {
   return {
@@ -68,5 +68,88 @@ describe('extractItinerary', () => {
   it('returns an empty array when there is no itinerary data at all', () => {
     expect(extractItinerary(tourWith({}))).toEqual([])
     expect(extractItinerary(null)).toEqual([])
+  })
+})
+
+describe('extractMeetingInfo pickup precedence', () => {
+  const AREA = { name: 'Oasis Park Residences, 15', lat: 5.626746, lng: -0.169995, radiusKm: 15 }
+  const LOCATIONS = [
+    { name: 'Accra Mall, Airport Bypass', lat: 5.6221843, lng: -0.1729361 },
+    { name: 'China Mall, Spintex Road', lat: 5.6391942, lng: -0.1244027 },
+    { name: 'Embassy Gardens, Ghana', lat: 5.5850113, lng: -0.1675345 },
+  ]
+
+  it('pickupType address keeps the multiple locations and drops the stale area', () => {
+    // Real cape-coast / accra-full-day shape: the supplier's Step-13 toggle is
+    // 'address' (specific pickup points), but a leftover area lingers in the
+    // saved blob. The locations must win or the multi-point flow never shows.
+    const info = extractMeetingInfo({
+      productContent: JSON.stringify({
+        pickupType: 'address',
+        meetingMode: 'pickup',
+        pickupAreas: [AREA],
+        pickupLocations: LOCATIONS,
+      }),
+    })
+    expect(info.pickupType).toBe('address')
+    expect(info.pickupAreas).toEqual([])
+    expect(info.pickupLocations).toHaveLength(3)
+  })
+
+  it('pickupType area keeps the areas and drops leftover locations', () => {
+    const info = extractMeetingInfo({
+      productContent: JSON.stringify({
+        pickupType: 'area',
+        meetingMode: 'pickup',
+        pickupAreas: [AREA],
+        pickupLocations: LOCATIONS,
+      }),
+    })
+    expect(info.pickupType).toBe('area')
+    expect(info.pickupAreas).toEqual([AREA])
+    expect(info.pickupLocations).toEqual([])
+  })
+
+  it('legacy tours without pickupType default to areas when present', () => {
+    const info = extractMeetingInfo({
+      productContent: JSON.stringify({
+        meetingMode: 'pickup',
+        pickupAreas: [AREA],
+        pickupLocations: LOCATIONS,
+      }),
+    })
+    expect(info.pickupType).toBe('area')
+    expect(info.pickupAreas).toHaveLength(1)
+    expect(info.pickupLocations).toEqual([])
+  })
+
+  it('legacy tours with only locations report address mode', () => {
+    const info = extractMeetingInfo({
+      productContent: JSON.stringify({
+        meetingMode: 'pickup',
+        pickupLocations: LOCATIONS,
+      }),
+    })
+    expect(info.pickupType).toBe('address')
+    expect(info.pickupAreas).toEqual([])
+    expect(info.pickupLocations).toHaveLength(3)
+  })
+
+  it('bookingAndTickets wins over productContent when both blobs exist', () => {
+    const info = extractMeetingInfo({
+      productContent: JSON.stringify({
+        pickupType: 'area',
+        pickupAreas: [AREA],
+        pickupLocations: [],
+      }),
+      bookingAndTickets: JSON.stringify({
+        pickupType: 'address',
+        pickupAreas: [AREA],
+        pickupLocations: LOCATIONS,
+      }),
+    })
+    expect(info.pickupType).toBe('address')
+    expect(info.pickupAreas).toEqual([])
+    expect(info.pickupLocations).toHaveLength(3)
   })
 })

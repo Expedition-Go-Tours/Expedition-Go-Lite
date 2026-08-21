@@ -9,6 +9,7 @@ import {
   isPickupLocationSatisfied,
   circleRing,
   pickupZoneRings,
+  locationAreaRadiusM,
   LOCATION_AREA_RADIUS_M,
   type PickupAreaShape,
 } from './pickupZone'
@@ -106,13 +107,28 @@ describe('findPickupAreaForAddress', () => {
 
   it('matches a location-only area by proximity to its saved point', () => {
     const pointArea: PickupAreaShape = { name: 'Kumasi', lat: 6.6871, lng: -1.6219 }
-    const match = findPickupAreaForAddress({ lat: 6.6971, lng: -1.6219, name: 'Some Rd' }, [pointArea])
+    // ~650 m away — inside the 1 km default radius.
+    const match = findPickupAreaForAddress({ lat: 6.693, lng: -1.6219, name: 'Some Rd' }, [pointArea])
     expect(match?.name).toBe('Kumasi')
   })
 
   it('does not match a location-only area beyond the radius', () => {
     const pointArea: PickupAreaShape = { name: 'Kumasi', lat: 6.6871, lng: -1.6219 }
-    expect(findPickupAreaForAddress({ lat: 6.0, lng: -1.6219, name: 'Some Rd' }, [pointArea])).toBeNull()
+    // ~1.4 km away — outside the 1 km default radius.
+    expect(findPickupAreaForAddress({ lat: 6.6997, lng: -1.6219, name: 'Some Rd' }, [pointArea])).toBeNull()
+  })
+
+  it('honours the area radiusKm when it is larger than the default', () => {
+    const pointArea: PickupAreaShape = { name: 'Oasis Park', lat: 5.626746, lng: -0.169995, radiusKm: 15 }
+    // ~10 km away — inside the configured 15 km zone, outside the 5 km default.
+    const match = findPickupAreaForAddress({ lat: 5.7, lng: -0.11, name: 'Some Rd' }, [pointArea])
+    expect(match?.name).toBe('Oasis Park')
+  })
+
+  it('honours the area radiusKm when it is smaller than the default', () => {
+    const pointArea: PickupAreaShape = { name: 'Tiny Zone', lat: 5.626746, lng: -0.169995, radiusKm: 1 }
+    // ~3 km away — inside the 5 km default, outside the configured 1 km zone.
+    expect(findPickupAreaForAddress({ lat: 5.65, lng: -0.17, name: 'Some Rd' }, [pointArea])).toBeNull()
   })
 
   it('exact name still matches a location-only area beyond the radius', () => {
@@ -154,12 +170,36 @@ describe('pickupZoneStatus', () => {
 
   it('is in_area for a location-only area within the radius', () => {
     const pointArea: PickupAreaShape = { name: 'Kumasi', lat: 6.6871, lng: -1.6219 }
-    expect(pickupZoneStatus({ lat: 6.6971, lng: -1.6219 }, [pointArea])).toBe('in_area')
+    expect(pickupZoneStatus({ lat: 6.693, lng: -1.6219 }, [pointArea])).toBe('in_area')
   })
 
   it('is outside for a location-only area beyond the radius', () => {
     const pointArea: PickupAreaShape = { name: 'Kumasi', lat: 6.6871, lng: -1.6219 }
-    expect(pickupZoneStatus({ lat: 6.0, lng: -1.6219 }, [pointArea])).toBe('outside')
+    expect(pickupZoneStatus({ lat: 6.6997, lng: -1.6219 }, [pointArea])).toBe('outside')
+  })
+})
+
+describe('locationAreaRadiusM', () => {
+  it('defaults to the backend LOCATION_AREA_RADIUS_M (1000 m) without radiusKm', () => {
+    expect(locationAreaRadiusM({ name: 'Kumasi', lat: 6.6871, lng: -1.6219 })).toBe(1000)
+  })
+
+  it('honours the configured radiusKm', () => {
+    expect(locationAreaRadiusM({ name: 'Oasis Park', lat: 5.626746, lng: -0.169995, radiusKm: 15 })).toBe(15000)
+    expect(locationAreaRadiusM({ name: 'Tiny', lat: 5.626746, lng: -0.169995, radiusKm: 1 })).toBe(1000)
+  })
+
+  it('mirrors the backend for a numeric-string radiusKm (not finite → default)', () => {
+    expect(locationAreaRadiusM({ name: 'Str', lat: 5.6, lng: -0.17, radiusKm: '15' as unknown as number })).toBe(1000)
+  })
+
+  it('mirrors the backend for radiusKm 0 (0 m — only the exact point matches)', () => {
+    expect(locationAreaRadiusM({ name: 'Zero', lat: 5.6, lng: -0.17, radiusKm: 0 })).toBe(0)
+  })
+
+  it('mirrors the backend for null/undefined radiusKm', () => {
+    expect(locationAreaRadiusM({ name: 'Null', lat: 5.6, lng: -0.17, radiusKm: null })).toBe(1000)
+    expect(locationAreaRadiusM({ name: 'Undef', lat: 5.6, lng: -0.17 })).toBe(1000)
   })
 })
 
@@ -175,10 +215,10 @@ describe('circleRing', () => {
 
   it('keeps the centre inside the ring and points near the edge on the correct side', () => {
     expect(pointInPolygon(CENTER.lat, CENTER.lng, ring)).toBe(true)
-    // ~4.5 km north of the centre — inside the 5 km radius.
-    expect(pointInPolygon(CENTER.lat + 4500 / 6371000 * (180 / Math.PI), CENTER.lng, ring)).toBe(true)
-    // ~5.5 km north of the centre — outside the 5 km radius.
-    expect(pointInPolygon(CENTER.lat + 5500 / 6371000 * (180 / Math.PI), CENTER.lng, ring)).toBe(false)
+    // ~700 m north of the centre — inside the 1 km radius.
+    expect(pointInPolygon(CENTER.lat + 700 / 6371000 * (180 / Math.PI), CENTER.lng, ring)).toBe(true)
+    // ~1.3 km north of the centre — outside the 1 km radius.
+    expect(pointInPolygon(CENTER.lat + 1300 / 6371000 * (180 / Math.PI), CENTER.lng, ring)).toBe(false)
   })
 
   it('places every vertex at the haversine radius from the centre', () => {

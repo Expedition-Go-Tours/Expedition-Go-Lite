@@ -9,6 +9,7 @@ import { useWishlist, toWishlistItem } from '../context/WishlistContext'
 import FormattedPrice from './FormattedPrice'
 import { getCategoryMeta } from './categoryMeta'
 import OptimizedImage from '@/components/shared/OptimizedImage'
+import type { SpecialOfferData } from '../hooks/useExpeditionTours'
 
 interface TourCardProps extends Tour {
   discount?: string
@@ -16,13 +17,17 @@ interface TourCardProps extends Tour {
   isNew?: boolean
   hideSourceBadge?: boolean
   hideFeatures?: boolean
+  /** Numeric price (full/undiscounted) when the raw API value is available. */
+  priceValue?: number | null
+  /** Supplier-applied offers for this tour (used to derive the promo price). */
+  specialOffers?: SpecialOfferData[]
   /** Plain Bootstrap-style card: clean image on top (no fade overlay, no
       floating pills/badges/heart), with the duration/category shown as a
       subtitle and the wishlist inline in the body. */
   imageClean?: boolean
 }
 
-export default function TourCard({ id, title, duration, features, price, rating, reviews, location, image, photos, discount, difficulty, cancellationPolicy, pickupIncluded, accommodationIncluded, category, languages, source, externalUrl, slug, isNew, hideSourceBadge, hideFeatures, imageClean }: TourCardProps) {
+export default function TourCard({ id, title, duration, features, price, rating, reviews, location, image, photos, discount, difficulty, cancellationPolicy, pickupIncluded, accommodationIncluded, category, languages, source, externalUrl, slug, isNew, hideSourceBadge, hideFeatures, imageClean, priceValue, specialOffers }: TourCardProps) {
   const { t } = useTranslation()
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist()
   const item = toWishlistItem({ id, title, duration, features, price, rating: String(rating), reviews, location, image, source, externalUrl } as Tour)
@@ -133,6 +138,34 @@ export default function TourCard({ id, title, duration, features, price, rating,
       handleCardClick()
     }
   }
+
+  // The card's `price` is the ORIGINAL (full) price; when a supplier offer
+  // (specialOffers) or a percentage discount label ("-30%") applies, derive
+  // the promo price down from it so the card can show `~~$240~~` + `$96`.
+  const originalPrice = priceValue ?? parsePrice(price)
+  const promoPrice = useMemo(() => {
+    if (!Number.isFinite(originalPrice) || originalPrice <= 0) return null
+    const pct = discount?.match(/-?\s*(\d+(?:\.\d+)?)\s*%/)
+    if (pct) {
+      const promo = originalPrice * (1 - parseFloat(pct[1]) / 100)
+      return promo > 0 && promo < originalPrice ? promo : null
+    }
+    if (Array.isArray(specialOffers) && specialOffers.length > 0) {
+      let best = 0
+      for (const offer of specialOffers) {
+        const amount =
+          offer.discountType === 'FIXED_AMOUNT' && offer.fixedDiscountValue != null
+            ? offer.fixedDiscountValue
+            : offer.discountPercentage != null
+              ? (originalPrice * offer.discountPercentage) / 100
+              : 0
+        if (amount > best) best = amount
+      }
+      const promo = originalPrice - best
+      return best > 0 && promo > 0 && promo < originalPrice ? promo : null
+    }
+    return null
+  }, [originalPrice, discount, specialOffers])
 
   return (
     <div className={`tour-card${imageClean ? ' tour-card-clean' : ''}`} onClick={handleCardClick} onKeyDown={handleKeyDown} role="link" tabIndex={0}>
@@ -270,9 +303,20 @@ export default function TourCard({ id, title, duration, features, price, rating,
           {price && (
             <div className="tour-card-price">
               <span className="tour-card-from">{t('common.from')} </span>
-              <span className="tour-card-price-value">
-                <FormattedPrice usdPrice={parsePrice(price)} />
-              </span>
+              {promoPrice != null ? (
+                <>
+                  <span className="tour-card-price-strike">
+                    <FormattedPrice usdPrice={originalPrice} />
+                  </span>
+                  <span className="tour-card-price-promo">
+                    <FormattedPrice usdPrice={promoPrice} />
+                  </span>
+                </>
+              ) : (
+                <span className="tour-card-price-value">
+                  <FormattedPrice usdPrice={originalPrice} />
+                </span>
+              )}
             </div>
           )}
         </div>

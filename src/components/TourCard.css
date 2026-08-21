@@ -408,6 +408,23 @@
   color: #111827;
 }
 
+/* Offer pricing: the original (full) price is struck through and the promo
+   price is shown in red next to it. */
+.tour-card-price-strike {
+  font-family: 'Raleway', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  color: #9ca3af;
+  text-decoration: line-through;
+}
+
+.tour-card-price-promo {
+  font-family: 'Raleway', sans-serif;
+  font-weight: 700;
+  font-size: 22px;
+  color: #dc2626;
+}
+
 @media (max-width: 1024px) {
   .tour-card-image {
     height: 160px;

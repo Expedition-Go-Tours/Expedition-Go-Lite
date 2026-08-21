@@ -14,6 +14,12 @@ interface LocationPickerProps {
   error?: string
   placeholder?: string
   disabled?: boolean
+  /** Minimal mode: hides the selected location card, "Use my current location" button, and attribution. */
+  minimal?: boolean
+  /** True when the current value is a confirmed selection (e.g. a green pickup
+      point tapped on the map) — the input shows the tick instead of the
+      clear × until the traveller edits the text. */
+  confirmed?: boolean
 }
 
 /**
@@ -35,6 +41,8 @@ export default function LocationPicker({
   error,
   placeholder = 'e.g. Accra, Ghana',
   disabled,
+  minimal,
+  confirmed,
 }: LocationPickerProps) {
   const { search, retry, clear, results, loading, error: searchError } = useLocationAutocomplete()
 
@@ -185,7 +193,19 @@ export default function LocationPicker({
           if (query.trim().length >= 2) commitManual(query)
           break
         }
-        if (highlightedIndex >= 0) handleSelect(results[highlightedIndex])
+        if (highlightedIndex >= 0) {
+          handleSelect(results[highlightedIndex])
+        } else if (
+          results[0] &&
+          results[0].formatted.toLowerCase().includes(query.trim().toLowerCase())
+        ) {
+          // Dropdown open with nothing highlighted: pressing Enter after
+          // typing an address must resolve coordinates (and get a real zone
+          // verdict) instead of silently doing nothing. Commit the top
+          // suggestion only when it actually contains what the traveller
+          // typed, so a bad first hit never pins a different place.
+          handleSelect(results[0])
+        }
         break
       case 'Escape':
         setOpen(false)
@@ -238,6 +258,8 @@ export default function LocationPicker({
         />
         {loading ? (
           <Loader2 className="absolute right-3 top-1/2 size-4 -translate-y-1/2 animate-spin text-[#179237]" />
+        ) : confirmed ? (
+          <Check className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-emerald-500" />
         ) : query ? (
           <button
             type="button"
@@ -257,15 +279,17 @@ export default function LocationPicker({
       )}
 
       {/* Use my current location — geolocation → reverse geocode. */}
-      <button
-        type="button"
-        onClick={handleUseMyLocation}
-        disabled={locating || disabled}
-        className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm transition-colors hover:border-[#179237]/50 hover:text-[#179237] disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        {locating ? <Loader2 size={13} className="animate-spin text-[#179237]" /> : <LocateFixed size={13} className="text-[#179237]" />}
-        {locating ? 'Locating…' : 'Use my current location'}
-      </button>
+      {!minimal && (
+        <button
+          type="button"
+          onClick={handleUseMyLocation}
+          disabled={locating || disabled}
+          className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm transition-colors hover:border-[#179237]/50 hover:text-[#179237] disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {locating ? <Loader2 size={13} className="animate-spin text-[#179237]" /> : <LocateFixed size={13} className="text-[#179237]" />}
+          {locating ? 'Locating…' : 'Use my current location'}
+        </button>
+      )}
 
       {/* Geoapify suggestions dropdown. */}
       {open && (
@@ -355,7 +379,7 @@ export default function LocationPicker({
       )}
 
       {/* Selected location summary */}
-      {query && !open && !error && (
+      {!minimal && query && !open && !error && (
         <div className="flex items-start gap-2.5 rounded-xl border border-emerald-200/60 bg-emerald-50/60 px-3 py-2.5">
           <MapPin size={14} className="mt-0.5 shrink-0 text-[#179237]" />
           <div className="min-w-0 flex-1">
@@ -377,18 +401,20 @@ export default function LocationPicker({
         </div>
       )}
 
-      <p className="text-[10px] text-slate-400">
-        Location data ©{' '}
-        <a
-          href="https://www.openstreetmap.org/copyright"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="underline hover:text-slate-600"
-        >
-          OpenStreetMap
-        </a>{' '}
-        contributors
-      </p>
+      {!minimal && (
+        <p className="text-[10px] text-slate-400">
+          Location data ©{' '}
+          <a
+            href="https://www.openstreetmap.org/copyright"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline hover:text-slate-600"
+          >
+            OpenStreetMap
+          </a>{' '}
+          contributors
+        </p>
+      )}
     </div>
   )
 }

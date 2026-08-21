@@ -186,7 +186,12 @@ export async function resolveTourPoints(tour: ResolveTourSource | null | undefin
       )
     })
 
-    const locations = Array.isArray(tour.pickupLocations) ? tour.pickupLocations.filter(Boolean) : []
+    // Area-based pickup supersedes leftover specific pickup locations — when
+    // areas exist, the location entries are stale and must not be resolved
+    // (they'd otherwise render as extra pins / options alongside the zone).
+    const locations = areas.length > 0
+      ? []
+      : Array.isArray(tour.pickupLocations) ? tour.pickupLocations.filter(Boolean) : []
     const locationGeocodes = await Promise.all(
       locations.map((l) =>
         l!.lat == null || l!.lng == null
@@ -207,7 +212,7 @@ export async function resolveTourPoints(tour: ResolveTourSource | null | undefin
 
 /**
  * Merges the resolved points back into a tour-shaped object consumable by the
- * existing map components (buildTourPoints, PickupZoneMap, GooglePickupMap) —
+ * existing map components (buildTourPoints, PickupZoneMap, MapboxPickupMap) —
  * every entry now carries its exact lat/lng.
  */
 export function resolvedPointsToTour(points: ResolvedTourPoint[], source: ResolveTourSource | null | undefined): ResolveTourSource {

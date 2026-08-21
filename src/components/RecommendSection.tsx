@@ -1,9 +1,9 @@
-import { useRef, useState, useEffect, useCallback } from 'react'
+import { useRef, useState, useEffect, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import SectionHeading from './SectionHeading'
 import TourCard from './TourCard'
 import { recommendedTours } from './data'
-import { useRecommendedTours } from '../hooks/useExpeditionTours'
+import { useRecommendedTours, useExpeditionOffers, type TourCardData } from '../hooks/useExpeditionTours'
 import './RecommendSection.css'
 
 const CARD_WIDTH = 295
@@ -15,11 +15,39 @@ export default function RecommendSection() {
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
   const { data: liveTours } = useRecommendedTours(12)
+  // Discounted (offer) tours are folded into this carousel too. The shared
+  // query key means the offer fetch (N+1 over the tiny catalog) runs once
+  // across both the Recommended and Special Offers sections.
+  const { data: offerTours } = useExpeditionOffers(12)
 
   // Fall back to the static mock list while loading or if the live data is
   // empty/unavailable — once live data arrives (including newly created
-  // tours that haven't been manually curated yet) it takes over.
-  const items = liveTours && liveTours.length > 0 ? liveTours : recommendedTours
+  // tours that haven't been manually curated yet) it takes over. Offer tours
+  // replace their plain (curated) card when present so the promo price shows,
+  // and are appended at the end when they aren't already in the list.
+  const items = useMemo(() => {
+    const base = liveTours && liveTours.length > 0 ? liveTours : recommendedTours
+    if (!offerTours || offerTours.length === 0) return base
+    const keyOf = (t: { slug?: string; title: string }) => t.slug || t.title
+    const offerByKey = new Map<string, TourCardData>()
+    for (const tour of offerTours) offerByKey.set(keyOf(tour), tour)
+
+    const seen = new Set<string>()
+    const merged: Array<typeof base[number]> = []
+    for (const tour of base) {
+      const key = keyOf(tour)
+      seen.add(key)
+      const offer = offerByKey.get(key)
+      merged.push(offer ?? tour)
+    }
+    for (const tour of offerTours) {
+      const key = keyOf(tour)
+      if (seen.has(key)) continue
+      seen.add(key)
+      merged.push(tour)
+    }
+    return merged
+  }, [liveTours, offerTours])
 
   const updateArrows = useCallback(() => {
     const el = scrollRef.current

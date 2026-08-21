@@ -5,25 +5,23 @@ import 'maplibre-gl/dist/maplibre-gl.css'
 import { reverseGeocode } from '@/lib/locations'
 import {
   DEFAULT_CENTER,
+  TILE_STYLE,
   TOUR_PIN_COLOR,
   USER_PIN_COLOR,
-  buildTileStyle,
   buildTourPoints,
   cameraFromGeoData,
   createMapLibreMap,
   pulsingPinElement,
-  resolveTileProvider,
   ringsToFeatureCollection,
   toNumber,
   warmMapResources,
   type MapPoint,
   type PickupMapSource,
-  type TileProvider,
 } from '@/lib/mapUtils'
 import { pickupZoneRings, type PickupAreaShape } from '@/lib/pickupZone'
 
 /**
- * The booking page's tour object â€” the supplier's meeting/pickup config with
+ * The booking page's tour object — the supplier's meeting/pickup config with
  * the drawn geoshapes that PickupMapSource doesn't declare.
  */
 export interface PickupZoneMapTour {
@@ -57,6 +55,8 @@ export interface PickupZoneMapTour {
 export default function PickupZoneMap({
   tour,
   userMarker,
+  userOutOfRange,
+  userChosen,
   onUserPointChange,
   onUserAddressChange,
   extraPoints,
@@ -73,16 +73,22 @@ export default function PickupZoneMap({
   onUserAddressChange?: (address: string) => void
   /** Extra non-interactive pins (e.g. nearby landmarks) layered on the map. */
   extraPoints?: MapPoint[]
-  /** Fired when the map fatally fails (tile/style CDN down) â€” the layered
+  /** Fired when the map fatally fails (tile/style CDN down) — the layered
       LocationMap uses this to switch to Google Maps. */
   onFatalFailure?: () => void
-  /** When true, never attempt to build the map â€” render the text fallback
+  /** When true, never attempt to build the map — render the text fallback
       directly (used after the Google fallback also fails). */
   mapDisabled?: boolean
   /** Fired with the pin's label when a tour pickup/meeting pin is tapped. */
   onPinClick?: (label: string) => void
   /** Fired when the map is double-clicked at a spot (to add a pickup location). */
   onDoubleClickPoint?: (lat: number, lng: number) => void
+  /** True when the traveller's location is outside the pickup zones/points —
+      the pin renders red with an × ("location not included"). */
+  userOutOfRange?: boolean
+  /** True when the traveller has a confirmed chosen pickup location — the
+      legend shows a "Your pickup location" entry. */
+  userChosen?: boolean
   /** Height classes for the map container (defaults to the standard booking height). */
   mapHeight?: string
 }) {
@@ -90,19 +96,24 @@ export default function PickupZoneMap({
   const [mapReady, setMapReady] = useState(false)
   const [mapFailed, setMapFailed] = useState(false)
   const [containerWidth, setContainerWidth] = useState(0)
-  const [tileProvider, setTileProvider] = useState<TileProvider | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const embedRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
   const tourPinsRef = useRef<maplibregl.Marker[]>([])
   const extraPinsRef = useRef<maplibregl.Marker[]>([])
   const userPinRef = useRef<maplibregl.Marker | null>(null)
+  /** Variant the existing user pin was built with, so a changed verdict swaps
+      the blue pin for the red × ("not included") pin (and vice versa). */
+  const userPinVariantRef = useRef<'default' | 'error'>('default')
+  /** Last out-of-range point the camera was moved to, so the jump fires only
+      once per point (not on every unrelated render). */
+  const lastOutOfRangeKeyRef = useRef('')
   const mapReadyRef = useRef(false)
   const paintedRef = useRef(false)
   const mapFailTimerRef = useRef<number | null>(null)
   const loadWatchdogRef = useRef<number | null>(null)
   const paintedWatchdogRef = useRef<number | null>(null)
-  /** True right after the draggable pin is dropped â€” the map fires a click
+  /** True right after the draggable pin is dropped — the map fires a click
       after a marker drag; that ghost click must not re-trigger click-to-pick
       (which would fly the camera off to zoom 15 / re-open the prompt). */
   const dragJustEndedRef = useRef(false)
@@ -130,7 +141,7 @@ export default function PickupZoneMap({
 
   // Drawn geoshapes + exclusion zones from the supplier's Step-13 config.
   // Location-only areas (a saved point, no drawn polygon) render as a
-  // LOCATION_AREA_RADIUS_M circle â€” only when it's the tour's single pickup
+  // LOCATION_AREA_RADIUS_M circle — only when it's the tour's single pickup
   // spot (no other areas and no pickup locations), so the map matches the
   // "Pickup zone" legend without blobbing multi-location tours.
   const zones = useMemo(
@@ -158,7 +169,7 @@ export default function PickupZoneMap({
   )
   const userPointKey = userPoint ? `${userPoint.lat.toFixed(6)},${userPoint.lng.toFixed(6)}` : ''
 
-  // Re-center control â€” re-fits the camera to every zone/point, mirroring the
+  // Re-center control — re-fits the camera to every zone/point, mirroring the
   // Google map's Re-center button.
   const handleRecenter = useCallback((): void => {
     const map = mapRef.current
@@ -195,28 +206,15 @@ export default function PickupZoneMap({
     return ''
   }, [tour.meetingMode, tour.meetingPointAddress, tour.meetingPoint, tour.pickupAreas, tour.pickupLocations, tour.pickupDescription])
 
-  // Pick a healthy tile provider once per page load (probes the first tile),
-  // then hand the choice to the build effect below.
+  // Build the map once: warmed OpenFreeMap style, zone/exclusion overlays,
+  // tour pins and an initial camera that fits the whole service area.
   useEffect(() => {
-    if (mapFailed || mapDisabled || !hasMapData) return
-    let cancelled = false
-    void resolveTileProvider().then((provider) => {
-      if (!cancelled) setTileProvider(provider)
-    })
-    return () => {
-      cancelled = true
-    }
-  }, [mapFailed, mapDisabled, hasMapData])
-
-  // Build the map once: warmed style, zone/exclusion overlays, tour pins and
-  // an initial camera that fits the whole service area.
-  useEffect(() => {
-    if (mapFailed || mapDisabled || !hasMapData || !tileProvider || !containerRef.current) return
+    if (mapFailed || mapDisabled || !hasMapData || !containerRef.current) return
     if (mapRef.current) return
     warmMapResources()
     const container = containerRef.current
     const map = createMapLibreMap(container, {
-      style: buildTileStyle(tileProvider),
+      style: TILE_STYLE,
       center: DEFAULT_CENTER,
       zoom: 6,
       localIdeographFontFamily: 'sans-serif',
@@ -237,7 +235,7 @@ export default function PickupZoneMap({
     // Click-to-pick (mirrors the supplier's LocationMapPicker): sets the
     // traveller's pickup coordinates, drops the pin and zooms to street level.
     const onClick = (e: maplibregl.MapMouseEvent): void => {
-      // A mouseup right after dropping the draggable pin fires a ghost click â€”
+      // A mouseup right after dropping the draggable pin fires a ghost click —
       // skip it so the camera doesn't fly off right after the drop.
       if (dragJustEndedRef.current) {
         dragJustEndedRef.current = false
@@ -262,11 +260,11 @@ export default function PickupZoneMap({
     map.on('dblclick', onDblclick)
 
     map.on('load', () => {
-      // Ignore late events from a stale (unmounted) instance â€” StrictMode
+      // Ignore late events from a stale (unmounted) instance — StrictMode
       // remounts effects, and a replaced map's 'load' must not mark the live
       // map ready before its own style is loaded.
       if (!mapRef.current || mapRef.current !== map) return
-      // Style loaded â€” a success beats any pre-load error, so disarm the
+      // Style loaded — a success beats any pre-load error, so disarm the
       // failover timer and the load watchdog before drawing overlays.
       if (loadWatchdogRef.current != null) {
         window.clearTimeout(loadWatchdogRef.current)
@@ -293,13 +291,17 @@ export default function PickupZoneMap({
         })
       }
 
-      // Supplier pins â€” the overlay that was missing and left location-only
+      // Supplier pins — the overlay that was missing and left location-only
       // tours as "bare land". Pulsating glow marks pickup/meeting points.
       for (const p of tourPoints) {
         const marker = new maplibregl.Marker({ element: pulsingPinElement(TOUR_PIN_COLOR), anchor: 'bottom' })
         marker.setLngLat([p.lng, p.lat])
         if (p.label) {
-          marker.getElement().addEventListener('click', () => {
+          // Stop the click from bubbling to the map's click-to-pick handler —
+          // otherwise the reverse-geocoded address overwrites the selected pin
+          // name in the location search bar.
+          marker.getElement().addEventListener('click', (e: MouseEvent) => {
+            e.stopPropagation()
             onPinClickRef.current?.(p.label || '')
           })
           marker.setPopup(new maplibregl.Popup({ offset: 18 }).setText(p.label))
@@ -317,7 +319,7 @@ export default function PickupZoneMap({
 
       // Tiles-painted watchdog: 'load' can fire with only the style's
       // background rendered (e.g. tile requests failing silently on a blocked
-      // CDN) â€” if the map never paints within the grace period, degrade to
+      // CDN) — if the map never paints within the grace period, degrade to
       // the fallback stack instead of leaving a blank box.
       let paintedChecks = 0
       paintedWatchdogRef.current = window.setInterval(() => {
@@ -347,7 +349,7 @@ export default function PickupZoneMap({
       }, 1000)
     })
 
-    // A dead WebGL context paints nothing and fires no map 'error' â€” fail
+    // A dead WebGL context paints nothing and fires no map 'error' — fail
     // over immediately so the fallback stack takes over.
     map.on('webglcontextlost', () => {
       if (!mapRef.current || mapRef.current !== map) return
@@ -355,7 +357,7 @@ export default function PickupZoneMap({
     })
 
     // A failing style/tile CDN must not leave a permanent blank box in the
-    // checkout â€” degrade to the fallback after a grace period. Errors on a
+    // checkout — degrade to the fallback after a grace period. Errors on a
     // map that HAS painted are transient (single raster tile 404s self-heal);
     // errors before the first paint mean the basemap is dead.
     map.on('error', () => {
@@ -397,9 +399,9 @@ export default function PickupZoneMap({
       setMapReady(false)
     }
     // Overlays are live-updated by the effect below; the map itself is built
-    // once per (provider, fallback, data-availability) state.
+    // once per (fallback, data-availability) state.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mapFailed, mapDisabled, hasMapData, tileProvider])
+  }, [mapFailed, mapDisabled, hasMapData])
 
   // Live-update overlays as the traveller picks/drags a location.
   useEffect(() => {
@@ -412,13 +414,13 @@ export default function PickupZoneMap({
           (source as maplibregl.GeoJSONSource).setData(ringsToFeatureCollection(rings))
         }
       } catch {
-        // Source not present yet â€” the build effect adds it on 'load'.
+        // Source not present yet — the build effect adds it on 'load'.
       }
     }
     if (zones.length > 0) setSource('pz-zones', zones)
     if (exclusions.length > 0) setSource('pz-excl', exclusions)
 
-    // Refresh the extra (landmark) pins â€” non-interactive amber dots.
+    // Refresh the extra (landmark) pins — non-interactive amber dots.
     extraPinsRef.current.forEach((m) => m.remove())
     extraPinsRef.current = []
     for (const p of extraPoints || []) {
@@ -433,28 +435,54 @@ export default function PickupZoneMap({
       extraPinsRef.current.push(marker.addTo(map))
     }
 
-    // Refresh the traveller's blue pin (draggable â€” repositioning updates the
+    // Refresh the traveller's pin (draggable — repositioning updates the
     // live zone verdict, mirroring the GetYourGuide pickup map). The existing
-    // marker is moved in place with setLngLat â€” never recreated â€” so a drop
-    // never skids the pin to a stale position.
+    // marker is moved in place with setLngLat — never recreated — so a drop
+    // never skids the pin to a stale position. When the out-of-range verdict
+    // changes, the marker element must be recreated to swap the blue pin for
+    // the red × ("not included") pin and back.
+    const pinVariant: 'default' | 'error' = userOutOfRange ? 'error' : 'default'
     if (userPinRef.current) {
       if (userPoint) {
-        userPinRef.current.setLngLat([userPoint.lng, userPoint.lat])
+        if (userPinVariantRef.current !== pinVariant) {
+          userPinRef.current.remove()
+          userPinRef.current = null
+          userPinVariantRef.current = pinVariant
+        } else {
+          userPinRef.current.setLngLat([userPoint.lng, userPoint.lat])
+        }
       } else {
         userPinRef.current.remove()
         userPinRef.current = null
       }
-    } else if (userPoint) {
-      // Blue draggable pin with the same pulsating glow as the tour pins.
-      const marker = new maplibregl.Marker({ element: pulsingPinElement('#2563eb', 'grab'), anchor: 'bottom', draggable: true })
+    }
+    if (!userPinRef.current && userPoint) {
+      // Draggable pin with the same pulsating glow as the tour pins.
+      const marker = new maplibregl.Marker({ element: pulsingPinElement('#2563eb', 'grab', pinVariant), anchor: 'bottom', draggable: true })
       marker.on('dragend', () => {
         const { lat, lng } = marker.getLngLat()
         onUserPointChangeRef.current?.(lat, lng)
         dragJustEndedRef.current = true
+        // Reverse geocode the new position so the search bar updates.
+        void reverseGeocode(lat, lng).then((r) => {
+          if (r?.formatted) onUserAddressChangeRef.current?.(r.formatted)
+        })
       })
+      userPinVariantRef.current = pinVariant
       userPinRef.current = marker.setLngLat([userPoint.lng, userPoint.lat]).addTo(map)
     }
-  }, [zones, exclusions, userPoint, mapReady, hasMapData, extraPoints])
+  }, [zones, exclusions, userPoint, mapReady, hasMapData, extraPoints, userOutOfRange])
+
+  // Out-of-range location: move the camera to the point immediately so the
+  // red × pin is front and centre — no need to hit Re-center first.
+  useEffect(() => {
+    const m = mapRef.current
+    if (!m || !mapReady || !userOutOfRange || !userPoint) return
+    const key = `${userPoint.lat.toFixed(6)},${userPoint.lng.toFixed(6)}`
+    if (lastOutOfRangeKeyRef.current === key) return
+    lastOutOfRangeKeyRef.current = key
+    m.flyTo({ center: [userPoint.lng, userPoint.lat], zoom: 13, duration: 800 })
+  }, [mapReady, userOutOfRange, userPoint])
 
   // Legacy name/address-only config: OSM embed, located by the address text.
   const mapView = useMemo(() => {
@@ -511,15 +539,9 @@ export default function PickupZoneMap({
     <div className="px-0 py-3">
       <div className={`relative ${mapHeight} w-full touch-none overflow-hidden rounded-xl border border-slate-200/40 shadow-[0_1px_3px_rgba(0,0,0,0.04)]`}>
         {hasMapData && !mapFailed && !mapDisabled ? (
-          tileProvider == null ? (
-            <div className="absolute inset-0 z-0 flex items-center justify-center gap-2 bg-slate-50">
-              <RefreshCw size={14} className="animate-spin text-slate-400" />
-              <span className="text-xs font-medium text-slate-400">Loading mapâ€¦</span>
-            </div>
-          ) : (
           <>
             {/* maplibre-gl's CSS forces `.maplibregl-map { position: relative }`,
-                which defeats Tailwind's `absolute inset-0` â€” size the container
+                which defeats Tailwind's `absolute inset-0` — size the container
                 in flow so it fills the fixed-height frame instead of collapsing
                 and cutting the map. */}
             <div ref={containerRef} className="z-0 h-full w-full" />
@@ -533,8 +555,8 @@ export default function PickupZoneMap({
                 Re-center
               </button>
             )}
-            {mapReady && (zones.length > 0 || exclusions.length > 0 || tourPoints.length > 1) && (
-              <div className="absolute left-2 top-2 z-10 flex flex-col gap-1.5 rounded-lg bg-white/90 px-2.5 py-2 text-[10px] font-medium text-slate-700 shadow-sm backdrop-blur-sm">
+            {mapReady && (zones.length > 0 || exclusions.length > 0 || tourPoints.length > 1 || userPoint || userChosen) && (
+              <div className="pointer-events-none absolute bottom-2 left-2 z-10 flex flex-col gap-1.5 rounded-lg bg-white/90 px-2.5 py-2 text-[10px] font-medium text-slate-700 shadow-sm backdrop-blur-sm">
                 {tourPoints.length > 1 && (
                   <span className="flex items-center gap-1.5">
                     <svg
@@ -560,16 +582,24 @@ export default function PickupZoneMap({
                     <span className="h-2 w-2 rounded-sm" style={{ background: '#dc2626' }} /> No pickup
                   </span>
                 )}
-              </div>
-            )}
-            {mapReady && (
-              <div className="absolute inset-x-0 bottom-0 z-10 flex items-center justify-center gap-1.5 border-t border-slate-100 bg-white/85 px-3 py-1.5 text-[11px] font-medium text-slate-500 backdrop-blur-sm">
-                <MapPin size={11} className="shrink-0 text-[#179237]" />
-                Click the map to set your pickup location
+                {(userPoint || userChosen) && (
+                  <span className="flex items-center gap-1.5">
+                    <svg
+                      viewBox="0 0 32 40"
+                      width="13"
+                      height="16"
+                      className="shrink-0"
+                      aria-hidden="true"
+                    >
+                      <path d="M16 0C7.16 0 0 7.16 0 16c0 12 16 24 16 24s16-12 16-24C32 7.16 24.84 0 16 0z" fill={userOutOfRange ? '#dc2626' : '#2563eb'} />
+                      <circle cx="16" cy="16" r="6" fill="white" stroke={userOutOfRange ? '#dc2626' : '#2563eb'} strokeWidth="2" />
+                    </svg>
+                    Your pickup location
+                  </span>
+                )}
               </div>
             )}
           </>
-          )
         ) : mapView && !osmFailed ? (
           <>
             <iframe

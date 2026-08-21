@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import SectionHeading from './SectionHeading'
 import TourCard from './TourCard'
 import { lastMinuteDeals } from './data'
+import { useExpeditionOffers } from '../hooks/useExpeditionTours'
 import './LastMinuteDealsSection.css'
 
 const CARD_WIDTH = 295
@@ -13,7 +14,10 @@ export default function LastMinuteDealsSection() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
-  const items = lastMinuteDeals
+  const { data: offerTours } = useExpeditionOffers()
+  // Show real tours that have a supplier-applied offer; fall back to the
+  // curated flash-deal list while loading or when no tour has an offer.
+  const items = offerTours && offerTours.length > 0 ? offerTours : lastMinuteDeals
 
   const updateArrows = useCallback(() => {
     const el = scrollRef.current

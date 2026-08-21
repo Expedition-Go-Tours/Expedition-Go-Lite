@@ -191,6 +191,10 @@ export interface TourCardData {
   durationMinutes?: number | null
   priceValue?: number | null
   ratingValue?: number | null
+  /** Supplier-applied offers for this tour (used to derive the promo price). */
+  specialOffers?: SpecialOfferData[]
+  /** Discount badge label (e.g. "-30%") shown on cards. */
+  discount?: string
 }
 function extractDurationFromTour(tour: any): number | null {
   try {
@@ -861,6 +865,25 @@ export function extractMeetingInfo(rawTour: any) {
   const meetingPoint = pick(bt?.meetingPoint, pc?.meetingPoint)
   const dropoffLocation = pick(bt?.dropoffLocation, pc?.dropoffLocation)
 
+  // The supplier platform keeps ONE active pickup config (Step-13's
+  // area ↔ address toggle), but entries from the other mode can linger in
+  // the saved blobs when the supplier switches types. The explicit
+  // pickupType decides which list is live: 'address' → the specific pickup
+  // locations (a multi-point tour must list its points, never render a
+  // leftover zone), 'area' → the pickup areas. Legacy tours without
+  // pickupType fall back to "areas win" (the historical default), then
+  // locations, so the app never renders a mix of both.
+  const pickupAreasRaw = (pick(bt?.pickupAreas, pc?.pickupAreas) || []).filter(
+    (a: any) => a && (a.name || a.address),
+  ) as PickupAreaShape[]
+  const pickupLocationsRaw = (pick(bt?.pickupLocations, pc?.pickupLocations) || []).filter(
+    (l: any) => l && (l.name || l.address),
+  ) as PickupLocationShape[]
+  const rawPickupType = (pick(bt?.pickupType, pc?.pickupType) || '') as 'area' | 'address' | ''
+  const effectivePickupType = rawPickupType || (pickupAreasRaw.length > 0 ? 'area' : 'address')
+  const pickupAreas = effectivePickupType === 'area' ? pickupAreasRaw : []
+  const pickupLocations = effectivePickupType === 'address' ? pickupLocationsRaw : []
+
   return {
     meetingMode: (pick(bt?.meetingMode, pc?.meetingMode) || 'none') as 'meeting_point' | 'pickup' | 'none',
     meetingPoint: pointString(meetingPoint) || '',
@@ -883,13 +906,13 @@ export function extractMeetingInfo(rawTour: any) {
     arrivalTimeType: (pick(bt?.arrivalTimeType, pc?.arrivalTimeType) || 'none') as
       | 'none' | '5min' | '10min' | '15min' | '30min' | 'notified' | 'custom',
     arrivalTimeCustom: pick(bt?.arrivalTimeCustom, pc?.arrivalTimeCustom) || '',
-    pickupType: (pick(bt?.pickupType, pc?.pickupType) || 'area') as 'area' | 'address',
+    pickupType: effectivePickupType,
     pickupTiming: (pick(bt?.pickupTiming, pc?.pickupTiming) || 'at_start') as 'at_start' | 'before_start',
     pickupFinalLocationTiming: (pick(bt?.pickupFinalLocationTiming, pc?.pickupFinalLocationTiming) || 'day_before') as
       | 'day_before' | 'after_selection',
     referenceStartTime: pick(bt?.referenceStartTime, pc?.referenceStartTime) || '',
-    pickupAreas: (pick(bt?.pickupAreas, pc?.pickupAreas) || []).filter((a: any) => a && (a.name || a.address)) as PickupAreaShape[],
-    pickupLocations: (pick(bt?.pickupLocations, pc?.pickupLocations) || []).filter((l: any) => l && (l.name || l.address)) as PickupLocationShape[],
+    pickupAreas,
+    pickupLocations,
     pickupDescription: pick(bt?.pickupDescription, pc?.pickupDescription) || '',
     dropoffOption: (pick(bt?.dropoffOption, pc?.dropoffOption) || 'none') as
       | 'same_location' | 'different_location' | 'none' | 'service',
@@ -1817,6 +1840,7 @@ export function mapRawTourToListing(t: any): TourCardData {
     duration: formatDuration(durationMinutes),
     features,
     price: formatPrice(price),
+    priceValue: price != null ? price : null,
     rating: t.averageRating != null ? String(t.averageRating) : '0',
     reviews: t.reviewCount ?? t._count?.reviews ?? 0,
     location,
@@ -1831,6 +1855,54 @@ export function mapRawTourToListing(t: any): TourCardData {
     pickupIncluded,
     accommodationIncluded: extractAccommodationIncluded(t),
   }
+}
+
+/** Absolute discount a single offer contributes against a given full price. */
+function offerDiscountAmount(offer: SpecialOfferData, fullPrice: number): number {
+  if (offer.discountType === 'FIXED_AMOUNT' && offer.fixedDiscountValue != null) {
+    return offer.fixedDiscountValue
+  }
+  if (offer.discountPercentage != null) {
+    return (fullPrice * offer.discountPercentage) / 100
+  }
+  return 0
+}
+
+/**
+ * Tours that currently carry an active supplier-applied offer, for the
+ * homepage "Special Offers" section. The /tours list endpoint doesn't project
+ * specialOffers, so each tour's detail (GET /tours/:id — which does) is
+ * fetched to decide eligibility. The catalog is small and the detail endpoint
+ * is HTTP-cached (max-age=60), so this stays cheap after the first load.
+ */
+export function useExpeditionOffers(limit = 12) {
+  return useQuery({
+    queryKey: ['expedition', 'offers', limit],
+    staleTime: 60_000,
+    queryFn: async (): Promise<TourCardData[]> => {
+      const payload = await expeditionFetchRaw(`/tours?limit=${limit}&sortBy=viewCount&sortOrder=desc`)
+      const tours: any[] = payload.data?.tours ?? payload.tours ?? []
+      const results: (TourCardData | null)[] = await Promise.all(
+        tours.map(async (t: any): Promise<TourCardData | null> => {
+          try {
+            const raw = await fetchRawTourBySlugOrId(t.id)
+            const offers = raw ? mapSpecialOffers(raw) : undefined
+            if (!offers || offers.length === 0) return null
+            return { ...mapRawTourToListing(t), specialOffers: offers }
+          } catch {
+            return null
+          }
+        }),
+      )
+      const withOffers = results.filter((x): x is TourCardData => x != null)
+      // Best deal (largest absolute saving) first.
+      return withOffers.sort((a, b) => {
+        const bestA = Math.max(0, ...(a.specialOffers || []).map((o) => offerDiscountAmount(o, a.priceValue ?? 0)))
+        const bestB = Math.max(0, ...(b.specialOffers || []).map((o) => offerDiscountAmount(o, b.priceValue ?? 0)))
+        return bestB - bestA
+      })
+    },
+  })
 }
 
 /**
