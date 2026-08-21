@@ -128,7 +128,7 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
         method: 'POST',
         body: JSON.stringify({
           tourId: tId,
-          selectedDate: date,
+          travelDate: date,
           // Fixed-slot tours must carry a concrete time slot or the backend
           // rejects the check ("A time slot must be selected").
           ...(time ? { selectedTime: time } : {}),

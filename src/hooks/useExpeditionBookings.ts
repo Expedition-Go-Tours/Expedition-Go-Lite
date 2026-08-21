@@ -139,7 +139,7 @@ export function useTourAvailability(
 
 interface CalculateCheckoutInput {
   tourId: string
-  selectedDate: string
+  travelDate: string
   travelers: Record<string, number>
 }
 
@@ -184,7 +184,7 @@ export function useCalculateCheckout() {
 
 interface ConfirmBookingInput {
   tourId: string
-  selectedDate: string
+  travelDate: string
   selectedTime?: string | null
   travelers: Record<string, number | string | boolean | { name: string; age: number; ageGroup: string; specialRequests?: string }[] | undefined>
   /** Required for reserve-now-pay-later (card captured for auto-charge). Pay-now redirects to Stripe's hosted Checkout and never sends a card. */
@@ -288,7 +288,7 @@ export interface ExpeditionBookingSummary {
   tourImage: string | null
   tourLocation: string
   tourDurationMinutes: number | null
-  selectedDate: string
+  travelDate: string
   status: string
   paymentTiming?: 'now' | 'later'
   paymentStatus?: string
@@ -306,7 +306,7 @@ interface RawBookingListRecord {
   total: number | string
   currency: string
   createdAt: string
-  selectedDate: string
+  travelDate: string
   tour: {
     id: string
     title: string
@@ -329,7 +329,7 @@ function mapBookingSummary(b: RawBookingListRecord): ExpeditionBookingSummary {
     tourImage: b.tour?.coverPhoto || b.tour?.photos?.[0] || null,
     tourLocation: [b.tour?.city, b.tour?.country].filter(Boolean).join(', '),
     tourDurationMinutes: b.tour?.durationMinutes ?? null,
-    selectedDate: b.selectedDate,
+    travelDate: b.travelDate,
     status: b.status,
     paymentTiming: b.paymentTiming,
     paymentStatus: b.paymentStatus,

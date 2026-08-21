@@ -42,7 +42,7 @@ interface ConfirmationBooking {
   status?: string
   paymentStatus?: string
   paymentTiming?: 'now' | 'later'
-  selectedDate?: string
+  travelDate?: string
   selectedTime?: string | null
   travelers?: TravelerRecord
   subtotal?: number | string
@@ -260,7 +260,7 @@ export default function BookingConfirmationPage() {
   const timeLabel = (() => {
     if (b.selectedTime) return formatTime12h(b.selectedTime)
     if (schedule.scheduleType === 'operatingHours') {
-      const day = b.selectedDate ? openingHoursForDay(schedule, new Date(b.selectedDate)) : ''
+      const day = b.travelDate ? openingHoursForDay(schedule, new Date(b.travelDate)) : ''
       if (day) return day
       const range = weeklyHoursRange(schedule)
       if (range) return range
@@ -376,7 +376,7 @@ export default function BookingConfirmationPage() {
               <CalendarDays size={16} />
               <div>
                 <span className="confirmation-grid-label">{t('confirmation.date')}</span>
-                <span className="confirmation-grid-value">{formatDate(b.selectedDate)}</span>
+                <span className="confirmation-grid-value">{formatDate(b.travelDate)}</span>
               </div>
             </div>
             <div className="confirmation-grid-item">

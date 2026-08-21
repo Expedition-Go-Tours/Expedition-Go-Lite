@@ -2129,7 +2129,7 @@ export default function BookingPage() {
 
       const payload = {
         tourId: tour.id || tour.slug,
-        selectedDate: editableTour.selectedDate || editableTour.date,
+        travelDate: editableTour.selectedDate || editableTour.date,
         ...(editableTour.selectedTime ? { selectedTime: editableTour.selectedTime } : {}),
         ...(pickupSelection ? { pickup: pickupSelection } : {}),
         travelers: {
@@ -2205,7 +2205,7 @@ export default function BookingPage() {
         body: JSON.stringify({
           promoCode: code,
           tourId: tour.id || tour.slug,
-          selectedDate,
+          travelDate: selectedDate,
           quantity: Math.max(quantity, 1),
         }),
       })
