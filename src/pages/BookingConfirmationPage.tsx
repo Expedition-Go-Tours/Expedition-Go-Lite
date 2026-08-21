@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Check, CalendarDays, Clock, Users, MapPin, CreditCard, ShieldCheck, Phone, Mail, Printer, Star, Ticket, Globe } from 'lucide-react'
-import { useExpeditionBookingDetail } from '../hooks/useExpeditionBookings'
+import { Check, CalendarDays, Clock, Users, MapPin, CreditCard, ShieldCheck, Phone, Mail, Printer, Star, Ticket, Globe, AlertTriangle } from 'lucide-react'
+import { useExpeditionBookingDetail, useBookingBySession } from '../hooks/useExpeditionBookings'
 import { extractMeetingInfo, extractAvailabilitySchedule, formatDuration } from '../hooks/useExpeditionTours'
 import { buildE164Phone, isValidPhoneInput } from '../lib/phone'
 import { formatTime12h, weeklyHoursRange, openingHoursForDay, formatTimeSlotList } from '../lib/tourAvailability'
@@ -42,7 +42,7 @@ interface ConfirmationBooking {
   status?: string
   paymentStatus?: string
   paymentTiming?: 'now' | 'later'
-  selectedDate?: string
+  travelDate?: string
   selectedTime?: string | null
   travelers?: TravelerRecord
   subtotal?: number | string
@@ -87,21 +87,56 @@ const num = (v?: number | string | null): number => {
 
 export default function BookingConfirmationPage() {
   const { bookingId } = useParams<{ bookingId: string }>()
+  const [searchParams] = useSearchParams()
+  const sessionId = searchParams.get('session_id')
   const navigate = useNavigate()
   const { t } = useTranslation()
   const user = useAuthUser()
 
-  const { data: booking, isLoading, isError, refetch } = useExpeditionBookingDetail(bookingId)
+  // Pay-now: poll by session id (no Booking exists yet).
+  // Pay-later / legacy: poll by booking id (Booking exists immediately).
+  const sessionQuery = useBookingBySession(sessionId)
+  const bookingQuery = useExpeditionBookingDetail(bookingId)
 
-  // Pay-now bookings arrive here straight from Stripe's redirect (success_url)
-  // before the checkout.session.completed webhook has landed. Poll briefly so
-  // the page flips from "Reserved" to "Confirmed" without a manual refresh.
+  // Decide which data source to use.
+  const isSessionMode = !!sessionId
+  const sessionData = sessionQuery.data as { status?: string; booking?: { id: string; [k: string]: unknown } } | undefined
+  const sessionStatus = sessionData?.status
+  const sessionBooking = sessionData?.booking
+
+  const booking = isSessionMode ? sessionBooking ?? null : bookingQuery.data ?? null
+  const isLoading = isSessionMode ? sessionQuery.isLoading : bookingQuery.isLoading
+  const isError = isSessionMode ? sessionQuery.isError : bookingQuery.isError
+  const refetch = isSessionMode ? sessionQuery.refetch : bookingQuery.refetch
+
+  // ── Session mode: redirect to confirmation once materialized ────────
+  const [navigatedToBooking, setNavigatedToBooking] = useState(false)
+  useEffect(() => {
+    if (isSessionMode && sessionBooking?.id && !navigatedToBooking) {
+      // Update the URL to the canonical booking confirmation path so
+      // deep-links and refreshes work (replaceState avoids history pollution).
+      window.history.replaceState({}, '', `/booking/confirmation/${sessionBooking.id}`)
+      setNavigatedToBooking(true)
+    }
+  }, [isSessionMode, sessionBooking?.id, navigatedToBooking])
+
+  // ── Session mode: stop polling once terminal ────────────────────────
+  const [sessionPollStopped, setSessionPollStopped] = useState(false)
+  useEffect(() => {
+    if (isSessionMode && (sessionStatus === 'EXPIRED' || sessionStatus === 'REFUNDED') && !sessionPollStopped) {
+      setSessionPollStopped(true)
+    }
+  }, [isSessionMode, sessionStatus, sessionPollStopped])
+
+  // ── Legacy mode: poll PENDING pay-now bookings (shouldn't happen with
+  //    the new hold-based flow, but kept for backwards compat). ──────────
   const [pollStopped, setPollStopped] = useState(false)
   const confirmingPayment =
+    !isSessionMode &&
     !!booking &&
     booking.status === 'PENDING' &&
     booking.paymentStatus === 'PENDING' &&
-    booking.paymentTiming !== 'later' && // reserve-now-pay-later stays PENDING on purpose
+    booking.paymentTiming !== 'later' &&
     !pollStopped
 
   useEffect(() => {
@@ -142,6 +177,33 @@ export default function BookingConfirmationPage() {
       <div className="confirmation-page">
         <div className="confirmation-card">
           <p className="confirmation-message">{t('confirmation.loading')}</p>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Session mode: terminal states (no booking exists yet) ──────────
+  if (isSessionMode && sessionStatus && sessionStatus !== 'PAID') {
+    const isRefunded = sessionStatus === 'REFUNDED'
+    return (
+      <div className="confirmation-page">
+        <div className="confirmation-card">
+          <div className={`confirmation-icon ${isRefunded ? 'warning' : 'error'}`}>
+            {isRefunded ? <AlertTriangle className="size-10" /> : <span className="text-3xl">⏰</span>}
+          </div>
+          <h2 className="confirmation-title">
+            {isRefunded ? 'Payment received but spots sold out' : 'Checkout not completed'}
+          </h2>
+          <p className="confirmation-message">
+            {isRefunded
+              ? 'Your payment was processed but the last spots were claimed by another customer while your checkout was in progress. You have been fully refunded.'
+              : 'Your session expired before payment was completed. No spots were held and no money was charged.'}
+          </p>
+          <div className="confirmation-actions">
+            <button className="confirmation-btn-primary" onClick={() => navigate('/')}>
+              {t('confirmation.backToHome')}
+            </button>
+          </div>
         </div>
       </div>
     )
@@ -198,7 +260,7 @@ export default function BookingConfirmationPage() {
   const timeLabel = (() => {
     if (b.selectedTime) return formatTime12h(b.selectedTime)
     if (schedule.scheduleType === 'operatingHours') {
-      const day = b.selectedDate ? openingHoursForDay(schedule, new Date(b.selectedDate)) : ''
+      const day = b.travelDate ? openingHoursForDay(schedule, new Date(b.travelDate)) : ''
       if (day) return day
       const range = weeklyHoursRange(schedule)
       if (range) return range
@@ -314,7 +376,7 @@ export default function BookingConfirmationPage() {
               <CalendarDays size={16} />
               <div>
                 <span className="confirmation-grid-label">{t('confirmation.date')}</span>
-                <span className="confirmation-grid-value">{formatDate(b.selectedDate)}</span>
+                <span className="confirmation-grid-value">{formatDate(b.travelDate)}</span>
               </div>
             </div>
             <div className="confirmation-grid-item">

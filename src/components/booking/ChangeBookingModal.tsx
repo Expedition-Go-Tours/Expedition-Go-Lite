@@ -128,7 +128,7 @@ export default function ChangeBookingModal({ tour, isOpen, onClose, onReserve, i
     let cancelled = false
     const timer = setTimeout(() => {
       calculateCheckout
-        .mutateAsync({ tourId, selectedDate, travelers: travelersPayload })
+        .mutateAsync({ tourId, travelDate: selectedDate, travelers: travelersPayload })
         .then((res) => {
           if (cancelled) return
           if (!res.available) {

@@ -1809,7 +1809,7 @@ export default function BookingPage() {
 
       const payload = {
         tourId: tour.id || tour.slug,
-        selectedDate: editableTour.selectedDate || editableTour.date,
+        travelDate: editableTour.selectedDate || editableTour.date,
         ...(editableTour.selectedTime ? { selectedTime: editableTour.selectedTime } : {}),
         ...(pickupSelection ? { pickup: pickupSelection } : {}),
         travelers: {
@@ -1849,7 +1849,9 @@ export default function BookingPage() {
 
       // Reserve-now-pay-later: booking is committed PENDING until the deferred
       // auto-charge (payLaterSweep) settles it near the activity date.
-      await pollBooking(result?.booking?.id)
+      if (result?.booking?.id) {
+        await pollBooking(result.booking.id)
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Booking failed. Please try again.'
       toast.error(msg)
@@ -1883,7 +1885,7 @@ export default function BookingPage() {
         body: JSON.stringify({
           promoCode: code,
           tourId: tour.id || tour.slug,
-          selectedDate,
+          travelDate: selectedDate,
           quantity: Math.max(quantity, 1),
         }),
       })

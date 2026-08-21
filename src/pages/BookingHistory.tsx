@@ -67,7 +67,7 @@ export default function BookingHistory() {
   const timeLabel = (() => {
     if (detail?.selectedTime) return formatTime12h(detail.selectedTime)
     if (schedule.scheduleType === 'operatingHours') {
-      const day = detail?.selectedDate ? openingHoursForDay(schedule, new Date(detail.selectedDate)) : ''
+      const day = detail?.travelDate ? openingHoursForDay(schedule, new Date(detail.travelDate)) : ''
       if (day) return day
       const range = weeklyHoursRange(schedule)
       if (range) return range
@@ -384,7 +384,7 @@ export default function BookingHistory() {
                         <div className="booking-detail">
                           <span className="booking-detail-label">Date</span>
                           <span className="booking-detail-value">
-                            {new Date(booking.selectedDate).toLocaleDateString('en-US', {
+                            {new Date(booking.travelDate).toLocaleDateString('en-US', {
                               month: 'short',
                               day: 'numeric',
                               year: 'numeric'
@@ -520,7 +520,7 @@ export default function BookingHistory() {
                           <div>
                             <span className="booking-modal-detail-label">Date</span>
                             <span className="booking-modal-detail-value">
-                              {new Date(selectedBooking.selectedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                              {new Date(selectedBooking.travelDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                             </span>
                           </div>
                         </div>
