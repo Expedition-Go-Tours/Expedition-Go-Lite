@@ -5,6 +5,10 @@
   background: #fff;
   min-height: 100vh;
   padding-top: 64px;
+  /* Defensive: clip any residual horizontal overflow so a stray wide child
+     can never introduce a page-level horizontal scrollbar. `clip` does not
+     create a scroll container, so sticky tabs/headers keep working. */
+  overflow-x: clip;
 }
 
 .tour-detail-container {
@@ -50,6 +54,7 @@
 /* Main Content (image gallery) */
 .tour-detail-main {
   width: 100%;
+  min-width: 0;
   background: #fff;
 }
 
@@ -148,6 +153,7 @@
 /* Sidebar - after gallery on mobile, right of header+gallery on desktop */
 .tour-detail-sidebar {
   width: 100%;
+  min-width: 0;
 }
 
 @media (min-width: 1024px) {

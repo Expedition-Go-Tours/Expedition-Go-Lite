@@ -38,12 +38,34 @@ function copyMapboxWorker(): Plugin {
   }
 }
 
+// maplibre-gl's worker (`maplibre-gl-worker.mjs`) is a MODULE worker that
+// imports its shared chunk (`./maplibre-gl-shared.mjs`). Vite's `?url` import
+// copies the worker into dist/assets/ verbatim but never emits that relative
+// chunk next to it, so on the deployed build the worker fails to boot and the
+// map can't parse tiles — it hangs until the failover watchdogs (the "map
+// takes very long to load" on Vercel). Serving the worker + its shared chunk
+// raw from `public/` keeps the relative import resolvable in dev and prod.
+function copyMaplibreWorker(): Plugin {
+  const files = ['maplibre-gl-worker.mjs', 'maplibre-gl-shared.mjs']
+  return {
+    name: 'copy-maplibre-worker',
+    configResolved() {
+      const outDir = resolve(__dirname, 'public/maplibre-gl')
+      mkdirSync(outDir, { recursive: true })
+      for (const f of files) {
+        copyFileSync(resolve(__dirname, 'node_modules/maplibre-gl/dist', f), resolve(outDir, f))
+      }
+    },
+  }
+}
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react(),
     babel({ presets: [reactCompilerPreset()] }),
     copyMapboxWorker(),
+    copyMaplibreWorker(),
     VitePWA({
       registerType: 'autoUpdate',
       workbox: {

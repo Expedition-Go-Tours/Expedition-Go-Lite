@@ -1,13 +1,14 @@
 import { useMemo, useState } from 'react'
-import { buildTourPoints, toNumber, type MapPoint, type PickupMapSource } from '@/lib/mapUtils'
+import { buildTourPoints, toNumber, type MapPoint, type PickupMapSource, type SelectedPoint } from '@/lib/mapUtils'
 import { getMapboxToken } from '@/lib/mapbox'
 import { pickupZoneRings } from '@/lib/pickupZone'
+import type { GeoapifyRoute } from '@/lib/geoapifyRouting'
 import MapboxPickupMap from './MapboxPickupMap'
 import PickupZoneMap, { type PickupZoneMapTour } from './PickupZoneMap'
 
 interface LocationMapProps {
   tour: PickupZoneMapTour
-  userMarker?: { lat: number | null; lng: number | null } | null
+  userMarker?: { lat: number | null; lng: number | null; label?: string | null } | null
   onUserPointChange?: (lat: number, lng: number) => void
   /** Reverse-geocoded formatted address for a point picked on the map. */
   onUserAddressChange?: (address: string) => void
@@ -15,16 +16,29 @@ interface LocationMapProps {
   extraPoints?: MapPoint[]
   /** Fired with the pin's label when a tour pickup/meeting pin is tapped. */
   onPinClick?: (label: string) => void
-  /** Fired when the map is double-clicked at a spot (to add a pickup location). */
-  onDoubleClickPoint?: (lat: number, lng: number) => void
   /** True when the traveller's location is outside the pickup zones/points —
       the pin renders red with an × ("location not included"). */
   userOutOfRange?: boolean
   /** True when the traveller has a confirmed chosen pickup location (shown as
       "Your pickup location" in the map legend, even when the pin is hidden). */
   userChosen?: boolean
+  /** The pickup/meeting point the traveller selected — that pin renders in
+      the bright green check-mark style and the legend shows a "Selected
+      pickup point" entry. Matched by label or tight coordinates. */
+  selectedPin?: SelectedPoint | null
+  /** Label of the selected pickup/meeting point (legacy prop). */
+  selectedPinLabel?: string | null
+  /** When true (multi-point pickups) no draggable user pin is shown and map
+      clicks don't place a custom location — the traveller picks a fixed point. */
+  suppressDraggablePin?: boolean
+  /** When set (and changed), the map flies to this point — used to zoom onto a
+      location clicked in the modal's side list. */
+  focusPoint?: { lat: number; lng: number } | null
   /** Height classes for the map container (defaults to the standard booking height). */
   mapHeight?: string
+  /** A directions route to draw on the map (origin → destination polyline,
+      with a blue origin marker). Cleared when null. */
+  route?: GeoapifyRoute | null
 }
 
 /**
@@ -38,7 +52,7 @@ interface LocationMapProps {
  *  2. Mapbox GL JS (2D)              — fallback on MapLibre fatal failure (token required)
  *  3. Text + Google Maps link        — last resort (PickupZoneMap `mapDisabled`)
  */
-export default function LocationMap({ tour, userMarker, onUserPointChange, onUserAddressChange, extraPoints, onPinClick, onDoubleClickPoint, mapHeight, userOutOfRange, userChosen }: LocationMapProps) {
+export default function LocationMap({ tour, userMarker, onUserPointChange, onUserAddressChange, extraPoints, onPinClick, mapHeight, userOutOfRange, userChosen, selectedPin, selectedPinLabel, suppressDraggablePin, focusPoint, route }: LocationMapProps) {
   const [osmFailed, setOsmFailed] = useState(false)
   const [mapboxFailed, setMapboxFailed] = useState(false)
 
@@ -79,10 +93,14 @@ export default function LocationMap({ tour, userMarker, onUserPointChange, onUse
         onUserAddressChange={onUserAddressChange}
         extraPoints={extraPoints}
         onPinClick={onPinClick}
-        onDoubleClickPoint={onDoubleClickPoint}
         mapHeight={mapHeight}
         userOutOfRange={userOutOfRange}
         userChosen={userChosen}
+        selectedPin={selectedPin}
+        selectedPinLabel={selectedPinLabel}
+        suppressDraggablePin={suppressDraggablePin}
+        focusPoint={focusPoint}
+        route={route}
       />
     )
   }
@@ -97,11 +115,15 @@ export default function LocationMap({ tour, userMarker, onUserPointChange, onUse
         onUserAddressChange={onUserAddressChange}
         extraPoints={extraPoints}
         onPinClick={onPinClick}
-        onDoubleClickPoint={onDoubleClickPoint}
         mapHeight={mapHeight}
         userOutOfRange={userOutOfRange}
         userChosen={userChosen}
+        selectedPin={selectedPin}
+        selectedPinLabel={selectedPinLabel}
+        suppressDraggablePin={suppressDraggablePin}
+        focusPoint={focusPoint}
         onFatalFailure={() => setOsmFailed(true)}
+        route={route}
       />
     )
   }
@@ -114,13 +136,17 @@ export default function LocationMap({ tour, userMarker, onUserPointChange, onUse
         userMarker={userMarker}
         userOutOfRange={userOutOfRange}
         userChosen={userChosen}
+        selectedPin={selectedPin}
+        selectedPinLabel={selectedPinLabel}
+        suppressDraggablePin={suppressDraggablePin}
+        focusPoint={focusPoint}
         onUserPointChange={onUserPointChange}
         onUserAddressChange={onUserAddressChange}
         extraPoints={extraPoints}
         onPinClick={onPinClick}
-        onDoubleClickPoint={onDoubleClickPoint}
         mapHeight={mapHeight}
         onFatalFailure={() => setMapboxFailed(true)}
+        route={route}
       />
     )
   }
@@ -134,11 +160,15 @@ export default function LocationMap({ tour, userMarker, onUserPointChange, onUse
       onUserAddressChange={onUserAddressChange}
       extraPoints={extraPoints}
       onPinClick={onPinClick}
-      onDoubleClickPoint={onDoubleClickPoint}
       mapHeight={mapHeight}
       userOutOfRange={userOutOfRange}
       userChosen={userChosen}
+      selectedPin={selectedPin}
+      selectedPinLabel={selectedPinLabel}
+      suppressDraggablePin={suppressDraggablePin}
+      focusPoint={focusPoint}
       mapDisabled
+      route={route}
     />
   )
 }

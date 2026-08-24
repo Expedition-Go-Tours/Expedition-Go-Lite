@@ -7,7 +7,7 @@ import { toast } from 'sonner'
 import {
   Check, ArrowLeft, MapPin, CalendarDays, CalendarCheck, Users, Info, X,
   Phone, MessageSquare, ShieldCheck, Star, Clock, Globe, Loader2,
-  Car, CreditCard, Ticket,
+  Car, CreditCard, Ticket, ExternalLink,
 } from 'lucide-react'
 import logoSrc from '../assets/expo_trans.png'
 import Footer from '../components/Footer'
@@ -23,15 +23,15 @@ import type { CardElementHandle } from '../components/booking/CardField'
 import { fetchWithAuth } from '../lib/api'
 import { useCreateBooking } from '../hooks/useExpeditionBookings'
 import { buildE164Phone, isValidPhoneInput, COUNTRY_CODES } from '../lib/phone'
-import { hasLocationOnlyAreas, isPickupLocationSatisfied, pickupZoneStatus, type PickupAreaShape } from '../lib/pickupZone'
+import { hasLocationOnlyAreas, isPickupLocationSatisfied, pickupZoneStatus, distanceMeters, type PickupAreaShape } from '../lib/pickupZone'
 import LocationMap from '../components/booking/LocationMap'
 import MapErrorBoundary from '../components/booking/MapErrorBoundary'
 import PickupSelectModal from '../components/booking/PickupSelectModal'
 import PickupLocationSection from '../components/booking/PickupLocationSection'
 import TravelTimeChip from '../components/booking/TravelTimeChip'
+import { appleMapsDirectionsUrl, googleMapsDirectionsUrl } from '../lib/geoapifyRouting'
 import { toNumber } from '../lib/mapUtils'
 import { useResolvedTourPoints } from '../hooks/useResolvedTourPoints'
-import { useCustomPickupPoints } from '../hooks/useCustomPickupPoints'
 import type { ResolveTourSource } from '../lib/resolvePoints'
 import type { PickupZoneMapTour } from '../components/booking/PickupZoneMap'
 import OptimizedImage from '@/components/shared/OptimizedImage'
@@ -333,13 +333,62 @@ function referenceStartLabel(value?: string): string {
 // Drop-off is appended when the supplier configured one.
 // `embedded` renders it as a sub-section (no outer card border/background) so
 // it can sit inside the tour summary card without a nested box.
-function MeetingPickupCard({ tour, embedded = false, onOpenMap }: {
+function MeetingPickupCard({ tour, embedded = false, onOpenMap, showMapLink = true, showDirections = false }: {
   tour: typeof FALLBACK_TOUR
   embedded?: boolean
   /** Opens the map modal (a pin per pickup spot). */
   onOpenMap?: () => void
+  /** Whether the "Select on Map" link is shown (hidden in the collapsed summary). */
+  showMapLink?: boolean
+  /** Whether the Google/Apple Maps directions links (meeting-point tours) are shown. */
+  showDirections?: boolean
 }) {
   const mode = tour.meetingMode
+
+  // Destination for the meeting-point directions links — only when the
+  // supplier provided coordinates (nothing renders otherwise).
+  const meetingPointDest = useMemo(() => {
+    const lat = toNumber(tour.meetingPointLat)
+    const lng = toNumber(tour.meetingPointLng)
+    return lat != null && lng != null
+      ? { lat, lng, label: tour.meetingPoint || tour.meetingPointAddress || 'the meeting point' }
+      : null
+  }, [tour.meetingPointLat, tour.meetingPointLng, tour.meetingPoint, tour.meetingPointAddress])
+
+  // The directions links route from the traveller's CURRENT location to the
+  // meeting point — the device location is resolved when the links render so
+  // the origin is baked into the deep-links before they are clicked.
+  const geolocationSupported =
+    typeof navigator !== 'undefined' &&
+    !!navigator.geolocation &&
+    typeof navigator.geolocation.getCurrentPosition === 'function'
+  const [origin, setOrigin] = useState<{ lat: number; lng: number } | null>(null)
+  const [originStatus, setOriginStatus] = useState<'locating' | 'located' | 'error'>('locating')
+
+  useEffect(() => {
+    if (!showDirections || !meetingPointDest || !geolocationSupported) return
+    let active = true
+    const geo = navigator.geolocation
+    if (!geo) return
+    geo.getCurrentPosition(
+      (pos) => {
+        if (!active) return
+        setOrigin({ lat: pos.coords.latitude, lng: pos.coords.longitude })
+        setOriginStatus('located')
+      },
+      () => {
+        if (active) setOriginStatus('error')
+      },
+      { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 },
+    )
+    return () => {
+      active = false
+    }
+  }, [showDirections, meetingPointDest, geolocationSupported])
+
+  // True while the device location is still being resolved (the links are held
+  // back so they always carry the correct origin when clicked).
+  const locating = geolocationSupported && originStatus === 'locating' && origin == null
 
   const arrivalLabel = () => {
     if (mode !== 'meeting_point') return ''
@@ -399,6 +448,40 @@ function MeetingPickupCard({ tour, embedded = false, onOpenMap }: {
                 <p className="pl-[22px] text-slate-500">{arrivalLabel()}</p>
               </div>
             )}
+            {showDirections && meetingPointDest && (
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 pl-[22px] text-xs">
+                <span className="font-semibold text-slate-600">Directions:</span>
+                {locating ? (
+                  <span className="inline-flex items-center gap-1 font-medium text-slate-500">
+                    <Loader2 size={11} className="animate-spin" />
+                    Locating your current location…
+                  </span>
+                ) : (
+                  <>
+                    <a
+                      href={googleMapsDirectionsUrl(origin, { lat: meetingPointDest.lat, lng: meetingPointDest.lng }, 'drive')}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 font-semibold text-emerald-700 underline underline-offset-2 transition-colors hover:text-emerald-900"
+                    >
+                      Open in Google Maps <ExternalLink size={11} />
+                    </a>
+                    <span className="text-slate-300">·</span>
+                    <a
+                      href={appleMapsDirectionsUrl(origin, { lat: meetingPointDest.lat, lng: meetingPointDest.lng })}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 font-semibold text-emerald-700 underline underline-offset-2 transition-colors hover:text-emerald-900"
+                    >
+                      Apple Maps <ExternalLink size={11} />
+                    </a>
+                    {origin && (
+                      <span className="text-slate-400">from your current location</span>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
             {tour.meetingPointDescription && (
               <p className="pl-[22px] leading-relaxed text-slate-500">{tour.meetingPointDescription}</p>
             )}
@@ -407,16 +490,16 @@ function MeetingPickupCard({ tour, embedded = false, onOpenMap }: {
 
         {mode === 'pickup' && hasPickup && (
           <div className="space-y-2">
-            {pickupAreas.length + pickupLocations.length > 0 && (
+            {pickupAreas.length + pickupLocations.length > 0 && showMapLink && (
               <button
                 type="button"
                 onClick={onOpenMap}
                 className="flex w-full items-center gap-2 font-semibold text-slate-700 transition-colors hover:text-emerald-700"
               >
                 <Car className="size-3.5 shrink-0 text-emerald-600" />
-                <span>Pickup locations ({pickupAreas.length + pickupLocations.length})</span>
-                <span className="ml-auto inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 underline underline-offset-2">
-                  Show on map
+                <span className="min-w-0 truncate">Pickup locations ({pickupAreas.length + pickupLocations.length})</span>
+                <span className="ml-auto inline-flex shrink-0 items-center gap-1 whitespace-nowrap text-xs font-semibold text-emerald-600 underline underline-offset-2">
+                  Select on Map
                   <MapPin className="size-3.5" />
                 </span>
               </button>
@@ -451,12 +534,16 @@ function MeetingPickupCard({ tour, embedded = false, onOpenMap }: {
 // Meeting-point / pickup photo uploaded by the supplier (Step 13). Rendered
 // separately from the meeting/pickup info so it can sit after the map. Tapping
 // it opens the full-size image. Renders nothing when no photo is configured.
-function MeetingPointPhoto({ src }: { src?: string }) {
+function MeetingPointPhoto({ src, title = 'Meeting point photo' }: { src?: string; title?: string }) {
   const [showPhoto, setShowPhoto] = useState(false)
   if (!src) return null
 
   return (
     <div className="space-y-2">
+      <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-500">
+        <MapPin className="size-3.5 text-emerald-600" />
+        {title}
+      </p>
       <button
         type="button"
         onClick={() => setShowPhoto(true)}
@@ -737,26 +824,60 @@ function ActivityDetailsStep({
     return lat != null && lng != null ? { lat, lng } : null
   }, [tour.meetingPointLat, tour.meetingPointLng])
 
-  // Traveller-added pickup spots — double-clicking the map inside a pickup
-  // zone appends a violet entry to the pickup list below.
-  const { points: customPoints, addPoint, removePoint } = useCustomPickupPoints(tour.pickupAreas)
-
-  const handleDoubleClickPoint = async (lat: number, lng: number): Promise<void> => {
-    const res = await addPoint(lat, lng)
-    if (res.status === 'added') {
-      // Auto-select: commit the new spot as the traveller's pickup location.
-      onContactChange('location', res.point.address)
-      onContactChange('pickupLat', res.point.lat)
-      onContactChange('pickupLng', res.point.lng)
-      onContactChange('pickupArea', '')
+  // Label of the pickup point the traveller's chosen coordinates land on —
+  // a pin tap commits the point's exact coordinates, so a tight radius only
+  // matches a real pin selection. The matching map pin renders in the bright
+  // green check-mark style (no blue user pin on top of it).
+  const selectedPinLabel = useMemo(() => {
+    if (contact.pickupLat == null || contact.pickupLng == null) return null
+    for (const p of resolvedPoints) {
+      if (p.kind !== 'point' || p.lat == null || p.lng == null) continue
+      if (distanceMeters(contact.pickupLat, contact.pickupLng, p.lat, p.lng) <= 25) {
+        return p.name || p.address || ''
+      }
     }
+    return null
+  }, [resolvedPoints, contact.pickupLat, contact.pickupLng])
+
+  // Coordinate + label of the chosen pickup POINT — non-null only when the
+  // traveller picked a designated pickup point (selectedPinLabel set). A plain
+  // map click or free-typed address is NOT a designated point: it must keep
+  // rendering the draggable user pin, so selectedPin stays null there.
+  const selectedPin = useMemo(() => {
+    if (selectedPinLabel == null || contact.pickupLat == null || contact.pickupLng == null) return null
+    return { lat: contact.pickupLat, lng: contact.pickupLng, label: selectedPinLabel }
+  }, [contact.pickupLat, contact.pickupLng, selectedPinLabel])
+
+  // Tapping a pickup/meeting pin selects it directly — the point's label and
+  // coordinates land on the form without dropping a separate blue pin.
+  const handlePinClick = (label: string): void => {
+    const point = resolvedPoints.find((p) => (p.name || p.address) === label)
+    if (!point || point.kind === 'meeting' || point.lat == null || point.lng == null) return
+    onContactChange('pickupArea', '')
+    onContactChange('location', point.name || point.address || label)
+    onContactChange('pickupLat', point.lat)
+    onContactChange('pickupLng', point.lng)
+    setTouched((t) => ({ ...t, location: true }))
   }
 
   const meetingSummaryCard = (
     <div className="overflow-hidden rounded-xl border border-slate-200/40 bg-slate-50/30">
       {/* Meeting & pickup — embedded so the summary card carries the start/end
           details; the timing/hours are already shown in the date row above. */}
-      <MeetingPickupCard tour={tour} embedded onOpenMap={handleOpenMap} />
+      <MeetingPickupCard
+        tour={tour}
+        embedded
+        onOpenMap={handleOpenMap}
+        showDirections
+      />
+    </div>
+  )
+
+  // Collapsed summary variant — the "Select on Map" link is hidden here: the
+  // traveller already picked their location, so the summary just states it.
+  const meetingSummaryCollapsed = (
+    <div className="overflow-hidden rounded-xl border border-slate-200/40 bg-slate-50/30">
+      <MeetingPickupCard tour={tour} embedded showMapLink={false} />
     </div>
   )
 
@@ -768,9 +889,12 @@ function ActivityDetailsStep({
     <MapErrorBoundary resetKey={mapTour || tour}>
       <LocationMap
         tour={(mapTour || tour) as PickupZoneMapTour}
-        userMarker={{ lat: contact.pickupLat, lng: contact.pickupLng }}
+        userMarker={selectedPin ? null : { lat: contact.pickupLat, lng: contact.pickupLng, label: contact.location }}
         userOutOfRange={mapUserOutOfRange}
-        userChosen={contact.pickupLat != null && contact.pickupLng != null}
+        userChosen={contact.pickupLat != null && contact.pickupLng != null && !selectedPin}
+        selectedPin={selectedPin}
+        selectedPinLabel={selectedPinLabel}
+        onPinClick={handlePinClick}
         onUserPointChange={(lat, lng) => {
           onContactChange('pickupLat', lat)
           onContactChange('pickupLng', lng)
@@ -783,9 +907,6 @@ function ActivityDetailsStep({
           // Map-click reverse geocode — keep the address text in sync with the
           // pinned coordinates (the LocationPicker re-syncs from its value prop).
           onContactChange('location', address)
-        }}
-        onDoubleClickPoint={(lat, lng) => {
-          void handleDoubleClickPoint(lat, lng)
         }}
       />
     </MapErrorBoundary>
@@ -817,7 +938,12 @@ function ActivityDetailsStep({
     (tour.pickupAreas?.length ?? 0) > 0 ||
     (tour.pickupLocations?.length ?? 0) > 0
 
-  const pickupPhoto = <MeetingPointPhoto src={tour.meetingPointPicture} />
+  const pickupPhoto = (
+    <MeetingPointPhoto
+      src={tour.meetingPointPicture}
+      title={tour.meetingMode === 'pickup' ? 'Pickup point photo' : 'Meeting point photo'}
+    />
+  )
 
   return (
     <>
@@ -841,8 +967,10 @@ function ActivityDetailsStep({
                 }`}>
                   {tour.meetingMode === 'pickup'
                     ? (tour.pickupAreas?.length ?? 0) > 0
-                      ? 'Pick zone'
-                      : 'Pickup'
+                      ? 'Pickup Zone'
+                      : (tour.pickupLocations?.length ?? 0) > 1
+                        ? 'Pickup points'
+                        : 'Pickup'
                     : 'Meeting point'}
                 </span>
               ) : null}
@@ -874,9 +1002,7 @@ function ActivityDetailsStep({
                 resolvedPoints={resolvedPoints}
                 mapTour={mapTour}
                 resolvingPoints={resolvingPoints}
-                customPoints={customPoints}
-                onAddCustomPoint={addPoint}
-                onRemoveCustomPoint={removePoint}
+                onOpenMap={handleOpenMap}
               />
             )}
 
@@ -929,11 +1055,44 @@ function ActivityDetailsStep({
             animate="visible"
             className="space-y-3 p-7 sm:p-9"
           >
-            {meetingSummaryCard}
+            {meetingSummaryCollapsed}
             {/* The map stays out of the collapsed summary — the traveller just
                 picked their location on it, so only the ETA chip remains. */}
             {showZoneMap && travelTimeChip}
             {!showPickupLocation && pickupPhoto}
+            {showPickupLocation && !contact.pickupLater && (contact.pickupArea || contact.location) && (
+              <div className="flex items-start gap-2 text-sm text-slate-600">
+                <MapPin className="mt-0.5 size-3.5 shrink-0 text-emerald-600" />
+                <div className="min-w-0 flex-1">
+                  <p>
+                    <span className="font-semibold text-slate-800">Traveler's pickup location:</span>{' '}
+                    <span>{contact.pickupArea || contact.location}</span>
+                  </p>
+                  {contact.pickupLat != null && contact.pickupLng != null && (
+                    <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+                      <span className="font-semibold text-slate-600">Directions:</span>
+                      <a
+                        href={googleMapsDirectionsUrl(null, { lat: contact.pickupLat, lng: contact.pickupLng }, 'drive')}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 font-semibold text-emerald-700 underline underline-offset-2 transition-colors hover:text-emerald-900"
+                      >
+                        Open in Google Maps <ExternalLink size={11} />
+                      </a>
+                      <span className="text-slate-300">·</span>
+                      <a
+                        href={appleMapsDirectionsUrl(null, { lat: contact.pickupLat, lng: contact.pickupLng })}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 font-semibold text-emerald-700 underline underline-offset-2 transition-colors hover:text-emerald-900"
+                      >
+                        Apple Maps <ExternalLink size={11} />
+                      </a>
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
             {hasError && (
               <p className="pt-1 text-xs font-semibold text-rose-500">There are errors in this step — please review.</p>
             )}
