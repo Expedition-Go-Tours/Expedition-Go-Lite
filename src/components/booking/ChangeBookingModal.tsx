@@ -6,7 +6,7 @@ import { CalendarPicker } from '../ui/apple-calendar-picker'
 import { useTourAvailability, useCalculateCheckout } from '../../hooks/useExpeditionBookings'
 import { useTravelerSelection } from '../../hooks/useTravelerSelection'
 import type { DayTimeSlot } from '../../lib/tourAvailability'
-import { openingHoursForDay } from '../../lib/tourAvailability'
+import { openingHoursForDay, resolveDayStatus } from '../../lib/tourAvailability'
 import { categoryKey, categoryPayloadKey } from '../../lib/travelerBuckets'
 import '../../pages/tour-detail/BookingWidget.css'
 
@@ -328,7 +328,13 @@ export default function ChangeBookingModal({ tour, isOpen, onClose, onReserve, i
                     selectedDate={selectedDate ? new Date(`${selectedDate}T00:00:00`) : null}
                     getAvailability={(date) => {
                       const key = toDateKey(date)
-                      return availabilityMap.get(key) || 'available'
+                      const info = availabilityCalendar?.find((d) => d.date === key)
+                      return resolveDayStatus({
+                        schedule: tour,
+                        date,
+                        apiStatus: availabilityMap.get(key),
+                        apiIsOperatingDay: info?.isOperatingDay,
+                      })
                     }}
                     getDayCounts={(date) => {
                       const day = availabilityCalendar?.find((d) => d.date === toDateKey(date))

@@ -9,7 +9,7 @@ import { CalendarDays, Users, Minus, Plus, MessageSquare, Clock as ClockIcon, Ba
 import { toast } from 'sonner'
 import { useCurrency } from '../../contexts/CurrencyContext'
 import type { DayAvailability, DayAvailabilityInfo, DayTimeSlot } from '../../lib/tourAvailability'
-import { openingHoursForDay } from '../../lib/tourAvailability'
+import { openingHoursForDay, isSupplierOperatingDay, resolveDayStatus } from '../../lib/tourAvailability'
 import { freeCancellationDateLabel } from '../../lib/cancellationLabel'
 import { categoryKey } from '../../lib/travelerBuckets'
 import { useTravelerSelection } from '../../hooks/useTravelerSelection'
@@ -21,7 +21,7 @@ import './BookingWidget.css'
 
 interface BookingWidgetProps {
   tour: TourDetailData
-  getAvailability?: (date: Date) => DayAvailability
+  getAvailability?: (date: Date) => DayAvailability | undefined
   getDayInfo?: (date: Date) => DayAvailabilityInfo | undefined
   availabilityLoading?: boolean
   onMonthChange?: (year: number, month: number) => void
@@ -44,6 +44,10 @@ interface AppliedPromo {
   name: string
   offerType?: string
   discountAmount: number
+  /** Offer metadata the backend returns with the validated code. */
+  promoCode?: string | null
+  timeSlotMode?: 'ALL_DAYS' | 'SPECIFIC_WEEKDAYS'
+  specificWeekdays?: string[]
 }
 
 function offerDiscountLabel(offer: SpecialOfferData): string {
@@ -255,6 +259,13 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
       return
     }
 
+    // Never let a booking proceed on a day the supplier hasn't set the tour
+    // to run (defense-in-depth: the calendar makes such days unselectable).
+    if (selectedDate && (selectedDay?.isOperatingDay === false || !isSupplierOperatingDay(tour, selectedDate))) {
+      toast.error(t('booking.notOperatingDay', 'This tour does not run on the selected date'))
+      return
+    }
+
     const travelersLabel = isPerGroup
       ? `${groupHeadcount} ${groupHeadcount === 1 ? 'traveler' : 'travelers'}`
       : travelerGroups
@@ -324,6 +335,7 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
         // "Time slots" vs "Opening hours" choice accurately.
         scheduleType: tour.scheduleType,
         timeSlots: tour.timeSlots,
+        daysOfWeek: tour.daysOfWeek,
         weeklySchedule: tour.weeklySchedule,
         operatingHoursStart: tour.operatingHoursStart,
         operatingHoursEnd: tour.operatingHoursEnd,
@@ -384,6 +396,16 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
   const validatePromoCode = useCallback(async (date: Date, time: string | null, quiet = false) => {
     const code = normalizePromoCode(promoCode)
     if (!code) return
+    // A promo can never be applied on a day the tour doesn't run — fail fast
+    // client-side (the calendar already makes such days unselectable; this
+    // guards date changes made before the schedule data arrived).
+    const dayInfo = getDayInfo ? getDayInfo(date) : undefined
+    if (dayInfo?.isOperatingDay === false || !isSupplierOperatingDay(tour, date)) {
+      setPromoApplied(false)
+      setAppliedPromo(null)
+      setPromoError(t('booking.promoNotOperatingDay', 'This tour does not run on the selected date'))
+      return
+    }
     const token = ++promoCheckRef.current
     setPromoLoading(true)
     setPromoError('')
@@ -423,6 +445,9 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
         name: data.offer?.name || code,
         offerType: data.offer?.offerType,
         discountAmount: Number(data.discount?.amount) || 0,
+        promoCode: data.offer?.promoCode ?? null,
+        timeSlotMode: data.offer?.timeSlotMode === 'SPECIFIC_WEEKDAYS' ? 'SPECIFIC_WEEKDAYS' : 'ALL_DAYS',
+        specificWeekdays: Array.isArray(data.offer?.specificWeekdays) ? data.offer.specificWeekdays : [],
       })
       if (!quiet) toast.success(t('booking.promoApplied'))
       // Re-price with the code so the total reflects the validated discount.
@@ -435,7 +460,7 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
     } finally {
       if (token === promoCheckRef.current) setPromoLoading(false)
     }
-  }, [promoCode, tour.id, totalTravelers, pricingResult, clientSubtotal, t, doFetchPricing])
+  }, [promoCode, tour, totalTravelers, pricingResult, clientSubtotal, t, doFetchPricing, getDayInfo])
 
   const handleApplyPromo = useCallback(async () => {
     const code = normalizePromoCode(promoCode)
@@ -611,6 +636,18 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
                   <BadgePercent size={14} />
                   <span className="booking-offer-chip-name">{offer.name}</span>
                   <span className="booking-offer-chip-discount">{offerDiscountLabel(offer)}</span>
+                  {offer.promoCode && (
+                    <span className="booking-offer-chip-code">
+                      {t('booking.usePromoCode', 'Use code {{code}}', { code: offer.promoCode })}
+                    </span>
+                  )}
+                  {offer.timeSlotMode === 'SPECIFIC_WEEKDAYS' && offer.specificWeekdays.length > 0 && (
+                    <span className="booking-offer-chip-code">
+                      {t('booking.offerValidDays', 'Valid {{days}}', {
+                        days: offer.specificWeekdays.map((d) => d.charAt(0).toUpperCase() + d.slice(1, 3)).join(', '),
+                      })}
+                    </span>
+                  )}
                 </span>
               ))}
               {promoApplied && appliedPromo && (
@@ -680,10 +717,12 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
                       }
                     }}
                     selectedDate={selectedDate}
-                    getAvailability={(date) => {
-                      const avail = propGetAvailability ? propGetAvailability(date) : 'available'
-                      return avail
-                    }}
+                    getAvailability={(date) => resolveDayStatus({
+                      schedule: tour,
+                      date,
+                      apiStatus: propGetAvailability ? propGetAvailability(date) : undefined,
+                      apiIsOperatingDay: getDayInfo ? getDayInfo(date)?.isOperatingDay : undefined,
+                    })}
                     getDayCounts={(date) => {
                       if (!getDayInfo) return null
                       const info = getDayInfo(date)

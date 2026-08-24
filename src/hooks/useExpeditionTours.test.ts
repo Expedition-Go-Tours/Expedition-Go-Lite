@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { extractItinerary, extractMeetingInfo, extractStartingPriceFromRaw } from './useExpeditionTours'
+import { extractItinerary, extractMeetingInfo, extractStartingPriceFromRaw, extractAvailabilitySchedule, mapSpecialOffers } from './useExpeditionTours'
 
 function tourWith(productContent: unknown): any {
   return {
@@ -305,5 +305,114 @@ describe('extractStartingPriceFromRaw', () => {
     expect(extractStartingPriceFromRaw(JSON.stringify(natureEscape))).toBe(300)
     expect(extractStartingPriceFromRaw(null)).toBeNull()
     expect(extractStartingPriceFromRaw({})).toBeNull()
+  })
+})
+describe('mapSpecialOffers', () => {
+  const fullOffer = {
+    id: 'offer-1',
+    name: 'Summer Sale',
+    offerType: 'LIMITED_TIME',
+    discountType: 'PERCENTAGE',
+    discountPercentage: 20,
+    fixedDiscountValue: null,
+    startDate: '2026-08-01T00:00:00.000Z',
+    endDate: '2026-08-31T00:00:00.000Z',
+    promoCode: 'SUMMER20',
+    timeSlotMode: 'SPECIFIC_WEEKDAYS',
+    specificWeekdays: ['monday', 'friday'],
+    capacityType: 'CAPPED',
+    maxSpots: 50,
+    minQuantity: 2,
+    minSpendAmount: 100,
+    maxRedemptionsPerCustomer: 1,
+    stackable: true,
+    earlyBirdAdvanceDays: null,
+    lastMinuteWindowHours: null,
+    targets: [{ tourId: 'tour-1', tourOptionKey: null, tourOptionLabel: null }],
+  }
+
+  it('maps every promo-code term the supplier builder defines', () => {
+    const mapped = mapSpecialOffers({ specialOffers: [fullOffer] })!
+    expect(mapped).toHaveLength(1)
+    expect(mapped[0]).toEqual({
+      id: 'offer-1',
+      name: 'Summer Sale',
+      offerType: 'LIMITED_TIME',
+      discountType: 'PERCENTAGE',
+      discountPercentage: 20,
+      fixedDiscountValue: null,
+      startDate: '2026-08-01T00:00:00.000Z',
+      endDate: '2026-08-31T00:00:00.000Z',
+      promoCode: 'SUMMER20',
+      timeSlotMode: 'SPECIFIC_WEEKDAYS',
+      specificWeekdays: ['monday', 'friday'],
+      capacityType: 'CAPPED',
+      maxSpots: 50,
+      minQuantity: 2,
+      minSpendAmount: 100,
+      maxRedemptionsPerCustomer: 1,
+      stackable: true,
+      earlyBirdAdvanceDays: null,
+      lastMinuteWindowHours: null,
+      targets: [{ tourId: 'tour-1', tourOptionKey: null, tourOptionLabel: null }],
+    })
+  })
+
+  it('defaults missing terms to safe values', () => {
+    const mapped = mapSpecialOffers({ specialOffers: [{ id: 'o2', name: 'Basic', offerType: 'EARLY_BIRD', discountType: 'FIXED_AMOUNT' }] })!
+    expect(mapped[0].promoCode).toBeNull()
+    expect(mapped[0].timeSlotMode).toBe('ALL_DAYS')
+    expect(mapped[0].specificWeekdays).toEqual([])
+    expect(mapped[0].capacityType).toBe('UNLIMITED')
+    expect(mapped[0].maxSpots).toBeNull()
+    expect(mapped[0].minQuantity).toBeNull()
+    expect(mapped[0].minSpendAmount).toBeNull()
+    expect(mapped[0].maxRedemptionsPerCustomer).toBeNull()
+    expect(mapped[0].stackable).toBe(false)
+    expect(mapped[0].earlyBirdAdvanceDays).toBeNull()
+    expect(mapped[0].lastMinuteWindowHours).toBeNull()
+    expect(mapped[0].targets).toEqual([])
+  })
+
+  it('returns undefined for tours without offers', () => {
+    expect(mapSpecialOffers({})).toBeUndefined()
+    expect(mapSpecialOffers({ specialOffers: [] })).toBeUndefined()
+  })
+})
+
+describe('extractAvailabilitySchedule daysOfWeek', () => {
+  it('extracts the supplier-set weekdays from the aggregate availability block', () => {
+    const schedule = extractAvailabilitySchedule({
+      schedulesAndPricing: {
+        availability: {
+          scheduleType: 'fixedTimeSlot',
+          daysOfWeek: ['Monday', 'Wednesday', 'Friday'],
+          timeSlots: [{ startTime: '08:00' }],
+          weeklySchedule: {},
+        },
+      },
+    })
+    expect(schedule.daysOfWeek).toEqual(['Monday', 'Wednesday', 'Friday'])
+  })
+
+  it('falls back to the first pricing schedule when the aggregate omits daysOfWeek', () => {
+    const schedule = extractAvailabilitySchedule({
+      schedulesAndPricing: {
+        availability: { scheduleType: 'fixedTimeSlot', timeSlots: [{ startTime: '08:00' }], weeklySchedule: {} },
+        pricingSchedules: {
+          schedules: [{ name: 'Time', type: 'fixedTimeSlot', daysOfWeek: ['Saturday'], timeSlots: [{ startTime: '08:00' }] }],
+        },
+      },
+    })
+    expect(schedule.daysOfWeek).toEqual(['Saturday'])
+  })
+
+  it('defaults to an empty list when the schedule has no weekday data', () => {
+    const schedule = extractAvailabilitySchedule({
+      schedulesAndPricing: {
+        availability: { scheduleType: 'operatingHours', weeklySchedule: {} },
+      },
+    })
+    expect(schedule.daysOfWeek).toEqual([])
   })
 })

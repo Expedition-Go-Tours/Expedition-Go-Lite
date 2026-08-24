@@ -923,7 +923,9 @@ export default function TourDetailPage() {
                   tour={tour}
                   getAvailability={(date: Date) => {
                     const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
-                    return availabilityMap.get(key) || 'available'
+                    // Raw status only — the widget resolves the final day
+                    // state (incl. the supplier's operating days) itself.
+                    return availabilityMap.get(key)
                   }}
                   getDayInfo={(date: Date) => {
                     const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`

@@ -36,6 +36,7 @@ import type { ResolveTourSource } from '../lib/resolvePoints'
 import type { PickupZoneMapTour } from '../components/booking/PickupZoneMap'
 import OptimizedImage from '@/components/shared/OptimizedImage'
 import {
+  isSupplierOperatingDay,
   openingHoursForDay,
   weeklyHoursRange,
   formatTimeSlotList,
@@ -77,6 +78,7 @@ interface MeetingPickupInfo {
   /** Supplier's Step-14 availability scheduling ("Time slots" vs "Opening hours"). */
   scheduleType?: TourScheduleInfo['scheduleType']
   timeSlots?: TourScheduleInfo['timeSlots']
+  daysOfWeek?: TourScheduleInfo['daysOfWeek']
   weeklySchedule?: TourScheduleInfo['weeklySchedule']
   operatingHoursStart?: string
   operatingHoursEnd?: string
@@ -132,6 +134,7 @@ const FALLBACK_TOUR = {
   dropoffDescription: '',
   scheduleType: undefined as MeetingPickupInfo['scheduleType'],
   timeSlots: [] as NonNullable<MeetingPickupInfo['timeSlots']>,
+  daysOfWeek: [] as NonNullable<MeetingPickupInfo['daysOfWeek']>,
   weeklySchedule: {} as NonNullable<MeetingPickupInfo['weeklySchedule']>,
   operatingHoursStart: '',
   operatingHoursEnd: '',
@@ -2029,6 +2032,11 @@ export default function BookingPage() {
     const selectedDate = editableTour.selectedDate || editableTour.date
     if (!selectedDate) {
       setPromoError('Select a date first to validate the code')
+      return
+    }
+    // A promo can never be applied on a day the tour doesn't run.
+    if (!isSupplierOperatingDay(editableTour as TourScheduleInfo, new Date(`${selectedDate}T00:00:00`))) {
+      setPromoError('This tour does not run on the selected date')
       return
     }
     setPromoLoading(true)

@@ -45,6 +45,9 @@ export type ScheduleType = 'fixedTimeSlot' | 'operatingHours'
 export interface TourScheduleInfo {
   scheduleType?: ScheduleType
   timeSlots?: { startTime: string; endTime?: string }[]
+  /** Supplier-set weekdays the tour runs on (Step 14). Empty when unset —
+      treated as "all days", mirroring the backend's calendar builder. */
+  daysOfWeek?: string[]
   weeklySchedule?: Record<string, { startTime: string; endTime: string }[]>
   operatingHoursStart?: string
   operatingHoursEnd?: string
@@ -54,6 +57,57 @@ const DAY_ORDER = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Satu
 const DAY_SHORT: Record<string, string> = {
   Monday: 'Mon', Tuesday: 'Tue', Wednesday: 'Wed', Thursday: 'Thu',
   Friday: 'Fri', Saturday: 'Sat', Sunday: 'Sun',
+}
+
+/**
+ * The weekdays the supplier has actually set the tour to run on: the explicit
+ * `daysOfWeek` list when present, else the days that carry operating hours in
+ * the weekly schedule, else `null` (unknown — every day is treated as
+ * operating, which is exactly how the backend's calendar builder behaves for
+ * tours whose schedule predates the weekday picker).
+ */
+export function supplierOperatingDays(schedule?: TourScheduleInfo): string[] | null {
+  if (!schedule) return null
+  if (Array.isArray(schedule.daysOfWeek) && schedule.daysOfWeek.length > 0) {
+    return schedule.daysOfWeek
+  }
+  const ws = schedule.weeklySchedule
+  if (ws) {
+    const active = Object.keys(ws).filter((d) => Array.isArray(ws[d]) && ws[d].length > 0)
+    if (active.length > 0) return active
+  }
+  return null
+}
+
+/** Whether the supplier's schedule has this date's weekday set to run. */
+export function isSupplierOperatingDay(schedule?: TourScheduleInfo, date?: Date | null): boolean {
+  if (!date) return true
+  const days = supplierOperatingDays(schedule)
+  if (!days) return true
+  const dayName = date.toLocaleDateString('en-US', { weekday: 'long' })
+  return days.includes(dayName)
+}
+
+/**
+ * Effective calendar status for a date. The backend's status is authoritative
+ * where it exists, but a day the supplier did NOT set to run must never render
+ * as bookable:
+ *  1. the API's own `isOperatingDay === false` → 'blocked'
+ *  2. a backend status other than 'available' (limited/full/blocked/past) →
+ *     passed through untouched
+ *  3. otherwise the supplier's weekly schedule decides — an off-day is
+ *     'blocked', an operating day (or an unknown/legacy schedule) is
+ *     'available'
+ */
+export function resolveDayStatus(opts: {
+  schedule?: TourScheduleInfo | undefined
+  date: Date
+  apiStatus?: DayAvailability | undefined
+  apiIsOperatingDay?: boolean | undefined
+}): DayAvailability {
+  if (opts.apiIsOperatingDay === false) return 'blocked'
+  if (opts.apiStatus != null && opts.apiStatus !== 'available') return opts.apiStatus
+  return isSupplierOperatingDay(opts.schedule, opts.date) ? 'available' : 'blocked'
 }
 
 export function formatTime12h(value: string | undefined | null): string {

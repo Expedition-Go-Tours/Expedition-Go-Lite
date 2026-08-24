@@ -108,7 +108,10 @@ function parseJsonMaybe(value: unknown): any {
 }
 
 /** Customer-facing special offer, projected by GET /tours/:id (the backend
-    already filters to ACTIVE offers whose date window includes today). */
+    already filters to ACTIVE offers whose date window includes today).
+    Mirrors the supplier's offer builder (TravioAfrica-Supplier special-offers):
+    every term the customer-facing promo flow needs — the promo code, the
+    offer's valid weekdays, capacity, thresholds and stackability. */
 export interface SpecialOfferData {
   id: string
   name: string
@@ -118,9 +121,27 @@ export interface SpecialOfferData {
   fixedDiscountValue: number | null
   startDate: string | null
   endDate: string | null
+  /** The code customers must enter to redeem this offer (null when the offer
+      auto-applies without a code). */
+  promoCode: string | null
+  /** ALL_DAYS or SPECIFIC_WEEKDAYS — which days of the week the offer applies. */
+  timeSlotMode: 'ALL_DAYS' | 'SPECIFIC_WEEKDAYS'
+  /** Lowercase weekday names the offer is valid on when timeSlotMode is
+      SPECIFIC_WEEKDAYS (e.g. ['monday', 'friday']). */
+  specificWeekdays: string[]
+  capacityType: 'UNLIMITED' | 'CAPPED'
+  maxSpots: number | null
+  minQuantity: number | null
+  minSpendAmount: number | null
+  maxRedemptionsPerCustomer: number | null
+  stackable: boolean
+  earlyBirdAdvanceDays: number | null
+  lastMinuteWindowHours: number | null
+  /** Tours/options this offer is scoped to (for display). */
+  targets: { tourId: string; tourOptionKey: string | null; tourOptionLabel: string | null }[]
 }
 
-function mapSpecialOffers(rawTour: any): SpecialOfferData[] | undefined {
+export function mapSpecialOffers(rawTour: any): SpecialOfferData[] | undefined {
   const offers = rawTour?.specialOffers
   if (!Array.isArray(offers) || offers.length === 0) return undefined
   return offers
@@ -134,6 +155,24 @@ function mapSpecialOffers(rawTour: any): SpecialOfferData[] | undefined {
       fixedDiscountValue: o.fixedDiscountValue != null ? Number(o.fixedDiscountValue) : null,
       startDate: o.startDate || null,
       endDate: o.endDate || null,
+      promoCode: o.promoCode || null,
+      timeSlotMode: o.timeSlotMode === 'SPECIFIC_WEEKDAYS' ? 'SPECIFIC_WEEKDAYS' : 'ALL_DAYS',
+      specificWeekdays: Array.isArray(o.specificWeekdays) ? o.specificWeekdays : [],
+      capacityType: o.capacityType === 'CAPPED' ? 'CAPPED' : 'UNLIMITED',
+      maxSpots: o.maxSpots != null ? Number(o.maxSpots) : null,
+      minQuantity: o.minQuantity != null ? Number(o.minQuantity) : null,
+      minSpendAmount: o.minSpendAmount != null ? Number(o.minSpendAmount) : null,
+      maxRedemptionsPerCustomer: o.maxRedemptionsPerCustomer != null ? Number(o.maxRedemptionsPerCustomer) : null,
+      stackable: o.stackable === true,
+      earlyBirdAdvanceDays: o.earlyBirdAdvanceDays != null ? Number(o.earlyBirdAdvanceDays) : null,
+      lastMinuteWindowHours: o.lastMinuteWindowHours != null ? Number(o.lastMinuteWindowHours) : null,
+      targets: Array.isArray(o.targets)
+        ? o.targets.map((t: any) => ({
+            tourId: t.tourId,
+            tourOptionKey: t.tourOptionKey ?? null,
+            tourOptionLabel: t.tourOptionLabel ?? null,
+          }))
+        : [],
     }))
 }
 
@@ -568,6 +607,7 @@ export type ScheduleType = 'fixedTimeSlot' | 'operatingHours'
 export interface AvailabilityScheduleInfo {
   scheduleType: ScheduleType
   timeSlots: { startTime: string; endTime?: string }[]
+  daysOfWeek: string[]
   weeklySchedule: Record<string, { startTime: string; endTime: string }[]>
   operatingHoursStart?: string
   operatingHoursEnd?: string
@@ -637,9 +677,18 @@ export function extractAvailabilitySchedule(rawTour: any): AvailabilityScheduleI
       if (hours.length > 0) weeklySchedule[day] = hours
     }
 
+    // The weekdays the supplier picked in Step 14 — the calendar picker must
+    // reflect these so a day the tour doesn't run never renders as bookable.
+    // Fixed-time-slot tours carry the list here even though their weekly
+    // hours are empty, so it must be extracted explicitly.
+    const daysOfWeek: string[] = Array.isArray(avail.daysOfWeek) && avail.daysOfWeek.length > 0
+      ? avail.daysOfWeek
+      : (Array.isArray(firstSched.daysOfWeek) ? firstSched.daysOfWeek : [])
+
     return {
       scheduleType,
       timeSlots,
+      daysOfWeek,
       weeklySchedule,
       operatingHoursStart: avail.operatingHoursStart || undefined,
       operatingHoursEnd: avail.operatingHoursEnd || undefined,
@@ -648,6 +697,7 @@ export function extractAvailabilitySchedule(rawTour: any): AvailabilityScheduleI
     return {
       scheduleType: 'operatingHours',
       timeSlots: [],
+      daysOfWeek: [],
       weeklySchedule: {},
     }
   }
@@ -1456,6 +1506,8 @@ export interface TourDetailData extends Omit<TourDetail, 'guide' | 'contact' | '
   /** Supplier's Step-14 availability type: fixed start times or opening hours. */
   scheduleType?: ScheduleType
   timeSlots?: { startTime: string; endTime?: string }[]
+  /** Weekdays the supplier set the tour to run on (empty = all days). */
+  daysOfWeek?: string[]
   weeklySchedule?: Record<string, { startTime: string; endTime: string }[]>
   operatingHoursStart?: string
   operatingHoursEnd?: string
