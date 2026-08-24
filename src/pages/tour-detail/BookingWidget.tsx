@@ -16,7 +16,7 @@ import { useTravelerSelection } from '../../hooks/useTravelerSelection'
 import SupportChatWidget from '../../components/SupportChatWidget'
 import BookingTransition from '../../components/BookingTransition'
 import { fetchWithAuth } from '../../lib/api'
-import { buildPromoValidationPayload, isValidPromoCodeFormat, normalizePromoCode, PROMO_CODE_MIN_LENGTH } from '../../lib/promo'
+import { buildPromoValidationPayload, isValidPromoCodeFormat, normalizePromoCode, PROMO_CODE_MIN_LENGTH, validateOfferAgainstSelection } from '../../lib/promo'
 import './BookingWidget.css'
 
 interface BookingWidgetProps {
@@ -564,10 +564,20 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
   const showPromoPrice =
     promoUnitPrice != null && promoUnitPrice > 0 && promoUnitPrice < originalUnitPrice
 
-  // Auto-applied (non-promo) special offers — surface the engine's discount
-  // only once real pricing exists so we never invent a discount.
-  const appliedOffers = savedAmount > 0 ? activeOffers : []
-  const showOfferChips = appliedOffers.length > 0 || (promoApplied && appliedPromo != null)
+  // Offer eligibility against the CURRENT selection, computed on page load so
+  // the promo info (code, discount, valid days, unmet conditions) is visible
+  // BEFORE the traveler enters anything. The backend projection already
+  // guarantees ACTIVE + in-window at fetch time; this re-checks at render and
+  // against the live date/traveler selection.
+  const offerEligibility = activeOffers.map((offer) => ({
+    offer,
+    result: validateOfferAgainstSelection(offer, {
+      quantity: totalTravelers,
+      subtotal: subtotalAmount > 0 ? subtotalAmount : clientSubtotal,
+      dateISO: selectedDate ? selectedDate.toISOString().slice(0, 10) : undefined,
+    }),
+  }))
+  const showOfferChips = activeOffers.length > 0 || (promoApplied && appliedPromo != null)
 
   // An applied promo must always produce a real discount: if the re-quoted
   // pricing comes back with zero discount (the code no longer applies to the
@@ -627,11 +637,12 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
             ) : null}
           </div>
 
-          {/* Special offers applied on the supplier platform — shown once the
-              pricing engine confirms the discount is actually applied. */}
+          {/* Special offers — shown on page load (before any promo code is
+              entered) with the code to use, valid days, redemption progress
+              and any condition the current selection does not yet meet. */}
           {showOfferChips && (
             <div className="booking-offers">
-              {appliedOffers.map((offer) => (
+              {offerEligibility.map(({ offer, result }) => (
                 <span key={offer.id} className={`booking-offer-chip booking-offer-chip-${String(offer.offerType || '').toLowerCase()}`}>
                   <BadgePercent size={14} />
                   <span className="booking-offer-chip-name">{offer.name}</span>
@@ -646,6 +657,19 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
                       {t('booking.offerValidDays', 'Valid {{days}}', {
                         days: offer.specificWeekdays.map((d) => d.charAt(0).toUpperCase() + d.slice(1, 3)).join(', '),
                       })}
+                    </span>
+                  )}
+                  {!result.ok && (
+                    <span className="booking-offer-chip-code booking-offer-chip-code-warn">
+                      {result.reason === 'quantity' && offer.minQuantity != null
+                        ? t('booking.offerRequiresQuantity', 'Requires {{min}}+ travelers', { min: offer.minQuantity })
+                        : result.reason === 'spend' && offer.minSpendAmount != null
+                          ? t('booking.offerRequiresSpend', 'Requires {{amount}} spend', { amount: formatMoney(offer.minSpendAmount) })
+                          : result.reason === 'weekday'
+                            ? t('booking.offerValidDays', 'Valid {{days}}', {
+                                days: offer.specificWeekdays.map((d) => d.charAt(0).toUpperCase() + d.slice(1, 3)).join(', '),
+                              })
+                            : t('booking.offerExpired', 'Offer expired')}
                     </span>
                   )}
                 </span>
