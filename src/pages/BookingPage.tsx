@@ -1953,8 +1953,9 @@ export default function BookingPage() {
       // autocomplete-resolved address + coordinates (coords stay out of the
       // legacy travelers payload on purpose).
       const hasPickupAddress = contact.pickupLat != null && contact.pickupLng != null && contact.location.trim().length > 0
-      const pickupSelection =
-        showPickupLocation && !contact.pickupLater && (contact.pickupArea || hasPickupAddress)
+      const pickupSelection = contact.pickupLater
+        ? { skipValidation: true }
+        : showPickupLocation && (contact.pickupArea || hasPickupAddress)
           ? {
               // Drawn geoshapes mean the server validates against zone
               // polygons (area mode) — never the location-list mode.
@@ -1977,7 +1978,6 @@ export default function BookingPage() {
           // Only send a pickup location when one was collected (pickup-mode
           // tours); meeting-point tours leave it out entirely.
           ...(contact.location.trim() ? { location: contact.location.trim() } : {}),
-          ...(contact.pickupLater ? { pickupLater: true } : {}),
           details,
         },
         ...(paymentMethodId ? { paymentMethodId } : {}),
