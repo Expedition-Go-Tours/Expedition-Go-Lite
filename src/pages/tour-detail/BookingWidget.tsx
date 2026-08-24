@@ -434,7 +434,12 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
         if (token !== promoCheckRef.current) return
         setPromoApplied(false)
         setAppliedPromo(null)
-        setPromoError(data.message || t('booking.promoInvalid', 'This promo code is not valid for this tour and date'))
+        // A date-change revalidation failure usually just means the offer does
+        // not cover the new date — the booking stays available at the standard
+        // price, so the notice reflects that instead of a generic rejection.
+        setPromoError(quiet
+          ? t('booking.promoNotValidForDate', 'This promo code does not apply on the selected date')
+          : (data.message || t('booking.promoInvalid', 'This promo code is not valid for this tour and date')))
         return
       }
       if (token !== promoCheckRef.current) return
@@ -723,8 +728,9 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
                       onSelectedDateChange?.(date)
                       setSelectedTime(null)
                       // If the chosen date's weekday falls outside any
-                      // specific-weekday offer, surface it as a toast — the
-                      // chip already shows which days the offer is valid on.
+                      // specific-weekday offer, note it as informational —
+                      // the date is still fully bookable at the standard
+                      // price, just without that discount.
                       const weekday = date
                         .toLocaleDateString('en-US', { weekday: 'long' })
                         .toLowerCase()
@@ -733,7 +739,7 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
                         o.specificWeekdays.length > 0 &&
                         !o.specificWeekdays.includes(weekday)
                       )) {
-                        toast.error(t('booking.offerNotValidOnDate', 'Not valid on the selected date'))
+                        toast.info(t('booking.offerNotValidOnDate', 'No discount applies on this date — you can still book at the standard price'))
                       }
                       // Promo codes are date-scoped: re-validate an applied
                       // code against the new date instead of carrying a stale
