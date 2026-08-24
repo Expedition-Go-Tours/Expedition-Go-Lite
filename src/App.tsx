@@ -91,7 +91,7 @@ function AppContent() {
 
   useEffect(() => {
     const unsub = subscribeToAuthState(() => {})
-    return () => { unsub.then((fn) => fn()) }
+    return () => { unsub.then((fn) => fn()) }   
   }, [])
 
   useEffect(() => {
