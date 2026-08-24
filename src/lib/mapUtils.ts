@@ -1,14 +1,13 @@
 import * as maplibregl from 'maplibre-gl'
-import maplibreWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url'
 
 // maplibre resolves its render worker from `import.meta.url` at runtime
 // (new URL('./maplibre-gl-worker.mjs', import.meta.url)), which bundlers
 // cannot statically detect — the worker would never be emitted in production
-// and every map would hang on a silent 404. Importing the worker with Vite's
-// `?url` suffix produces a real, bundled URL in dev and build alike; pinning
-// it here (before any map is created) makes both environments load the same
-// worker file.
-maplibregl.setWorkerUrl(maplibreWorkerUrl)
+// and every map would hang on a silent 404. The worker + its shared chunk are
+// copied verbatim to `public/maplibre-gl/` by the `copy-maplibre-worker` Vite
+// plugin; pinning that same-origin URL here (before any map is created) makes
+// both environments load the same worker file.
+maplibregl.setWorkerUrl('/maplibre-gl/maplibre-gl-worker.mjs')
 
 /**
  * Shared helpers for the storefront maps (booking-page pickup map, pickup
