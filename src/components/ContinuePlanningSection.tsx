@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { Star, Heart, Car, Languages as LanguagesIcon, ShieldCheck, Ban } from 'lucide-react'
 import SectionHeading from './SectionHeading'
 import FormattedPrice from './FormattedPrice'
+import TourCard from './TourCard'
 import { useContinuePlanning, type ContinuePlanningItem } from '../context/ContinuePlanningContext'
 import { useWishlist, toWishlistItem } from '../context/WishlistContext'
 import { getCategoryMeta } from './categoryMeta'
@@ -20,6 +21,31 @@ function shortCancellation(policy?: string): string {
   if (/non[ -]?refundable/.test(lower)) return 'Non-refundable'
   if (lower.includes('free')) return 'Free cancellation'
   return policy.split(' up to')[0].trim()
+}
+
+// Maps a Continue Planning item onto the TourCard props used by the
+// homepage's Recommended carousel, so the mobile cards render identically.
+function toTourCardProps(item: ContinuePlanningItem) {
+  return {
+    id: item.id,
+    title: item.title,
+    location: item.location,
+    price: item.price > 0 ? `$${item.price}` : '',
+    duration: item.duration,
+    features: item.features,
+    image: item.imageUrl,
+    rating: String(item.rating),
+    reviews: item.reviewCount,
+    category: item.category ?? '',
+    languages: item.languages,
+    difficulty: item.difficulty,
+    cancellationPolicy: item.cancellationPolicy,
+    pickupIncluded: item.pickupIncluded,
+    source: item.source,
+    externalUrl: item.externalUrl,
+    slug: item.slug,
+    discount: item.discount,
+  }
 }
 
 function ContinuePlanningCard({ item }: { item: ContinuePlanningItem }) {
@@ -153,6 +179,18 @@ export default function ContinuePlanningSection() {
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
   const [hasOverflow, setHasOverflow] = useState(false)
+  // On mobile the section reuses the Recommended carousel's vertical TourCard
+  // so the two sections look identical; desktop keeps the horizontal card.
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== 'undefined' && !!window.matchMedia && window.matchMedia('(max-width: 767px)').matches,
+  )
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)')
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
 
   const updateArrows = useCallback(() => {
     const el = scrollRef.current
@@ -205,7 +243,11 @@ export default function ContinuePlanningSection() {
             <div className="continue-planning-carousel" ref={scrollRef}>
               {continuePlanning.map((item) => (
                 <div key={item.id} className="continue-planning-card-wrap">
-                  <ContinuePlanningCard item={item} />
+                  {isMobile ? (
+                    <TourCard {...toTourCardProps(item)} imageClean hideFeatures />
+                  ) : (
+                    <ContinuePlanningCard item={item} />
+                  )}
                 </div>
               ))}
             </div>

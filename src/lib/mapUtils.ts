@@ -56,6 +56,10 @@ export function warmMapResources(): void {
 
 /** Supplier's default pin colour (green) for pickup / meeting points. */
 export const TOUR_PIN_COLOR = '#047857'
+/** Brighter green used when a pickup point is the traveller's selection. */
+export const SELECTED_PIN_COLOR = '#179237'
+/** Green draggable pin for the traveller's chosen pickup location. */
+export const DRAGGABLE_PIN_COLOR = '#179237'
 /** Red pin for the traveller's chosen pickup location. */
 export const USER_PIN_COLOR = '#dc2626'
 /** Violet pin for traveller-added (double-clicked) pickup spots. */
@@ -134,6 +138,13 @@ export function pinSvg(color: string): string {
   return `<svg width="32" height="40" viewBox="0 0 32 40" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M16 0C7.16 0 0 7.16 0 16c0 12 16 24 16 24s16-12 16-24C32 7.16 24.84 0 16 0z" fill="${color}"/><circle cx="16" cy="16" r="6" fill="white" stroke="${color}" stroke-width="2"/></svg>`
 }
 
+/** The selected pickup-point pin: the same 32×40 shape in the brighter brand
+    green with a white check mark inside — visually distinct from the plain
+    green pickup pins on a multi-point map. */
+export function selectedPinSvg(): string {
+  return `<svg width="32" height="40" viewBox="0 0 32 40" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M16 0C7.16 0 0 7.16 0 16c0 12 16 24 16 24s16-12 16-24C32 7.16 24.84 0 16 0z" fill="${SELECTED_PIN_COLOR}"/><circle cx="16" cy="16" r="9" fill="white"/><path d="M11 16.5l3.2 3.2L21 13" stroke="${SELECTED_PIN_COLOR}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`
+}
+
 /** "Location not included" pin: red body with a white × — shown when the
     traveller's searched/dragged pickup location falls outside the supplier's
     pickup zones or points. */
@@ -176,7 +187,31 @@ export function pulsingPinElement(color: string, cursor = 'pointer', variant: 'd
   glow.className = 'pin-glow'
   glow.style.setProperty('--pin-color', variant === 'error' ? '#dc2626' : color)
   const pin = document.createElement('div')
+  pin.className = 'map-pin-body'
   pin.innerHTML = variant === 'error' ? errorPinSvg() : pinSvg(color)
+  pin.style.cssText = 'position: relative; z-index: 1; pointer-events: auto;'
+  el.appendChild(glow)
+  el.appendChild(pin)
+  return el
+}
+
+/**
+ * Marker element for the SELECTED pickup point: the bright green check-mark
+ * pin with the same pulsating glow halo (--pin-color = SELECTED_PIN_COLOR).
+ * Used on multi-point maps so the traveller's choice stands out from the
+ * plain green pickup pins. The `.map-pin-body` class lets the map swap the
+ * pin artwork in place when the selection changes.
+ */
+export function selectedPinElement(cursor = 'pointer'): HTMLDivElement {
+  const el = document.createElement('div')
+  el.className = 'maplibregl-marker mapboxgl-marker'
+  el.style.cssText = `position: absolute; top: 0; left: 0; cursor: ${cursor};`
+  const glow = document.createElement('span')
+  glow.className = 'pin-glow'
+  glow.style.setProperty('--pin-color', SELECTED_PIN_COLOR)
+  const pin = document.createElement('div')
+  pin.className = 'map-pin-body'
+  pin.innerHTML = selectedPinSvg()
   pin.style.cssText = 'position: relative; z-index: 1; pointer-events: auto;'
   el.appendChild(glow)
   el.appendChild(pin)
@@ -211,6 +246,43 @@ export function fitMapToPoints(map: maplibregl.Map, points: MapPoint[], padding 
   const bounds = new maplibregl.LngLatBounds()
   for (const p of points) bounds.extend([p.lng, p.lat])
   map.fitBounds(bounds, { padding, maxZoom: 15 })
+}
+
+/** GeoJSON FeatureCollection for a route polyline ([lon, lat] pairs — the
+    GeoJSON coordinate order the Geoapify/Mapbox routing APIs return). */
+export function routeToFeatureCollection(route: { geometry: [number, number][] }): {
+  type: 'FeatureCollection'
+  features: {
+    type: 'Feature'
+    properties: Record<string, never>
+    geometry: { type: 'LineString'; coordinates: [number, number][] }
+  }[]
+} {
+  return {
+    type: 'FeatureCollection',
+    features: [
+      {
+        type: 'Feature',
+        properties: {},
+        geometry: {
+          type: 'LineString',
+          coordinates: route.geometry,
+        },
+      },
+    ],
+  }
+}
+
+/** Small blue dot for the route ORIGIN (the traveller's starting point),
+    visually distinct from the destination's selected green pin. */
+export function routeOriginMarkerElement(): HTMLDivElement {
+  const el = document.createElement('div')
+  el.className = 'maplibregl-marker mapboxgl-marker'
+  el.style.cssText = 'position: absolute; top: 0; left: 0; cursor: default;'
+  el.innerHTML =
+    '<div style="width:16px;height:16px;border-radius:9999px;background:#2563eb;' +
+    'border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.35);"></div>'
+  return el
 }
 
 /** GeoJSON FeatureCollection from polygon rings ordered as [lat, lng]. */
@@ -273,4 +345,28 @@ export function cameraFromGeoData(options: {
   const bounds = new maplibregl.LngLatBounds()
   for (const [lat, lng] of coords) bounds.extend([lng, lat])
   return { bounds, padding: 50, maxZoom: 15 }
+}
+
+/** The traveller's chosen pickup point (a designated tour point). */
+export interface SelectedPoint {
+  lat: number
+  lng: number
+  label?: string | null
+}
+
+/**
+ * True when a tour pin is the traveller's selected pickup point. Matches by
+ * label first (what the pin tooltip shows), then falls back to a tight
+ * coordinate check (~10 m) so selection still highlights the right pin even
+ * when label strings drift (empty/whitespace names, address fallbacks).
+ */
+export function pinMatchesSelection(
+  pin: { lat: number; lng: number; label?: string | null },
+  selected?: SelectedPoint | null,
+): boolean {
+  if (!selected) return false
+  if (pin.label && selected.label && pin.label === selected.label) return true
+  const dLat = Math.abs(pin.lat - selected.lat)
+  const dLng = Math.abs(pin.lng - selected.lng)
+  return dLat < 1e-4 && dLng < 1e-4
 }

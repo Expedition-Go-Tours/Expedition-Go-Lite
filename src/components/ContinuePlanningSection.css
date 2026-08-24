@@ -47,6 +47,10 @@
   align-items: stretch;
 }
 
+.continue-planning-card-wrap > * {
+  width: 100%;
+}
+
 /* Chevrons only make sense once the row actually overflows — a single card
    or a non-scrolling row gets no arrows at all. */
 .continue-planning-section .section-arrows {
@@ -343,9 +347,11 @@
     gap: 16px;
   }
 
+  /* Mobile cards reuse the Recommended carousel's vertical TourCard — same
+     280px width and gap so the two sections line up identically. */
   .continue-planning-card-wrap {
-    width: min(94%, 520px);
-    min-width: min(94%, 520px);
+    width: 280px;
+    min-width: 280px;
   }
 
   /* Mobile never shows chevrons — the row is swiped instead, even when it

@@ -2,29 +2,31 @@
   position: sticky;
   top: var(--navbar-offset, 64px);
   z-index: 20;
-  margin: 20px -16px 0;
+  /* Full-bleed bar: spans exactly the viewport regardless of how wide the
+     parent grid track is, so the bar can never widen the page (negative
+     margins against a mis-sized parent caused a horizontal scrollbar). */
+  width: 100vw;
+  margin: 20px calc(50% - 50vw) 0;
   overflow-x: auto;
   background: #fff;
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
 
-.tour-detail-tabs::-webkit-scrollbar {
-  display: none;
-}
-
-@media (min-width: 640px) {
-  .tour-detail-tabs {
-    margin-left: -24px;
-    margin-right: -24px;
-  }
-}
-
+/* Desktop: the booking widget sits in the right-hand grid column, so the tabs
+   bar must stay inside the main content column — a full-viewport bar runs its
+   border over the widget. `.tour-detail-page` clips stray overflow, so a
+   plain 100% width cannot introduce a horizontal scrollbar. */
 @media (min-width: 1024px) {
   .tour-detail-tabs {
-    margin-left: -32px;
-    margin-right: -32px;
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
   }
+}
+
+.tour-detail-tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .tour-detail-tabs-inner {

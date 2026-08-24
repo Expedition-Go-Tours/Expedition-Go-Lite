@@ -1,9 +1,8 @@
 import { useMemo, useState } from 'react'
-import { Check, MapPin, X, Loader2, AlertCircle } from 'lucide-react'
+import { Check, MapPin, X, Loader2, AlertCircle, Info, ExternalLink } from 'lucide-react'
 import type { PickupAreaShape } from '@/lib/pickupZone'
 import { findPickupAreaForAddress, distanceMeters, hasLocationOnlyAreas, pickupZoneStatus, type PickupZoneStatus } from '@/lib/pickupZone'
 import type { ResolveTourSource, ResolvedTourPoint } from '@/lib/resolvePoints'
-import type { AddCustomPointResult } from '@/hooks/useCustomPickupPoints'
 import type { PickupZoneMapTour } from './PickupZoneMap'
 import LocationPicker from './LocationPicker'
 import LocationMap from './LocationMap'
@@ -11,8 +10,24 @@ import MapErrorBoundary from './MapErrorBoundary'
 import OutOfRangeDistance from './OutOfRangeDistance'
 import TravelTimeChip from './TravelTimeChip'
 import { toNumber } from '@/lib/mapUtils'
+import { appleMapsDirectionsUrl, googleMapsDirectionsUrl } from '@/lib/geoapifyRouting'
 
 const compactTime = (t?: string): string => (t ? t.replace('-', '–') : '')
+
+// Pickup reference windows mirror the supplier's Step 13 options — how long
+// before the activity start pickup happens.
+const PICKUP_REF_LABELS: Record<string, string> = {
+  '0-15': 'Pickup 0–15 min before the activity starts',
+  '0-30': 'Pickup 0–30 min before the activity starts',
+  '0-45': 'Pickup 0–45 min before the activity starts',
+  '0-60': 'Pickup up to 1 hour before the activity starts',
+  '0-90': 'Pickup up to 1.5 hours before the activity starts',
+  '0-120': 'Pickup up to 2 hours before the activity starts',
+}
+function referenceStartLabel(value?: string): string {
+  if (!value) return ''
+  return PICKUP_REF_LABELS[value] || `Pickup ${value} before the activity starts`
+}
 
 export interface PickupLocationSectionTour {
   id?: string
@@ -42,9 +57,9 @@ interface PickupLocationSectionProps {
   resolvedPoints: ResolvedTourPoint[]
   mapTour: ResolveTourSource | null
   resolvingPoints: boolean
-  customPoints: ResolvedTourPoint[]
-  onAddCustomPoint: (lat: number, lng: number) => Promise<AddCustomPointResult>
-  onRemoveCustomPoint: (id: string) => void
+  /** Opens the pickup-selection modal (multi-point tours — locations left,
+      map right; the inline map is not shown for multi-point). */
+  onOpenMap?: () => void
 }
 
 /**
@@ -66,9 +81,7 @@ export default function PickupLocationSection({
   resolvedPoints,
   mapTour,
   resolvingPoints,
-  customPoints,
-  onAddCustomPoint,
-  onRemoveCustomPoint,
+  onOpenMap,
 }: PickupLocationSectionProps) {
   // ── Mode detection ──
   const pickupLocations = tour.pickupLocations || []
@@ -84,12 +97,13 @@ export default function PickupLocationSection({
   // Multi-point: show radio buttons when there are multiple named pickup locations
   const isMultiPoint = hasMultiplePoints
 
-  // ── Radio selection for multi-point tours (null = no selection yet) ──
-  const [pickupChoice, setPickupChoice] = useState<'now' | 'later' | null>(null)
-  /** True after a green pickup-point pin is tapped — the point IS the selected
-      location, so no extra blue pin should be dropped on top of it. Reset as
-      soon as the traveller types/selects something in the location search bar. */
-  const [hideUserPin, setHideUserPin] = useState(false)
+  // ── Radio selection (null = no selection yet) — used by multi-point AND
+  //     zone tours: "Yes, I can add it now" reveals the search bar + map;
+  //     "I don't know yet" defers the pickup location. Initialised from a
+  //     restored draft so a saved "later" choice shows the right radio. ──
+  const [pickupChoice, setPickupChoice] = useState<'now' | 'later' | null>(
+    contact.pickupLater ? 'later' : null,
+  )
 
   // ── Check if searched location is near any pickup point ──
   // The comparison runs against the RESOLVED points (the exact entries the map
@@ -172,16 +186,6 @@ export default function PickupLocationSection({
     }
   }
 
-  const handleDoubleClickPoint = async (lat: number, lng: number): Promise<void> => {
-    const res = await onAddCustomPoint(lat, lng)
-    if (res.status === 'added') {
-      onContactChange('location', res.point.address)
-      onContactChange('pickupLat', res.point.lat)
-      onContactChange('pickupLng', res.point.lng)
-      onContactChange('pickupArea', '')
-    }
-  }
-
   // Tapping a green pickup-point/zone pin on the map selects it directly: the
   // point's label (name first, matching what the pin shows) lands in the
   // location search bar and the coordinates are committed — without dropping
@@ -201,14 +205,6 @@ export default function PickupLocationSection({
     onContactChange('pickupLat', point.lat)
     onContactChange('pickupLng', point.lng)
     onSetTouched((t) => ({ ...t, location: true }))
-    setHideUserPin(true)
-  }
-
-  const handleCustomRowSelect = (p: ResolvedTourPoint) => {
-    onContactChange('location', p.address)
-    onContactChange('pickupLat', p.lat)
-    onContactChange('pickupLng', p.lng)
-    onContactChange('pickupArea', '')
   }
 
   // ── Location error message ──
@@ -236,6 +232,35 @@ export default function PickupLocationSection({
     return geofenced && (zoneStatus === 'outside' || zoneStatus === 'excluded')
   }, [contact.pickupLat, contact.pickupLng, contact.location, isMultiPoint, isNearPickupPoint, geofenced, zoneStatus])
 
+  // Label of the pickup point the traveller's chosen coordinates land on —
+  // a pin tap commits the point's exact coordinates, so a tight radius only
+  // matches a real pin selection (never a loose search near a point). The
+  // matching map pin renders in the bright green check-mark style and the
+  // legend shows "Selected pickup point" instead of the blue user pin.
+  const selectedPinLabel = useMemo(() => {
+    if (contact.pickupLat == null || contact.pickupLng == null) return null
+    for (const p of resolvedPoints) {
+      if (p.kind !== 'point' || p.lat == null || p.lng == null) continue
+      if (distanceMeters(contact.pickupLat, contact.pickupLng, p.lat, p.lng) <= 25) {
+        return p.name || p.address || ''
+      }
+    }
+    return null
+  }, [resolvedPoints, contact.pickupLat, contact.pickupLng])
+
+  // Coordinate + label of the chosen pickup POINT — non-null only when the
+  // traveller picked a designated pickup point (selectedPinLabel set). A plain
+  // map click or free-typed address is NOT a designated point: it must keep
+  // rendering the draggable user pin, so selectedPin stays null there.
+  const selectedPin = useMemo<{ lat: number; lng: number; label?: string } | null>(() => {
+    if (selectedPinLabel == null || contact.pickupLat == null || contact.pickupLng == null) return null
+    return {
+      lat: contact.pickupLat,
+      lng: contact.pickupLng,
+      label: selectedPinLabel,
+    }
+  }, [contact.pickupLat, contact.pickupLng, selectedPinLabel])
+
   // Every designated pickup point/zone (the map's green pins) that has
   // coordinates — each one is listed on the out-of-range card with its own
   // distance & travel time. Polygon-only zones use the polygon's first vertex.
@@ -251,13 +276,21 @@ export default function PickupLocationSection({
     return list
   }, [resolvedPoints])
 
+  // Number of supplier pickup points — shown on the "Pickup locations (N)"
+  // link that opens the selection modal for multi-point tours.
+  const pickupPointsCount = useMemo(
+    () => resolvedPoints.filter((p) => p.kind === 'point').length,
+    [resolvedPoints],
+  )
+
   // ── Render ──
   return (
     <div className="space-y-5">
-      {/* Heading — multi-point tours ask a question, others use a direct label */}
-      {isMultiPoint ? (
+      {/* Heading — multi-point and zone tours ask a question (radio flow),
+          other single-location tours use a direct label. */}
+      {isMultiPoint || geofenced ? (
         <h3 className="text-xl font-bold tracking-tight text-slate-900">
-          Do you know where you want to be picked up?
+          Would you like to choose your pickup point?
         </h3>
       ) : (
         <h3 className="text-xl font-bold tracking-tight text-slate-900">
@@ -267,6 +300,155 @@ export default function PickupLocationSection({
 
       {/* Multi-point: Radio selection with inline content */}
       {isMultiPoint && (
+        <div className="space-y-3">
+          {/* "Yes" option — shows a link to the pickup-point modal (locations
+              list left, map right). No inline map for multi-point tours. */}
+          <div>
+            <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 transition-colors hover:border-slate-300">
+              <input
+                type="radio"
+                name="pickup-choice"
+                checked={pickupChoice === 'now'}
+                onChange={() => {
+                  setPickupChoice('now')
+                  onContactChange('pickupLater', false)
+                }}
+                className="pickup-radio shrink-0"
+              />
+              <span className="text-sm font-medium text-slate-800">Yes, I can add it now</span>
+            </label>
+            {pickupChoice === 'now' && (
+              <div className="mt-4 space-y-4">
+                {/* Link that opens the pickup-selection modal. */}
+                <button
+                  type="button"
+                  onClick={onOpenMap}
+                  className="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3.5 text-left transition-colors hover:border-emerald-300"
+                >
+                  <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-emerald-50 text-[#179237]">
+                    <MapPin className="size-5" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-semibold text-slate-800">
+                      Pickup locations ({pickupPointsCount})
+                    </span>
+                    <span className="block text-xs text-slate-500">
+                      Tap to choose your pickup point on the map.
+                    </span>
+                  </span>
+                  <span className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-emerald-600 underline underline-offset-2">
+                    Select on Map
+                    <MapPin className="size-3.5" />
+                  </span>
+                </button>
+
+                {/* Pickup info — the supplier's pickup description and the
+                    reference window before the activity start. */}
+                {(tour.pickupDescription || referenceStartLabel(tour.referenceStartTime)) && (
+                  <div className="rounded-xl border border-slate-200/40 bg-slate-50/30 px-3.5 py-3">
+                    <div className="space-y-1">
+                      <p className="flex items-center gap-2 font-semibold text-slate-700">
+                        <Info className="size-3.5 text-emerald-600" />
+                        Pickup info
+                      </p>
+                      {tour.pickupDescription && (
+                        <p className="flex items-start gap-2 pl-[22px] leading-relaxed text-slate-500">
+                          <span className="mt-[7px] size-1.5 shrink-0 rounded-full bg-[#179237]" />
+                          <span>{tour.pickupDescription}</span>
+                        </p>
+                      )}
+                      {referenceStartLabel(tour.referenceStartTime) && (
+                        <p className="flex items-start gap-2 pl-[22px] text-slate-500">
+                          <span className="mt-[7px] size-1.5 shrink-0 rounded-full bg-[#179237]" />
+                          <span>{referenceStartLabel(tour.referenceStartTime)}</span>
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Out-of-range: distance & travel time to every pickup point */}
+                {userOutOfRange && contact.pickupLat != null && contact.pickupLng != null && (
+                  <OutOfRangeDistance
+                    from={{ lat: contact.pickupLat, lng: contact.pickupLng }}
+                    points={designatedPoints}
+                    message={`${contact.location} is not one of our pickup points — available pickup points:`}
+                  />
+                )}
+
+                {/* Selected pickup location confirmation */}
+                {selectedPin && (
+                  <div className="flex items-start gap-2.5 rounded-xl border border-emerald-200/60 bg-emerald-50/60 px-3.5 py-2.5">
+                    <Check className="mt-0.5 size-4 shrink-0 text-[#179237]" />
+                    <div className="min-w-0 flex-1 text-sm text-emerald-900">
+                      <p className="font-semibold">
+                        Traveler's pickup location: <span className="underline underline-offset-2">{selectedPinLabel || contact.location}</span>
+                      </p>
+                      {contact.pickupLat != null && contact.pickupLng != null && (
+                        <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+                          <span className="font-semibold text-emerald-700">Directions:</span>
+                          <a
+                            href={googleMapsDirectionsUrl(null, { lat: contact.pickupLat, lng: contact.pickupLng }, 'drive')}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 font-semibold text-emerald-700 underline underline-offset-2 transition-colors hover:text-emerald-900"
+                          >
+                            Open in Google Maps <ExternalLink size={11} />
+                          </a>
+                          <span className="text-emerald-300">·</span>
+                          <a
+                            href={appleMapsDirectionsUrl(null, { lat: contact.pickupLat, lng: contact.pickupLng })}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 font-semibold text-emerald-700 underline underline-offset-2 transition-colors hover:text-emerald-900"
+                          >
+                            Apple Maps <ExternalLink size={11} />
+                          </a>
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* "I don't know yet" option with message below it */}
+          <div>
+            <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 transition-colors hover:border-slate-300">
+              <input
+                type="radio"
+                name="pickup-choice"
+                checked={pickupChoice === 'later'}
+                onChange={() => {
+                  setPickupChoice('later')
+                  onContactChange('pickupLater', true)
+                  onContactChange('location', '')
+                  onContactChange('pickupArea', '')
+                  onContactChange('pickupLat', null)
+                  onContactChange('pickupLng', null)
+                }}
+                className="pickup-radio shrink-0"
+              />
+              <span className="text-sm font-medium text-slate-800">I don't know yet</span>
+            </label>
+            {/* Message appears right under "I don't know yet" when selected */}
+            {pickupChoice === 'later' && (
+              <div className="mt-4 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3">
+                <p className="text-sm font-medium text-sky-800">
+                  Add your pickup location 24 hours before your activity (ideally sooner) so your activity provider can accommodate you
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Pickup location search + map — non-multi-point tours (zone-based and
+          single-location). Zone tours ask the same Yes/No radio question as
+          multi-point tours: "Yes" reveals the search bar + map, "No" defers
+          the pickup location. */}
+      {!isMultiPoint ? (
         <div className="space-y-3">
           {/* "Yes" option with search + map below it */}
           <div>
@@ -289,10 +471,7 @@ export default function PickupLocationSection({
                 {/* Search bar */}
                 <LocationPicker
                   value={contact.location}
-                  onChange={(v) => {
-                    onContactChange('location', v)
-                    setHideUserPin(false)
-                  }}
+                  onChange={(v) => onContactChange('location', v)}
                   onCoordsChange={(lat, lng) => {
                     onContactChange('pickupLat', lat)
                     onContactChange('pickupLng', lng)
@@ -303,19 +482,90 @@ export default function PickupLocationSection({
                   }}
                   onBlur={() => onSetTouched((t) => ({ ...t, location: true }))}
                   placeholder="Search for hotel, address, etc."
-                  valid={hideUserPin}
+                  valid={locationValid}
                   error={locationInvalidMessage}
-                  confirmed={hideUserPin}
                   minimal
                 />
 
-                {/* Out-of-range: distance & travel time to every pickup point */}
-                {userOutOfRange && contact.pickupLat != null && contact.pickupLng != null && (
+                {/* Live zone verdict */}
+                {!contact.pickupArea && zoneStatus === 'in_area' && matchedArea && (
+                  <div className="flex items-start gap-2.5 rounded-xl border border-emerald-200/60 bg-emerald-50/60 px-3.5 py-2.5">
+                    <Check className="mt-0.5 size-4 shrink-0 text-[#179237]" />
+                    <div className="text-sm text-emerald-900">
+                      <p className="font-semibold">
+                        Great, your location is within the <span className="underline underline-offset-2">{matchedArea.name}</span> pickup zone.
+                      </p>
+                      {matchedArea.time && (
+                        <p className="mt-0.5 text-xs text-emerald-700">
+                          Pickup {compactTime(matchedArea.time)} min before the activity starts
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+                {/* Out-of-range: distance & travel time to every pickup zone */}
+                {!contact.pickupArea && zoneStatus === 'outside' && geofenced && contact.pickupLat != null && contact.pickupLng != null && (
                   <OutOfRangeDistance
                     from={{ lat: contact.pickupLat, lng: contact.pickupLng }}
                     points={designatedPoints}
-                    message={`${contact.location} is not one of our pickup points — available pickup points:`}
+                    message="This address isn't inside any of the pickup zones — available pickup zones:"
                   />
+                )}
+                {!contact.pickupArea && zoneStatus === 'excluded' && matchedArea && (
+                  <div className="flex items-start gap-2.5 rounded-xl border border-rose-200/70 bg-rose-50/60 px-3.5 py-2.5">
+                    <MapPin className="mt-0.5 size-4 shrink-0 text-rose-500" />
+                    <p className="text-sm text-rose-700">
+                      This address falls inside a no-pickup zone{matchedArea.name ? ` for \u201C${matchedArea.name}\u201D` : ''} — choose a different address or zone.
+                    </p>
+                  </div>
+                )}
+
+                {/* Selected pickup location confirmation */}
+                {(contact.pickupArea || (zoneStatus === 'in_area' && matchedArea)) && (
+                  <div className="flex items-start gap-2.5 rounded-xl border border-emerald-200/60 bg-emerald-50/60 px-3.5 py-2.5">
+                    <MapPin className="mt-0.5 size-4 shrink-0 text-[#179237]" />
+                    <div className="min-w-0 flex-1 text-sm text-emerald-900">
+                      <p className="font-semibold">
+                        Traveler's pickup location:{' '}
+                        <span className="underline underline-offset-2">{contact.location || contact.pickupArea || matchedArea?.name}</span>
+                      </p>
+                      <p className="mt-0.5 text-xs text-emerald-700">
+                        The exact pickup point and time are confirmed with you directly.
+                      </p>
+                    </div>
+                    {contact.pickupArea && (
+                      <button
+                        type="button"
+                        onClick={() => handlePickupAreaSelect(contact.pickupArea)}
+                        className="shrink-0 rounded p-1 text-emerald-500 transition-colors hover:bg-emerald-100 hover:text-emerald-700"
+                        aria-label={`Remove pickup zone ${contact.pickupArea}`}
+                      >
+                        <X size={14} />
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {/* Multi-point: Red pin message when searched location is not near any pickup point */}
+                {isMultiPoint && !contact.pickupArea && contact.pickupLat != null && contact.pickupLng != null && isNearPickupPoint === null && contact.location.trim().length >= 3 && (
+                  <div className="flex items-start gap-2.5 rounded-xl border border-rose-200/70 bg-rose-50/60 px-3.5 py-2.5">
+                    <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-rose-500">
+                      <AlertCircle className="size-3 text-white" />
+                    </div>
+                    <p className="text-sm text-rose-700">
+                      <span className="font-semibold">{contact.location}</span> is not one of our pickup points. Choose from the available pickup points or adjust your search.
+                    </p>
+                  </div>
+                )}
+
+                {/* Multi-point: Confirmation when searched location is near a pickup point */}
+                {isMultiPoint && !contact.pickupArea && isNearPickupPoint && (
+                  <div className="flex items-start gap-2.5 rounded-xl border border-emerald-200/60 bg-emerald-50/60 px-3.5 py-2.5">
+                    <Check className="mt-0.5 size-4 shrink-0 text-[#179237]" />
+                    <p className="text-sm text-emerald-900">
+                      Great, your location is near the <span className="font-semibold underline underline-offset-2">{isNearPickupPoint.name || isNearPickupPoint.address}</span> pickup point.
+                    </p>
+                  </div>
                 )}
 
                 {/* Map */}
@@ -330,9 +580,11 @@ export default function PickupLocationSection({
                     <MapErrorBoundary resetKey={mapTour || tour}>
                       <LocationMap
                         tour={(mapTour || tour) as PickupZoneMapTour}
-                        userMarker={hideUserPin ? null : { lat: contact.pickupLat, lng: contact.pickupLng }}
+                        userMarker={selectedPin ? null : { lat: contact.pickupLat, lng: contact.pickupLng, label: contact.location }}
                         userOutOfRange={userOutOfRange}
-                        userChosen={contact.pickupLat != null && contact.pickupLng != null}
+                        userChosen={contact.pickupLat != null && contact.pickupLng != null && !selectedPin}
+                        selectedPin={selectedPin}
+                        selectedPinLabel={selectedPinLabel}
                         onPinClick={handlePinClick}
                         onUserPointChange={(lat, lng) => {
                           onContactChange('pickupLat', lat)
@@ -342,9 +594,6 @@ export default function PickupLocationSection({
                         }}
                         onUserAddressChange={(address) => {
                           onContactChange('location', address)
-                        }}
-                        onDoubleClickPoint={(lat, lng) => {
-                          void handleDoubleClickPoint(lat, lng)
                         }}
                       />
                     </MapErrorBoundary>
@@ -391,209 +640,6 @@ export default function PickupLocationSection({
               </div>
             )}
           </div>
-        </div>
-      )}
-
-      {/* Traveller-added spots — not shown for multi-point tours */}
-      {!isMultiPoint && !contact.pickupLater && customPoints.length > 0 && (
-        <div>
-          <p className="flex items-center gap-1.5 px-1 text-[10px] font-bold uppercase tracking-wider text-violet-500">
-            <MapPin className="size-3" /> Added on map
-            <span className="font-semibold text-slate-300">({customPoints.length})</span>
-          </p>
-          <ul className="mt-1.5 space-y-2">
-            {customPoints.map((p) => {
-              const selected = contact.pickupArea === '' && contact.location === p.address && contact.pickupLat === p.lat
-              return (
-                <li key={p.id}>
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    aria-pressed={selected}
-                    onClick={() => handleCustomRowSelect(p)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault()
-                        handleCustomRowSelect(p)
-                      }
-                    }}
-                    className={`flex w-full items-start gap-3 rounded-xl border p-3 text-left transition-colors ${
-                      selected
-                        ? 'border-violet-400 bg-violet-50 ring-1 ring-violet-400/40'
-                        : 'border-slate-200 bg-white hover:border-violet-300'
-                    }`}
-                  >
-                    <MapPin className={`mt-0.5 size-4 shrink-0 ${selected ? 'text-violet-600' : 'text-violet-400'}`} />
-                    <span className="min-w-0 flex-1">
-                      <span className={`block text-sm font-semibold ${selected ? 'text-violet-700' : 'text-slate-800'}`}>
-                        {p.address || 'Added point'}
-                      </span>
-                      {p.lat != null && p.lng != null && (
-                        <span className="block font-mono text-[10px] text-slate-400">
-                          {p.lat.toFixed(5)}, {p.lng.toFixed(5)}
-                        </span>
-                      )}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onRemoveCustomPoint(p.id)
-                      }}
-                      aria-label={`Remove ${p.address || 'added point'}`}
-                      className="shrink-0 rounded p-1 text-slate-400 transition-colors hover:bg-violet-100 hover:text-violet-600"
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                </li>
-              )
-            })}
-          </ul>
-        </div>
-      )}
-
-      {/* Pickup location search + map — only for non-multi-point tours (area-based) */}
-      {!isMultiPoint && !contact.pickupLater ? (
-        <div className="space-y-4">
-          {/* Search bar */}
-          <LocationPicker
-            value={contact.location}
-            onChange={(v) => onContactChange('location', v)}
-            onCoordsChange={(lat, lng) => {
-              onContactChange('pickupLat', lat)
-              onContactChange('pickupLng', lng)
-              if (lat != null && lng != null) {
-                onContactChange('pickupArea', '')
-                onSetTouched((t) => ({ ...t, location: true }))
-              }
-            }}
-            onBlur={() => onSetTouched((t) => ({ ...t, location: true }))}
-            placeholder="Search for hotel, address, etc."
-            valid={locationValid}
-            error={locationInvalidMessage}
-            minimal
-          />
-
-          {/* Live zone verdict */}
-          {!contact.pickupArea && zoneStatus === 'in_area' && matchedArea && (
-            <div className="flex items-start gap-2.5 rounded-xl border border-emerald-200/60 bg-emerald-50/60 px-3.5 py-2.5">
-              <Check className="mt-0.5 size-4 shrink-0 text-[#179237]" />
-              <div className="text-sm text-emerald-900">
-                <p className="font-semibold">
-                  Great, your location is within the <span className="underline underline-offset-2">{matchedArea.name}</span> pickup zone.
-                </p>
-                {matchedArea.time && (
-                  <p className="mt-0.5 text-xs text-emerald-700">
-                    Pickup {compactTime(matchedArea.time)} min before the activity starts
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
-          {/* Out-of-range: distance & travel time to every pickup zone */}
-          {!contact.pickupArea && zoneStatus === 'outside' && geofenced && contact.pickupLat != null && contact.pickupLng != null && (
-            <OutOfRangeDistance
-              from={{ lat: contact.pickupLat, lng: contact.pickupLng }}
-              points={designatedPoints}
-              message="This address isn't inside any of the pickup zones — available pickup zones:"
-            />
-          )}
-          {!contact.pickupArea && zoneStatus === 'excluded' && matchedArea && (
-            <div className="flex items-start gap-2.5 rounded-xl border border-rose-200/70 bg-rose-50/60 px-3.5 py-2.5">
-              <MapPin className="mt-0.5 size-4 shrink-0 text-rose-500" />
-              <p className="text-sm text-rose-700">
-                This address falls inside a no-pickup zone{matchedArea.name ? ` for \u201C${matchedArea.name}\u201D` : ''} — choose a different address or zone.
-              </p>
-            </div>
-          )}
-
-          {/* Zone selected confirmation */}
-          {!contact.pickupLater && contact.pickupArea && (
-            <div className="flex items-start gap-2.5 rounded-xl border border-emerald-200/60 bg-emerald-50/60 px-3.5 py-2.5">
-              <MapPin className="mt-0.5 size-4 shrink-0 text-[#179237]" />
-              <div className="min-w-0 flex-1 text-sm text-emerald-900">
-                <p className="font-semibold">
-                  Pickup zone: <span className="underline underline-offset-2">{contact.pickupArea}</span>
-                </p>
-                <p className="mt-0.5 text-xs text-emerald-700">
-                  The exact pickup point and time are confirmed with you directly.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => handlePickupAreaSelect(contact.pickupArea)}
-                className="shrink-0 rounded p-1 text-emerald-500 transition-colors hover:bg-emerald-100 hover:text-emerald-700"
-                aria-label={`Remove pickup zone ${contact.pickupArea}`}
-              >
-                <X size={14} />
-              </button>
-            </div>
-          )}
-
-          {/* Multi-point: Red pin message when searched location is not near any pickup point */}
-          {isMultiPoint && !contact.pickupArea && contact.pickupLat != null && contact.pickupLng != null && isNearPickupPoint === null && contact.location.trim().length >= 3 && (
-            <div className="flex items-start gap-2.5 rounded-xl border border-rose-200/70 bg-rose-50/60 px-3.5 py-2.5">
-              <div className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-rose-500">
-                <AlertCircle className="size-3 text-white" />
-              </div>
-              <p className="text-sm text-rose-700">
-                <span className="font-semibold">{contact.location}</span> is not one of our pickup points. Choose from the available pickup points or adjust your search.
-              </p>
-            </div>
-          )}
-
-          {/* Multi-point: Confirmation when searched location is near a pickup point */}
-          {isMultiPoint && !contact.pickupArea && isNearPickupPoint && (
-            <div className="flex items-start gap-2.5 rounded-xl border border-emerald-200/60 bg-emerald-50/60 px-3.5 py-2.5">
-              <Check className="mt-0.5 size-4 shrink-0 text-[#179237]" />
-              <p className="text-sm text-emerald-900">
-                Great, your location is near the <span className="font-semibold underline underline-offset-2">{isNearPickupPoint.name || isNearPickupPoint.address}</span> pickup point.
-              </p>
-            </div>
-          )}
-
-          {/* Map */}
-          {showZoneMap && (
-            <div className="space-y-1">
-              {resolvingPoints && (
-                <p className="flex items-center gap-1.5 px-1 text-[11px] font-medium text-slate-400">
-                  <Loader2 className="size-3 animate-spin" />
-                  Locating pickup points…
-                </p>
-              )}
-              <MapErrorBoundary resetKey={mapTour || tour}>
-                <LocationMap
-                  tour={(mapTour || tour) as PickupZoneMapTour}
-                  userMarker={{ lat: contact.pickupLat, lng: contact.pickupLng }}
-                  userOutOfRange={userOutOfRange}
-                  userChosen={contact.pickupLat != null && contact.pickupLng != null}
-                  onPinClick={handlePinClick}
-                  onUserPointChange={(lat, lng) => {
-                    onContactChange('pickupLat', lat)
-                    onContactChange('pickupLng', lng)
-                    onContactChange('pickupArea', '')
-                    onSetTouched((t) => ({ ...t, location: true }))
-                  }}
-                  onUserAddressChange={(address) => {
-                    onContactChange('location', address)
-                  }}
-                  onDoubleClickPoint={(lat, lng) => {
-                    void handleDoubleClickPoint(lat, lng)
-                  }}
-                />
-              </MapErrorBoundary>
-              <TravelTimeChip
-                from={
-                  contact.pickupLat != null && contact.pickupLng != null
-                    ? { lat: contact.pickupLat, lng: contact.pickupLng }
-                    : null
-                }
-                to={meetingPointCoords}
-                destinationLabel="the meeting point"
-              />
-            </div>
-          )}
         </div>
       ) : null}
     </div>
