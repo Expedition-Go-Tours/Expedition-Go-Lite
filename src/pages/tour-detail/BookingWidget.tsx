@@ -16,6 +16,7 @@ import { useTravelerSelection } from '../../hooks/useTravelerSelection'
 import SupportChatWidget from '../../components/SupportChatWidget'
 import BookingTransition from '../../components/BookingTransition'
 import { fetchWithAuth } from '../../lib/api'
+import { buildPromoValidationPayload, isValidPromoCodeFormat, normalizePromoCode, PROMO_CODE_MIN_LENGTH } from '../../lib/promo'
 import './BookingWidget.css'
 
 interface BookingWidgetProps {
@@ -75,7 +76,12 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
   const [promoApplied, setPromoApplied] = useState(false)
   const [promoError, setPromoError] = useState('')
   const [promoLoading, setPromoLoading] = useState(false)
+  const [promoRevalidating, setPromoRevalidating] = useState(false)
   const [appliedPromo, setAppliedPromo] = useState<AppliedPromo | null>(null)
+  // Monotonic token so a stale validation response can never overwrite the
+  // state for a newer code / date (the user can edit the code or change the
+  // date while a validation request is in flight).
+  const promoCheckRef = useRef(0)
   const [pricingResult, setPricingResult] = useState<PricingResult | null>(null)
   const [pricingLoading, setPricingLoading] = useState(false)
   const guestRef = useRef<HTMLDivElement>(null)
@@ -102,12 +108,11 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
     unitPriceFor,
     matchingGroupBand,
     lowestGroupBand,
-    groupMinHeadcount,
-    groupMaxHeadcount,
+    bookableBounds,
     activeGroupBandLabel,
-    mixBounds,
     mixIssues,
-    canAddCount,
+    canIncrementCount,
+    canDecrementCount,
     increment,
     decrement,
     clientSubtotal,
@@ -369,17 +374,17 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
     doFetchPricing(selectedDate.toISOString().slice(0, 10), selectedTime)
   }, [selectedDate, selectedTime, doFetchPricing, t])
 
-  const handleApplyPromo = useCallback(async () => {
-    const code = promoCode.trim()
+  // Validates the current promo code against the backend's special-offer
+  // engine for a concrete date (POST /tours/offers/validate-promo — the same
+  // endpoint that prices the booking). On success the code is marked applied
+  // and the checkout is re-quoted WITH the code so the total reflects the
+  // discount; on failure the code is cleared with a specific message.
+  // `quiet` suppresses the success toast — used for the auto-revalidation on
+  // date change, where a silent success is expected.
+  const validatePromoCode = useCallback(async (date: Date, time: string | null, quiet = false) => {
+    const code = normalizePromoCode(promoCode)
     if (!code) return
-    if (code.length < 3) {
-      setPromoError(t('booking.promoLengthError'))
-      return
-    }
-    if (!selectedDate) {
-      setPromoError(t('booking.promoSelectDateFirst', 'Select a date first to validate the code'))
-      return
-    }
+    const token = ++promoCheckRef.current
     setPromoLoading(true)
     setPromoError('')
     try {
@@ -390,13 +395,13 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
         : (clientSubtotal > 0 ? clientSubtotal : undefined)
       const res = await fetchWithAuth('/tours/offers/validate-promo', {
         method: 'POST',
-        body: JSON.stringify({
-          promoCode: code,
+        body: JSON.stringify(buildPromoValidationPayload({
+          code,
           tourId: tour.id,
-          selectedDate: selectedDate.toISOString().slice(0, 10),
-          ...(basePrice != null ? { basePrice } : {}),
+          dateISO: date.toISOString().slice(0, 10),
           quantity: totalTravelers,
-        }),
+          ...(basePrice != null ? { basePrice } : {}),
+        })),
       })
       const payload = await res.json().catch(() => ({}))
       if (!res.ok) {
@@ -404,11 +409,13 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
       }
       const data = payload.data ?? payload
       if (!data.valid) {
+        if (token !== promoCheckRef.current) return
         setPromoApplied(false)
         setAppliedPromo(null)
         setPromoError(data.message || t('booking.promoInvalid', 'This promo code is not valid for this tour and date'))
         return
       }
+      if (token !== promoCheckRef.current) return
       setPromoApplied(true)
       setPromoError('')
       setAppliedPromo({
@@ -417,17 +424,49 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
         offerType: data.offer?.offerType,
         discountAmount: Number(data.discount?.amount) || 0,
       })
-      toast.success(t('booking.promoApplied'))
+      if (!quiet) toast.success(t('booking.promoApplied'))
       // Re-price with the code so the total reflects the validated discount.
-      doFetchPricing(selectedDate.toISOString().slice(0, 10), selectedTime, code)
+      doFetchPricing(date.toISOString().slice(0, 10), time, code)
     } catch (err) {
+      if (token !== promoCheckRef.current) return
       setPromoApplied(false)
       setAppliedPromo(null)
       setPromoError(err instanceof Error ? err.message : t('booking.promoInvalid', 'This promo code is not valid for this tour and date'))
     } finally {
-      setPromoLoading(false)
+      if (token === promoCheckRef.current) setPromoLoading(false)
     }
-  }, [promoCode, selectedDate, selectedTime, tour.id, totalTravelers, pricingResult, clientSubtotal, t, doFetchPricing])
+  }, [promoCode, tour.id, totalTravelers, pricingResult, clientSubtotal, t, doFetchPricing])
+
+  const handleApplyPromo = useCallback(async () => {
+    const code = normalizePromoCode(promoCode)
+    if (!code) return
+    if (code.length < PROMO_CODE_MIN_LENGTH) {
+      setPromoError(t('booking.promoLengthError'))
+      return
+    }
+    if (!isValidPromoCodeFormat(code)) {
+      setPromoError(t('booking.promoFormatError'))
+      return
+    }
+    if (!selectedDate) {
+      setPromoError(t('booking.promoSelectDateFirst', 'Select a date first to validate the code'))
+      return
+    }
+    await validatePromoCode(selectedDate, selectedTime)
+  }, [promoCode, selectedDate, selectedTime, validatePromoCode, t])
+
+  // Removes an applied code and re-quotes WITHOUT it (an explicit empty
+  // forceCode so the stale `promoApplied` closure can't re-thread the code).
+  const handleRemovePromo = useCallback(() => {
+    promoCheckRef.current += 1
+    setPromoApplied(false)
+    setAppliedPromo(null)
+    setPromoError('')
+    setPromoCode('')
+    if (selectedDate) {
+      doFetchPricing(selectedDate.toISOString().slice(0, 10), selectedTime, '')
+    }
+  }, [selectedDate, selectedTime, doFetchPricing])
 
   const selectedDateLabel = selectedDate
     ? selectedDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
@@ -505,6 +544,22 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
   const appliedOffers = savedAmount > 0 ? activeOffers : []
   const showOfferChips = appliedOffers.length > 0 || (promoApplied && appliedPromo != null)
 
+  // An applied promo must always produce a real discount: if the re-quoted
+  // pricing comes back with zero discount (the code no longer applies to the
+  // selected date / traveler mix), clear it with an inline notice instead of
+  // silently showing a full-price total next to an "applied" code. React-
+  // recommended "adjust state during render" pattern — guarded so it only
+  // runs once (clearing the applied state makes the condition false).
+  if (
+    promoApplied && appliedPromo &&
+    !promoRevalidating && !pricingLoading &&
+    pricingResult != null && pricingResult.discounts === 0
+  ) {
+    setPromoApplied(false)
+    setAppliedPromo(null)
+    setPromoError(t('booking.promoNoLongerApplies', 'This promo code no longer applies to the selected date and travelers'))
+  }
+
   return (
     <div className="booking-widget-desktop">
       <div className="booking-widget-card">
@@ -563,7 +618,7 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
                   <BadgePercent size={14} />
                   <span className="booking-offer-chip-name">{appliedPromo.name}</span>
                   <span className="booking-offer-chip-discount">
-                    {appliedPromo.discountAmount > 0 ? `-${formatMoney(appliedPromo.discountAmount)}` : t('booking.promoApplied')}
+                    {savedAmount > 0 ? `-${formatMoney(savedAmount)}` : t('booking.promoApplied')}
                   </span>
                 </span>
               )}
@@ -610,12 +665,19 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
                       setSelectedDate(date)
                       onSelectedDateChange?.(date)
                       setSelectedTime(null)
-                      // Offers are date-scoped — a promo validated for the old
-                      // date may not apply on the new one, so reset it and
-                      // let the auto-pricing (which refires) recalculate.
-                      setPromoApplied(false)
-                      setAppliedPromo(null)
-                      setPromoError('')
+                      // Promo codes are date-scoped: re-validate an applied
+                      // code against the new date instead of carrying a stale
+                      // discount (or silently dropping it). Success is quiet;
+                      // failure clears the code with an inline error.
+                      if (promoApplied && appliedPromo) {
+                        setPromoRevalidating(true)
+                        setPromoError('')
+                        validatePromoCode(date, null, true)
+                          .catch(() => {})
+                          .finally(() => setPromoRevalidating(false))
+                      } else {
+                        setPromoError('')
+                      }
                     }}
                     selectedDate={selectedDate}
                     getAvailability={(date) => {
@@ -771,15 +833,8 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
                   )}
                   {travelerOptions.map((opt) => {
                     const category = travelerGroups.find((g) => categoryKey(g.label) === opt.key)
-                    const canDecrement = isPerGroup
-                      ? groupHeadcount > groupMinHeadcount
-                      : (opt.key === 'adult'
-                          ? opt.count > 1
-                          : opt.count > 0)
-                    const canIncrement = isPerGroup
-                      ? groupHeadcount < groupMaxHeadcount
-                      : (opt.key === 'adult' ? opt.count < 50 : opt.count < 9)
-                    const addBlocked = !isPerGroup && !canAddCount(opt.key)
+                    const canDecrement = canDecrementCount(opt.key)
+                    const canIncrement = canIncrementCount(opt.key)
                     return (
                       <div key={opt.key} className="guest-type">
                         <div className="guest-type-info">
@@ -810,7 +865,7 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
                           <button
                             className="guest-btn"
                             onClick={() => increment(opt.key)}
-                            disabled={!canIncrement || addBlocked}
+                            disabled={!canIncrement}
                             aria-label={`Add one ${opt.label}`}
                           >
                             <Plus size={16} />
@@ -820,9 +875,14 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
                     )
                   })}
 
-                  {mixBounds.min != null && mixBounds.max != null && (
+                  {bookableBounds.max != null && (
                     <p className="booking-slot-note">
-                      {t('booking.bookableRange', 'Bookable by {{min}}–{{max}} travelers', { min: mixBounds.min, max: mixBounds.max })}
+                      {t('booking.bookableRange', 'Bookable by {{min}}–{{max}} travelers', { min: bookableBounds.min, max: bookableBounds.max })}
+                    </p>
+                  )}
+                  {bookableBounds.max == null && bookableBounds.min > 1 && (
+                    <p className="booking-slot-note">
+                      {t('booking.minTravelersNote', 'Minimum {{min}} travelers', { min: bookableBounds.min })}
                     </p>
                   )}
                   {mixIssues.length > 0 && (
@@ -869,7 +929,7 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
                   <div className="booking-savings-row booking-savings-discount">
                     <span>
                       {promoApplied && appliedPromo
-                        ? t('booking.promoDiscount', 'Promo discount')
+                        ? t('booking.promoDiscountNamed', 'Promo discount ({{name}})', { name: appliedPromo.name })
                         : t('booking.specialOfferApplied', 'Special offer applied')}
                     </span>
                     <span className="booking-savings-amount">-{formatMoney(savedAmount)}</span>
@@ -909,35 +969,71 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
           {/* Promo code */}
           <div className="booking-promo">
             <div className="booking-promo-row">
-              <input
-                type="text"
-                value={promoCode}
-                onChange={(e) => {
-                  setPromoCode(e.target.value.toUpperCase())
-                  setPromoApplied(false)
-                  setAppliedPromo(null)
-                  setPromoError('')
-                }}
-                placeholder={t('booking.promoCode')}
-                maxLength={30}
-                className="booking-promo-input"
-              />
-              <button
-                type="button"
-                onClick={handleApplyPromo}
-                disabled={promoLoading}
-                className="booking-promo-btn"
-              >
-                {promoLoading ? t('booking.checking') : t('booking.apply')}
-              </button>
+              {promoApplied && appliedPromo ? (
+                <>
+                  <input
+                    type="text"
+                    value={promoCode}
+                    readOnly
+                    aria-label={t('booking.promoCode')}
+                    className="booking-promo-input booking-promo-input-applied"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleRemovePromo}
+                    disabled={promoLoading}
+                    className="booking-promo-btn booking-promo-remove-btn"
+                  >
+                    {t('booking.removePromo', 'Remove')}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <input
+                    type="text"
+                    value={promoCode}
+                    onChange={(e) => {
+                      // Editing invalidates any in-flight validation for the
+                      // previous code.
+                      promoCheckRef.current += 1
+                      setPromoCode(e.target.value.toUpperCase())
+                      setPromoApplied(false)
+                      setAppliedPromo(null)
+                      setPromoError('')
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        handleApplyPromo()
+                      }
+                    }}
+                    placeholder={t('booking.promoCode')}
+                    maxLength={30}
+                    disabled={promoLoading}
+                    aria-invalid={!!promoError}
+                    aria-describedby={promoError || (promoApplied && appliedPromo) ? 'booking-promo-status' : undefined}
+                    className={`booking-promo-input${promoError ? ' booking-promo-input-error' : ''}`}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleApplyPromo}
+                    disabled={promoLoading}
+                    className="booking-promo-btn"
+                  >
+                    {promoLoading ? t('booking.checking') : t('booking.apply')}
+                  </button>
+                </>
+              )}
             </div>
-            {promoError && <p className="booking-promo-error">{promoError}</p>}
-            {promoApplied && appliedPromo && !promoError && (
-              <p className="booking-promo-success">
-                {t('booking.promoApplied')}
-                {appliedPromo.discountAmount > 0 && ` · ${t('booking.youSave', 'You save')} ${formatMoney(appliedPromo.discountAmount)}`}
-              </p>
-            )}
+            <div id="booking-promo-status" aria-live="polite">
+              {promoError && <p className="booking-promo-error">{promoError}</p>}
+              {promoApplied && appliedPromo && !promoError && (
+                <p className="booking-promo-success">
+                  {t('booking.promoApplied')}
+                  {savedAmount > 0 && ` · ${t('booking.youSave', 'You save')} ${formatMoney(savedAmount)}`}
+                </p>
+              )}
+            </div>
           </div>
 
           {/* Submit */}

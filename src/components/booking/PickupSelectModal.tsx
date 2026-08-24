@@ -1,10 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { AlertTriangle, Car, Check, ChevronDown, Clock, Compass, List, Loader2, MapPin, Pencil, RefreshCw, Search, Star, X } from 'lucide-react'
-import { fetchNearbyPlaces, reverseGeocode, type NearbyPlace } from '@/lib/locations'
-import { fetchNearbyPlacesGoogle, type GoogleNearbyPlace } from '@/lib/googlePlaces'
-import { pinMatchesSelection, type MapPoint } from '@/lib/mapUtils'
-import type { GeoapifyRoute } from '@/lib/geoapifyRouting'
+import { AlertTriangle, Car, Check, ChevronDown, Clock, Compass, List, Loader2, MapPin, Pencil, RefreshCw, Search, X } from 'lucide-react'
+import { reverseGeocode } from '@/lib/locations'
+import { pinMatchesSelection } from '@/lib/mapUtils'
 import DirectionsPanel from './DirectionsPanel'
 import { useLocationAutocomplete, type LocationSuggestion } from '@/hooks/useLocationAutocomplete'
 import { hasLocationOnlyAreas, pickupZoneStatus } from '@/lib/pickupZone'
@@ -36,28 +34,12 @@ interface PickupSelectModalProps {
 
 const compactTime = (t?: string): string => (t ? t.replace('-', '–') : '')
 
-const CATEGORY_LABELS: Record<string, string> = {
-  cafe: 'Café',
-  restaurant: 'Restaurant',
-  hotel: 'Hotel',
-  monument: 'Monument',
-  attraction: 'Attraction',
-  landmark: 'Landmark',
-}
-
 const pointDisplayName = (p: ResolvedTourPoint): string => p.name || p.address || 'Pickup point'
-
-interface NearbyState {
-  id: string
-  places: (NearbyPlace | GoogleNearbyPlace)[]
-  loading: boolean
-}
 
 /**
  * The booking page's pickup/meeting selection modal. Browse the map (OSM-first
  * layered map) and the grouped list; tap a pin or a row to select a pickup
- * zone or pickup point. The selection is reverse-geocoded to an exact address
- * and nearby landmarks (Overpass via /locations/nearby) anchor the spot.
+ * zone or pickup point. The selection is reverse-geocoded to an exact address.
  * "Select" writes the selection back into the form's contact state — on
  * multi-pickup tours it first asks "is this your pickup point?" in a popup.
  *
@@ -120,8 +102,7 @@ function PickupSelectModalContent({
     return match ? match.id : null
   })
   const [addressPreview, setAddressPreview] = useState('')
-  const [nearbyState, setNearbyState] = useState<NearbyState | null>(null)
-  /** Mobile-only: the pickup list lives in a bottom sheet overlaying the map.
+  /** Mobile-only: the pickup list lives in a top sheet overlaying the map.
       Collapsed by default so the map is the hero; desktop ignores this state
       (the list is a static left column there). */
   const [listOpen, setListOpen] = useState(false)
@@ -147,11 +128,6 @@ function PickupSelectModalContent({
   const [dragAddress, setDragAddress] = useState('')
   /** True when the dropped pin is outside the supplier's pickup zone. */
   const [dragOutOfRange, setDragOutOfRange] = useState(false)
-
-  // Directions to the chosen pickup location — the DirectionsPanel resolves
-  // the origin and fetches the Geoapify route, handing the drawn route up so
-  // the map can render it. Multipoint tours only.
-  const [drawnRoute, setDrawnRoute] = useState<GeoapifyRoute | null>(null)
 
   // On multi-pickup tours, tapping a row/pin selects it and zooms the map;
   // the "is this your pickup point?" popup only appears when the footer
@@ -412,52 +388,10 @@ function PickupSelectModalContent({
     setDragOutOfRange(false)
   }
 
-  // Nearby landmarks for the selected point — Google Places Nearby Search
-  // first (richer: ratings + place ids for the pin info windows), falling back
-  // to the backend service (Geoapify → Overpass) when Google is unavailable.
-  // State is only touched in async callbacks (never synchronously in the
-  // effect body) to keep the react-hooks rules happy.
-  useEffect(() => {
-    const selected = allPoints.find((p) => p.id === selectedId)
-    if (!selected || selected.lat == null || selected.lng == null) return
-    const id = selected.id
-    const lat = selected.lat
-    const lng = selected.lng
-    let active = true
-    Promise.resolve().then(() => {
-      if (active) setNearbyState((s) => (s?.id === id ? s : { id, places: [], loading: true }))
-    })
-    void fetchNearbyPlacesGoogle(lat, lng, 3).then(async (googlePlaces) => {
-      let places: (NearbyPlace | GoogleNearbyPlace)[] = googlePlaces
-      if (places.length === 0) {
-        places = await fetchNearbyPlaces(lat, lng, 3)
-      }
-      if (active) setNearbyState({ id, places, loading: false })
-    })
-    return () => {
-      active = false
-    }
-  }, [selectedId, allPoints])
-
   const handlePinClick = (label: string): void => {
     const point = allPoints.find((p) => p.name === label || p.address === label)
     if (point && point.kind !== 'meeting') selectPoint(point)
   }
-
-  const extraPoints: MapPoint[] = useMemo(() => {
-    const active = nearbyState && nearbyState.id === selectedId ? nearbyState : null
-    return (active?.places ?? [])
-      .filter((n) => n.lat != null && n.lng != null)
-      .map((n) => ({
-        lat: n.lat!,
-        lng: n.lng!,
-        label: n.name,
-        kind: 'tour' as const,
-        placeId: 'placeId' in n ? n.placeId : null,
-        rating: 'rating' in n ? n.rating : null,
-        category: n.category,
-      }))
-  }, [nearbyState, selectedId])
 
   const handleConfirm = (): void => {
     const selected = allPoints.find((p) => p.id === selectedId)
@@ -517,9 +451,6 @@ function PickupSelectModalContent({
     return { lat: selected.lat, lng: selected.lng, label: selectedPinLabel ?? undefined }
   }, [pointSelected, selected, selectedPinLabel])
   const canConfirm = !!selected || searchCommitted
-  const activeNearby = nearbyState && nearbyState.id === selectedId ? nearbyState : null
-  const nearby = activeNearby?.places ?? []
-  const nearbyLoading = !!activeNearby?.loading
 
   // The directions DESTINATION — the selected pickup point on MULTI-pickup
   // tours only (single-point tours keep the modal free of directions).
@@ -531,18 +462,6 @@ function PickupSelectModalContent({
     }
     return null
   }, [multiplePickups, allPoints, selectedId])
-  const destinationKey = directionsDestination
-    ? `${directionsDestination.lat.toFixed(6)},${directionsDestination.lng.toFixed(6)}`
-    : 'none'
-
-  // The DirectionsPanel hands the drawn route up so the map can render it.
-  // A panel keyed by destination remounts (and clears the route) on selection
-  // change, so the map never keeps an old polyline.
-  const meetingPointOrigin =
-    meetingPoint && meetingPoint.lat != null && meetingPoint.lng != null
-      ? { lat: meetingPoint.lat, lng: meetingPoint.lng, label: meetingPoint.name || meetingPoint.address || 'Meeting point' }
-      : null
-
 
   // Highlights the traveller's selection in the left list — either picked live
   // in this session, or the previously confirmed location seeded from the
@@ -615,9 +534,9 @@ function PickupSelectModalContent({
     >
       <motion.div
         className="relative flex h-full w-full flex-col overflow-hidden bg-white shadow-2xl sm:h-auto sm:max-h-[92vh] sm:max-w-4xl sm:rounded-2xl"
-        initial={{ opacity: 0, y: 24 }}
+        initial={{ opacity: 0, y: -48 }}
         animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 16 }}
+        exit={{ opacity: 0, y: -32 }}
         transition={{ duration: 0.2 }}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
@@ -795,16 +714,33 @@ function PickupSelectModalContent({
         )}
 
         {/* Body — on mobile the map owns the whole height and the list
-            overlays it as a collapsible bottom sheet (never obstructing the
+            overlays it as a collapsible top sheet (never obstructing the
             map); on desktop the list is a static left column and the body may
             scroll when content exceeds the modal. */}
         <div className="scrollbar-hide relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden md:flex-row md:overflow-y-auto">
-          {/* List panel — desktop: static left column; mobile: bottom sheet
-              sliding over the map (collapsed by default). */}
+          {/* Mobile-only: reopen the pickup list — a button pinned under the
+              modal header (hidden once the top sheet is open, a dragged pin is
+              waiting for confirmation, or a pickup point is already selected —
+              the selection preview shows the choice). */}
+          {!listOpen && !dragPreview && !pointSelected && (
+            <button
+              type="button"
+              onClick={() => setListOpen(true)}
+              className="flex shrink-0 items-center justify-between gap-1.5 border-b border-slate-100 bg-white px-4 py-2.5 text-xs font-semibold text-[#179237] md:hidden"
+            >
+              <span className="flex items-center gap-1.5">
+                <List className="size-3.5" />
+                Pickup locations ({selectable.length})
+              </span>
+              <ChevronDown className="size-3.5" />
+            </button>
+          )}
+          {/* List panel — desktop: static left column; mobile: top sheet
+              sliding down over the map (collapsed by default). */}
           <div
-            className={`absolute inset-x-0 bottom-0 z-20 flex max-h-[60vh] flex-col overflow-hidden rounded-t-2xl border-t border-slate-200 bg-white shadow-[0_-8px_30px_rgba(15,23,42,0.18)] transition-transform duration-300 ease-out ${
-              listOpen ? 'translate-y-0' : 'translate-y-full'
-            } md:static md:z-auto md:max-h-none md:w-80 md:shrink-0 md:translate-y-0 md:rounded-none md:border-t-0 md:border-r md:border-slate-100 md:bg-transparent md:shadow-none`}
+            className={`absolute inset-x-0 top-0 z-20 flex max-h-[60vh] flex-col overflow-hidden rounded-b-2xl border-b border-slate-200 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.18)] transition-transform duration-300 ease-out ${
+              listOpen ? 'translate-y-0' : '-translate-y-full'
+            } md:static md:z-auto md:max-h-none md:w-80 md:shrink-0 md:translate-y-0 md:rounded-none md:border-b-0 md:border-r md:border-slate-100 md:bg-transparent md:shadow-none`}
           >
             {/* Mobile-only sheet handle — collapses the sheet back over the map. */}
             <div className="flex items-center justify-between border-b border-slate-100 px-4 py-2 md:hidden">
@@ -817,7 +753,7 @@ function PickupSelectModalContent({
                 <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-slate-500">
                   <List className="size-3.5" /> Pickup locations ({selectable.length})
                 </span>
-                <ChevronDown className="size-4 text-slate-400" />
+                <ChevronDown className="size-4 rotate-180 text-slate-400" />
               </button>
             </div>
             {/* Scrollable list — scrollbar hidden so the panel stays clean. */}
@@ -907,8 +843,9 @@ function PickupSelectModalContent({
           </div>
 
           {/* Map panel — min-w-0 so the row layout never overflows sideways.
-              On mobile it fills the whole body height (the list sheet floats
-              above it); on desktop it keeps the fixed tall height. */}
+              On mobile it fills the whole body height (the list sheet drops
+              over it from the top); on desktop it keeps the fixed tall
+              height. */}
           <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-slate-50/60">
             <div className="relative min-h-0 flex-1 md:min-h-[560px] md:p-4">
               {loading ? (
@@ -941,9 +878,7 @@ function PickupSelectModalContent({
                   suppressDraggablePin={multiplePickups}
                   focusPoint={focusPoint}
                   onUserPointChange={(lat, lng) => handleDragEnd(lat, lng)}
-                  extraPoints={extraPoints}
                   onPinClick={handlePinClick}
-                  route={drawnRoute}
                 />
                 </MapErrorBoundary>
               ) : (
@@ -1033,39 +968,6 @@ function PickupSelectModalContent({
               )}
             </div>
 
-            {/* Nearby landmarks */}
-            {(nearby.length > 0 || nearbyLoading) && (
-              <div className="border-t border-slate-100 px-4 py-2.5">
-                <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                  <MapPin className="size-3 text-amber-600" />
-                  Nearby landmarks
-                  {nearbyLoading && <Loader2 className="size-3 animate-spin" />}
-                </div>
-                <div className="mt-1.5 flex flex-wrap gap-1.5">
-                  {nearby.map((n, i) => (
-                    <span
-                      key={`${n.name}-${i}`}
-                      className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] font-medium text-amber-800"
-                    >
-                      <span className="size-1.5 rounded-full bg-amber-500" />
-                      {n.name}
-                      {'rating' in n && n.rating != null && (
-                        <span className="inline-flex items-center gap-0.5 font-semibold text-amber-700">
-                          <Star size={9} className="fill-amber-500 text-amber-500" />
-                          {n.rating.toFixed(1)}
-                        </span>
-                      )}
-                      {n.category && (
-                        <span className="text-[10px] font-semibold text-amber-600/70">
-                          · {CATEGORY_LABELS[n.category] || n.category}
-                        </span>
-                      )}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* Selection preview */}
             {searchMarker && !selected && !searchOutOfRange && (
               <div className="flex items-start gap-2 border-t border-slate-100 bg-emerald-50/50 px-4 py-2.5">
@@ -1098,33 +1000,9 @@ function PickupSelectModalContent({
             )}
 
             {/* Directions to the chosen pickup point (multi-pickup tours) —
-                the panel draws the Geoapify route on the map and offers
-                Google/Apple Maps deep-links. Remounts per destination. */}
-            {directionsDestination && (
-              <DirectionsPanel
-                key={destinationKey}
-                destination={directionsDestination}
-                fallbackOrigin={meetingPointOrigin}
-                onRouteChange={setDrawnRoute}
-              />
-            )}
+                Google/Apple Maps deep-links to the selection. */}
+            {directionsDestination && <DirectionsPanel destination={directionsDestination} />}
           </div>
-
-          {/* Mobile-only: reopen the pickup list — a floating pill above the
-              map's bottom edge (hidden once the bottom sheet is open, a
-              dragged pin is waiting for confirmation, or a pickup point is
-              already selected — the selection preview shows the choice). */}
-          {!listOpen && !dragPreview && !pointSelected && (
-            <button
-              type="button"
-              onClick={() => setListOpen(true)}
-              className="absolute bottom-3 left-1/2 z-30 flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-[#179237] shadow-md md:hidden"
-            >
-              <List className="size-3.5" />
-              Pickup locations ({selectable.length})
-              <ChevronDown className="size-3.5 rotate-180" />
-            </button>
-          )}
         </div>
 
         {/* Footer */}

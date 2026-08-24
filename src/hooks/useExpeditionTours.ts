@@ -28,43 +28,70 @@ export function extractStartingPriceFromRaw(sp: unknown): number | null {
   try {
     const data = typeof sp === 'string' ? JSON.parse(sp) : sp as Record<string, any>;
 
+    // The "starting price" is the ADULT rate. The supplier's Step-14 category
+    // order is arbitrary (a Senior or Child row can come first), so a
+    // "first entry" fallback must only fire when there is genuinely no adult
+    // category anywhere — otherwise cards would show the Senior/Child price
+    // (e.g. The Nature Escape showed the Senior rate). Labels are trimmed so
+    // "Adult " / "ADULT" still match.
+    const isAdultLabel = (label: unknown): boolean => {
+      const l = String(label || '').trim().toLowerCase()
+      return l === 'adult' || l === 'adults'
+    }
+
+    let firstSchedulePrice: number | null = null
+    let firstScheduleCategoryPrice: number | null = null
+    let uniformPrice: number | null = null
+
     // Path 1: pricingSchedules -> schedules[].prices/ pricingCategories
     const schedules = (data as any)?.pricingSchedules?.schedules;
     if (Array.isArray(schedules) && schedules.length > 0) {
       for (const s of schedules) {
         const prices = Array.isArray(s?.prices) ? s.prices : [];
         for (const p of prices) {
-          const ag = (p?.ageGroup || '').toLowerCase();
-          if ((ag === 'adult' || ag === 'adults') && p?.retailPrice != null) {
+          if (isAdultLabel(p?.ageGroup) && p?.retailPrice != null) {
             return Number(p.retailPrice);
           }
         }
         const cats = Array.isArray(s?.pricingCategories) ? s.pricingCategories : [];
         for (const c of cats) {
-          const name = (c?.name || '').toLowerCase();
-          if ((name === 'adult' || name === 'adults') && c?.price != null) {
+          if (isAdultLabel(c?.name) && c?.price != null) {
             return Number(c.price);
           }
         }
-        if (s?.uniformPrice != null) return Number(s.uniformPrice);
-        if (prices.length > 0 && prices[0]?.retailPrice != null) return Number(prices[0].retailPrice);
-        if (cats.length > 0 && cats[0]?.price != null) return Number(cats[0].price);
+        if (s?.uniformPrice != null) uniformPrice = Number(s.uniformPrice);
+        if (firstSchedulePrice == null && prices.length > 0 && prices[0]?.retailPrice != null) {
+          firstSchedulePrice = Number(prices[0].retailPrice);
+        }
+        if (firstScheduleCategoryPrice == null && cats.length > 0 && cats[0]?.price != null) {
+          firstScheduleCategoryPrice = Number(cats[0].price);
+        }
       }
     }
 
-    // Path 2: travelerDetails.pricingCategories (no schedules case)
+    // Path 2: travelerDetails.pricingCategories — the authoritative Step-14
+    // source. Checked for the adult rate even when schedules exist, because a
+    // supplier mid-edit can leave the schedule rows without an adult entry
+    // while travelerDetails still carries it.
     const td = (data as any)?.travelerDetails;
     if (td) {
-      if (td.uniformPrice != null) return Number(td.uniformPrice);
+      if (td.uniformPrice != null) uniformPrice = Number(td.uniformPrice);
       const cats = Array.isArray(td.pricingCategories) ? td.pricingCategories : [];
       for (const c of cats) {
-        const name = (c?.name || '').toLowerCase();
-        if ((name === 'adult' || name === 'adults') && c?.price != null) {
+        if (isAdultLabel(c?.name) && c?.price != null) {
           return Number(c.price);
         }
       }
-      if (cats.length > 0 && cats[0]?.price != null) return Number(cats[0].price);
+      if (firstScheduleCategoryPrice == null && cats.length > 0 && cats[0]?.price != null) {
+        firstScheduleCategoryPrice = Number(cats[0].price);
+      }
     }
+
+    // Fallbacks, in priority order — only reached when no adult rate exists:
+    // uniform price, then the first pricing category, then the first price row.
+    if (uniformPrice != null) return uniformPrice;
+    if (firstScheduleCategoryPrice != null) return firstScheduleCategoryPrice;
+    if (firstSchedulePrice != null) return firstSchedulePrice;
 
     return null;
   } catch {
@@ -1162,6 +1189,20 @@ async function enrichExpeditionRecords(records: ExpeditionTourRecord[]): Promise
     }
   } catch (e) {
     console.warn('[enrichExpeditionRecords] batch fallback failed:', e)
+    // Without the batch, the stored startingPrice on curated records would
+    // reach the cards unchanged — and it can be stale/wrong (e.g. a Child or
+    // Senior price for a tour whose adult rate differs). Resolve each record's
+    // price from its own detail fetch (HTTP-cached max-age=60) so the card
+    // still shows the authoritative adult starting price.
+    for (const r of records) {
+      try {
+        const raw = await fetchRawTourBySlugOrId(r.tour.id)
+        const p = extractStartingPriceFromRaw(raw?.schedulesAndPricing)
+        if (p != null) r.tour.startingPrice = p
+      } catch {
+        /* keep the stored value as a last resort */
+      }
+    }
   }
 }
 
@@ -2095,6 +2136,19 @@ export function useSimilarTours(slug: string | undefined) {
           }
         } catch (e) {
           console.warn('[useSimilarTours] batch fallback failed:', e)
+          // Same rule as enrichExpeditionRecords: never let a stale stored
+          // startingPrice (Child/Senior) reach the similar-tour cards when the
+          // batch listing is unavailable — resolve each record's price from
+          // its own detail fetch instead.
+          for (const r of records) {
+            try {
+              const raw = await fetchRawTourBySlugOrId(r.tour.id)
+              const p = extractStartingPriceFromRaw(raw?.schedulesAndPricing)
+              if (p != null) r.tour.startingPrice = p
+            } catch {
+              /* keep the stored value as a last resort */
+            }
+          }
         }
       }
 

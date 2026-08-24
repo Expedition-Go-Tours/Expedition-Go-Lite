@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { extractItinerary, extractMeetingInfo } from './useExpeditionTours'
+import { extractItinerary, extractMeetingInfo, extractStartingPriceFromRaw } from './useExpeditionTours'
 
 function tourWith(productContent: unknown): any {
   return {
@@ -151,5 +151,159 @@ describe('extractMeetingInfo pickup precedence', () => {
     expect(info.pickupType).toBe('address')
     expect(info.pickupAreas).toEqual([])
     expect(info.pickupLocations).toHaveLength(3)
+  })
+})
+
+describe('extractStartingPriceFromRaw', () => {
+  const natureEscape = {
+    travelerDetails: {
+      pricingModel: 'perPerson',
+      pricingApproach: 'dependsOnAge',
+      pricingCategories: [
+        { name: 'Child', price: 200, tiers: [] },
+        { name: 'Adult', price: 300, tiers: [] },
+        { name: 'Senior', price: 350, tiers: [] },
+      ],
+    },
+    pricingSchedules: {
+      currency: 'USD',
+      schedules: [
+        {
+          name: 'Time',
+          type: 'operatingHours',
+          prices: [
+            { ageGroup: 'Child', retailPrice: 200 },
+            { ageGroup: 'Adult', retailPrice: 300 },
+            { ageGroup: 'Senior', retailPrice: 350 },
+          ],
+          pricingCategories: [
+            { name: 'Child', price: 200 },
+            { name: 'Adult', price: 300 },
+            { name: 'Senior', price: 350 },
+          ],
+        },
+      ],
+    },
+  }
+
+  it('returns the adult price when it is not the first schedule entry', () => {
+    expect(extractStartingPriceFromRaw(natureEscape)).toBe(300)
+  })
+
+  it('returns the adult price even when the schedule rows lack an adult entry (senior first)', () => {
+    // A supplier mid-edit can leave the schedule without the adult row while
+    // travelerDetails.pricingCategories (authoritative) still carries it. The
+    // extractor must not fall back to the first schedule row (Senior 350).
+    const seniorFirst = {
+      ...natureEscape,
+      pricingSchedules: {
+        currency: 'USD',
+        schedules: [
+          {
+            name: 'Time',
+            type: 'operatingHours',
+            prices: [
+              { ageGroup: 'Senior', retailPrice: 350 },
+              { ageGroup: 'Child', retailPrice: 200 },
+            ],
+            pricingCategories: [],
+          },
+        ],
+      },
+    }
+    expect(extractStartingPriceFromRaw(seniorFirst)).toBe(300)
+  })
+
+  it('falls back to the adult category price when the adult retailPrice is null', () => {
+    const nullAdultRetail = {
+      ...natureEscape,
+      pricingSchedules: {
+        currency: 'USD',
+        schedules: [
+          {
+            name: 'Time',
+            type: 'operatingHours',
+            prices: [
+              { ageGroup: 'Child', retailPrice: 200 },
+              { ageGroup: 'Adult', retailPrice: null },
+              { ageGroup: 'Senior', retailPrice: 350 },
+            ],
+            pricingCategories: [
+              { name: 'Child', price: 200 },
+              { name: 'Adult', price: 300 },
+              { name: 'Senior', price: 350 },
+            ],
+          },
+        ],
+      },
+    }
+    expect(extractStartingPriceFromRaw(nullAdultRetail)).toBe(300)
+  })
+
+  it('matches adult labels regardless of case or surrounding whitespace', () => {
+    const messyLabels = {
+      ...natureEscape,
+      pricingSchedules: {
+        currency: 'USD',
+        schedules: [
+          {
+            name: 'Time',
+            type: 'operatingHours',
+            prices: [
+              { ageGroup: ' Child ', retailPrice: 200 },
+              { ageGroup: ' ADULT ', retailPrice: 300 },
+              { ageGroup: 'Senior', retailPrice: 350 },
+            ],
+            pricingCategories: [],
+          },
+        ],
+      },
+    }
+    expect(extractStartingPriceFromRaw(messyLabels)).toBe(300)
+  })
+
+  it('keeps the first-entry fallback when no adult category exists anywhere', () => {
+    const noAdult = {
+      travelerDetails: {
+        pricingModel: 'perPerson',
+        pricingApproach: 'dependsOnAge',
+        pricingCategories: [
+          { name: 'Senior', price: 350 },
+          { name: 'Child', price: 200 },
+        ],
+      },
+      pricingSchedules: {
+        currency: 'USD',
+        schedules: [
+          {
+            name: 'Time',
+            type: 'operatingHours',
+            prices: [
+              { ageGroup: 'Senior', retailPrice: 350 },
+              { ageGroup: 'Child', retailPrice: 200 },
+            ],
+            pricingCategories: [],
+          },
+        ],
+      },
+    }
+    expect(extractStartingPriceFromRaw(noAdult)).toBe(350)
+  })
+
+  it('returns the uniform price for sameForEveryone tours', () => {
+    const uniform = {
+      travelerDetails: { pricingModel: 'perPerson', pricingApproach: 'sameForEveryone', uniformPrice: 120 },
+      pricingSchedules: {
+        currency: 'USD',
+        schedules: [{ name: 'Time', type: 'operatingHours', prices: [], pricingCategories: [] }],
+      },
+    }
+    expect(extractStartingPriceFromRaw(uniform)).toBe(120)
+  })
+
+  it('accepts a JSON-string payload and returns null for empty input', () => {
+    expect(extractStartingPriceFromRaw(JSON.stringify(natureEscape))).toBe(300)
+    expect(extractStartingPriceFromRaw(null)).toBeNull()
+    expect(extractStartingPriceFromRaw({})).toBeNull()
   })
 })

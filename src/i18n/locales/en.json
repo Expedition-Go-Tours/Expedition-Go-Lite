@@ -36,6 +36,9 @@
     "promoApplied": "Promo code applied!",
     "promoInvalid": "This promo code is not valid for this tour and date.",
     "promoSelectDateFirst": "Select a date first to validate the code.",
+    "promoDiscountNamed": "Promo discount ({{name}})",
+    "promoNoLongerApplies": "This promo code no longer applies to the selected date and travelers.",
+    "removePromo": "Remove",
     "apply": "Apply",
     "checking": "Checking...",
     "subtotal": "Subtotal",
@@ -67,6 +70,7 @@
     "perPersonShort": "per person",
     "notAllowed": "Not permitted on this tour",
     "bookableRange": "Bookable by {{min}}–{{max}} travelers",
+    "minTravelersNote": "Minimum {{min}} travelers",
     "priceUpdated": "Price updated to reflect the latest availability"
   },
   "common": {

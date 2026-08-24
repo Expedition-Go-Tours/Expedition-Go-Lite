@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { validatePassengerMix } from './passengerMix'
+import { resolveBookableBounds, validatePassengerMix } from './passengerMix'
 import type { TravelerPricing } from './tourTypes'
 
 const cat = (label: string, extra: Partial<TravelerPricing> = {}): TravelerPricing => ({
@@ -46,5 +46,24 @@ describe('validatePassengerMix', () => {
     const cats = [cat('Adult'), cat('Child', { needsAdult: true })]
     const issues = validatePassengerMix(cats, { adult: 2, child: 0 }, { min: 1, max: 15 })
     expect(issues.some((i) => i.type === 'needsAdult')).toBe(false)
+  })
+})
+
+describe('resolveBookableBounds', () => {
+  it('per-person: uses the supplier minimum (default 1) and maximum', () => {
+    expect(resolveBookableBounds({ isPerGroup: false, groupBandMin: 1, groupBandMax: 50, minParticipants: 3, maxParticipants: 10 })).toEqual({ min: 3, max: 10 })
+    expect(resolveBookableBounds({ isPerGroup: false, groupBandMin: 1, groupBandMax: 50, minParticipants: null, maxParticipants: null })).toEqual({ min: 1, max: null })
+    expect(resolveBookableBounds({ isPerGroup: false, groupBandMin: 1, groupBandMax: 50, minParticipants: 2, maxParticipants: null })).toEqual({ min: 2, max: null })
+  })
+
+  it('per-group: takes the wider of the group-size bands and the supplier bounds', () => {
+    expect(resolveBookableBounds({ isPerGroup: true, groupBandMin: 1, groupBandMax: 50, minParticipants: 3, maxParticipants: 10 })).toEqual({ min: 3, max: 10 })
+    expect(resolveBookableBounds({ isPerGroup: true, groupBandMin: 1, groupBandMax: 50, minParticipants: null, maxParticipants: null })).toEqual({ min: 1, max: 50 })
+    expect(resolveBookableBounds({ isPerGroup: true, groupBandMin: 3, groupBandMax: 8, minParticipants: 2, maxParticipants: 5 })).toEqual({ min: 3, max: 5 })
+  })
+
+  it('clamps a mis-configured minimum that sits above the maximum', () => {
+    expect(resolveBookableBounds({ isPerGroup: true, groupBandMin: 1, groupBandMax: 4, minParticipants: 10, maxParticipants: 4 })).toEqual({ min: 4, max: 4 })
+    expect(resolveBookableBounds({ isPerGroup: false, groupBandMin: 1, groupBandMax: 50, minParticipants: 12, maxParticipants: 8 })).toEqual({ min: 8, max: 8 })
   })
 })

@@ -103,14 +103,12 @@ export default function ChangeBookingModal({ tour, isOpen, onClose, onReserve, i
     isPerGroup,
     groupSizeBands,
     travelerGroups,
-    groupHeadcount,
     totalTravelers,
     travelersPayload,
-    groupMinHeadcount,
-    groupMaxHeadcount,
-    mixBounds,
+    bookableBounds,
     mixIssues,
-    canAddCount,
+    canIncrementCount,
+    canDecrementCount,
     increment,
     decrement,
     clientSubtotal,
@@ -452,15 +450,8 @@ export default function ChangeBookingModal({ tour, isOpen, onClose, onReserve, i
               <div>
                 {travelerOptions.map((opt) => {
                   const category = travelerGroups.find((g) => categoryKey(g.label) === opt.key)
-                  const canDecrement = isPerGroup
-                    ? groupHeadcount > groupMinHeadcount
-                    : (opt.key === 'adult'
-                        ? opt.count > 1
-                        : opt.count > 0)
-                  const canIncrement = isPerGroup
-                    ? groupHeadcount < groupMaxHeadcount
-                    : (opt.key === 'adult' ? opt.count < 50 : opt.count < 9)
-                  const addBlocked = !isPerGroup && !canAddCount(opt.key)
+                  const canDecrement = canDecrementCount(opt.key)
+                  const canIncrement = canIncrementCount(opt.key)
                   return (
                     <div key={opt.key} className="guest-type">
                       <div className="guest-type-info">
@@ -491,7 +482,7 @@ export default function ChangeBookingModal({ tour, isOpen, onClose, onReserve, i
                         <button
                           className="guest-btn"
                           onClick={() => increment(opt.key)}
-                          disabled={!canIncrement || addBlocked}
+                          disabled={!canIncrement}
                           aria-label={`Add one ${opt.label}`}
                         >
                           <Plus size={16} />
@@ -502,9 +493,14 @@ export default function ChangeBookingModal({ tour, isOpen, onClose, onReserve, i
                 })}
               </div>
 
-              {mixBounds.min != null && mixBounds.max != null && (
+              {bookableBounds.max != null && (
                 <p className="booking-slot-note">
-                  {t('booking.bookableRange', 'Bookable by {{min}}–{{max}} travelers', { min: mixBounds.min, max: mixBounds.max })}
+                  {t('booking.bookableRange', 'Bookable by {{min}}–{{max}} travelers', { min: bookableBounds.min, max: bookableBounds.max })}
+                </p>
+              )}
+              {bookableBounds.max == null && bookableBounds.min > 1 && (
+                <p className="booking-slot-note">
+                  {t('booking.minTravelersNote', 'Minimum {{min}} travelers', { min: bookableBounds.min })}
                 </p>
               )}
               {mixIssues.length > 0 && (

@@ -30,6 +30,55 @@ export interface PassengerMixIssue {
   message: string
 }
 
+export interface BookableBounds {
+  min: number
+  max: number | null
+}
+
+export interface BookableBoundsInput {
+  isPerGroup: boolean
+  /** Smallest headcount the supplier's group-size bands cover (per-group only). */
+  groupBandMin: number
+  /** Largest headcount the supplier's group-size bands cover (per-group only). */
+  groupBandMax: number
+  /** Supplier's party minimum (travelerDetails.minParticipants). */
+  minParticipants: number | null
+  /** Supplier's party maximum (travelerDetails.maxParticipants). */
+  maxParticipants: number | null
+}
+
+/**
+ * The EFFECTIVE bookable headcount range a traveler picker must enforce,
+ * combining the supplier's capacity bounds (minParticipants/maxParticipants)
+ * with the pricing model's own constraints:
+ *  - per-person: the supplier's minimum (defaulting to 1 traveler), and the
+ *    supplier's maximum when set
+ *  - per-group: the wider of the group-size bands and the supplier's bounds —
+ *    the stepper must never allow a headcount the supplier's bands or capacity
+ *    settings would reject
+ * The range is sanity-clamped so a mis-configured supplier minimum can never
+ * surface an empty/unreachable range.
+ */
+export function resolveBookableBounds({
+  isPerGroup,
+  groupBandMin,
+  groupBandMax,
+  minParticipants,
+  maxParticipants,
+}: BookableBoundsInput): BookableBounds {
+  let min: number
+  let max: number | null
+  if (isPerGroup) {
+    min = Math.max(groupBandMin, minParticipants ?? groupBandMin)
+    max = maxParticipants != null ? Math.min(groupBandMax, maxParticipants) : groupBandMax
+  } else {
+    min = minParticipants ?? 1
+    max = maxParticipants
+  }
+  if (max != null && min > max) min = max
+  return { min, max }
+}
+
 /**
  * Validate a per-category counts map (keyed by categoryKey) against the tour's
  * passenger-mix rules. Returns an array of issues; empty = valid.

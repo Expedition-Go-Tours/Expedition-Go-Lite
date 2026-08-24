@@ -1,8 +1,7 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent, act, waitFor } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { render, screen, fireEvent, act } from '@testing-library/react'
 import PickupSelectModal from './PickupSelectModal'
 import { useLocationAutocomplete } from '@/hooks/useLocationAutocomplete'
-import { fetchGeoapifyRoute } from '@/lib/geoapifyRouting'
 import type { LocationResult } from '@/hooks/useLocationAutocomplete'
 
 vi.mock('@/hooks/useLocationAutocomplete', () => ({
@@ -15,18 +14,6 @@ vi.mock('@/hooks/useLocationAutocomplete', () => ({
     error: null,
   })),
 }))
-
-// The Geoapify routing call is mocked — the real fetch requires a key and a
-// network round-trip. The deep-link/format helpers stay real.
-vi.mock('@/lib/geoapifyRouting', async () => {
-  const actual = await vi.importActual<typeof import('@/lib/geoapifyRouting')>('@/lib/geoapifyRouting')
-  return {
-    ...actual,
-    fetchGeoapifyRoute: vi.fn(),
-  }
-})
-
-const mockFetchGeoapifyRoute = vi.mocked(fetchGeoapifyRoute)
 
 // Capture the props handed to LocationMap so tests can fire the map's
 // onUserPointChange (the drag handler) exactly like the real map would.
@@ -96,7 +83,6 @@ const outsideSearchResult: LocationResult = {
 
 beforeEach(() => {
   vi.clearAllMocks()
-  mockFetchGeoapifyRoute.mockReset()
   mockAutocomplete.mockReturnValue({
     search: vi.fn(),
     retry: vi.fn(),
@@ -105,13 +91,6 @@ beforeEach(() => {
     loading: false,
     error: null,
   })
-})
-
-afterEach(() => {
-  // Remove the navigator.geolocation override installed by the directions tests.
-  if (Object.prototype.hasOwnProperty.call(navigator, 'geolocation')) {
-    delete (navigator as { geolocation?: unknown }).geolocation
-  }
 })
 
 describe('PickupSelectModal search', () => {
@@ -402,26 +381,7 @@ describe('PickupSelectModal search', () => {
     expect(screen.getByRole('button', { name: /Osu/ })).toHaveAttribute('aria-pressed', 'true')
   })
 
-  it('draws Geoapify directions to the selected point on the map', async () => {
-    mockFetchGeoapifyRoute.mockResolvedValue({
-      geometry: [
-        [-0.19, 5.6],
-        [-0.18, 5.56],
-      ],
-      distanceM: 5000,
-      durationSec: 600,
-      steps: [{ instruction: 'Head north', distanceM: 1000, durationSec: 120, mode: 'drive' }],
-    })
-    // Simulate a supported browser with a device location.
-    Object.defineProperty(navigator, 'geolocation', {
-      value: {
-        getCurrentPosition: vi.fn((ok: (p: { coords: { latitude: number; longitude: number } }) => void) =>
-          ok({ coords: { latitude: 5.6, longitude: -0.19 } }),
-        ),
-      },
-      configurable: true,
-    })
-
+  it('shows Google/Apple Maps deep-links when a multi-pickup point is selected', () => {
     render(
       <PickupSelectModal
         {...baseProps}
@@ -432,81 +392,16 @@ describe('PickupSelectModal search', () => {
       />,
     )
 
-    // The "Get directions" control appears once a location is selected.
+    // The directions deep-links appear once a location is selected.
     fireEvent.click(screen.getByText('Osu'))
-    expect(screen.getByRole('button', { name: /Get directions/i })).toBeInTheDocument()
+    const googleLink = screen.getByRole('link', { name: /Open in Google Maps/ })
+    const appleLink = screen.getByRole('link', { name: /Apple Maps/ })
 
-    fireEvent.click(screen.getByRole('button', { name: /Get directions/i }))
-
-    // The route is fetched (device location → selected point) and drawn.
-    await screen.findByText(/≈ 10 min/)
-    expect(mockFetchGeoapifyRoute).toHaveBeenCalledWith(
-      { lat: 5.6, lng: -0.19 },
-      { lat: 5.56, lng: -0.18 },
-      'drive',
-    )
-    expect(mapProps.current.route).toEqual(expect.objectContaining({ distanceM: 5000 }))
-  })
-
-  it('falls back to the meeting point origin and shows the deep-links', async () => {
-    mockFetchGeoapifyRoute.mockResolvedValue(null)
-    render(
-      <PickupSelectModal
-        {...baseProps}
-        points={[
-          { id: 'meeting', kind: 'meeting', name: 'Independence Arch', address: 'Accra', lat: 5.5473, lng: -0.1866, query: '' },
-          { id: 'point-0', kind: 'point', name: 'Osu', address: 'Osu, Accra, Ghana', lat: 5.56, lng: -0.18, query: '' },
-          { id: 'point-1', kind: 'point', name: 'Labone', address: 'Labone, Accra, Ghana', lat: 5.57, lng: -0.17, query: '' },
-        ]}
-      />,
-    )
-    fireEvent.click(screen.getByText('Osu'))
-    fireEvent.click(screen.getByRole('button', { name: /Get directions/i }))
-
-    // No geolocation in jsdom → origin falls back to the tour meeting point.
-    await waitFor(() => expect(screen.getByText(/From: Independence Arch/)).toBeInTheDocument())
-    // Routing failed (mock → null) → the deep-links remain as the fallback path.
-    await screen.findByText(/Couldn't calculate directions/)
-    expect(screen.getByRole('link', { name: /Google Maps/ })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Apple Maps/ })).toBeInTheDocument()
-  })
-
-  it('clears the drawn route when the selection changes', async () => {
-    mockFetchGeoapifyRoute.mockResolvedValue({
-      geometry: [
-        [-0.19, 5.6],
-        [-0.18, 5.56],
-      ],
-      distanceM: 4000,
-      durationSec: 480,
-      steps: [],
-    })
-    Object.defineProperty(navigator, 'geolocation', {
-      value: {
-        getCurrentPosition: vi.fn((ok: (p: { coords: { latitude: number; longitude: number } }) => void) =>
-          ok({ coords: { latitude: 5.6, longitude: -0.19 } }),
-        ),
-      },
-      configurable: true,
-    })
-
-    render(
-      <PickupSelectModal
-        {...baseProps}
-        points={[
-          { id: 'point-0', kind: 'point', name: 'Osu', address: 'Osu, Accra, Ghana', lat: 5.56, lng: -0.18, query: '' },
-          { id: 'point-1', kind: 'point', name: 'Labone', address: 'Labone, Accra, Ghana', lat: 5.57, lng: -0.17, query: '' },
-        ]}
-      />,
-    )
-    fireEvent.click(screen.getByText('Osu'))
-    fireEvent.click(screen.getByRole('button', { name: /Get directions/i }))
-    await screen.findByText(/≈ 8 min/)
-    expect(mapProps.current.route).not.toBeNull()
-
-    // Picking a different location clears the stale route from the map.
-    fireEvent.click(screen.getByText('Labone'))
-    await waitFor(() => expect(mapProps.current.route).toBeNull())
+    expect(googleLink).toHaveAttribute('href', expect.stringContaining('destination=5.56,-0.18'))
+    expect(appleLink).toHaveAttribute('href', expect.stringContaining('daddr=5.56,-0.18'))
+    // No route is fetched or drawn on the map.
+    expect(screen.queryByRole('button', { name: /Get directions/i })).not.toBeInTheDocument()
+    expect(mapProps.current.route).toBeUndefined()
   })
 
   it('shows no directions control on single-point tours', () => {
@@ -520,9 +415,9 @@ describe('PickupSelectModal search', () => {
     )
 
     // Directions are for multi-pickup (and meeting-point) tours — selecting the
-    // single pickup point must NOT reveal a "Get directions" control.
+    // single pickup point must NOT reveal the directions deep-links.
     fireEvent.click(screen.getByText('Osu'))
-    expect(screen.queryByRole('button', { name: /Get directions/i })).not.toBeInTheDocument()
-    expect(mapProps.current.route).toBeNull()
+    expect(screen.queryByRole('link', { name: /Open in Google Maps/ })).not.toBeInTheDocument()
+    expect(mapProps.current.route).toBeUndefined()
   })
 })
