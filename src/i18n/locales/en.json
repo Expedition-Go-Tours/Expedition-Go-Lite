@@ -39,6 +39,7 @@
     "promoNotOperatingDay": "This tour does not run on the selected date.",
     "usePromoCode": "Use code {{code}}",
     "offerValidDays": "Valid {{days}}",
+    "offerNotValidOnDate": "Not valid on the selected date",
     "offerRequiresQuantity": "Requires {{min}}+ travelers",
     "offerRequiresSpend": "Requires {{amount}} spend",
     "offerExpired": "Offer expired",

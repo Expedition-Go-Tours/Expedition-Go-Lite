@@ -666,9 +666,7 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
                         : result.reason === 'spend' && offer.minSpendAmount != null
                           ? t('booking.offerRequiresSpend', 'Requires {{amount}} spend', { amount: formatMoney(offer.minSpendAmount) })
                           : result.reason === 'weekday'
-                            ? t('booking.offerValidDays', 'Valid {{days}}', {
-                                days: offer.specificWeekdays.map((d) => d.charAt(0).toUpperCase() + d.slice(1, 3)).join(', '),
-                              })
+                            ? t('booking.offerNotValidOnDate', 'Not valid on the selected date')
                             : t('booking.offerExpired', 'Offer expired')}
                     </span>
                   )}
