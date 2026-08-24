@@ -659,15 +659,13 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
                       })}
                     </span>
                   )}
-                  {!result.ok && (
+                  {!result.ok && (result.reason === 'quantity' || result.reason === 'spend' || result.reason === 'window') && (
                     <span className="booking-offer-chip-code booking-offer-chip-code-warn">
                       {result.reason === 'quantity' && offer.minQuantity != null
                         ? t('booking.offerRequiresQuantity', 'Requires {{min}}+ travelers', { min: offer.minQuantity })
                         : result.reason === 'spend' && offer.minSpendAmount != null
                           ? t('booking.offerRequiresSpend', 'Requires {{amount}} spend', { amount: formatMoney(offer.minSpendAmount) })
-                          : result.reason === 'weekday'
-                            ? t('booking.offerNotValidOnDate', 'Not valid on the selected date')
-                            : t('booking.offerExpired', 'Offer expired')}
+                          : t('booking.offerExpired', 'Offer expired')}
                     </span>
                   )}
                 </span>
@@ -724,6 +722,19 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
                       setSelectedDate(date)
                       onSelectedDateChange?.(date)
                       setSelectedTime(null)
+                      // If the chosen date's weekday falls outside any
+                      // specific-weekday offer, surface it as a toast — the
+                      // chip already shows which days the offer is valid on.
+                      const weekday = date
+                        .toLocaleDateString('en-US', { weekday: 'long' })
+                        .toLowerCase()
+                      if (activeOffers.some((o) =>
+                        o.timeSlotMode === 'SPECIFIC_WEEKDAYS' &&
+                        o.specificWeekdays.length > 0 &&
+                        !o.specificWeekdays.includes(weekday)
+                      )) {
+                        toast.error(t('booking.offerNotValidOnDate', 'Not valid on the selected date'))
+                      }
                       // Promo codes are date-scoped: re-validate an applied
                       // code against the new date instead of carrying a stale
                       // discount (or silently dropping it). Success is quiet;
