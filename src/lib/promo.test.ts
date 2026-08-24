@@ -3,6 +3,8 @@ import {
   buildPromoValidationPayload,
   isValidPromoCodeFormat,
   normalizePromoCode,
+  validateOfferAgainstSelection,
+  type OfferLike,
 } from './promo'
 
 describe('promo code helpers', () => {
@@ -59,5 +61,51 @@ describe('promo code helpers', () => {
   it('normalizes codes to trimmed uppercase', () => {
     expect(normalizePromoCode('  save10 ')).toBe('SAVE10')
     expect(normalizePromoCode('')).toBe('')
+  })
+})
+
+describe('validateOfferAgainstSelection', () => {
+  const baseOffer: OfferLike = {
+    startDate: null,
+    endDate: null,
+    timeSlotMode: 'ALL_DAYS',
+    specificWeekdays: [],
+    minQuantity: null,
+    minSpendAmount: null,
+  }
+  const sel = { quantity: 2, subtotal: 500 }
+
+  it('passes an offer with no conditions', () => {
+    expect(validateOfferAgainstSelection(baseOffer, sel)).toEqual({ ok: true })
+  })
+
+  it('rejects an offer outside its date window', () => {
+    expect(validateOfferAgainstSelection({ ...baseOffer, endDate: '2026-01-01T00:00:00.000Z' }, sel)).toEqual({ ok: false, reason: 'window' })
+    expect(validateOfferAgainstSelection({ ...baseOffer, startDate: '2099-01-01T00:00:00.000Z' }, sel)).toEqual({ ok: false, reason: 'window' })
+  })
+
+  it('rejects a weekday the selected date does not match', () => {
+    const monFri = { ...baseOffer, timeSlotMode: 'SPECIFIC_WEEKDAYS' as const, specificWeekdays: ['monday', 'friday'] }
+    expect(validateOfferAgainstSelection(monFri, { ...sel, dateISO: '2026-08-24' })).toEqual({ ok: true }) // Monday
+    expect(validateOfferAgainstSelection(monFri, { ...sel, dateISO: '2026-08-25' })).toEqual({ ok: false, reason: 'weekday' }) // Tuesday
+    expect(validateOfferAgainstSelection(monFri, { ...sel, dateISO: '2026-08-29' })).toEqual({ ok: false, reason: 'weekday' }) // Saturday
+  })
+
+  it('skips the weekday check when no date is selected yet', () => {
+    expect(validateOfferAgainstSelection({ ...baseOffer, timeSlotMode: 'SPECIFIC_WEEKDAYS', specificWeekdays: ['monday'] }, sel)).toEqual({ ok: true })
+  })
+
+  it('rejects when the traveler count is below the minimum quantity', () => {
+    expect(validateOfferAgainstSelection({ ...baseOffer, minQuantity: 3 }, sel)).toEqual({ ok: false, reason: 'quantity' })
+    expect(validateOfferAgainstSelection({ ...baseOffer, minQuantity: 2 }, sel)).toEqual({ ok: true })
+  })
+
+  it('rejects when the subtotal is below the minimum spend', () => {
+    expect(validateOfferAgainstSelection({ ...baseOffer, minSpendAmount: 600 }, sel)).toEqual({ ok: false, reason: 'spend' })
+    expect(validateOfferAgainstSelection({ ...baseOffer, minSpendAmount: 500 }, sel)).toEqual({ ok: true })
+  })
+
+  it('reports the first unmet condition only', () => {
+    expect(validateOfferAgainstSelection({ ...baseOffer, minQuantity: 3, minSpendAmount: 600 }, sel)).toEqual({ ok: false, reason: 'quantity' })
   })
 })

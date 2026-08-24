@@ -131,6 +131,8 @@ export interface SpecialOfferData {
   specificWeekdays: string[]
   capacityType: 'UNLIMITED' | 'CAPPED'
   maxSpots: number | null
+  /** How many traveler slots have already redeemed the offer (CAPPED only). */
+  spotsSold: number | null
   minQuantity: number | null
   minSpendAmount: number | null
   maxRedemptionsPerCustomer: number | null
@@ -160,6 +162,7 @@ export function mapSpecialOffers(rawTour: any): SpecialOfferData[] | undefined {
       specificWeekdays: Array.isArray(o.specificWeekdays) ? o.specificWeekdays : [],
       capacityType: o.capacityType === 'CAPPED' ? 'CAPPED' : 'UNLIMITED',
       maxSpots: o.maxSpots != null ? Number(o.maxSpots) : null,
+      spotsSold: o.spotsSold != null ? Number(o.spotsSold) : null,
       minQuantity: o.minQuantity != null ? Number(o.minQuantity) : null,
       minSpendAmount: o.minSpendAmount != null ? Number(o.minSpendAmount) : null,
       maxRedemptionsPerCustomer: o.maxRedemptionsPerCustomer != null ? Number(o.maxRedemptionsPerCustomer) : null,

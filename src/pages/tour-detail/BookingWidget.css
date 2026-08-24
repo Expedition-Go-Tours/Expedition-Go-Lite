@@ -196,6 +196,12 @@
   white-space: nowrap;
 }
 
+/* Unmet condition / fully-redeemed state on the chip. */
+.booking-offer-chip-code-warn {
+  opacity: 1;
+  color: #b45309;
+}
+
 /* Form */
 .booking-form {
   display: flex;

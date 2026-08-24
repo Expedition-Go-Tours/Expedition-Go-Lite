@@ -44,3 +44,60 @@ export function buildPromoValidationPayload(params: {
     ...(params.basePrice != null && Number.isFinite(params.basePrice) ? { basePrice: params.basePrice } : {}),
   }
 }
+
+/* ─── Offer eligibility against the current selection (pre-entry info) ─── */
+
+/** Structural subset of SpecialOfferData the client-side check needs. */
+export interface OfferLike {
+  startDate?: string | null
+  endDate?: string | null
+  timeSlotMode?: 'ALL_DAYS' | 'SPECIFIC_WEEKDAYS'
+  specificWeekdays?: string[]
+  minQuantity?: number | null
+  minSpendAmount?: number | null
+}
+
+export interface OfferEligibilitySelection {
+  /** Current traveler count (the supplier's minQuantity is checked against it). */
+  quantity: number
+  /** Current booking subtotal before discounts (checked against minSpendAmount). */
+  subtotal: number
+  /** Selected travel date as YYYY-MM-DD — undefined when no date is chosen yet. */
+  dateISO?: string
+}
+
+export type OfferEligibilityReason = 'window' | 'weekday' | 'quantity' | 'spend'
+
+export interface OfferValidationResult {
+  ok: boolean
+  reason?: OfferEligibilityReason
+}
+
+/**
+ * Client-side pre-entry eligibility of an offer against the CURRENT selection,
+ * so the widget can show "Use code X — 54% off" (and any unmet condition) on
+ * page load, before the traveler types anything. The server stays the ground
+ * truth for the actual discount — this only decides what info to show.
+ */
+export function validateOfferAgainstSelection(
+  offer: OfferLike,
+  selection: OfferEligibilitySelection
+): OfferValidationResult {
+  const now = Date.now()
+  if (offer.startDate && now < new Date(offer.startDate).getTime()) return { ok: false, reason: 'window' }
+  if (offer.endDate && now > new Date(offer.endDate).getTime()) return { ok: false, reason: 'window' }
+  if (
+    offer.timeSlotMode === 'SPECIFIC_WEEKDAYS' &&
+    Array.isArray(offer.specificWeekdays) &&
+    offer.specificWeekdays.length > 0 &&
+    selection.dateISO
+  ) {
+    const dayName = new Date(`${selection.dateISO}T00:00:00`)
+      .toLocaleDateString('en-US', { weekday: 'long' })
+      .toLowerCase()
+    if (!offer.specificWeekdays.includes(dayName)) return { ok: false, reason: 'weekday' }
+  }
+  if (offer.minQuantity != null && selection.quantity < offer.minQuantity) return { ok: false, reason: 'quantity' }
+  if (offer.minSpendAmount != null && selection.subtotal < offer.minSpendAmount) return { ok: false, reason: 'spend' }
+  return { ok: true }
+}

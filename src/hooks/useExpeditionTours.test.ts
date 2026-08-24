@@ -322,6 +322,7 @@ describe('mapSpecialOffers', () => {
     specificWeekdays: ['monday', 'friday'],
     capacityType: 'CAPPED',
     maxSpots: 50,
+    spotsSold: 12,
     minQuantity: 2,
     minSpendAmount: 100,
     maxRedemptionsPerCustomer: 1,
@@ -348,6 +349,7 @@ describe('mapSpecialOffers', () => {
       specificWeekdays: ['monday', 'friday'],
       capacityType: 'CAPPED',
       maxSpots: 50,
+      spotsSold: 12,
       minQuantity: 2,
       minSpendAmount: 100,
       maxRedemptionsPerCustomer: 1,
@@ -365,6 +367,7 @@ describe('mapSpecialOffers', () => {
     expect(mapped[0].specificWeekdays).toEqual([])
     expect(mapped[0].capacityType).toBe('UNLIMITED')
     expect(mapped[0].maxSpots).toBeNull()
+    expect(mapped[0].spotsSold).toBeNull()
     expect(mapped[0].minQuantity).toBeNull()
     expect(mapped[0].minSpendAmount).toBeNull()
     expect(mapped[0].maxRedemptionsPerCustomer).toBeNull()
