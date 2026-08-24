@@ -207,9 +207,9 @@ const itemVariants = {
 }
 
 const stepContentVariants = {
-  hidden: { opacity: 0, y: 12 },
-  visible: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 120, damping: 18 } },
-  exit: { opacity: 0, y: -8, transition: { duration: 0.12 } },
+  hidden: { opacity: 0, y: 10 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.22, ease: 'easeOut' as const } },
+  exit: { opacity: 0, y: -6, transition: { duration: 0.1, ease: 'easeIn' as const } },
 }
 
 /* --- Mobile Summary Card --- */
@@ -283,11 +283,12 @@ function HoldTimer({ onExpire, lastActivityAt, isExpired }: { onExpire: () => vo
   }
 
   return (
-    <motion.div variants={itemVariants} className="flex items-center justify-center gap-3 rounded-[1.25rem] bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800 shadow-sm">
-      <span className="flex size-8 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 shrink-0">
+    <motion.div variants={itemVariants} className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 rounded-[1.25rem] bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800 shadow-sm">
+      <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
         <Clock className="size-4" />
       </span>
-      <div className="flex items-center gap-4">
+      <span className="shrink-0">We&apos;ll hold your spot for</span>
+      <div className="flex shrink-0 items-center gap-4">
         <CountdownDigit value={m} label="min" />
         <span className="self-start pt-0.5 text-lg font-bold text-emerald-900 tabular-nums">:</span>
         <CountdownDigit value={s} label="sec" />
@@ -300,14 +301,12 @@ function HoldTimer({ onExpire, lastActivityAt, isExpired }: { onExpire: () => vo
 
 function StepCard({ children, id }: { children: React.ReactNode; id?: string }) {
   return (
-    <motion.div
+    <div
       id={id}
-      layout
-      className="rounded-[1.75rem] border border-slate-200/40 bg-white shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)]"
-      transition={{ type: 'spring' as const, stiffness: 120, damping: 18 }}
+      className="scroll-mt-40 rounded-[1.75rem] border border-slate-200/40 bg-white shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] md:scroll-mt-20"
     >
       {children}
-    </motion.div>
+    </div>
   )
 }
 
@@ -631,7 +630,7 @@ function ContactDetailsStep({
         </button>
       </div>
 
-      <AnimatePresence mode="wait">
+      <AnimatePresence mode="popLayout">
         {isActive && (
           <motion.div
             key="contact-active"
@@ -982,7 +981,7 @@ function ActivityDetailsStep({
         </button>
       </div>
 
-      <AnimatePresence mode="wait">
+      <AnimatePresence mode="popLayout">
         {isActive && (
           <motion.div
             key="activity-active"
@@ -1174,7 +1173,7 @@ function PaymentDetailsStep({
         </button>
       </div>
 
-      <AnimatePresence mode="wait">
+      <AnimatePresence mode="popLayout">
         {isActive && (
           <motion.div
             key="payment-active"
@@ -1715,7 +1714,7 @@ export default function BookingPage() {
   useEffect(() => {
     if (canRestore && step > 1) {
       requestAnimationFrame(() => {
-        document.getElementById(`booking-step-${step}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        document.getElementById(`booking-step-${step}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
       })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1807,9 +1806,11 @@ export default function BookingPage() {
   }
 
   const scrollToStep = (n: number) => {
-    requestAnimationFrame(() => {
-      document.getElementById(`booking-step-${n}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    })
+    // Wait for the step-content swap (exit ~0.1s) to settle before scrolling,
+    // so the section header lands at the top of the viewport — never cut off.
+    setTimeout(() => {
+      document.getElementById(`booking-step-${n}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 220)
   }
 
   /* Clickable-step navigation with validation: jumping forward is only allowed

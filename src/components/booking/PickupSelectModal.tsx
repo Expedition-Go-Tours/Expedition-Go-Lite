@@ -719,10 +719,10 @@ function PickupSelectModalContent({
             scroll when content exceeds the modal. */}
         <div className="scrollbar-hide relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden md:flex-row md:overflow-y-auto">
           {/* Mobile-only: reopen the pickup list — a button pinned under the
-              modal header (hidden once the top sheet is open, a dragged pin is
-              waiting for confirmation, or a pickup point is already selected —
-              the selection preview shows the choice). */}
-          {!listOpen && !dragPreview && !pointSelected && (
+              modal header (hidden only while the top sheet is open or a
+              dragged pin waits for confirmation — it stays visible after a
+              pickup point is selected so the list can be reopened). */}
+          {!listOpen && !dragPreview && (
             <button
               type="button"
               onClick={() => setListOpen(true)}

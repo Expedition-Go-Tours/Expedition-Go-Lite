@@ -323,20 +323,22 @@ export default function PickupLocationSection({
                 <button
                   type="button"
                   onClick={onOpenMap}
-                  className="flex w-full items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3.5 text-left transition-colors hover:border-emerald-300"
+                  className="flex w-full flex-col gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3.5 text-left transition-colors hover:border-emerald-300 sm:flex-row sm:items-center"
                 >
-                  <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-emerald-50 text-[#179237]">
-                    <MapPin className="size-5" />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-semibold text-slate-800">
-                      Pickup locations ({pickupPointsCount})
+                  <span className="flex min-w-0 items-center gap-3">
+                    <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-emerald-50 text-[#179237]">
+                      <MapPin className="size-5" />
                     </span>
-                    <span className="block text-xs text-slate-500">
-                      Tap to choose your pickup point on the map.
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm font-semibold text-slate-800">
+                        Pickup locations ({pickupPointsCount})
+                      </span>
+                      <span className="block text-xs text-slate-500">
+                        Tap to choose your pickup point on the map.
+                      </span>
                     </span>
                   </span>
-                  <span className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-emerald-600 underline underline-offset-2">
+                  <span className="inline-flex shrink-0 items-center gap-1 pl-[52px] text-xs font-semibold text-emerald-600 underline underline-offset-2 sm:ml-auto sm:pl-0">
                     Select on Map
                     <MapPin className="size-3.5" />
                   </span>
