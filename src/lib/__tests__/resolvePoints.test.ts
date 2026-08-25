@@ -38,6 +38,16 @@ describe('resolveTourPoints', () => {
     expect(mockFetch).not.toHaveBeenCalled()
   })
 
+  it('carries the area radiusKm through for location-only pickup zones', async () => {
+    const points = await resolveTourPoints({
+      meetingMode: 'pickup',
+      pickupAreas: [{ name: 'Oasis Park', lat: 5.626746, lng: -0.169995, radiusKm: 15 }],
+    })
+    expect(points).toHaveLength(1)
+    expect(points[0]).toMatchObject({ kind: 'zone', radiusKm: 15 })
+    expect(mockFetch).not.toHaveBeenCalled()
+  })
+
   it('geocodes points that lack coordinates via the backend search endpoint', async () => {
     mockFetch.mockResolvedValueOnce(
       ok([{ formatted: 'Osu, Accra, Ghana', latitude: 5.5555, longitude: -0.1877 }]),
@@ -123,6 +133,17 @@ describe('resolvedPointsToTour', () => {
     const tour = resolvedPointsToTour(points, { meetingMode: 'pickup' })
     expect(tour.pickupAreas).toHaveLength(1)
     expect(tour.pickupAreas?.[0]).toMatchObject({ name: 'Polygon Zone', polygon })
+  })
+
+  it('round-trips the area radiusKm into the map tour for location-only zones', async () => {
+    const source = {
+      meetingMode: 'pickup' as const,
+      pickupAreas: [{ name: 'Oasis Park', lat: 5.626746, lng: -0.169995, radiusKm: 15 }],
+    }
+    const points = await resolveTourPoints(source)
+    const tour = resolvedPointsToTour(points, source)
+    expect(tour.pickupAreas).toHaveLength(1)
+    expect(tour.pickupAreas?.[0]).toMatchObject({ name: 'Oasis Park', lat: 5.626746, lng: -0.169995, radiusKm: 15 })
   })
 
   it('handles meetingMode === "none" gracefully', () => {

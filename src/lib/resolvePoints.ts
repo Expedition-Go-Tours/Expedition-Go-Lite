@@ -23,6 +23,8 @@ export interface ResolvedTourPoint {
   time?: string
   polygon?: [number, number][]
   exclusions?: [number, number][][]
+  /** Geofence radius (km) for a location-only pickup area (no drawn geoshape). */
+  radiusKm?: number | null
   /** True when the point has no coordinates and geocoding failed/returned nothing. */
   unresolved?: boolean
   /** The name/address string used for geocoding (shown with the retry affordance). */
@@ -182,6 +184,7 @@ export async function resolveTourPoints(tour: ResolveTourSource | null | undefin
           time: area.time,
           polygon,
           exclusions,
+          radiusKm: area.radiusKm,
         }, areaGeocodes[i]),
       )
     })
@@ -250,6 +253,7 @@ export function resolvedPointsToTour(points: ResolvedTourPoint[], source: Resolv
       time: p.time,
       polygon: p.polygon,
       exclusions: p.exclusions,
+      radiusKm: p.radiusKm,
     }))
   tour.pickupLocations = spots.map((p) => ({
     name: p.name || undefined,
