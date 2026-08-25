@@ -57,9 +57,9 @@ function HomePage() {
       <MountOnView><TopAttractionsNearbySection /></MountOnView>
       <MountOnView><CustomReviewsSection /></MountOnView>
       <MountOnView><WhyBookSection /></MountOnView>
-      <MountOnView><PartnersSection /></MountOnView>
       <MountOnView><TravelStoriesSection /></MountOnView>
       <MountOnView><NewsletterSection /></MountOnView>
+      <MountOnView><PartnersSection /></MountOnView>
       <Footer />
     </>
   )
