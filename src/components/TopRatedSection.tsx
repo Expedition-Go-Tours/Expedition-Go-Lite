@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import SectionHeading from './SectionHeading'
 import TourCard from './TourCard'
 import { topRatedTours } from './data'
+import { useTopRated, mapToTourCard } from '../hooks/useHomepageSections'
 import './TopRatedSection.css'
 
 const CARD_WIDTH = 295
@@ -13,7 +14,8 @@ export default function TopRatedSection() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
-  const items = topRatedTours
+  const { data: liveData } = useTopRated(12)
+  const items = liveData?.length ? liveData.map(mapToTourCard) : topRatedTours
 
   const updateArrows = useCallback(() => {
     const el = scrollRef.current

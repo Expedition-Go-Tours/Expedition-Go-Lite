@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next'
 import { Clock, X } from 'lucide-react'
 import { useSearchAutocomplete, type SearchSuggestion } from '../hooks/useSearchAutocomplete'
 import { useRecentSearches } from '../hooks/useRecentSearches'
+import { trackSearch } from '../lib/analytics'
 import './SearchBar.css'
 import OptimizedImage from '@/components/shared/OptimizedImage'
 
@@ -69,6 +70,7 @@ export default function SearchBar() {
     const q = inputValue.trim()
     if (!q) return
 
+    trackSearch(q)
     navigate(`/search?q=${encodeURIComponent(q)}`)
   }, [inputValue, navigate])
 
