@@ -13,6 +13,10 @@ import './TopAttractionsNearbySection.css'
 const CARD_WIDTH = 295
 const GAP = 16
 
+interface Props {
+  preloaded?: HomepageTour[]
+}
+
 function AttractionCard({ attraction, hasTour }: { attraction: Attraction; hasTour: boolean }) {
   const { t } = useTranslation()
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist()
@@ -113,14 +117,14 @@ function mapToAttraction(t: HomepageTour): Attraction {
   }
 }
 
-export default function TopAttractionsNearbySection() {
+export default function TopAttractionsNearbySection({ preloaded }: Props) {
   const { t } = useTranslation()
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
   const { data: liveAttractions } = useTopAttractions(10)
   const [sortedAttractions, setSortedAttractions] = useState<Attraction[]>(
-    liveAttractions?.length ? liveAttractions.map(mapToAttraction) : attractionsNearby
+    (preloaded ?? liveAttractions)?.length ? (preloaded ?? liveAttractions)!.map(mapToAttraction) : attractionsNearby
   )
   const [locationError, setLocationError] = useState<string | null>(() =>
     typeof navigator !== 'undefined' && navigator.geolocation ? null : 'Geolocation not supported',
@@ -133,9 +137,10 @@ export default function TopAttractionsNearbySection() {
   )
 
   useEffect(() => {
+    const data = preloaded ?? liveAttractions
     // If API returned live data (already proximity-sorted), use it directly
-    if (liveAttractions?.length) {
-      setSortedAttractions(liveAttractions.map(mapToAttraction))
+    if (data?.length) {
+      setSortedAttractions(data.map(mapToAttraction))
       return
     }
 
@@ -159,7 +164,7 @@ export default function TopAttractionsNearbySection() {
       },
       { enableHighAccuracy: false, timeout: 5000, maximumAge: 300000 },
     )
-  }, [liveAttractions])
+  }, [preloaded, liveAttractions])
 
   const updateArrows = useCallback(() => {
     const el = scrollRef.current

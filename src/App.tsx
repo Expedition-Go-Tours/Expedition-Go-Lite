@@ -39,23 +39,25 @@ import { ContinuePlanningProvider } from './context/ContinuePlanningContext'
 import SupportChatWidget from './components/SupportChatWidget'
 import { subscribeToAuthState, handleGoogleCallback, getAuthReturnTo, clearAuthReturnTo } from './lib/auth'
 import { trackPageView, requestLocation } from './lib/analytics'
+import { useHomepage } from './hooks/useHomepageSections'
 
 
 type PageView = 'home' | 'signin' | 'signup'
 
 function HomePage() {
+  const { data: homepage } = useHomepage()
   return (
     <>
       <Hero />
       <ContinuePlanningSection />
-      <MoodSection />
-      <RecommendSection />
-      <PopularLocations />
-      <MountOnView><TopRatedSection /></MountOnView>
-      <MountOnView><SellOutSection /></MountOnView>
+      <MoodSection preloaded={homepage?.mood} />
+      <RecommendSection preloaded={homepage?.recommended} />
+      <PopularLocations preloaded={homepage?.destinations} />
+      <MountOnView><TopRatedSection preloaded={homepage?.topRated} /></MountOnView>
+      <MountOnView><SellOutSection preloaded={homepage?.sellOut} /></MountOnView>
       <MountOnView><LastMinuteDealsSection /></MountOnView>
       <MountOnView><NewExperiencesSection /></MountOnView>
-      <MountOnView><TopAttractionsNearbySection /></MountOnView>
+      <MountOnView><TopAttractionsNearbySection preloaded={homepage?.attractions} /></MountOnView>
       <MountOnView><CustomReviewsSection /></MountOnView>
       <MountOnView><WhyBookSection /></MountOnView>
       <MountOnView><TravelStoriesSection /></MountOnView>

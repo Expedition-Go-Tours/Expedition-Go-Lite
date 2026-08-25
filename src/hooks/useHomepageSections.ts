@@ -64,6 +64,31 @@ export interface PopularDestination {
   heroImage: string | null
 }
 
+// ─── Unified Homepage Data ─────────────────────────────────────────────
+
+export interface HomepageData {
+  sellOut: HomepageTour[]
+  topRated: HomepageTour[]
+  trending: HomepageTour[]
+  recommended: HomepageTour[]
+  new: HomepageTour[]
+  attractions: HomepageTour[]
+  mood: MoodKeyword[]
+  destinations: PopularDestination[]
+}
+
+/**
+ * Single request that fetches all homepage sections.
+ * Returns pre-computed data from Redis (0 DB queries) when available.
+ */
+export function useHomepage() {
+  return useQuery({
+    queryKey: ['homepage', 'all'],
+    queryFn: () => fetchHomepageSection<HomepageData>(''),
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
 // ─── Fetcher ──────────────────────────────────────────────────────────
 
 async function fetchHomepageSection<T>(path: string): Promise<T> {

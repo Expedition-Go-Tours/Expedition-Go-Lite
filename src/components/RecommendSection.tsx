@@ -4,13 +4,17 @@ import SectionHeading from './SectionHeading'
 import TourCard from './TourCard'
 import { recommendedTours } from './data'
 import { useRecommendedTours, useExpeditionOffers, type TourCardData } from '../hooks/useExpeditionTours'
-import { useRecommended, mapToTourCard } from '../hooks/useHomepageSections'
+import { useRecommended, mapToTourCard, type HomepageTour } from '../hooks/useHomepageSections'
 import './RecommendSection.css'
 
 const CARD_WIDTH = 295
 const GAP = 16
 
-export default function RecommendSection() {
+interface Props {
+  preloaded?: HomepageTour[]
+}
+
+export default function RecommendSection({ preloaded }: Props) {
   const { t } = useTranslation()
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
@@ -19,12 +23,14 @@ export default function RecommendSection() {
   const { data: liveTours } = useRecommendedTours(12)
   const { data: offerTours } = useExpeditionOffers(12)
 
-  // Prefer personalized recommendations, fall back to curated, then static
-  const baseTours = personalizedTours?.length
-    ? personalizedTours.map(mapToTourCard)
-    : liveTours && liveTours.length > 0
-      ? liveTours
-      : recommendedTours
+  // Prefer preloaded > personalized > liveTours > static
+  const baseTours = preloaded?.length
+    ? preloaded.map(mapToTourCard)
+    : personalizedTours?.length
+      ? personalizedTours.map(mapToTourCard)
+      : liveTours && liveTours.length > 0
+        ? liveTours
+        : recommendedTours
 
   // Offer tours replace their plain card when present, appended otherwise.
   const items = useMemo(() => {

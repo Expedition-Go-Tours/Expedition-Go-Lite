@@ -20,7 +20,11 @@ function mapToDestination(d: PopularDestination) {
   }
 }
 
-export default function PopularLocations() {
+interface Props {
+  preloaded?: PopularDestination[]
+}
+
+export default function PopularLocations({ preloaded }: Props) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -28,7 +32,9 @@ export default function PopularLocations() {
   const [canScrollRight, setCanScrollRight] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const { data: liveDestinations } = usePopularDestinations(10)
-  const items = liveDestinations?.length ? liveDestinations.map(mapToDestination) : destinations
+  const items = (preloaded ?? liveDestinations)?.length
+    ? (preloaded ?? liveDestinations)!.map(mapToDestination)
+    : destinations
 
   const updateArrows = useCallback(() => {
     const el = scrollRef.current

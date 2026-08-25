@@ -20,7 +20,11 @@ const FALLBACK_CATEGORIES = [
   { keyword: 'Wellness', image: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=600&q=80', tourCount: 7 },
 ]
 
-export default function MoodSection() {
+interface Props {
+  preloaded?: MoodKeyword[]
+}
+
+export default function MoodSection({ preloaded }: Props) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -28,8 +32,8 @@ export default function MoodSection() {
   const [canScrollRight, setCanScrollRight] = useState(true)
   const { data: liveKeywords } = useMoodKeywords(8)
 
-  const items = liveKeywords?.length
-    ? liveKeywords.map((k: MoodKeyword) => ({
+  const items = (preloaded ?? liveKeywords)?.length
+    ? (preloaded ?? liveKeywords)!.map((k: MoodKeyword) => ({
         keyword: k.keyword,
         image: k.image || FALLBACK_CATEGORIES[0].image,
         tourCount: k.tourCount,
