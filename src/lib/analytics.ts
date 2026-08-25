@@ -35,19 +35,18 @@ function flush() {
   if (queue.length === 0) return
   const events = queue.splice(0, MAX_QUEUE_SIZE)
 
-  getApiBaseUrl().then(base => {
-    getAuthToken().then(token => {
-      fetch(`${base}/api/analytics/batch`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({ events }),
-        keepalive: true,
-      }).catch(() => {
-        // Silently fail — analytics should never break the app
-      })
+  const base = getApiBaseUrl()
+  getAuthToken().then(token => {
+    fetch(`${base}/api/analytics/batch`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ events }),
+      keepalive: true,
+    }).catch(() => {
+      // Silently fail — analytics should never break the app
     })
   })
 

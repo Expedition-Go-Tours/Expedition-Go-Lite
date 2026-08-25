@@ -216,7 +216,6 @@ export function mapToTourCard(t: HomepageTour): Tour {
     image: t.coverPhoto || t.photos?.[0] || '',
     photos: t.photos,
     source: 'expedition-go',
-    slug: t.slug,
     difficulty: t.difficulty || undefined,
   }
 }
