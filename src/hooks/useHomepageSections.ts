@@ -61,7 +61,6 @@ export interface PopularDestination {
   tourCount: number
   totalBookings: number
   avgRating: number | null
-  avgPrice: number | null
   heroImage: string | null
 }
 
