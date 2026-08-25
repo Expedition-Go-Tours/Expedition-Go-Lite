@@ -5,10 +5,20 @@ import SectionHeading from './SectionHeading'
 import PopularLocationCard from './PopularLocationCard'
 import DestinationsModal from './DestinationsModal'
 import { destinations } from './data'
+import { usePopularDestinations, type PopularDestination } from '../hooks/useHomepageSections'
 import './PopularLocations.css'
 
 const CARD_WIDTH = 295
 const GAP = 16
+
+function mapToDestination(d: PopularDestination) {
+  return {
+    title: d.city,
+    tours: d.tourCount > 0 ? `${d.tourCount}+ Tours` : 'Explore',
+    image: d.heroImage || 'https://images.unsplash.com/photo-1590181076255-de1dbbc106ed?auto=format&fit=crop&w=800&q=80',
+    region: d.country || '',
+  }
+}
 
 export default function PopularLocations() {
   const { t } = useTranslation()
@@ -17,7 +27,8 @@ export default function PopularLocations() {
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const items = destinations
+  const { data: liveDestinations } = usePopularDestinations(10)
+  const items = liveDestinations?.length ? liveDestinations.map(mapToDestination) : destinations
 
   const updateArrows = useCallback(() => {
     const el = scrollRef.current

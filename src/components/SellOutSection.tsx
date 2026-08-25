@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import SectionHeading from './SectionHeading'
 import TourCard from './TourCard'
 import { sellOutTours } from './data'
+import { useLikelySellOut, mapToTourCard } from '../hooks/useHomepageSections'
 import './SellOutSection.css'
 
 const CARD_WIDTH = 295
@@ -13,7 +14,8 @@ export default function SellOutSection() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
-  const items = sellOutTours
+  const { data: liveData } = useLikelySellOut(12)
+  const items = liveData?.length ? liveData.map(mapToTourCard) : sellOutTours
 
   const updateArrows = useCallback(() => {
     const el = scrollRef.current

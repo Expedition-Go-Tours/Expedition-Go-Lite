@@ -5,6 +5,7 @@ import { MapPin } from 'lucide-react'
 import SectionHeading from './SectionHeading'
 import { attractionsNearby, haversineDistanceKm, type Attraction } from './attractionsData'
 import { useAllExpeditionTours } from '../hooks/useExpeditionTours'
+import { useTopAttractions, type HomepageTour } from '../hooks/useHomepageSections'
 import { useWishlist, toWishlistItem } from '../context/WishlistContext'
 import type { Tour } from './data'
 import './TopAttractionsNearbySection.css'
@@ -98,12 +99,29 @@ function AttractionCard({ attraction, hasTour }: { attraction: Attraction; hasTo
   )
 }
 
+function mapToAttraction(t: HomepageTour): Attraction {
+  return {
+    title: t.title,
+    slug: t.slug,
+    price: t.startingPrice != null ? `$${t.startingPrice}` : '',
+    rating: t.averageRating != null ? String(t.averageRating) : '',
+    reviews: t.reviewCount || 0,
+    image: t.coverPhoto || t.photos?.[0] || '',
+    lat: 0, // Will be sorted by API proximity
+    lng: 0,
+    location: [t.city, t.country].filter(Boolean).join(', '),
+  }
+}
+
 export default function TopAttractionsNearbySection() {
   const { t } = useTranslation()
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
-  const [sortedAttractions, setSortedAttractions] = useState<Attraction[]>(attractionsNearby)
+  const { data: liveAttractions } = useTopAttractions(10)
+  const [sortedAttractions, setSortedAttractions] = useState<Attraction[]>(
+    liveAttractions?.length ? liveAttractions.map(mapToAttraction) : attractionsNearby
+  )
   const [locationError, setLocationError] = useState<string | null>(() =>
     typeof navigator !== 'undefined' && navigator.geolocation ? null : 'Geolocation not supported',
   )
@@ -115,6 +133,13 @@ export default function TopAttractionsNearbySection() {
   )
 
   useEffect(() => {
+    // If API returned live data (already proximity-sorted), use it directly
+    if (liveAttractions?.length) {
+      setSortedAttractions(liveAttractions.map(mapToAttraction))
+      return
+    }
+
+    // Otherwise, sort hardcoded attractions by geolocation
     if (!navigator.geolocation) return
 
     navigator.geolocation.getCurrentPosition(
@@ -134,7 +159,7 @@ export default function TopAttractionsNearbySection() {
       },
       { enableHighAccuracy: false, timeout: 5000, maximumAge: 300000 },
     )
-  }, [])
+  }, [liveAttractions])
 
   const updateArrows = useCallback(() => {
     const el = scrollRef.current

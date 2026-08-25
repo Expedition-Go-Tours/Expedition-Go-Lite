@@ -38,6 +38,7 @@ import { WishlistProvider } from './context/WishlistContext'
 import { ContinuePlanningProvider } from './context/ContinuePlanningContext'
 import SupportChatWidget from './components/SupportChatWidget'
 import { subscribeToAuthState, handleGoogleCallback, getAuthReturnTo, clearAuthReturnTo } from './lib/auth'
+import { trackPageView, requestLocation } from './lib/analytics'
 
 
 type PageView = 'home' | 'signin' | 'signup'
@@ -127,7 +128,13 @@ function AppContent() {
   }, [])
   useEffect(() => {
     window.scrollTo(0, 0)
-  }, [location.pathname])
+    trackPageView(location.pathname + location.search)
+  }, [location.pathname, location.search])
+
+  // Request location once on mount for personalized recommendations
+  useEffect(() => {
+    requestLocation()
+  }, [])
 
   const hideNav = currentPage === 'signin' || currentPage === 'signup' || location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/booking') || location.pathname.endsWith('/booking') || location.pathname.startsWith('/supplier/register') || location.pathname.startsWith('/supplier/list-experience') || location.pathname.startsWith('/login')
 

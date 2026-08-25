@@ -1,28 +1,40 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router-dom'
 import { transformImage } from '@/lib/image'
+import { useMoodKeywords, type MoodKeyword } from '../hooks/useHomepageSections'
+import { trackMoodClick } from '../lib/analytics'
 import './MoodSection.css'
 
 const CARD_WIDTH = 295
 const GAP = 16
 
-const MOOD_CATEGORIES = [
-  { id: 'adventure', title: 'Adventure', tag: 'Thrill', count: 15, image: 'https://images.unsplash.com/photo-1533240332313-0db49b459ad6?auto=format&fit=crop&w=600&q=80' },
-  { id: 'cultural', title: 'Cultural', tag: 'Heritage', count: 20, image: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=600&q=80' },
-  { id: 'nature', title: 'Nature', tag: 'Escape', count: 18, image: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=600&q=80' },
-  { id: 'beach', title: 'Beach', tag: 'Sun & Sea', count: 12, image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80' },
-  { id: 'wildlife', title: 'Wildlife', tag: 'Safari', count: 10, image: 'https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=600&q=80' },
-  { id: 'city-tours', title: 'City Tours', tag: 'Urban', count: 22, image: 'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?auto=format&fit=crop&w=600&q=80' },
-  { id: 'food-drinks', title: 'Food & Drinks', tag: 'Taste', count: 9, image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=600&q=80' },
-  { id: 'wellness', title: 'Wellness', tag: 'Recharge', count: 7, image: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=600&q=80' },
+const FALLBACK_CATEGORIES = [
+  { keyword: 'Adventure', image: 'https://images.unsplash.com/photo-1533240332313-0db49b459ad6?auto=format&fit=crop&w=600&q=80', tourCount: 15 },
+  { keyword: 'Cultural', image: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=600&q=80', tourCount: 20 },
+  { keyword: 'Nature', image: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=600&q=80', tourCount: 18 },
+  { keyword: 'Beach', image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80', tourCount: 12 },
+  { keyword: 'Wildlife', image: 'https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=600&q=80', tourCount: 10 },
+  { keyword: 'City Tours', image: 'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?auto=format&fit=crop&w=600&q=80', tourCount: 22 },
+  { keyword: 'Food & Drinks', image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=600&q=80', tourCount: 9 },
+  { keyword: 'Wellness', image: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=600&q=80', tourCount: 7 },
 ]
 
 export default function MoodSection() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
-  const items = MOOD_CATEGORIES
+  const { data: liveKeywords } = useMoodKeywords(8)
+
+  const items = liveKeywords?.length
+    ? liveKeywords.map((k: MoodKeyword) => ({
+        keyword: k.keyword,
+        image: k.image || FALLBACK_CATEGORIES[0].image,
+        tourCount: k.tourCount,
+      }))
+    : FALLBACK_CATEGORIES
 
   const updateArrows = useCallback(() => {
     const el = scrollRef.current
@@ -76,16 +88,20 @@ export default function MoodSection() {
           <div className="mood-clip">
             <div className="mood-carousel" ref={scrollRef}>
                 {items.map((cat, i) => (
-                  <div key={`${cat.id}-${i}`} className="mood-card-wrap">
+                  <div key={`${cat.keyword}-${i}`} className="mood-card-wrap">
                     <button
                       className="mood-card"
                       style={{ backgroundImage: `url(${transformImage(cat.image, { width: 600, quality: 'auto:good', format: 'auto' }) ?? cat.image})` }}
+                      onClick={() => {
+                        trackMoodClick(cat.keyword, i)
+                        navigate(`/tours?category=${encodeURIComponent(cat.keyword)}`)
+                      }}
                     >
-                      <span className="mood-tag">{cat.tag}</span>
-                      <span className="mood-count">{cat.count} {t('mood.tours')}</span>
+                      <span className="mood-tag">{cat.keyword}</span>
+                      <span className="mood-count">{cat.tourCount} {t('mood.tours')}</span>
                       <div className="mood-gradient" />
                       <div className="mood-footer">
-                        <h3 className="mood-card-title">{cat.title}</h3>
+                        <h3 className="mood-card-title">{cat.keyword}</h3>
                         <div className="mood-arrow-btn">
                           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <polyline points="9 18 15 12 9 6" />
