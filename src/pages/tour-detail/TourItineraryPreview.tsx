@@ -2,9 +2,9 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ChevronDown, ChevronUp, Bed, UtensilsCrossed, MapPin, Navigation } from 'lucide-react'
-import type { ItineraryDay } from '../../lib/tourTypes'
+import type { ItineraryDay, DayLogisticsMap } from '../../lib/tourTypes'
 import type { PickupAreaShape, PickupLocationShape } from '../../lib/pickupZone'
-import { formatItineraryDuration } from '../../lib/tourTypes'
+import { formatItineraryDuration, ACCOMMODATION_TYPE_LABELS } from '../../lib/tourTypes'
 // Shared black rounded marker/timeline styles (.itinerary-stop-simple-*)
 // live in TourItinerary.css, whose only other consumer (TourItinerary.tsx)
 // isn't imported anywhere in the page — so those classes were unstyled
@@ -40,6 +40,8 @@ interface TourItineraryPreviewProps {
   dropoff?: DropoffNodeData
   accommodationIncluded?: boolean
   meals?: { type: string; format: string }[]
+  /** Supplier's per-day logistics — the accommodation type / meals set per day. */
+  dayLogistics?: DayLogisticsMap
 }
 
 interface TimelineNode {
@@ -54,6 +56,7 @@ export default function TourItineraryPreview({
   dropoff,
   accommodationIncluded,
   meals,
+  dayLogistics,
 }: TourItineraryPreviewProps) {
   const { t } = useTranslation()
   const [expanded, setExpanded] = useState(false)
@@ -333,8 +336,8 @@ export default function TourItineraryPreview({
           <p className="itinerary-day-label">{t('tourDetail.itineraryDay', { day: dayData.day })}</p>
         </div>
       </div>
+      {renderDayLogistics(true, dayData.day)}
       {renderDayStops(dayData.stops, dayData.day)}
-      {renderDayLogistics(true)}
     </div>
   )
 
@@ -342,16 +345,19 @@ export default function TourItineraryPreview({
     const stop = itinerary[globalIndex]
     const day = stop.day || 1
     const isFirstOfDay = globalIndex === 0 || (itinerary[globalIndex - 1].day || 1) !== day
-    const isLastOfDay = globalIndex === itinerary.length - 1 || (itinerary[globalIndex + 1].day || 1) !== day
     return (
       <div key={globalIndex}>
-        {isMultiDay && isFirstOfDay && renderDayNode(day)}
+        {isMultiDay && isFirstOfDay && (
+          <>
+            {renderDayNode(day)}
+            {renderDayLogistics(true, day)}
+          </>
+        )}
         {renderStop(
           stop,
           globalIndex === itinerary.length - 1 && !end,
           String(isMultiDay ? perDayNumber[globalIndex] : globalIndex + 1),
         )}
-        {isMultiDay && isLastOfDay && renderDayLogistics(true)}
       </div>
     )
   }
@@ -362,25 +368,38 @@ export default function TourItineraryPreview({
 
   // Overnight accommodation + meals rendered together in one logistics strip,
   // mirroring the supplier's itinerary preview (each item is a labeled span).
-  // Both items are gated on the itinerary actually reflecting them: overnight
-  // accommodation only makes sense on a multi-day itinerary, and meals only
-  // show when an itinerary stop carries meal data.
-  const renderDayLogistics = (indented: boolean) => {
+  // When the supplier set per-day logistics (dayLogistics[day]) those take
+  // precedence — the exact accommodation type / meals for that day show
+  // instead of the generic fallbacks. Both items are gated on the itinerary
+  // actually reflecting them: overnight accommodation only makes sense on a
+  // multi-day itinerary, and meals only show when a day/stop carries them.
+  const renderDayLogistics = (indented: boolean, day?: number) => {
+    const dayEntry = day != null ? dayLogistics?.[day] : undefined
     const showAccommodation = accommodationIncluded && isMultiDay
-    const showMeals = !!mealsLine && itineraryHasMeals
-    if (!showAccommodation && !showMeals) return null
+    const accommodationType = dayEntry?.accommodation
+      ? ACCOMMODATION_TYPE_LABELS[dayEntry.accommodation] ?? ''
+      : ''
+    const dayMeals = (Array.isArray(dayEntry?.meals) ? dayEntry.meals : [])
+      .filter((m) => m && (m.type || '').trim())
+      .map((m) => [m.type, m.format ? `(${m.format})` : ''].filter(Boolean).join(' '))
+      .join(', ')
+    const showDayMeals = !!dayMeals
+    const showGlobalMeals = !!mealsLine && itineraryHasMeals
+    if (!showAccommodation && !showDayMeals && !showGlobalMeals) return null
     return (
       <div className={`itinerary-day-logistics${indented ? ' itinerary-day-logistics-indent' : ''}`}>
         {showAccommodation && (
           <span className="itinerary-day-logistics-item">
             <Bed size={13} strokeWidth={2.4} />
-            {t('tourDetail.overnightAccommodationIncluded')}
+            {accommodationType
+              ? t('tourDetail.overnightAccommodation', { type: accommodationType })
+              : t('tourDetail.overnightAccommodationIncluded')}
           </span>
         )}
-        {showMeals && (
+        {(showDayMeals || showGlobalMeals) && (
           <span className="itinerary-day-logistics-item">
             <UtensilsCrossed size={13} strokeWidth={2.4} />
-            {t('tourDetail.mealsLabel')}: {mealsLine}
+            {t('tourDetail.mealsLabel')}: {showDayMeals ? dayMeals : mealsLine}
           </span>
         )}
       </div>

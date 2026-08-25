@@ -178,6 +178,12 @@
   border-color: rgba(22, 101, 52, 0.18);
 }
 
+.tour-card-badge-meeting {
+  color: #0e7490;
+  background: rgba(8, 145, 178, 0.09);
+  border-color: rgba(8, 145, 178, 0.2);
+}
+
 .tour-card-badge-accommodation {
   color: #6d28d9;
   background: rgba(124, 58, 237, 0.08);

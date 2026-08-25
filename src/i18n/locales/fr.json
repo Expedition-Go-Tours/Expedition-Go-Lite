@@ -350,6 +350,7 @@
     "accommodationLabel": "Hébergement",
     "mealsLabel": "Repas",
     "overnightAccommodationIncluded": "Hébergement de nuit inclus",
+    "overnightAccommodation": "Hébergement de nuit : {{type}}",
     "pickupAreas": "Zones de prise en charge",
     "pickupLocations": "Points de prise en charge",
     "pickupNotSet": "Non défini",

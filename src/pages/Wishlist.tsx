@@ -21,7 +21,8 @@ export default function Wishlist() {
   }
 
   const handleTransitionDone = () => {
-    navigate('/booking', { state: pendingNavState.current })
+    const tourId = (pendingNavState.current as { tour?: { id?: string } } | null)?.tour?.id
+    navigate(`/${encodeURIComponent(tourId || '')}/booking`, { state: pendingNavState.current })
   }
 
 const handleBookNow = (item: WishlistItem) => {

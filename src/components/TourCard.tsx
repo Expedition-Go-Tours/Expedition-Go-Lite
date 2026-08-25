@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
-import { Car, Languages as LanguagesIcon, ShieldCheck, Ban, TrendingUp, BedDouble } from 'lucide-react'
+import { Car, Languages as LanguagesIcon, ShieldCheck, Ban, TrendingUp, BedDouble, Compass } from 'lucide-react'
 import i18n from '../i18n/config'
 import './TourCard.css'
 import { parsePrice, getTourSlug, type Tour } from './data'
@@ -10,6 +10,7 @@ import FormattedPrice from './FormattedPrice'
 import { getCategoryMeta } from './categoryMeta'
 import OptimizedImage from '@/components/shared/OptimizedImage'
 import type { SpecialOfferData } from '../hooks/useExpeditionTours'
+import { bestOfferDiscountAmount } from '../hooks/useExpeditionTours'
 
 interface TourCardProps extends Tour {
   discount?: string
@@ -27,7 +28,7 @@ interface TourCardProps extends Tour {
   imageClean?: boolean
 }
 
-export default function TourCard({ id, title, duration, features, price, rating, reviews, location, image, photos, discount, difficulty, cancellationPolicy, pickupIncluded, accommodationIncluded, category, languages, source, externalUrl, slug, isNew, hideSourceBadge, hideFeatures, imageClean, priceValue, specialOffers }: TourCardProps) {
+export default function TourCard({ id, title, duration, features, price, rating, reviews, location, image, photos, discount, difficulty, cancellationPolicy, pickupIncluded, accommodationIncluded, meetingMode, category, languages, source, externalUrl, slug, isNew, hideSourceBadge, hideFeatures, imageClean, priceValue, specialOffers }: TourCardProps) {
   const { t } = useTranslation()
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist()
   const item = toWishlistItem({ id, title, duration, features, price, rating: String(rating), reviews, location, image, source, externalUrl } as Tour)
@@ -151,16 +152,7 @@ export default function TourCard({ id, title, duration, features, price, rating,
       return promo > 0 && promo < originalPrice ? promo : null
     }
     if (Array.isArray(specialOffers) && specialOffers.length > 0) {
-      let best = 0
-      for (const offer of specialOffers) {
-        const amount =
-          offer.discountType === 'FIXED_AMOUNT' && offer.fixedDiscountValue != null
-            ? offer.fixedDiscountValue
-            : offer.discountPercentage != null
-              ? (originalPrice * offer.discountPercentage) / 100
-              : 0
-        if (amount > best) best = amount
-      }
+      const best = bestOfferDiscountAmount(specialOffers, originalPrice)
       const promo = originalPrice - best
       return best > 0 && promo > 0 && promo < originalPrice ? promo : null
     }
@@ -260,7 +252,12 @@ export default function TourCard({ id, title, duration, features, price, rating,
         </div>
         <h3 className="tour-card-title">{title}</h3>
         <div className="tour-card-meta">
-          {pickupIncluded && (
+          {meetingMode === 'meeting_point' ? (
+            <span className="tour-card-badge tour-card-badge-meeting">
+              <Compass size={12} strokeWidth={2.2} />
+              Meeting point
+            </span>
+          ) : pickupIncluded && (
             <span className="tour-card-badge tour-card-badge-pickup">
               <Car size={12} strokeWidth={2.2} />
               Pickup included

@@ -1,9 +1,9 @@
 ﻿import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { Bed, UtensilsCrossed, MapPin, Navigation } from 'lucide-react'
-import type { ItineraryDay } from '../../lib/tourTypes'
+import type { ItineraryDay, DayLogisticsMap } from '../../lib/tourTypes'
 import type { PickupAreaShape, PickupLocationShape } from '../../lib/pickupZone'
-import { formatItineraryDuration } from '../../lib/tourTypes'
+import { formatItineraryDuration, ACCOMMODATION_TYPE_LABELS } from '../../lib/tourTypes'
 import './TourItinerary.css'
 
 interface MeetingNodeData {
@@ -32,6 +32,8 @@ interface TourItineraryProps {
   dropoff?: DropoffNodeData
   accommodationIncluded?: boolean
   meals?: { type: string; format: string }[]
+  /** Supplier's per-day logistics — the accommodation type / meals set per day. */
+  dayLogistics?: DayLogisticsMap
 }
 
 const fadeUp = (i: number) => ({
@@ -46,6 +48,7 @@ export default function TourItinerary({
   dropoff,
   accommodationIncluded,
   meals,
+  dayLogistics,
 }: TourItineraryProps) {
   const { t } = useTranslation()
 
@@ -197,25 +200,38 @@ export default function TourItinerary({
 
   // Overnight accommodation + meals rendered together in one logistics strip,
   // mirroring the supplier's itinerary preview (each item is a labeled span).
-  // Both items are gated on the itinerary actually reflecting them: overnight
-  // accommodation only makes sense on a multi-day itinerary, and meals only
-  // show when an itinerary stop carries meal data.
-  const renderDayLogistics = (indented: boolean) => {
+  // When the supplier set per-day logistics (dayLogistics[day]) those take
+  // precedence — the exact accommodation type / meals for that day show
+  // instead of the generic fallbacks. Both items are gated on the itinerary
+  // actually reflecting them: overnight accommodation only makes sense on a
+  // multi-day itinerary, and meals only show when a day/stop carries them.
+  const renderDayLogistics = (indented: boolean, day?: number) => {
+    const dayEntry = day != null ? dayLogistics?.[day] : undefined
     const showAccommodation = accommodationIncluded && isMultiDay
-    const showMeals = !!mealsLine && itineraryHasMeals
-    if (!showAccommodation && !showMeals) return null
+    const accommodationType = dayEntry?.accommodation
+      ? ACCOMMODATION_TYPE_LABELS[dayEntry.accommodation] ?? ''
+      : ''
+    const dayMeals = (Array.isArray(dayEntry?.meals) ? dayEntry.meals : [])
+      .filter((m) => m && (m.type || '').trim())
+      .map((m) => [m.type, m.format ? `(${m.format})` : ''].filter(Boolean).join(' '))
+      .join(', ')
+    const showDayMeals = !!dayMeals
+    const showGlobalMeals = !!mealsLine && itineraryHasMeals
+    if (!showAccommodation && !showDayMeals && !showGlobalMeals) return null
     return (
       <div className={`itinerary-day-logistics${indented ? ' itinerary-day-logistics-indent' : ''}`}>
         {showAccommodation && (
           <span className="itinerary-day-logistics-item">
             <Bed size={13} strokeWidth={2.4} />
-            {t('tourDetail.overnightAccommodationIncluded')}
+            {accommodationType
+              ? t('tourDetail.overnightAccommodation', { type: accommodationType })
+              : t('tourDetail.overnightAccommodationIncluded')}
           </span>
         )}
-        {showMeals && (
+        {(showDayMeals || showGlobalMeals) && (
           <span className="itinerary-day-logistics-item">
             <UtensilsCrossed size={13} strokeWidth={2.4} />
-            {t('tourDetail.mealsLabel')}: {mealsLine}
+            {t('tourDetail.mealsLabel')}: {showDayMeals ? dayMeals : mealsLine}
           </span>
         )}
       </div>
@@ -241,7 +257,6 @@ export default function TourItinerary({
           const isLast = index === itinerary.length - 1 && !end
           const day = stop.day || 1
           const isFirstOfDay = index === 0 || (itinerary[index - 1].day || 1) !== day
-          const isLastOfDay = index === itinerary.length - 1 || (itinerary[index + 1].day || 1) !== day
           const markerLabel = String(isMultiDay ? perDayNumber[index] : index + 1)
           const displayTitle = stop.locationName || stop.title
           const durationLabel = formatItineraryDuration(stop.duration, stop.durationUnit)
@@ -272,15 +287,18 @@ export default function TourItinerary({
               {...fadeUp(index)}
             >
               {isMultiDay && isFirstOfDay && (
-                <div className="itinerary-stop-simple">
-                  <div className="itinerary-stop-simple-marker-col">
-                    <span className="itinerary-stop-simple-marker">{day}</span>
-                    <div className="itinerary-stop-simple-line" />
+                <>
+                  <div className="itinerary-stop-simple">
+                    <div className="itinerary-stop-simple-marker-col">
+                      <span className="itinerary-stop-simple-marker">{day}</span>
+                      <div className="itinerary-stop-simple-line" />
+                    </div>
+                    <div className="itinerary-stop-simple-content">
+                      <p className="itinerary-day-label">{t('tourDetail.itineraryDay', { day })}</p>
+                    </div>
                   </div>
-                  <div className="itinerary-stop-simple-content">
-                    <p className="itinerary-day-label">{t('tourDetail.itineraryDay', { day })}</p>
-                  </div>
-                </div>
+                  {renderDayLogistics(true, day)}
+                </>
               )}
               <div className="itinerary-stop-simple">
                 <div className="itinerary-stop-simple-marker-col">
@@ -302,7 +320,6 @@ export default function TourItinerary({
                   )}
                 </div>
               </div>
-              {isMultiDay && isLastOfDay && renderDayLogistics(true)}
             </motion.div>
           )
         })}

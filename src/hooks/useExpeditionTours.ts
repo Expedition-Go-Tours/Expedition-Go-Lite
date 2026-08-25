@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import type { TourDetail, TravelerPricing, GroupSizeBand, PricingTier, ItineraryDay } from '../lib/tourTypes'
+import type { TourDetail, TravelerPricing, GroupSizeBand, PricingTier, ItineraryDay, DayLogisticsMap } from '../lib/tourTypes'
 import { fetchWithAuth } from '../lib/api'
 import type { PickupAreaShape, PickupLocationShape } from '../lib/pickupZone'
 
@@ -224,6 +224,7 @@ interface ExpeditionTourRecord {
     cancellationPolicy?: string | null
     pickupIncluded?: boolean | null
     accommodationIncluded?: boolean | null
+    meetingMode?: 'meeting_point' | 'pickup' | 'none'
     supplierName: string | null
     supplierPhoto: string | null
     bookingFlow: 'DIRECT' | 'EXTERNAL'
@@ -256,6 +257,8 @@ export interface TourCardData {
   pickupIncluded?: boolean
   /** Whether the supplier offers overnight accommodation (categorization.accommodationIncluded). */
   accommodationIncluded?: boolean
+  /** How travelers assemble at the start: a fixed meeting point, or pickup. */
+  meetingMode?: 'meeting_point' | 'pickup' | 'none'
   /** Numeric equivalents for client-side filtering (All Tours page). */
   durationMinutes?: number | null
   priceValue?: number | null
@@ -910,6 +913,40 @@ function extractMeals(rawTour: any): MealInfo[] {
   }
 }
 
+/**
+ * The supplier's per-day logistics (productContent.dayLogistics[day]) — the
+ * overnight accommodation type and meals assigned to each day in the product
+ * builder's day editor. Empty meal rows are dropped (mirroring the supplier's
+ * autosave cleanup) and days with nothing set are omitted, so consumers only
+ * ever see days the supplier actually configured.
+ */
+function extractDayLogistics(rawTour: any): DayLogisticsMap {
+  try {
+    const dayLogistics = parseProductContent(rawTour)?.dayLogistics
+    if (!dayLogistics || typeof dayLogistics !== 'object' || Array.isArray(dayLogistics)) return {}
+    const out: DayLogisticsMap = {}
+    for (const [day, log] of Object.entries(dayLogistics)) {
+      if (!log || typeof log !== 'object') continue
+      const entry = log as Record<string, any>
+      const meals = (Array.isArray(entry.meals) ? entry.meals : [])
+        .filter((m: any) => m && typeof m === 'object' && (m.type || '').trim())
+        .map((m: any) => ({ type: String(m.type || ''), format: String(m.format || '') }))
+      const hasAccommodation = !!entry.accommodation
+      const hasDrinks = !!entry.drinksIncluded
+      if (hasAccommodation || hasDrinks || meals.length > 0) {
+        out[day] = {
+          ...(hasAccommodation ? { accommodation: String(entry.accommodation) } : {}),
+          ...(meals.length > 0 ? { meals } : {}),
+          ...(hasDrinks ? { drinksIncluded: true } : {}),
+        }
+      }
+    }
+    return out
+  } catch {
+    return {}
+  }
+}
+
 function extractDietaryOptions(rawTour: any): string[] {
   try {
     const pc = parseProductContent(rawTour)
@@ -1136,6 +1173,7 @@ function mapToListing(tour: ExpeditionTourRecord['tour']): TourCardData {
     difficulty: extractDifficultyFromTour(tour) || undefined,
     cancellationPolicy: extractCancellationFromTour(tour) || undefined,
     pickupIncluded: tour.pickupIncluded ?? (tour.bookingAndTickets?.pickupAvailable ?? tour.bookingAndTickets?.pickupProvided) ?? undefined,
+    meetingMode: extractMeetingInfo(tour).meetingMode,
     // Curated records carry the enriched backfill (tour.accommodationIncluded);
     // raw records (e.g. a direct /tours fetch) read the categorization blob.
     accommodationIncluded: tour.accommodationIncluded === true || extractAccommodationIncluded(tour),
@@ -1184,6 +1222,7 @@ async function enrichExpeditionRecords(records: ExpeditionTourRecord[]): Promise
     const difficultyMap = new Map<string, string | null>()
     const cancellationMap = new Map<string, string | null>()
     const pickupMap = new Map<string, boolean | undefined>()
+    const meetingModeMap = new Map<string, 'meeting_point' | 'pickup' | 'none'>()
     const languagesMap = new Map<string, string[]>()
     const categoryMap = new Map<string, string | null>()
     const accommodationMap = new Map<string, boolean>()
@@ -1196,6 +1235,7 @@ async function enrichExpeditionRecords(records: ExpeditionTourRecord[]): Promise
       difficultyMap.set(t.id, extractDifficultyFromTour(t))
       cancellationMap.set(t.id, extractCancellationFromTour(t))
       pickupMap.set(t.id, t.pickupIncluded ?? (t.bookingAndTickets?.pickupAvailable ?? t.bookingAndTickets?.pickupProvided) ?? undefined)
+      meetingModeMap.set(t.id, extractMeetingInfo(t).meetingMode)
       // Cards show only the single Step 1 content language, not the full
       // per-option merge extractLanguagesFromTour() returns.
       languagesMap.set(t.id, extractContentLanguage(t))
@@ -1231,6 +1271,10 @@ async function enrichExpeditionRecords(records: ExpeditionTourRecord[]): Promise
       if (r.tour.pickupIncluded == null) {
         const p = pickupMap.get(r.tour.id)
         if (p != null) r.tour.pickupIncluded = p
+      }
+      if (r.tour.meetingMode == null) {
+        const mode = meetingModeMap.get(r.tour.id)
+        if (mode) r.tour.meetingMode = mode
       }
       if (r.tour.accommodationIncluded == null) {
         r.tour.accommodationIncluded = accommodationMap.get(r.tour.id) ?? false
@@ -1477,6 +1521,12 @@ export interface TourDetailData extends Omit<TourDetail, 'guide' | 'contact' | '
   foodProvided?: boolean
   drinksIncluded?: boolean
   meals?: MealInfo[]
+  /**
+   * Supplier's per-day logistics (productContent.dayLogistics) — the overnight
+   * accommodation type and meals the supplier assigned to each itinerary day.
+   * Drives the per-day accommodation/meals shown in the itinerary.
+   */
+  dayLogistics?: DayLogisticsMap
   dietaryOptions?: string[]
   guideType?: string
   guideMaterials?: { audioGuide: boolean; infoBooklet: boolean }
@@ -1612,6 +1662,7 @@ function buildTourDetailFromRawTour(rawTour: any): TourDetailData {
     foodProvided: extractFoodProvided(rawTour),
     drinksIncluded: extractDrinksIncluded(rawTour),
     meals: extractMeals(rawTour),
+    dayLogistics: extractDayLogistics(rawTour),
     dietaryOptions: extractDietaryOptions(rawTour),
     guideType: extractGuideType(rawTour),
     guideMaterials: extractGuideMaterials(rawTour),
@@ -1718,6 +1769,7 @@ export function useExpeditionTour(slug: string | undefined) {
             tour.foodProvided = extractFoodProvided(rawTour)
             tour.drinksIncluded = extractDrinksIncluded(rawTour)
             tour.meals = extractMeals(rawTour)
+            tour.dayLogistics = extractDayLogistics(rawTour)
             tour.dietaryOptions = extractDietaryOptions(rawTour)
             tour.guideType = extractGuideType(rawTour)
             tour.guideMaterials = extractGuideMaterials(rawTour)
@@ -1886,6 +1938,7 @@ export function useExpeditionTour(slug: string | undefined) {
         foodProvided: !!tour.foodProvided,
         drinksIncluded: !!tour.drinksIncluded,
         meals: Array.isArray(tour.meals) ? tour.meals : [],
+        dayLogistics: tour.dayLogistics,
         dietaryOptions: Array.isArray(tour.dietaryOptions) ? tour.dietaryOptions : [],
         guideType: tour.guideType || undefined,
         guideMaterials: tour.guideMaterials || undefined,
@@ -1949,12 +2002,13 @@ export function mapRawTourToListing(t: any): TourCardData {
     difficulty: extractDifficultyFromTour(t) || undefined,
     cancellationPolicy: extractCancellationFromTour(t) || undefined,
     pickupIncluded,
+    meetingMode: extractMeetingInfo(t).meetingMode,
     accommodationIncluded: extractAccommodationIncluded(t),
   }
 }
 
 /** Absolute discount a single offer contributes against a given full price. */
-function offerDiscountAmount(offer: SpecialOfferData, fullPrice: number): number {
+export function offerDiscountAmount(offer: SpecialOfferData, fullPrice: number): number {
   if (offer.discountType === 'FIXED_AMOUNT' && offer.fixedDiscountValue != null) {
     return offer.fixedDiscountValue
   }
@@ -1962,6 +2016,21 @@ function offerDiscountAmount(offer: SpecialOfferData, fullPrice: number): number
     return (fullPrice * offer.discountPercentage) / 100
   }
   return 0
+}
+
+/**
+ * The largest absolute discount among the given offers against a full price
+ * (0 when there are no offers). Single source of truth for offer-derived
+ * pricing — shared by the tour cards (Special Offers / New Experiences) and
+ * the booking widget so they never disagree on the discounted price.
+ */
+export function bestOfferDiscountAmount(offers: SpecialOfferData[], fullPrice: number): number {
+  let best = 0
+  for (const offer of offers) {
+    const amount = offerDiscountAmount(offer, fullPrice)
+    if (amount > best) best = amount
+  }
+  return best
 }
 
 /**
@@ -1993,8 +2062,8 @@ export function useExpeditionOffers(limit = 12) {
       const withOffers = results.filter((x): x is TourCardData => x != null)
       // Best deal (largest absolute saving) first.
       return withOffers.sort((a, b) => {
-        const bestA = Math.max(0, ...(a.specialOffers || []).map((o) => offerDiscountAmount(o, a.priceValue ?? 0)))
-        const bestB = Math.max(0, ...(b.specialOffers || []).map((o) => offerDiscountAmount(o, b.priceValue ?? 0)))
+        const bestA = bestOfferDiscountAmount(a.specialOffers || [], a.priceValue ?? 0)
+        const bestB = bestOfferDiscountAmount(b.specialOffers || [], b.priceValue ?? 0)
         return bestB - bestA
       })
     },
@@ -2089,6 +2158,11 @@ export function useRecommendedTours(limit: number = 12) {
  * published active tours from the public /tours endpoint (i.e. tours just
  * added by suppliers on the platform). Sorted newest-first by createdAt so
  * brand-new experiences surface immediately without waiting on curation.
+ *
+ * The /tours LIST endpoint doesn't project specialOffers (only GET /tours/:id
+ * does), so each tour is enriched with its offers via the detail endpoint
+ * (HTTP-cached max-age=60) — mirroring useExpeditionOffers — so the section's
+ * cards show the discounted price just like the Special Offers cards do.
  */
 export function useNewestTours(limit: number = 10) {
   return useQuery({
@@ -2096,7 +2170,18 @@ export function useNewestTours(limit: number = 10) {
     queryFn: async (): Promise<TourCardData[]> => {
       const payload = await expeditionFetchRaw(`/tours?limit=${limit}&sortBy=createdAt&sortOrder=desc`)
       const rawTours: any[] = payload.data?.tours ?? payload.tours ?? []
-      return rawTours.map(mapRawTourToListing)
+      const listings = rawTours.map(mapRawTourToListing)
+      return Promise.all(
+        listings.map(async (listing) => {
+          try {
+            const raw = await fetchRawTourBySlugOrId(listing.id)
+            const offers = raw ? mapSpecialOffers(raw) : undefined
+            return offers && offers.length > 0 ? { ...listing, specialOffers: offers } : listing
+          } catch {
+            return listing
+          }
+        }),
+      )
     },
   })
 }
@@ -2144,6 +2229,7 @@ export function useSimilarTours(slug: string | undefined) {
           const difficultyMap = new Map<string, string | null>()
           const cancellationMap = new Map<string, string | null>()
           const pickupMap = new Map<string, boolean | undefined>()
+          const meetingModeMap = new Map<string, 'meeting_point' | 'pickup' | 'none'>()
           const languagesMap = new Map<string, string[]>()
           for (const t of allTours) {
             const p = extractStartingPriceFromRaw(t.schedulesAndPricing)
@@ -2154,6 +2240,7 @@ export function useSimilarTours(slug: string | undefined) {
             difficultyMap.set(t.id, extractDifficultyFromTour(t))
             cancellationMap.set(t.id, extractCancellationFromTour(t))
             pickupMap.set(t.id, t.pickupIncluded ?? (t.bookingAndTickets?.pickupAvailable ?? t.bookingAndTickets?.pickupProvided) ?? undefined)
+            meetingModeMap.set(t.id, extractMeetingInfo(t).meetingMode)
             // Cards show only the single Step 1 content language, not the
             // full per-option merge extractLanguagesFromTour() returns.
             languagesMap.set(t.id, extractContentLanguage(t))
@@ -2183,6 +2270,10 @@ export function useSimilarTours(slug: string | undefined) {
             if (r.tour.pickupIncluded == null) {
               const p = pickupMap.get(r.tour.id)
               if (p != null) r.tour.pickupIncluded = p
+            }
+            if (r.tour.meetingMode == null) {
+              const mode = meetingModeMap.get(r.tour.id)
+              if (mode) r.tour.meetingMode = mode
             }
             if (!r.tour.languages?.length) {
               const fallbackLanguages = languagesMap.get(r.tour.id)

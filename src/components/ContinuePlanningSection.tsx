@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { Star, Heart, Car, Languages as LanguagesIcon, ShieldCheck, Ban } from 'lucide-react'
+import { Star, Heart, Car, Compass, Languages as LanguagesIcon, ShieldCheck, Ban } from 'lucide-react'
 import SectionHeading from './SectionHeading'
 import FormattedPrice from './FormattedPrice'
 import TourCard from './TourCard'
@@ -34,6 +34,7 @@ function toTourCardProps(item: ContinuePlanningItem) {
     duration: item.duration,
     features: item.features,
     image: item.imageUrl,
+    photos: item.photos,
     rating: String(item.rating),
     reviews: item.reviewCount,
     category: item.category ?? '',
@@ -41,6 +42,7 @@ function toTourCardProps(item: ContinuePlanningItem) {
     difficulty: item.difficulty,
     cancellationPolicy: item.cancellationPolicy,
     pickupIncluded: item.pickupIncluded,
+    meetingMode: item.meetingMode,
     source: item.source,
     externalUrl: item.externalUrl,
     slug: item.slug,
@@ -96,7 +98,11 @@ function ContinuePlanningCard({ item }: { item: ContinuePlanningItem }) {
   // backgrounds — just an icon-led row so features stay scannable without
   // turning the card into a wall of colored badges.
   const featureFacts: { Icon: typeof Car; label: string; negative?: boolean }[] = [
-    ...(item.pickupIncluded ? [{ Icon: Car, label: t('sections.pickupTitle') }] : []),
+    ...(item.meetingMode === 'meeting_point'
+      ? [{ Icon: Compass as typeof Car, label: t('tourDetail.meetingPoint') }]
+      : item.pickupIncluded
+        ? [{ Icon: Car, label: t('sections.pickupTitle') }]
+        : []),
     ...(languageLabel ? [{ Icon: LanguagesIcon, label: languageLabel }] : []),
     ...(cancellationLabel
       ? [{ Icon: isNonRefundable ? Ban : ShieldCheck, label: cancellationLabel, negative: isNonRefundable }]

@@ -17,6 +17,8 @@ export interface Tour {
   pickupIncluded?: boolean
   /** Whether the supplier offers overnight accommodation (categorization.accommodationIncluded). */
   accommodationIncluded?: boolean
+  /** How travelers assemble at the start: a fixed meeting point, or pickup. */
+  meetingMode?: 'meeting_point' | 'pickup' | 'none'
   source?: 'expedition-go' | 'travio-africa'
   externalUrl?: string
   /** Real backend tour ID, present only for tours fetched from the API (not the static mock lists below). Enables wishlist backend sync. */

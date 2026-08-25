@@ -182,6 +182,7 @@ export default function TourDetailPage() {
         title: tour.title,
         location: tour.location,
         image: mergedImages[0] || '',
+        photos: mergedImages,
         price: `$${tour.price}`,
         rating: String(tour.rating),
         reviews: tour.reviewCount,
@@ -193,6 +194,7 @@ export default function TourDetailPage() {
         difficulty: tour.difficulty,
         cancellationPolicy: tour.cancellationPolicy,
         pickupIncluded: tour.pickupIncluded,
+        meetingMode: tour.meetingMode,
         languages: tour.languages,
         slug: tour.slug,
       } as Tour))
@@ -976,6 +978,7 @@ export default function TourDetailPage() {
                           dropoff={tour}
                           accommodationIncluded={tour.accommodationIncluded}
                           meals={tour.meals}
+                          dayLogistics={tour.dayLogistics}
                         />
 
                         <OverviewSection

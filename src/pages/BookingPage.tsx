@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQueryClient } from '@tanstack/react-query'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { motion, AnimatePresence, useAnimate } from 'framer-motion'
 import { toast } from 'sonner'
 import {
@@ -32,8 +32,10 @@ import TravelTimeChip from '../components/booking/TravelTimeChip'
 import { appleMapsDirectionsUrl, googleMapsDirectionsUrl } from '../lib/geoapifyRouting'
 import { toNumber } from '../lib/mapUtils'
 import { useResolvedTourPoints } from '../hooks/useResolvedTourPoints'
+import { useExpeditionTour } from '../hooks/useExpeditionTours'
 import type { ResolveTourSource } from '../lib/resolvePoints'
 import type { PickupZoneMapTour } from '../components/booking/PickupZoneMap'
+import { DEFAULT_BOOKING_TOUR, buildBookingTour, type BookingTour } from '../lib/bookingTour'
 import OptimizedImage from '@/components/shared/OptimizedImage'
 import {
   isSupplierOperatingDay,
@@ -47,102 +49,10 @@ import { freeCancellationDateLabel } from '../lib/cancellationLabel'
 
 /* --- Tour data from location state --- */
 
-// The supplier's meeting / pickup / drop-off configuration (passed from the
-// tour detail page via BookingWidget). Mirrors TourDetailData's meetingInfo.
-interface MeetingPickupInfo {
-  meetingMode?: 'meeting_point' | 'pickup' | 'none'
-  meetingPoint?: string
-  meetingPointAddress?: string
-  meetingPointDescription?: string
-  /** Coordinates of the supplier's meeting point (Step 13), for map rendering. */
-  meetingPointLat?: number | null
-  meetingPointLng?: number | null
-  /** Photo of the meeting point uploaded by the supplier (Step 13). */
-  meetingPointPicture?: string
-  arrivalTimeType?: 'none' | '5min' | '10min' | '15min' | '30min' | 'notified' | 'custom'
-  arrivalTimeCustom?: string
-  pickupType?: 'area' | 'address'
-  /** Whether pickup happens at the activity start or before it. */
-  pickupTiming?: 'at_start' | 'before_start'
-  /** When the final pickup location is communicated (day before / after selection). */
-  pickupFinalLocationTiming?: 'day_before' | 'after_selection'
-  /** Pickup reference window before the start, e.g. '0-45' (0–45 min before). */
-  referenceStartTime?: string
-  pickupAreas?: PickupAreaShape[]
-  pickupLocations?: { name?: string; address?: string; lat?: number | null; lng?: number | null }[]
-  pickupDescription?: string
-  dropoffOption?: 'same_location' | 'different_location' | 'none' | 'service'
-  dropoffLocation?: string
-  dropoffLocationAddress?: string
-  dropoffDescription?: string
-  /** Supplier's Step-14 availability scheduling ("Time slots" vs "Opening hours"). */
-  scheduleType?: TourScheduleInfo['scheduleType']
-  timeSlots?: TourScheduleInfo['timeSlots']
-  daysOfWeek?: TourScheduleInfo['daysOfWeek']
-  weeklySchedule?: TourScheduleInfo['weeklySchedule']
-  operatingHoursStart?: string
-  operatingHoursEnd?: string
-  /** Pricing model + per-category / group data (mirrors TourDetailData). */
-  pricingModel?: 'perPerson' | 'perGroup'
-  travelerPricing?: { label: string; price: number; minAge?: number | null; maxAge?: number | null; tiers?: { from: number; to: number; pricePerPerson: number }[] }[]
-  groupSizePricing?: { from: number; to: number; price: number }[]
-}
-
-const FALLBACK_TOUR = {
-  id: '',
-  slug: '',
-  title: 'Loading...',
-  location: '',
-  pickupIncluded: false,
-  image: '',
-  provider: 'Expedition GO Tours',
-  rating: 0,
-  reviews: 0,
-  date: '',
-  dateISO: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
-  time: '9:00 AM',
-  duration: '',
-  travelers: '1 adult',
-  travelersCount: { adults: 1, children: 0, infants: 0 } as Record<string, number>,
-  adults: 1,
-  children: 0,
-  infants: 0,
-  selectedDate: '',
-  selectedTime: null as string | null,
-  price: 0,
-  cancellation: 'Free cancellation up to 24 hours before',
-  language: 'English',
-  meetingMode: undefined as MeetingPickupInfo['meetingMode'],
-  meetingPoint: '',
-  meetingPointAddress: '',
-  meetingPointDescription: '',
-  meetingPointPicture: '',
-  meetingPointLat: null as number | null,
-  meetingPointLng: null as number | null,
-  arrivalTimeType: 'none' as MeetingPickupInfo['arrivalTimeType'],
-  arrivalTimeCustom: '',
-  pickupType: 'area' as MeetingPickupInfo['pickupType'],
-  pickupTiming: 'at_start' as MeetingPickupInfo['pickupTiming'],
-  pickupFinalLocationTiming: 'day_before' as MeetingPickupInfo['pickupFinalLocationTiming'],
-  referenceStartTime: '',
-  pickupAreas: [] as MeetingPickupInfo['pickupAreas'],
-  pickupLocations: [] as MeetingPickupInfo['pickupLocations'],
-  pickupDescription: '',
-  dropoffOption: 'none' as MeetingPickupInfo['dropoffOption'],
-  dropoffLocation: '',
-  dropoffLocationAddress: '',
-  dropoffDescription: '',
-  scheduleType: undefined as MeetingPickupInfo['scheduleType'],
-  timeSlots: [] as NonNullable<MeetingPickupInfo['timeSlots']>,
-  daysOfWeek: [] as NonNullable<MeetingPickupInfo['daysOfWeek']>,
-  weeklySchedule: {} as NonNullable<MeetingPickupInfo['weeklySchedule']>,
-  operatingHoursStart: '',
-  operatingHoursEnd: '',
-  pricingModel: 'perPerson' as MeetingPickupInfo['pricingModel'],
-  travelerPricing: [] as NonNullable<MeetingPickupInfo['travelerPricing']>,
-  groupSizePricing: [] as NonNullable<MeetingPickupInfo['groupSizePricing']>,
-  ticketValidity: undefined as string | undefined,
-}
+// Neutral placeholder tour shown only while no tour context is available yet
+// (no router state, no matching draft, and the by-id re-fetch is still in
+// flight). The full booking tour shape lives in lib/bookingTour.
+const FALLBACK_TOUR: BookingTour = DEFAULT_BOOKING_TOUR
 
 // Time label for the date/time summary rows: time-slot tours show the chosen
 // slot; opening-hours tours show the selected day's opening hours, falling back
@@ -1658,6 +1568,7 @@ export default function BookingPage() {
   const location = useLocation()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const { tourId: urlTourId } = useParams<{ tourId: string }>()
 
   // Read the persisted draft once so every piece of booking state can be
   // initialized synchronously from it. Restored data is therefore present from
@@ -1666,15 +1577,24 @@ export default function BookingPage() {
   const draft = useMemo(() => readBookingDraft(), [])
   const freshTour = location.state?.tour
 
+  // The URL carries the tour id (/{tourId}/booking) so a refresh can rebuild
+  // the booking context. The persisted draft is only trusted when it belongs
+  // to THIS URL's tour — a stale draft for another tour must never bleed in.
+  const draftMatches = !freshTour && Boolean(draft) && !!urlTourId && draft?.tourId === urlTourId
+
   // Restore the tour from router state when arriving fresh from a tour detail
-  // page, otherwise fall back to the persisted draft (refresh / sign-in
-  // round-trip) so the booking never loses its tour context.
-  const [tour] = useState(() => freshTour || draft?.tour || FALLBACK_TOUR)
+  // page, otherwise fall back to the matching persisted draft (refresh /
+  // sign-in round-trip). With neither, re-fetch the tour by its URL id so the
+  // booking context survives even when the draft is missing or was cleared.
+  const needFetch = !freshTour && !draftMatches && !!urlTourId
+  const { data: fetchedTour, isLoading: tourLoading } = useExpeditionTour(needFetch ? urlTourId : undefined)
+
+  const [tour, setTour] = useState(() => freshTour || (draftMatches ? draft?.tour : FALLBACK_TOUR))
 
   // Only restore the form fields when we're NOT arriving fresh (i.e. this is a
   // sign-in/refresh round-trip) and the stored draft belongs to this tour —
   // otherwise a draft from a previous booking would bleed its data in.
-  const canRestore = !freshTour && Boolean(draft) && draft?.tourId === (tour.id || tour.slug)
+  const canRestore = draftMatches
 
   const user = useAuthUser()
 
@@ -1709,6 +1629,17 @@ export default function BookingPage() {
   const [showExpiredModal, setShowExpiredModal] = useState(false)
   const [showSignInPrompt, setShowSignInPrompt] = useState(false)
   const lastActivityAt = useRef(0)
+
+  // Refresh / direct-URL arrival with no usable draft: once the by-URL-id fetch
+  // lands, rebuild the tour context (and its editable selection) from the
+  // fetched detail so the page never sits on the "Loading..." placeholder.
+  // React-recommended "adjust state during render" pattern — guarded so the
+  // rebuild runs exactly once (setting the tour id flips the guard).
+  if (!tour?.id && fetchedTour) {
+    const built = buildBookingTour(fetchedTour)
+    setTour(built)
+    setEditableTour(buildEditableTour(built))
+  }
 
   // Bring a restored later step into view (mount-only; no state changes).
   useEffect(() => {
@@ -1857,7 +1788,7 @@ export default function BookingPage() {
 
   const handleSignInPrompt = () => {
     setShowSignInPrompt(false)
-    setAuthReturnTo('/booking')
+    setAuthReturnTo(location.pathname)
     navigate('/login')
   }
 
@@ -2106,6 +2037,17 @@ export default function BookingPage() {
     () => ({ ...tour, ...editableTour, price: finalPrice }),
     [tour, editableTour, finalPrice],
   )
+
+  // Refresh / direct-URL arrival with no draft: show a spinner while the tour
+  // is re-fetched by the URL id, instead of a broken "Loading..." placeholder.
+  if (needFetch && tourLoading && !tour?.id) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-white">
+        <Loader2 className="size-8 animate-spin text-emerald-600" />
+        <p className="mt-3 text-sm font-medium text-slate-500">Loading tour…</p>
+      </div>
+    )
+  }
 
   return (
     <div className="flex min-h-screen flex-col bg-white">

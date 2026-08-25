@@ -388,6 +388,7 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
                       difficulty={tour.difficulty}
                       cancellationPolicy={tour.cancellationPolicy}
                       pickupIncluded={tour.pickupIncluded}
+                      meetingMode={tour.meetingMode}
                       languages={tour.languages}
                     />
                 </motion.div>

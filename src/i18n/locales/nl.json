@@ -350,6 +350,7 @@
     "accommodationLabel": "Accommodatie",
     "mealsLabel": "Maaltijden",
     "overnightAccommodationIncluded": "Overnachting inbegrepen",
+    "overnightAccommodation": "Overnachting: {{type}}",
     "pickupAreas": "Ophaalgebieden",
     "pickupLocations": "Ophaalpunten",
     "pickupNotSet": "Niet ingesteld",

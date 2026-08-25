@@ -13,7 +13,7 @@ export default function NewExperiencesSection() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
-  const { data: liveTours } = useNewestTours(10)
+  const { data: liveTours } = useNewestTours(30)
 
   const items = liveTours ?? []
 
@@ -43,7 +43,16 @@ export default function NewExperiencesSection() {
     updateArrows()
     const onScroll = () => updateArrows()
     el.addEventListener('scroll', onScroll, { passive: true })
-    return () => el.removeEventListener('scroll', onScroll)
+    // Re-evaluate when the tour data arrives — the carousel starts empty (so
+    // both arrows compute as muted), then grows once the newest tours load.
+    // Without this the right arrow would stay muted forever, even though the
+    // carousel is scrollable.
+    const ro = new ResizeObserver(() => updateArrows())
+    ro.observe(el)
+    return () => {
+      el.removeEventListener('scroll', onScroll)
+      ro.disconnect()
+    }
   }, [updateArrows])
 
   return (

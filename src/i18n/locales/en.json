@@ -387,6 +387,7 @@
     "accommodationLabel": "Accommodation",
     "mealsLabel": "Meals",
     "overnightAccommodationIncluded": "Overnight accommodation included",
+    "overnightAccommodation": "Overnight accommodation: {{type}}",
     "pickupAreas": "Pickup areas",
     "pickupLocations": "Pickup locations",
     "pickupNotSet": "Not set",

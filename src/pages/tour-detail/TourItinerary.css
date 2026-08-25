@@ -114,12 +114,20 @@
    sits beside it, so the start of each day reads clearly while every day's
    stops restart their numbering at 1. */
 .itinerary-day-label {
+  display: inline-flex;
+  align-items: center;
   margin: 4px 0 0;
+  padding: 5px 14px;
+  border-radius: 999px;
+  background: #179237;
+  color: #fff;
+  white-space: nowrap;
   font-family: var(--font-body);
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 800;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
+  line-height: 1;
 }
 
 .itinerary-stop-simple-desc {

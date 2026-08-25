@@ -2,6 +2,8 @@
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import type { TourDetailData, SpecialOfferData } from '../../hooks/useExpeditionTours'
+import { bestOfferDiscountAmount } from '../../hooks/useExpeditionTours'
+import { buildBookingTour } from '../../lib/bookingTour'
 import { Button } from '../../components/ui/button'
 import { CalendarPicker } from '../../components/ui/apple-calendar-picker'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -284,75 +286,20 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
 
     // Stash the navigation payload, then play spinner → transition → booking.
     pendingNavState.current = {
-      tour: {
-        id: tour.id,
-        slug: tour.slug,
-        title: tour.title,
-        location: tour.location,
-        pickupIncluded: tour.pickupIncluded,
-        image: tour.images?.[0] || '',
-        provider: 'Expedition GO Tours',
-        rating: tour.rating,
-        reviews: tour.reviewCount,
+      tour: buildBookingTour(tour, {
         date: dateLabel,
         dateISO,
         time: selectedTime ? formatSlotTime(selectedTime) : (openingHoursLabel ? `Open ${openingHoursLabel}` : 'Flexible time'),
-        duration: tour.duration,
         travelers: travelersLabel,
-        travelersCount: travelersPayload,
+        travelersPayload,
         adults: travelersPayload.adults || 0,
         children: travelersPayload.children || 0,
         infants: travelersPayload.infants || 0,
         price: isPerGroup ? (matchingGroupBand?.price ?? clientSubtotal) : (pricingResult ? totalPrice : clientSubtotal),
-        cancellation: tour.cancellationPolicy || 'Free cancellation up to 24 hours before',
-        language: tour.languages?.[0] || 'English',
-        // Ticket validity from the supplier's Step-12 "Booking Options" (the
-        // booking page surfaces it on the tour summary card).
-        ticketValidity: tour.ticketValidity,
-        // Meeting / pickup / drop-off configuration so the booking page can
-        // render exactly how travellers get to (and leave) the activity.
-        meetingMode: tour.meetingMode,
-        meetingPoint: tour.meetingPoint,
-        meetingPointAddress: tour.meetingPointAddress,
-        meetingPointDescription: tour.meetingPointDescription,
-        meetingPointPicture: tour.meetingPointPicture,
-        meetingPointLat: tour.meetingPointLat,
-        meetingPointLng: tour.meetingPointLng,
-        arrivalTimeType: tour.arrivalTimeType,
-        arrivalTimeCustom: tour.arrivalTimeCustom,
-        pickupType: tour.pickupType,
-        pickupTiming: tour.pickupTiming,
-        pickupFinalLocationTiming: tour.pickupFinalLocationTiming,
-        referenceStartTime: tour.referenceStartTime,
-        pickupAreas: tour.pickupAreas,
-        pickupLocations: tour.pickupLocations,
-        pickupDescription: tour.pickupDescription,
-        dropoffOption: tour.dropoffOption,
-        dropoffLocation: tour.dropoffLocation,
-        dropoffLocationAddress: tour.dropoffLocationAddress,
-        dropoffDescription: tour.dropoffDescription,
-        // Availability scheduling so the booking page can render the supplier's
-        // "Time slots" vs "Opening hours" choice accurately.
-        scheduleType: tour.scheduleType,
-        timeSlots: tour.timeSlots,
-        daysOfWeek: tour.daysOfWeek,
-        weeklySchedule: tour.weeklySchedule,
-        operatingHoursStart: tour.operatingHoursStart,
-        operatingHoursEnd: tour.operatingHoursEnd,
-        // The traveller's chosen time slot (fixed-slot tours) so the booking
-        // page's tour card can show just the selected time, not every slot.
-        selectedTime: selectedTime || null,
-        // Pricing model + per-category / group data so the booking page can
-        // show an accurate client-side total (mirroring the widget's own
-        // fallback) when the checkout API is unavailable / rate-limited.
-        pricingModel: tour.pricingModel,
-        travelerPricing: tour.travelerPricing,
-        groupSizePricing: tour.groupSizePricing,
-        // Validated promo code so the booking page can prefill/apply it and
-        // send it with the confirm request (the backend prices with it).
+        selectedTime,
         promoCode: promoApplied ? promoCode.trim() : null,
         appliedPromo: appliedPromo ? { name: appliedPromo.name, discountAmount: appliedPromo.discountAmount } : null,
-      },
+      }),
     }
 
     // Pick the vehicle for this booking, cycling helicopter → tram → truck
@@ -372,8 +319,8 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
   }, [selectedDate, selectedTime, t, tour, isPerGroup, groupHeadcount, travelerGroups, categoryCounts, travelersPayload, matchingGroupBand, totalPrice, clientSubtotal, pricingResult, getSelectedDayInfo, openingHoursLabel, promoApplied, promoCode, appliedPromo])
 
   const handleTransitionDone = useCallback(() => {
-    navigate('/booking', { state: pendingNavState.current })
-  }, [navigate])
+    navigate(`/${encodeURIComponent(tour.id)}/booking`, { state: pendingNavState.current })
+  }, [navigate, tour.id])
 
   const handleUpdatePricing = useCallback(() => {
     if (!selectedDate) {
@@ -556,16 +503,25 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
   // confirms a discount (a supplier-applied special offer or a validated promo
   // code), strike the original unit price and show the discounted unit price
   // in red. `savedAmount` is the total discount, so per-traveler it divides by
-  // the headcount.
+  // the headcount. When checkout hasn't confirmed a discount yet (e.g. the
+  // initial pricing call failed for the default date), fall back to the best
+  // supplier offer applied to the unit price — so the detail page matches the
+  // Special Offers cards instead of showing only the full price.
   const originalUnitPrice = isPerGroup
     ? (lowestGroupBand?.price ?? 0)
     : hasPricing && adultGroup && unitPriceFor(adultGroup) > 0
       ? unitPriceFor(adultGroup)
       : tour.price
-  const promoUnitPrice =
+  const confirmedPerUnitDiscount =
     savedAmount > 0 && totalTravelers > 0 && !pricingLoading
-      ? originalUnitPrice - savedAmount / totalTravelers
-      : null
+      ? savedAmount / totalTravelers
+      : 0
+  const offerPerUnitDiscount =
+    activeOffers.length > 0 && originalUnitPrice > 0
+      ? bestOfferDiscountAmount(activeOffers, originalUnitPrice)
+      : 0
+  const discountPerUnit = Math.max(confirmedPerUnitDiscount, offerPerUnitDiscount)
+  const promoUnitPrice = discountPerUnit > 0 ? originalUnitPrice - discountPerUnit : null
   const showPromoPrice =
     promoUnitPrice != null && promoUnitPrice > 0 && promoUnitPrice < originalUnitPrice
 

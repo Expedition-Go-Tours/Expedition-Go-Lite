@@ -119,6 +119,34 @@ export interface ItineraryDay {
   accommodation?: string
 }
 
+/**
+ * Per-day logistics a supplier sets on the platform (Step 05 — the "Overnight
+ * accommodation" / "Meals" panels of the day editor), persisted under
+ * productContent.dayLogistics[day]. Mirrors the supplier app's shape so the
+ * storefront renders the exact accommodation type / meals the supplier chose.
+ */
+export interface DayLogisticsEntry {
+  /** Accommodation type key: 'budget' | 'midrange' | 'premium'. */
+  accommodation?: string
+  /** Meals for the day, e.g. { type: 'Breakfast', format: 'Buffet' }. */
+  meals?: { type: string; format: string }[]
+  drinksIncluded?: boolean
+}
+
+/** Per-day logistics keyed by the day number (as string or number). */
+export type DayLogisticsMap = Record<string, DayLogisticsEntry | undefined>
+
+/**
+ * Display labels for the supplier's accommodation types. Values must match the
+ * supplier platform's ACCOMMODATION_LABELS (utils/itineraryConstants.js) so the
+ * storefront shows the exact "Midrange hotel (3 stars)"-style wording.
+ */
+export const ACCOMMODATION_TYPE_LABELS: Record<string, string> = {
+  budget: 'Budget hotel (2 stars)',
+  midrange: 'Midrange hotel (3 stars)',
+  premium: 'Premium hotel (4\u20135 stars)',
+}
+
 export function formatItineraryDuration(duration?: number, unit?: string): string {
   if (duration == null) return ''
   switch (unit) {

@@ -129,7 +129,7 @@ function AppContent() {
     window.scrollTo(0, 0)
   }, [location.pathname])
 
-  const hideNav = currentPage === 'signin' || currentPage === 'signup' || location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/booking') || location.pathname.startsWith('/supplier/register') || location.pathname.startsWith('/supplier/list-experience') || location.pathname.startsWith('/login')
+  const hideNav = currentPage === 'signin' || currentPage === 'signup' || location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/booking') || location.pathname.endsWith('/booking') || location.pathname.startsWith('/supplier/register') || location.pathname.startsWith('/supplier/list-experience') || location.pathname.startsWith('/login')
 
   return (
     <>
@@ -173,6 +173,15 @@ function AppContent() {
           <SupplierLandingPage onOpenAuth={handleOpenAuth} />
         } />
         <Route path="/booking" element={
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25, ease: 'easeOut' }}
+          >
+            <BookingPage />
+          </motion.div>
+        } />
+        <Route path="/:tourId/booking" element={
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}

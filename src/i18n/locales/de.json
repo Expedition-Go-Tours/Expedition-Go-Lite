@@ -350,6 +350,7 @@
     "accommodationLabel": "Unterkunft",
     "mealsLabel": "Mahlzeiten",
     "overnightAccommodationIncluded": "Übernachtung inklusive",
+    "overnightAccommodation": "Übernachtung: {{type}}",
     "pickupAreas": "Abholgebiete",
     "pickupLocations": "Abholorte",
     "pickupNotSet": "Nicht festgelegt",

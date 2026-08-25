@@ -9,6 +9,8 @@ export interface ContinuePlanningItem {
   duration: string
   features: string
   imageUrl: string
+  /** All tour photos — drives the swipeable image carousel on mobile cards. */
+  photos?: string[]
   rating: number
   reviewCount: number
   viewedAt: string
@@ -18,6 +20,7 @@ export interface ContinuePlanningItem {
   difficulty?: string
   cancellationPolicy?: string
   pickupIncluded?: boolean
+  meetingMode?: 'meeting_point' | 'pickup' | 'none'
   source?: 'expedition-go' | 'travio-africa'
   externalUrl?: string
   slug?: string
@@ -57,6 +60,7 @@ export function toContinuePlanningItem(tour: Tour | (MultiDayTour & { days?: str
     duration: hasDuration ? (tour as Tour).duration : (hasDays ? m.days : '1 Day'),
     features: tourFeatures,
     imageUrl: tour.image,
+    photos: (tour as Tour).photos,
     rating: parseFloat(tour.rating) || 0,
     reviewCount: tour.reviews,
     viewedAt: new Date().toISOString(),
@@ -65,6 +69,7 @@ export function toContinuePlanningItem(tour: Tour | (MultiDayTour & { days?: str
     difficulty: (tour as Tour).difficulty,
     cancellationPolicy: (tour as Tour).cancellationPolicy,
     pickupIncluded: (tour as Tour).pickupIncluded,
+    meetingMode: (tour as Tour).meetingMode,
     source: (tour as Tour).source,
     externalUrl: (tour as Tour).externalUrl,
     slug: (tour as Tour & { slug?: string }).slug,

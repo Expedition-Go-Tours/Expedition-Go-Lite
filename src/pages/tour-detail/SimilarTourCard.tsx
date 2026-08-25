@@ -1,4 +1,4 @@
-import { MapPin, Star, Heart, Car, Languages as LanguagesIcon, ShieldCheck, Ban } from 'lucide-react'
+import { MapPin, Star, Heart, Car, Compass, Languages as LanguagesIcon, ShieldCheck, Ban } from 'lucide-react'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
 import i18n from '../../i18n/config'
@@ -28,6 +28,7 @@ export default function SimilarTourCard({
   difficulty,
   cancellationPolicy,
   pickupIncluded,
+  meetingMode,
   source,
   externalUrl,
 }: SimilarTourCardProps) {
@@ -108,9 +109,14 @@ export default function SimilarTourCard({
 
         <h3 className="similar-tour-title">{title}</h3>
 
-        {(pickupIncluded || languageLabel || cancellationLabel || difficulty) && (
+        {(meetingMode === 'meeting_point' || pickupIncluded || languageLabel || cancellationLabel || difficulty) && (
           <div className="similar-tour-meta">
-            {pickupIncluded && (
+            {meetingMode === 'meeting_point' ? (
+              <span className="similar-tour-meta-badge similar-tour-meta-badge-meeting">
+                <Compass size={11} strokeWidth={2.2} />
+                Meeting point
+              </span>
+            ) : pickupIncluded && (
               <span className="similar-tour-meta-badge similar-tour-meta-badge-pickup">
                 <Car size={11} strokeWidth={2.2} />
                 Pickup included
