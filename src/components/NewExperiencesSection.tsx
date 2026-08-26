@@ -15,7 +15,11 @@ export default function NewExperiencesSection() {
   const [canScrollRight, setCanScrollRight] = useState(true)
   const { data: liveTours } = useNewExperiences(30)
 
-  const items = (liveTours ?? []).map(mapToTourCard)
+  const items = (liveTours ?? []).map(t => {
+    const card = mapToTourCard(t)
+    // Only use coverPhoto for the carousel — photos array may contain low-quality uploads
+    return { ...card, photos: card.image ? [card.image] : card.photos }
+  })
 
   const updateArrows = useCallback(() => {
     const el = scrollRef.current
