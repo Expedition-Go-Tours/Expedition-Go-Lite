@@ -48,6 +48,8 @@ const TravelStoriesSection = lazy(() => import('./components/TravelStoriesSectio
 
 type PageView = 'home' | 'signin' | 'signup'
 
+const sectionFallback = <div style={{ minHeight: 400 }} />
+
 function HomePage() {
   const { data: homepage } = useHomepage()
   return (
@@ -57,14 +59,14 @@ function HomePage() {
       <MoodSection preloaded={homepage?.mood} />
       <RecommendSection preloaded={homepage?.recommended} />
       <PopularLocations preloaded={homepage?.destinations} />
-      <MountOnView><TopRatedSection preloaded={homepage?.topRated} /></MountOnView>
-      <MountOnView><SellOutSection preloaded={homepage?.sellOut} /></MountOnView>
-      <MountOnView><LastMinuteDealsSection preloaded={homepage?.offers} /></MountOnView>
-      <MountOnView><NewExperiencesSection /></MountOnView>
-      <MountOnView><TopAttractionsNearbySection preloaded={homepage?.attractions} /></MountOnView>
+      <MountOnView><Suspense fallback={sectionFallback}><TopRatedSection preloaded={homepage?.topRated} /></Suspense></MountOnView>
+      <MountOnView><Suspense fallback={sectionFallback}><SellOutSection preloaded={homepage?.sellOut} /></Suspense></MountOnView>
+      <MountOnView><Suspense fallback={sectionFallback}><LastMinuteDealsSection preloaded={homepage?.offers} /></Suspense></MountOnView>
+      <MountOnView><Suspense fallback={sectionFallback}><NewExperiencesSection /></Suspense></MountOnView>
+      <MountOnView><Suspense fallback={sectionFallback}><TopAttractionsNearbySection preloaded={homepage?.attractions} /></Suspense></MountOnView>
       <MountOnView><CustomReviewsSection /></MountOnView>
       <MountOnView><WhyBookSection /></MountOnView>
-      <MountOnView><TravelStoriesSection /></MountOnView>
+      <MountOnView><Suspense fallback={sectionFallback}><TravelStoriesSection /></Suspense></MountOnView>
       <MountOnView><NewsletterSection /></MountOnView>
       <MountOnView><PartnersSection /></MountOnView>
       <Footer />
