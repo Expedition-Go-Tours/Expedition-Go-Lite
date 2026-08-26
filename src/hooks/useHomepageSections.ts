@@ -314,6 +314,13 @@ export function mapToTourCard(t: HomepageTour): Tour {
 
   const location = [t.city, t.country].filter(Boolean).join(', ')
 
+  // Pick a random photo from the array for variety (reduces duplicate images)
+  const allPhotos = [t.coverPhoto, ...(t.photos || [])].filter(Boolean)
+  const uniquePhotos = [...new Set(allPhotos)]
+  const image = uniquePhotos.length > 0
+    ? uniquePhotos[Math.floor(Math.random() * uniquePhotos.length)]
+    : t.coverPhoto || ''
+
   return {
     id: t.id,
     title: t.title,
@@ -324,7 +331,7 @@ export function mapToTourCard(t: HomepageTour): Tour {
     rating: t.averageRating != null ? String(t.averageRating) : '',
     reviews: t.reviewCount || 0,
     location,
-    image: t.coverPhoto || t.photos?.[0] || '',
+    image,
     photos: t.photos,
     source: 'expedition-go',
     difficulty: t.difficulty || undefined,

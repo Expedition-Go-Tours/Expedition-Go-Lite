@@ -184,7 +184,7 @@ export default function TourCard({ id, title, duration, features, price, rating,
             return (
               <div key={`${src}-${i}`} className={`tour-card-slide${isActive ? ' tour-card-slide-active' : ''}`}>
                 {shouldLoad ? (
-                  <OptimizedImage src={src} alt={title} width={600} loading={isActive ? 'eager' : 'lazy'} />
+                  <OptimizedImage src={src} alt={title} width={600} height={400} fit="crop" loading={isActive ? 'eager' : 'lazy'} />
                 ) : null}
               </div>
             )
