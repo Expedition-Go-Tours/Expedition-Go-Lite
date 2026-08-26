@@ -55,7 +55,7 @@ function HomePage() {
       <PopularLocations preloaded={homepage?.destinations} />
       <MountOnView><TopRatedSection preloaded={homepage?.topRated} /></MountOnView>
       <MountOnView><SellOutSection preloaded={homepage?.sellOut} /></MountOnView>
-      <MountOnView><LastMinuteDealsSection /></MountOnView>
+      <MountOnView><LastMinuteDealsSection preloaded={homepage?.offers} /></MountOnView>
       <MountOnView><NewExperiencesSection /></MountOnView>
       <MountOnView><TopAttractionsNearbySection preloaded={homepage?.attractions} /></MountOnView>
       <MountOnView><CustomReviewsSection /></MountOnView>

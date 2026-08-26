@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import SectionHeading from './SectionHeading'
 import TourCard from './TourCard'
 import { lastMinuteDeals } from './data'
-import { useHomepageOffers, type HomepageOfferTour } from '../hooks/useHomepageSections'
+import { useHomepageOffers, type HomepageOfferTour, type HomepageTour } from '../hooks/useHomepageSections'
 import './LastMinuteDealsSection.css'
 
 const CARD_WIDTH = 295
@@ -46,16 +46,19 @@ function mapOfferToCardProps(t: HomepageOfferTour) {
   }
 }
 
-export default function LastMinuteDealsSection() {
+interface Props {
+  preloaded?: HomepageOfferTour[]
+}
+
+export default function LastMinuteDealsSection({ preloaded }: Props) {
   const { t } = useTranslation()
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
   const { data: offerTours } = useHomepageOffers(12)
-  // Show real tours that have a supplier-applied offer; fall back to the
-  // curated flash-deal list while loading or when no tour has an offer.
-  const items = offerTours && offerTours.length > 0
-    ? offerTours.map(mapOfferToCardProps)
+  // Use preloaded from unified endpoint, fall back to individual hook, then dummy data
+  const items = (preloaded ?? offerTours) && (preloaded ?? offerTours)!.length > 0
+    ? (preloaded ?? offerTours)!.map(mapOfferToCardProps)
     : lastMinuteDeals
 
   const updateArrows = useCallback(() => {
