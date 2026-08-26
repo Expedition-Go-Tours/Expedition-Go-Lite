@@ -7,9 +7,21 @@ import Navbar from '../components/Navbar'
 import TourCard from '../components/TourCard'
 
 import { useAllExpeditionTours, useTourFilterOptions, type TourCardData } from '../hooks/useExpeditionTours'
+import { useSectionTourIds, useHomepageOffers, type HomepageOfferTour } from '../hooks/useHomepageSections'
 import './AllToursPage.css'
 
 const PAGE_SIZE = 12
+
+function computeDiscountLabel(t: HomepageOfferTour): string | undefined {
+  if (t.discountType === 'PERCENTAGE' && t.discountPercentage) {
+    return `-${t.discountPercentage}%`
+  }
+  if (t.discountType === 'FIXED_AMOUNT' && t.fixedDiscountValue && t.startingPrice) {
+    const pct = Math.round((t.fixedDiscountValue / t.startingPrice) * 100)
+    if (pct > 0) return `-${pct}%`
+  }
+  return undefined
+}
 
 const RATING_OPTIONS = [
   { value: '5', label: '5' },
@@ -87,6 +99,8 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
   const navigate = useNavigate()
   const sectionParam = searchParams.get('section') || ''
   const locationParam = searchParams.get('location') || ''
+  const categoryParam = searchParams.get('category') || ''
+  const moodParam = searchParams.get('mood') || ''
 
   const [tourTypes, setTourTypes] = useState<string[]>([])
   const [destinations, setDestinations] = useState<string[]>([])
@@ -102,8 +116,23 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
   const effectiveSortKey: SortKey =
     sortByVal === 'recommended' && sectionParam ? sectionSortKey(sectionParam) : sortByVal
 
-  const { data: allTours, isLoading, isError, error } = useAllExpeditionTours()
+  const { data: allTours, isLoading, isError, error } = useAllExpeditionTours(moodParam ? { mood: moodParam } : undefined)
   const { data: filterOptionData } = useTourFilterOptions()
+
+  // Single lightweight call to get section tour IDs (reads pre-computed Redis cache)
+  const { data: sectionTourIdList } = useSectionTourIds(sectionParam)
+  const isOffersSection = sectionParam === 'Last Minute Deals'
+  const { data: offerTours } = useHomepageOffers(50)
+  const offersMap = useMemo(() => {
+    if (!isOffersSection || !offerTours?.length) return null
+    const map = new Map<string, HomepageOfferTour>()
+    for (const o of offerTours) map.set(o.id, o)
+    return map
+  }, [isOffersSection, offerTours])
+  const sectionTourIds = useMemo(() => {
+    if (!sectionTourIdList?.length) return null
+    return new Set(sectionTourIdList)
+  }, [sectionTourIdList])
 
   // Seed the destination filter from a /tours?location=... link (once per value).
   const seededLocationRef = useRef<string | null>(null)
@@ -113,6 +142,15 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
       setDestinations(prev => prev.includes(locationParam) ? prev : [...prev, locationParam])
     }
   }, [locationParam])
+
+  // Seed the category filter from a /tours?category=... link (e.g. from MoodSection).
+  const seededCategoryRef = useRef<string | null>(null)
+  useEffect(() => {
+    if (categoryParam && seededCategoryRef.current !== categoryParam) {
+      seededCategoryRef.current = categoryParam
+      setCategories(prev => prev.includes(categoryParam) ? prev : [...prev, categoryParam])
+    }
+  }, [categoryParam])
 
   // Always start from page 1 whenever the active filters or sort change.
   useEffect(() => {
@@ -147,7 +185,7 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
       list = list.filter((tour) => (tour.ratingValue ?? 0) >= minRating)
     }
     if (categories.length > 0) {
-      list = list.filter((tour) => categories.includes(tour.category))
+      list = list.filter((tour) => categories.some(c => c.toLowerCase() === tour.category?.toLowerCase()))
     }
     if (destinations.length > 0) {
       list = list.filter((tour) => {
@@ -159,8 +197,13 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
       })
     }
 
+    // Filter by section algorithm (tours curated by the homepage backend)
+    if (sectionTourIds) {
+      list = list.filter(tour => sectionTourIds.has(tour.id))
+    }
+
     return applySort(list, effectiveSortKey)
-  }, [allTours, tourTypes, durationFilter, priceFilter, ratingFilter, categories, destinations, effectiveSortKey])
+  }, [allTours, tourTypes, durationFilter, priceFilter, ratingFilter, categories, destinations, effectiveSortKey, sectionTourIds])
 
   const totalCount = filteredTours.length
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
@@ -209,13 +252,16 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
     if (filterOptions.categories.some(c => c.value === value)) { handleMulti(setCategories)(value); return }
   }
 
-  const pageTitle = locationParam
+  const pageTitle = moodParam
+    ? moodParam
+    : locationParam
     ? t('sections.toursIn', { location: locationParam })
     : SECTION_TITLES[sectionParam] || t('sections.allToursTitle')
 
   const sortOptions = useMemo(() => [
     { value: 'recommended', label: t('sections.recommendedTitle') },
     { value: 'rating', label: t('sections.topRatedTitle') },
+    { value: 'popular', label: 'Most Popular' },
     { value: 'price-low', label: 'Price: Low – High' },
     { value: 'price-high', label: 'Price: High – Low' },
   ] as const, [t])
@@ -263,7 +309,7 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
       <div className="all-tours-container">
         <div className="all-tours-header">
           <div className="all-tours-header-left">
-            {sectionParam && (
+            {(sectionParam || moodParam) && (
               <button
                 onClick={() => navigate('/')}
                 className="all-tours-back-btn"
@@ -315,6 +361,16 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
                   onClick={() => navigate('/tours')}
                 >
                   {SECTION_TITLES[sectionParam] || sectionParam}
+                  <X size={12} className="filter-pill-x" />
+                </button>
+              )}
+              {moodParam && (
+                <button
+                  type="button"
+                  className="filter-pill active"
+                  onClick={() => navigate('/tours')}
+                >
+                  {moodParam}
                   <X size={12} className="filter-pill-x" />
                 </button>
               )}
@@ -390,6 +446,8 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
                       pickupIncluded={tour.pickupIncluded}
                       meetingMode={tour.meetingMode}
                       languages={tour.languages}
+                      discount={offersMap?.get(tour.id) ? computeDiscountLabel(offersMap.get(tour.id)!) : undefined}
+                      specialOffers={offersMap?.get(tour.id)?.specialOffers}
                     />
                 </motion.div>
               ))}

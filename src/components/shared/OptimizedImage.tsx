@@ -137,6 +137,19 @@ export default function OptimizedImage({
   const srcSet = srcSetWidths ? getSrcSet(src, srcSetWidths, transformOpts) : undefined
   const sizes = width ? widthToSizes(width) : undefined
 
+  // LQIP: tiny blurred placeholder shown while full image loads
+  const lqipUrl = transformImage(src, { width: 20, quality: 'auto:low', format: 'auto' })
+  const placeholderStyle: React.CSSProperties = loaded
+    ? { ...style }
+    : {
+        ...style,
+        backgroundImage: lqipUrl ? `url(${lqipUrl})` : undefined,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        filter: 'blur(20px)',
+        transform: 'scale(1.1)',
+      }
+
   return (
     <img
       ref={imgRef}
@@ -150,7 +163,7 @@ export default function OptimizedImage({
       decoding="async"
       fetchPriority={fetchPriority}
       className={`optimized-img${loaded ? '' : ' optimized-img-loading'} ${className}`}
-      style={style}
+      style={placeholderStyle}
       onLoad={handleLoad}
       onError={handleError}
       {...imgProps}

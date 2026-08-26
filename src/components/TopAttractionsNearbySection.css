@@ -210,6 +210,51 @@
   height: 14px;
 }
 
+.attractions-back-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.attractions-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  color: #374151;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  flex-shrink: 0;
+}
+
+.attractions-back-btn:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+}
+
+.attractions-selected-heading {
+  font-size: 22px;
+  font-weight: 700;
+  color: #111827;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attractions-loading,
+.attractions-empty {
+  text-align: center;
+  padding: 40px 16px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
 @media (max-width: 768px) {
   .attractions-section {
     padding: 30px 0;

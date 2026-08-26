@@ -3,21 +3,63 @@ import { useTranslation } from 'react-i18next'
 import SectionHeading from './SectionHeading'
 import TourCard from './TourCard'
 import { lastMinuteDeals } from './data'
-import { useExpeditionOffers } from '../hooks/useExpeditionTours'
+import { useHomepageOffers, type HomepageOfferTour } from '../hooks/useHomepageSections'
 import './LastMinuteDealsSection.css'
 
 const CARD_WIDTH = 295
 const GAP = 16
 
-export default function LastMinuteDealsSection() {
+function mapOfferToCardProps(t: HomepageOfferTour) {
+  const durationStr = t.durationMinutes
+    ? t.durationMinutes >= 1440
+      ? `${Math.round(t.durationMinutes / 1440)} days`
+      : `${Math.round(t.durationMinutes / 60)} hours`
+    : ''
+  const location = [t.city, t.country].filter(Boolean).join(', ')
+
+  // Compute discount label from the specific offer on this card
+  let discount: string | undefined
+  if (t.discountType === 'PERCENTAGE' && t.discountPercentage) {
+    discount = `-${t.discountPercentage}%`
+  } else if (t.discountType === 'FIXED_AMOUNT' && t.fixedDiscountValue && t.startingPrice) {
+    const pct = Math.round((t.fixedDiscountValue / t.startingPrice) * 100)
+    if (pct > 0) discount = `-${pct}%`
+  }
+
+  return {
+    id: t.offerId,
+    title: t.title,
+    slug: t.slug,
+    category: t.category || '',
+    duration: durationStr,
+    features: t.tags?.join(', ') || '',
+    price: t.startingPrice != null ? `$${t.startingPrice}` : '',
+    rating: t.averageRating != null ? String(t.averageRating) : '',
+    reviews: t.reviewCount || 0,
+    location,
+    image: t.coverPhoto || t.photos?.[0] || '',
+    photos: t.photos,
+    source: 'expedition-go' as const,
+    priceValue: t.startingPrice,
+    discount,
+    specialOffers: t.specialOffers,
+  }
+}
+
+interface Props {
+  preloaded?: HomepageOfferTour[]
+}
+
+export default function LastMinuteDealsSection({ preloaded }: Props) {
   const { t } = useTranslation()
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
-  const { data: offerTours } = useExpeditionOffers()
-  // Show real tours that have a supplier-applied offer; fall back to the
-  // curated flash-deal list while loading or when no tour has an offer.
-  const items = offerTours && offerTours.length > 0 ? offerTours : lastMinuteDeals
+  const { data: offerTours } = useHomepageOffers(12)
+  // Use preloaded from unified endpoint, fall back to individual hook, then dummy data
+  const items = (preloaded ?? offerTours) && (preloaded ?? offerTours)!.length > 0
+    ? (preloaded ?? offerTours)!.map(mapOfferToCardProps)
+    : lastMinuteDeals
 
   const updateArrows = useCallback(() => {
     const el = scrollRef.current

@@ -1,39 +1,20 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Toaster } from 'sonner'
 import Navbar from './components/Navbar'
 import Hero from './components/Hero'
-import AuthForm from './pages/AuthForm'
-import DashboardLayout from './pages/dashboard/DashboardLayout'
-import TourDetailPage from './pages/tour-detail/TourDetailPage'
-import AllToursPage from './pages/AllToursPage'
-import SearchResultsPage from './pages/SearchResultsPage'
-import AllStoriesPage from './pages/AllStoriesPage'
-import StoryDetailPage from './pages/StoryDetailPage'
 import SplashScreen from './components/SplashScreen'
 import ContinuePlanningSection from './components/ContinuePlanningSection'
 import MoodSection from './components/MoodSection'
 import RecommendSection from './components/RecommendSection'
 import PopularLocations from './components/PopularLocations'
-import TopRatedSection from './components/TopRatedSection'
-import SellOutSection from './components/SellOutSection'
-import LastMinuteDealsSection from './components/LastMinuteDealsSection'
-import NewExperiencesSection from './components/NewExperiencesSection'
-import TopAttractionsNearbySection from './components/TopAttractionsNearbySection'
 import CustomReviewsSection from './components/CustomReviewsSection'
 import PartnersSection from './components/PartnersSection'
 import WhyBookSection from './components/WhyBookSection'
-import TravelStoriesSection from './components/TravelStoriesSection'
 import NewsletterSection from './components/NewsletterSection'
 import Footer from './components/Footer'
 import MountOnView from './components/MountOnView'
-import ReviewExperiencePage from './pages/ReviewExperiencePage'
-import SupplierPage from './pages/SupplierPage'
-import SupplierRegisterPage from './pages/supplier/SupplierRegisterPage'
-import SupplierLandingPage from './pages/supplier/SupplierLandingPage'
-import BookingPage from './pages/BookingPage'
-import BookingConfirmationPage from './pages/BookingConfirmationPage'
 import { WishlistProvider } from './context/WishlistContext'
 import { ContinuePlanningProvider } from './context/ContinuePlanningContext'
 import SupportChatWidget from './components/SupportChatWidget'
@@ -41,8 +22,33 @@ import { subscribeToAuthState, handleGoogleCallback, getAuthReturnTo, clearAuthR
 import { trackPageView, requestLocation } from './lib/analytics'
 import { useHomepage } from './hooks/useHomepageSections'
 
+// Route-level code splitting
+const AuthForm = lazy(() => import('./pages/AuthForm'))
+const DashboardLayout = lazy(() => import('./pages/dashboard/DashboardLayout'))
+const TourDetailPage = lazy(() => import('./pages/tour-detail/TourDetailPage'))
+const AllToursPage = lazy(() => import('./pages/AllToursPage'))
+const SearchResultsPage = lazy(() => import('./pages/SearchResultsPage'))
+const AllStoriesPage = lazy(() => import('./pages/AllStoriesPage'))
+const StoryDetailPage = lazy(() => import('./pages/StoryDetailPage'))
+const ReviewExperiencePage = lazy(() => import('./pages/ReviewExperiencePage'))
+const SupplierPage = lazy(() => import('./pages/SupplierPage'))
+const SupplierRegisterPage = lazy(() => import('./pages/supplier/SupplierRegisterPage'))
+const SupplierLandingPage = lazy(() => import('./pages/supplier/SupplierLandingPage'))
+const BookingPage = lazy(() => import('./pages/BookingPage'))
+const BookingConfirmationPage = lazy(() => import('./pages/BookingConfirmationPage'))
+
+// Below-fold homepage sections (lazy loaded, mounted on scroll)
+const TopRatedSection = lazy(() => import('./components/TopRatedSection'))
+const SellOutSection = lazy(() => import('./components/SellOutSection'))
+const LastMinuteDealsSection = lazy(() => import('./components/LastMinuteDealsSection'))
+const NewExperiencesSection = lazy(() => import('./components/NewExperiencesSection'))
+const TopAttractionsNearbySection = lazy(() => import('./components/TopAttractionsNearbySection'))
+const TravelStoriesSection = lazy(() => import('./components/TravelStoriesSection'))
+
 
 type PageView = 'home' | 'signin' | 'signup'
+
+const sectionFallback = <div style={{ minHeight: 400 }} />
 
 function HomePage() {
   const { data: homepage } = useHomepage()
@@ -53,14 +59,14 @@ function HomePage() {
       <MoodSection preloaded={homepage?.mood} />
       <RecommendSection preloaded={homepage?.recommended} />
       <PopularLocations preloaded={homepage?.destinations} />
-      <MountOnView><TopRatedSection preloaded={homepage?.topRated} /></MountOnView>
-      <MountOnView><SellOutSection preloaded={homepage?.sellOut} /></MountOnView>
-      <MountOnView><LastMinuteDealsSection /></MountOnView>
-      <MountOnView><NewExperiencesSection /></MountOnView>
-      <MountOnView><TopAttractionsNearbySection preloaded={homepage?.attractions} /></MountOnView>
+      <MountOnView><Suspense fallback={sectionFallback}><TopRatedSection preloaded={homepage?.topRated} /></Suspense></MountOnView>
+      <MountOnView><Suspense fallback={sectionFallback}><SellOutSection preloaded={homepage?.sellOut} /></Suspense></MountOnView>
+      <MountOnView><Suspense fallback={sectionFallback}><LastMinuteDealsSection preloaded={homepage?.offers} /></Suspense></MountOnView>
+      <MountOnView><Suspense fallback={sectionFallback}><NewExperiencesSection /></Suspense></MountOnView>
+      <MountOnView><Suspense fallback={sectionFallback}><TopAttractionsNearbySection preloaded={homepage?.attractions} /></Suspense></MountOnView>
       <MountOnView><CustomReviewsSection /></MountOnView>
       <MountOnView><WhyBookSection /></MountOnView>
-      <MountOnView><TravelStoriesSection /></MountOnView>
+      <MountOnView><Suspense fallback={sectionFallback}><TravelStoriesSection /></Suspense></MountOnView>
       <MountOnView><NewsletterSection /></MountOnView>
       <MountOnView><PartnersSection /></MountOnView>
       <Footer />
@@ -158,6 +164,7 @@ function AppContent() {
       <Toaster position="top-center" duration={2500} closeButton />
       {!hideNav && <Navbar onOpenAuth={handleOpenAuth} />}
       {!location.pathname.startsWith('/tour') && <SupportChatWidget />}
+      <Suspense fallback={<div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div className="spinner" /></div>}>
       <Routes>
         <Route path="/dashboard/*" element={<DashboardLayout />} />
         <Route path="/tour/:tourId" element={
@@ -255,6 +262,7 @@ function AppContent() {
           </AnimatePresence>
         } />
       </Routes>
+      </Suspense>
     </>
   )
 }

@@ -1,123 +1,108 @@
-import { useRef, useState, useEffect, useCallback, useMemo } from 'react'
-import { Link } from 'react-router-dom'
+import { useRef, useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { MapPin } from 'lucide-react'
+import { MapPin, ArrowLeft } from 'lucide-react'
 import SectionHeading from './SectionHeading'
-import { attractionsNearby, haversineDistanceKm, type Attraction } from './attractionsData'
-import { useAllExpeditionTours } from '../hooks/useExpeditionTours'
-import { useTopAttractions, type HomepageTour } from '../hooks/useHomepageSections'
-import { useWishlist, toWishlistItem } from '../context/WishlistContext'
-import type { Tour } from './data'
+import { haversineDistanceKm, type Attraction } from './attractionsData'
+import { useAttractions, useAttractionTours, mapToTourCard, type HomepageAttraction } from '../hooks/useHomepageSections'
+import TourCard from './TourCard'
 import './TopAttractionsNearbySection.css'
 
 const CARD_WIDTH = 295
 const GAP = 16
 
-interface Props {
-  preloaded?: HomepageTour[]
-}
-
-function AttractionCard({ attraction, hasTour }: { attraction: Attraction; hasTour: boolean }) {
+function AttractionCard({
+  attraction,
+  onClick,
+}: {
+  attraction: Attraction
+  onClick: () => void
+}) {
   const { t } = useTranslation()
-  const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist()
-  const wishlistItem = toWishlistItem({
-    title: attraction.title,
-    location: attraction.location,
-    price: attraction.price,
-    duration: '1 Day',
-    image: attraction.image,
-    rating: attraction.rating,
-    reviews: attraction.reviews,
-    source: 'expedition-go',
-  } as Tour)
-  const inWishlist = isInWishlist(wishlistItem.id)
+  const priceStr = attraction.startingPrice != null ? `$${attraction.startingPrice}` : ''
 
-  const handleHeartClick = (e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    if (inWishlist) {
-      removeFromWishlist(wishlistItem.id)
-    } else {
-      addToWishlist(wishlistItem)
-    }
-  }
-
-  const cardInner = (
-    <>
-      <img
-        src={attraction.image}
-        alt=""
-        aria-hidden
-        className="attraction-card-img"
-        loading="lazy"
-        decoding="async"
-        width={295}
-        height={336}
-      />
+  return (
+    <button type="button" className="attraction-card" onClick={onClick}>
+      {attraction.heroImage && (
+        <img
+          src={attraction.heroImage}
+          alt=""
+          aria-hidden
+          className="attraction-card-img"
+          loading="lazy"
+          decoding="async"
+          width={295}
+          height={336}
+        />
+      )}
       <div className="attraction-card-overlay" />
-      <span className="attraction-card-badge">{t('sections.attractionsBadge')}</span>
+      <span className="attraction-card-badge">
+        {t('sections.attractionsBadge', { defaultValue: 'Attraction' })}
+      </span>
       <div className="attraction-card-footer">
         <div className="attraction-card-location">
           <MapPin className="attraction-card-pin" size={13} />
-          <span>{attraction.location}</span>
+          <span>{attraction.tourCount} {t('sections.tours', { defaultValue: 'tours' })}</span>
         </div>
         <div className="attraction-card-title-row">
-          <h3 className="attraction-card-title">{attraction.title}</h3>
-          <div className="attraction-card-price">
-            <p className="attraction-card-from">{t('common.from')}</p>
-            <p className="attraction-card-amount">{attraction.price}</p>
-          </div>
+          <h3 className="attraction-card-title">{attraction.name}</h3>
+          {priceStr && (
+            <div className="attraction-card-price">
+              <p className="attraction-card-from">{t('common.from')}</p>
+              <p className="attraction-card-amount">{priceStr}</p>
+            </div>
+          )}
         </div>
       </div>
-      <button
-        type="button"
-        onClick={handleHeartClick}
-        aria-label={inWishlist ? t('common.removeFromWishlist') : t('common.addToWishlist')}
-        className={`attraction-card-heart${inWishlist ? ' wishlist-active' : ''}`}
-      >
-        <svg
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill={inWishlist ? 'currentColor' : 'none'}
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-        </svg>
-      </button>
-    </>
-  )
-
-  if (!hasTour) {
-    return <div className="attraction-card">{cardInner}</div>
-  }
-
-  return (
-    <Link
-      to={`/tour/${attraction.slug}`}
-      className="attraction-card"
-      aria-label={`${t('common.viewDetails', { defaultValue: 'View details' })}: ${attraction.title}`}
-    >
-      {cardInner}
-    </Link>
+    </button>
   )
 }
 
-function mapToAttraction(t: HomepageTour): Attraction {
-  return {
-    title: t.title,
-    slug: t.slug,
-    price: t.startingPrice != null ? `$${t.startingPrice}` : '',
-    rating: t.averageRating != null ? String(t.averageRating) : '',
-    reviews: t.reviewCount || 0,
-    image: t.coverPhoto || t.photos?.[0] || '',
-    lat: 0, // Will be sorted by API proximity
-    lng: 0,
-    location: [t.city, t.country].filter(Boolean).join(', '),
-  }
+function AttractionToursView({
+  attraction,
+  onBack,
+}: {
+  attraction: Attraction
+  onBack: () => void
+}) {
+  const { t } = useTranslation()
+  const { data: toursData, isLoading } = useAttractionTours(attraction.name, 12)
+
+  const tours = (toursData ?? []).map(mapToTourCard)
+
+  return (
+    <section className="attractions-section">
+      <div className="attractions-container">
+        <div className="attractions-viewport">
+          <div className="attractions-back-row">
+            <button type="button" className="attractions-back-btn" onClick={onBack}>
+              <ArrowLeft size={18} />
+              <span>{t('common.back', { defaultValue: 'Back' })}</span>
+            </button>
+            <h2 className="attractions-selected-heading">{attraction.name}</h2>
+          </div>
+          {isLoading ? (
+            <div className="attractions-loading">{t('common.loading', { defaultValue: 'Loading...' })}</div>
+          ) : tours.length === 0 ? (
+            <div className="attractions-empty">{t('sections.noToursForAttraction', { defaultValue: 'No tours found for this attraction.' })}</div>
+          ) : (
+            <div className="attractions-clip">
+              <div className="attractions-carousel">
+                {tours.map((tour, i) => (
+                  <div key={`${tour.id}-${i}`} className="attractions-card-wrap">
+                    <TourCard {...tour} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+interface Props {
+  preloaded?: HomepageAttraction[]
 }
 
 export default function TopAttractionsNearbySection({ preloaded }: Props) {
@@ -125,49 +110,49 @@ export default function TopAttractionsNearbySection({ preloaded }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
-  const { data: liveAttractions } = useTopAttractions(10)
-  const [sortedAttractions, setSortedAttractions] = useState<Attraction[]>(
-    (preloaded ?? liveAttractions)?.length ? (preloaded ?? liveAttractions)!.map(mapToAttraction) : attractionsNearby
-  )
+  const [selectedAttraction, setSelectedAttraction] = useState<Attraction | null>(null)
+  const { data: attractionsData, isLoading } = useAttractions(12)
   const [locationError, setLocationError] = useState<string | null>(() =>
     typeof navigator !== 'undefined' && navigator.geolocation ? null : 'Geolocation not supported',
   )
-  const { data: allTours } = useAllExpeditionTours()
 
-  const liveSlugs = useMemo(
-    () => new Set((allTours ?? []).map((tour) => tour.slug).filter(Boolean)),
-    [allTours],
-  )
+  const attractions = (preloaded ?? attractionsData) ?? []
+
+  // Sort by proximity if geolocation available
+  const [sortedAttractions, setSortedAttractions] = useState<Attraction[]>([])
 
   useEffect(() => {
-    const data = preloaded ?? liveAttractions
-    // If API returned live data (already proximity-sorted), use it directly
-    if (data?.length) {
-      setSortedAttractions(data.map(mapToAttraction))
+    if (attractions.length === 0) {
+      setSortedAttractions([])
       return
     }
 
-    // Otherwise, sort hardcoded attractions by geolocation
-    if (!navigator.geolocation) return
+    if (!navigator.geolocation) {
+      setSortedAttractions(attractions)
+      return
+    }
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords
-        const withDistance = attractionsNearby
-          .map((a) => ({
+        const withDistance = attractions
+          .filter(a => a.lat != null && a.lng != null)
+          .map(a => ({
             ...a,
-            distance: haversineDistanceKm(latitude, longitude, a.lat, a.lng),
+            _distance: haversineDistanceKm(latitude, longitude, a.lat!, a.lng!),
           }))
-          .sort((a, b) => (a.distance ?? Infinity) - (b.distance ?? Infinity))
-        setSortedAttractions(withDistance)
+          .sort((a, b) => (a._distance ?? Infinity) - (b._distance ?? Infinity))
+
+        const withoutCoords = attractions.filter(a => a.lat == null || a.lng == null)
+        setSortedAttractions([...withDistance, ...withoutCoords])
       },
       () => {
         setLocationError('Location access denied')
-        setSortedAttractions(attractionsNearby)
+        setSortedAttractions(attractions)
       },
       { enableHighAccuracy: false, timeout: 5000, maximumAge: 300000 },
     )
-  }, [preloaded, liveAttractions])
+  }, [attractions])
 
   const updateArrows = useCallback(() => {
     const el = scrollRef.current
@@ -193,11 +178,21 @@ export default function TopAttractionsNearbySection({ preloaded }: Props) {
     const el = scrollRef.current
     if (!el) return
     updateArrows()
-    const onScroll = () => updateArrows()
-    el.addEventListener('scroll', onScroll, { passive: true })
-    return () => el.removeEventListener('scroll', onScroll)
+    el.addEventListener('scroll', updateArrows, { passive: true })
+    return () => el.removeEventListener('scroll', updateArrows)
   }, [updateArrows])
 
+  // Step 2: Show tours for selected attraction
+  if (selectedAttraction) {
+    return (
+      <AttractionToursView
+        attraction={selectedAttraction}
+        onBack={() => setSelectedAttraction(null)}
+      />
+    )
+  }
+
+  // Step 1: Show attraction cards
   return (
     <section className="attractions-section">
       <div className="attractions-container">
@@ -211,15 +206,24 @@ export default function TopAttractionsNearbySection({ preloaded }: Props) {
             disableLeft={!canScrollLeft}
             disableRight={!canScrollRight}
           />
-          <div className="attractions-clip">
-            <div className="attractions-carousel" ref={scrollRef}>
-              {sortedAttractions.map((attraction, i) => (
-                <div key={`${attraction.slug}-${i}`} className="attractions-card-wrap">
-                  <AttractionCard attraction={attraction} hasTour={liveSlugs.has(attraction.slug)} />
-                </div>
-              ))}
+          {isLoading ? (
+            <div className="attractions-loading">{t('common.loading', { defaultValue: 'Loading...' })}</div>
+          ) : sortedAttractions.length === 0 ? (
+            <div className="attractions-empty">{t('sections.noAttractions', { defaultValue: 'No attractions found.' })}</div>
+          ) : (
+            <div className="attractions-clip">
+              <div className="attractions-carousel" ref={scrollRef}>
+                {sortedAttractions.map((attraction, i) => (
+                  <div key={`${attraction.name}-${i}`} className="attractions-card-wrap">
+                    <AttractionCard
+                      attraction={attraction}
+                      onClick={() => setSelectedAttraction(attraction)}
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </section>
