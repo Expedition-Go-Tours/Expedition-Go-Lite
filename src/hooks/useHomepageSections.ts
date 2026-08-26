@@ -92,7 +92,7 @@ export function useHomepage() {
 // ─── Fetcher ──────────────────────────────────────────────────────────
 
 async function fetchHomepageSection<T>(path: string): Promise<T> {
-  const res = await fetchWithAuth(`/api/homepage${path}`)
+  const res = await fetchWithAuth(`/homepage${path}`)
   const payload = await res.json().catch(() => ({}))
   if (!res.ok) {
     throw new Error(payload.message || `Request failed (${res.status})`)

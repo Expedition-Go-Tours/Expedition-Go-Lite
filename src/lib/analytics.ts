@@ -37,7 +37,7 @@ function flush() {
 
   const base = getApiBaseUrl()
   getAuthToken().then(token => {
-    fetch(`${base}/api/analytics/batch`, {
+    fetch(`${base}/analytics/batch`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -184,7 +184,7 @@ export function requestLocation(): Promise<UserLocation | null> {
 async function fetchIPLocation(): Promise<UserLocation | null> {
   try {
     const base = getApiBaseUrl()
-    const res = await fetch(`${base}/api/locations/my-location`)
+    const res = await fetch(`${base}/locations/my-location`)
     const payload = await res.json().catch(() => ({}))
     const loc = payload?.data?.location
     if (loc?.lat && loc?.lng) {
