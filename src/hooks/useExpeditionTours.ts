@@ -1286,12 +1286,14 @@ async function enrichExpeditionRecords(records: ExpeditionTourRecord[]): Promise
     }
   } catch (e) {
     console.warn('[enrichExpeditionRecords] batch fallback failed:', e)
-    // Without the batch, the stored startingPrice on curated records would
-    // reach the cards unchanged — and it can be stale/wrong (e.g. a Child or
-    // Senior price for a tour whose adult rate differs). Resolve each record's
-    // price from its own detail fetch (HTTP-cached max-age=60) so the card
-    // still shows the authoritative adult starting price.
-    for (const r of records) {
+    // Cap individual fetches to prevent catastrophic N+1 on batch failure.
+    // Only resolve prices for the first 20 records — the rest keep stored values.
+    const ENRICH_FALLBACK_CAP = 20
+    const missing = records.filter(r => {
+      const p = r.tour.startingPrice
+      return p == null || p <= 0
+    }).slice(0, ENRICH_FALLBACK_CAP)
+    for (const r of missing) {
       try {
         const raw = await fetchRawTourBySlugOrId(r.tour.id)
         const p = extractStartingPriceFromRaw(raw?.schedulesAndPricing)
@@ -1352,17 +1354,25 @@ export function useAllExpeditionTours() {
     staleTime: 5 * 60_000,
     queryFn: async (): Promise<TourCardData[]> => {
       const records: ExpeditionTourRecord[] = []
-      let page = 1
-      let totalPages: number
 
-      do {
-        const payload = await expeditionFetchRaw(`/expedition/tours?page=${page}&limit=${CATALOG_PAGE_SIZE}`)
-        const batch: ExpeditionTourRecord[] = payload.data?.tours ?? payload.tours ?? []
-        records.push(...batch)
-        totalPages = payload.pagination?.totalPages ?? 1
-        if (batch.length === 0) break
-        page += 1
-      } while (page <= totalPages && page <= MAX_CATALOG_PAGES)
+      // Fetch first page to get totalPages
+      const first = await expeditionFetchRaw(`/expedition/tours?page=1&limit=${CATALOG_PAGE_SIZE}`)
+      const firstBatch: ExpeditionTourRecord[] = first.data?.tours ?? first.tours ?? []
+      records.push(...firstBatch)
+      const totalPages = Math.min(first.pagination?.totalPages ?? 1, MAX_CATALOG_PAGES)
+
+      // Fetch remaining pages in parallel
+      if (totalPages > 1 && firstBatch.length > 0) {
+        const rest = await Promise.all(
+          Array.from({ length: totalPages - 1 }, (_, i) =>
+            expeditionFetchRaw(`/expedition/tours?page=${i + 2}&limit=${CATALOG_PAGE_SIZE}`)
+          )
+        )
+        for (const payload of rest) {
+          const batch: ExpeditionTourRecord[] = payload.data?.tours ?? payload.tours ?? []
+          records.push(...batch)
+        }
+      }
 
       await enrichExpeditionRecords(records)
 

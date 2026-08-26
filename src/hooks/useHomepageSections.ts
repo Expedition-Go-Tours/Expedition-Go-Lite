@@ -88,6 +88,17 @@ export interface PopularDestination {
   heroImage: string | null
 }
 
+export interface HomepageAttraction {
+  name: string
+  tourCount: number
+  heroImage: string | null
+  avgRating: number | null
+  totalBookings: number
+  startingPrice: number | null
+  lat: number | null
+  lng: number | null
+}
+
 // ─── Unified Homepage Data ─────────────────────────────────────────────
 
 export interface HomepageData {
@@ -96,9 +107,10 @@ export interface HomepageData {
   trending: HomepageTour[]
   recommended: HomepageTour[]
   new: HomepageTour[]
-  attractions: HomepageTour[]
+  attractions: HomepageAttraction[]
   mood: MoodKeyword[]
   destinations: PopularDestination[]
+  offers: HomepageOfferTour[]
 }
 
 /**
@@ -194,21 +206,30 @@ export function useNewExperiences(limit = 10) {
 }
 
 /**
- * Top Attractions — nearby tours sorted by affordability + quality.
+ * Attractions — grouped by attraction name from tour data.
  */
-export function useTopAttractions(limit = 10) {
-  const location = getStoredLocation()
-  const params = new URLSearchParams({ limit: String(limit) })
-  if (location) {
-    params.set('lat', String(location.lat))
-    params.set('lng', String(location.lng))
-  }
-
+export function useAttractions(limit = 12) {
   return useQuery({
-    queryKey: ['homepage', 'attractions', limit, location?.lat, location?.lng],
-    queryFn: () => fetchHomepageSection<{ tours: HomepageTour[] }>(`/attractions?${params}`),
+    queryKey: ['homepage', 'attractions', limit],
+    queryFn: () => fetchHomepageSection<{ attractions: HomepageAttraction[] }>(`/attractions?limit=${limit}`),
     staleTime: 10 * 60 * 1000,
+    select: (data) => data.attractions,
+  })
+}
+
+/**
+ * Tours for a specific attraction — filtered by attraction name.
+ * Only enabled when attractionName is provided.
+ */
+export function useAttractionTours(attractionName: string | null, limit = 12) {
+  return useQuery({
+    queryKey: ['homepage', 'attraction-tours', attractionName, limit],
+    queryFn: () => fetchHomepageSection<{ tours: HomepageTour[] }>(
+      `/attractions/tours?name=${encodeURIComponent(attractionName!)}&limit=${limit}`
+    ),
+    staleTime: 5 * 60 * 1000,
     select: (data) => data.tours,
+    enabled: !!attractionName,
   })
 }
 
@@ -236,7 +257,32 @@ export function usePopularDestinations(limit = 10) {
   })
 }
 
+/**
+ * Returns tour IDs curated by a specific homepage section's algorithm.
+ * Reads from pre-computed Redis cache on the backend (0 DB queries).
+ * Used by AllToursPage to filter the tour list when ?section= is set.
+ */
+export function useSectionTourIds(section: string) {
+  return useQuery({
+    queryKey: ['homepage', 'section-tour-ids', section],
+    queryFn: () => fetchHomepageSection<{ tourIds: string[] }>(
+      `/section-tour-ids?section=${encodeURIComponent(section)}`
+    ),
+    staleTime: 5 * 60 * 1000,
+    select: (data) => data.tourIds,
+    enabled: !!section,
+  })
+}
+
 export interface HomepageOfferTour extends HomepageTour {
+  offerId: string
+  offerName: string
+  offerType: string
+  discountType: string
+  discountPercentage: number | null
+  fixedDiscountValue: number | null
+  startDate: string | null
+  endDate: string | null
   specialOffers: SpecialOfferData[]
 }
 

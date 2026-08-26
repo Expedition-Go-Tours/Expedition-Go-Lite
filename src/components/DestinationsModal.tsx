@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import { X, Search, ChevronLeft, ChevronRight } from 'lucide-react'
 import { destinations } from './data'
+import { usePopularDestinations } from '../hooks/useHomepageSections'
 import PopularLocationCard from './PopularLocationCard'
 import './DestinationsModal.css'
 
@@ -21,6 +22,19 @@ export default function DestinationsModal({ isOpen, onClose }: DestinationsModal
   const regionScrollRef = useRef<HTMLDivElement>(null)
   const [showRegionLeft, setShowRegionLeft] = useState(false)
   const [showRegionRight, setShowRegionRight] = useState(false)
+
+  const { data: liveDestinations } = usePopularDestinations(50)
+  const apiDestinations = useMemo(() => {
+    if (!liveDestinations?.length) return null
+    return liveDestinations.map(d => ({
+      title: d.city,
+      tours: d.tourCount > 0 ? `${d.tourCount}+ Tours` : 'Explore',
+      image: d.heroImage || 'https://images.unsplash.com/photo-1590181076255-de1dbbc106ed?auto=format&fit=crop&w=800&q=80',
+      region: d.country || '',
+    }))
+  }, [liveDestinations])
+
+  const activeDestinations = apiDestinations ?? destinations
 
   const updateRegionArrows = useCallback(() => {
     const el = regionScrollRef.current
@@ -76,12 +90,12 @@ export default function DestinationsModal({ isOpen, onClose }: DestinationsModal
   }, [isOpen])
 
   const regions = useMemo(() => {
-    const set = new Set(destinations.map((d) => d.region))
+    const set = new Set(activeDestinations.map((d) => d.region))
     return ['all', ...Array.from(set).sort()]
-  }, [])
+  }, [activeDestinations])
 
   const filtered = useMemo(() => {
-    let result = destinations
+    let result = activeDestinations
     if (selectedRegion !== 'all') {
       result = result.filter((d) => d.region === selectedRegion)
     }
@@ -90,7 +104,7 @@ export default function DestinationsModal({ isOpen, onClose }: DestinationsModal
       result = result.filter((d) => d.title.toLowerCase().includes(q))
     }
     return result
-  }, [selectedRegion, searchQuery])
+  }, [activeDestinations, selectedRegion, searchQuery])
 
   const visibleItems = filtered.slice(0, 8)
 
@@ -113,8 +127,8 @@ export default function DestinationsModal({ isOpen, onClose }: DestinationsModal
   // Group by region when "All Regions" is selected and no search
   const groupedByRegion = useMemo(() => {
     if (selectedRegion !== 'all' || searchQuery.trim()) return null
-    const map = new Map<string, typeof destinations>()
-    destinations.forEach((d) => {
+    const map = new Map<string, typeof activeDestinations>()
+    activeDestinations.forEach((d) => {
       if (!map.has(d.region)) map.set(d.region, [])
       map.get(d.region)!.push(d)
     })
@@ -122,7 +136,7 @@ export default function DestinationsModal({ isOpen, onClose }: DestinationsModal
       region,
       items: items.slice(0, 3),
     }))
-  }, [selectedRegion, searchQuery])
+  }, [activeDestinations, selectedRegion, searchQuery])
 
   return (
     <AnimatePresence>

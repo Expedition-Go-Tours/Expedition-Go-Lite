@@ -7,6 +7,7 @@ import Navbar from '../components/Navbar'
 import TourCard from '../components/TourCard'
 
 import { useAllExpeditionTours, useTourFilterOptions, type TourCardData } from '../hooks/useExpeditionTours'
+import { useSectionTourIds } from '../hooks/useHomepageSections'
 import './AllToursPage.css'
 
 const PAGE_SIZE = 12
@@ -87,6 +88,7 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
   const navigate = useNavigate()
   const sectionParam = searchParams.get('section') || ''
   const locationParam = searchParams.get('location') || ''
+  const categoryParam = searchParams.get('category') || ''
 
   const [tourTypes, setTourTypes] = useState<string[]>([])
   const [destinations, setDestinations] = useState<string[]>([])
@@ -105,6 +107,13 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
   const { data: allTours, isLoading, isError, error } = useAllExpeditionTours()
   const { data: filterOptionData } = useTourFilterOptions()
 
+  // Single lightweight call to get section tour IDs (reads pre-computed Redis cache)
+  const { data: sectionTourIdList } = useSectionTourIds(sectionParam)
+  const sectionTourIds = useMemo(() => {
+    if (!sectionTourIdList?.length) return null
+    return new Set(sectionTourIdList)
+  }, [sectionTourIdList])
+
   // Seed the destination filter from a /tours?location=... link (once per value).
   const seededLocationRef = useRef<string | null>(null)
   useEffect(() => {
@@ -113,6 +122,15 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
       setDestinations(prev => prev.includes(locationParam) ? prev : [...prev, locationParam])
     }
   }, [locationParam])
+
+  // Seed the category filter from a /tours?category=... link (e.g. from MoodSection).
+  const seededCategoryRef = useRef<string | null>(null)
+  useEffect(() => {
+    if (categoryParam && seededCategoryRef.current !== categoryParam) {
+      seededCategoryRef.current = categoryParam
+      setCategories(prev => prev.includes(categoryParam) ? prev : [...prev, categoryParam])
+    }
+  }, [categoryParam])
 
   // Always start from page 1 whenever the active filters or sort change.
   useEffect(() => {
@@ -147,7 +165,7 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
       list = list.filter((tour) => (tour.ratingValue ?? 0) >= minRating)
     }
     if (categories.length > 0) {
-      list = list.filter((tour) => categories.includes(tour.category))
+      list = list.filter((tour) => categories.some(c => c.toLowerCase() === tour.category?.toLowerCase()))
     }
     if (destinations.length > 0) {
       list = list.filter((tour) => {
@@ -159,8 +177,13 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
       })
     }
 
+    // Filter by section algorithm (tours curated by the homepage backend)
+    if (sectionTourIds) {
+      list = list.filter(tour => sectionTourIds.has(tour.id))
+    }
+
     return applySort(list, effectiveSortKey)
-  }, [allTours, tourTypes, durationFilter, priceFilter, ratingFilter, categories, destinations, effectiveSortKey])
+  }, [allTours, tourTypes, durationFilter, priceFilter, ratingFilter, categories, destinations, effectiveSortKey, sectionTourIds])
 
   const totalCount = filteredTours.length
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
@@ -216,6 +239,7 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
   const sortOptions = useMemo(() => [
     { value: 'recommended', label: t('sections.recommendedTitle') },
     { value: 'rating', label: t('sections.topRatedTitle') },
+    { value: 'popular', label: 'Most Popular' },
     { value: 'price-low', label: 'Price: Low – High' },
     { value: 'price-high', label: 'Price: High – Low' },
   ] as const, [t])

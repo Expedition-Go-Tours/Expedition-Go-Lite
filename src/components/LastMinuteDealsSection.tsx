@@ -17,9 +17,18 @@ function mapOfferToCardProps(t: HomepageOfferTour) {
     : ''
   const location = [t.city, t.country].filter(Boolean).join(', ')
 
+  // Compute discount label from the specific offer on this card
+  let discount: string | undefined
+  if (t.discountType === 'PERCENTAGE' && t.discountPercentage) {
+    discount = `-${t.discountPercentage}%`
+  } else if (t.discountType === 'FIXED_AMOUNT' && t.fixedDiscountValue && t.startingPrice) {
+    const pct = Math.round((t.fixedDiscountValue / t.startingPrice) * 100)
+    if (pct > 0) discount = `-${pct}%`
+  }
+
   return {
-    id: t.id,
-    title: t.title,
+    id: t.offerId,
+    title: t.offerName || t.title,
     slug: t.slug,
     category: t.category || '',
     duration: durationStr,
@@ -32,6 +41,7 @@ function mapOfferToCardProps(t: HomepageOfferTour) {
     photos: t.photos,
     source: 'expedition-go' as const,
     priceValue: t.startingPrice,
+    discount,
     specialOffers: t.specialOffers,
   }
 }
