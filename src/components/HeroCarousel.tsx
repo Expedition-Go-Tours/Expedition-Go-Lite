@@ -24,6 +24,17 @@ export default function HeroCarousel({ activeIndex, onIndexChange }: HeroCarouse
     return () => clearInterval(timer)
   }, [nextSlide])
 
+  // Preload the first hero image so the browser discovers it before CSS
+  // parsing — critical for LCP. The link is removed on unmount.
+  useEffect(() => {
+    const link = document.createElement('link')
+    link.rel = 'preload'
+    link.as = 'image'
+    link.href = images[0]
+    document.head.appendChild(link)
+    return () => { document.head.removeChild(link) }
+  }, [])
+
   return (
     <div className="hero-carousel">
       {images.map((src, i) => (
@@ -32,6 +43,11 @@ export default function HeroCarousel({ activeIndex, onIndexChange }: HeroCarouse
           src={src}
           alt=""
           className={`carousel-slide${i === activeIndex ? ' active' : ''}${i === 4 ? ' shift-down' : ''}`}
+          width={1920}
+          height={1080}
+          decoding="async"
+          loading={i === 0 ? 'eager' : 'lazy'}
+          fetchPriority={i === 0 ? 'high' : undefined}
           draggable={false}
         />
       ))}
