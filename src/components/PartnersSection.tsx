@@ -46,7 +46,7 @@ export default function PartnersSection() {
               {[...logos, ...logos].map((logo, i) => (
                 <div key={`${logo.alt}-${i}`} className="partner-logo-wrap">
                   <div className={`partner-logo-card${logo.tall ? ' partner-logo-card--tall' : ''}`}>
-                    <img src={logo.src} alt={logo.alt} loading="lazy" />
+                    <img src={logo.src} alt={logo.alt} loading="lazy" decoding="async" width={120} height={40} />
                   </div>
                 </div>
               ))}

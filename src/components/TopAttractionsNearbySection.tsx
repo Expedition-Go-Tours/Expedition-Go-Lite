@@ -50,6 +50,9 @@ function AttractionCard({ attraction, hasTour }: { attraction: Attraction; hasTo
         aria-hidden
         className="attraction-card-img"
         loading="lazy"
+        decoding="async"
+        width={295}
+        height={336}
       />
       <div className="attraction-card-overlay" />
       <span className="attraction-card-badge">{t('sections.attractionsBadge')}</span>

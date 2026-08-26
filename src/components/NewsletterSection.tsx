@@ -11,7 +11,7 @@ export default function NewsletterSection() {
         <div className="newsletter-viewport">
           <div className="newsletter-card">
         <div className="newsletter-image">
-          <img src={heroSrc} alt={t('newsletter.imageAlt')} loading="lazy" />
+          <img src={heroSrc} alt={t('newsletter.imageAlt')} loading="lazy" decoding="async" width={600} height={400} />
         </div>
         <div className="newsletter-content">
           <h2 className="newsletter-heading">Don't just dream it, Book it</h2>
