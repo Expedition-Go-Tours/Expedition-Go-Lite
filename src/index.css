@@ -345,6 +345,17 @@ body {
   }
 }
 
+/* OptimizedImage: subtle fade-in on load. The base opacity is 1 so
+   images that are cached (service-worker CacheFirst) appear instantly.
+   Only uncached images get the 200ms crossfade. */
+img.optimized-img {
+  opacity: 1;
+  transition: opacity 0.2s ease-out;
+}
+img.optimized-img.optimized-img-loading {
+  opacity: 0;
+}
+
 /* Custom radio buttons — white unchecked, green checked */
 input[type="radio"].pickup-radio {
   appearance: none;
