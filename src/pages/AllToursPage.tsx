@@ -7,7 +7,7 @@ import Navbar from '../components/Navbar'
 import TourCard from '../components/TourCard'
 
 import { useAllExpeditionTours, useTourFilterOptions, type TourCardData } from '../hooks/useExpeditionTours'
-import { useSectionTourIds, useHomepageOffers, type HomepageOfferTour } from '../hooks/useHomepageSections'
+import { useSectionTourIds, useHomepageOffers, useAttractionTours, type HomepageOfferTour } from '../hooks/useHomepageSections'
 import './AllToursPage.css'
 
 const PAGE_SIZE = 12
@@ -101,6 +101,7 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
   const locationParam = searchParams.get('location') || ''
   const categoryParam = searchParams.get('category') || ''
   const moodParam = searchParams.get('mood') || ''
+  const attractionParam = searchParams.get('attraction') || ''
 
   const [tourTypes, setTourTypes] = useState<string[]>([])
   const [destinations, setDestinations] = useState<string[]>([])
@@ -133,6 +134,13 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
     if (!sectionTourIdList?.length) return null
     return new Set(sectionTourIdList)
   }, [sectionTourIdList])
+
+  // Fetch tours for a specific attraction (when ?attraction= is set)
+  const { data: attractionToursData } = useAttractionTours(attractionParam, 50)
+  const attractionTourIds = useMemo(() => {
+    if (!attractionParam || !attractionToursData?.length) return null
+    return new Set(attractionToursData.map(t => t.id))
+  }, [attractionParam, attractionToursData])
 
   // Seed the destination filter from a /tours?location=... link (once per value).
   const seededLocationRef = useRef<string | null>(null)
@@ -202,8 +210,13 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
       list = list.filter(tour => sectionTourIds.has(tour.id))
     }
 
+    // Filter by attraction (tours that visit a specific attraction)
+    if (attractionTourIds) {
+      list = list.filter(tour => attractionTourIds.has(tour.id))
+    }
+
     return applySort(list, effectiveSortKey)
-  }, [allTours, tourTypes, durationFilter, priceFilter, ratingFilter, categories, destinations, effectiveSortKey, sectionTourIds])
+  }, [allTours, tourTypes, durationFilter, priceFilter, ratingFilter, categories, destinations, effectiveSortKey, sectionTourIds, attractionTourIds])
 
   const totalCount = filteredTours.length
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
@@ -252,7 +265,9 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
     if (filterOptions.categories.some(c => c.value === value)) { handleMulti(setCategories)(value); return }
   }
 
-  const pageTitle = moodParam
+  const pageTitle = attractionParam
+    ? attractionParam
+    : moodParam
     ? moodParam
     : locationParam
     ? t('sections.toursIn', { location: locationParam })
@@ -309,7 +324,7 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
       <div className="all-tours-container">
         <div className="all-tours-header">
           <div className="all-tours-header-left">
-            {(sectionParam || moodParam) && (
+            {(sectionParam || moodParam || attractionParam) && (
               <button
                 onClick={() => navigate('/')}
                 className="all-tours-back-btn"
@@ -371,6 +386,16 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
                   onClick={() => navigate('/tours')}
                 >
                   {moodParam}
+                  <X size={12} className="filter-pill-x" />
+                </button>
+              )}
+              {attractionParam && (
+                <button
+                  type="button"
+                  className="filter-pill active"
+                  onClick={() => navigate('/tours')}
+                >
+                  {attractionParam}
                   <X size={12} className="filter-pill-x" />
                 </button>
               )}

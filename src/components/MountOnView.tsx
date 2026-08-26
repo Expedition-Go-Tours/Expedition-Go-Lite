@@ -5,7 +5,7 @@ interface MountOnViewProps {
   rootMargin?: string
 }
 
-export default function MountOnView({ children, rootMargin = '400px' }: MountOnViewProps) {
+export default function MountOnView({ children, rootMargin = '1000px' }: MountOnViewProps) {
   const ref = useRef<HTMLDivElement>(null)
   const [mounted, setMounted] = useState(false)
 

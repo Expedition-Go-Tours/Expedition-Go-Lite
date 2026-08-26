@@ -52,6 +52,26 @@ const sectionFallback = <div style={{ minHeight: 400 }} />
 
 function HomePage() {
   const { data: homepage } = useHomepage()
+
+  // Prefetch below-fold section chunks during browser idle time.
+  // This ensures chunks are cached before the user scrolls, without
+  // competing with LCP/FCP rendering on the critical path.
+  useEffect(() => {
+    const prefetch = () => {
+      import('./components/TopRatedSection')
+      import('./components/SellOutSection')
+      import('./components/LastMinuteDealsSection')
+      import('./components/NewExperiencesSection')
+      import('./components/TopAttractionsNearbySection')
+      import('./components/TravelStoriesSection')
+    }
+    if ('requestIdleCallback' in window) {
+      (window as any).requestIdleCallback(prefetch, { timeout: 3000 })
+    } else {
+      setTimeout(prefetch, 1000)
+    }
+  }, [])
+
   return (
     <>
       <Hero />

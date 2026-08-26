@@ -101,9 +101,10 @@ export default function MoodSection({ preloaded }: Props) {
                       }}
                     >
                       <img
-                        src={transformImage(cat.image, { width: 600, height: 420, quality: 'auto:good', format: 'auto' }) ?? cat.image}
+                        src={transformImage(cat.image, { width: 300, height: 210, quality: 'auto:good', format: 'auto', fit: 'crop' }) ?? cat.image}
                         alt={cat.keyword}
-                        loading="lazy"
+                        loading={i < 4 ? 'eager' : 'lazy'}
+                        fetchPriority={i === 0 ? 'high' : undefined}
                         decoding="async"
                         width={295}
                         height={210}
