@@ -7,10 +7,21 @@ import Navbar from '../components/Navbar'
 import TourCard from '../components/TourCard'
 
 import { useAllExpeditionTours, useTourFilterOptions, type TourCardData } from '../hooks/useExpeditionTours'
-import { useSectionTourIds } from '../hooks/useHomepageSections'
+import { useSectionTourIds, useHomepageOffers, type HomepageOfferTour } from '../hooks/useHomepageSections'
 import './AllToursPage.css'
 
 const PAGE_SIZE = 12
+
+function computeDiscountLabel(t: HomepageOfferTour): string | undefined {
+  if (t.discountType === 'PERCENTAGE' && t.discountPercentage) {
+    return `-${t.discountPercentage}%`
+  }
+  if (t.discountType === 'FIXED_AMOUNT' && t.fixedDiscountValue && t.startingPrice) {
+    const pct = Math.round((t.fixedDiscountValue / t.startingPrice) * 100)
+    if (pct > 0) return `-${pct}%`
+  }
+  return undefined
+}
 
 const RATING_OPTIONS = [
   { value: '5', label: '5' },
@@ -110,6 +121,14 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
 
   // Single lightweight call to get section tour IDs (reads pre-computed Redis cache)
   const { data: sectionTourIdList } = useSectionTourIds(sectionParam)
+  const isOffersSection = sectionParam === 'Last Minute Deals'
+  const { data: offerTours } = useHomepageOffers(50)
+  const offersMap = useMemo(() => {
+    if (!isOffersSection || !offerTours?.length) return null
+    const map = new Map<string, HomepageOfferTour>()
+    for (const o of offerTours) map.set(o.id, o)
+    return map
+  }, [isOffersSection, offerTours])
   const sectionTourIds = useMemo(() => {
     if (!sectionTourIdList?.length) return null
     return new Set(sectionTourIdList)
@@ -427,6 +446,8 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
                       pickupIncluded={tour.pickupIncluded}
                       meetingMode={tour.meetingMode}
                       languages={tour.languages}
+                      discount={offersMap?.get(tour.id) ? computeDiscountLabel(offersMap.get(tour.id)!) : undefined}
+                      specialOffers={offersMap?.get(tour.id)?.specialOffers}
                     />
                 </motion.div>
               ))}
