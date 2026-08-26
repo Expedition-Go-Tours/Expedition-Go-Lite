@@ -68,7 +68,7 @@ export default function SellOutSection({ preloaded }: Props) {
             <div className="sellout-carousel" ref={scrollRef}>
               {items.map((tour, i) => (
                 <div key={`${tour.title}-${i}`} className="sellout-card-wrap">
-                  <TourCard {...tour} discount={tour.discount} imageClean hideFeatures />
+                  <TourCard {...tour} imageClean hideFeatures />
                 </div>
               ))}
             </div>

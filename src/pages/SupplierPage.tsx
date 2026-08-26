@@ -337,7 +337,7 @@ export default function SupplierPage() {
 
           <div className="supplier-tours-grid">
             {visibleTours.map((tour, i) => (
-              <TourCard key={`${tour.title}-${i}`} {...tour} />
+              <TourCard key={`${tour.title}-${i}`} {...tour} imageClean hideFeatures />
             ))}
           </div>
 

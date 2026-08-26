@@ -8,11 +8,12 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: rgba(255, 255, 255, 0.95);
+  background-color: rgba(255, 255, 255, 0.95);
+  background-image: linear-gradient(180deg, rgba(23, 146, 55, 0.1) 0%, rgba(23, 146, 55, 0.04) 100%);
   backdrop-filter: blur(8px);
   z-index: 100;
   color: #333;
-  transition: box-shadow 0.3s;
+  transition: background-color 0.3s, box-shadow 0.3s;
 }
 
 /* Tour detail, all tours, supplier, review, stories, and story-detail pages: show shadow */
@@ -31,8 +32,27 @@ body:has(.story-detail) .navbar {
   box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
 }
 
+/* Search in the navbar (homepage scrolled, or pages that always show it):
+   flat white so the green tint doesn't linger behind the search bar */
+body.hero--search-sticky .navbar,
+body:has(.tour-detail-page) .navbar,
+body:has(.all-tours-page) .navbar,
+body:has(.supplier-page) .navbar,
+body:has(.supplier-landing-page) .navbar,
+body:has(.review-page) .navbar,
+body:has(.all-stories-page) .navbar,
+body:has(.story-detail) .navbar {
+  background-color: #fff;
+  background-image: none;
+}
+
 /* Hamburger - hidden on desktop */
 .nav-hamburger {
+  display: none;
+}
+
+/* Mobile wishlist - hidden on desktop (desktop uses .nav-icons wishlist) */
+.nav-wishlist-mobile {
   display: none;
 }
 
@@ -734,7 +754,7 @@ body:has(.story-detail) .navbar-compact-search {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.4);
-  z-index: 300;
+  z-index: 2200;
 }
 
 .nav-mobile-menu {
@@ -748,7 +768,7 @@ body:has(.story-detail) .navbar-compact-search {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  z-index: 301;
+  z-index: 2201;
   overflow-y: auto;
 }
 
@@ -1061,6 +1081,24 @@ body:has(.story-detail) .navbar-compact-search {
     display: none;
   }
 
+  .nav-wishlist-mobile {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .nav-wishlist-mobile:hover {
+    color: var(--primary);
+  }
+
+  .nav-right {
+    gap: 8px;
+  }
+
   .nav-center {
     display: none;
   }
@@ -1089,7 +1127,8 @@ body:has(.story-detail) .navbar-compact-search {
   }
 
   body.hero--search-sticky .nav-globe-trigger,
-  body.hero--search-sticky .nav-hamburger {
+  body.hero--search-sticky .nav-hamburger,
+  body.hero--search-sticky .nav-wishlist-mobile {
     display: none;
   }
 

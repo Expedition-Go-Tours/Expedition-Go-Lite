@@ -53,6 +53,72 @@
   display: none;
 }
 
+/* Mobile carousel chrome: a circular chevron overlaid on the right edge
+   (over the fade gradient) as a "swipeable" hint, and a dot indicator under
+   the cards. Both disappear when the strip expands into the full grid, and
+   on desktop where the grid is always shown. */
+.tour-quick-facts-arrow {
+  position: absolute;
+  top: 20px;
+  bottom: 24px;
+  right: 8px;
+  margin-block: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid #e2e8f0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.96);
+  color: #166534;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12);
+  z-index: 2;
+  transition: opacity 0.2s ease, transform 0.1s ease, background-color 0.15s ease;
+}
+
+.tour-quick-facts-arrow:hover {
+  background: #f0fdf4;
+}
+
+.tour-quick-facts-arrow:active {
+  transform: scale(0.94);
+}
+
+.tour-quick-facts-arrow-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.tour-quick-facts-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.tour-quick-facts-dot {
+  width: 6px;
+  height: 6px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: #d1d5db;
+  cursor: pointer;
+  transition: width 0.2s ease, background-color 0.2s ease;
+}
+
+.tour-quick-facts-dot-active {
+  width: 16px;
+  background: #16a34a;
+}
+
+.tour-quick-facts-wrap-expanded .tour-quick-facts-arrow,
+.tour-quick-facts-wrap-expanded .tour-quick-facts-dots {
+  display: none;
+}
+
 /* Two whole tiles per view — each tile is half the track minus its gap, so
    a snapped pair is never clipped by the viewport edge. Styled as a proper
    card (background, border, shadow) so the row reads as distinct,
@@ -214,6 +280,11 @@
   }
 
   .tour-quick-facts-wrap::after {
+    display: none;
+  }
+
+  .tour-quick-facts-arrow,
+  .tour-quick-facts-dots {
     display: none;
   }
 

@@ -322,9 +322,91 @@
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 640px) {
   .all-tours-grid {
     grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  /* ===== HORIZONTAL CARD LAYOUT (mobile, All Tours page only) =====
+     On small screens the card switches to a side-by-side layout: image on
+     the left (~35% width) with title, badges, rating and price on the
+     right — matching the reference design from the View All pages. Other
+     surfaces (homepage carousels, related tours, ...) keep the classic
+     vertical card. */
+  .all-tours-grid .tour-card {
+    flex-direction: row;
+    max-height: 180px;
+  }
+
+  .all-tours-grid .tour-card-image {
+    width: 35%;
+    height: auto;
+    flex-shrink: 0;
+  }
+
+  .all-tours-grid .tour-card-body {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 12px;
+    justify-content: center;
+  }
+
+  .all-tours-grid .tour-card-title {
+    font-size: 13px;
+    line-height: 1.35;
+    -webkit-line-clamp: 2;
+  }
+
+  .all-tours-grid .tour-card-meta {
+    gap: 4px;
+  }
+
+  .all-tours-grid .tour-card-badge {
+    font-size: 10px;
+    padding: 3px 6px;
+    gap: 3px;
+  }
+
+  .all-tours-grid .tour-card-badge svg {
+    width: 10px;
+    height: 10px;
+  }
+
+  .all-tours-grid .tour-card-rating-value {
+    font-size: 13px;
+  }
+
+  .all-tours-grid .tour-card-rating-reviews {
+    font-size: 11px;
+  }
+
+  .all-tours-grid .tour-card-price-value,
+  .all-tours-grid .tour-card-price-promo {
+    font-size: 18px;
+  }
+
+  .all-tours-grid .tour-card-bottom {
+    gap: 6px;
+  }
+
+  .all-tours-grid .tour-card-duration {
+    bottom: 6px;
+    right: 6px;
+    font-size: 10px;
+    padding: 4px 8px;
+  }
+
+  .all-tours-grid .tour-card-wishlist {
+    width: 30px;
+    height: 30px;
+    top: 6px;
+    right: 6px;
+  }
+
+  .all-tours-grid .tour-card-wishlist svg {
+    width: 12px;
+    height: 12px;
   }
 }
 

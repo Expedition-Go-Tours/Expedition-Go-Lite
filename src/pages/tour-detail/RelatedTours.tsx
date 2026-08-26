@@ -2,11 +2,11 @@ import { useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import TourCard from '../../components/TourCard'
-import type { Tour } from '../../components/data'
+import type { TourCardData } from '../../hooks/useExpeditionTours'
 import './RelatedTours.css'
 
 interface RelatedToursProps {
-  tours: Tour[]
+  tours: TourCardData[]
 }
 
 export default function RelatedTours({ tours }: RelatedToursProps) {
@@ -54,7 +54,7 @@ export default function RelatedTours({ tours }: RelatedToursProps) {
       <div className="related-tours-container" ref={scrollContainerRef}>
         {tours.map((tour) => (
           <div key={tour.title} className="related-tour-card-wrapper">
-            <TourCard {...tour} />
+            <TourCard {...tour} imageClean hideFeatures />
           </div>
         ))}
       </div>

@@ -237,6 +237,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
   const navShowSkeleton = navIsSearching && navIsFocused && navSuggestions.length === 0
 
   return (
+    <>
     <nav className={`navbar${searchBarSticky ? ' scrolled' : ''}`}>
       <div className="nav-left">
         <div className="nav-logo">
@@ -550,6 +551,11 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
             <span className="nav-icon-label">{user?.name || t('nav.profile')}</span>
           </div>
         </div>
+        <a href="#" className="nav-wishlist-mobile" onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate('/dashboard/wishlist') }} aria-label={t('nav.wishlist')}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+          </svg>
+        </a>
         <button className="nav-hamburger" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-label="Toggle menu">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             {mobileMenuOpen ? (
@@ -567,6 +573,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
           </svg>
         </button>
       </div>
+    </nav>
 
       <AnimatePresence>
         {mobileMenuOpen && (
@@ -619,13 +626,6 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
                 {t('nav.profile')}
               </a>
             )}
-            <a href="#" className="nav-mobile-link" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMobileMenuOpen(false); navigate('/dashboard/wishlist') }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-              </svg>
-              {t('nav.wishlist')}
-            </a>
-            <div className="nav-mobile-divider" />
             <div className="nav-mobile-link" onClick={() => { setMobileMenuOpen(false); setLangCurrencyOpen(true) }}>
               <Globe size={18} />
               <span>Language &amp; Currency</span>
@@ -712,6 +712,6 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
       <AnimatePresence>
         {langCurrencyOpen && <LanguageCurrencyModal onClose={() => setLangCurrencyOpen(false)} />}
       </AnimatePresence>
-    </nav>
+    </>
   )
 }

@@ -22,7 +22,6 @@ import type { DayAvailability, DayAvailabilityInfo } from '../../lib/tourAvailab
 import TourImageGallery from './TourImageGallery'
 import TourHeader from './TourHeader'
 import TourQuickFacts from './TourQuickFacts'
-import TravelersLoved from './TravelersLoved'
 import BookingWidget from './BookingWidget'
 import RelatedTours from './RelatedTours'
 import StickyNavHeader from './StickyNavHeader'
@@ -44,10 +43,6 @@ import ReviewsSection from './ReviewsSection'
 import SupplierSection from './SupplierSection'
 
 import './TourDetailPage.css'
-
-function toSlug(title: string): string {
-  return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
-}
 
 /** Skeleton placeholder shown while the tour loads: header, image gallery and booking widget. */
 function TourDetailSkeleton() {
@@ -798,20 +793,11 @@ export default function TourDetailPage() {
     }
   }, [tour, relatedTours])
 
-  const supplierTours = useMemo(() => relatedTours.map((t) => ({
-    title: t.title,
-    slug: toSlug(t.title),
-    image: t.image,
-    duration: t.duration,
-    price: parseInt(t.price.replace(/[^0-9]/g, ''), 10) || 100,
-    rating: t.rating,
-    reviews: t.reviews,
-    features: t.features,
-    location: t.location,
-    category: t.category,
-    source: t.source,
-    externalUrl: t.externalUrl,
-  })), [relatedTours])
+  // Same full TourCardData as the "similar experiences" row — the Supplier
+  // tab cards must carry the identical props (photos carousel, priceValue for
+  // promo pricing, badges, real slug) so they render the same as everywhere
+  // else. No degradation here.
+  const supplierTours = relatedTours
 
   const handleWriteReviewSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -966,11 +952,6 @@ export default function TourDetailPage() {
                         )}
 
                         <TourQuickFacts items={tourQuickFacts} />
-
-                        <TravelersLoved
-                          reviews={allReviewCards}
-                          onViewAllReviews={handleReviewsTab}
-                        />
 
                         <TourItineraryPreview
                           itinerary={tour.itinerary}

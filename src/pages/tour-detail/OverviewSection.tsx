@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, type ReactNode } from 'react'
+import { useState, useRef, useCallback, useEffect, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import {
@@ -36,13 +36,23 @@ export default function OverviewSection({
   const travellersLovedRef = useRef<HTMLDivElement>(null)
   const [showLeftArrow, setShowLeftArrow] = useState(false)
   const [showRightArrow, setShowRightArrow] = useState(true)
+  // Mobile swipe hint (parity with the quick-facts carousel): active-card
+  // dot under the cards + a right-edge chevron. Desktop keeps its side arrows.
+  const [activeDot, setActiveDot] = useState(0)
+
+  const displayReviews = reviews.slice(0, 8)
 
   const handleTravellersScroll = useCallback(() => {
     const el = travellersLovedRef.current
     if (!el) return
     setShowLeftArrow(el.scrollLeft > 4)
     setShowRightArrow(el.scrollLeft < el.scrollWidth - el.clientWidth - 4)
-  }, [])
+    if (displayReviews.length > 0) {
+      const cardStep = el.scrollWidth / displayReviews.length
+      const cardIndex = Math.round(el.scrollLeft / cardStep)
+      setActiveDot(Math.min(displayReviews.length - 1, Math.max(0, cardIndex)))
+    }
+  }, [displayReviews.length])
 
   const scrollLeft = useCallback(() => {
     travellersLovedRef.current?.scrollBy({ left: -960, behavior: 'smooth' })
@@ -52,7 +62,42 @@ export default function OverviewSection({
     travellersLovedRef.current?.scrollBy({ left: 960, behavior: 'smooth' })
   }, [])
 
-  const displayReviews = reviews.slice(0, 8)
+  // Right-edge mobile hint: nudge one card forward (matches the snap rhythm).
+  const scrollTravellersForward = useCallback(() => {
+    const el = travellersLovedRef.current
+    if (!el || displayReviews.length === 0) return
+    el.scrollBy({ left: el.scrollWidth / displayReviews.length, behavior: 'smooth' })
+  }, [displayReviews.length])
+
+  const scrollTravellersTo = useCallback((index: number) => {
+    const el = travellersLovedRef.current
+    if (!el || displayReviews.length === 0) return
+    const maxScroll = el.scrollWidth - el.clientWidth
+    el.scrollTo({
+      left: Math.min(index * (el.scrollWidth / displayReviews.length), maxScroll),
+      behavior: 'smooth',
+    })
+  }, [displayReviews.length])
+
+  // Reset the indicator when the review set changes and re-measure after
+  // layout settles (mount, fonts, orientation change).
+  useEffect(() => {
+    setActiveDot(0)
+    const raf = requestAnimationFrame(() => handleTravellersScroll())
+    const wrap = travellersLovedRef.current?.parentElement
+    let ro: ResizeObserver | null = null
+    if (typeof ResizeObserver !== 'undefined' && wrap) {
+      ro = new ResizeObserver(() => handleTravellersScroll())
+      ro.observe(wrap)
+    }
+    window.addEventListener('resize', handleTravellersScroll)
+    return () => {
+      cancelAnimationFrame(raf)
+      ro?.disconnect()
+      window.removeEventListener('resize', handleTravellersScroll)
+    }
+  }, [displayReviews.length, handleTravellersScroll])
+
   const avatarColors = ['bg-amber-600', 'bg-emerald-600', 'bg-blue-600', 'bg-rose-500', 'bg-violet-600', 'bg-orange-500']
 
   return (
@@ -143,7 +188,31 @@ export default function OverviewSection({
                 <ChevronRight size={20} />
               </button>
             )}
+
+            <button
+              type="button"
+              className={`overview-travellers-hint${showRightArrow ? '' : ' overview-travellers-hint-hidden'}`}
+              onClick={scrollTravellersForward}
+              aria-label="Scroll reviews"
+            >
+              <ChevronRight size={18} strokeWidth={2.5} />
+            </button>
           </div>
+
+          {displayReviews.length > 1 && (
+            <div className="overview-travellers-dots">
+              {displayReviews.map((_, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  className={`overview-travellers-dot${activeDot === i ? ' overview-travellers-dot-active' : ''}`}
+                  onClick={() => scrollTravellersTo(i)}
+                  aria-label={`Go to review ${i + 1}`}
+                  aria-current={activeDot === i}
+                />
+              ))}
+            </div>
+          )}
         </section>
       )}
 

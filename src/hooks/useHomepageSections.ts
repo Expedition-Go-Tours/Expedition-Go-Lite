@@ -11,7 +11,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { fetchWithAuth } from '../lib/api'
 import { getStoredLocation } from '../lib/analytics'
-import type { Tour } from '../components/data'
+import { enrichTourBadgeFields } from './useExpeditionTours'
+import type { TourCardData } from './useExpeditionTours'
 
 // ─── Types ────────────────────────────────────────────────────────────
 
@@ -62,6 +63,15 @@ export interface HomepageTour {
     photo: string | null
     rating: number | null
   } | null
+  // Badge fields the tour card renders. The homepage endpoints don't project
+  // these — they're backfilled client-side from the full /tours listing by
+  // enrichTourBadgeFields() so the cards show the same badges as the
+  // tour-detail "similar experiences" row.
+  languages?: string[]
+  cancellationPolicy?: string | null
+  pickupIncluded?: boolean
+  meetingMode?: 'meeting_point' | 'pickup' | 'none'
+  accommodationIncluded?: boolean
   _score?: number
   _velocity14d?: number
   _bayesianRating?: number
@@ -120,7 +130,18 @@ export interface HomepageData {
 export function useHomepage() {
   return useQuery({
     queryKey: ['homepage', 'all'],
-    queryFn: () => fetchHomepageSection<HomepageData>(''),
+    queryFn: async () => {
+      const data = await fetchHomepageSection<HomepageData>('')
+      return {
+        ...data,
+        recommended: await enrichTourBadgeFields(data.recommended),
+        topRated: await enrichTourBadgeFields(data.topRated),
+        sellOut: await enrichTourBadgeFields(data.sellOut),
+        trending: await enrichTourBadgeFields(data.trending),
+        new: await enrichTourBadgeFields(data.new),
+        offers: await enrichTourBadgeFields(data.offers),
+      }
+    },
     staleTime: 5 * 60 * 1000,
   })
 }
@@ -144,7 +165,10 @@ async function fetchHomepageSection<T>(path: string): Promise<T> {
 export function useLikelySellOut(limit = 12) {
   return useQuery({
     queryKey: ['homepage', 'sell-out', limit],
-    queryFn: () => fetchHomepageSection<{ tours: HomepageTour[] }>(`/sell-out?limit=${limit}`),
+    queryFn: async () => {
+      const data = await fetchHomepageSection<{ tours: HomepageTour[] }>(`/sell-out?limit=${limit}`)
+      return { ...data, tours: await enrichTourBadgeFields(data.tours) }
+    },
     staleTime: 5 * 60 * 1000, // 5 minutes
     select: (data) => data.tours,
   })
@@ -156,7 +180,10 @@ export function useLikelySellOut(limit = 12) {
 export function useTopRated(limit = 12) {
   return useQuery({
     queryKey: ['homepage', 'top-rated', limit],
-    queryFn: () => fetchHomepageSection<{ tours: HomepageTour[] }>(`/top-rated?limit=${limit}`),
+    queryFn: async () => {
+      const data = await fetchHomepageSection<{ tours: HomepageTour[] }>(`/top-rated?limit=${limit}`)
+      return { ...data, tours: await enrichTourBadgeFields(data.tours) }
+    },
     staleTime: 5 * 60 * 1000,
     select: (data) => data.tours,
   })
@@ -168,7 +195,10 @@ export function useTopRated(limit = 12) {
 export function useTrending(limit = 12) {
   return useQuery({
     queryKey: ['homepage', 'trending', limit],
-    queryFn: () => fetchHomepageSection<{ tours: HomepageTour[] }>(`/trending?limit=${limit}`),
+    queryFn: async () => {
+      const data = await fetchHomepageSection<{ tours: HomepageTour[] }>(`/trending?limit=${limit}`)
+      return { ...data, tours: await enrichTourBadgeFields(data.tours) }
+    },
     staleTime: 5 * 60 * 1000,
     select: (data) => data.tours,
   })
@@ -187,7 +217,10 @@ export function useRecommended(limit = 12) {
 
   return useQuery({
     queryKey: ['homepage', 'recommended', limit, location?.lat, location?.lng],
-    queryFn: () => fetchHomepageSection<{ tours: HomepageTour[] }>(`/recommended?${params}`),
+    queryFn: async () => {
+      const data = await fetchHomepageSection<{ tours: HomepageTour[] }>(`/recommended?${params}`)
+      return { ...data, tours: await enrichTourBadgeFields(data.tours) }
+    },
     staleTime: 5 * 60 * 1000,
     select: (data) => data.tours,
   })
@@ -199,7 +232,10 @@ export function useRecommended(limit = 12) {
 export function useNewExperiences(limit = 10) {
   return useQuery({
     queryKey: ['homepage', 'new', limit],
-    queryFn: () => fetchHomepageSection<{ tours: HomepageTour[] }>(`/new?limit=${limit}`),
+    queryFn: async () => {
+      const data = await fetchHomepageSection<{ tours: HomepageTour[] }>(`/new?limit=${limit}`)
+      return { ...data, tours: await enrichTourBadgeFields(data.tours) }
+    },
     staleTime: 10 * 60 * 1000, // 10 minutes
     select: (data) => data.tours,
   })
@@ -224,9 +260,12 @@ export function useAttractions(limit = 12) {
 export function useAttractionTours(attractionName: string | null, limit = 12) {
   return useQuery({
     queryKey: ['homepage', 'attraction-tours', attractionName, limit],
-    queryFn: () => fetchHomepageSection<{ tours: HomepageTour[] }>(
-      `/attractions/tours?name=${encodeURIComponent(attractionName!)}&limit=${limit}`
-    ),
+    queryFn: async () => {
+      const data = await fetchHomepageSection<{ tours: HomepageTour[] }>(
+        `/attractions/tours?name=${encodeURIComponent(attractionName!)}&limit=${limit}`
+      )
+      return { ...data, tours: await enrichTourBadgeFields(data.tours) }
+    },
     staleTime: 5 * 60 * 1000,
     select: (data) => data.tours,
     enabled: !!attractionName,
@@ -293,7 +332,10 @@ export interface HomepageOfferTour extends HomepageTour {
 export function useHomepageOffers(limit = 12) {
   return useQuery({
     queryKey: ['homepage', 'offers', limit],
-    queryFn: () => fetchHomepageSection<{ tours: HomepageOfferTour[] }>(`/offers?limit=${limit}`),
+    queryFn: async () => {
+      const data = await fetchHomepageSection<{ tours: HomepageOfferTour[] }>(`/offers?limit=${limit}`)
+      return { ...data, tours: await enrichTourBadgeFields(data.tours) }
+    },
     staleTime: 5 * 60 * 1000,
     select: (data) => data.tours,
   })
@@ -302,10 +344,13 @@ export function useHomepageOffers(limit = 12) {
 // ─── Mapper ───────────────────────────────────────────────────────────
 
 /**
- * Map an API HomepageTour to the Tour interface that TourCard expects.
- * This is the only bridge between the new API shape and the existing UI.
+ * Map an API HomepageTour to the full TourCardData shape that TourCard
+ * expects. This is the only bridge between the new API shape and the
+ * existing UI — every homepage section that renders TourCards feeds through
+ * here so cards get the same props (slug, priceValue, photos, ...) as the
+ * tour-detail "similar experiences" cards.
  */
-export function mapToTourCard(t: HomepageTour): Tour {
+export function mapToTourCard(t: HomepageTour): TourCardData {
   const durationStr = t.durationMinutes
     ? t.durationMinutes >= 1440
       ? `${Math.round(t.durationMinutes / 1440)} days`
@@ -317,10 +362,12 @@ export function mapToTourCard(t: HomepageTour): Tour {
   return {
     id: t.id,
     title: t.title,
+    slug: t.slug,
     category: t.category || '',
     duration: durationStr,
     features: t.tags?.join(', ') || '',
     price: t.startingPrice != null ? `$${t.startingPrice}` : '',
+    priceValue: t.startingPrice != null ? t.startingPrice : null,
     rating: t.averageRating != null ? String(t.averageRating) : '',
     reviews: t.reviewCount || 0,
     location,
@@ -328,5 +375,10 @@ export function mapToTourCard(t: HomepageTour): Tour {
     photos: t.photos,
     source: 'expedition-go',
     difficulty: t.difficulty || undefined,
+    languages: t.languages?.length ? t.languages : undefined,
+    cancellationPolicy: t.cancellationPolicy || undefined,
+    pickupIncluded: t.pickupIncluded,
+    meetingMode: t.meetingMode,
+    accommodationIncluded: t.accommodationIncluded || undefined,
   }
 }

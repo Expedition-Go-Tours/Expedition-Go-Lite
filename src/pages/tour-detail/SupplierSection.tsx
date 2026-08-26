@@ -4,24 +4,10 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Star, ChevronDown, ChevronRight, ChevronLeft, Phone, Mail, Globe, MapPin } from 'lucide-react'
 import TourCard from '../../components/TourCard'
+import type { TourCardData } from '../../hooks/useExpeditionTours'
 import { supplierTypeLabel } from '../../lib/supplier'
 import './SupplierSection.css'
 import OptimizedImage from '@/components/shared/OptimizedImage'
-
-interface SupplierTour {
-  title: string
-  slug?: string
-  image: string
-  duration: string
-  price: number
-  rating: string
-  reviews: string | number
-  features?: string
-  location?: string
-  category?: string
-  source?: 'expedition-go' | 'travio-africa'
-  externalUrl?: string
-}
 
 interface SupplierSectionProps {
   name: string
@@ -35,7 +21,7 @@ interface SupplierSectionProps {
   address?: string
   verified?: boolean
   supplierType?: string | null
-  tours: SupplierTour[]
+  tours: TourCardData[]
   /** Id of the tour this section is rendered on — passed to the supplier page
       so it can resolve the real supplier profile without a name-only lookup. */
   tourId?: string
@@ -242,20 +228,7 @@ export default function SupplierSection({
               <div ref={scrollRef} className="supplier-tours-scroll">
                 {tours.map((tour) => (
                   <div key={tour.title} className="supplier-tour-card-wrap">
-                    <TourCard
-                      title={tour.title}
-                      duration={tour.duration}
-                      category={tour.category || ''}
-                      features={tour.features || ''}
-                      price={String(tour.price)}
-                      rating={tour.rating}
-                      reviews={Number(tour.reviews)}
-                      location={tour.location || ''}
-                      image={tour.image}
-                      source={tour.source}
-                      externalUrl={tour.externalUrl}
-                      slug={tour.slug}
-                    />
+                    <TourCard {...tour} imageClean hideFeatures />
                   </div>
                 ))}
               </div>

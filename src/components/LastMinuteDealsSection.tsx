@@ -3,13 +3,14 @@ import { useTranslation } from 'react-i18next'
 import SectionHeading from './SectionHeading'
 import TourCard from './TourCard'
 import { lastMinuteDeals } from './data'
+import type { TourCardData } from '../hooks/useExpeditionTours'
 import { useHomepageOffers, type HomepageOfferTour } from '../hooks/useHomepageSections'
 import './LastMinuteDealsSection.css'
 
 const CARD_WIDTH = 295
 const GAP = 16
 
-function mapOfferToCardProps(t: HomepageOfferTour) {
+function mapOfferToCardProps(t: HomepageOfferTour): TourCardData {
   const durationStr = t.durationMinutes
     ? t.durationMinutes >= 1440
       ? `${Math.round(t.durationMinutes / 1440)} days`
@@ -43,6 +44,12 @@ function mapOfferToCardProps(t: HomepageOfferTour) {
     priceValue: t.startingPrice,
     discount,
     specialOffers: t.specialOffers,
+    difficulty: t.difficulty || undefined,
+    languages: t.languages?.length ? t.languages : undefined,
+    cancellationPolicy: t.cancellationPolicy || undefined,
+    pickupIncluded: t.pickupIncluded,
+    meetingMode: t.meetingMode,
+    accommodationIncluded: t.accommodationIncluded || undefined,
   }
 }
 
@@ -106,7 +113,7 @@ export default function LastMinuteDealsSection({ preloaded }: Props) {
             <div className="lastminute-carousel" ref={scrollRef}>
               {items.map((tour, i) => (
                 <div key={`${tour.title}-${i}`} className="lastminute-card-wrap">
-                  <TourCard {...tour} discount={tour.discount} imageClean hideFeatures />
+                  <TourCard {...tour} imageClean hideFeatures />
                 </div>
               ))}
             </div>

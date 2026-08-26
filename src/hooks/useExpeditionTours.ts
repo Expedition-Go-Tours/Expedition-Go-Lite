@@ -1226,6 +1226,7 @@ async function enrichExpeditionRecords(records: ExpeditionTourRecord[]): Promise
     const languagesMap = new Map<string, string[]>()
     const categoryMap = new Map<string, string | null>()
     const accommodationMap = new Map<string, boolean>()
+    const photosMap = new Map<string, string[]>()
     for (const t of allTours) {
       const p = extractStartingPriceFromRaw(t.schedulesAndPricing)
       if (p != null) priceMap.set(t.id, p)
@@ -1239,6 +1240,7 @@ async function enrichExpeditionRecords(records: ExpeditionTourRecord[]): Promise
       // Cards show only the single Step 1 content language, not the full
       // per-option merge extractLanguagesFromTour() returns.
       languagesMap.set(t.id, extractContentLanguage(t))
+      if (Array.isArray(t.photos) && t.photos.length > 1) photosMap.set(t.id, t.photos)
       categoryMap.set(t.id, t.category ?? null)
       if (extractAccommodationIncluded(t)) accommodationMap.set(t.id, true)
     }
@@ -1275,6 +1277,13 @@ async function enrichExpeditionRecords(records: ExpeditionTourRecord[]): Promise
       if (r.tour.meetingMode == null) {
         const mode = meetingModeMap.get(r.tour.id)
         if (mode) r.tour.meetingMode = mode
+      }
+      // The curated endpoints don't project the full photo set — backfill it
+      // so cards keep their image carousel on every surface (similar
+      // experiences row, Supplier tab, curated listings).
+      if (!r.tour.photos?.length) {
+        const fallbackPhotos = photosMap.get(r.tour.id)
+        if (fallbackPhotos?.length) r.tour.photos = fallbackPhotos
       }
       if (r.tour.accommodationIncluded == null) {
         r.tour.accommodationIncluded = accommodationMap.get(r.tour.id) ?? false
@@ -2019,6 +2028,102 @@ export function mapRawTourToListing(t: any): TourCardData {
   }
 }
 
+// ─── Homepage badge-field enrichment ───────────────────────────────────
+
+/** Badge fields the tour card renders but the homepage endpoints never
+ *  project — backfilled client-side from the full /tours listing. */
+export interface TourBadgeFields {
+  languages?: string[]
+  cancellationPolicy?: string | null
+  pickupIncluded?: boolean
+  meetingMode?: 'meeting_point' | 'pickup' | 'none'
+  accommodationIncluded?: boolean
+}
+
+interface BadgeFieldMaps {
+  languages: Map<string, string[]>
+  cancellation: Map<string, string | null>
+  pickup: Map<string, boolean | undefined>
+  meetingMode: Map<string, 'meeting_point' | 'pickup' | 'none'>
+  accommodation: Map<string, boolean>
+}
+
+let badgeMapsCache: { promise: Promise<BadgeFieldMaps>; expiresAt: number } | null = null
+
+/**
+ * One shared batch fetch of the full /tours listing, extracting the tour-card
+ * badge fields (languages, cancellation policy, pickup, meeting mode,
+ * accommodation) into id-keyed maps. The homepage endpoints don't project
+ * these fields at all, so every homepage section reuses this single request
+ * (cached ~60s) instead of firing its own N+1 fetches.
+ */
+function getBadgeFieldMaps(): Promise<BadgeFieldMaps> {
+  const now = Date.now()
+  if (!badgeMapsCache || now >= badgeMapsCache.expiresAt) {
+    badgeMapsCache = {
+      promise: (async () => {
+        const payload = await expeditionFetchRaw('/tours?limit=500')
+        const allTours: any[] = payload.data?.tours ?? payload.tours ?? []
+        const maps: BadgeFieldMaps = {
+          languages: new Map(),
+          cancellation: new Map(),
+          pickup: new Map(),
+          meetingMode: new Map(),
+          accommodation: new Map(),
+        }
+        for (const t of allTours) {
+          const bt = parseJsonMaybe(t.bookingAndTickets)
+          maps.languages.set(t.id, extractContentLanguage(t))
+          maps.cancellation.set(t.id, extractCancellationFromTour(t))
+          maps.pickup.set(t.id, t.pickupIncluded ?? (bt?.pickupProvided ?? bt?.pickupAvailable) ?? undefined)
+          maps.meetingMode.set(t.id, extractMeetingInfo(t).meetingMode)
+          if (extractAccommodationIncluded(t)) maps.accommodation.set(t.id, true)
+        }
+        return maps
+      })(),
+      expiresAt: now + 60_000,
+    }
+  }
+  return badgeMapsCache.promise
+}
+
+/**
+ * Backfill the tour-card badge fields (languages, cancellation policy,
+ * pickup, meeting mode, accommodation) onto a list of tours that the
+ * homepage endpoints return in their slim shape. Fields the tour already
+ * carries are never clobbered; tours with no match in the full listing (or
+ * when the listing fetch fails) come back unchanged.
+ */
+export async function enrichTourBadgeFields<T extends { id: string } & TourBadgeFields>(tours: T[]): Promise<T[]> {
+  if (!tours || tours.length === 0) return tours
+  let maps: BadgeFieldMaps
+  try {
+    maps = await getBadgeFieldMaps()
+  } catch (e) {
+    console.warn('[enrichTourBadgeFields] batch listing failed:', e)
+    return tours
+  }
+  return tours.map((tour) => {
+    const languages = maps.languages.get(tour.id)
+    const cancellation = maps.cancellation.get(tour.id)
+    const pickup = maps.pickup.get(tour.id)
+    const meetingMode = maps.meetingMode.get(tour.id)
+    const accommodation = maps.accommodation.get(tour.id)
+    if (
+      !languages?.length && !cancellation && pickup == null && !meetingMode && !accommodation
+    ) {
+      return tour
+    }
+    const enriched: any = { ...tour }
+    if (!tour.languages?.length && languages?.length) enriched.languages = languages
+    if (!tour.cancellationPolicy && cancellation) enriched.cancellationPolicy = cancellation
+    if (tour.pickupIncluded == null && pickup != null) enriched.pickupIncluded = pickup
+    if (tour.meetingMode == null && meetingMode) enriched.meetingMode = meetingMode
+    if (tour.accommodationIncluded == null && accommodation) enriched.accommodationIncluded = accommodation
+    return enriched as T
+  })
+}
+
 /** Absolute discount a single offer contributes against a given full price. */
 export function offerDiscountAmount(offer: SpecialOfferData, fullPrice: number): number {
   if (offer.discountType === 'FIXED_AMOUNT' && offer.fixedDiscountValue != null) {
@@ -2243,6 +2348,7 @@ export function useSimilarTours(slug: string | undefined) {
           const pickupMap = new Map<string, boolean | undefined>()
           const meetingModeMap = new Map<string, 'meeting_point' | 'pickup' | 'none'>()
           const languagesMap = new Map<string, string[]>()
+          const photosMap = new Map<string, string[]>()
           for (const t of allTours) {
             const p = extractStartingPriceFromRaw(t.schedulesAndPricing)
             if (p != null) priceMap.set(t.id, p)
@@ -2256,6 +2362,7 @@ export function useSimilarTours(slug: string | undefined) {
             // Cards show only the single Step 1 content language, not the
             // full per-option merge extractLanguagesFromTour() returns.
             languagesMap.set(t.id, extractContentLanguage(t))
+            if (Array.isArray(t.photos) && t.photos.length > 1) photosMap.set(t.id, t.photos)
           }
           for (const r of records) {
             // Same rule as enrichExpeditionRecords: the stored startingPrice
@@ -2290,6 +2397,13 @@ export function useSimilarTours(slug: string | undefined) {
             if (!r.tour.languages?.length) {
               const fallbackLanguages = languagesMap.get(r.tour.id)
               if (fallbackLanguages?.length) r.tour.languages = fallbackLanguages
+            }
+            // The similar endpoint doesn't project the full photo set —
+            // backfill it so the cards keep the image carousel (PC + mobile)
+            // in both the similar-experiences row and the Supplier tab.
+            if (!r.tour.photos?.length) {
+              const fallbackPhotos = photosMap.get(r.tour.id)
+              if (fallbackPhotos?.length) r.tour.photos = fallbackPhotos
             }
           }
         } catch (e) {

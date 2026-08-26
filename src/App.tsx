@@ -65,10 +65,10 @@ function HomePage() {
       <MountOnView><Suspense fallback={sectionFallback}><NewExperiencesSection /></Suspense></MountOnView>
       <MountOnView><Suspense fallback={sectionFallback}><TopAttractionsNearbySection preloaded={homepage?.attractions} /></Suspense></MountOnView>
       <MountOnView><CustomReviewsSection /></MountOnView>
-      <MountOnView><WhyBookSection /></MountOnView>
       <MountOnView><Suspense fallback={sectionFallback}><TravelStoriesSection /></Suspense></MountOnView>
       <MountOnView><NewsletterSection /></MountOnView>
       <MountOnView><PartnersSection /></MountOnView>
+      <MountOnView><WhyBookSection /></MountOnView>
       <Footer />
     </>
   )

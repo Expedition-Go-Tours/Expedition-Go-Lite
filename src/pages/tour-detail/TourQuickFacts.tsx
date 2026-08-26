@@ -1,8 +1,8 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, useCallback, useEffect } from 'react'
 import type { ComponentType, ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AnimatePresence, motion } from 'framer-motion'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, ChevronRight } from 'lucide-react'
 import './TourQuickFacts.css'
 
 export interface QuickFactItem {
@@ -32,7 +32,67 @@ export default function TourQuickFacts({ items }: TourQuickFactsProps) {
   const { t } = useTranslation()
   const [expanded, setExpanded] = useState(false)
   const wrapRef = useRef<HTMLDivElement>(null)
+  const trackRef = useRef<HTMLDivElement>(null)
   const collapseRef = useRef(false)
+  // Mobile carousel chrome: a chevron arrow over the right edge (swipe hint)
+  // plus a dot indicator under the cards. Both are mobile-only and disappear
+  // when the strip expands into the full 2-up grid.
+  const [canScrollRight, setCanScrollRight] = useState(false)
+  const [activeDot, setActiveDot] = useState(0)
+  const perView = 2
+  const pages = Math.max(1, Math.ceil(items.length / perView))
+
+  const handleFactsScroll = useCallback(() => {
+    const el = trackRef.current
+    if (!el) return
+    const eps = 4
+    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - eps)
+    if (items.length > 0) {
+      const tileStep = el.scrollWidth / items.length
+      const tileIndex = Math.round(el.scrollLeft / tileStep)
+      setActiveDot(Math.min(pages - 1, Math.max(0, Math.floor(tileIndex / perView))))
+    }
+  }, [items.length, pages])
+
+  const scrollFactsForward = useCallback(() => {
+    const el = trackRef.current
+    if (!el || items.length === 0) return
+    el.scrollBy({ left: el.scrollWidth / items.length, behavior: 'smooth' })
+  }, [items.length])
+
+  const scrollToPage = useCallback((page: number) => {
+    const el = trackRef.current
+    if (!el || items.length === 0) return
+    const maxScroll = el.scrollWidth - el.clientWidth
+    el.scrollTo({
+      left: Math.min(page * perView * (el.scrollWidth / items.length), maxScroll),
+      behavior: 'smooth',
+    })
+  }, [items.length])
+
+  // Re-measure after layout settles (mount, font loads, orientation change).
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => handleFactsScroll())
+    const wrap = wrapRef.current
+    let ro: ResizeObserver | null = null
+    if (typeof ResizeObserver !== 'undefined' && wrap) {
+      ro = new ResizeObserver(() => handleFactsScroll())
+      ro.observe(wrap)
+    }
+    window.addEventListener('resize', handleFactsScroll)
+    return () => {
+      cancelAnimationFrame(raf)
+      ro?.disconnect()
+      window.removeEventListener('resize', handleFactsScroll)
+    }
+  }, [handleFactsScroll])
+
+  // New fact set -> reset the indicator to the first tile.
+  useEffect(() => {
+    setActiveDot(0)
+    const timer = window.setTimeout(() => handleFactsScroll(), 0)
+    return () => window.clearTimeout(timer)
+  }, [items.length, handleFactsScroll])
 
   const toggleExpanded = () => {
     collapseRef.current = expanded
@@ -97,7 +157,9 @@ export default function TourQuickFacts({ items }: TourQuickFactsProps) {
           ) : (
             <motion.div
               key="facts-carousel"
+              ref={trackRef}
               className="tour-quick-facts"
+              onScroll={handleFactsScroll}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0, scale: 0.98 }}
@@ -107,6 +169,32 @@ export default function TourQuickFacts({ items }: TourQuickFactsProps) {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {!expanded && (
+          <button
+            type="button"
+            className={`tour-quick-facts-arrow${canScrollRight ? '' : ' tour-quick-facts-arrow-hidden'}`}
+            onClick={scrollFactsForward}
+            aria-label="Scroll quick facts"
+          >
+            <ChevronRight size={18} strokeWidth={2.5} />
+          </button>
+        )}
+
+        {!expanded && pages > 1 && (
+          <div className="tour-quick-facts-dots">
+            {Array.from({ length: pages }).map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                className={`tour-quick-facts-dot${activeDot === i ? ' tour-quick-facts-dot-active' : ''}`}
+                onClick={() => scrollToPage(i)}
+                aria-label={`Go to page ${i + 1}`}
+                aria-current={activeDot === i}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       <button
