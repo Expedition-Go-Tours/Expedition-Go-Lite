@@ -315,9 +315,9 @@ export function mapToTourCard(t: HomepageTour): Tour {
   const location = [t.city, t.country].filter(Boolean).join(', ')
 
   // Pick a random photo from the array for variety (reduces duplicate images)
-  const allPhotos = [t.coverPhoto, ...(t.photos || [])].filter(Boolean)
+  const allPhotos = [t.coverPhoto, ...(t.photos || [])].filter((p): p is string => typeof p === 'string' && p.length > 0)
   const uniquePhotos = [...new Set(allPhotos)]
-  const image = uniquePhotos.length > 0
+  const image: string = uniquePhotos.length > 0
     ? uniquePhotos[Math.floor(Math.random() * uniquePhotos.length)]
     : t.coverPhoto || ''
 
