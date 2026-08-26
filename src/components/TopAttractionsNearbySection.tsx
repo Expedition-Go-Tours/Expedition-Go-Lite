@@ -4,6 +4,7 @@ import { MapPin, ArrowLeft } from 'lucide-react'
 import SectionHeading from './SectionHeading'
 import { haversineDistanceKm, type Attraction } from './attractionsData'
 import { useAttractions, useAttractionTours, mapToTourCard, type HomepageAttraction } from '../hooks/useHomepageSections'
+import { transformImage } from '../lib/image'
 import TourCard from './TourCard'
 import './TopAttractionsNearbySection.css'
 
@@ -24,7 +25,7 @@ function AttractionCard({
     <button type="button" className="attraction-card" onClick={onClick}>
       {attraction.heroImage && (
         <img
-          src={attraction.heroImage}
+          src={transformImage(attraction.heroImage, { width: 300, height: 336, quality: 'auto:good', format: 'auto', fit: 'crop' }) ?? attraction.heroImage}
           alt=""
           aria-hidden
           className="attraction-card-img"
