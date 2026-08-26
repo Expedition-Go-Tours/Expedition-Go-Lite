@@ -89,6 +89,7 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
   const sectionParam = searchParams.get('section') || ''
   const locationParam = searchParams.get('location') || ''
   const categoryParam = searchParams.get('category') || ''
+  const moodParam = searchParams.get('mood') || ''
 
   const [tourTypes, setTourTypes] = useState<string[]>([])
   const [destinations, setDestinations] = useState<string[]>([])
@@ -104,7 +105,7 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
   const effectiveSortKey: SortKey =
     sortByVal === 'recommended' && sectionParam ? sectionSortKey(sectionParam) : sortByVal
 
-  const { data: allTours, isLoading, isError, error } = useAllExpeditionTours()
+  const { data: allTours, isLoading, isError, error } = useAllExpeditionTours(moodParam ? { mood: moodParam } : undefined)
   const { data: filterOptionData } = useTourFilterOptions()
 
   // Single lightweight call to get section tour IDs (reads pre-computed Redis cache)
@@ -232,7 +233,9 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
     if (filterOptions.categories.some(c => c.value === value)) { handleMulti(setCategories)(value); return }
   }
 
-  const pageTitle = locationParam
+  const pageTitle = moodParam
+    ? moodParam
+    : locationParam
     ? t('sections.toursIn', { location: locationParam })
     : SECTION_TITLES[sectionParam] || t('sections.allToursTitle')
 
@@ -287,7 +290,7 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
       <div className="all-tours-container">
         <div className="all-tours-header">
           <div className="all-tours-header-left">
-            {sectionParam && (
+            {(sectionParam || moodParam) && (
               <button
                 onClick={() => navigate('/')}
                 className="all-tours-back-btn"
@@ -339,6 +342,16 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
                   onClick={() => navigate('/tours')}
                 >
                   {SECTION_TITLES[sectionParam] || sectionParam}
+                  <X size={12} className="filter-pill-x" />
+                </button>
+              )}
+              {moodParam && (
+                <button
+                  type="button"
+                  className="filter-pill active"
+                  onClick={() => navigate('/tours')}
+                >
+                  {moodParam}
                   <X size={12} className="filter-pill-x" />
                 </button>
               )}

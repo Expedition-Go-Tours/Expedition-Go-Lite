@@ -1348,15 +1348,17 @@ export function useExpeditionTours(filters: ExpeditionToursFilters = {}) {
 const MAX_CATALOG_PAGES = 10
 const CATALOG_PAGE_SIZE = 50
 
-export function useAllExpeditionTours() {
+export function useAllExpeditionTours(opts?: { mood?: string }) {
+  const mood = opts?.mood || ''
   return useQuery({
-    queryKey: ['expedition', 'tours', 'all'],
+    queryKey: ['expedition', 'tours', 'all', mood],
     staleTime: 5 * 60_000,
     queryFn: async (): Promise<TourCardData[]> => {
       const records: ExpeditionTourRecord[] = []
+      const moodParam = mood ? `&mood=${encodeURIComponent(mood)}` : ''
 
       // Fetch first page to get totalPages
-      const first = await expeditionFetchRaw(`/expedition/tours?page=1&limit=${CATALOG_PAGE_SIZE}`)
+      const first = await expeditionFetchRaw(`/expedition/tours?page=1&limit=${CATALOG_PAGE_SIZE}${moodParam}`)
       const firstBatch: ExpeditionTourRecord[] = first.data?.tours ?? first.tours ?? []
       records.push(...firstBatch)
       const totalPages = Math.min(first.pagination?.totalPages ?? 1, MAX_CATALOG_PAGES)
@@ -1365,7 +1367,7 @@ export function useAllExpeditionTours() {
       if (totalPages > 1 && firstBatch.length > 0) {
         const rest = await Promise.all(
           Array.from({ length: totalPages - 1 }, (_, i) =>
-            expeditionFetchRaw(`/expedition/tours?page=${i + 2}&limit=${CATALOG_PAGE_SIZE}`)
+            expeditionFetchRaw(`/expedition/tours?page=${i + 2}&limit=${CATALOG_PAGE_SIZE}${moodParam}`)
           )
         )
         for (const payload of rest) {

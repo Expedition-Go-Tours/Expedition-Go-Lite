@@ -97,7 +97,7 @@ export default function MoodSection({ preloaded }: Props) {
                       className="mood-card"
                       onClick={() => {
                         trackMoodClick(cat.keyword, i)
-                        navigate(`/tours?category=${encodeURIComponent(cat.keyword)}`)
+                        navigate(`/tours?mood=${encodeURIComponent(cat.keyword)}`)
                       }}
                     >
                       <img
