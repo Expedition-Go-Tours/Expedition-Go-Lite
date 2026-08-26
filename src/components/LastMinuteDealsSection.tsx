@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import SectionHeading from './SectionHeading'
 import TourCard from './TourCard'
 import { lastMinuteDeals } from './data'
-import { useHomepageOffers, type HomepageOfferTour, type HomepageTour } from '../hooks/useHomepageSections'
+import { useHomepageOffers, type HomepageOfferTour } from '../hooks/useHomepageSections'
 import './LastMinuteDealsSection.css'
 
 const CARD_WIDTH = 295
