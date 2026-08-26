@@ -28,7 +28,7 @@ function mapOfferToCardProps(t: HomepageOfferTour) {
 
   return {
     id: t.offerId,
-    title: t.offerName || t.title,
+    title: t.title,
     slug: t.slug,
     category: t.category || '',
     duration: durationStr,
