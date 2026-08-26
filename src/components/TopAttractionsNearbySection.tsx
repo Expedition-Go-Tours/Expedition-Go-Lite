@@ -1,11 +1,11 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { MapPin, ArrowLeft } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { MapPin } from 'lucide-react'
 import SectionHeading from './SectionHeading'
 import { haversineDistanceKm, type Attraction } from './attractionsData'
-import { useAttractions, useAttractionTours, mapToTourCard, type HomepageAttraction } from '../hooks/useHomepageSections'
+import { useAttractions, type HomepageAttraction } from '../hooks/useHomepageSections'
 import { transformImage } from '../lib/image'
-import TourCard from './TourCard'
 import './TopAttractionsNearbySection.css'
 
 const CARD_WIDTH = 295
@@ -25,9 +25,8 @@ function AttractionCard({
     <button type="button" className="attraction-card" onClick={onClick}>
       {attraction.heroImage && (
         <img
-          src={transformImage(attraction.heroImage, { width: 300, height: 336, quality: 'auto:good', format: 'auto', fit: 'crop' }) ?? attraction.heroImage}
-          alt=""
-          aria-hidden
+          src={transformImage(attraction.heroImage, { width: 590, height: 672, quality: 'auto:best', format: 'auto', fit: 'fill' }) ?? attraction.heroImage}
+          alt={attraction.name}
           className="attraction-card-img"
           loading="lazy"
           decoding="async"
@@ -58,60 +57,16 @@ function AttractionCard({
   )
 }
 
-function AttractionToursView({
-  attraction,
-  onBack,
-}: {
-  attraction: Attraction
-  onBack: () => void
-}) {
-  const { t } = useTranslation()
-  const { data: toursData, isLoading } = useAttractionTours(attraction.name, 12)
-
-  const tours = (toursData ?? []).map(mapToTourCard)
-
-  return (
-    <section className="attractions-section">
-      <div className="attractions-container">
-        <div className="attractions-viewport">
-          <div className="attractions-back-row">
-            <button type="button" className="attractions-back-btn" onClick={onBack}>
-              <ArrowLeft size={18} />
-              <span>{t('common.back', { defaultValue: 'Back' })}</span>
-            </button>
-            <h2 className="attractions-selected-heading">{attraction.name}</h2>
-          </div>
-          {isLoading ? (
-            <div className="attractions-loading">{t('common.loading', { defaultValue: 'Loading...' })}</div>
-          ) : tours.length === 0 ? (
-            <div className="attractions-empty">{t('sections.noToursForAttraction', { defaultValue: 'No tours found for this attraction.' })}</div>
-          ) : (
-            <div className="attractions-clip">
-              <div className="attractions-carousel">
-                {tours.map((tour, i) => (
-                  <div key={`${tour.id}-${i}`} className="attractions-card-wrap">
-                    <TourCard {...tour} />
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </section>
-  )
-}
-
 interface Props {
   preloaded?: HomepageAttraction[]
 }
 
 export default function TopAttractionsNearbySection({ preloaded }: Props) {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
-  const [selectedAttraction, setSelectedAttraction] = useState<Attraction | null>(null)
   const { data: attractionsData, isLoading } = useAttractions(12)
   const [locationError, setLocationError] = useState<string | null>(() =>
     typeof navigator !== 'undefined' && navigator.geolocation ? null : 'Geolocation not supported',
@@ -183,17 +138,6 @@ export default function TopAttractionsNearbySection({ preloaded }: Props) {
     return () => el.removeEventListener('scroll', updateArrows)
   }, [updateArrows])
 
-  // Step 2: Show tours for selected attraction
-  if (selectedAttraction) {
-    return (
-      <AttractionToursView
-        attraction={selectedAttraction}
-        onBack={() => setSelectedAttraction(null)}
-      />
-    )
-  }
-
-  // Step 1: Show attraction cards
   return (
     <section className="attractions-section">
       <div className="attractions-container">
@@ -218,7 +162,7 @@ export default function TopAttractionsNearbySection({ preloaded }: Props) {
                   <div key={`${attraction.name}-${i}`} className="attractions-card-wrap">
                     <AttractionCard
                       attraction={attraction}
-                      onClick={() => setSelectedAttraction(attraction)}
+                      onClick={() => navigate(`/tours?attraction=${encodeURIComponent(attraction.name)}`)}
                     />
                   </div>
                 ))}
