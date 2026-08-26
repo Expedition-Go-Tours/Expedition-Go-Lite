@@ -15,6 +15,30 @@ import type { Tour } from '../components/data'
 
 // ─── Types ────────────────────────────────────────────────────────────
 
+export interface SpecialOfferData {
+  id: string
+  name: string
+  offerType: string
+  discountType: string
+  discountPercentage: number | null
+  fixedDiscountValue: number | null
+  startDate: string | null
+  endDate: string | null
+  promoCode: string | null
+  timeSlotMode: string
+  specificWeekdays: string[]
+  capacityType: string
+  maxSpots: number | null
+  spotsSold: number | null
+  minQuantity: number | null
+  minSpendAmount: number | null
+  maxRedemptionsPerCustomer: number | null
+  stackable: boolean
+  earlyBirdAdvanceDays: number | null
+  lastMinuteWindowHours: number | null
+  targets: { tourId: string; tourOptionKey: string | null; tourOptionLabel: string | null }[]
+}
+
 export interface HomepageTour {
   id: string
   title: string
@@ -209,6 +233,23 @@ export function usePopularDestinations(limit = 10) {
     queryFn: () => fetchHomepageSection<{ destinations: PopularDestination[] }>(`/destinations?limit=${limit}`),
     staleTime: 60 * 60 * 1000, // 1 hour
     select: (data) => data.destinations,
+  })
+}
+
+export interface HomepageOfferTour extends HomepageTour {
+  specialOffers: SpecialOfferData[]
+}
+
+/**
+ * Tours with active special offers — single efficient query (no N+1).
+ * Powers the "Special Offers" / "Last Minute Deals" homepage section.
+ */
+export function useHomepageOffers(limit = 12) {
+  return useQuery({
+    queryKey: ['homepage', 'offers', limit],
+    queryFn: () => fetchHomepageSection<{ tours: HomepageOfferTour[] }>(`/offers?limit=${limit}`),
+    staleTime: 5 * 60 * 1000,
+    select: (data) => data.tours,
   })
 }
 
