@@ -195,7 +195,7 @@ export default function SearchBar() {
   return (
     <div className={`hero-search-wrap${isSearching ? ' searching' : ''}`} ref={containerRef}>
       <form className="hero-search-form" onSubmit={handleSubmit}>
-        <div id="hero-search-bar" className="hero-search-bar" ref={barRef}>
+        <div id="hero-search-bar" className={`hero-search-bar${isFocused ? ' focused' : ''}`} ref={barRef}>
           <div className="hero-search-input-wrap">
             {isSearching ? (
               <span className="search-loading-spinner" aria-hidden="true" />

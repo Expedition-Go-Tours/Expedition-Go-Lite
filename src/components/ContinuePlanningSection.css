@@ -1,5 +1,5 @@
 .continue-planning-section {
-  padding: 45px 0;
+  padding: 8px 0 20px;
   background: #fff;
 }
 
@@ -328,7 +328,7 @@
 
 @media (max-width: 767px) {
   .continue-planning-section {
-    padding: 40px 0;
+    padding: 8px 0;
   }
 
   .continue-planning-container {

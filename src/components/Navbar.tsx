@@ -248,7 +248,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
 
       <div className="nav-center">
         <div className={`navbar-compact-search${navIsSearching ? ' searching' : ''}`} ref={navSearchRef}>
-          <form className="navbar-search-form" onSubmit={(e) => {
+          <form className={`navbar-search-form${navIsFocused ? ' focused' : ''}`} onSubmit={(e) => {
             e.preventDefault()
             if (navHighlightedIndex >= 0 && navHighlightedIndex < navSuggestions.length) {
               navigateToSuggestion(navSuggestions[navHighlightedIndex])
