@@ -174,11 +174,21 @@ export default function TourCard({ id, title, duration, features, price, rating,
           onTouchStart={onImageTouchStart}
           onTouchEnd={onImageTouchEnd}
         >
-          {slides.map((src, i) => (
-            <div key={`${src}-${i}`} className={`tour-card-slide${i === current ? ' tour-card-slide-active' : ''}`}>
-              <OptimizedImage src={src} alt={title} width={600} />
-            </div>
-          ))}
+          {slides.map((src, i) => {
+            const isActive = i === current
+            const isAdjacent = Math.abs(i - current) === 1
+            // Only load images for the active slide and ±1 neighbours.
+            // Far-off slides render an empty placeholder so the CSS
+            // translateX carousel still works (all slides stay in the DOM).
+            const shouldLoad = isActive || isAdjacent
+            return (
+              <div key={`${src}-${i}`} className={`tour-card-slide${isActive ? ' tour-card-slide-active' : ''}`}>
+                {shouldLoad ? (
+                  <OptimizedImage src={src} alt={title} width={600} loading={isActive ? 'eager' : 'lazy'} />
+                ) : null}
+              </div>
+            )
+          })}
         </div>
         {!imageClean && <div className="tour-card-image-fade" />}
         {duration && <span className="tour-card-duration">{duration}</span>}
