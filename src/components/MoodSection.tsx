@@ -95,12 +95,20 @@ export default function MoodSection({ preloaded }: Props) {
                   <div key={`${cat.keyword}-${i}`} className="mood-card-wrap">
                     <button
                       className="mood-card"
-                      style={{ backgroundImage: `url(${transformImage(cat.image, { width: 600, quality: 'auto:good', format: 'auto' }) ?? cat.image})` }}
                       onClick={() => {
                         trackMoodClick(cat.keyword, i)
                         navigate(`/tours?category=${encodeURIComponent(cat.keyword)}`)
                       }}
                     >
+                      <img
+                        src={transformImage(cat.image, { width: 600, height: 420, quality: 'auto:good', format: 'auto' }) ?? cat.image}
+                        alt={cat.keyword}
+                        loading="lazy"
+                        decoding="async"
+                        width={295}
+                        height={210}
+                        className="mood-card-img"
+                      />
                       <span className="mood-tag">{cat.keyword}</span>
                       <span className="mood-count">{cat.tourCount} {t('mood.tours')}</span>
                       <div className="mood-gradient" />
