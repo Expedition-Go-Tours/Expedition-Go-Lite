@@ -18,16 +18,16 @@ import type { Tour } from '../components/data'
 export interface SpecialOfferData {
   id: string
   name: string
-  offerType: string
-  discountType: string
+  offerType: 'LIMITED_TIME' | 'EARLY_BIRD' | 'LAST_MINUTE'
+  discountType: 'PERCENTAGE' | 'FIXED_AMOUNT'
   discountPercentage: number | null
   fixedDiscountValue: number | null
   startDate: string | null
   endDate: string | null
   promoCode: string | null
-  timeSlotMode: string
+  timeSlotMode: 'ALL_DAYS' | 'SPECIFIC_WEEKDAYS'
   specificWeekdays: string[]
-  capacityType: string
+  capacityType: 'UNLIMITED' | 'CAPPED'
   maxSpots: number | null
   spotsSold: number | null
   minQuantity: number | null

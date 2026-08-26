@@ -3,10 +3,8 @@ import { useTranslation } from 'react-i18next'
 import { MapPin, ArrowLeft } from 'lucide-react'
 import SectionHeading from './SectionHeading'
 import { haversineDistanceKm, type Attraction } from './attractionsData'
-import { useAttractions, useAttractionTours, mapToTourCard, type HomepageTour } from '../hooks/useHomepageSections'
-import { useWishlist, toWishlistItem } from '../context/WishlistContext'
+import { useAttractions, useAttractionTours, mapToTourCard, type HomepageAttraction } from '../hooks/useHomepageSections'
 import TourCard from './TourCard'
-import type { Tour } from './data'
 import './TopAttractionsNearbySection.css'
 
 const CARD_WIDTH = 295
@@ -68,38 +66,8 @@ function AttractionToursView({
 }) {
   const { t } = useTranslation()
   const { data: toursData, isLoading } = useAttractionTours(attraction.name, 12)
-  const scrollRef = useRef<HTMLDivElement>(null)
-  const [canScrollLeft, setCanScrollLeft] = useState(false)
-  const [canScrollRight, setCanScrollRight] = useState(true)
 
   const tours = (toursData ?? []).map(mapToTourCard)
-
-  const updateArrows = useCallback(() => {
-    const el = scrollRef.current
-    if (!el) return
-    const maxScroll = el.scrollWidth - el.clientWidth
-    setCanScrollLeft(el.scrollLeft > 2)
-    setCanScrollRight(el.scrollLeft < maxScroll - 2)
-  }, [])
-
-  const scroll = (direction: 'left' | 'right') => {
-    const el = scrollRef.current
-    if (!el) return
-    const cardStep = CARD_WIDTH + GAP
-    const currentIndex = Math.round(el.scrollLeft / cardStep)
-    const targetIndex = direction === 'left'
-      ? Math.max(0, currentIndex - 3)
-      : currentIndex + 3
-    el.scrollTo({ left: targetIndex * cardStep, behavior: 'smooth' })
-  }
-
-  useEffect(() => {
-    const el = scrollRef.current
-    if (!el) return
-    updateArrows()
-    el.addEventListener('scroll', updateArrows, { passive: true })
-    return () => el.removeEventListener('scroll', updateArrows)
-  }, [updateArrows])
 
   return (
     <section className="attractions-section">
@@ -118,10 +86,10 @@ function AttractionToursView({
             <div className="attractions-empty">{t('sections.noToursForAttraction', { defaultValue: 'No tours found for this attraction.' })}</div>
           ) : (
             <div className="attractions-clip">
-              <div className="attractions-carousel" ref={scrollRef}>
+              <div className="attractions-carousel">
                 {tours.map((tour, i) => (
                   <div key={`${tour.id}-${i}`} className="attractions-card-wrap">
-                    <TourCard tour={tour} />
+                    <TourCard {...tour} />
                   </div>
                 ))}
               </div>
@@ -133,7 +101,11 @@ function AttractionToursView({
   )
 }
 
-export default function TopAttractionsNearbySection() {
+interface Props {
+  preloaded?: HomepageAttraction[]
+}
+
+export default function TopAttractionsNearbySection({ preloaded }: Props) {
   const { t } = useTranslation()
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
@@ -144,7 +116,7 @@ export default function TopAttractionsNearbySection() {
     typeof navigator !== 'undefined' && navigator.geolocation ? null : 'Geolocation not supported',
   )
 
-  const attractions = attractionsData ?? []
+  const attractions = (preloaded ?? attractionsData) ?? []
 
   // Sort by proximity if geolocation available
   const [sortedAttractions, setSortedAttractions] = useState<Attraction[]>([])
