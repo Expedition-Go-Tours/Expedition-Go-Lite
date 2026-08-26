@@ -91,12 +91,19 @@ export default defineConfig({
             },
           },
           {
-            urlPattern: /\.(webp|png|jpg|svg)$/,
+            // Cache all CDN-served images (Cloudinary tour photos,
+            // Unsplash fallbacks, Google UserContent profile photos).
+            // CacheFirst: once downloaded, serve from disk for 30 days.
+            // This prevents images from re-downloading on every scroll.
+            urlPattern: ({ url }: { url: URL }) =>
+              url.hostname === 'res.cloudinary.com' ||
+              url.hostname === 'images.unsplash.com' ||
+              url.hostname.endsWith('.googleusercontent.com'),
             handler: 'CacheFirst',
             options: {
-              cacheName: 'image-cache',
+              cacheName: 'cdn-images',
               expiration: {
-                maxEntries: 200,
+                maxEntries: 300,
                 maxAgeSeconds: 60 * 60 * 24 * 30,
               },
             },
