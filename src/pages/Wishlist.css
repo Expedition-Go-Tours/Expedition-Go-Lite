@@ -70,7 +70,7 @@
   transform: scale(1.05);
 }
 
-/* Remove Button */
+/* Remove Button — explicit X on the image's top-right corner. */
 .wishlist-remove-btn {
   position: absolute;
   top: 12px;
@@ -80,7 +80,7 @@
   border-radius: 50%;
   border: none;
   background: rgba(255, 255, 255, 0.95);
-  color: #179237;
+  color: #374151;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -91,7 +91,7 @@
 }
 
 .wishlist-remove-btn:hover {
-  background: #179237;
+  background: #dc2626;
   color: #fff;
   transform: scale(1.1);
 }
@@ -531,11 +531,6 @@
     right: 6px;
   }
 
-  .wishlist-remove-btn.no-logo {
-    left: 6px;
-    right: auto;
-  }
-
   .wishlist-remove-btn svg {
     width: 12px;
     height: 12px;
@@ -659,11 +654,6 @@
     height: 20px;
     top: 5px;
     right: 5px;
-  }
-
-  .wishlist-remove-btn.no-logo {
-    left: 5px;
-    right: auto;
   }
 
   .wishlist-remove-btn svg {

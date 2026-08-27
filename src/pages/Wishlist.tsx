@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { toast } from 'sonner'
 import { Button } from '../components/ui/button'
 import { useWishlist, type WishlistItem } from '../context/WishlistContext'
 import { useTranslation } from 'react-i18next'
@@ -14,10 +15,13 @@ export default function Wishlist() {
   const { wishlist: wishlistItems, removeFromWishlist } = useWishlist()
   const [showTransition, setShowTransition] = useState(false)
   const [transitVehicle, setTransitVehicle] = useState(0)
+  const [removingId, setRemovingId] = useState<string | null>(null)
   const pendingNavState = useRef<unknown>(null)
 
   const handleRemove = (id: string) => {
+    setRemovingId(id)
     removeFromWishlist(id)
+    toast.success(t('common.removedFromWishlist'))
   }
 
   const handleTransitionDone = () => {
@@ -188,18 +192,19 @@ const handleBookNow = (item: WishlistItem) => {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.9, x: -50 }}
                   transition={{ duration: 0.3 }}
-                  className="wishlist-card"
+                  className={`wishlist-card${removingId === item.id ? ' removing' : ''}`}
                 >
                   <div className="wishlist-card-image">
                     <OptimizedImage src={item.imageUrl} alt={item.title} width={400} />
                     <button
-                      className={`wishlist-remove-btn${item.source === 'travio-africa' ? '' : ' no-logo'}`}
+                      className="wishlist-remove-btn"
                       onClick={() => handleRemove(item.id)}
-                      aria-label="Remove from wishlist"
-                      title="Remove from wishlist"
+                      aria-label={t('common.removeFromWishlist')}
+                      title={t('common.removeFromWishlist')}
                     >
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                        <line x1="18" y1="6" x2="6" y2="18" />
                       </svg>
                     </button>
                     {item.duration && <div className="wishlist-card-badge">{item.duration}</div>}
