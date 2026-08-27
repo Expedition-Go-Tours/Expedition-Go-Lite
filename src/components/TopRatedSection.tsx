@@ -2,7 +2,7 @@ import { useRef, useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import SectionHeading from './SectionHeading'
 import TourCard from './TourCard'
-import { topRatedTours } from './data'
+import TourCardSkeleton from './TourCardSkeleton'
 import { useTopRated, mapToTourCard, type HomepageTour } from '../hooks/useHomepageSections'
 import './TopRatedSection.css'
 
@@ -11,9 +11,10 @@ const GAP = 16
 
 interface Props {
   preloaded?: HomepageTour[]
+  isLoading?: boolean
 }
 
-export default function TopRatedSection({ preloaded }: Props) {
+export default function TopRatedSection({ preloaded, isLoading }: Props) {
   const { t } = useTranslation()
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
@@ -21,7 +22,7 @@ export default function TopRatedSection({ preloaded }: Props) {
   const { data: liveData } = useTopRated(12)
   const items = (preloaded ?? liveData)?.length
     ? (preloaded ?? liveData)!.map(mapToTourCard)
-    : topRatedTours
+    : null
 
   const updateArrows = useCallback(() => {
     const el = scrollRef.current
@@ -52,6 +53,8 @@ export default function TopRatedSection({ preloaded }: Props) {
     return () => el.removeEventListener('scroll', onScroll)
   }, [updateArrows])
 
+  if (!items && !isLoading) return null
+
   return (
     <section className="toprated-section">
       <div className="toprated-container">
@@ -66,11 +69,18 @@ export default function TopRatedSection({ preloaded }: Props) {
           />
           <div className="toprated-clip">
             <div className="toprated-carousel" ref={scrollRef}>
-              {items.map((tour, i) => (
-                <div key={`${tour.title}-${i}`} className="toprated-card-wrap">
-                  <TourCard {...tour} imageClean hideFeatures />
-                </div>
-              ))}
+              {isLoading && !items
+                ? Array.from({ length: 6 }).map((_, i) => (
+                    <div key={`skeleton-${i}`} className="toprated-card-wrap">
+                      <TourCardSkeleton />
+                    </div>
+                  ))
+                : items?.map((tour, i) => (
+                    <div key={`${tour.title}-${i}`} className="toprated-card-wrap">
+                      <TourCard {...tour} imageClean hideFeatures />
+                    </div>
+                  ))
+              }
             </div>
           </div>
         </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, lazy, Suspense } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Toaster } from 'sonner'
@@ -51,8 +51,7 @@ type PageView = 'home' | 'signin' | 'signup'
 const sectionFallback = <div style={{ minHeight: 400 }} />
 
 function HomePage() {
-  const { data: homepage } = useHomepage()
-  const sellOutTours = useMemo(() => homepage?.sellOut ?? [], [homepage])
+  const { data: homepage, isLoading } = useHomepage()
 
   // Prefetch below-fold section chunks during browser idle time.
   // This ensures chunks are cached before the user scrolls, without
@@ -74,16 +73,16 @@ function HomePage() {
   }, [])
 
   return (
-    <SellOutProvider tours={sellOutTours}>
+    <SellOutProvider tours={homepage?.sellOut ?? []}>
       <Hero />
       <ContinuePlanningSection />
-      <MoodSection preloaded={homepage?.mood} />
-      <RecommendSection preloaded={homepage?.recommended} />
+      <MoodSection preloaded={homepage?.mood} isLoading={isLoading} />
+      <RecommendSection preloaded={homepage?.recommended} isLoading={isLoading} />
       <PopularLocations preloaded={homepage?.destinations} />
-      <MountOnView><Suspense fallback={sectionFallback}><TopRatedSection preloaded={homepage?.topRated} /></Suspense></MountOnView>
-      <MountOnView><Suspense fallback={sectionFallback}><SellOutSection preloaded={homepage?.sellOut} /></Suspense></MountOnView>
-      <MountOnView><Suspense fallback={sectionFallback}><LastMinuteDealsSection preloaded={homepage?.offers} /></Suspense></MountOnView>
-      <MountOnView><Suspense fallback={sectionFallback}><NewExperiencesSection /></Suspense></MountOnView>
+      <MountOnView><Suspense fallback={sectionFallback}><TopRatedSection preloaded={homepage?.topRated} isLoading={isLoading} /></Suspense></MountOnView>
+      <MountOnView><Suspense fallback={sectionFallback}><SellOutSection preloaded={homepage?.sellOut} isLoading={isLoading} /></Suspense></MountOnView>
+      <MountOnView><Suspense fallback={sectionFallback}><LastMinuteDealsSection preloaded={homepage?.offers} isLoading={isLoading} /></Suspense></MountOnView>
+      <MountOnView><Suspense fallback={sectionFallback}><NewExperiencesSection isLoading={isLoading} /></Suspense></MountOnView>
       <MountOnView><Suspense fallback={sectionFallback}><TopAttractionsNearbySection preloaded={homepage?.attractions} /></Suspense></MountOnView>
       <MountOnView><CustomReviewsSection /></MountOnView>
       <MountOnView><Suspense fallback={sectionFallback}><TravelStoriesSection /></Suspense></MountOnView>

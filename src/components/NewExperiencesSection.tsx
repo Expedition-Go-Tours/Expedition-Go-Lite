@@ -2,24 +2,30 @@ import { useRef, useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import SectionHeading from './SectionHeading'
 import TourCard from './TourCard'
+import TourCardSkeleton from './TourCardSkeleton'
 import { useNewExperiences, mapToTourCard } from '../hooks/useHomepageSections'
 import './NewExperiencesSection.css'
 
 const CARD_WIDTH = 295
 const GAP = 16
 
-export default function NewExperiencesSection() {
+interface Props {
+  isLoading?: boolean
+}
+
+export default function NewExperiencesSection({ isLoading }: Props) {
   const { t } = useTranslation()
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
   const { data: liveTours } = useNewExperiences(30)
 
-  const items = (liveTours ?? []).map(t => {
-    const card = mapToTourCard(t)
-    // Only use coverPhoto for the carousel — photos array may contain low-quality uploads
-    return { ...card, photos: card.image ? [card.image] : card.photos }
-  })
+  const items = liveTours?.length
+    ? liveTours.map(t => {
+        const card = mapToTourCard(t)
+        return { ...card, photos: card.image ? [card.image] : card.photos }
+      })
+    : null
 
   const updateArrows = useCallback(() => {
     const el = scrollRef.current
@@ -73,11 +79,18 @@ export default function NewExperiencesSection() {
           />
           <div className="newexp-clip">
             <div className="newexp-carousel" ref={scrollRef}>
-              {items.map((tour, i) => (
-                <div key={`${tour.id ?? tour.title}-${i}`} className="newexp-card-wrap">
-                  <TourCard {...tour} isNew hideSourceBadge hideFeatures imageClean />
-                </div>
-              ))}
+              {isLoading && !items
+                ? Array.from({ length: 6 }).map((_, i) => (
+                    <div key={`skeleton-${i}`} className="newexp-card-wrap">
+                      <TourCardSkeleton />
+                    </div>
+                  ))
+                : items?.map((tour, i) => (
+                    <div key={`${tour.id ?? tour.title}-${i}`} className="newexp-card-wrap">
+                      <TourCard {...tour} isNew hideSourceBadge hideFeatures imageClean />
+                    </div>
+                  ))
+              }
             </div>
           </div>
         </div>

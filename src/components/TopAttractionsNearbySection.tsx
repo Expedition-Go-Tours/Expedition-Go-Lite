@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { MapPin } from 'lucide-react'
 import SectionHeading from './SectionHeading'
+import TourCardSkeleton from './TourCardSkeleton'
 import { type Attraction } from './attractionsData'
 import { useAttractions, type HomepageAttraction } from '../hooks/useHomepageSections'
 import { storeLocation } from '../lib/analytics'
@@ -148,7 +149,15 @@ export default function TopAttractionsNearbySection({ preloaded }: Props) {
             disableRight={!canScrollRight}
           />
           {isLoading ? (
-            <div className="attractions-loading">{t('common.loading', { defaultValue: 'Loading...' })}</div>
+            <div className="attractions-clip">
+              <div className="attractions-carousel" ref={scrollRef}>
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={`skeleton-${i}`} className="attractions-card-wrap">
+                    <TourCardSkeleton />
+                  </div>
+                ))}
+              </div>
+            </div>
           ) : attractions.length === 0 ? (
             <div className="attractions-empty">{t('sections.noAttractions', { defaultValue: 'No attractions found.' })}</div>
           ) : (

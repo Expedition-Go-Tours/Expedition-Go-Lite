@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom'
 import SectionHeading from './SectionHeading'
 import PopularLocationCard from './PopularLocationCard'
 import DestinationsModal from './DestinationsModal'
-import { destinations } from './data'
 import { usePopularDestinations, type PopularDestination } from '../hooks/useHomepageSections'
 import './PopularLocations.css'
 
@@ -34,7 +33,7 @@ export default function PopularLocations({ preloaded }: Props) {
   const { data: liveDestinations, isLoading } = usePopularDestinations(10)
   const items = (preloaded ?? liveDestinations)?.length
     ? (preloaded ?? liveDestinations)!.map(mapToDestination)
-    : destinations
+    : null
 
   const updateArrows = useCallback(() => {
     const el = scrollRef.current
@@ -65,6 +64,8 @@ export default function PopularLocations({ preloaded }: Props) {
     return () => el.removeEventListener('scroll', onScroll)
   }, [updateArrows])
 
+  if (!items && !isLoading) return null
+
   return (
     <section className="popular-locations-section">
       <div className="popular-locations-container">
@@ -79,8 +80,7 @@ export default function PopularLocations({ preloaded }: Props) {
           />
           <div className="location-clip">
             <div className="popular-locations-carousel" ref={scrollRef}>
-              {isLoading && !preloaded ? (
-                // Loading skeleton
+              {isLoading && !items ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <div key={`skeleton-${i}`} className="location-card-wrap">
                     <div className="location-card-skeleton">
@@ -89,7 +89,7 @@ export default function PopularLocations({ preloaded }: Props) {
                   </div>
                 ))
               ) : (
-                items.map((dest, i) => (
+                items?.map((dest, i) => (
                   <div key={`${dest.title}-${i}`} className="location-card-wrap">
                     <PopularLocationCard {...dest} onClick={() => navigate(`/tours?location=${encodeURIComponent(dest.title)}`)} />
                   </div>
