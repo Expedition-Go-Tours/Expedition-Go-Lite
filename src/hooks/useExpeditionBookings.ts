@@ -274,6 +274,9 @@ export function useBookingBySession(sessionId: string | null) {
       // Stop polling once the session is no longer in-flight.
       const status = query.state.data?.status
       if (status === 'PAID' || status === 'EXPIRED' || status === 'REFUNDED') return false
+      // Stop after ~2 minutes (60 attempts) to avoid infinite spinner.
+      // The backend cleanup sweep will reconcile stale sessions.
+      if ((query.state.dataUpdateCount ?? 0) >= 60) return false
       return 2000
     },
   })

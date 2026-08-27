@@ -3,8 +3,9 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { MapPin } from 'lucide-react'
 import SectionHeading from './SectionHeading'
-import { haversineDistanceKm, type Attraction } from './attractionsData'
+import { type Attraction } from './attractionsData'
 import { useAttractions, type HomepageAttraction } from '../hooks/useHomepageSections'
+import { storeLocation } from '../lib/analytics'
 import { transformImage } from '../lib/image'
 import './TopAttractionsNearbySection.css'
 
@@ -20,6 +21,11 @@ function AttractionCard({
 }) {
   const { t } = useTranslation()
   const priceStr = attraction.startingPrice != null ? `$${attraction.startingPrice}` : ''
+  const distanceStr = attraction._distance != null
+    ? attraction._distance < 1
+      ? `${Math.round(attraction._distance * 1000)}m`
+      : `${attraction._distance.toFixed(1)} km`
+    : null
 
   return (
     <button type="button" className="attraction-card" onClick={onClick}>
@@ -32,12 +38,24 @@ function AttractionCard({
           decoding="async"
           width={295}
           height={336}
+          onError={(e) => {
+            const target = e.currentTarget
+            target.onerror = null
+            target.src = 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=590&h=672&fit=crop'
+          }}
         />
       )}
       <div className="attraction-card-overlay" />
-      <span className="attraction-card-badge">
-        {t('sections.attractionsBadge', { defaultValue: 'Attraction' })}
-      </span>
+      <div className="attraction-card-badges">
+        <span className="attraction-card-badge">
+          {t('sections.attractionsBadge', { defaultValue: 'Attraction' })}
+        </span>
+        {distanceStr && (
+          <span className="attraction-card-distance">
+            {distanceStr}
+          </span>
+        )}
+      </div>
       <div className="attraction-card-footer">
         <div className="attraction-card-location">
           <MapPin className="attraction-card-pin" size={13} />
@@ -68,47 +86,26 @@ export default function TopAttractionsNearbySection({ preloaded }: Props) {
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
   const { data: attractionsData, isLoading } = useAttractions(12)
-  const [locationError, setLocationError] = useState<string | null>(() =>
-    typeof navigator !== 'undefined' && navigator.geolocation ? null : 'Geolocation not supported',
-  )
+  const [locationRequested, setLocationRequested] = useState(false)
 
   const attractions = (preloaded ?? attractionsData) ?? []
 
-  // Sort by proximity if geolocation available
-  const [sortedAttractions, setSortedAttractions] = useState<Attraction[]>([])
-
+  // Request geolocation permission once to store location for the hook.
+  // Backend now handles proximity sorting — this just ensures the stored
+  // location is available for subsequent API calls.
   useEffect(() => {
-    if (attractions.length === 0) {
-      setSortedAttractions([])
-      return
-    }
+    if (locationRequested) return
+    if (!navigator.geolocation) return
 
-    if (!navigator.geolocation) {
-      setSortedAttractions(attractions)
-      return
-    }
-
+    setLocationRequested(true)
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        const { latitude, longitude } = position.coords
-        const withDistance = attractions
-          .filter(a => a.lat != null && a.lng != null)
-          .map(a => ({
-            ...a,
-            _distance: haversineDistanceKm(latitude, longitude, a.lat!, a.lng!),
-          }))
-          .sort((a, b) => (a._distance ?? Infinity) - (b._distance ?? Infinity))
-
-        const withoutCoords = attractions.filter(a => a.lat == null || a.lng == null)
-        setSortedAttractions([...withDistance, ...withoutCoords])
+        storeLocation(position.coords.latitude, position.coords.longitude)
       },
-      () => {
-        setLocationError('Location access denied')
-        setSortedAttractions(attractions)
-      },
+      () => { /* permission denied — hook will use global popularity sort */ },
       { enableHighAccuracy: false, timeout: 5000, maximumAge: 300000 },
     )
-  }, [attractions])
+  }, [locationRequested])
 
   const updateArrows = useCallback(() => {
     const el = scrollRef.current
@@ -144,7 +141,6 @@ export default function TopAttractionsNearbySection({ preloaded }: Props) {
         <div className="attractions-viewport">
           <SectionHeading
             title={t('sections.topAttractionsNearby')}
-            subtitle={locationError ? t('sections.attractionsShowingAll') : undefined}
             viewAllLink="/tours?section=Top Attractions Nearby"
             onScrollLeft={() => scroll('left')}
             onScrollRight={() => scroll('right')}
@@ -153,12 +149,12 @@ export default function TopAttractionsNearbySection({ preloaded }: Props) {
           />
           {isLoading ? (
             <div className="attractions-loading">{t('common.loading', { defaultValue: 'Loading...' })}</div>
-          ) : sortedAttractions.length === 0 ? (
+          ) : attractions.length === 0 ? (
             <div className="attractions-empty">{t('sections.noAttractions', { defaultValue: 'No attractions found.' })}</div>
           ) : (
             <div className="attractions-clip">
               <div className="attractions-carousel" ref={scrollRef}>
-                {sortedAttractions.map((attraction, i) => (
+                {attractions.map((attraction, i) => (
                   <div key={`${attraction.name}-${i}`} className="attractions-card-wrap">
                     <AttractionCard
                       attraction={attraction}

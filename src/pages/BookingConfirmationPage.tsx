@@ -73,12 +73,7 @@ function formatDate(value?: string): string {
   return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
 }
 
-function currencySymbol(currency?: string): string {
-  if (currency === 'GHS') return 'GH₵'
-  if (currency === 'EUR') return '€'
-  if (currency === 'GBP') return '£'
-  return '$'
-}
+import { currencySymbol } from '../lib/currencySymbol'
 
 const num = (v?: number | string | null): number => {
   const n = Number(v)
@@ -201,6 +196,32 @@ export default function BookingConfirmationPage() {
           </p>
           <div className="confirmation-actions">
             <button className="confirmation-btn-primary" onClick={() => navigate('/')}>
+              {t('confirmation.backToHome')}
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Session mode: polling timed out (webhook hasn't landed) ────────
+  if (isSessionMode && sessionStatus === 'HOLDING' && !sessionQuery.isFetching) {
+    return (
+      <div className="confirmation-page">
+        <div className="confirmation-card">
+          <div className="confirmation-icon warning">
+            <AlertTriangle className="size-10" />
+          </div>
+          <h2 className="confirmation-title">Still processing</h2>
+          <p className="confirmation-message">
+            Your payment is being confirmed. This usually takes a few seconds but can take longer during busy periods.
+            We'll email you once your booking is confirmed — you can also check your bookings page.
+          </p>
+          <div className="confirmation-actions">
+            <button className="confirmation-btn-primary" onClick={() => navigate('/bookings')}>
+              View My Bookings
+            </button>
+            <button className="confirmation-btn-secondary" onClick={() => navigate('/')}>
               {t('confirmation.backToHome')}
             </button>
           </div>

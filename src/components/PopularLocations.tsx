@@ -31,7 +31,7 @@ export default function PopularLocations({ preloaded }: Props) {
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const { data: liveDestinations } = usePopularDestinations(10)
+  const { data: liveDestinations, isLoading } = usePopularDestinations(10)
   const items = (preloaded ?? liveDestinations)?.length
     ? (preloaded ?? liveDestinations)!.map(mapToDestination)
     : destinations
@@ -79,11 +79,22 @@ export default function PopularLocations({ preloaded }: Props) {
           />
           <div className="location-clip">
             <div className="popular-locations-carousel" ref={scrollRef}>
-              {items.map((dest, i) => (
-                <div key={`${dest.title}-${i}`} className="location-card-wrap">
-                  <PopularLocationCard {...dest} onClick={() => navigate(`/tours?location=${encodeURIComponent(dest.title)}`)} />
-                </div>
-              ))}
+              {isLoading && !preloaded ? (
+                // Loading skeleton
+                Array.from({ length: 5 }).map((_, i) => (
+                  <div key={`skeleton-${i}`} className="location-card-wrap">
+                    <div className="location-card-skeleton">
+                      <div className="skeleton-shimmer" />
+                    </div>
+                  </div>
+                ))
+              ) : (
+                items.map((dest, i) => (
+                  <div key={`${dest.title}-${i}`} className="location-card-wrap">
+                    <PopularLocationCard {...dest} onClick={() => navigate(`/tours?location=${encodeURIComponent(dest.title)}`)} />
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>

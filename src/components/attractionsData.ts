@@ -7,6 +7,7 @@ export interface Attraction {
   startingPrice: number | null
   lat: number | null
   lng: number | null
+  _distance?: number | null
 }
 
 /** Haversine distance in kilometers between two lat/lng points. */
