@@ -431,59 +431,6 @@
   color: #dc2626;
 }
 
-/* "Expires in" countdown — sits between the features row and the price row.
-   Compact red chip with white text; only the digits pulse, the label and
-   icon stay static. */
-.tour-card-countdown {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  width: fit-content;
-  align-self: flex-end;
-  margin-top: auto;
-  margin-bottom: -3px;
-  padding: 3px 6px;
-  background: #dc2626;
-  border-radius: 999px;
-  font-family: 'Raleway', sans-serif;
-}
-
-/* When the countdown chip is present it pins to the bottom (right above the
-   price row); the bottom row's auto margin is transferred to the chip so all
-   free space stacks above it. Cards without an offer keep the old layout. */
-.tour-card-body:has(.tour-card-countdown) .tour-card-bottom {
-  margin-top: 0;
-}
-
-.tour-card-countdown-icon {
-  flex-shrink: 0;
-  color: #fff;
-}
-
-.tour-card-countdown-time {
-  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-  font-size: 12px;
-  font-weight: 700;
-  color: #fff;
-  animation: tour-card-countdown-pulse 1.8s ease-in-out infinite;
-}
-
-@keyframes tour-card-countdown-pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.55;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .tour-card-countdown-time {
-    animation: none;
-  }
-}
-
 @media (max-width: 1024px) {
   .tour-card-image {
     height: 160px;
@@ -593,11 +540,6 @@
   padding: 5px 10px;
   border-radius: 999px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
-}
-
-/* When the red sell-out tag also shows, stack the offer tag below it. */
-.tour-card-image--dual-tags .tour-card-special-offer {
-  top: 34px;
 }
 
 .source-badge {

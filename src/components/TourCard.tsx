@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
-import { Car, Languages as LanguagesIcon, ShieldCheck, Ban, TrendingUp, BedDouble, Compass, Clock } from 'lucide-react'
+import { Car, Languages as LanguagesIcon, ShieldCheck, Ban, TrendingUp, BedDouble, Compass } from 'lucide-react'
 import i18n from '../i18n/config'
 import './TourCard.css'
 import { parsePrice, getTourSlug, type Tour } from './data'
@@ -13,9 +13,9 @@ import OptimizedImage from '@/components/shared/OptimizedImage'
 import type { SpecialOfferData } from '../hooks/useExpeditionTours'
 import { bestOfferDiscountAmount, offerDiscountAmount } from '../hooks/useExpeditionTours'
 
-/** Active offer with the largest discount that still has a future endDate —
-    the one the "Expires in" countdown targets. Returns null when no offer is
-    currently expiring (so cards without an expiring offer show no badge). */
+/** Active offer with the largest discount that still has a future endDate.
+    Returns null when no offer is currently live (so cards without an active
+    offer show no badge). */
 function pickCountdownOffer(specialOffers: SpecialOfferData[] | undefined, fullPrice: number): SpecialOfferData | null {
   if (!Array.isArray(specialOffers) || specialOffers.length === 0) return null
   const now = Date.now()
@@ -33,39 +33,6 @@ function pickCountdownOffer(specialOffers: SpecialOfferData[] | undefined, fullP
     }
   }
   return best
-}
-
-/** Milliseconds until an ISO endDate, ticking once per second. Returns null
-    when there is no target or the time has passed. */
-function useCountdown(endDate: string | null): number | null {
-  const target = useMemo(() => {
-    if (!endDate) return null
-    const t = new Date(endDate).getTime()
-    return Number.isFinite(t) ? t : null
-  }, [endDate])
-  const [now, setNow] = useState(() => Date.now())
-
-  useEffect(() => {
-    if (target == null) return
-    const id = window.setInterval(() => setNow(Date.now()), 1000)
-    return () => window.clearInterval(id)
-  }, [target])
-
-  if (target == null) return null
-  const remaining = target - now
-  return remaining > 0 ? remaining : null
-}
-
-function formatCountdown(ms: number): string {
-  const totalSeconds = Math.max(0, Math.floor(ms / 1000))
-  const days = Math.floor(totalSeconds / 86400)
-  const hours = Math.floor((totalSeconds % 86400) / 3600)
-  const minutes = Math.floor((totalSeconds % 3600) / 60)
-  const seconds = totalSeconds % 60
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return days > 0
-    ? `${days}d ${pad(hours)}:${pad(minutes)}:${pad(seconds)}`
-    : `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`
 }
 
 interface TourCardProps extends Tour {
@@ -87,7 +54,7 @@ interface TourCardProps extends Tour {
       sell-out list via SellOutContext when inside the provider. */
   likelyToSellOut?: boolean
   /** Hide the "Special Offer" tag (used in sections where every card is an
-      offer, e.g. the Special Offers carousel). The countdown stays. */
+      offer, e.g. the Special Offers carousel). */
   hideOfferBadge?: boolean
 }
 
@@ -227,19 +194,18 @@ export default function TourCard({ id, title, duration, features, price, rating,
     return null
   }, [originalPrice, discount, specialOffers])
 
-  // The offer the "Expires in" countdown targets; the tag and timer only
-  // render while an offer with a future endDate is still live.
+  // The offer the "Special Offer" tag targets; it only renders while an
+  // offer with a future endDate is still live.
   const countdownOffer = useMemo(
     () => pickCountdownOffer(specialOffers, Number.isFinite(originalPrice) ? originalPrice : 0),
     [specialOffers, originalPrice],
   )
-  const remaining = useCountdown(countdownOffer?.endDate ?? null)
-  const showOfferBadge = remaining != null
+  const showOfferBadge = countdownOffer != null
 
   return (
     <div className={`tour-card${imageClean ? ' tour-card-clean' : ''}`} onClick={handleCardClick} onKeyDown={handleKeyDown} role="link" tabIndex={0}>
-      <div className={`tour-card-image${isCarousel ? ' tour-card-has-carousel' : ''}${showSellOutTag && showOfferBadge && !hideOfferBadge ? ' tour-card-image--dual-tags' : ''}`}>
-        {showSellOutTag && (
+      <div className={`tour-card-image${isCarousel ? ' tour-card-has-carousel' : ''}`}>
+        {showSellOutTag && !(showOfferBadge && !hideOfferBadge) && (
           <span className="tour-card-sellout-tag">
             <TrendingUp size={12} strokeWidth={2.4} />
             {t('card.likelyToSellOut')}
@@ -383,12 +349,6 @@ export default function TourCard({ id, title, duration, features, price, rating,
           )}
         </div>
         {!hideFeatures && <div className="tour-card-features">{features}</div>}
-        {showOfferBadge && remaining != null && (
-          <div className="tour-card-countdown">
-            <Clock size={12} strokeWidth={2.2} className="tour-card-countdown-icon" />
-            <span className="tour-card-countdown-time">{formatCountdown(remaining)}</span>
-          </div>
-        )}
         <div className="tour-card-bottom">
           <div className="tour-card-rating">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="#39AD6C" stroke="#39AD6C" strokeWidth="1">
