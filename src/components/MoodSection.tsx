@@ -162,7 +162,7 @@ export default function MoodSection({ preloaded, isLoading }: Props) {
                     </button>
                   </div>
                 ))
-                )}
+                }
             </div>
           </div>
         </div>
