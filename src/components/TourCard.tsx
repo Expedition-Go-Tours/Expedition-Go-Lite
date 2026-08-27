@@ -11,29 +11,7 @@ import FormattedPrice from './FormattedPrice'
 import { getCategoryMeta } from './categoryMeta'
 import OptimizedImage from '@/components/shared/OptimizedImage'
 import type { SpecialOfferData } from '../hooks/useExpeditionTours'
-import { bestOfferDiscountAmount, offerDiscountAmount } from '../hooks/useExpeditionTours'
-
-/** Active offer with the largest discount that still has a future endDate.
-    Returns null when no offer is currently live (so cards without an active
-    offer show no badge). */
-function pickCountdownOffer(specialOffers: SpecialOfferData[] | undefined, fullPrice: number): SpecialOfferData | null {
-  if (!Array.isArray(specialOffers) || specialOffers.length === 0) return null
-  const now = Date.now()
-  let best: SpecialOfferData | null = null
-  let bestAmount = 0
-  for (const offer of specialOffers) {
-    if (!offer || typeof offer !== 'object' || !offer.endDate) continue
-    const end = new Date(offer.endDate).getTime()
-    if (!Number.isFinite(end) || end <= now) continue
-    if (offer.startDate && now < new Date(offer.startDate).getTime()) continue
-    const amount = Number.isFinite(fullPrice) ? offerDiscountAmount(offer, fullPrice) : 0
-    if (!best || amount > bestAmount) {
-      best = offer
-      bestAmount = amount
-    }
-  }
-  return best
-}
+import { bestOfferDiscountAmount, hasActiveOffer } from '../hooks/useExpeditionTours'
 
 interface TourCardProps extends Tour {
   discount?: string
@@ -194,13 +172,9 @@ export default function TourCard({ id, title, duration, features, price, rating,
     return null
   }, [originalPrice, discount, specialOffers])
 
-  // The offer the "Special Offer" tag targets; it only renders while an
-  // offer with a future endDate is still live.
-  const countdownOffer = useMemo(
-    () => pickCountdownOffer(specialOffers, Number.isFinite(originalPrice) ? originalPrice : 0),
-    [specialOffers, originalPrice],
-  )
-  const showOfferBadge = countdownOffer != null
+  // The "Special Offer" tag renders whenever the tour currently carries a
+  // live supplier offer (started, not yet ended).
+  const showOfferBadge = hasActiveOffer(specialOffers)
 
   return (
     <div className={`tour-card${imageClean ? ' tour-card-clean' : ''}`} onClick={handleCardClick} onKeyDown={handleKeyDown} role="link" tabIndex={0}>

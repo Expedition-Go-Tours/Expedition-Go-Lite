@@ -41,8 +41,8 @@ export default function RecommendSection({ preloaded, isLoading }: Props) {
     for (const tour of offerTours) offerByKey.set(keyOf(tour), tour)
 
     const seen = new Set<string>()
-    const merged: Array<typeof baseTours[number]> = []
-    for (const tour of baseTours) {
+    const merged: TourCardData[] = []
+    for (const tour of baseTours ?? []) {
       const key = keyOf(tour)
       seen.add(key)
       const offer = offerByKey.get(key)

@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect, useCallback } from 'react'
+import { useRef, useState, useEffect, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { Star, Heart, Car, Compass, Languages as LanguagesIcon, ShieldCheck, Ban, TrendingUp } from 'lucide-react'
@@ -12,6 +12,7 @@ import { getCategoryMeta } from './categoryMeta'
 import i18n from '../i18n/config'
 import './ContinuePlanningSection.css'
 import OptimizedImage from '@/components/shared/OptimizedImage'
+import { bestOfferDiscountAmount, type SpecialOfferData } from '../hooks/useExpeditionTours'
 
 const CARD_WIDTH = 560
 const GAP = 24
@@ -53,10 +54,24 @@ function toTourCardProps(item: ContinuePlanningItem, likelyToSellOut: boolean) {
   }
 }
 
+/** Whether any of the item's offers is currently live (its date window
+    includes today) — drives the green "Special Offer" tag. */
+function hasActiveOffer(offers: SpecialOfferData[] | undefined): boolean {
+  if (!Array.isArray(offers) || offers.length === 0) return false
+  const now = Date.now()
+  return offers.some((o) => {
+    if (!o || typeof o !== 'object') return false
+    if (o.startDate && now < new Date(o.startDate).getTime()) return false
+    if (o.endDate && now > new Date(o.endDate).getTime()) return false
+    return true
+  })
+}
+
 function ContinuePlanningCard({ item, likelyToSellOut }: { item: ContinuePlanningItem; likelyToSellOut?: boolean }) {
   const { t } = useTranslation()
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist()
   const inWishlist = isInWishlist(item.id)
+  const hasOffer = hasActiveOffer(item.specialOffers)
 
   const openTour = () => {
     const slug = item.slug || item.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
@@ -112,6 +127,36 @@ function ContinuePlanningCard({ item, likelyToSellOut }: { item: ContinuePlannin
       : []),
   ]
 
+  // Offer pricing, mirroring TourCard: the stored price is the FULL price;
+  // when a supplier offer (specialOffers) or a percentage discount label
+  // applies, strike the original and show the promo price plus a "-X%" chip.
+  const originalPrice = item.price
+  const promoPrice = useMemo(() => {
+    if (!Number.isFinite(originalPrice) || originalPrice <= 0) return null
+    if (Array.isArray(item.specialOffers) && item.specialOffers.length > 0) {
+      const best = bestOfferDiscountAmount(item.specialOffers, originalPrice)
+      const promo = originalPrice - best
+      return best > 0 && promo > 0 && promo < originalPrice ? promo : null
+    }
+    const pct = item.discount?.match(/-?\s*(\d+(?:\.\d+)?)\s*%/)
+    if (pct) {
+      const promo = originalPrice * (1 - parseFloat(pct[1]) / 100)
+      return promo > 0 && promo < originalPrice ? promo : null
+    }
+    return null
+  }, [originalPrice, item.specialOffers, item.discount])
+
+  const discountLabel = useMemo(() => {
+    if (Array.isArray(item.specialOffers) && item.specialOffers.length > 0 && originalPrice > 0) {
+      const best = bestOfferDiscountAmount(item.specialOffers, originalPrice)
+      if (best > 0) {
+        const pct = Math.round((best / originalPrice) * 100)
+        if (pct > 0) return `-${pct}%`
+      }
+    }
+    return item.discount || ''
+  }, [item.specialOffers, item.discount, originalPrice])
+
   return (
     <div
       className="cp-card"
@@ -125,6 +170,7 @@ function ContinuePlanningCard({ item, likelyToSellOut }: { item: ContinuePlannin
         }
       }}
     >
+      {discountLabel && <span className="cp-card-discount-chip">{discountLabel}</span>}
       <div className="cp-card-media">
         {item.source === 'travio-africa' && (
           <div className="cp-card-source-badge">
@@ -153,12 +199,14 @@ function ContinuePlanningCard({ item, likelyToSellOut }: { item: ContinuePlannin
 
         {item.duration && <p className="cp-card-duration">{item.duration}</p>}
 
-        {likelyToSellOut && (
+        {hasOffer ? (
+          <span className="cp-card-special-offer">{t('card.specialOffer')}</span>
+        ) : likelyToSellOut ? (
           <span className="cp-card-sellout-tag">
             <TrendingUp size={11} strokeWidth={2.4} />
             {t('card.likelyToSellOut')}
           </span>
-        )}
+        ) : null}
 
         {featureFacts.length > 0 && (
           <ul className="cp-card-facts">
@@ -180,14 +228,20 @@ function ContinuePlanningCard({ item, likelyToSellOut }: { item: ContinuePlannin
 
       <div className="cp-card-price-col">
         <span className="cp-card-from">{t('common.from')}</span>
-        <span className="cp-card-price">
-          <FormattedPrice usdPrice={item.price} />
-        </span>
+        {promoPrice != null ? (
+          <span className="cp-card-price">
+            <span className="cp-card-price-strike"><FormattedPrice usdPrice={originalPrice} /></span>
+            <span className="cp-card-price-promo"><FormattedPrice usdPrice={promoPrice} /></span>
+          </span>
+        ) : (
+          <span className="cp-card-price">
+            <FormattedPrice usdPrice={originalPrice} />
+          </span>
+        )}
       </div>
     </div>
   )
 }
-
 export default function ContinuePlanningSection() {
   const { t } = useTranslation()
   const { continuePlanning } = useContinuePlanning()

@@ -246,6 +246,11 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
       return
     }
 
+    if (totalTravelers < 1) {
+      toast.error(t('booking.selectTravelersFirst', 'Select at least one traveler'))
+      return
+    }
+
     const selectedDay = selectedDate ? getSelectedDayInfo(selectedDate) : undefined
     const daySlots = selectedDay?.timeSlots?.length ? selectedDay.timeSlots : []
     if (daySlots.length > 0 && !selectedTime) {
@@ -308,22 +313,23 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
     setIsBooking(true)
     // Spinner on the button for a moment, then reveal the travel transition.
     setTimeout(() => setShowTransition(true), 1100)
-  }, [selectedDate, selectedTime, t, tour, isPerGroup, groupHeadcount, travelerGroups, categoryCounts, travelersPayload, matchingGroupBand, totalPrice, clientSubtotal, pricingResult, getSelectedDayInfo, openingHoursLabel, promoApplied, promoCode, appliedPromo])
+  }, [selectedDate, selectedTime, t, tour, isPerGroup, groupHeadcount, travelerGroups, categoryCounts, travelersPayload, matchingGroupBand, totalPrice, clientSubtotal, pricingResult, getSelectedDayInfo, openingHoursLabel, promoApplied, promoCode, appliedPromo, totalTravelers])
 
   const handleTransitionDone = useCallback(() => {
     navigate(`/${encodeURIComponent(tour.id)}/booking`, { state: pendingNavState.current })
   }, [navigate, tour.id])
 
   const handleUpdatePricing = useCallback(() => {
-    if (!selectedDate) {
-      toast.error(t('booking.selectDateFirst'))
-      return
-    }
-    // Close the picker so the recalculation spinner on the price/total is visible.
+    // Close the picker so the recalculated price/total is visible.
     setShowGuestSelector(false)
     setPriceUpdated(false)
+    if (!selectedDate) {
+      // No date chosen yet — refresh the client-side estimate for the current
+      // traveler selection (the checkout quote API requires a travel date).
+      return
+    }
     doFetchPricing(selectedDate.toISOString().slice(0, 10), selectedTime)
-  }, [selectedDate, selectedTime, doFetchPricing, t])
+  }, [selectedDate, selectedTime, doFetchPricing])
 
   // Validates the current promo code against the backend's special-offer
   // engine for a concrete date (POST /tours/offers/validate-promo — the same
@@ -489,29 +495,24 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
   const activeOffers: SpecialOfferData[] = Array.isArray(tour.specialOffers) ? tour.specialOffers : []
   const savedAmount = pricingResult?.discounts ?? 0
   const subtotalAmount = pricingResult?.subtotal ?? 0
-  const formatMoney = (n: number) => `${currency.symbol}${convertPrice(n).toFixed(currency.decimals)}`
+  // Round like the tour cards (FormattedPrice) so the widget's headline and
+  // totals show the same rounded figures as the card on the homepage.
+  const formatMoney = (n: number) => `${currency.symbol}${Math.round(convertPrice(n)).toLocaleString()}`
 
-  // Offer pricing for the headline "From $X" figure: when the checkout engine
-  // confirms a discount (a supplier-applied special offer or a validated promo
-  // code), strike the original unit price and show the discounted unit price
-  // in red. `savedAmount` is the total discount, so per-traveler it divides by
-  // the headcount. When checkout hasn't confirmed a discount yet (e.g. the
-  // initial pricing call failed for the default date), fall back to the best
-  // supplier offer applied to the unit price — so the detail page matches the
-  // Special Offers cards instead of showing only the full price.
+  // Offer pricing for the headline "From $X" figure: strike the original unit
+  // price and show the discounted unit price in red — using the exact same
+  // logic as the tour cards (best supplier offer applied to the headline base
+  // price), so the widget and the card never disagree. The checkout-confirmed
+  // discount (which reflects the real tier for the selected date/headcount)
+  // is shown in the price summary below, not in the headline.
   const originalUnitPrice = isPerGroup
     ? (lowestGroupBand?.price ?? 0)
     : (lowestAdultFromTravelerPricing(travelerGroups) ?? tour.price)
-  const confirmedPerUnitDiscount =
-    savedAmount > 0 && totalTravelers > 0 && !pricingLoading
-      ? savedAmount / totalTravelers
-      : 0
   const offerPerUnitDiscount =
     activeOffers.length > 0 && originalUnitPrice > 0
       ? bestOfferDiscountAmount(activeOffers, originalUnitPrice)
       : 0
-  const discountPerUnit = Math.max(confirmedPerUnitDiscount, offerPerUnitDiscount)
-  const promoUnitPrice = discountPerUnit > 0 ? originalUnitPrice - discountPerUnit : null
+  const promoUnitPrice = offerPerUnitDiscount > 0 ? originalUnitPrice - offerPerUnitDiscount : null
   const showPromoPrice =
     promoUnitPrice != null && promoUnitPrice > 0 && promoUnitPrice < originalUnitPrice
 
@@ -871,7 +872,7 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
                     type="button"
                     className="booking-update-btn"
                     onClick={handleUpdatePricing}
-                    disabled={!selectedDate || pricingLoading}
+                    disabled={pricingLoading}
                   >
                     {pricingLoading ? (
                       <span className="booking-btn-loader">
@@ -928,6 +929,9 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
               </div>
               {priceUpdated && !pricingLoading && (
                 <p className="booking-slot-note">{t('booking.priceUpdated', 'Price updated to reflect the latest availability')}</p>
+              )}
+              {!selectedDate && !pricingLoading && totalTravelers > 0 && (
+                <p className="booking-slot-note">{t('booking.priceEstimateNote', 'Estimate from your traveler selection — choose a date for a live quote')}</p>
               )}
             </div>
           )}

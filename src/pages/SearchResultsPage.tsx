@@ -5,6 +5,7 @@ import { ArrowLeft, Search } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { fetchWithAuth } from '../lib/api'
 import { mapRawTourToListing, type TourCardData } from '../hooks/useExpeditionTours'
+import { mergeOffersIntoTours } from '../hooks/useHomepageSections'
 import TourCard from '../components/TourCard'
 import './SearchResultsPage.css'
 
@@ -14,7 +15,7 @@ async function fetchSearchResults(query: string): Promise<TourCardData[]> {
   if (!res.ok) return []
   const payload = await res.json().catch(() => ({}))
   const tours: any[] = payload.data?.tours ?? payload.tours ?? []
-  return tours.map(mapRawTourToListing)
+  return mergeOffersIntoTours(tours.map(mapRawTourToListing))
 }
 
 export default function SearchResultsPage() {

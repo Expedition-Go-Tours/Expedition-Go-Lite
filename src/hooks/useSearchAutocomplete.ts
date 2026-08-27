@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { destinations } from '../components/data'
 import { fetchWithAuth } from '../lib/api'
+import { usePopularDestinations } from './useHomepageSections'
 import { extractStartingPriceFromRaw, formatDuration } from './useExpeditionTours'
 
 export interface SearchSuggestion {
@@ -65,18 +65,20 @@ export function useSearchAutocomplete(inputValue: string) {
   const trimmed = debounced.trim()
   const isQueryLongEnough = trimmed.length >= 2
 
+  const { data: destinationList } = usePopularDestinations(20)
+
   const destinationSuggestions = useMemo<SearchSuggestion[]>(() => {
     if (!isQueryLongEnough) return []
     const lq = trimmed.toLowerCase()
-    return destinations
-      .filter((d) => d.title.toLowerCase().includes(lq))
+    return (destinationList ?? [])
+      .filter((d) => d.city.toLowerCase().includes(lq))
       .map((d) => ({
-        id: `dest-${d.title}`,
+        id: `dest-${d.city}`,
         type: 'destination' as const,
-        title: d.title,
-        subtitle: d.tours,
+        title: d.city,
+        subtitle: d.country ?? '',
       }))
-  }, [trimmed, isQueryLongEnough])
+  }, [trimmed, isQueryLongEnough, destinationList])
 
   const tourQuery = useQuery({
     queryKey: ['search-autocomplete', 'tours', trimmed],

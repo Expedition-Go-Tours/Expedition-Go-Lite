@@ -2086,6 +2086,26 @@ export function bestOfferDiscountAmount(offers: SpecialOfferData[], fullPrice: n
 }
 
 /**
+ * True when the tour currently carries a live supplier-applied offer: the
+ * offer has started (or has no startDate) and hasn't ended yet (offers without
+ * an endDate count as always active). Single source of truth for the
+ * "Special Offer" badge on tour cards.
+ */
+export function hasActiveOffer(specialOffers: SpecialOfferData[] | undefined): boolean {
+  if (!Array.isArray(specialOffers) || specialOffers.length === 0) return false
+  const now = Date.now()
+  return specialOffers.some((offer) => {
+    if (!offer || typeof offer !== 'object') return false
+    if (offer.startDate && now < new Date(offer.startDate).getTime()) return false
+    if (offer.endDate) {
+      const end = new Date(offer.endDate).getTime()
+      if (!Number.isFinite(end) || end <= now) return false
+    }
+    return true
+  })
+}
+
+/**
  * Tours that currently carry an active supplier-applied offer, for the
  * homepage "Special Offers" section. The /tours list endpoint doesn't project
  * specialOffers, so each tour's detail (GET /tours/:id — which does) is

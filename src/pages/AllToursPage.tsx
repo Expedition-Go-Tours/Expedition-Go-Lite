@@ -125,11 +125,11 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
   const isOffersSection = sectionParam === 'Last Minute Deals'
   const { data: offerTours } = useHomepageOffers(50)
   const offersMap = useMemo(() => {
-    if (!isOffersSection || !offerTours?.length) return null
+    if (!offerTours?.length) return null
     const map = new Map<string, HomepageOfferTour>()
     for (const o of offerTours) map.set(o.id, o)
     return map
-  }, [isOffersSection, offerTours])
+  }, [offerTours])
   const sectionTourIds = useMemo(() => {
     if (!sectionTourIdList?.length) return null
     return new Set(sectionTourIdList)
