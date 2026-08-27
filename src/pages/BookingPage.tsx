@@ -1253,6 +1253,7 @@ function PaymentDetailsStep({
 
 function BookingTourCard({ tour, onChangeClick }: { tour: typeof FALLBACK_TOUR; onChangeClick: () => void }) {
   const { t } = useTranslation()
+  const { formatPrice } = useCurrency()
   const stars = useMemo(() => {
     const full = Math.floor(tour.rating)
     return Array.from({ length: 5 }, (_, i) => i < full)
@@ -1406,6 +1407,7 @@ function BookingSidebar({
   contact: { firstName: string; lastName: string; email: string; countryCode: string; phone: string; location: string; pickupLater: boolean; pickupArea: string }
   step: number
 }) {
+  const { formatPrice } = useCurrency()
   const showPricing = step === 3
 
   return (
