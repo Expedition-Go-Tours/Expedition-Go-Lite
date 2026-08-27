@@ -1,8 +1,14 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import './PopularLocationCard.css'
-import type { Destination } from './data'
 import OptimizedImage from '@/components/shared/OptimizedImage'
+
+interface Destination {
+  title: string
+  tours: string
+  image: string
+  region: string
+}
 
 interface PopularLocationCardProps extends Destination {
   onClick?: () => void

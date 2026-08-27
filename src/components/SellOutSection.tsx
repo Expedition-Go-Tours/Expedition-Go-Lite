@@ -2,7 +2,7 @@ import { useRef, useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import SectionHeading from './SectionHeading'
 import TourCard from './TourCard'
-import { sellOutTours } from './data'
+import TourCardSkeleton from './TourCardSkeleton'
 import { useLikelySellOut, mapToTourCard, type HomepageTour } from '../hooks/useHomepageSections'
 import './SellOutSection.css'
 
@@ -11,9 +11,10 @@ const GAP = 16
 
 interface Props {
   preloaded?: HomepageTour[]
+  isLoading?: boolean
 }
 
-export default function SellOutSection({ preloaded }: Props) {
+export default function SellOutSection({ preloaded, isLoading }: Props) {
   const { t } = useTranslation()
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
@@ -21,7 +22,7 @@ export default function SellOutSection({ preloaded }: Props) {
   const { data: liveData } = useLikelySellOut(12)
   const items = (preloaded ?? liveData)?.length
     ? (preloaded ?? liveData)!.map((t) => ({ ...mapToTourCard(t), likelyToSellOut: true }))
-    : sellOutTours.map((t) => ({ ...t, likelyToSellOut: true, discount: undefined }))
+    : null
 
   const updateArrows = useCallback(() => {
     const el = scrollRef.current
@@ -52,6 +53,8 @@ export default function SellOutSection({ preloaded }: Props) {
     return () => el.removeEventListener('scroll', onScroll)
   }, [updateArrows])
 
+  if (!items && !isLoading) return null
+
   return (
     <section className="sellout-section">
       <div className="sellout-container">
@@ -66,11 +69,18 @@ export default function SellOutSection({ preloaded }: Props) {
           />
           <div className="sellout-clip">
             <div className="sellout-carousel" ref={scrollRef}>
-              {items.map((tour, i) => (
-                <div key={`${tour.title}-${i}`} className="sellout-card-wrap">
-                  <TourCard {...tour} imageClean hideFeatures />
-                </div>
-              ))}
+              {isLoading && !items
+                ? Array.from({ length: 6 }).map((_, i) => (
+                    <div key={`skeleton-${i}`} className="sellout-card-wrap">
+                      <TourCardSkeleton />
+                    </div>
+                  ))
+                : items?.map((tour, i) => (
+                    <div key={`${tour.title}-${i}`} className="sellout-card-wrap">
+                      <TourCard {...tour} imageClean hideFeatures />
+                    </div>
+                  ))
+              }
             </div>
           </div>
         </div>

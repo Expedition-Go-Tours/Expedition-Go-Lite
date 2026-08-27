@@ -2,7 +2,7 @@ import { useRef, useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import SectionHeading from './SectionHeading'
 import TourCard from './TourCard'
-import { lastMinuteDeals } from './data'
+import TourCardSkeleton from './TourCardSkeleton'
 import type { TourCardData } from '../hooks/useExpeditionTours'
 import { useHomepageOffers, type HomepageOfferTour } from '../hooks/useHomepageSections'
 import './LastMinuteDealsSection.css'
@@ -55,18 +55,18 @@ function mapOfferToCardProps(t: HomepageOfferTour): TourCardData {
 
 interface Props {
   preloaded?: HomepageOfferTour[]
+  isLoading?: boolean
 }
 
-export default function LastMinuteDealsSection({ preloaded }: Props) {
+export default function LastMinuteDealsSection({ preloaded, isLoading }: Props) {
   const { t } = useTranslation()
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
   const { data: offerTours } = useHomepageOffers(12)
-  // Use preloaded from unified endpoint, fall back to individual hook, then dummy data
   const items = (preloaded ?? offerTours) && (preloaded ?? offerTours)!.length > 0
     ? (preloaded ?? offerTours)!.map(mapOfferToCardProps)
-    : lastMinuteDeals
+    : null
 
   const updateArrows = useCallback(() => {
     const el = scrollRef.current
@@ -97,6 +97,8 @@ export default function LastMinuteDealsSection({ preloaded }: Props) {
     return () => el.removeEventListener('scroll', onScroll)
   }, [updateArrows])
 
+  if (!items && !isLoading) return null
+
   return (
     <section className="lastminute-section">
       <div className="lastminute-container">
@@ -111,11 +113,18 @@ export default function LastMinuteDealsSection({ preloaded }: Props) {
           />
           <div className="lastminute-clip">
             <div className="lastminute-carousel" ref={scrollRef}>
-              {items.map((tour, i) => (
-                <div key={`${tour.title}-${i}`} className="lastminute-card-wrap">
-                  <TourCard {...tour} imageClean hideFeatures hideOfferBadge />
-                </div>
-              ))}
+              {isLoading && !items
+                ? Array.from({ length: 6 }).map((_, i) => (
+                    <div key={`skeleton-${i}`} className="lastminute-card-wrap">
+                      <TourCardSkeleton />
+                    </div>
+                  ))
+                : items?.map((tour, i) => (
+                    <div key={`${tour.title}-${i}`} className="lastminute-card-wrap">
+                      <TourCard {...tour} imageClean hideFeatures hideOfferBadge />
+                    </div>
+                  ))
+              }
             </div>
           </div>
         </div>

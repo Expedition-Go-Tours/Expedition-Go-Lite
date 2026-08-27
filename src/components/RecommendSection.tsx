@@ -2,7 +2,7 @@ import { useRef, useState, useEffect, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import SectionHeading from './SectionHeading'
 import TourCard from './TourCard'
-import { recommendedTours } from './data'
+import TourCardSkeleton from './TourCardSkeleton'
 import { useRecommendedTours, useExpeditionOffers, type TourCardData } from '../hooks/useExpeditionTours'
 import { useRecommended, mapToTourCard, type HomepageTour } from '../hooks/useHomepageSections'
 import './RecommendSection.css'
@@ -12,9 +12,10 @@ const GAP = 16
 
 interface Props {
   preloaded?: HomepageTour[]
+  isLoading?: boolean
 }
 
-export default function RecommendSection({ preloaded }: Props) {
+export default function RecommendSection({ preloaded, isLoading }: Props) {
   const { t } = useTranslation()
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
@@ -23,14 +24,14 @@ export default function RecommendSection({ preloaded }: Props) {
   const { data: liveTours } = useRecommendedTours(12)
   const { data: offerTours } = useExpeditionOffers(12)
 
-  // Prefer preloaded > personalized > liveTours > static
+  // Prefer preloaded > personalized > liveTours
   const baseTours = preloaded?.length
     ? preloaded.map(mapToTourCard)
     : personalizedTours?.length
       ? personalizedTours.map(mapToTourCard)
       : liveTours && liveTours.length > 0
         ? liveTours
-        : recommendedTours
+        : null
 
   // Offer tours replace their plain card when present, appended otherwise.
   const items = useMemo(() => {
@@ -85,6 +86,8 @@ export default function RecommendSection({ preloaded }: Props) {
     return () => el.removeEventListener('scroll', onScroll)
   }, [updateArrows])
 
+  if (!items && !isLoading) return null
+
   return (
     <section className="recommend-section">
       <div className="recommend-container">
@@ -99,11 +102,18 @@ export default function RecommendSection({ preloaded }: Props) {
           />
           <div className="carousel-clip">
             <div className="recommend-carousel" ref={scrollRef}>
-              {items.map((tour, i) => (
-                <div key={`${tour.title}-${i}`} className="carousel-card-wrap">
-                  <TourCard {...tour} imageClean hideFeatures />
-                </div>
-              ))}
+              {isLoading && !items
+                ? Array.from({ length: 6 }).map((_, i) => (
+                    <div key={`skeleton-${i}`} className="carousel-card-wrap">
+                      <TourCardSkeleton />
+                    </div>
+                  ))
+                : items?.map((tour, i) => (
+                    <div key={`${tour.title}-${i}`} className="carousel-card-wrap">
+                      <TourCard {...tour} imageClean hideFeatures />
+                    </div>
+                  ))
+              }
             </div>
           </div>
         </div>

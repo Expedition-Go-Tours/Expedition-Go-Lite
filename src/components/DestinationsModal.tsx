@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import { X, Search, ChevronLeft, ChevronRight } from 'lucide-react'
-import { destinations } from './data'
 import { usePopularDestinations } from '../hooks/useHomepageSections'
 import PopularLocationCard from './PopularLocationCard'
 import './DestinationsModal.css'
@@ -34,7 +33,7 @@ export default function DestinationsModal({ isOpen, onClose }: DestinationsModal
     }))
   }, [liveDestinations])
 
-  const activeDestinations = apiDestinations ?? destinations
+  const activeDestinations = apiDestinations ?? []
 
   const updateRegionArrows = useCallback(() => {
     const el = regionScrollRef.current

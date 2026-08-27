@@ -4,21 +4,11 @@ import { useNavigate } from 'react-router-dom'
 import { transformImage } from '@/lib/image'
 import { useMoodKeywords, type MoodKeyword } from '../hooks/useHomepageSections'
 import { trackMoodClick } from '../lib/analytics'
+import CategorySkeleton from './CategorySkeleton'
 import './MoodSection.css'
 
 const CARD_WIDTH = 295
 const GAP = 16
-
-const FALLBACK_CATEGORIES = [
-  { keyword: 'Adventure', image: 'https://images.unsplash.com/photo-1533240332313-0db49b459ad6?auto=format&fit=crop&w=600&q=80', tourCount: 15 },
-  { keyword: 'Cultural', image: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=600&q=80', tourCount: 20 },
-  { keyword: 'Nature', image: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=600&q=80', tourCount: 18 },
-  { keyword: 'Beach', image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80', tourCount: 12 },
-  { keyword: 'Wildlife', image: 'https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=600&q=80', tourCount: 10 },
-  { keyword: 'City Tours', image: 'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?auto=format&fit=crop&w=600&q=80', tourCount: 22 },
-  { keyword: 'Food & Drinks', image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=600&q=80', tourCount: 9 },
-  { keyword: 'Wellness', image: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=600&q=80', tourCount: 7 },
-]
 
 // Per-keyword fallback images — prevents all missing images from showing
 // the same generic photo (previously fell back to FALLBACK_CATEGORIES[0])
@@ -47,15 +37,16 @@ const CATEGORY_IMAGE_FALLBACKS: Record<string, string> = {
 
 function getKeywordFallbackImage(keyword: string): string {
   if (CATEGORY_IMAGE_FALLBACKS[keyword]) return CATEGORY_IMAGE_FALLBACKS[keyword]
-  const fallback = FALLBACK_CATEGORIES.find(f => keyword.includes(f.keyword) || f.keyword.includes(keyword))
-  return fallback?.image ?? FALLBACK_CATEGORIES[0].image
+  // Generic nature fallback for unknown keywords
+  return 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=600&q=80'
 }
 
 interface Props {
   preloaded?: MoodKeyword[]
+  isLoading?: boolean
 }
 
-export default function MoodSection({ preloaded }: Props) {
+export default function MoodSection({ preloaded, isLoading }: Props) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -71,7 +62,7 @@ export default function MoodSection({ preloaded }: Props) {
           : getKeywordFallbackImage(k.keyword),
         tourCount: k.tourCount,
       }))
-    : FALLBACK_CATEGORIES
+    : null
 
   const updateArrows = useCallback(() => {
     const el = scrollRef.current
@@ -102,6 +93,8 @@ export default function MoodSection({ preloaded }: Props) {
     return () => el.removeEventListener('scroll', onScroll)
   }, [updateArrows])
 
+  if (!items && !isLoading) return null
+
   return (
     <section className="mood-section">
       <div className="mood-container">
@@ -124,7 +117,13 @@ export default function MoodSection({ preloaded }: Props) {
 
           <div className="mood-clip">
             <div className="mood-carousel" ref={scrollRef}>
-                {items.map((cat, i) => (
+                {isLoading && !items
+                  ? Array.from({ length: 8 }).map((_, i) => (
+                      <div key={`skeleton-${i}`} className="mood-card-wrap">
+                        <CategorySkeleton />
+                      </div>
+                    ))
+                  : items?.map((cat, i) => (
                   <div key={`${cat.keyword}-${i}`} className="mood-card-wrap">
                     <button
                       className="mood-card"
@@ -162,7 +161,8 @@ export default function MoodSection({ preloaded }: Props) {
                       </div>
                     </button>
                   </div>
-                ))}
+                ))
+                }
             </div>
           </div>
         </div>
