@@ -47,6 +47,10 @@
     "total": "Total ({{count}} viajero)",
     "total_plural": "Total ({{count}} viajeros)"
   },
+  "card": {
+    "likelyToSellOut": "Es probable que se agote",
+    "specialOffer": "Oferta especial"
+  },
   "common": {
     "back": "Atrás",
     "close": "Cerrar",
@@ -406,7 +410,7 @@
     "additionalInformation": "Información adicional",
     "accommodationIncluded": "Alojamiento incluido",
     "perAdultShort": "por adulto",
-    "perPerson": "/persona",
+    "perPerson": "/Adulto",
     "petsAllowed": "Mascotas permitidas",
     "phone": "Teléfono",
     "pickupConfirmedAfterBooking": "Los detalles de recogida se confirman después de la reserva.",

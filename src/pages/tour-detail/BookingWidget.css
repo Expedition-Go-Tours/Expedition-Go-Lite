@@ -691,6 +691,8 @@
 .booking-savings-strike {
   text-decoration: line-through;
   color: #94a3b8;
+  font-size: 18px;
+  font-weight: 600;
 }
 
 .booking-savings-discount {
@@ -700,6 +702,7 @@
 
 .booking-savings-amount {
   font-weight: 700;
+  font-size: 18px;
 }
 
 /* Total */.booking-total {

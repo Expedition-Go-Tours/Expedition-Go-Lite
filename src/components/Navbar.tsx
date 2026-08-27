@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion, type Variants } from 'framer-motion'
 import { toast } from 'sonner'
 import { Clock, X, Globe, Megaphone, ChevronRight } from 'lucide-react'
@@ -40,6 +40,8 @@ interface NavbarProps {
 
 export default function Navbar({ onOpenAuth }: NavbarProps) {
   const navigate = useNavigate()
+  const location = useLocation()
+  const isTourDetailPage = location.pathname.startsWith('/tour')
   const [user, setUser] = useState<AuthUser | null>(getStoredAuthUser)
   const [searchBarSticky, setSearchBarSticky] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
@@ -238,7 +240,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
 
   return (
     <>
-    <nav className={`navbar${searchBarSticky ? ' scrolled' : ''}`}>
+    <nav className={`navbar${searchBarSticky ? ' scrolled' : ''}${isTourDetailPage ? ' navbar--tour-detail' : ''}`}>
       <div className="nav-left">
         <div className="nav-logo">
           <a href="/" onClick={(e) => { e.preventDefault(); navigate('/') }}>

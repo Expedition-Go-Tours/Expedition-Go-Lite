@@ -47,6 +47,10 @@
     "total": "Totaal ({{count}} reiziger)",
     "total_plural": "Totaal ({{count}} reizigers)"
   },
+  "card": {
+    "likelyToSellOut": "Waarschijnlijk uitverkocht",
+    "specialOffer": "Speciale aanbieding"
+  },
   "common": {
     "back": "Terug",
     "close": "Sluiten",
@@ -406,7 +410,7 @@
     "additionalInformation": "Extra informatie",
     "accommodationIncluded": "Accommodatie inbegrepen",
     "perAdultShort": "per volwassene",
-    "perPerson": "/persoon",
+    "perPerson": "/Volwassene",
     "petsAllowed": "Huisdieren toegestaan",
     "phone": "Telefoon",
     "pickupConfirmedAfterBooking": "Ophaaldetails worden bevestigd na het boeken.",

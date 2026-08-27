@@ -113,7 +113,7 @@ export default function LastMinuteDealsSection({ preloaded }: Props) {
             <div className="lastminute-carousel" ref={scrollRef}>
               {items.map((tour, i) => (
                 <div key={`${tour.title}-${i}`} className="lastminute-card-wrap">
-                  <TourCard {...tour} imageClean hideFeatures />
+                  <TourCard {...tour} imageClean hideFeatures hideOfferBadge />
                 </div>
               ))}
             </div>

@@ -1,12 +1,13 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { Star, Heart, Car, Compass, Languages as LanguagesIcon, ShieldCheck, Ban } from 'lucide-react'
+import { Star, Heart, Car, Compass, Languages as LanguagesIcon, ShieldCheck, Ban, TrendingUp } from 'lucide-react'
 import SectionHeading from './SectionHeading'
 import FormattedPrice from './FormattedPrice'
 import TourCard from './TourCard'
 import { useContinuePlanning, type ContinuePlanningItem } from '../context/ContinuePlanningContext'
 import { useWishlist, toWishlistItem } from '../context/WishlistContext'
+import { useSellOutContext } from '../context/SellOutContext'
 import { getCategoryMeta } from './categoryMeta'
 import i18n from '../i18n/config'
 import './ContinuePlanningSection.css'
@@ -25,7 +26,7 @@ function shortCancellation(policy?: string): string {
 
 // Maps a Continue Planning item onto the TourCard props used by the
 // homepage's Recommended carousel, so the mobile cards render identically.
-function toTourCardProps(item: ContinuePlanningItem) {
+function toTourCardProps(item: ContinuePlanningItem, likelyToSellOut: boolean) {
   return {
     id: item.id,
     title: item.title,
@@ -47,10 +48,12 @@ function toTourCardProps(item: ContinuePlanningItem) {
     externalUrl: item.externalUrl,
     slug: item.slug,
     discount: item.discount,
+    specialOffers: item.specialOffers,
+    likelyToSellOut,
   }
 }
 
-function ContinuePlanningCard({ item }: { item: ContinuePlanningItem }) {
+function ContinuePlanningCard({ item, likelyToSellOut }: { item: ContinuePlanningItem; likelyToSellOut?: boolean }) {
   const { t } = useTranslation()
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist()
   const inWishlist = isInWishlist(item.id)
@@ -150,6 +153,13 @@ function ContinuePlanningCard({ item }: { item: ContinuePlanningItem }) {
 
         {item.duration && <p className="cp-card-duration">{item.duration}</p>}
 
+        {likelyToSellOut && (
+          <span className="cp-card-sellout-tag">
+            <TrendingUp size={11} strokeWidth={2.4} />
+            {t('card.likelyToSellOut')}
+          </span>
+        )}
+
         {featureFacts.length > 0 && (
           <ul className="cp-card-facts">
             {featureFacts.map(({ Icon, label, negative }, i) => (
@@ -181,6 +191,7 @@ function ContinuePlanningCard({ item }: { item: ContinuePlanningItem }) {
 export default function ContinuePlanningSection() {
   const { t } = useTranslation()
   const { continuePlanning } = useContinuePlanning()
+  const { isLikelyToSellOut } = useSellOutContext()
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
@@ -250,9 +261,9 @@ export default function ContinuePlanningSection() {
               {continuePlanning.map((item) => (
                 <div key={item.id} className="continue-planning-card-wrap">
                   {isMobile ? (
-                    <TourCard {...toTourCardProps(item)} imageClean hideFeatures />
+                    <TourCard {...toTourCardProps(item, isLikelyToSellOut({ id: item.id, title: item.title }))} imageClean hideFeatures hideOfferBadge />
                   ) : (
-                    <ContinuePlanningCard item={item} />
+                    <ContinuePlanningCard item={item} likelyToSellOut={isLikelyToSellOut({ id: item.id, title: item.title })} />
                   )}
                 </div>
               ))}

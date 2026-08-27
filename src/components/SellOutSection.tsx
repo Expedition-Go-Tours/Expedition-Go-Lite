@@ -20,8 +20,8 @@ export default function SellOutSection({ preloaded }: Props) {
   const [canScrollRight, setCanScrollRight] = useState(true)
   const { data: liveData } = useLikelySellOut(12)
   const items = (preloaded ?? liveData)?.length
-    ? (preloaded ?? liveData)!.map(mapToTourCard)
-    : sellOutTours
+    ? (preloaded ?? liveData)!.map((t) => ({ ...mapToTourCard(t), likelyToSellOut: true }))
+    : sellOutTours.map((t) => ({ ...t, likelyToSellOut: true, discount: undefined }))
 
   const updateArrows = useCallback(() => {
     const el = scrollRef.current

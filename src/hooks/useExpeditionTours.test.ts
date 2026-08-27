@@ -262,7 +262,7 @@ describe('extractStartingPriceFromRaw', () => {
     expect(extractStartingPriceFromRaw(messyLabels)).toBe(300)
   })
 
-  it('keeps the first-entry fallback when no adult category exists anywhere', () => {
+  it('falls back to the cheapest category when no adult category exists anywhere', () => {
     const noAdult = {
       travelerDetails: {
         pricingModel: 'perPerson',
@@ -287,7 +287,7 @@ describe('extractStartingPriceFromRaw', () => {
         ],
       },
     }
-    expect(extractStartingPriceFromRaw(noAdult)).toBe(350)
+    expect(extractStartingPriceFromRaw(noAdult)).toBe(200)
   })
 
   it('returns the uniform price for sameForEveryone tours', () => {

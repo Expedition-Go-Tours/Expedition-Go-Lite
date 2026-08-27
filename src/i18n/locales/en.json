@@ -82,6 +82,10 @@
     "minTravelersNote": "Minimum {{min}} travelers",
     "priceUpdated": "Price updated to reflect the latest availability"
   },
+  "card": {
+    "likelyToSellOut": "Likely to sell out",
+    "specialOffer": "Special Offer"
+  },
   "common": {
     "back": "Back",
     "cancel": "Cancel",
@@ -446,7 +450,7 @@
     "additionalInformation": "Additional Information",
     "accommodationIncluded": "Accommodation included",
     "perAdultShort": "per adult",
-    "perPerson": "/person",
+    "perPerson": "/Adult",
     "petsAllowed": "Pets allowed",
     "phone": "Phone",
     "pickupConfirmedAfterBooking": "Pickup details are confirmed after booking.",

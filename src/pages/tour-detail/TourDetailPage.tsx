@@ -192,6 +192,7 @@ export default function TourDetailPage() {
         meetingMode: tour.meetingMode,
         languages: tour.languages,
         slug: tour.slug,
+        specialOffers: tour.specialOffers,
       } as Tour))
     }
   }, [tour, addToContinuePlanning, mergedImages])

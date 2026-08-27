@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react'
 import type { Tour, MultiDayTour } from '../components/data'
+import type { SpecialOfferData } from '../hooks/useExpeditionTours'
 
 export interface ContinuePlanningItem {
   id: string
@@ -25,6 +26,7 @@ export interface ContinuePlanningItem {
   externalUrl?: string
   slug?: string
   discount?: string
+  specialOffers?: SpecialOfferData[]
 }
 
 interface ContinuePlanningContextValue {
@@ -74,6 +76,7 @@ export function toContinuePlanningItem(tour: Tour | (MultiDayTour & { days?: str
     externalUrl: (tour as Tour).externalUrl,
     slug: (tour as Tour & { slug?: string }).slug,
     discount: (tour as Tour).discount,
+    specialOffers: (tour as Tour & { specialOffers?: SpecialOfferData[] }).specialOffers,
   }
 }
 

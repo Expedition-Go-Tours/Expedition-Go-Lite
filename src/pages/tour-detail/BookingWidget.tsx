@@ -15,10 +15,11 @@ import { openingHoursForDay, isSupplierOperatingDay, resolveDayStatus } from '..
 import { freeCancellationDateLabel } from '../../lib/cancellationLabel'
 import { categoryKey } from '../../lib/travelerBuckets'
 import { useTravelerSelection } from '../../hooks/useTravelerSelection'
+import { lowestAdultFromTravelerPricing } from '../../lib/startingPrice'
 import SupportChatWidget from '../../components/SupportChatWidget'
 import BookingTransition from '../../components/BookingTransition'
 import { fetchWithAuth } from '../../lib/api'
-import { buildPromoValidationPayload, isValidPromoCodeFormat, normalizePromoCode, PROMO_CODE_MIN_LENGTH, validateOfferAgainstSelection } from '../../lib/promo'
+import { buildPromoValidationPayload, isValidPromoCodeFormat, normalizePromoCode, PROMO_CODE_MIN_LENGTH } from '../../lib/promo'
 import './BookingWidget.css'
 
 interface BookingWidgetProps {
@@ -50,13 +51,6 @@ interface AppliedPromo {
   promoCode?: string | null
   timeSlotMode?: 'ALL_DAYS' | 'SPECIFIC_WEEKDAYS'
   specificWeekdays?: string[]
-}
-
-function offerDiscountLabel(offer: SpecialOfferData): string {
-  if (offer.discountType === 'FIXED_AMOUNT' && offer.fixedDiscountValue != null) {
-    return `$${offer.fixedDiscountValue} off`
-  }
-  return `${offer.discountPercentage ?? 0}% off`
 }
 
 const dropdownVariants = {
@@ -110,8 +104,6 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
     groupHeadcount,
     totalTravelers,
     travelersPayload,
-    adultGroup,
-    unitPriceFor,
     matchingGroupBand,
     lowestGroupBand,
     bookableBounds,
@@ -233,7 +225,6 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
   }, [showGuestSelector, showCalendar])
 
   const totalPrice = pricingResult?.total ?? 0
-  const hasPricing = pricingResult !== null
 
   const getSelectedDayInfo = useCallback((date: Date | null | undefined): DayAvailabilityInfo | undefined => {
     if (!date || !getDayInfo) return undefined
@@ -509,9 +500,7 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
   // Special Offers cards instead of showing only the full price.
   const originalUnitPrice = isPerGroup
     ? (lowestGroupBand?.price ?? 0)
-    : hasPricing && adultGroup && unitPriceFor(adultGroup) > 0
-      ? unitPriceFor(adultGroup)
-      : tour.price
+    : (lowestAdultFromTravelerPricing(travelerGroups) ?? tour.price)
   const confirmedPerUnitDiscount =
     savedAmount > 0 && totalTravelers > 0 && !pricingLoading
       ? savedAmount / totalTravelers
@@ -524,21 +513,6 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
   const promoUnitPrice = discountPerUnit > 0 ? originalUnitPrice - discountPerUnit : null
   const showPromoPrice =
     promoUnitPrice != null && promoUnitPrice > 0 && promoUnitPrice < originalUnitPrice
-
-  // Offer eligibility against the CURRENT selection, computed on page load so
-  // the promo info (code, discount, valid days, unmet conditions) is visible
-  // BEFORE the traveler enters anything. The backend projection already
-  // guarantees ACTIVE + in-window at fetch time; this re-checks at render and
-  // against the live date/traveler selection.
-  const offerEligibility = activeOffers.map((offer) => ({
-    offer,
-    result: validateOfferAgainstSelection(offer, {
-      quantity: totalTravelers,
-      subtotal: subtotalAmount > 0 ? subtotalAmount : clientSubtotal,
-      dateISO: selectedDate ? selectedDate.toISOString().slice(0, 10) : undefined,
-    }),
-  }))
-  const showOfferChips = activeOffers.length > 0 || (promoApplied && appliedPromo != null)
 
   // An applied promo must always produce a real discount: if the re-quoted
   // pricing comes back with zero discount (the code no longer applies to the
@@ -588,8 +562,8 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
                   </>
                 ) : (
                   <span className="booking-price-amount">
-                    {hasPricing && adultGroup && unitPriceFor(adultGroup) > 0
-                      ? formatMoney(unitPriceFor(adultGroup))
+                    {originalUnitPrice > 0
+                      ? formatMoney(originalUnitPrice)
                       : formatMoney(tour.price)}
                   </span>
                 )}
@@ -598,48 +572,17 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
             ) : null}
           </div>
 
-          {/* Special offers — shown on page load (before any promo code is
-              entered) with the code to use, valid days, redemption progress
-              and any condition the current selection does not yet meet. */}
-          {showOfferChips && (
+          {/* Applied promo code chip — shown only after a code is entered and
+              validated. Supplier-applied special offers no longer show chips. */}
+          {promoApplied && appliedPromo && (
             <div className="booking-offers">
-              {offerEligibility.map(({ offer, result }) => (
-                <span key={offer.id} className={`booking-offer-chip booking-offer-chip-${String(offer.offerType || '').toLowerCase()}`}>
-                  <BadgePercent size={14} />
-                  <span className="booking-offer-chip-name">{offer.name}</span>
-                  <span className="booking-offer-chip-discount">{offerDiscountLabel(offer)}</span>
-                  {offer.promoCode && (
-                    <span className="booking-offer-chip-code">
-                      {t('booking.usePromoCode', 'Use code {{code}}', { code: offer.promoCode })}
-                    </span>
-                  )}
-                  {offer.timeSlotMode === 'SPECIFIC_WEEKDAYS' && offer.specificWeekdays.length > 0 && (
-                    <span className="booking-offer-chip-code">
-                      {t('booking.offerValidDays', 'Valid {{days}}', {
-                        days: offer.specificWeekdays.map((d) => d.charAt(0).toUpperCase() + d.slice(1, 3)).join(', '),
-                      })}
-                    </span>
-                  )}
-                  {!result.ok && (result.reason === 'quantity' || result.reason === 'spend' || result.reason === 'window') && (
-                    <span className="booking-offer-chip-code booking-offer-chip-code-warn">
-                      {result.reason === 'quantity' && offer.minQuantity != null
-                        ? t('booking.offerRequiresQuantity', 'Requires {{min}}+ travelers', { min: offer.minQuantity })
-                        : result.reason === 'spend' && offer.minSpendAmount != null
-                          ? t('booking.offerRequiresSpend', 'Requires {{amount}} spend', { amount: formatMoney(offer.minSpendAmount) })
-                          : t('booking.offerExpired', 'Offer expired')}
-                    </span>
-                  )}
+              <span className="booking-offer-chip booking-offer-chip-promo">
+                <BadgePercent size={14} />
+                <span className="booking-offer-chip-name">{appliedPromo.name}</span>
+                <span className="booking-offer-chip-discount">
+                  {savedAmount > 0 ? `-${formatMoney(savedAmount)}` : t('booking.promoApplied')}
                 </span>
-              ))}
-              {promoApplied && appliedPromo && (
-                <span className="booking-offer-chip booking-offer-chip-promo">
-                  <BadgePercent size={14} />
-                  <span className="booking-offer-chip-name">{appliedPromo.name}</span>
-                  <span className="booking-offer-chip-discount">
-                    {savedAmount > 0 ? `-${formatMoney(savedAmount)}` : t('booking.promoApplied')}
-                  </span>
-                </span>
-              )}
+              </span>
             </div>
           )}
         </div>

@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import type { TourDetail, TravelerPricing, GroupSizeBand, PricingTier, ItineraryDay, DayLogisticsMap } from '../lib/tourTypes'
 import { fetchWithAuth } from '../lib/api'
 import type { PickupAreaShape, PickupLocationShape } from '../lib/pickupZone'
+import { lowestAdultRetailPrice } from '../lib/startingPrice'
 
 /**
  * `bypassCache` skips the browser's HTTP cache for this request. The tour
@@ -24,79 +25,10 @@ async function expeditionFetchRaw(path: string, bypassCache = false) {
 }
 
 export function extractStartingPriceFromRaw(sp: unknown): number | null {
-  if (!sp) return null;
-  try {
-    const data = typeof sp === 'string' ? JSON.parse(sp) : sp as Record<string, any>;
-
-    // The "starting price" is the ADULT rate. The supplier's Step-14 category
-    // order is arbitrary (a Senior or Child row can come first), so a
-    // "first entry" fallback must only fire when there is genuinely no adult
-    // category anywhere — otherwise cards would show the Senior/Child price
-    // (e.g. The Nature Escape showed the Senior rate). Labels are trimmed so
-    // "Adult " / "ADULT" still match.
-    const isAdultLabel = (label: unknown): boolean => {
-      const l = String(label || '').trim().toLowerCase()
-      return l === 'adult' || l === 'adults'
-    }
-
-    let firstSchedulePrice: number | null = null
-    let firstScheduleCategoryPrice: number | null = null
-    let uniformPrice: number | null = null
-
-    // Path 1: pricingSchedules -> schedules[].prices/ pricingCategories
-    const schedules = (data as any)?.pricingSchedules?.schedules;
-    if (Array.isArray(schedules) && schedules.length > 0) {
-      for (const s of schedules) {
-        const prices = Array.isArray(s?.prices) ? s.prices : [];
-        for (const p of prices) {
-          if (isAdultLabel(p?.ageGroup) && p?.retailPrice != null) {
-            return Number(p.retailPrice);
-          }
-        }
-        const cats = Array.isArray(s?.pricingCategories) ? s.pricingCategories : [];
-        for (const c of cats) {
-          if (isAdultLabel(c?.name) && c?.price != null) {
-            return Number(c.price);
-          }
-        }
-        if (s?.uniformPrice != null) uniformPrice = Number(s.uniformPrice);
-        if (firstSchedulePrice == null && prices.length > 0 && prices[0]?.retailPrice != null) {
-          firstSchedulePrice = Number(prices[0].retailPrice);
-        }
-        if (firstScheduleCategoryPrice == null && cats.length > 0 && cats[0]?.price != null) {
-          firstScheduleCategoryPrice = Number(cats[0].price);
-        }
-      }
-    }
-
-    // Path 2: travelerDetails.pricingCategories — the authoritative Step-14
-    // source. Checked for the adult rate even when schedules exist, because a
-    // supplier mid-edit can leave the schedule rows without an adult entry
-    // while travelerDetails still carries it.
-    const td = (data as any)?.travelerDetails;
-    if (td) {
-      if (td.uniformPrice != null) uniformPrice = Number(td.uniformPrice);
-      const cats = Array.isArray(td.pricingCategories) ? td.pricingCategories : [];
-      for (const c of cats) {
-        if (isAdultLabel(c?.name) && c?.price != null) {
-          return Number(c.price);
-        }
-      }
-      if (firstScheduleCategoryPrice == null && cats.length > 0 && cats[0]?.price != null) {
-        firstScheduleCategoryPrice = Number(cats[0].price);
-      }
-    }
-
-    // Fallbacks, in priority order — only reached when no adult rate exists:
-    // uniform price, then the first pricing category, then the first price row.
-    if (uniformPrice != null) return uniformPrice;
-    if (firstScheduleCategoryPrice != null) return firstScheduleCategoryPrice;
-    if (firstSchedulePrice != null) return firstSchedulePrice;
-
-    return null;
-  } catch {
-    return null;
-  }
+  // Delegate to the shared "From $X" helper (mirrors the backend's
+  // cheapestRetailPrice): the lowest ADULT-tier per-person price, never a
+  // cheaper child/senior rate. See src/lib/startingPrice.ts.
+  return lowestAdultRetailPrice(sp);
 }
 
 function parseJsonMaybe(value: unknown): any {
@@ -267,6 +199,8 @@ export interface TourCardData {
   specialOffers?: SpecialOfferData[]
   /** Discount badge label (e.g. "-30%") shown on cards. */
   discount?: string
+  /** Whether the tour is flagged as likely to sell out (drives the red tag on the card image). */
+  likelyToSellOut?: boolean
 }
 function extractDurationFromTour(tour: any): number | null {
   try {
@@ -2019,6 +1953,7 @@ export function mapRawTourToListing(t: any): TourCardData {
     source: 'expedition-go',
     externalUrl: undefined,
     slug: t.slug,
+    specialOffers: mapSpecialOffers(t),
     languages: languages.length ? languages : undefined,
     difficulty: extractDifficultyFromTour(t) || undefined,
     cancellationPolicy: extractCancellationFromTour(t) || undefined,

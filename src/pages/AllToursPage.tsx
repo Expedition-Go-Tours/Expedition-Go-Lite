@@ -473,6 +473,8 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
                       languages={tour.languages}
                       discount={offersMap?.get(tour.id) ? computeDiscountLabel(offersMap.get(tour.id)!) : undefined}
                       specialOffers={offersMap?.get(tour.id)?.specialOffers}
+                      hideOfferBadge={isOffersSection}
+                      likelyToSellOut={sectionParam === 'Sell Out'}
                     />
                 </motion.div>
               ))}

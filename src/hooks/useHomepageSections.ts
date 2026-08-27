@@ -72,6 +72,12 @@ export interface HomepageTour {
   pickupIncluded?: boolean
   meetingMode?: 'meeting_point' | 'pickup' | 'none'
   accommodationIncluded?: boolean
+  /** Set by the backend for sell-out tours; the frontend otherwise derives it
+      from section membership (see SellOutContext). */
+  likelyToSellOut?: boolean
+  /** Supplier-applied offers for this tour (only set by endpoints that
+      project them, e.g. /homepage/offers). */
+  specialOffers?: SpecialOfferData[]
   _score?: number
   _velocity14d?: number
   _bayesianRating?: number
@@ -374,11 +380,13 @@ export function mapToTourCard(t: HomepageTour): TourCardData {
     image: t.coverPhoto || t.photos?.[0] || '',
     photos: t.photos,
     source: 'expedition-go',
+    specialOffers: t.specialOffers,
     difficulty: t.difficulty || undefined,
     languages: t.languages?.length ? t.languages : undefined,
     cancellationPolicy: t.cancellationPolicy || undefined,
     pickupIncluded: t.pickupIncluded,
     meetingMode: t.meetingMode,
     accommodationIncluded: t.accommodationIncluded || undefined,
+    likelyToSellOut: t.likelyToSellOut,
   }
 }

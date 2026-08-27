@@ -1,10 +1,9 @@
-import { useState, useEffect, lazy, Suspense } from 'react'
+import { useState, useEffect, useMemo, lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Toaster } from 'sonner'
 import Navbar from './components/Navbar'
 import Hero from './components/Hero'
-import SplashScreen from './components/SplashScreen'
 import ContinuePlanningSection from './components/ContinuePlanningSection'
 import MoodSection from './components/MoodSection'
 import RecommendSection from './components/RecommendSection'
@@ -17,6 +16,7 @@ import Footer from './components/Footer'
 import MountOnView from './components/MountOnView'
 import { WishlistProvider } from './context/WishlistContext'
 import { ContinuePlanningProvider } from './context/ContinuePlanningContext'
+import { SellOutProvider } from './context/SellOutContext'
 import SupportChatWidget from './components/SupportChatWidget'
 import { subscribeToAuthState, handleGoogleCallback, getAuthReturnTo, clearAuthReturnTo } from './lib/auth'
 import { trackPageView, requestLocation } from './lib/analytics'
@@ -52,6 +52,7 @@ const sectionFallback = <div style={{ minHeight: 400 }} />
 
 function HomePage() {
   const { data: homepage } = useHomepage()
+  const sellOutTours = useMemo(() => homepage?.sellOut ?? [], [homepage])
 
   // Prefetch below-fold section chunks during browser idle time.
   // This ensures chunks are cached before the user scrolls, without
@@ -73,7 +74,7 @@ function HomePage() {
   }, [])
 
   return (
-    <>
+    <SellOutProvider tours={sellOutTours}>
       <Hero />
       <ContinuePlanningSection />
       <MoodSection preloaded={homepage?.mood} />
@@ -90,32 +91,12 @@ function HomePage() {
       <MountOnView><PartnersSection /></MountOnView>
       <MountOnView><WhyBookSection /></MountOnView>
       <Footer />
-    </>
+    </SellOutProvider>
   )
 }
 
 function AppContent() {
   const [currentPage, setCurrentPage] = useState<PageView>('home')
-  const [showSplash, setShowSplash] = useState(() => {
-    // Only show splash on the homepage — skip for direct deep-links
-    // (e.g. opening a tour card in a new tab).
-    try {
-      if (window.location.pathname !== '/') return false
-      return !sessionStorage.getItem('eg_splash_seen')
-    } catch {
-      return true
-    }
-  })
-
-  useEffect(() => {
-    if (showSplash) {
-      try {
-        sessionStorage.setItem('eg_splash_seen', '1')
-      } catch {
-        /* ignore */
-      }
-    }
-  }, [showSplash])
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -168,19 +149,6 @@ function AppContent() {
 
   return (
     <>
-      <AnimatePresence>
-        {showSplash && (
-          <motion.div
-            key="splash"
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.4, ease: 'easeInOut' }}
-            style={{ position: 'fixed', inset: 0, zIndex: 9999 }}
-          >
-            <SplashScreen onFinish={() => setShowSplash(false)} />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       <Toaster position="top-center" duration={2500} closeButton />
       {!hideNav && <Navbar onOpenAuth={handleOpenAuth} />}
       {!location.pathname.startsWith('/tour') && <SupportChatWidget />}
