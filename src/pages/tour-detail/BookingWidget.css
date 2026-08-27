@@ -913,6 +913,16 @@
   opacity: 0.85;
 }
 
+/* Unread-dot indicator on "Start a Chat" when the supplier has sent
+   messages the traveler hasn't opened yet. */
+.booking-assistance-unread {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #dc2626;
+  flex-shrink: 0;
+}
+
 /* Footer */
 .booking-footer {
   display: flex;

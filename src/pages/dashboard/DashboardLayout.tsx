@@ -8,6 +8,7 @@ import {
 import { toast } from "sonner";
 import { useSidebarStore } from "@/stores/sidebarStore";
 import { getStoredAuthUser, signOutUser } from "@/lib/auth";
+import { useChat } from "@/chat/ChatContext";
 import BookingHistory from "@/pages/BookingHistory";
 import Wishlist from "@/pages/Wishlist";
 import SettingsPage from "./SettingsPage";
@@ -38,6 +39,7 @@ function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const user = getStoredAuthUser();
+  const { unreadCount } = useChat();
   const [signingOut, setSigningOut] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -138,6 +140,11 @@ function Sidebar() {
                   </motion.span>
                   {!isCollapsed && (
                     <span className="truncate text-[15px]">{item.label}</span>
+                  )}
+                  {item.path === "/dashboard/chat" && unreadCount > 0 && (
+                    <span className={`ml-auto min-w-[18px] h-[18px] px-1 rounded-full bg-[#ef4444] text-white text-[11px] font-bold flex items-center justify-center ${isCollapsed ? "absolute top-1 right-1" : ""}`}>
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </span>
                   )}
                   {isCollapsed && (
                     <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 px-2.5 py-1.5 bg-white text-[#333] text-xs font-medium rounded-lg shadow-lg border border-[#eaeaea] whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 pointer-events-none z-[70]">

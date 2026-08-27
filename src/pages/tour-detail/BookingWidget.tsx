@@ -16,6 +16,7 @@ import { freeCancellationDateLabel } from '../../lib/cancellationLabel'
 import { categoryKey } from '../../lib/travelerBuckets'
 import { useTravelerSelection } from '../../hooks/useTravelerSelection'
 import { lowestAdultFromTravelerPricing } from '../../lib/startingPrice'
+import { useChat } from '../../chat/ChatContext'
 import SupportChatWidget from '../../components/SupportChatWidget'
 import BookingTransition from '../../components/BookingTransition'
 import { fetchWithAuth } from '../../lib/api'
@@ -31,6 +32,8 @@ interface BookingWidgetProps {
   /** Reports the traveller's selected date up to the page (e.g. so the
       quick-facts cancellation badge can show the concrete cutoff date). */
   onSelectedDateChange?: (date: Date | null) => void
+  /** Opens the app's auth modal when a signed-out visitor starts a chat. */
+  onOpenAuth?: (mode: 'signin' | 'signup') => void
 }
 
 interface PricingResult {
@@ -59,7 +62,7 @@ const dropdownVariants = {
   exit: { opacity: 0, y: -8, scale: 0.96 },
 }
 
-export default function BookingWidget({ tour, getAvailability: propGetAvailability, getDayInfo, availabilityLoading, onMonthChange, onSelectedDateChange }: BookingWidgetProps) {
+export default function BookingWidget({ tour, getAvailability: propGetAvailability, getDayInfo, availabilityLoading, onMonthChange, onSelectedDateChange, onOpenAuth }: BookingWidgetProps) {
   const { t } = useTranslation()
   const { currency, convertPrice } = useCurrency()
   const navigate = useNavigate()
@@ -68,6 +71,16 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [selectedTime, setSelectedTime] = useState<string | null>(null)
   const [showChat, setShowChat] = useState(false)
+
+  // Unread indicator for the supplier's chat: a red dot on "Start a Chat"
+  // when that supplier has sent messages the traveler hasn't opened yet.
+  const chatCtx = useChat()
+  const supplierId = tour.supplierProfile?.id ?? null
+  const supplierConv = chatCtx.conversations.find(
+    (c) => c.type === 'SUPPLIER_CUSTOMER' && !!supplierId &&
+      c.participants?.some((p) => p.userId === supplierId),
+  )
+  const hasSupplierUnread = (supplierConv?.unreadCount ?? 0) > 0
   const [isBooking, setIsBooking] = useState(false)
   const [showTransition, setShowTransition] = useState(false)
   const [transitVehicle, setTransitVehicle] = useState(0)
@@ -1051,11 +1064,22 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
             <button type="button" className="booking-assistance-btn" onClick={() => setShowChat(true)}>
               <MessageSquare size={16} />
               {t('tourDetail.startChat')}
+              {hasSupplierUnread && <span className="booking-assistance-unread" aria-label="Unread messages" />}
             </button>
           </div>
         </div>
       </div>
-      {showChat && <SupportChatWidget initialOpen />}
+      {showChat && (
+        <SupportChatWidget
+          initialOpen
+          initialRecipient={
+            tour.supplierProfile?.id
+              ? { id: tour.supplierProfile.id, name: tour.supplierProfile.name, photoURL: tour.supplierProfile.photoURL }
+              : null
+          }
+          onOpenAuth={onOpenAuth}
+        />
+      )}
 
       <AnimatePresence>
         {showTransition && (

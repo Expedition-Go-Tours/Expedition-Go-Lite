@@ -17,6 +17,7 @@ import MountOnView from './components/MountOnView'
 import { WishlistProvider } from './context/WishlistContext'
 import { ContinuePlanningProvider } from './context/ContinuePlanningContext'
 import { SellOutProvider } from './context/SellOutContext'
+import { ChatProvider } from './chat/ChatContext'
 import SupportChatWidget from './components/SupportChatWidget'
 import { subscribeToAuthState, handleGoogleCallback, getAuthReturnTo, clearAuthReturnTo } from './lib/auth'
 import { trackPageView, requestLocation } from './lib/analytics'
@@ -150,12 +151,12 @@ function AppContent() {
     <>
       <Toaster position="top-center" duration={2500} closeButton />
       {!hideNav && <Navbar onOpenAuth={handleOpenAuth} />}
-      {!location.pathname.startsWith('/tour') && <SupportChatWidget />}
+      {!location.pathname.startsWith('/tour') && <SupportChatWidget onOpenAuth={handleOpenAuth} />}
       <Suspense fallback={<div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div className="spinner" /></div>}>
       <Routes>
         <Route path="/dashboard/*" element={<DashboardLayout />} />
         <Route path="/tour/:tourId" element={
-          <TourDetailPage />
+          <TourDetailPage onOpenAuth={handleOpenAuth} />
         } />
         <Route path="/tours" element={
           <AllToursPage onOpenAuth={handleOpenAuth} />
@@ -259,7 +260,9 @@ function App() {
     <BrowserRouter>
       <WishlistProvider>
         <ContinuePlanningProvider>
-          <AppContent />
+          <ChatProvider>
+            <AppContent />
+          </ChatProvider>
         </ContinuePlanningProvider>
       </WishlistProvider>
     </BrowserRouter>
