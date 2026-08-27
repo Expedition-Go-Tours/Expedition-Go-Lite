@@ -1575,7 +1575,6 @@ export default function BookingPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { tourId: urlTourId } = useParams<{ tourId: string }>()
-  const { formatPrice } = useCurrency()
 
   // Read the persisted draft once so every piece of booking state can be
   // initialized synchronously from it. Restored data is therefore present from
