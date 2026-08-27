@@ -35,13 +35,14 @@ export default function RecommendSection({ preloaded, isLoading }: Props) {
 
   // Offer tours replace their plain card when present, appended otherwise.
   const items = useMemo(() => {
+    if (!baseTours) return null
     if (!offerTours || offerTours.length === 0) return baseTours
     const keyOf = (t: { slug?: string; title: string }) => t.slug || t.title
     const offerByKey = new Map<string, TourCardData>()
     for (const tour of offerTours) offerByKey.set(keyOf(tour), tour)
 
     const seen = new Set<string>()
-    const merged: Array<typeof baseTours[number]> = []
+    const merged: TourCardData[] = []
     for (const tour of baseTours) {
       const key = keyOf(tour)
       seen.add(key)
