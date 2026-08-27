@@ -68,6 +68,7 @@ export function useSearchAutocomplete(inputValue: string) {
   const { data: destinationList } = usePopularDestinations(20)
 
   const destinationSuggestions = useMemo<SearchSuggestion[]>(() => {
+<<<<<<< HEAD
     if (!isQueryLongEnough) return []
     const lq = trimmed.toLowerCase()
     return (destinationList ?? [])
@@ -79,6 +80,11 @@ export function useSearchAutocomplete(inputValue: string) {
         subtitle: d.country ?? '',
       }))
   }, [trimmed, isQueryLongEnough, destinationList])
+=======
+    // Destination suggestions now come from the API tour search results
+    return []
+  }, [])
+>>>>>>> 7160fb1325ae25c86c01ebe5bdd2cb7b69e680a5
 
   const tourQuery = useQuery({
     queryKey: ['search-autocomplete', 'tours', trimmed],
