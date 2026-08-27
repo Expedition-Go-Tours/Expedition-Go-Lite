@@ -1,7 +1,6 @@
 import { defineConfig, type Plugin } from 'vite'
 import react, { reactCompilerPreset } from '@vitejs/plugin-react'
 import babel from '@rolldown/plugin-babel'
-import { VitePWA } from 'vite-plugin-pwa'
 import path from 'path'
 import { copyFileSync, mkdirSync } from 'node:fs'
 import { resolve } from 'node:path'
@@ -66,72 +65,6 @@ export default defineConfig({
     babel({ presets: [reactCompilerPreset()] }),
     copyMapboxWorker(),
     copyMaplibreWorker(),
-    VitePWA({
-      registerType: 'autoUpdate',
-      workbox: {
-        maximumFileSizeToCacheInBytes: 20 * 1024 * 1024,
-        globPatterns: ['**/*.{js,css,html,webp,png,jpg,svg,ttf,otf,ico}'],
-        runtimeCaching: [
-          {
-            // Tour detail freshness matters: the storefront relies on the
-            // API's productContent (itinerary/locations, pricing, availability)
-            // reflecting the supplier's latest edits. StaleWhileRevalidate
-            // could serve a cached payload captured before locations were
-            // saved, hiding the itinerary. NetworkFirst hits the network first
-            // (fresh data) and only falls back to cache when offline/failing.
-            urlPattern: /^https?:\/\/.*\/api\//,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'api-cache',
-              networkTimeoutSeconds: 10,
-              expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24,
-              },
-            },
-          },
-          {
-            // Cache all CDN-served images (Cloudinary tour photos,
-            // Unsplash fallbacks, Google UserContent profile photos).
-            // CacheFirst: once downloaded, serve from disk for 30 days.
-            // This prevents images from re-downloading on every scroll.
-            urlPattern: ({ url }: { url: URL }) =>
-              url.hostname === 'res.cloudinary.com' ||
-              url.hostname === 'images.unsplash.com' ||
-              url.hostname.endsWith('.googleusercontent.com'),
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'cdn-images',
-              expiration: {
-                maxEntries: 300,
-                maxAgeSeconds: 60 * 60 * 24 * 30,
-              },
-            },
-          },
-        ],
-      },
-      manifest: {
-        name: 'Expedition-Go Tours',
-        short_name: 'Expedition-Go',
-        description: 'Discover and book amazing tours worldwide',
-        theme_color: '#ffffff',
-        background_color: '#ffffff',
-        display: 'standalone',
-        start_url: '/',
-        icons: [
-          {
-            src: '/src/assets/icons/compyIcon.png',
-            sizes: '192x192',
-            type: 'image/png',
-          },
-          {
-            src: '/src/assets/icons/compyIcon.png',
-            sizes: '512x512',
-            type: 'image/png',
-          },
-        ],
-      },
-    }),
   ],
   resolve: {
     alias: {

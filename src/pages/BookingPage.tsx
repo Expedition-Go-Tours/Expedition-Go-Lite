@@ -37,6 +37,7 @@ import type { ResolveTourSource } from '../lib/resolvePoints'
 import type { PickupZoneMapTour } from '../components/booking/PickupZoneMap'
 import { DEFAULT_BOOKING_TOUR, buildBookingTour, type BookingTour } from '../lib/bookingTour'
 import OptimizedImage from '@/components/shared/OptimizedImage'
+import { useCurrency } from '../contexts/CurrencyContext'
 import {
   isSupplierOperatingDay,
   openingHoursForDay,
@@ -558,6 +559,7 @@ function ContactDetailsStep({
                   onChange={(e) => onChange('firstName', e.target.value)}
                   onBlur={() => handleBlur('firstName')}
                   placeholder="e.g. Richard"
+                  maxLength={100}
                   valid={valid.firstName}
                   error={error('firstName', 'first name')}
                 />
@@ -569,6 +571,7 @@ function ContactDetailsStep({
                   onChange={(e) => onChange('lastName', e.target.value)}
                   onBlur={() => handleBlur('lastName')}
                   placeholder="e.g. Boochie"
+                  maxLength={100}
                   valid={valid.lastName}
                   error={error('lastName', 'last name')}
                 />
@@ -1058,12 +1061,13 @@ function PaymentDetailsStep({
   const isCompleted = step > 3
   const [cardHandle, setCardHandle] = useState<CardElementHandle | null>(null)
   const [creating, setCreating] = useState(false)
+  const { formatPrice } = useCurrency()
 
   const buttonLabel = data.paymentTiming === 'later' ? 'Reserve Now' : 'Pay Now'
 
   const paymentSummary = (
     <div className="space-y-2 text-sm text-slate-600">
-      <p><span className="font-semibold text-slate-800">When to pay:</span> {data.paymentTiming === 'now' ? `Pay now — $${tour.price.toFixed(2)}` : 'Reserve now, pay later'}</p>
+      <p><span className="font-semibold text-slate-800">When to pay:</span> {data.paymentTiming === 'now' ? `Pay now — ${formatPrice(tour.price)}` : 'Reserve now, pay later'}</p>
     </div>
   )
 
@@ -1113,7 +1117,7 @@ function PaymentDetailsStep({
                     )}
                   </div>
                   <span className="min-w-0 flex-1 text-sm font-semibold text-slate-900">Pay now</span>
-                  <span className="shrink-0 text-sm font-bold text-slate-900">${tour.price.toFixed(2)}</span>
+                  <span className="shrink-0 text-sm font-bold text-slate-900">{formatPrice(tour.price)}</span>
                   <input type="radio" name="paymentTiming" className="sr-only" checked={data.paymentTiming === 'now'} onChange={() => onChange('paymentTiming', 'now')} />
                 </label>
 
@@ -1147,7 +1151,7 @@ function PaymentDetailsStep({
             </div>
 
             <div className="rounded-xl border border-slate-200/40 bg-slate-50/30 p-6 text-center">
-              <p className="text-2xl font-bold text-slate-900 tracking-tight">${tour.price.toFixed(2)}</p>
+              <p className="text-2xl font-bold text-slate-900 tracking-tight">{formatPrice(tour.price)}</p>
               <div className="mt-2 flex items-center justify-center gap-1.5 text-xs text-slate-500">
                 <ShieldCheck className="size-3.5 text-emerald-600" />
                 {freeCancellationDateLabel(tour.cancellation || '', tour.selectedDate || tour.dateISO || '')}
@@ -1249,6 +1253,7 @@ function PaymentDetailsStep({
 
 function BookingTourCard({ tour, onChangeClick }: { tour: typeof FALLBACK_TOUR; onChangeClick: () => void }) {
   const { t } = useTranslation()
+  const { formatPrice } = useCurrency()
   const stars = useMemo(() => {
     const full = Math.floor(tour.rating)
     return Array.from({ length: 5 }, (_, i) => i < full)
@@ -1345,7 +1350,7 @@ function BookingTourCard({ tour, onChangeClick }: { tour: typeof FALLBACK_TOUR; 
 
       <div className="flex items-center justify-between border-t border-slate-100/60 px-5 py-3">
         <span className="text-sm font-semibold text-slate-700">Total</span>
-        <span className="text-2xl font-extrabold text-slate-900 tracking-tight">${tour.price.toFixed(2)}</span>
+        <span className="text-2xl font-extrabold text-slate-900 tracking-tight">{formatPrice(tour.price)}</span>
       </div>
 
       <div className="border-t border-slate-100/60 px-5 py-3">
@@ -1402,6 +1407,7 @@ function BookingSidebar({
   contact: { firstName: string; lastName: string; email: string; countryCode: string; phone: string; location: string; pickupLater: boolean; pickupArea: string }
   step: number
 }) {
+  const { formatPrice } = useCurrency()
   const showPricing = step === 3
 
   return (
@@ -1460,7 +1466,7 @@ function BookingSidebar({
           {appliedPromo && !promoError && (
             <p className="mt-2 text-xs font-medium text-emerald-600">
               {appliedPromo.name} applied
-              {appliedPromo.discountAmount > 0 && ` · you save $${appliedPromo.discountAmount.toFixed(2)}`}
+              {appliedPromo.discountAmount > 0 && ` · you save ${formatPrice(appliedPromo.discountAmount)}`}
             </p>
           )}
         </motion.div>
@@ -1475,17 +1481,17 @@ function BookingSidebar({
         >
           <div className="flex items-center justify-between">
             <span className="text-sm font-semibold text-slate-800">Total</span>
-            <span className="text-2xl font-extrabold text-slate-900 tracking-tight">${tour.price.toFixed(2)}</span>
+            <span className="text-2xl font-extrabold text-slate-900 tracking-tight">{formatPrice(tour.price)}</span>
           </div>
           {discount > 0 && (
             <>
               <div className="mt-1 flex items-center justify-between text-sm">
                 <span className="text-emerald-600">{appliedPromo ? `${appliedPromo.name} discount` : 'Promo discount'}</span>
-                <span className="font-semibold text-emerald-600">-${discount.toFixed(2)}</span>
+                <span className="font-semibold text-emerald-600">-{formatPrice(discount)}</span>
               </div>
               <div className="mt-2 flex items-center justify-between border-t border-dashed border-slate-200 pt-2">
                 <span className="text-sm font-semibold text-slate-700">Final total</span>
-                <span className="text-2xl font-extrabold text-emerald-600 tracking-tight">${finalPrice.toFixed(2)}</span>
+                <span className="text-2xl font-extrabold text-emerald-600 tracking-tight">{formatPrice(finalPrice)}</span>
               </div>
             </>
           )}
@@ -1696,9 +1702,11 @@ export default function BookingPage() {
         : 'none',
     [showPickupLocation, contact.pickupLater, contact.location, contact.pickupLat, contact.pickupLng, tour.pickupAreas],
   )
+  const noPickupConfig = showPickupLocation && (tour.pickupAreas || []).length === 0 && (tour.pickupLocations || []).length === 0
   const pickupLocationValid = useMemo(
     () =>
       !showPickupLocation ||
+      noPickupConfig ||
       isPickupLocationSatisfied({
         pickupLater: contact.pickupLater,
         pickedArea: contact.pickupArea,
@@ -1707,7 +1715,7 @@ export default function BookingPage() {
         zonesDrawn,
         hasLocationOnlyAreas: hasPointAreas,
       }),
-    [showPickupLocation, contact.pickupLater, contact.pickupArea, contact.location, pickupZoneStatusValue, zonesDrawn, hasPointAreas],
+    [showPickupLocation, noPickupConfig, contact.pickupLater, contact.pickupArea, contact.location, pickupZoneStatusValue, zonesDrawn, hasPointAreas],
   )
 
   const contactValid = useMemo(() => ({
@@ -1847,6 +1855,7 @@ export default function BookingPage() {
       // Webhook still hasn't landed — tell the user it's still processing (not
       // a success) and let the backend's stale-PENDING cleanup reconcile later.
       console.warn('[Booking] polling timed out; booking still settling. Backend cleanup will reconcile.')
+      toast.info('Your booking is still being processed. We\'ll email you confirmation shortly — you can also check your bookings page.')
     } finally {
       setIsActive(false)
     }
@@ -1986,6 +1995,7 @@ export default function BookingPage() {
           tourId: tour.id || tour.slug,
           travelDate: selectedDate,
           quantity: Math.max(quantity, 1),
+          ...(tour.price != null && Number.isFinite(tour.price) ? { basePrice: tour.price } : {}),
         }),
       })
       const payload = await res.json().catch(() => ({}))

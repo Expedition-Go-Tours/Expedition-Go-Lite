@@ -113,6 +113,7 @@ export interface HomepageAttraction {
   startingPrice: number | null
   lat: number | null
   lng: number | null
+  _distance?: number | null
 }
 
 // ─── Unified Homepage Data ─────────────────────────────────────────────
@@ -249,12 +250,20 @@ export function useNewExperiences(limit = 10) {
 
 /**
  * Attractions — grouped by attraction name from tour data.
+ * Uses location for proximity sorting when available.
  */
 export function useAttractions(limit = 12) {
+  const location = getStoredLocation()
+  const params = new URLSearchParams({ limit: String(limit) })
+  if (location) {
+    params.set('lat', String(location.lat))
+    params.set('lng', String(location.lng))
+  }
+
   return useQuery({
-    queryKey: ['homepage', 'attractions', limit],
-    queryFn: () => fetchHomepageSection<{ attractions: HomepageAttraction[] }>(`/attractions?limit=${limit}`),
-    staleTime: 10 * 60 * 1000,
+    queryKey: ['homepage', 'attractions', limit, location?.lat, location?.lng],
+    queryFn: () => fetchHomepageSection<{ attractions: HomepageAttraction[] }>(`/attractions?${params}`),
+    staleTime: 5 * 60 * 1000,
     select: (data) => data.attractions,
   })
 }
@@ -286,7 +295,14 @@ export function useMoodKeywords(limit = 8) {
     queryKey: ['homepage', 'mood', limit],
     queryFn: () => fetchHomepageSection<{ keywords: MoodKeyword[] }>(`/mood?limit=${limit}`),
     staleTime: 5 * 60 * 1000,
-    select: (data) => data.keywords,
+    select: (data) => data.keywords
+      .filter(k => k.keyword && typeof k.keyword === 'string' && k.keyword.trim().length > 0)
+      .map(k => ({
+        ...k,
+        image: k.image && typeof k.image === 'string' && k.image.startsWith('http')
+          ? k.image
+          : null,
+      })),
   })
 }
 

@@ -283,6 +283,20 @@ export default function PickupLocationSection({
     [resolvedPoints],
   )
 
+  // ── No zones or locations configured yet — show a graceful fallback ──
+  if (pickupAreas.length === 0 && pickupLocations.length === 0) {
+    return (
+      <div className="space-y-4">
+        <h3 className="text-xl font-bold tracking-tight text-slate-900">
+          Pickup location
+        </h3>
+        <div className="rounded-xl border border-slate-200/60 bg-slate-50/50 px-5 py-4 text-sm text-slate-600">
+          <p>Pickup details will be confirmed after booking. The tour operator will contact you to arrange pickup.</p>
+        </div>
+      </div>
+    )
+  }
+
   // ── Render ──
   return (
     <div className="space-y-5">

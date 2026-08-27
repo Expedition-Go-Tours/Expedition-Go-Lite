@@ -1,4 +1,4 @@
-﻿import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import type { TourDetailData, SpecialOfferData } from '../../hooks/useExpeditionTours'
@@ -159,6 +159,7 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
       }
     } catch {
       setPricingResult(null)
+      toast.error('Could not load pricing. Please try again.')
     } finally {
       setPricingLoading(false)
     }
@@ -488,7 +489,7 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
   const activeOffers: SpecialOfferData[] = Array.isArray(tour.specialOffers) ? tour.specialOffers : []
   const savedAmount = pricingResult?.discounts ?? 0
   const subtotalAmount = pricingResult?.subtotal ?? 0
-  const formatMoney = (n: number) => `${currency.symbol}${Math.round(convertPrice(n))}`
+  const formatMoney = (n: number) => `${currency.symbol}${convertPrice(n).toFixed(currency.decimals)}`
 
   // Offer pricing for the headline "From $X" figure: when the checkout engine
   // confirms a discount (a supplier-applied special offer or a validated promo

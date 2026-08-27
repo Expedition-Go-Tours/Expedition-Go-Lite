@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { X, MapPin, Calendar, Users, Ticket, CreditCard, Phone, Info, AlertTriangle, Clock } from 'lucide-react'
 import { Button } from '../components/ui/button'
+import { currencySymbol } from '../lib/currencySymbol'
 import {
   useMyExpeditionBookings,
   useExpeditionBookingDetail,
@@ -398,7 +399,7 @@ export default function BookingHistory() {
                         <div className="booking-detail">
                           <span className="booking-detail-label">Total</span>
                           <span className={`booking-detail-value booking-price`}>
-                            {booking.currency === 'GHS' ? 'GH₵' : '$'}{booking.total.toFixed(2)}
+                            {currencySymbol(booking.currency)}{booking.total.toFixed(2)}
                           </span>
                         </div>
                       </div>

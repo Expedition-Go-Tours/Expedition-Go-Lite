@@ -20,6 +20,37 @@ const FALLBACK_CATEGORIES = [
   { keyword: 'Wellness', image: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=600&q=80', tourCount: 7 },
 ]
 
+// Per-keyword fallback images — prevents all missing images from showing
+// the same generic photo (previously fell back to FALLBACK_CATEGORIES[0])
+const CATEGORY_IMAGE_FALLBACKS: Record<string, string> = {
+  'Sports & Adventure': 'https://images.unsplash.com/photo-1530549387789-4c1017266635?auto=format&fit=crop&w=600&q=80',
+  'Food & Drink': 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=600&q=80',
+  'Art & Museums': 'https://images.unsplash.com/photo-1518998053901-5348d3961a04?auto=format&fit=crop&w=600&q=80',
+  'Architecture': 'https://images.unsplash.com/photo-1487958449943-2429e8be8625?auto=format&fit=crop&w=600&q=80',
+  'Music & Shows': 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=600&q=80',
+  'Culture & Heritage': 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=600&q=80',
+  'Animals & Nature': 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=600&q=80',
+  'Water Activities': 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=600&q=80',
+  'Winter & Snow': 'https://images.unsplash.com/photo-1491002052546-bf38f186af56?auto=format&fit=crop&w=600&q=80',
+  'Desert & Safari': 'https://images.unsplash.com/photo-1516426122078-c23e76319801?auto=format&fit=crop&w=600&q=80',
+  'Nature & Outdoors': 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=600&q=80',
+  'City & Walking Tours': 'https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?auto=format&fit=crop&w=600&q=80',
+  'Seasonal & Events': 'https://images.unsplash.com/photo-1533240332313-0db49b459ad6?auto=format&fit=crop&w=600&q=80',
+  'Wellness & Relaxation': 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=600&q=80',
+  'Royalty & History': 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=600&q=80',
+  'Pop Culture & Media': 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=600&q=80',
+  'Mystery & Horror': 'https://images.unsplash.com/photo-1509248961957-4b7b5a2807bd?auto=format&fit=crop&w=600&q=80',
+  'Nightlife & Party': 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?auto=format&fit=crop&w=600&q=80',
+  'Religion & Spirituality': 'https://images.unsplash.com/photo-1509248961957-4b7b5a2807bd?auto=format&fit=crop&w=600&q=80',
+  'Transportation': 'https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?auto=format&fit=crop&w=600&q=80',
+}
+
+function getKeywordFallbackImage(keyword: string): string {
+  if (CATEGORY_IMAGE_FALLBACKS[keyword]) return CATEGORY_IMAGE_FALLBACKS[keyword]
+  const fallback = FALLBACK_CATEGORIES.find(f => keyword.includes(f.keyword) || f.keyword.includes(keyword))
+  return fallback?.image ?? FALLBACK_CATEGORIES[0].image
+}
+
 interface Props {
   preloaded?: MoodKeyword[]
 }
@@ -35,7 +66,9 @@ export default function MoodSection({ preloaded }: Props) {
   const items = (preloaded ?? liveKeywords)?.length
     ? (preloaded ?? liveKeywords)!.map((k: MoodKeyword) => ({
         keyword: k.keyword,
-        image: k.image || FALLBACK_CATEGORIES[0].image,
+        image: k.image && typeof k.image === 'string' && k.image.startsWith('http')
+          ? k.image
+          : getKeywordFallbackImage(k.keyword),
         tourCount: k.tourCount,
       }))
     : FALLBACK_CATEGORIES
@@ -109,6 +142,12 @@ export default function MoodSection({ preloaded }: Props) {
                         width={295}
                         height={210}
                         className="mood-card-img"
+                        onError={(e) => {
+                          const fallback = getKeywordFallbackImage(cat.keyword)
+                          if (e.currentTarget.src !== fallback) {
+                            e.currentTarget.src = fallback
+                          }
+                        }}
                       />
                       <span className="mood-tag">{cat.keyword}</span>
                       <span className="mood-count">{cat.tourCount} {t('mood.tours')}</span>
