@@ -133,13 +133,13 @@ export default function MoodSection({ preloaded, isLoading }: Props) {
                       }}
                     >
                       <img
-                        src={transformImage(cat.image, { width: 300, height: 210, quality: 'auto:good', format: 'auto', fit: 'crop' }) ?? cat.image}
+                        src={transformImage(cat.image, { width: 400, height: 280, quality: 'auto:good', format: 'auto', fit: 'crop', gravity: 'auto' }) ?? cat.image}
                         alt={cat.keyword}
                         loading={i < 4 ? 'eager' : 'lazy'}
                         fetchPriority={i === 0 ? 'high' : undefined}
                         decoding="async"
-                        width={295}
-                        height={210}
+                        width={400}
+                        height={280}
                         className="mood-card-img"
                         onError={(e) => {
                           const fallback = getKeywordFallbackImage(cat.keyword)

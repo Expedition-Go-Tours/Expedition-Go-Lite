@@ -1,6 +1,7 @@
 interface TransformOpts {
   crop?: string
   fit?: 'crop' | 'fill' | 'scale'
+  gravity?: 'auto' | 'face' | 'center' | 'north' | 'south' | 'east' | 'west'
   width?: number
   height?: number
   quality?: string
@@ -47,6 +48,7 @@ export function transformImage(
     const transforms: string[] = []
     const crop = opts.crop ?? opts.fit
     if (crop) transforms.push(`c_${crop}`)
+    if (opts.gravity) transforms.push(`g_${opts.gravity}`)
     if (opts.width) transforms.push(`w_${opts.width}`)
     if (opts.height) transforms.push(`h_${opts.height}`)
     if (opts.quality) transforms.push(`q_${opts.quality}`)
