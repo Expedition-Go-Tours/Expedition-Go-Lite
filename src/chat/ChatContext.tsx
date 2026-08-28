@@ -55,6 +55,14 @@ function tempMessageId(): string {
   return `tmp-${Date.now()}-${optimisticSeq}`
 }
 
+/** Chronological (oldest → newest) ordering for a thread, regardless of the
+ *  order the backend returns — keeps the newest message at the bottom. */
+function sortByCreatedAtAsc(list: ChatMessage[]): ChatMessage[] {
+  return [...list].sort(
+    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+  )
+}
+
 export function ChatProvider({ children }: { children: ReactNode }) {
   const { t } = useTranslation()
   const user = useAuthUser()
@@ -271,6 +279,53 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     handleSocketMarkRead, handleSocketDelivered, handleSocketEdited, handleSocketDeleted,
   ])
 
+  // ── Realtime fallback: lightweight polling so supplier replies appear
+  //    without a page refresh even when socket pushes are missed ────────
+  const threadPollInFlightRef = useRef(false)
+
+  const pollActiveThread = useCallback(async () => {
+    const convId = activeRef.current
+    if (!convId || threadPollInFlightRef.current) return
+    threadPollInFlightRef.current = true
+    try {
+      const page = await api.getMessages(convId)
+      setMessages((prev) => {
+        const existing = prev[convId] ?? []
+        const known = new Set(existing.map((m) => m.id))
+        const fresh = page.messages.filter((m) => !known.has(m.id))
+        if (fresh.length === 0) return prev
+        return { ...prev, [convId]: sortByCreatedAtAsc([...existing, ...fresh]) }
+      })
+      setHasMore((prev) => ({ ...prev, [convId]: page.hasMore }))
+    } catch {
+      /* transient */
+    } finally {
+      threadPollInFlightRef.current = false
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!user) return
+    const listTimer = setInterval(() => {
+      if (!document.hidden) refreshConversations()
+    }, 15000)
+    const threadTimer = setInterval(() => {
+      if (!document.hidden) void pollActiveThread()
+    }, 8000)
+    const refetch = () => {
+      refreshConversations()
+      void pollActiveThread()
+    }
+    window.addEventListener('focus', refetch)
+    document.addEventListener('visibilitychange', refetch)
+    return () => {
+      clearInterval(listTimer)
+      clearInterval(threadTimer)
+      window.removeEventListener('focus', refetch)
+      document.removeEventListener('visibilitychange', refetch)
+    }
+  }, [user, refreshConversations, pollActiveThread])
+
   // ── Conversation actions ─────────────────────────────────────────────
   const openConversation = useCallback(
     (conversationId: string) => {
@@ -294,7 +349,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         api
           .getMessages(conversationId)
           .then((page) => {
-            setMessages((prev) => ({ ...prev, [conversationId]: page.messages }))
+            setMessages((prev) => ({ ...prev, [conversationId]: sortByCreatedAtAsc(page.messages) }))
             setHasMore((prev) => ({ ...prev, [conversationId]: page.hasMore }))
           })
           .catch(() => {})
@@ -370,12 +425,17 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       setMessageStatuses((prev) => ({ ...prev, [optimisticId]: 'sending' }))
 
       const replaceOptimistic = (serverMessage: ChatMessage) => {
-        setMessages((prev) => ({
-          ...prev,
-          [conversationId]: (prev[conversationId] ?? []).map((m) =>
-            m.id === optimisticId ? serverMessage : m,
-          ),
-        }))
+        setMessages((prev) => {
+          const list = prev[conversationId] ?? []
+          // Idempotent: drop the temp AND any copy of the server message the
+          // socket echo may have inserted before the ack arrived, then append
+          // the server message exactly once — otherwise the echo+ack race
+          // renders the same message twice.
+          const rest = list.filter(
+            (m) => m.id !== optimisticId && m.id !== serverMessage.id,
+          )
+          return { ...prev, [conversationId]: [...rest, serverMessage] }
+        })
         setMessageStatuses((prev) => {
           const next = { ...prev }
           delete next[optimisticId]
@@ -385,7 +445,23 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
       const socket = getChatSocket()
       const sendViaSocket = socket && socket.connected
-      const fallbackRest = () =>
+      const fallbackRest = () => {
+        // The socket send may have landed even though the ack was lost — the
+        // server broadcasts the sender's own message back, so if an identical
+        // message from me just arrived, reuse it instead of POSTing again.
+        const list = messagesRef.current[conversationId] ?? []
+        const echoed = list.find(
+          (m) =>
+            m.id !== optimisticId &&
+            m.senderId === userIdRef.current &&
+            m.content === content &&
+            (m.attachmentUrl ?? null) === (attachment?.url ?? null) &&
+            Date.now() - new Date(m.createdAt).getTime() < 15000,
+        )
+        if (echoed) {
+          replaceOptimistic(echoed)
+          return
+        }
         api
           .sendMessageRest(conversationId, content, attachment)
           .then((serverMessage) => {
@@ -395,6 +471,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           .catch(() => {
             setMessageStatuses((prev) => ({ ...prev, [optimisticId]: 'sent' }))
           })
+      }
       if (sendViaSocket) {
         const timer = setTimeout(() => {
           // Ack lost — fall back to REST so the message is never dropped.
@@ -435,7 +512,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           const existing = prev[conversationId] ?? []
           const known = new Set(existing.map((m) => m.id))
           const fresh = page.messages.filter((m) => !known.has(m.id))
-          return { ...prev, [conversationId]: [...fresh, ...existing] }
+          return { ...prev, [conversationId]: sortByCreatedAtAsc([...fresh, ...existing]) }
         })
         setHasMore((prev) => ({ ...prev, [conversationId]: page.hasMore }))
       })

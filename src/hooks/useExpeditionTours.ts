@@ -1986,41 +1986,58 @@ interface BadgeFieldMaps {
 let badgeMapsCache: { promise: Promise<BadgeFieldMaps>; expiresAt: number } | null = null
 
 /**
- * One shared batch fetch of the lightweight /tours/badges endpoint,
- * extracting tour-card badge fields (languages, cancellation policy,
- * pickup, meeting mode, accommodation) into id-keyed maps.
- *
- * Uses the dedicated badges endpoint (~20KB) instead of the full
- * /tours listing (~500KB) for significantly faster homepage loads.
+ * One shared batch fetch of the tour-card badge fields (languages,
+ * cancellation policy, pickup, meeting mode, accommodation) into id-keyed
+ * maps. Prefers the lightweight /tours/badges endpoint when the backend
+ * serves it, and falls back to the full /tours listing (same extraction as
+ * the extractors used elsewhere) so homepage cards always get their facts.
  */
 function getBadgeFieldMaps(): Promise<BadgeFieldMaps> {
   const now = Date.now()
   if (!badgeMapsCache || now >= badgeMapsCache.expiresAt) {
     badgeMapsCache = {
       promise: (async () => {
-        const payload = await expeditionFetchRaw('/tours/badges')
-        const allTours: any[] = payload.data?.tours ?? payload.tours ?? []
-        const maps: BadgeFieldMaps = {
-          languages: new Map(),
-          cancellation: new Map(),
-          pickup: new Map(),
-          meetingMode: new Map(),
-          accommodation: new Map(),
+        try {
+          const payload = await expeditionFetchRaw('/tours/badges')
+          const allTours: any[] = payload.data?.tours ?? payload.tours ?? []
+          if (allTours.length > 0) return extractBadgeFieldMaps(allTours)
+          console.warn('[enrichTourBadgeFields] badges endpoint returned no tours, falling back to full listing')
+        } catch (e) {
+          console.warn('[enrichTourBadgeFields] badges endpoint failed, falling back to full listing:', e)
         }
-        for (const t of allTours) {
-          // The badges endpoint returns pre-extracted fields
-          if (t.languages?.length) maps.languages.set(t.id, t.languages)
-          if (t.cancellationPolicy) maps.cancellation.set(t.id, t.cancellationPolicy)
-          if (t.pickupIncluded != null) maps.pickup.set(t.id, t.pickupIncluded)
-          if (t.meetingMode) maps.meetingMode.set(t.id, t.meetingMode)
-          if (t.accommodationIncluded) maps.accommodation.set(t.id, true)
-        }
-        return maps
+        const fullPayload = await expeditionFetchRaw('/tours?limit=500')
+        const fullTours: any[] = fullPayload.data?.tours ?? fullPayload.tours ?? []
+        return extractBadgeFieldMaps(fullTours)
       })(),
       expiresAt: now + 60_000,
     }
   }
   return badgeMapsCache.promise
+}
+
+function extractBadgeFieldMaps(allTours: any[]): BadgeFieldMaps {
+  const maps: BadgeFieldMaps = {
+    languages: new Map(),
+    cancellation: new Map(),
+    pickup: new Map(),
+    meetingMode: new Map(),
+    accommodation: new Map(),
+  }
+  for (const t of allTours) {
+    const bt = parseJsonMaybe(t.bookingAndTickets)
+    // The badges endpoint returns pre-extracted fields; the full listing
+    // needs the same extraction the listing mappers use.
+    const languages = Array.isArray(t.languages) && t.languages.length ? t.languages : extractContentLanguage(t)
+    if (languages?.length) maps.languages.set(t.id, languages)
+    const cancellation = t.cancellationPolicy ?? extractCancellationFromTour(t)
+    if (cancellation) maps.cancellation.set(t.id, cancellation)
+    const pickup = t.pickupIncluded ?? (bt?.pickupProvided ?? bt?.pickupAvailable) ?? undefined
+    if (pickup != null) maps.pickup.set(t.id, pickup)
+    const meetingMode = t.meetingMode ?? extractMeetingInfo(t).meetingMode
+    if (meetingMode) maps.meetingMode.set(t.id, meetingMode)
+    if (t.accommodationIncluded === true || extractAccommodationIncluded(t)) maps.accommodation.set(t.id, true)
+  }
+  return maps
 }
 
 /**
