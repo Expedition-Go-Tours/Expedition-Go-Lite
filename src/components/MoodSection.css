@@ -108,7 +108,7 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  height: 210px;
+  height: 220px;
   background: #f1f1f1;
 }
 
@@ -228,7 +228,7 @@
   }
 
   .mood-card {
-    height: 185px;
+    height: 195px;
   }
 
   .mood-arrows {

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
+import { useQueryClient } from '@tanstack/react-query'
 import { Car, Languages as LanguagesIcon, ShieldCheck, Ban, TrendingUp, BedDouble, Compass } from 'lucide-react'
 import i18n from '../i18n/config'
 import './TourCard.css'
@@ -156,6 +157,8 @@ export default function TourCard({ id, title, duration, features, price, rating,
     }
   }
 
+  const queryClient = useQueryClient()
+
   const handleCardClick = () => {
     // A horizontal swipe on the image ends with a click — don't navigate.
     if (swipeJustHappened.current) {
@@ -164,6 +167,15 @@ export default function TourCard({ id, title, duration, features, price, rating,
     }
     window.open(`/tour/${tourSlug}`, '_blank', 'noopener')
   }
+
+  // Prefetch tour detail on hover so the page loads instantly when clicked
+  const handleMouseEnter = useCallback(() => {
+    if (!tourSlug) return
+    queryClient.prefetchQuery({
+      queryKey: ['expedition', 'tour', tourSlug],
+      staleTime: 60_000,
+    })
+  }, [tourSlug, queryClient])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -199,7 +211,7 @@ export default function TourCard({ id, title, duration, features, price, rating,
   const showOfferBadge = hasActiveOffer(specialOffers)
 
   return (
-    <div className={`tour-card${imageClean ? ' tour-card-clean' : ''}`} onClick={handleCardClick} onKeyDown={handleKeyDown} role="link" tabIndex={0}>
+    <div className={`tour-card${imageClean ? ' tour-card-clean' : ''}`} onClick={handleCardClick} onKeyDown={handleKeyDown} onMouseEnter={handleMouseEnter} role="link" tabIndex={0}>
       <div className={`tour-card-image${isCarousel ? ' tour-card-has-carousel' : ''}`}>
         {!moveBadgesToBody && showSellOutTag && !(showOfferBadge && !hideOfferBadge) && (
           <span className="tour-card-sellout-tag">
