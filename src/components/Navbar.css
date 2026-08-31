@@ -31,7 +31,8 @@ body:has(.supplier-page) .navbar,
 body:has(.supplier-landing-page) .navbar,
 body:has(.review-page) .navbar,
 body:has(.all-stories-page) .navbar,
-body:has(.story-detail) .navbar {
+body:has(.story-detail) .navbar,
+body:has(.support-page) .navbar {
   box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
 }
 
@@ -49,7 +50,8 @@ body:has(.supplier-page) .navbar,
 body:has(.supplier-landing-page) .navbar,
 body:has(.review-page) .navbar,
 body:has(.all-stories-page) .navbar,
-body:has(.story-detail) .navbar {
+body:has(.story-detail) .navbar,
+body:has(.support-page) .navbar {
   background-color: #fff;
   background-image: none;
 }

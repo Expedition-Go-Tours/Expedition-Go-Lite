@@ -106,9 +106,8 @@
     "cancellationHelp": "Aide Annulation",
     "company": "Entreprise",
     "connectWithUs": "Connectez-vous avec nous",
-    "contact": "Contact",
     "contactUs": "Contactez-Nous",
-    "copyright": "© 2026 Expedition GO. Tous droits réservés.",
+    "copyright": "2022 -2026 All rights reserved | Expedition-Go Tours LTD | Accra-Ghana",
     "faq": "FAQ",
     "helpCentre": "Centre d'Aide",
     "home": "Accueil",
@@ -122,21 +121,13 @@
     "mobile": "Mobile",
     "supplierZone": "Zone Fournisseur",
     "explore": "Explorer",
-    "liveChat": "Chat en Direct",
-    "bookingSupport": "Support Réservation",
     "refundPolicy": "Politique de Remboursement",
     "careers": "Carrières",
-    "affiliateProgram": "Programme d'Affiliation",
-    "travelLiability": "Responsabilité Voyage",
     "cookiesPolicy": "Politique de Cookies",
     "listYourTours": "Publiez Vos Circuits",
-    "becomeTourOperator": "Devenez Opérateur",
     "supplierDashboard": "Tableau de Bord Fournisseur",
-    "apiAccess": "Accès API",
     "supplierTerms": "Conditions Fournisseur",
-    "tours": "Circuits",
-    "destinations": "Destinations",
-    "deals": "Offres"
+    "tours": "Circuits"
   },
   "gallery": {
     "tourImage": "Image du tour {{number}}"
@@ -480,5 +471,30 @@
     "exploreTours": "Explorer les Circuits",
     "tourSaved": "circuit enregistré",
     "toursSaved": "circuits enregistrés"
+  },
+  "support": {
+    "helpCentreSubtitle": "Comment pouvons-nous vous aider aujourd'hui ?",
+    "contactUsSubtitle": "Nous serions ravis de vous entendre — contactez-nous comme vous préférez.",
+    "refundPolicySubtitle": "Tout ce qu'il faut savoir sur les annulations et les remboursements.",
+    "faqSubtitle": "Réponses aux questions les plus fréquentes sur les circuits, les réservations et les paiements.",
+    "emailUs": "Envoyez-nous un e-mail",
+    "callUs": "Appelez-nous",
+    "chatWithUs": "Discutez avec nous",
+    "supportHours": "Heures de support",
+    "exploreTopics": "Explorer les sujets",
+    "stillNeedHelp": "Besoin d'aide supplémentaire ?",
+    "updatedDate": "Dernière mise à jour",
+    "backToHelp": "Retour au Centre d'Aide"
+  },
+  "company": {
+    "aboutUsSubtitle": "Découvrez qui nous sommes et ce qui anime Expedition-Go.",
+    "careersSubtitle": "Rejoignez notre équipe et aidez les voyageurs à découvrir le monde.",
+    "partnershipsSubtitle": "Développez votre activité grâce aux partenariats Expedition-Go.",
+    "termsSubtitle": "Les conditions qui régissent votre utilisation d'Expedition-Go.",
+    "privacySubtitle": "Comment nous collectons, utilisons et protégeons vos informations.",
+    "cookiesSubtitle": "Comment nous utilisons les cookies et comment vous pouvez les contrôler."
+  },
+  "supplier": {
+    "termsSubtitle": "Les conditions qui régissent la vente de vos circuits et expériences sur Expedition-Go."
   }
 }

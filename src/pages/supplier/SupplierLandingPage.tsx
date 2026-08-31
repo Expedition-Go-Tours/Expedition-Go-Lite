@@ -179,7 +179,7 @@ const FAQ_GROUPS: { heading: string; items: FaqItem[] }[] = [
       },
       {
         question: 'What is the commission fee?',
-        answer: 'It\u2019s a flat 10% commission fee on every tour booked through the platform \u2014 you keep the remaining 90% of each booking. The fee covers platform management, tools, insights, and promoting your activities across dozens of marketing channels.',
+        answer: 'It\u2019s a flat 15% commission fee on every tour booked through the platform \u2014 you keep the remaining 85% of each booking. The fee covers platform management, tools, insights, and promoting your activities across dozens of marketing channels.',
       },
       {
         question: 'How and when do I get paid?',

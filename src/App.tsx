@@ -37,6 +37,17 @@ const SupplierRegisterPage = lazy(() => import('./pages/supplier/SupplierRegiste
 const SupplierLandingPage = lazy(() => import('./pages/supplier/SupplierLandingPage'))
 const BookingPage = lazy(() => import('./pages/BookingPage'))
 const BookingConfirmationPage = lazy(() => import('./pages/BookingConfirmationPage'))
+const HelpCentrePage = lazy(() => import('./pages/HelpCentrePage'))
+const ContactUsPage = lazy(() => import('./pages/ContactUsPage'))
+const RefundPolicyPage = lazy(() => import('./pages/RefundPolicyPage'))
+const FAQPage = lazy(() => import('./pages/FAQPage'))
+const AboutUsPage = lazy(() => import('./pages/AboutUsPage'))
+const CareersPage = lazy(() => import('./pages/CareersPage'))
+const PartnershipsPage = lazy(() => import('./pages/PartnershipsPage'))
+const TermsAndConditionsPage = lazy(() => import('./pages/TermsAndConditionsPage'))
+const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'))
+const CookiesPolicyPage = lazy(() => import('./pages/CookiesPolicyPage'))
+const SupplierTermsPage = lazy(() => import('./pages/SupplierTermsPage'))
 
 // Below-fold homepage sections (lazy loaded, mounted on scroll)
 const TopRatedSection = lazy(() => import('./components/TopRatedSection'))
@@ -152,110 +163,106 @@ function AppContent() {
       <Toaster position="top-center" duration={2500} closeButton />
       {!hideNav && <Navbar onOpenAuth={handleOpenAuth} />}
       {!location.pathname.startsWith('/tour') && <SupportChatWidget onOpenAuth={handleOpenAuth} />}
-      <Suspense fallback={<div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div className="spinner" /></div>}>
-      <Routes>
-        <Route path="/dashboard/*" element={<DashboardLayout />} />
-        <Route path="/tour/:tourId" element={
-          <TourDetailPage onOpenAuth={handleOpenAuth} />
-        } />
-        <Route path="/tours" element={
-          <AllToursPage onOpenAuth={handleOpenAuth} />
-        } />
-        <Route path="/search" element={
-          <SearchResultsPage />
-        } />
-        <Route path="/review/:tourTitle" element={
-          <ReviewExperiencePage />
-        } />
-        <Route path="/supplier/:supplierName" element={
-          <SupplierPage />
-        } />
-        <Route path="/supplier/register" element={
-          <SupplierRegisterPage onOpenAuth={handleOpenAuth} />
-        } />
-        <Route path="/supplier/list-experience" element={
-          <SupplierLandingPage onOpenAuth={handleOpenAuth} />
-        } />
-        <Route path="/booking" element={
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.25, ease: 'easeOut' }}
-          >
-            <BookingPage />
-          </motion.div>
-        } />
-        <Route path="/:tourId/booking" element={
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.25, ease: 'easeOut' }}
-          >
-            <BookingPage />
-          </motion.div>
-        } />
-        <Route path="/booking/confirmation/:bookingId" element={
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.25, ease: 'easeOut' }}
-          >
-            <BookingConfirmationPage />
-          </motion.div>
-        } />
-        <Route path="/booking/confirmation" element={
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.25, ease: 'easeOut' }}
-          >
-            <BookingConfirmationPage />
-          </motion.div>
-        } />
-        <Route path="/login" element={
-          <AuthForm
-            initialMode="signin"
-            onBack={() => navigate('/')}
-            onAuthSuccess={() => navigate('/')}
-          />
-        } />
-        <Route path="/auth/callback" element={
-          <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div className="spinner" />
-          </div>
-        } />
-        <Route path="/stories" element={<AllStoriesPage />} />
-        <Route path="/stories/:slug" element={<StoryDetailPage />} />
-        <Route path="/*" element={
-          <AnimatePresence mode="wait">
-            {currentPage === 'signin' || currentPage === 'signup' ? (
-              <motion.div
-                key="auth"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.25, ease: 'easeInOut' }}
-              >
-                <AuthForm
-                  initialMode={currentPage}
-                  onBack={handleGoHome}
-                  onAuthSuccess={handleGoHome}
-                />
-              </motion.div>
-            ) : (
-              <motion.div
-                key="home"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.25, ease: 'easeInOut' }}
-              >
-                <HomePage />
-              </motion.div>
-            )}
-          </AnimatePresence>
-        } />
-      </Routes>
-      </Suspense>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={location.pathname}
+          initial={{ opacity: 0, y: 16 }}
+          animate={{
+            opacity: 1,
+            y: 0,
+            transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] },
+          }}
+          exit={{
+            opacity: 0,
+            y: -16,
+            transition: { duration: 0.25, ease: [0.4, 0, 1, 1] },
+          }}
+        >
+        <Suspense fallback={<div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div className="spinner" /></div>}>
+        <Routes>
+          <Route path="/dashboard/*" element={<DashboardLayout />} />
+          <Route path="/tour/:tourId" element={
+            <TourDetailPage onOpenAuth={handleOpenAuth} />
+          } />
+          <Route path="/tours" element={
+            <AllToursPage onOpenAuth={handleOpenAuth} />
+          } />
+          <Route path="/search" element={
+            <SearchResultsPage />
+          } />
+          <Route path="/help-centre" element={<HelpCentrePage />} />
+          <Route path="/contact-us" element={<ContactUsPage />} />
+          <Route path="/refund-policy" element={<RefundPolicyPage />} />
+          <Route path="/faq" element={<FAQPage />} />
+          <Route path="/about-us" element={<AboutUsPage />} />
+          <Route path="/careers" element={<CareersPage />} />
+          <Route path="/partnerships" element={<PartnershipsPage />} />
+          <Route path="/terms-and-conditions" element={<TermsAndConditionsPage />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+          <Route path="/cookies-policy" element={<CookiesPolicyPage />} />
+        <Route path="/supplier-terms" element={<SupplierTermsPage />} />
+          <Route path="/review/:tourTitle" element={
+            <ReviewExperiencePage />
+          } />
+          <Route path="/supplier/:supplierName" element={
+            <SupplierPage />
+          } />
+          <Route path="/supplier/register" element={
+            <SupplierRegisterPage onOpenAuth={handleOpenAuth} />
+          } />
+          <Route path="/supplier/list-experience" element={
+            <SupplierLandingPage onOpenAuth={handleOpenAuth} />
+          } />
+          <Route path="/booking" element={<BookingPage />} />
+          <Route path="/:tourId/booking" element={<BookingPage />} />
+          <Route path="/booking/confirmation/:bookingId" element={<BookingConfirmationPage />} />
+          <Route path="/booking/confirmation" element={<BookingConfirmationPage />} />
+          <Route path="/login" element={
+            <AuthForm
+              initialMode="signin"
+              onBack={() => navigate('/')}
+              onAuthSuccess={() => navigate('/')}
+            />
+          } />
+          <Route path="/auth/callback" element={
+            <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div className="spinner" />
+            </div>
+          } />
+          <Route path="/stories" element={<AllStoriesPage />} />
+          <Route path="/stories/:slug" element={<StoryDetailPage />} />
+          <Route path="/*" element={
+            <AnimatePresence mode="wait">
+              {currentPage === 'signin' || currentPage === 'signup' ? (
+                <motion.div
+                  key="auth"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.25, ease: 'easeInOut' }}
+                >
+                  <AuthForm
+                    initialMode={currentPage}
+                    onBack={handleGoHome}
+                    onAuthSuccess={handleGoHome}
+                  />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="home"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.25, ease: 'easeInOut' }}
+                >
+                  <HomePage />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          } />
+        </Routes>
+        </Suspense>
+        </motion.div>
+      </AnimatePresence>
     </>
   )
 }

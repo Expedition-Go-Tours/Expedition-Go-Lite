@@ -280,10 +280,15 @@
 
 .footer-copyright {
   font-family: 'Raleway', sans-serif;
-  font-size: 12px;
-  font-weight: 400;
+  /* Scales with viewport width (and drops the global 0.18px letter-spacing)
+     so the full "… | Expedition-Go Tours LTD | Accra-Ghana" line fits on ONE
+     line on every screen size without the last letter clipping. */
+  font-size: clamp(7.5px, 2.4vw, 12px);
+  font-weight: 700;
   color: rgba(255, 255, 255, 0.6);
   margin: 0;
+  letter-spacing: 0;
+  text-align: center;
   white-space: nowrap;
 }
 

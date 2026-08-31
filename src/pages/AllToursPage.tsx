@@ -8,7 +8,7 @@ import TourCard from '../components/TourCard'
 import TourCardSkeleton from '../components/TourCardSkeleton'
 
 import { useAllExpeditionTours, useTourFilterOptions, type TourCardData } from '../hooks/useExpeditionTours'
-import { useSectionTourIds, useHomepageOffers, useAttractionTours, type HomepageOfferTour } from '../hooks/useHomepageSections'
+import { useSectionTourIds, useHomepageOffers, useAttractionTours, useLikelySellOut, type HomepageOfferTour } from '../hooks/useHomepageSections'
 import './AllToursPage.css'
 
 const PAGE_SIZE = 12
@@ -22,6 +22,12 @@ function computeDiscountLabel(t: HomepageOfferTour): string | undefined {
     if (pct > 0) return `-${pct}%`
   }
   return undefined
+}
+
+/** Mirrors SellOutContext's normalized-title matching so the All Tours page
+    tags the same tours as the homepage's sell-out provider. */
+function normalizeTitle(title: string): string {
+  return title.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
 }
 
 const RATING_OPTIONS = [
@@ -125,12 +131,35 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
   const { data: sectionTourIdList } = useSectionTourIds(sectionParam)
   const isOffersSection = sectionParam === 'Last Minute Deals'
   const { data: offerTours } = useHomepageOffers(50)
+  const { data: sellOutTours } = useLikelySellOut(50)
   const offersMap = useMemo(() => {
     if (!offerTours?.length) return null
     const map = new Map<string, HomepageOfferTour>()
     for (const o of offerTours) map.set(o.id, o)
     return map
   }, [offerTours])
+
+  // Id + normalized-title membership of the homepage sell-out list, so cards
+  // carry the same "Likely to sell out" tag they get on the homepage (which
+  // uses SellOutProvider around its sections).
+  const sellOutSet = useMemo(() => {
+    if (!sellOutTours?.length) return null
+    const ids = new Set<string>()
+    const titles = new Set<string>()
+    for (const t of sellOutTours) {
+      if (t.id) ids.add(t.id)
+      if (t.title) titles.add(normalizeTitle(t.title))
+    }
+    return { ids, titles }
+  }, [sellOutTours])
+
+  const isSellOutTour = (tour: TourCardData): boolean => {
+    if (sectionParam === 'Sell Out') return true
+    if (!sellOutSet) return false
+    if (tour.id && sellOutSet.ids.has(tour.id)) return true
+    const title = normalizeTitle(tour.title)
+    return !!title && sellOutSet.titles.has(title)
+  }
   const sectionTourIds = useMemo(() => {
     if (!sectionTourIdList?.length) return null
     return new Set(sectionTourIdList)
@@ -464,6 +493,7 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
                       reviews={tour.reviews}
                       location={tour.location}
                       image={tour.image}
+                      photos={tour.photos}
                       source={tour.source}
                       externalUrl={tour.externalUrl}
                       slug={tour.slug}
@@ -475,7 +505,9 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
                       discount={offersMap?.get(tour.id) ? computeDiscountLabel(offersMap.get(tour.id)!) : undefined}
                       specialOffers={offersMap?.get(tour.id)?.specialOffers}
                       hideOfferBadge={isOffersSection}
-                      likelyToSellOut={sectionParam === 'Sell Out'}
+                      likelyToSellOut={isSellOutTour(tour)}
+                      imageClean
+                      hideFeatures
                       compactDurationOnMobile
                       bodyOfferBadgesOnMobile
                     />

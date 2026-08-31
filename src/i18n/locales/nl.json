@@ -106,9 +106,8 @@
     "cancellationHelp": "Annuleringshulp",
     "company": "Bedrijf",
     "connectWithUs": "Maak verbinding met ons",
-    "contact": "Contact",
     "contactUs": "Neem Contact Op",
-    "copyright": "© 2026 Expedition GO. Alle rechten voorbehouden.",
+    "copyright": "2022 -2026 All rights reserved | Expedition-Go Tours LTD | Accra-Ghana",
     "faq": "FAQ",
     "helpCentre": "Helpcentrum",
     "home": "Home",
@@ -122,21 +121,13 @@
     "mobile": "Mobiel",
     "supplierZone": "Leverancierszone",
     "explore": "Ontdekken",
-    "liveChat": "Live Chat",
-    "bookingSupport": "Boekingsondersteuning",
     "refundPolicy": "Terugbetalingsbeleid",
     "careers": "Carrières",
-    "affiliateProgram": "Partnerprogramma",
-    "travelLiability": "Reisaansprakelijkheid",
     "cookiesPolicy": "Cookiebeleid",
     "listYourTours": "Tours Aanbieden",
-    "becomeTourOperator": "Touroperator Worden",
     "supplierDashboard": "Leveranciersdashboard",
-    "apiAccess": "API-toegang",
     "supplierTerms": "Leveranciersvoorwaarden",
-    "tours": "Tours",
-    "destinations": "Bestemmingen",
-    "deals": "Aanbiedingen"
+    "tours": "Tours"
   },
   "gallery": {
     "tourImage": "Tour afbeelding {{number}}"
@@ -480,5 +471,30 @@
     "exploreTours": "Ontdek Tours",
     "tourSaved": "tour opgeslagen",
     "toursSaved": "tours opgeslagen"
+  },
+  "support": {
+    "helpCentreSubtitle": "Hoe kunnen we je vandaag helpen?",
+    "contactUsSubtitle": "We horen graag van je — neem contact op op de manier die jij wilt.",
+    "refundPolicySubtitle": "Alles wat je moet weten over annuleringen en terugbetalingen.",
+    "faqSubtitle": "Antwoorden op de meest gestelde vragen over tours, boekingen en betalingen.",
+    "emailUs": "E-mail ons",
+    "callUs": "Bel ons",
+    "chatWithUs": "Chat met ons",
+    "supportHours": "Supporttijden",
+    "exploreTopics": "Onderwerpen verkennen",
+    "stillNeedHelp": "Nog hulp nodig?",
+    "updatedDate": "Laatst bijgewerkt",
+    "backToHelp": "Terug naar het Helpcentrum"
+  },
+  "company": {
+    "aboutUsSubtitle": "Ontdek wie we zijn en wat Expedition-Go drijft.",
+    "careersSubtitle": "Word lid van ons team en help reizigers de wereld te ervaren.",
+    "partnershipsSubtitle": "Laat je bedrijf groeien met Expedition-Go-partnerschappen.",
+    "termsSubtitle": "De voorwaarden die gelden voor je gebruik van Expedition-Go.",
+    "privacySubtitle": "Hoe we je gegevens verzamelen, gebruiken en beschermen.",
+    "cookiesSubtitle": "Hoe we cookies gebruiken en hoe je ze kunt beheren."
+  },
+  "supplier": {
+    "termsSubtitle": "De voorwaarden voor het verkopen van je tours en ervaringen op Expedition-Go."
   }
 }

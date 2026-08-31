@@ -141,9 +141,8 @@
     "cancellationHelp": "Cancellation Help",
     "company": "Company",
     "connectWithUs": "Connect with us",
-    "contact": "Contact",
     "contactUs": "Contact Us",
-    "copyright": "© 2026 Expedition GO. All rights reserved.",
+    "copyright": "2022 -2026 All rights reserved | Expedition-Go Tours LTD | Accra-Ghana",
     "faq": "FAQ",
     "helpCentre": "Help Centre",
     "home": "Home",
@@ -157,21 +156,13 @@
     "mobile": "Mobile",
     "supplierZone": "Supplier Zone",
     "explore": "Explore",
-    "liveChat": "Live Chat",
-    "bookingSupport": "Booking Support",
     "refundPolicy": "Refund Policy",
     "careers": "Careers",
-    "affiliateProgram": "Affiliate Program",
-    "travelLiability": "Travel Liability",
     "cookiesPolicy": "Cookies Policy",
     "listYourTours": "List Your Tours",
-    "becomeTourOperator": "Become a Tour Operator",
     "supplierDashboard": "Supplier Dashboard",
-    "apiAccess": "API Access",
     "supplierTerms": "Supplier Terms",
-    "tours": "Tours",
-    "destinations": "Destinations",
-    "deals": "Deals"
+    "tours": "Tours"
   },
   "gallery": {
     "tourImage": "Tour image {{number}}"
@@ -584,5 +575,30 @@
     "signInRequired": "Please sign in to view your booking confirmation.",
     "signIn": "Sign in",
     "viewInDashboard": "View in dashboard"
+  },
+  "support": {
+    "helpCentreSubtitle": "How can we help you today?",
+    "contactUsSubtitle": "We'd love to hear from you — reach out any way you prefer.",
+    "refundPolicySubtitle": "Everything you need to know about cancellations and refunds.",
+    "faqSubtitle": "Answers to the most common questions about tours, bookings and payments.",
+    "emailUs": "Email us",
+    "callUs": "Call us",
+    "chatWithUs": "Chat with us",
+    "supportHours": "Support hours",
+    "exploreTopics": "Explore topics",
+    "stillNeedHelp": "Still need help?",
+    "updatedDate": "Last updated",
+    "backToHelp": "Back to Help Centre"
+  },
+  "company": {
+    "aboutUsSubtitle": "Discover who we are and what drives Expedition-Go.",
+    "careersSubtitle": "Join our team and help travellers experience the world.",
+    "partnershipsSubtitle": "Grow your business with Expedition-Go partnerships.",
+    "termsSubtitle": "The terms that govern your use of Expedition-Go.",
+    "privacySubtitle": "How we collect, use and protect your information.",
+    "cookiesSubtitle": "How we use cookies and how you can control them."
+  },
+  "supplier": {
+    "termsSubtitle": "The terms that govern selling your tours and experiences on Expedition-Go."
   }
 }

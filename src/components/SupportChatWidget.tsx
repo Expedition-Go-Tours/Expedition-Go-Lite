@@ -58,6 +58,17 @@ export default function SupportChatWidget({ initialOpen, initialRecipient, onOpe
   const [isMobile, setIsMobile] = useState(false);
   const autoOpenedRef = useRef(false);
 
+  // External trigger: pages like the Help Centre / Contact Us dispatch
+  // 'expedition:open-support-chat' to raise the widget programmatically.
+  useEffect(() => {
+    const open = () => {
+      setIsOpen(true);
+      setView("welcome");
+    };
+    window.addEventListener("expedition:open-support-chat", open);
+    return () => window.removeEventListener("expedition:open-support-chat", open);
+  }, []);
+
   const activeConversation = chat.conversations.find((c) => c.id === chat.activeConversationId) ?? null;
   const other = activeConversation ? otherParticipant(activeConversation, myUserId) : undefined;
   const activeName = other?.name || activeConversation?.title || t('supportChat.expeditionSupport');

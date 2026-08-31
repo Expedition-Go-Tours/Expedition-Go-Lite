@@ -5,7 +5,6 @@ import { ChevronDown } from 'lucide-react'
 import i18n from '../i18n/config'
 import { useCurrency, availableCurrencies } from '../contexts/CurrencyContext'
 import { useAuthUser } from '../hooks/useAuthUser'
-import { useSupplierStatus } from '../hooks/useSupplierStatus'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -150,7 +149,6 @@ export default function Footer() {
   const { t, i18n: activeI18n } = useTranslation()
   const { currency, setCurrency } = useCurrency()
   const user = useAuthUser()
-  const { isApproved } = useSupplierStatus()
   const langCode = (activeI18n.resolvedLanguage ?? activeI18n.language ?? 'en')
     .substring(0, 2)
     .toLowerCase()
@@ -215,12 +213,9 @@ export default function Footer() {
           <div className="footer-col">
             <FooterAccordion title={t('footer.support')}>
               <div className="footer-links">
-                <a href="#" className="footer-link" onClick={(e) => e.preventDefault()}>{t('footer.helpCentre')}</a>
-                <a href="#" className="footer-link" onClick={(e) => e.preventDefault()}>{t('footer.contactUs')}</a>
-                <a href="#" className="footer-link" onClick={(e) => e.preventDefault()}>{t('footer.liveChat')}</a>
-                <a href="#" className="footer-link" onClick={(e) => e.preventDefault()}>{t('footer.bookingSupport')}</a>
-                <a href="#" className="footer-link" onClick={(e) => e.preventDefault()}>{t('footer.refundPolicy')}</a>
-                <a href="#" className="footer-link" onClick={(e) => e.preventDefault()}>{t('footer.faq')}</a>
+                <a href="/help-centre" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.helpCentre')}</a>
+                <a href="/contact-us" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.contactUs')}</a>
+                <a href="/faq" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.faq')}</a>
               </div>
             </FooterAccordion>
           </div>
@@ -229,14 +224,13 @@ export default function Footer() {
           <div className="footer-col">
             <FooterAccordion title={t('footer.company')}>
               <div className="footer-links">
-                <a href="#" className="footer-link" onClick={(e) => e.preventDefault()}>{t('footer.aboutUs')}</a>
-                <a href="#" className="footer-link" onClick={(e) => e.preventDefault()}>{t('footer.careers')}</a>
-                <a href="#" className="footer-link" onClick={(e) => e.preventDefault()}>{t('footer.partnerships')}</a>
-                <a href="#" className="footer-link" onClick={(e) => e.preventDefault()}>{t('footer.affiliateProgram')}</a>
-                <a href="#" className="footer-link" onClick={(e) => e.preventDefault()}>{t('footer.termsConditions')}</a>
-                <a href="#" className="footer-link" onClick={(e) => e.preventDefault()}>{t('footer.privacyPolicy')}</a>
-                <a href="#" className="footer-link" onClick={(e) => e.preventDefault()}>{t('footer.travelLiability')}</a>
-                <a href="#" className="footer-link" onClick={(e) => e.preventDefault()}>{t('footer.cookiesPolicy')}</a>
+                <a href="/about-us" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.aboutUs')}</a>
+                <a href="/careers" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.careers')}</a>
+                <a href="/partnerships" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.partnerships')}</a>
+                <a href="/terms-and-conditions" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.termsConditions')}</a>
+                <a href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.privacyPolicy')}</a>
+                <a href="/cookies-policy" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.cookiesPolicy')}</a>
+                <a href="/refund-policy" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.refundPolicy')}</a>
               </div>
             </FooterAccordion>
           </div>
@@ -245,17 +239,9 @@ export default function Footer() {
           <div className="footer-col">
             <FooterAccordion title={t('footer.supplierZone')}>
               <div className="footer-links">
-                {isApproved ? (
-                  <a href="/supplier/register" className="footer-link">{t('footer.supplierDashboard')}</a>
-                ) : (
-                  <>
-                    <a href={supplierStartPath} className="footer-link">{t('footer.listYourTours')}</a>
-                    <a href={supplierStartPath} className="footer-link">{t('footer.becomeTourOperator')}</a>
-                    <a href="/supplier/register" className="footer-link">{t('footer.supplierDashboard')}</a>
-                  </>
-                )}
-                <a href="#" className="footer-link" onClick={(e) => e.preventDefault()}>{t('footer.apiAccess')}</a>
-                <a href="#" className="footer-link" onClick={(e) => e.preventDefault()}>{t('footer.supplierTerms')}</a>
+                <a href={supplierStartPath} target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.listYourTours')}</a>
+                <a href="/supplier/register" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.supplierDashboard')}</a>
+                <a href="/supplier-terms" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.supplierTerms')}</a>
               </div>
             </FooterAccordion>
           </div>
@@ -264,12 +250,8 @@ export default function Footer() {
           <div className="footer-col">
             <FooterAccordion title={t('footer.explore')}>
               <div className="footer-links">
-                <a href="/" className="footer-link">{t('footer.home')}</a>
-                <a href="/tours" className="footer-link">{t('footer.tours')}</a>
-                <a href="#" className="footer-link" onClick={(e) => e.preventDefault()}>{t('footer.destinations')}</a>
-                <a href="#" className="footer-link" onClick={(e) => e.preventDefault()}>{t('footer.deals')}</a>
-                <a href="#" className="footer-link" onClick={(e) => e.preventDefault()}>{t('footer.aboutUs')}</a>
-                <a href="#" className="footer-link" onClick={(e) => e.preventDefault()}>{t('footer.contact')}</a>
+                <a href="/" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.home')}</a>
+                <a href="/tours" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.tours')}</a>
               </div>
             </FooterAccordion>
           </div>
@@ -297,13 +279,13 @@ export default function Footer() {
             </div>
           </div>
           <div className="footer-bottom-links">
-            <a href="#" className="footer-bottom-link" onClick={(e) => e.preventDefault()}>{t('footer.termsConditions')}</a>
+            <a href="/terms-and-conditions" target="_blank" rel="noopener noreferrer" className="footer-bottom-link">{t('footer.termsConditions')}</a>
             <span className="footer-bottom-divider" aria-hidden="true" />
-            <a href="#" className="footer-bottom-link" onClick={(e) => e.preventDefault()}>{t('footer.privacyPolicy')}</a>
+            <a href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="footer-bottom-link">{t('footer.privacyPolicy')}</a>
             <span className="footer-bottom-divider" aria-hidden="true" />
-            <a href="#" className="footer-bottom-link" onClick={(e) => e.preventDefault()}>{t('footer.refundPolicy')}</a>
+            <a href="/refund-policy" target="_blank" rel="noopener noreferrer" className="footer-bottom-link">{t('footer.refundPolicy')}</a>
             <span className="footer-bottom-divider" aria-hidden="true" />
-            <a href="#" className="footer-bottom-link" onClick={(e) => e.preventDefault()}>{t('footer.cookiesPolicy')}</a>
+            <a href="/cookies-policy" target="_blank" rel="noopener noreferrer" className="footer-bottom-link">{t('footer.cookiesPolicy')}</a>
           </div>
         </div>
       </div>
