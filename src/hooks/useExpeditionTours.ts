@@ -2135,7 +2135,7 @@ export function useExpeditionOffers(limit = 12) {
     queryKey: ['expedition', 'offers', limit],
     staleTime: 60_000,
     queryFn: async (): Promise<TourCardData[]> => {
-      const payload = await expeditionFetchRaw(`/tours?limit=${limit}&sortBy=viewCount&sortOrder=desc`)
+      const payload = await expeditionFetchRaw(`/tours?limit=${limit}&sortBy=views&sortOrder=desc`)
       const tours: any[] = payload.data?.tours ?? payload.tours ?? []
       // Offer data is now included in the /tours listing response via
       // specialOfferTargets — no need to fetch each tour individually.
@@ -2210,7 +2210,7 @@ export function useRecommendedTours(limit: number = 12) {
     queryFn: async (): Promise<TourCardData[]> => {
       const [curatedResult, newestResult] = await Promise.allSettled([
         expeditionFetchRaw(`/expedition/tours?limit=${limit}`),
-        expeditionFetchRaw(`/tours?limit=${limit}&sortBy=createdAt&sortOrder=desc`),
+        expeditionFetchRaw(`/tours?limit=${limit}&sortBy=newest&sortOrder=desc`),
       ])
 
       const curatedTours: TourCardData[] = []
@@ -2254,7 +2254,7 @@ export function useNewestTours(limit: number = 10) {
   return useQuery({
     queryKey: ['expedition', 'tours', 'newest', limit],
     queryFn: async (): Promise<TourCardData[]> => {
-      const payload = await expeditionFetchRaw(`/tours?limit=${limit}&sortBy=createdAt&sortOrder=desc`)
+      const payload = await expeditionFetchRaw(`/tours?limit=${limit}&sortBy=newest&sortOrder=desc`)
       const rawTours: any[] = payload.data?.tours ?? payload.tours ?? []
       const listings = rawTours.map(mapRawTourToListing)
       return Promise.all(
