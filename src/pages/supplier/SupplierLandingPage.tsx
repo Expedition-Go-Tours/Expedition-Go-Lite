@@ -15,12 +15,20 @@ import { motion, AnimatePresence, animate } from 'framer-motion'
 import {
   ClipboardList, BadgeCheck, Wallet, Rocket,
   ShieldCheck, Plane, LifeBuoy,
-  Megaphone, ChevronDown,
+  Megaphone, ChevronDown, ChevronLeft, ChevronRight,
 } from 'lucide-react'
 import image01Src from '../../assets/Image01.webp'
 import image02Src from '../../assets/Image02.webp'
 import image03Src from '../../assets/Image03.webp'
 import image04Src from '../../assets/Image04.webp'
+import tour1 from '../../assets/tours/tour1.avif'
+import tour2 from '../../assets/tours/tour2.avif'
+import tour3 from '../../assets/tours/tour3.avif'
+import tour4 from '../../assets/tours/tour4.avif'
+import tour5 from '../../assets/tours/tour5.avif'
+import tour6 from '../../assets/tours/tour6.avif'
+import tour7 from '../../assets/tours/tour7.avif'
+import tour8 from '../../assets/tours/tour8.avif'
 import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer'
 import { useAuthUser } from '../../hooks/useAuthUser'
@@ -92,10 +100,14 @@ function TicketCard() {
 }
 
 const GALLERY_CARDS = [
-  { src: image01Src, label: 'Guided Tours' },
-  { src: image02Src, label: 'Cultural Experiences' },
-  { src: image03Src, label: 'Adventure & Wildlife' },
-  { src: image04Src, label: 'Nature Walks' },
+  { src: tour1, label: 'Guided Tours' },
+  { src: tour2, label: 'Cultural Experiences' },
+  { src: tour3, label: 'Adventure & Wildlife' },
+  { src: tour4, label: 'Nature Walks' },
+  { src: tour5, label: 'City Exploration' },
+  { src: tour6, label: 'Beach & Water Sports' },
+  { src: tour7, label: 'Historical Tours' },
+  { src: tour8, label: 'Food & Culinary' },
 ]
 
 function GalleryCarousel({ scrollRef }: { scrollRef: React.RefObject<HTMLDivElement | null> }) {
@@ -115,23 +127,49 @@ function GalleryCarousel({ scrollRef }: { scrollRef: React.RefObject<HTMLDivElem
     return () => window.clearInterval(id)
   }, [paused, scrollRef])
 
+  const scroll = (direction: 'left' | 'right') => {
+    const container = scrollRef.current
+    if (!container || !container.firstChild) return
+    const cardWidth = (container.firstChild as HTMLElement).offsetWidth + 16
+    const scrollAmount = direction === 'left' ? -cardWidth : cardWidth
+    container.scrollBy({ left: scrollAmount, behavior: 'smooth' })
+  }
+
   return (
-    <div
-      className="supplier-landing-gallery-track"
-      ref={scrollRef}
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
-      onTouchStart={() => setPaused(true)}
-      onTouchEnd={() => setPaused(false)}
-    >
-      {GALLERY_CARDS.map((card, i) => (
-        <div className="supplier-landing-gallery-card" key={card.src}>
-          <img src={card.src} alt={card.label} loading={i === 0 ? 'eager' : 'lazy'} />
-          <div className="supplier-landing-gallery-logo">
-            <img src="/logo.png" alt="Expedition Go" />
+    <div className="supplier-landing-gallery-wrapper">
+      <button
+        type="button"
+        className="supplier-landing-gallery-arrow supplier-landing-gallery-arrow--left"
+        onClick={() => scroll('left')}
+        aria-label="Scroll left"
+      >
+        <ChevronLeft size={24} />
+      </button>
+      <div
+        className="supplier-landing-gallery-track"
+        ref={scrollRef}
+        onMouseEnter={() => setPaused(true)}
+        onMouseLeave={() => setPaused(false)}
+        onTouchStart={() => setPaused(true)}
+        onTouchEnd={() => setPaused(false)}
+      >
+        {GALLERY_CARDS.map((card, i) => (
+          <div className="supplier-landing-gallery-card" key={card.src}>
+            <img src={card.src} alt={card.label} loading={i === 0 ? 'eager' : 'lazy'} />
+            <div className="supplier-landing-gallery-logo">
+              <img src="/logo.png" alt="Expedition Go" />
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
+      <button
+        type="button"
+        className="supplier-landing-gallery-arrow supplier-landing-gallery-arrow--right"
+        onClick={() => scroll('right')}
+        aria-label="Scroll right"
+      >
+        <ChevronRight size={24} />
+      </button>
     </div>
   )
 }

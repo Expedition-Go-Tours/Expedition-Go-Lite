@@ -1,7 +1,7 @@
-import { useEffect } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { Store, Hotel, Handshake, Landmark, Camera, Mail, ArrowRight } from 'lucide-react'
+import { Store, Hotel, Handshake, Camera, Mail, ArrowRight } from 'lucide-react'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import './SupportPages.css'
@@ -19,30 +19,49 @@ const PARTNER_TYPES = [
     Icon: Hotel,
     title: 'Hotels & accommodations',
     text: 'Offer your guests exclusive experiences and earn through every successful booking.',
+    to: '/contact-us',
   },
   {
     Icon: Handshake,
     title: 'Travel agents & resellers',
     text: 'Resell Expedition-Go experiences to your clients with simple, transparent partnership terms.',
-  },
-  {
-    Icon: Landmark,
-    title: 'Tourism boards & DMOs',
-    text: 'Promote your destination with curated, bookable experiences that showcase the best of your region.',
+    to: '/contact-us',
   },
   {
     Icon: Camera,
     title: 'Content creators & influencers',
     text: 'Collaborate with us to create inspiring travel content and earn through your audience.',
+    to: '/contact-us',
   },
 ]
 
 export default function PartnershipsPage() {
   const { t } = useTranslation()
+  const [partnerSlide, setPartnerSlide] = useState(0)
+  const partnerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     document.title = `${t('footer.partnerships')} | Expedition-Go Tours`
   }, [t])
+
+  const scrollToPartner = (index: number) => {
+    if (!partnerRef.current) return
+    const cards = partnerRef.current.querySelectorAll('.partner-card')
+    if (cards[index]) {
+      cards[index].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' })
+      setPartnerSlide(index)
+    }
+  }
+
+  const handlePartnerScroll = () => {
+    if (!partnerRef.current) return
+    const scrollLeft = partnerRef.current.scrollLeft
+    const cardWidth = partnerRef.current.querySelector('.partner-card')?.clientWidth || 0
+    if (cardWidth > 0) {
+      const index = Math.round(scrollLeft / (cardWidth + 16))
+      setPartnerSlide(Math.min(index, PARTNER_TYPES.length - 1))
+    }
+  }
 
   return (
     <div className="support-page">
@@ -66,25 +85,41 @@ export default function PartnershipsPage() {
         </div>
 
         <h2 className="support-section-title">Who we work with</h2>
-        <div className="support-card-grid">
+        <div
+          className="partner-carousel"
+          ref={partnerRef}
+          onScroll={handlePartnerScroll}
+        >
           {PARTNER_TYPES.map((partner) => (
-            <div key={partner.title} className="support-card">
-              <div className="support-card-icon">
-                <partner.Icon size={22} />
+            <div key={partner.title} className="partner-card">
+              <div className="partner-card-icon">
+                <partner.Icon size={28} />
               </div>
-              <h3 className="support-card-title">{partner.title}</h3>
-              <p className="support-card-text">{partner.text}</p>
-              {partner.to && (
-                <Link
-                  to={partner.to}
-                  className="support-btn support-btn-secondary"
-                  style={{ marginTop: 14, alignSelf: 'flex-start', padding: '8px 16px', fontSize: 13.5 }}
-                >
-                  Get started
-                  <ArrowRight size={14} />
-                </Link>
-              )}
+              <div className="partner-card-content">
+                <h3 className="partner-card-title">{partner.title}</h3>
+                <p className="partner-card-text">{partner.text}</p>
+                {partner.to && (
+                  <Link
+                    to={partner.to}
+                    className="partner-card-btn"
+                  >
+                    Get started
+                    <ArrowRight size={14} />
+                  </Link>
+                )}
+              </div>
             </div>
+          ))}
+        </div>
+
+        <div className="partner-dots">
+          {PARTNER_TYPES.map((_, index) => (
+            <button
+              key={index}
+              className={`partner-dot ${index === partnerSlide ? 'active' : ''}`}
+              onClick={() => scrollToPartner(index)}
+              aria-label={`Go to slide ${index + 1}`}
+            />
           ))}
         </div>
 

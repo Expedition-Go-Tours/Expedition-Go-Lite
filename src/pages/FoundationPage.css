@@ -138,7 +138,7 @@
 
 .foundation-hero-label {
   font-family: 'Raleway', sans-serif;
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -324,6 +324,34 @@
   margin: 0;
 }
 
+/* --- Areas Carousel Dots --- */
+.foundation-areas-dots {
+  display: none;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 32px;
+}
+
+.foundation-areas-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(19, 122, 46, 0.25);
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.foundation-areas-dot:hover {
+  background: rgba(19, 122, 46, 0.5);
+}
+
+.foundation-areas-dot.active {
+  background: #137A2E;
+  transform: scale(1.3);
+}
+
 /* --- Image Gallery Section --- */
 .foundation-gallery {
   padding: 80px 32px;
@@ -375,6 +403,126 @@
 
 .foundation-gallery-item:hover .foundation-gallery-caption {
   opacity: 1;
+}
+
+/* --- Gallery Carousel Dots --- */
+.foundation-gallery-dots {
+  display: none;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.foundation-gallery-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(19, 122, 46, 0.25);
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.foundation-gallery-dot:hover {
+  background: rgba(19, 122, 46, 0.5);
+}
+
+.foundation-gallery-dot.active {
+  background: #137A2E;
+  transform: scale(1.3);
+}
+
+/* --- Request for Help Section --- */
+.foundation-help {
+  padding: 80px 32px;
+  background: #fff;
+}
+
+.foundation-help-header {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.foundation-help-intro {
+  font-family: 'Raleway', sans-serif;
+  font-size: 17px;
+  line-height: 1.7;
+  color: #4b5563;
+  max-width: 600px;
+  margin: 16px auto 0;
+}
+
+.foundation-help-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.foundation-help-card {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(19, 122, 46, 0.06), 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+  position: relative;
+}
+
+.foundation-help-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #137A2E, #22c55e, #4ade80, #22c55e, #137A2E);
+  background-size: 200% 100%;
+  animation: foundationShimmer 4s linear infinite;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 1;
+}
+
+.foundation-help-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(19, 122, 46, 0.12), 0 4px 16px rgba(19, 122, 46, 0.08);
+  border-color: rgba(19, 122, 46, 0.2);
+}
+
+.foundation-help-card:hover::before {
+  opacity: 1;
+}
+
+.foundation-help-card-image {
+  position: relative;
+  height: 200px;
+  overflow: hidden;
+}
+
+.foundation-help-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.foundation-help-card:hover .foundation-help-card-image img {
+  transform: scale(1.05);
+}
+
+.foundation-help-card-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.4) 0%, transparent 60%);
+}
+
+.foundation-help-card-content {
+  padding: 28px 28px 32px;
 }
 
 /* --- Volunteer Section --- */
@@ -548,6 +696,11 @@
     gap: 20px;
   }
 
+  .foundation-help-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+
   .foundation-gallery-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -585,16 +738,7 @@
   }
 
   .foundation-hero-nav {
-    width: 40px;
-    height: 40px;
-  }
-
-  .foundation-hero-nav--prev {
-    left: 12px;
-  }
-
-  .foundation-hero-nav--next {
-    right: 12px;
+    display: none;
   }
 
   .foundation-hero-dots {
@@ -631,37 +775,94 @@
   }
 
   .foundation-areas {
-    padding: 60px 20px;
+    padding: 60px 0;
   }
 
   .foundation-areas-grid {
-    grid-template-columns: 1fr;
+    display: flex;
     gap: 16px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding: 0 20px 16px;
+    margin: 0;
+    max-width: none;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .foundation-areas-grid::-webkit-scrollbar {
+    display: none;
   }
 
   .foundation-area-card {
+    flex: 0 0 85%;
+    min-width: 260px;
     padding: 24px;
+    scroll-snap-align: center;
+  }
+
+  .foundation-areas-dots {
+    display: flex;
   }
 
   .foundation-section-title {
     font-size: 24px;
   }
 
-  .foundation-gallery {
+  .foundation-help {
     padding: 60px 20px;
   }
 
+  .foundation-help-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .foundation-help-card-image {
+    height: 160px;
+  }
+
+  .foundation-help-card-content {
+    padding: 24px;
+  }
+
+  .foundation-gallery {
+    padding: 60px 0;
+  }
+
   .foundation-gallery-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding: 0 20px 16px;
+    margin: 0;
+    max-width: none;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .foundation-gallery-grid::-webkit-scrollbar {
+    display: none;
   }
 
   .foundation-gallery-item {
+    flex: 0 0 70%;
+    min-width: 200px;
     aspect-ratio: 1;
+    scroll-snap-align: center;
+    border-radius: 16px;
   }
 
   .foundation-gallery-caption {
-    opacity: 0;
+    opacity: 1;
+    font-size: 13px;
+  }
+
+  .foundation-gallery-dots {
+    display: flex;
   }
 
   .foundation-volunteer {
@@ -726,11 +927,24 @@
     height: 36px;
   }
 
+  .foundation-areas-grid {
+    gap: 12px;
+    padding: 0 16px 12px;
+  }
+
+  .foundation-area-card {
+    flex: 0 0 90%;
+    min-width: 240px;
+  }
+
   .foundation-gallery-grid {
-    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 0 16px 12px;
   }
 
   .foundation-gallery-item {
-    aspect-ratio: 16/9;
+    flex: 0 0 75%;
+    min-width: 180px;
+    aspect-ratio: 1;
   }
 }

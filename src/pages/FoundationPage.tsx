@@ -1,18 +1,18 @@
 import { useEffect, useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, type Variants } from 'framer-motion'
-import { Users, Heart, Folder, Handshake, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Users, User, Heart, Folder, Handshake, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
-import foundation1 from '../assets/images/foundation1.jpg'
-import foundation2 from '../assets/images/foundation2.jpg'
-import foundation3 from '../assets/images/foundation3.jpg'
-import foundation4 from '../assets/images/foundation4.jpg'
-import heroImg1 from '../assets/Image01.webp'
-import heroImg2 from '../assets/Image02.webp'
-import heroImg3 from '../assets/Image03.webp'
-import heroImg4 from '../assets/Image04.webp'
-import heroImg5 from '../assets/IMG_3538.webp'
+import help1 from '../assets/foundation/help1.avif'
+import help2 from '../assets/foundation/help2.avif'
+import help3 from '../assets/foundation/help3.avif'
+import help4 from '../assets/foundation/help4.avif'
+import help5 from '../assets/foundation/help5.avif'
+import help6 from '../assets/foundation/help6.avif'
+import help7 from '../assets/foundation/help7.avif'
+import help8 from '../assets/foundation/help8.avif'
+import help9 from '../assets/foundation/help9.avif'
 import './FoundationPage.css'
 
 const CORE_AREAS = [
@@ -42,7 +42,7 @@ const CORE_AREAS = [
   },
 ]
 
-const HERO_IMAGES = [heroImg1, heroImg2, heroImg3, heroImg4, heroImg5]
+const HERO_IMAGES = [help1, help2, help3, help4, help5]
 
 const fadeUp: Variants = {
   hidden: { opacity: 0, y: 30 },
@@ -55,7 +55,11 @@ const stagger: Variants = {
 
 export default function FoundationPage() {
   const [currentSlide, setCurrentSlide] = useState(0)
+  const [areasSlide, setAreasSlide] = useState(0)
+  const [gallerySlide, setGallerySlide] = useState(0)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const areasRef = useRef<HTMLDivElement>(null)
+  const galleryRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     document.title = 'Expedition-Go Foundation | Making a Difference Through Travel'
@@ -85,6 +89,46 @@ export default function FoundationPage() {
 
   const nextSlide = () => {
     goToSlide((currentSlide + 1) % HERO_IMAGES.length)
+  }
+
+  const scrollToArea = (index: number) => {
+    if (!areasRef.current) return
+    const cards = areasRef.current.querySelectorAll('.foundation-area-card')
+    if (cards[index]) {
+      cards[index].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' })
+      setAreasSlide(index)
+    }
+  }
+
+  const handleAreasScroll = () => {
+    if (!areasRef.current) return
+    const scrollLeft = areasRef.current.scrollLeft
+    const cardWidth = areasRef.current.querySelector('.foundation-area-card')?.clientWidth || 0
+    if (cardWidth > 0) {
+      const index = Math.round(scrollLeft / (cardWidth + 16))
+      setAreasSlide(Math.min(index, CORE_AREAS.length - 1))
+    }
+  }
+
+  const GALLERY_IMAGES = [help6, help7, help8, help9]
+
+  const scrollToGallery = (index: number) => {
+    if (!galleryRef.current) return
+    const items = galleryRef.current.querySelectorAll('.foundation-gallery-item')
+    if (items[index]) {
+      items[index].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' })
+      setGallerySlide(index)
+    }
+  }
+
+  const handleGalleryScroll = () => {
+    if (!galleryRef.current) return
+    const scrollLeft = galleryRef.current.scrollLeft
+    const itemWidth = galleryRef.current.querySelector('.foundation-gallery-item')?.clientWidth || 0
+    if (itemWidth > 0) {
+      const index = Math.round(scrollLeft / (itemWidth + 16))
+      setGallerySlide(Math.min(index, GALLERY_IMAGES.length - 1))
+    }
   }
 
   return (
@@ -188,6 +232,8 @@ export default function FoundationPage() {
 
         <motion.div
           className="foundation-areas-grid"
+          ref={areasRef}
+          onScroll={handleAreasScroll}
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: '-80px' }}
@@ -203,6 +249,87 @@ export default function FoundationPage() {
               <p className="foundation-area-description">{area.description}</p>
             </motion.div>
           ))}
+        </motion.div>
+
+        <div className="foundation-areas-dots">
+          {CORE_AREAS.map((_, index) => (
+            <button
+              key={index}
+              className={`foundation-areas-dot ${index === areasSlide ? 'active' : ''}`}
+              onClick={() => scrollToArea(index)}
+              aria-label={`Go to slide ${index + 1}`}
+            />
+          ))}
+        </div>
+      </section>
+
+      {/* Request for Help Section */}
+      <section className="foundation-help">
+        <motion.div
+          className="foundation-help-header"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: '-80px' }}
+          variants={fadeUp}
+        >
+          <p className="foundation-section-label">Need support?</p>
+          <h2 className="foundation-section-title">Request for Help</h2>
+          <p className="foundation-help-intro">
+            Whether you're an individual in need or a community seeking support,
+            we're here to help. Reach out and let us know how we can make a difference.
+          </p>
+        </motion.div>
+
+        <motion.div
+          className="foundation-help-grid"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: '-80px' }}
+          variants={stagger}
+        >
+          <motion.div className="foundation-help-card" variants={fadeUp}>
+            <div className="foundation-help-card-image">
+              <img src={help7} alt="Individual support" />
+              <div className="foundation-help-card-overlay" />
+            </div>
+            <div className="foundation-help-card-content">
+              <div className="foundation-area-icon">
+                <User size={24} />
+              </div>
+              <h3 className="foundation-area-title">For Individuals</h3>
+              <p className="foundation-area-subtitle">Personal support when you need it most.</p>
+              <p className="foundation-area-description">
+                If you or someone you know needs support, we're here to listen. Share your
+                situation with us and let us know how Expedition-Go may be able to help.
+              </p>
+              <Link to="/contact-us" className="foundation-btn foundation-btn--primary">
+                Request Help
+                <ArrowRight size={18} />
+              </Link>
+            </div>
+          </motion.div>
+
+          <motion.div className="foundation-help-card" variants={fadeUp}>
+            <div className="foundation-help-card-image">
+              <img src={help8} alt="Community support" />
+              <div className="foundation-help-card-overlay" />
+            </div>
+            <div className="foundation-help-card-content">
+              <div className="foundation-area-icon">
+                <Users size={24} />
+              </div>
+              <h3 className="foundation-area-title">For Communities</h3>
+              <p className="foundation-area-subtitle">Empowering communities to thrive.</p>
+              <p className="foundation-area-description">
+                We work with communities, local leaders, schools, and organizations to identify
+                needs and support initiatives that improve lives and create opportunities.
+              </p>
+              <Link to="/contact-us" className="foundation-btn foundation-btn--primary">
+                Get Support
+                <ArrowRight size={18} />
+              </Link>
+            </div>
+          </motion.div>
         </motion.div>
       </section>
 
@@ -221,28 +348,41 @@ export default function FoundationPage() {
 
         <motion.div
           className="foundation-gallery-grid"
+          ref={galleryRef}
+          onScroll={handleGalleryScroll}
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: '-80px' }}
           variants={stagger}
         >
           <motion.div className="foundation-gallery-item" variants={fadeUp}>
-            <img src={foundation1} alt="Supporting those in need" />
+            <img src={help6} alt="Helping those in need" />
+            <div className="foundation-gallery-caption">Making an Impact</div>
+          </motion.div>
+          <motion.div className="foundation-gallery-item" variants={fadeUp}>
+            <img src={help7} alt="Individual support" />
             <div className="foundation-gallery-caption">Individual Support</div>
           </motion.div>
           <motion.div className="foundation-gallery-item" variants={fadeUp}>
-            <img src={foundation2} alt="Giving back to communities" />
+            <img src={help8} alt="Community support" />
             <div className="foundation-gallery-caption">Community Support</div>
           </motion.div>
           <motion.div className="foundation-gallery-item" variants={fadeUp}>
-            <img src={foundation3} alt="Community projects in action" />
+            <img src={help9} alt="Community projects" />
             <div className="foundation-gallery-caption">Community Projects</div>
           </motion.div>
-          <motion.div className="foundation-gallery-item" variants={fadeUp}>
-            <img src={foundation4} alt="Volunteers making a difference" />
-            <div className="foundation-gallery-caption">Volunteer With Us</div>
-          </motion.div>
         </motion.div>
+
+        <div className="foundation-gallery-dots">
+          {GALLERY_IMAGES.map((_, index) => (
+            <button
+              key={index}
+              className={`foundation-gallery-dot ${index === gallerySlide ? 'active' : ''}`}
+              onClick={() => scrollToGallery(index)}
+              aria-label={`Go to slide ${index + 1}`}
+            />
+          ))}
+        </div>
       </section>
 
       {/* Volunteer Section */}
@@ -274,7 +414,7 @@ export default function FoundationPage() {
           viewport={{ once: true, margin: '-80px' }}
           variants={fadeUp}
         >
-          <img src={foundation4} alt="Volunteers working together" />
+          <img src={help9} alt="Volunteers working together" />
         </motion.div>
       </section>
 

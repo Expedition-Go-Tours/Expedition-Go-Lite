@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Mail, Phone, Clock, MessagesSquare, LifeBuoy } from 'lucide-react'
+import { Mail, Phone, Clock, MessagesSquare, LifeBuoy, MapPin } from 'lucide-react'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import { openSupportChat } from '../lib/support'
@@ -81,6 +81,42 @@ export default function ContactUsPage() {
                 </li>
               ))}
             </ul>
+          </div>
+        </div>
+
+        <h2 className="support-section-title">Visit Us</h2>
+        <div className="support-location-card">
+          <div className="support-location-map">
+            <iframe
+              title="Expedition-Go Tours Ltd Office Location"
+              src="https://www.google.com/maps?q=Expedition-Go+Tours+Ltd,+Accra,+Ghana&output=embed"
+              width="100%"
+              height="100%"
+              style={{ border: 0 }}
+              allowFullScreen
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
+          </div>
+          <div className="support-location-info">
+            <div className="support-contact-label">
+              <MapPin size={14} />
+              Our Office
+            </div>
+            <h3 className="support-location-name">Expedition-Go Tours Ltd</h3>
+            <p className="support-location-address">
+              Accra, Ghana<br />
+              West Africa
+            </p>
+            <a
+              href="https://www.google.com/maps/dir/?api=1&destination=Expedition-Go+Tours+Ltd,+Accra,+Ghana&travelmode=driving"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="support-btn support-btn-secondary support-btn-secondary--filled"
+            >
+              <MapPin size={14} />
+              Get Directions
+            </a>
           </div>
         </div>
 
