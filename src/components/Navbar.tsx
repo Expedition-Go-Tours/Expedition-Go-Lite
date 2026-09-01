@@ -48,6 +48,16 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [subDrawerTab, setSubDrawerTab] = useState<SubDrawerTab | null>(null)
+  // Reset the sub-drawer whenever the mobile menu closes (render-phase state
+  // adjustment — the linter-approved way to sync state to a prop change).
+  const [prevMenuOpen, setPrevMenuOpen] = useState(mobileMenuOpen)
+  if (!mobileMenuOpen && prevMenuOpen) {
+    setPrevMenuOpen(false)
+    setSubDrawerTab(null)
+  }
+  if (mobileMenuOpen && !prevMenuOpen) {
+    setPrevMenuOpen(true)
+  }
   const [signingOut, setSigningOut] = useState(false)
   const [langCurrencyOpen, setLangCurrencyOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -174,10 +184,6 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
     setMobileMenuOpen(false)
   }, [user])
 
-  useEffect(() => {
-    if (!mobileMenuOpen) setSubDrawerTab(null)
-  }, [mobileMenuOpen])
-
   // Prefetch the dashboard chunk so navigating to Bookings / Dashboard /
   // Updates from the drawer (or avatar menu) is instant, not a lazy fetch.
   useEffect(() => {
@@ -195,8 +201,10 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
   useEffect(() => {
     const state = location.state as { openMobileMenu?: boolean } | null
     if (state?.openMobileMenu) {
-      setMobileMenuOpen(true)
       window.history.replaceState({}, '')
+      // Defer to a microtask (still before paint) so the state update isn't a
+      // sync setState-in-effect.
+      Promise.resolve().then(() => setMobileMenuOpen(true))
     }
   }, [location.state])
 

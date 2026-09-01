@@ -42,6 +42,14 @@ export default function OverviewSection({
 
   const displayReviews = reviews.slice(0, 8)
 
+  // Reset the indicator when the review set changes (render-phase adjustment —
+  // the linter-approved way to sync state to a derived change).
+  const [prevReviewCount, setPrevReviewCount] = useState(displayReviews.length)
+  if (displayReviews.length !== prevReviewCount) {
+    setPrevReviewCount(displayReviews.length)
+    setActiveDot(0)
+  }
+
   const handleTravellersScroll = useCallback(() => {
     const el = travellersLovedRef.current
     if (!el) return
@@ -79,10 +87,8 @@ export default function OverviewSection({
     })
   }, [displayReviews.length])
 
-  // Reset the indicator when the review set changes and re-measure after
-  // layout settles (mount, fonts, orientation change).
+  // Re-measure after layout settles (mount, fonts, orientation change).
   useEffect(() => {
-    setActiveDot(0)
     const raf = requestAnimationFrame(() => handleTravellersScroll())
     const wrap = travellersLovedRef.current?.parentElement
     let ro: ResizeObserver | null = null

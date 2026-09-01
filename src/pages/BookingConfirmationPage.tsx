@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Check, CalendarDays, Clock, Users, MapPin, CreditCard, ShieldCheck, Phone, Mail, Printer, Star, Ticket, Globe, AlertTriangle } from 'lucide-react'
@@ -111,23 +111,23 @@ export default function BookingConfirmationPage() {
   const refetch = isSessionMode ? sessionQuery.refetch : bookingQuery.refetch
 
   // ── Session mode: redirect to confirmation once materialized ────────
-  const [navigatedToBooking, setNavigatedToBooking] = useState(false)
+  const navigatedToBookingRef = useRef(false)
   useEffect(() => {
-    if (isSessionMode && sessionBooking?.id && !navigatedToBooking) {
+    if (isSessionMode && sessionBooking?.id && !navigatedToBookingRef.current) {
       // Update the URL to the canonical booking confirmation path so
       // deep-links and refreshes work (replaceState avoids history pollution).
+      navigatedToBookingRef.current = true
       window.history.replaceState({}, '', `/booking/confirmation/${sessionBooking.id}`)
-      setNavigatedToBooking(true)
     }
-  }, [isSessionMode, sessionBooking?.id, navigatedToBooking])
+  }, [isSessionMode, sessionBooking?.id])
 
   // ── Session mode: stop polling once terminal ────────────────────────
-  const [sessionPollStopped, setSessionPollStopped] = useState(false)
+  const sessionPollStoppedRef = useRef(false)
   useEffect(() => {
-    if (isSessionMode && (sessionStatus === 'EXPIRED' || sessionStatus === 'REFUNDED') && !sessionPollStopped) {
-      setSessionPollStopped(true)
+    if (isSessionMode && (sessionStatus === 'EXPIRED' || sessionStatus === 'REFUNDED') && !sessionPollStoppedRef.current) {
+      sessionPollStoppedRef.current = true
     }
-  }, [isSessionMode, sessionStatus, sessionPollStopped])
+  }, [isSessionMode, sessionStatus])
 
   // ── Legacy mode: poll PENDING pay-now bookings (shouldn't happen with
   //    the new hold-based flow, but kept for backwards compat). ──────────
