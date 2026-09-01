@@ -33,22 +33,22 @@ export default function CookiesPolicyPage() {
           <h2>How we use cookies</h2>
           <ul>
             <li>
-              <strong>Essential cookies</strong> — required for the platform to work, including
+              <strong>Essential cookies</strong>, required for the platform to work, including
               keeping you signed in, remembering your wishlist and securing your session.
             </li>
             <li>
-              <strong>Preference cookies</strong> — remember choices such as your language,
+              <strong>Preference cookies</strong>, which remember choices such as your language,
               currency and recent searches.
             </li>
             <li>
-              <strong>Analytics cookies</strong> — help us understand how visitors use the site so
+              <strong>Analytics cookies</strong>, which help us understand how visitors use the site so
               we can improve it. These collect aggregated, non-identifying information.
             </li>
           </ul>
 
           <h2>Third-party cookies</h2>
           <p>
-            Some features are provided by trusted third parties that may set their own cookies —
+            Some features are provided by trusted third parties that may set their own cookies,
             for example, payment providers, map services and analytics tools. These providers
             handle data under their own policies.
           </p>
@@ -56,7 +56,7 @@ export default function CookiesPolicyPage() {
           <h2>Managing cookies</h2>
           <p>
             You can control or delete cookies through your browser settings at any time. Blocking
-            essential cookies may affect how the platform works — for example, you may be signed
+            essential cookies may affect how the platform works, for example, you may be signed
             out or lose saved preferences.
           </p>
 

@@ -95,4 +95,54 @@ describe('useTravelerSelection', () => {
     act(() => result.current.increment('travelers'))
     expect(result.current.groupHeadcount).toBe(10)
   })
+
+  it('per-group: hides the "Group of ..." row text for a single traveler, shows it for 2+', () => {
+    const tour = {
+      pricingModel: 'perGroup' as const,
+      groupSizePricing: [
+        { from: 1, to: 1, price: 100 },
+        { from: 2, to: 50, price: 250 },
+      ],
+      minParticipants: 1,
+      maxParticipants: 50,
+    }
+    const { result } = renderHook(() => useTravelerSelection(tour))
+    expect(result.current.groupHeadcount).toBe(2)
+    act(() => result.current.decrement('travelers'))
+    expect(result.current.totalTravelers).toBe(1)
+    expect(result.current.travelerOptions[0].age).toBe('')
+    act(() => result.current.increment('travelers'))
+    expect(result.current.totalTravelers).toBe(2)
+    expect(result.current.travelerOptions[0].age).toBe('2-50')
+  })
+
+  it('per-person tiered: no "· Group of ..." tier note when a single traveler is booked', () => {
+    const tour = {
+      pricingModel: 'perPerson' as const,
+      travelerPricing: [
+        {
+          label: 'Adult',
+          price: 300,
+          minAge: 18,
+          maxAge: 59,
+          tiers: [
+            { from: 1, to: 1, pricePerPerson: 400 },
+            { from: 2, to: 4, pricePerPerson: 300 },
+            { from: 5, to: 50, pricePerPerson: 250 },
+          ],
+        },
+      ],
+      minParticipants: 1,
+      maxParticipants: 50,
+      price: 300,
+    }
+    const { result } = renderHook(() => useTravelerSelection(tour))
+    expect(result.current.totalTravelers).toBe(2)
+    act(() => result.current.decrement('adult'))
+    expect(result.current.totalTravelers).toBe(1)
+    expect(result.current.travelerOptions[0].age).toBe('18-59 years')
+    act(() => result.current.increment('adult'))
+    expect(result.current.totalTravelers).toBe(2)
+    expect(result.current.travelerOptions[0].age).toBe('18-59 years · Group of 2-4')
+  })
 })

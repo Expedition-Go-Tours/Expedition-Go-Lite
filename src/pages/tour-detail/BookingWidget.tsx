@@ -15,7 +15,7 @@ import { openingHoursForDay, isSupplierOperatingDay, resolveDayStatus } from '..
 import { freeCancellationDateLabel } from '../../lib/cancellationLabel'
 import { categoryKey } from '../../lib/travelerBuckets'
 import { useTravelerSelection } from '../../hooks/useTravelerSelection'
-import { lowestAdultFromTravelerPricing } from '../../lib/startingPrice'
+import { headlineUnitPrice, cardParityUnitPrice } from '../../lib/startingPrice'
 import { useChat } from '../../chat/ChatContext'
 import SupportChatWidget from '../../components/SupportChatWidget'
 import BookingTransition from '../../components/BookingTransition'
@@ -71,6 +71,10 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [selectedTime, setSelectedTime] = useState<string | null>(null)
   const [showChat, setShowChat] = useState(false)
+  // Headline latch: the "From $X" price matches the tour card until the user
+  // touches the traveler picker; the first +/- tap flips it to the live
+  // headcount-aware unit price (and it stays live from then on).
+  const [travelerTouched, setTravelerTouched] = useState(false)
 
   // Unread indicator for the supplier's chat: a red dot on "Start a Chat"
   // when that supplier has sent messages the traveler hasn't opened yet.
@@ -130,6 +134,7 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
     anyTieredPricing,
     formatPrice,
     travelerOptions,
+    adultGroup,
   } = useTravelerSelection(tour)
 
   const doFetchPricing = useCallback(async (date: string, time?: string | null, forceCode?: string) => {
@@ -518,9 +523,25 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
   // price), so the widget and the card never disagree. The checkout-confirmed
   // discount (which reflects the real tier for the selected date/headcount)
   // is shown in the price summary below, not in the headline.
-  const originalUnitPrice = isPerGroup
-    ? (lowestGroupBand?.price ?? 0)
-    : (lowestAdultFromTravelerPricing(travelerGroups) ?? tour.price)
+  // Headline "From $X" unit price: card parity (lowest adult tier / cheapest
+  // group band) until the traveler picker is touched, then the live
+  // headcount-aware rate so it stays in sync with the picker's prices.
+  const originalUnitPrice = travelerTouched
+    ? headlineUnitPrice({
+        isPerGroup,
+        matchingGroupBand,
+        lowestGroupBand,
+        adultGroup,
+        totalTravelers,
+        travelerGroups,
+        tourPrice: tour.price,
+      })
+    : cardParityUnitPrice({
+        isPerGroup,
+        lowestGroupBand,
+        travelerGroups,
+        tourPrice: tour.price,
+      })
   const offerPerUnitDiscount =
     activeOffers.length > 0 && originalUnitPrice > 0
       ? bestOfferDiscountAmount(activeOffers, originalUnitPrice)
@@ -561,7 +582,7 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
                     </>
                   ) : (
                     <span className="booking-price-amount">
-                      {formatMoney(lowestGroupBand.price)}
+                      {formatMoney(originalUnitPrice)}
                     </span>
                   )}
                   <span className="booking-price-per">{t('booking.perGroup', 'per group')}</span>
@@ -777,7 +798,7 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
             >
               <span>
                 {totalTravelers} {t('booking.traveler', { count: totalTravelers })}
-                {isPerGroup && activeGroupBandLabel && (
+                {isPerGroup && totalTravelers > 1 && activeGroupBandLabel && (
                   <span className="booking-active-band">
                     {' '}· {t('booking.groupOf', 'Group of {{range}}', { range: activeGroupBandLabel })}
                   </span>
@@ -847,7 +868,7 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
                         <div className="guest-type-controls">
                           <button
                             className="guest-btn"
-                            onClick={() => decrement(opt.key)}
+                            onClick={() => { setTravelerTouched(true); decrement(opt.key) }}
                             disabled={!canDecrement}
                             aria-label={`Remove one ${opt.label}`}
                           >
@@ -856,7 +877,7 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
                           <span className="guest-count">{opt.count}</span>
                           <button
                             className="guest-btn"
-                            onClick={() => increment(opt.key)}
+                            onClick={() => { setTravelerTouched(true); increment(opt.key) }}
                             disabled={!canIncrement}
                             aria-label={`Add one ${opt.label}`}
                           >

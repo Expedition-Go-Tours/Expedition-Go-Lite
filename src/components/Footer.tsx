@@ -227,10 +227,7 @@ export default function Footer() {
                 <a href="/about-us" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.aboutUs')}</a>
                 <a href="/careers" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.careers')}</a>
                 <a href="/partnerships" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.partnerships')}</a>
-                <a href="/terms-and-conditions" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.termsConditions')}</a>
-                <a href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.privacyPolicy')}</a>
-                <a href="/cookies-policy" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.cookiesPolicy')}</a>
-                <a href="/refund-policy" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.refundPolicy')}</a>
+                <a href="/foundation" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.foundation')}</a>
               </div>
             </FooterAccordion>
           </div>

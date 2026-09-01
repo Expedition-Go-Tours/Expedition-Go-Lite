@@ -147,22 +147,46 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
     navigate(`/search?q=${encodeURIComponent(q)}`)
   }, [navSearchValue, navigate])
 
-  const handleListExperience = useCallback(async () => {
+  const handleListExperience = useCallback(() => {
     if (!user) {
       // Signed-out visitors land on the public "become a supplier" page first
       // (how it works + FAQ) instead of being dropped straight into sign-in.
       navigate('/supplier/list-experience')
       return
     }
-    // Already-approved suppliers go straight to the TravioAfrica-Supplier
-    // platform to log in securely; everyone else continues the application.
-    const portalUrl = await getSupplierPortalUrl()
-    if (portalUrl) {
-      window.location.href = portalUrl
-      return
-    }
+    // Navigate immediately — don't block the click on the portal status
+    // round-trip. Approved suppliers are redirected to the TravioAfrica-
+    // Supplier platform in the background once the check returns.
     navigate('/supplier/register')
+    getSupplierPortalUrl()
+      .then((portalUrl) => {
+        if (portalUrl && window.location.pathname === '/supplier/register') {
+          window.location.href = portalUrl
+        }
+      })
+      .catch(() => { /* fall back to the regular register flow */ })
   }, [user, navigate])
+
+  // Warm the supplier route chunks so "List an Experience" opens instantly —
+  // fired on hover/focus and once after first idle. The landing chunk is small
+  // (three.js now loads lazily inside it), so this is a cheap cache prime.
+  const prefetchSupplierRoutes = useCallback(() => {
+    void Promise.allSettled([
+      import('../pages/supplier/SupplierLandingPage'),
+      import('../pages/supplier/SupplierRegisterPage'),
+    ])
+  }, [])
+
+  useEffect(() => {
+    const canIdle = 'requestIdleCallback' in window
+    const id = canIdle
+      ? window.requestIdleCallback(prefetchSupplierRoutes, { timeout: 3000 })
+      : window.setTimeout(prefetchSupplierRoutes, 3000)
+    return () => {
+      if (canIdle) window.cancelIdleCallback(id)
+      else window.clearTimeout(id)
+    }
+  }, [prefetchSupplierRoutes])
 
   // Mobile "List an Experience": close the drawer so its AnimatePresence exit
   // transition plays out smoothly in this tab, then open the supplier page in
@@ -471,7 +495,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
       </div>
 
       <div className="nav-right">
-        <a href="#" className="nav-list-experience" onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleListExperience() }}>
+        <a href="#" className="nav-list-experience" onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleListExperience() }} onPointerEnter={prefetchSupplierRoutes} onFocus={prefetchSupplierRoutes}>
           <span className="nav-list-experience-icon">
             <Megaphone size={15} strokeWidth={2.1} />
           </span>
@@ -723,7 +747,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
               {t('nav.contact')}
             </a>
 
-            <a href="#" className="nav-mobile-list-experience" onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleMobileListExperience() }}>
+            <a href="#" className="nav-mobile-list-experience" onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleMobileListExperience() }} onPointerEnter={prefetchSupplierRoutes} onFocus={prefetchSupplierRoutes}>
               <span className="nav-mobile-list-experience-icon">
                 <Megaphone size={19} strokeWidth={2} />
               </span>

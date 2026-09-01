@@ -62,7 +62,7 @@
   overflow: hidden;
   padding: 110px 32px 100px;
   text-align: center;
-  background: #137A2E;
+  background: #1a1a2e;
 }
 
 /* Background image layer */
@@ -80,7 +80,7 @@
   animation: heroImagePan 20s ease-in-out infinite;
 }
 
-/* Green tinted overlay for readability */
+/* Dark gradient overlay for readability */
 .support-hero::before {
   content: '';
   position: absolute;
@@ -88,11 +88,10 @@
   z-index: 1;
   background:
     linear-gradient(
-      135deg,
-      rgba(19,122,46,0.88) 0%,
-      rgba(19,122,46,0.75) 30%,
-      rgba(10,90,35,0.82) 60%,
-      rgba(19,122,46,0.9) 100%
+      to bottom,
+      rgba(0,0,0,0.2) 0%,
+      rgba(0,0,0,0.45) 50%,
+      rgba(0,0,0,0.65) 100%
     );
 }
 
@@ -105,9 +104,9 @@
   background: linear-gradient(
     110deg,
     transparent 20%,
-    rgba(255,255,255,0.04) 30%,
-    rgba(255,255,255,0.08) 40%,
-    rgba(255,255,255,0.04) 50%,
+    rgba(255,255,255,0.03) 30%,
+    rgba(255,255,255,0.06) 40%,
+    rgba(255,255,255,0.03) 50%,
     transparent 60%
   );
   background-size: 200% 100%;
@@ -136,7 +135,7 @@
   height: 260px;
   bottom: -60px;
   right: -40px;
-  background: radial-gradient(circle, rgba(100,220,130,0.15) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(255,255,255,0.12) 0%, transparent 70%);
   animation: orbDrift2 10s ease-in-out infinite;
 }
 
@@ -154,47 +153,8 @@
   height: 120px;
   bottom: 20%;
   left: 10%;
-  background: radial-gradient(circle, rgba(150,255,170,0.12) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
   animation: orbDrift1 16s ease-in-out infinite reverse;
-}
-
-/* --- Vanta BIRDS Hero Variant --- */
-.support-hero--vanta {
-  background: #0a5a23;
-}
-
-.support-hero--vanta::before {
-  background:
-    linear-gradient(
-      135deg,
-      rgba(19,122,46,0.45) 0%,
-      rgba(19,122,46,0.35) 30%,
-      rgba(10,90,35,0.4) 60%,
-      rgba(19,122,46,0.5) 100%
-    );
-}
-
-.support-hero--vanta::after {
-  background: linear-gradient(
-    110deg,
-    transparent 20%,
-    rgba(255,255,255,0.02) 30%,
-    rgba(255,255,255,0.05) 40%,
-    rgba(255,255,255,0.02) 50%,
-    transparent 60%
-  );
-}
-
-.vanta-canvas {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-}
-
-.vanta-canvas > canvas {
-  display: block;
-  width: 100% !important;
-  height: 100% !important;
 }
 
 /* --- Hero Content --- */
@@ -562,13 +522,31 @@ a.support-contact-value:hover {
 }
 
 /* --- FAQ --- */
+/* Cosmic-dust canvas sits behind the FAQ sections (FAQ page only). */
+.faq-page .faq-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.faq-page .faq-cosmic-dust {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.faq-page .faq-sections {
+  position: relative;
+  z-index: 1;
+}
+
 .support-container section + section {
   margin-top: 48px;
 }
 
 .faq-category-title {
   font-family: var(--font-heading);
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 700;
   color: #137A2E;
   margin: 0 0 16px;
@@ -599,7 +577,7 @@ a.support-contact-value:hover {
 }
 
 .faq-item {
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.96);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255,255,255,0.7);
@@ -630,7 +608,7 @@ a.support-contact-value:hover {
   border: none;
   cursor: pointer;
   font-family: var(--font-heading);
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 600;
   color: #111827;
   text-align: left;
@@ -676,6 +654,31 @@ a.support-contact-value:hover {
   height: 1px;
   margin: 0 20px 14px;
   background: linear-gradient(90deg, transparent, rgba(19,122,46,0.2), rgba(34,197,94,0.2), transparent);
+}
+
+/* --- FAQ Hero with LiquidSurface --- */
+.faq-hero {
+  background: #f8f9fb;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.faq-hero .support-hero-content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+}
+
+.faq-hero .support-title {
+  color: #fff;
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.4);
+}
+
+.faq-hero .support-subtitle {
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.3);
 }
 
 /* --- Mobile --- */

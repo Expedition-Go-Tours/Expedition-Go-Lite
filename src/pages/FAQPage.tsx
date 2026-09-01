@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronDown } from 'lucide-react'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
-import heroImg from '../assets/images/IMG_3538.webp'
+import LiquidSurface from '@/components/lightswind/liquid-surface'
 import './SupportPages.css'
 
 interface FaqEntry {
@@ -26,7 +26,7 @@ const FAQ_CATEGORIES: { heading: string; items: FaqEntry[] }[] = [
       },
       {
         q: 'Are prices per person or per group?',
-        a: 'Prices are per person unless the tour page states otherwise. Children and infants often pay a reduced rate — the exact total is always shown before you confirm your booking.',
+        a: 'Prices are per person unless the tour page states otherwise. Children and infants often pay a reduced rate, and the exact total is always shown before you confirm your booking.',
       },
       {
         q: 'Is my booking confirmed immediately?',
@@ -51,7 +51,7 @@ const FAQ_CATEGORIES: { heading: string; items: FaqEntry[] }[] = [
       },
       {
         q: 'Are discounts refunded too?',
-        a: 'Yes — refunds are based on the discounted amount you actually paid, never the tour\'s full price.',
+        a: 'Yes, refunds are based on the discounted amount you actually paid, never the tour\'s full price.',
       },
     ],
   },
@@ -60,7 +60,7 @@ const FAQ_CATEGORIES: { heading: string; items: FaqEntry[] }[] = [
     items: [
       {
         q: 'Does my tour include pickup?',
-        a: 'Many tours include hotel or area pickup — those cards show a "Pickup included" badge. Other tours start at a fixed meeting point, which is shown on the tour page.',
+        a: 'Many tours include hotel or area pickup, and those cards show a "Pickup included" badge. Other tours start at a fixed meeting point, which is shown on the tour page.',
       },
       {
         q: 'When will I receive my pickup details?',
@@ -77,7 +77,7 @@ const FAQ_CATEGORIES: { heading: string; items: FaqEntry[] }[] = [
     items: [
       {
         q: 'How do promo codes work?',
-        a: 'Enter your promo code at checkout to apply the discount. Some offers auto-apply without a code — when several offers apply, the best one is chosen for you automatically.',
+        a: 'Enter your promo code at checkout to apply the discount. Some offers auto-apply without a code, and when several offers apply, the best one is chosen for you automatically.',
       },
       {
         q: 'Why did the price change after I viewed a tour?',
@@ -133,42 +133,42 @@ export default function FAQPage() {
   }, [t])
 
   return (
-    <div className="support-page">
+    <div className="support-page faq-page">
       <Navbar />
-      <div className="support-hero">
-        <div className="support-hero-bg">
-          <img src={heroImg} alt="" aria-hidden="true" />
-        </div>
-        <div className="support-hero-orb support-hero-orb--1" />
-        <div className="support-hero-orb support-hero-orb--2" />
-        <div className="support-hero-orb support-hero-orb--3" />
-        <div className="support-hero-orb support-hero-orb--4" />
+      <div className="support-hero faq-hero">
+        <LiquidSurface
+          scheme={1}
+          speed={1.2}
+          theme="light"
+        />
         <div className="support-hero-content">
           <h1 className="support-title">{t('footer.faq')}</h1>
           <p className="support-subtitle">{t('support.faqSubtitle')}</p>
         </div>
       </div>
 
-      <div className="support-container">
-        {FAQ_CATEGORIES.map((category, catIdx) => (
-          <section key={category.heading}>
-            <h2 className="faq-category-title">{category.heading}</h2>
-            <div className="faq-list">
-              {category.items.map((item, itemIdx) => {
-                const key = `${catIdx}-${itemIdx}`
-                const isOpen = openKey === key
-                return (
-                  <FaqItem
-                    key={key}
-                    item={item}
-                    isOpen={isOpen}
-                    onToggle={() => setOpenKey(isOpen ? null : key)}
-                  />
-                )
-              })}
-            </div>
-          </section>
-        ))}
+      <div className="support-container faq-container">
+        <div className="faq-sections">
+          {FAQ_CATEGORIES.map((category, catIdx) => (
+            <section key={category.heading}>
+              <h2 className="faq-category-title">{category.heading}</h2>
+              <div className="faq-list">
+                {category.items.map((item, itemIdx) => {
+                  const key = `${catIdx}-${itemIdx}`
+                  const isOpen = openKey === key
+                  return (
+                    <FaqItem
+                      key={key}
+                      item={item}
+                      isOpen={isOpen}
+                      onToggle={() => setOpenKey(isOpen ? null : key)}
+                    />
+                  )
+                })}
+              </div>
+            </section>
+          ))}
+        </div>
       </div>
 
       <Footer />

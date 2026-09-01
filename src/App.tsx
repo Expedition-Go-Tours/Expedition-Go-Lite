@@ -48,6 +48,7 @@ const TermsAndConditionsPage = lazy(() => import('./pages/TermsAndConditionsPage
 const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'))
 const CookiesPolicyPage = lazy(() => import('./pages/CookiesPolicyPage'))
 const SupplierTermsPage = lazy(() => import('./pages/SupplierTermsPage'))
+const FoundationPage = lazy(() => import('./pages/FoundationPage'))
 
 // Below-fold homepage sections (lazy loaded, mounted on scroll)
 const TopRatedSection = lazy(() => import('./components/TopRatedSection'))
@@ -200,6 +201,7 @@ function AppContent() {
           <Route path="/terms-and-conditions" element={<TermsAndConditionsPage />} />
           <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
           <Route path="/cookies-policy" element={<CookiesPolicyPage />} />
+          <Route path="/foundation" element={<FoundationPage />} />
         <Route path="/supplier-terms" element={<SupplierTermsPage />} />
           <Route path="/review/:tourTitle" element={
             <ReviewExperiencePage />

@@ -77,8 +77,8 @@ export default function TermsAndConditionsPage() {
 
           <h2>8. Intellectual property</h2>
           <p>
-            All content on the Expedition-Go platform — including text, images, logos and
-            software — is the property of Expedition-Go or its licensors and may not be
+            All content on the Expedition-Go platform, including text, images, logos and
+            software, is the property of Expedition-Go or its licensors and may not be
             reproduced without permission.
           </p>
 

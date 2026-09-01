@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
-import VantaBirds from '../components/VantaBirds'
 import './SupportPages.css'
 
 export default function RefundPolicyPage() {
@@ -17,8 +16,7 @@ export default function RefundPolicyPage() {
   return (
     <div className="support-page">
       <Navbar />
-      <div className="support-hero support-hero--vanta">
-        <VantaBirds className="vanta-canvas" />
+      <div className="support-hero">
         <div className="support-hero-content">
           <h1 className="support-title">{t('footer.refundPolicy')}</h1>
           <p className="support-subtitle">{t('support.refundPolicySubtitle')}</p>
@@ -44,7 +42,7 @@ export default function RefundPolicyPage() {
 
           <h2>Non-refundable tours</h2>
           <p>
-            Some experiences — typically those with limited capacity or fixed costs — are sold as
+            Some experiences, typically those with limited capacity or fixed costs, are sold as
             "all sales final". These tours are non-refundable, and no refund is available once the
             booking is confirmed, regardless of when you cancel.
           </p>
@@ -69,7 +67,7 @@ export default function RefundPolicyPage() {
           <h2>Refunds on discounted bookings</h2>
           <p>
             When you book with a special offer or promo code, any refund is based on the discounted
-            amount you actually paid — not the tour's full price.
+            amount you actually paid, not the tour's full price.
           </p>
 
           <h2>How to request a refund</h2>

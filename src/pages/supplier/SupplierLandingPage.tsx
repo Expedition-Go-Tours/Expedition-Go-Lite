@@ -9,7 +9,7 @@
  * @see components/Navbar.tsx (entry point)
  * @see pages/supplier/SupplierRegisterPage.tsx (application form)
  */
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useRef, lazy, Suspense } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence, animate } from 'framer-motion'
 import {
@@ -23,10 +23,22 @@ import image03Src from '../../assets/Image03.webp'
 import image04Src from '../../assets/Image04.webp'
 import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer'
-import AnimatedWave from '../../components/ui/AnimatedWave'
 import { useAuthUser } from '../../hooks/useAuthUser'
 import { setAuthReturnTo } from '../../lib/auth'
 import './SupplierLandingPage.css'
+
+// three.js is heavy (~500KB minified). Keep it out of this page's chunk so the
+// route renders instantly and the animated wave streams in asynchronously.
+const AnimatedWave = lazy(() => import('../../components/ui/AnimatedWave'))
+
+function WaveFallback() {
+  return (
+    <div
+      className="absolute inset-0 z-0 supplier-landing-wave-fallback"
+      aria-hidden="true"
+    />
+  )
+}
 
 const CAROUSEL_IMAGES = [
   { src: image01Src, alt: 'Travelers exploring a destination' },
@@ -35,52 +47,135 @@ const CAROUSEL_IMAGES = [
   { src: image04Src, alt: 'Cultural experience' },
 ]
 
-function ImageCarousel() {
-  const [index, setIndex] = useState(0)
-  const [paused, setPaused] = useState(false)
+function TicketCard() {
+  const [currentIndex, setCurrentIndex] = useState(0)
 
-  const goTo = useCallback((i: number) => {
-    setIndex(((i % CAROUSEL_IMAGES.length) + CAROUSEL_IMAGES.length) % CAROUSEL_IMAGES.length)
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % CAROUSEL_IMAGES.length)
+    }, 4000)
+    return () => clearInterval(timer)
   }, [])
+
+  return (
+    <div className="supplier-ticket-card">
+      <div className="supplier-ticket-notch supplier-ticket-notch--left" />
+      <div className="supplier-ticket-notch supplier-ticket-notch--right" />
+      <div className="supplier-ticket-image-container">
+        <AnimatePresence mode="wait">
+          <motion.img
+            key={currentIndex}
+            src={CAROUSEL_IMAGES[currentIndex].src}
+            alt={CAROUSEL_IMAGES[currentIndex].alt}
+            initial={{ opacity: 0, scale: 1.1 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.6 }}
+            loading={currentIndex === 0 ? 'eager' : 'lazy'}
+          />
+        </AnimatePresence>
+      </div>
+      <div className="supplier-ticket-overlay">
+        <span className="supplier-ticket-label">Expedition Go Tours</span>
+        <span className="supplier-ticket-title">List Your Experience</span>
+      </div>
+      <div className="supplier-ticket-dots">
+        {CAROUSEL_IMAGES.map((_, i) => (
+          <span
+            key={i}
+            className={`supplier-ticket-dot${i === currentIndex ? ' active' : ''}`}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+const GALLERY_CARDS = [
+  { src: image01Src, label: 'Guided Tours' },
+  { src: image02Src, label: 'Cultural Experiences' },
+  { src: image03Src, label: 'Adventure & Wildlife' },
+  { src: image04Src, label: 'Nature Walks' },
+]
+
+function GalleryCarousel({ scrollRef }: { scrollRef: React.RefObject<HTMLDivElement | null> }) {
+  const [paused, setPaused] = useState(false)
 
   useEffect(() => {
     if (paused) return
     const id = window.setInterval(() => {
-      setIndex((prev) => (prev + 1) % CAROUSEL_IMAGES.length)
-    }, 4500)
+      const container = scrollRef.current
+      if (!container || !container.firstChild) return
+      const cardWidth = (container.firstChild as HTMLElement).offsetWidth + 16
+      if (cardWidth <= 0) return
+      const maxScroll = container.scrollWidth - container.clientWidth
+      const next = container.scrollLeft + cardWidth
+      container.scrollTo({ left: next > maxScroll ? 0 : next, behavior: 'smooth' })
+    }, 4000)
     return () => window.clearInterval(id)
-  }, [paused])
+  }, [paused, scrollRef])
 
   return (
     <div
-      className="supplier-landing-carousel"
+      className="supplier-landing-gallery-track"
+      ref={scrollRef}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onTouchStart={() => setPaused(true)}
       onTouchEnd={() => setPaused(false)}
     >
-      <div
-        className="supplier-landing-carousel-track"
-        style={{ transform: `translateX(-${index * 100}%)` }}
-      >
-        {CAROUSEL_IMAGES.map((img, i) => (
-          <div className="supplier-landing-carousel-slide" key={img.src}>
-            <img src={img.src} alt={img.alt} loading={i === 0 ? 'eager' : 'lazy'} />
+      {GALLERY_CARDS.map((card, i) => (
+        <div className="supplier-landing-gallery-card" key={card.src}>
+          <img src={card.src} alt={card.label} loading={i === 0 ? 'eager' : 'lazy'} />
+          <div className="supplier-landing-gallery-logo">
+            <img src="/logo.png" alt="Expedition Go" />
           </div>
-        ))}
-      </div>
+        </div>
+      ))}
+    </div>
+  )
+}
 
-      <div className="supplier-landing-carousel-dots">
-        {CAROUSEL_IMAGES.map((img, i) => (
-          <button
-            key={img.src}
-            type="button"
-            aria-label={`Go to slide ${i + 1}`}
-            className={`supplier-landing-carousel-dot${i === index ? ' active' : ''}`}
-            onClick={() => goTo(i)}
-          />
-        ))}
-      </div>
+interface ScrollDotsProps {
+  count: number
+  scrollRef: React.RefObject<HTMLDivElement | null>
+  className?: string
+}function ScrollDots({ count, scrollRef, className = '' }: ScrollDotsProps) {
+  const [activeIndex, setActiveIndex] = useState(0)
+
+  useEffect(() => {
+    const container = scrollRef.current
+    if (!container) return
+
+    const handleScroll = () => {
+      const scrollLeft = container.scrollLeft
+      const cardWidth = container.firstChild instanceof HTMLElement ? container.firstChild.offsetWidth + 16 : 200
+      const newIndex = Math.round(scrollLeft / cardWidth)
+      setActiveIndex(Math.min(Math.max(newIndex, 0), count - 1))
+    }
+
+    container.addEventListener('scroll', handleScroll, { passive: true })
+    return () => container.removeEventListener('scroll', handleScroll)
+  }, [scrollRef, count])
+
+  const scrollToCard = (index: number) => {
+    const container = scrollRef.current
+    if (!container || !container.firstChild) return
+    const cardWidth = (container.firstChild as HTMLElement).offsetWidth + 16
+    container.scrollTo({ left: index * cardWidth, behavior: 'smooth' })
+  }
+
+  return (
+    <div className={`supplier-landing-scroll-dots ${className}`}>
+      {Array.from({ length: count }).map((_, i) => (
+        <button
+          key={i}
+          type="button"
+          className={`supplier-landing-scroll-dot${i === activeIndex ? ' active' : ''}`}
+          onClick={() => scrollToCard(i)}
+          aria-label={`Go to card ${i + 1}`}
+        />
+      ))}
     </div>
   )
 }
@@ -93,7 +188,7 @@ const HOW_IT_WORKS = [
   {
     icon: ClipboardList,
     title: 'Sign up & list your activity',
-    desc: 'Create your account and add your tour or experience — our system guides you through every step.',
+    desc: 'Create your account and add your tour or experience, and our system guides you through every step.',
   },
   {
     icon: BadgeCheck,
@@ -121,7 +216,7 @@ const WHY_SELL = [
   {
     icon: Megaphone,
     title: 'We handle the marketing',
-    desc: 'Social media and email campaigns put your activity in front of the right travelers — all done for you.',
+    desc: 'Social media and email campaigns put your activity in front of the right travelers, all done for you.',
   },
   {
     icon: ShieldCheck,
@@ -162,7 +257,7 @@ const FAQ_GROUPS: { heading: string; items: FaqItem[] }[] = [
       },
       {
         question: 'What happens when I sign up?',
-        answer: 'After signing up, simply confirm your email to receive access to your in-portal page, where you can add your activity to our platform. The system will guide you through the process and ensure a seamless experience so your activity goes online as soon as possible. Follow our email instructions and also fill out your key business documentation information right away — without it, we\u2019re unable to process payments and you may experience payment delays after you receive bookings.',
+        answer: 'After signing up, simply confirm your email to receive access to your in-portal page, where you can add your activity to our platform. The system will guide you through the process and ensure a seamless experience so your activity goes online as soon as possible. Follow our email instructions and also fill out your key business documentation information right away, as without it we\u2019re unable to process payments and you may experience payment delays after you receive bookings.',
       },
       {
         question: 'Are there any obligations on my side?',
@@ -179,7 +274,7 @@ const FAQ_GROUPS: { heading: string; items: FaqItem[] }[] = [
       },
       {
         question: 'What is the commission fee?',
-        answer: 'It\u2019s a flat 15% commission fee on every tour booked through the platform \u2014 you keep the remaining 85% of each booking. The fee covers platform management, tools, insights, and promoting your activities across dozens of marketing channels.',
+        answer: 'It\u2019s a flat 15% commission fee on every tour booked through the platform, so you keep the remaining 85% of each booking. The fee covers platform management, tools, insights, and promoting your activities across dozens of marketing channels.',
       },
       {
         question: 'How and when do I get paid?',
@@ -235,15 +330,29 @@ function FaqAccordion({ groups }: { groups: typeof FAQ_GROUPS }) {
 
   return (
     <div className="supplier-faq-groups">
-      {groups.map((group) => (
-        <div key={group.heading} className="supplier-faq-group">
+      {groups.map((group, groupIdx) => (
+        <motion.div
+          key={group.heading}
+          className="supplier-faq-group"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-30px' }}
+          transition={{ duration: 0.4, delay: groupIdx * 0.1 }}
+        >
           <h3 className="supplier-faq-group-heading">{group.heading}</h3>
           <div className="supplier-faq-list">
             {group.items.map((item, i) => {
               const key = `${group.heading}-${i}`
               const isOpen = openKey === key
               return (
-                <div key={key} className={`supplier-faq-item${isOpen ? ' supplier-faq-item-open' : ''}`}>
+                <motion.div
+                  key={key}
+                  className={`supplier-faq-item${isOpen ? ' supplier-faq-item-open' : ''}`}
+                  initial={{ opacity: 0, x: -10 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true, margin: '-20px' }}
+                  transition={{ duration: 0.3, delay: i * 0.05 }}
+                >
                   <button
                     type="button"
                     className="supplier-faq-question"
@@ -251,21 +360,40 @@ function FaqAccordion({ groups }: { groups: typeof FAQ_GROUPS }) {
                     aria-expanded={isOpen}
                   >
                     <span>{item.question}</span>
-                    <ChevronDown size={18} className="supplier-faq-chevron" strokeWidth={2.2} />
+                    <motion.span
+                      className="supplier-faq-chevron"
+                      animate={{ rotate: isOpen ? 180 : 0 }}
+                      transition={{ duration: 0.3, ease: 'easeInOut' }}
+                    >
+                      <ChevronDown size={18} strokeWidth={2.2} />
+                    </motion.span>
                   </button>
                   <motion.div
                     className="supplier-faq-answer-wrap"
                     initial={false}
-                    animate={{ height: isOpen ? 'auto' : 0, opacity: isOpen ? 1 : 0 }}
-                    transition={{ duration: 0.25, ease: 'easeInOut' }}
+                    animate={{
+                      height: isOpen ? 'auto' : 0,
+                      opacity: isOpen ? 1 : 0,
+                    }}
+                    transition={{
+                      height: { duration: 0.35, ease: [0.4, 0, 0.2, 1] },
+                      opacity: { duration: 0.25, ease: 'easeInOut' },
+                    }}
                   >
-                    <p className="supplier-faq-answer">{item.answer}</p>
+                    <motion.p
+                      className="supplier-faq-answer"
+                      initial={{ y: -10 }}
+                      animate={{ y: isOpen ? 0 : -10 }}
+                      transition={{ duration: 0.3, delay: isOpen ? 0.1 : 0 }}
+                    >
+                      {item.answer}
+                    </motion.p>
                   </motion.div>
-                </div>
+                </motion.div>
               )
             })}
           </div>
-        </div>
+        </motion.div>
       ))}
     </div>
   )
@@ -274,6 +402,9 @@ function FaqAccordion({ groups }: { groups: typeof FAQ_GROUPS }) {
 export default function SupplierLandingPage({ onOpenAuth }: SupplierLandingPageProps) {
   const navigate = useNavigate()
   const user = useAuthUser()
+  const stepsScrollRef = useRef<HTMLDivElement>(null)
+  const whyScrollRef = useRef<HTMLDivElement>(null)
+  const galleryScrollRef = useRef<HTMLDivElement>(null)
 
   const handleBecomeSupplier = () => {
     if (!user) {
@@ -309,21 +440,23 @@ export default function SupplierLandingPage({ onOpenAuth }: SupplierLandingPageP
 
       {/* Hero */}
       <section className="supplier-landing-hero">
-        <AnimatedWave
-          colorFrom="#1ba845"
-          colorTo="#0f2418"
-          speed={0.8}
-          amplitude={30}
-          wireframe
-          showParticles
-          particleSize={4}
-          resolution={60}
-          opacity={0.35}
-          cameraX={0}
-          cameraY={160}
-          cameraZ={250}
-          className="z-0"
-        />
+        <Suspense fallback={<WaveFallback />}>
+          <AnimatedWave
+            colorFrom="#1ba845"
+            colorTo="#0f2418"
+            speed={0.8}
+            amplitude={30}
+            wireframe
+            showParticles
+            particleSize={4}
+            resolution={45}
+            opacity={0.35}
+            cameraX={0}
+            cameraY={160}
+            cameraZ={250}
+            className="z-0"
+          />
+        </Suspense>
         <div className="supplier-landing-hero-inner">
           <div className="supplier-landing-hero-copy">
             <h1 className="supplier-landing-hero-title">
@@ -342,63 +475,120 @@ export default function SupplierLandingPage({ onOpenAuth }: SupplierLandingPageP
               </a>
             </div>
           </div>
-          <ImageCarousel />
+          <TicketCard />
         </div>
       </section>
 
       {/* How it works */}
       <section className="supplier-landing-section">
         <div className="supplier-landing-container">
-          <div className="supplier-landing-section-head">
+          <motion.div
+            className="supplier-landing-section-head"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-50px' }}
+            transition={{ duration: 0.5 }}
+          >
             <span className="supplier-landing-eyebrow">How it works</span>
             <h2 className="supplier-landing-section-title">From sign-up to your first booking</h2>
-          </div>
-          <div className="supplier-landing-steps">
+          </motion.div>
+          <div className="supplier-landing-steps" ref={stepsScrollRef}>
             {HOW_IT_WORKS.map((step, i) => (
-              <div key={step.title} className="supplier-landing-step-card">
+              <motion.div
+                key={step.title}
+                className="supplier-landing-step-card"
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-50px' }}
+                transition={{ duration: 0.5, delay: i * 0.1 }}
+              >
                 <span className="supplier-landing-step-number">{i + 1}</span>
                 <div className="supplier-landing-step-icon">
                   <step.icon size={22} strokeWidth={1.8} />
                 </div>
                 <h3 className="supplier-landing-step-title">{step.title}</h3>
                 <p className="supplier-landing-step-desc">{step.desc}</p>
-              </div>
+              </motion.div>
             ))}
           </div>
+          <ScrollDots count={HOW_IT_WORKS.length} scrollRef={stepsScrollRef} className="supplier-landing-steps-dots" />
         </div>
       </section>
 
       {/* Why sell with us */}
       <section className="supplier-landing-section supplier-landing-section-alt">
         <div className="supplier-landing-container">
-          <div className="supplier-landing-section-head">
+          <motion.div
+            className="supplier-landing-section-head"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-50px' }}
+            transition={{ duration: 0.5 }}
+          >
             <span className="supplier-landing-eyebrow">Why Expedition Go Tours</span>
             <h2 className="supplier-landing-section-title">Built to help your business grow</h2>
-          </div>
-          <div className="supplier-landing-why-grid">
-            {WHY_SELL.map((item) => (
-              <div key={item.title} className="supplier-landing-why-card">
+          </motion.div>
+          <div className="supplier-landing-why-grid" ref={whyScrollRef}>
+            {WHY_SELL.map((item, i) => (
+              <motion.div
+                key={item.title}
+                className="supplier-landing-why-card"
+                initial={{ opacity: 0, scale: 0.95 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true, margin: '-50px' }}
+                transition={{ duration: 0.4, delay: i * 0.08 }}
+              >
                 <div className="supplier-landing-why-icon">
                   <item.icon size={22} strokeWidth={1.8} />
                 </div>
-                <h3 className="supplier-landing-why-title">{item.title}</h3>
-                <p className="supplier-landing-why-desc">{item.desc}</p>
-              </div>
+                <div className="supplier-landing-why-content">
+                  <h3 className="supplier-landing-why-title">{item.title}</h3>
+                  <p className="supplier-landing-why-desc">{item.desc}</p>
+                </div>
+              </motion.div>
             ))}
           </div>
+          <ScrollDots count={WHY_SELL.length} scrollRef={whyScrollRef} className="supplier-landing-why-dots" />
+        </div>
+      </section>
+
+      {/* Gallery carousel */}
+      <section className="supplier-landing-section supplier-landing-gallery-section">
+        <div className="supplier-landing-container">
+          <motion.div
+            className="supplier-landing-section-head"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-50px' }}
+            transition={{ duration: 0.5 }}
+          >
+            <span className="supplier-landing-eyebrow">Gallery</span>
+            <h2 className="supplier-landing-section-title">A glimpse of the experiences you can offer</h2>
+            <p className="supplier-landing-section-desc">
+              From guided tours to adventure and culture — show travelers what they can expect.
+            </p>
+          </motion.div>
+          <GalleryCarousel scrollRef={galleryScrollRef} />
+          <ScrollDots count={GALLERY_CARDS.length} scrollRef={galleryScrollRef} className="supplier-landing-gallery-dots" />
         </div>
       </section>
 
       {/* FAQ */}
       <section className="supplier-landing-section" id="supplier-landing-faq">
         <div className="supplier-landing-container supplier-landing-faq-container">
-          <div className="supplier-landing-section-head">
+          <motion.div
+            className="supplier-landing-section-head"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-50px' }}
+            transition={{ duration: 0.5 }}
+          >
             <span className="supplier-landing-eyebrow">FAQ</span>
             <h2 className="supplier-landing-section-title">Frequently asked questions</h2>
             <p className="supplier-landing-section-desc">
               Everything you need to know before you list your first experience.
             </p>
-          </div>
+          </motion.div>
           <FaqAccordion groups={FAQ_GROUPS} />
         </div>
       </section>

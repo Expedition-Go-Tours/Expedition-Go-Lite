@@ -29,7 +29,7 @@ export default function PrivacyPolicyPage() {
           <ul>
             <li>Account details (name, email and profile information) when you sign in.</li>
             <li>Booking information, including traveller details, dates and tour selections.</li>
-            <li>Payment information, which is processed by our payment providers — we do not store full card details.</li>
+            <li>Payment information, which is processed by our payment providers, as we do not store full card details.</li>
             <li>Your preferences, such as currency and language.</li>
             <li>Optional location information, used to personalise recommendations and show nearby experiences.</li>
           </ul>
@@ -53,7 +53,7 @@ export default function PrivacyPolicyPage() {
 
           <h2>Sharing your information</h2>
           <p>
-            We share information only where it's needed to provide our service — for example, with
+            We share information only where it's needed to provide our service, for example, with
             the tour supplier to fulfil your booking, and with payment providers (such as card
             networks and digital wallets) to process payments. We do not sell your personal data.
           </p>
