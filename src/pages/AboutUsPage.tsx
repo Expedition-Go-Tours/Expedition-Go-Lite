@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef, type ReactNode } from 'react'
+import { useEffect, useState, useCallback, useRef, useSyncExternalStore, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence, type Variants } from 'framer-motion'
@@ -73,17 +73,17 @@ const stagger: Variants = {
 }
 
 function useIsMobile(query = '(max-width: 900px)') {
-  const [matches, setMatches] = useState(
-    () => typeof window !== 'undefined' && window.matchMedia(query).matches,
+  // useSyncExternalStore is the linter- and production-approved way to track a
+  // matchMedia query (no sync setState-in-effect, correct SSR/hydration).
+  return useSyncExternalStore(
+    (callback) => {
+      const mq = window.matchMedia(query)
+      mq.addEventListener('change', callback)
+      return () => mq.removeEventListener('change', callback)
+    },
+    () => window.matchMedia(query).matches,
+    () => false,
   )
-  useEffect(() => {
-    const mq = window.matchMedia(query)
-    const handler = (e: MediaQueryListEvent) => setMatches(e.matches)
-    setMatches(mq.matches)
-    mq.addEventListener('change', handler)
-    return () => mq.removeEventListener('change', handler)
-  }, [query])
-  return matches
 }
 
 /**

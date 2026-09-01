@@ -87,18 +87,19 @@ export default function TopAttractionsNearbySection({ preloaded }: Props) {
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
   const { data: attractionsData, isLoading } = useAttractions(12)
-  const [locationRequested, setLocationRequested] = useState(false)
+  const locationRequestedRef = useRef(false)
 
   const attractions = (preloaded ?? attractionsData) ?? []
 
   // Request geolocation permission once to store location for the hook.
   // Backend now handles proximity sorting — this just ensures the stored
-  // location is available for subsequent API calls.
+  // location is available for subsequent API calls. (Ref guard — no re-render
+  // needed for a one-time request.)
   useEffect(() => {
-    if (locationRequested) return
+    if (locationRequestedRef.current) return
     if (!navigator.geolocation) return
 
-    setLocationRequested(true)
+    locationRequestedRef.current = true
     navigator.geolocation.getCurrentPosition(
       (position) => {
         storeLocation(position.coords.latitude, position.coords.longitude)
@@ -106,7 +107,7 @@ export default function TopAttractionsNearbySection({ preloaded }: Props) {
       () => { /* permission denied — hook will use global popularity sort */ },
       { enableHighAccuracy: false, timeout: 5000, maximumAge: 300000 },
     )
-  }, [locationRequested])
+  }, [])
 
   const updateArrows = useCallback(() => {
     const el = scrollRef.current

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Check, CalendarDays, Clock, Users, MapPin, CreditCard, ShieldCheck, Phone, Mail, Printer, Star, Ticket, Globe, AlertTriangle } from 'lucide-react'
@@ -49,7 +49,7 @@ interface ConfirmationBooking {
   taxes?: number | string
   fees?: number | string
   discounts?: number | string
-  total?: number | string
+  grossAmount?: number | string
   currency?: string
   specialRequests?: string | null
   paidAt?: string | null
@@ -57,12 +57,18 @@ interface ConfirmationBooking {
   tour?: ConfirmationTour
   /** Resolved pickup selection snapshotted at booking time (server-validated). */
   pickup?: {
+    status?: 'deferred' | 'selected' | 'confirmed'
     mode?: string
+    pickupLater?: boolean
+    skipValidation?: boolean
     areaName?: string
     locationName?: string
+    place?: string
     address?: { name?: string; address?: string } | null
     time?: string
     instructions?: string
+    lat?: number | null
+    lng?: number | null
   } | null
 }
 
@@ -105,23 +111,23 @@ export default function BookingConfirmationPage() {
   const refetch = isSessionMode ? sessionQuery.refetch : bookingQuery.refetch
 
   // ── Session mode: redirect to confirmation once materialized ────────
-  const [navigatedToBooking, setNavigatedToBooking] = useState(false)
+  const navigatedToBookingRef = useRef(false)
   useEffect(() => {
-    if (isSessionMode && sessionBooking?.id && !navigatedToBooking) {
+    if (isSessionMode && sessionBooking?.id && !navigatedToBookingRef.current) {
       // Update the URL to the canonical booking confirmation path so
       // deep-links and refreshes work (replaceState avoids history pollution).
+      navigatedToBookingRef.current = true
       window.history.replaceState({}, '', `/booking/confirmation/${sessionBooking.id}`)
-      setNavigatedToBooking(true)
     }
-  }, [isSessionMode, sessionBooking?.id, navigatedToBooking])
+  }, [isSessionMode, sessionBooking?.id])
 
   // ── Session mode: stop polling once terminal ────────────────────────
-  const [sessionPollStopped, setSessionPollStopped] = useState(false)
+  const sessionPollStoppedRef = useRef(false)
   useEffect(() => {
-    if (isSessionMode && (sessionStatus === 'EXPIRED' || sessionStatus === 'REFUNDED') && !sessionPollStopped) {
-      setSessionPollStopped(true)
+    if (isSessionMode && (sessionStatus === 'EXPIRED' || sessionStatus === 'REFUNDED') && !sessionPollStoppedRef.current) {
+      sessionPollStoppedRef.current = true
     }
-  }, [isSessionMode, sessionStatus, sessionPollStopped])
+  }, [isSessionMode, sessionStatus])
 
   // ── Legacy mode: poll PENDING pay-now bookings (shouldn't happen with
   //    the new hold-based flow, but kept for backwards compat). ──────────
@@ -473,17 +479,48 @@ export default function BookingConfirmationPage() {
                 <div className="confirmation-grid-item confirmation-grid-item-wide">
                   <MapPin size={16} />
                   <div>
-                    <span className="confirmation-grid-label">{b.pickup.areaName ? t('tourDetail.pickupAreas') : t('confirmation.meetingPointLabel')}</span>
-                    <span className="confirmation-grid-value">
-                      {b.pickup.areaName || b.pickup.locationName || b.pickup.address?.name || b.pickup.address?.address || 'Pickup arranged after booking'}
-                    </span>
-                    {b.pickup.time && <span className="confirmation-grid-sub">Pickup {b.pickup.time}</span>}
-                    {b.pickup.instructions && <span className="confirmation-grid-sub">{b.pickup.instructions}</span>}
-                    {!b.pickup.areaName && !b.pickup.locationName && !b.pickup.address?.name && (
-                      <span className="confirmation-grid-sub">
-                        The tour operator will confirm your exact pickup point and time directly.
-                      </span>
-                    )}
+                    {(() => {
+                      const deferred =
+                        b.pickup?.pickupLater ||
+                        (b.pickup as { skipValidation?: boolean })?.skipValidation ||
+                        b.pickup?.status === 'deferred'
+                      const hasPlace = !!(b.pickup?.areaName || b.pickup?.locationName || b.pickup?.address?.name || b.pickup?.address?.address)
+                      if (deferred || !hasPlace) {
+                        return (
+                          <>
+                            <span className="confirmation-grid-label">{t('confirmation.meetingPointLabel')}</span>
+                            <span className="confirmation-grid-value">
+                              {t('confirmation.pickupPending', 'Pickup to be arranged')}
+                            </span>
+                            <span className="confirmation-grid-sub">
+                              The tour operator will contact you to confirm your exact pickup point and time.
+                            </span>
+                            <button
+                              onClick={() => navigate(`/booking/${b.id}/pickup`)}
+                              className="mt-2 inline-flex items-center gap-1 rounded-full bg-emerald-600 px-4 py-1.5 text-xs font-semibold text-white transition hover:brightness-110"
+                            >
+                              Add pickup location
+                            </button>
+                          </>
+                        )
+                      }
+                      return (
+                        <>
+                          <span className="confirmation-grid-label">{b.pickup?.areaName ? t('tourDetail.pickupAreas') : t('confirmation.meetingPointLabel')}</span>
+                          <span className="confirmation-grid-value">
+                            {b.pickup?.areaName || b.pickup?.locationName || b.pickup?.address?.name || b.pickup?.address?.address}
+                          </span>
+                          {b.pickup?.time && <span className="confirmation-grid-sub">Pickup {b.pickup.time}</span>}
+                          {b.pickup?.instructions && <span className="confirmation-grid-sub">{b.pickup.instructions}</span>}
+                          <button
+                            onClick={() => navigate(`/booking/${b.id}/pickup`)}
+                            className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 underline underline-offset-2"
+                          >
+                            Update pickup
+                          </button>
+                        </>
+                      )
+                    })()}
                   </div>
                 </div>
               </div>
@@ -562,7 +599,7 @@ export default function BookingConfirmationPage() {
             )}
             <div className="confirmation-price-total">
               <span>{t('confirmation.total')}</span>
-              <span>{currencySymbol(b.currency)}{num(b.total).toFixed(2)}</span>
+              <span>{currencySymbol(b.currency)}{num(b.grossAmount).toFixed(2)}</span>
             </div>
           </div>
         </div>

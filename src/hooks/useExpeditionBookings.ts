@@ -208,7 +208,7 @@ interface ConfirmBookingResponse {
     id: string
     bookingNumber: string
     status: string
-    total: number
+    grossAmount?: number | string
     currency: string
   }
   /** Pay-now: hosted Stripe Checkout redirect. The frontend navigates the browser to `checkout.url`. */
@@ -249,7 +249,7 @@ interface BookingBySessionResponse {
     id: string
     bookingNumber: string
     status: string
-    total: number
+    grossAmount?: number | string
     currency: string
     tour: { id: string; title: string; slug: string; coverPhoto: string | null }
     customer: { id: string; name: string; email: string }
@@ -295,6 +295,8 @@ export interface ExpeditionBookingSummary {
   status: string
   paymentTiming?: 'now' | 'later'
   paymentStatus?: string
+  /** True when the customer chose "pickup later" (no pickup location yet). */
+  pickupDeferred?: boolean
   total: number
   currency: string
   createdAt: string
@@ -306,10 +308,11 @@ interface RawBookingListRecord {
   status: string
   paymentTiming?: 'now' | 'later'
   paymentStatus?: string
-  total: number | string
+  grossAmount: number | string
   currency: string
   createdAt: string
   travelDate: string
+  pickup?: Record<string, unknown> | null
   tour: {
     id: string
     title: string
@@ -336,7 +339,14 @@ function mapBookingSummary(b: RawBookingListRecord): ExpeditionBookingSummary {
     status: b.status,
     paymentTiming: b.paymentTiming,
     paymentStatus: b.paymentStatus,
-    total: Number(b.total),
+    pickupDeferred: !!(
+      b.pickup &&
+      typeof b.pickup === 'object' &&
+      ((b.pickup as Record<string, unknown>).pickupLater ||
+        (b.pickup as Record<string, unknown>).skipValidation ||
+        (b.pickup as Record<string, unknown>).status === 'deferred')
+    ),
+    total: Number(b.grossAmount),
     currency: b.currency,
     createdAt: b.createdAt,
   }
@@ -470,6 +480,35 @@ export function useCancelBooking() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['expedition', 'bookings'] })
+    },
+  })
+}
+
+/**
+ * Customer self-service pickup update ("Choose pickup location later"
+ * completion flow) via PATCH /expedition/bookings/:id/pickup. Sends the same
+ * selection shapes as checkout ({ skipValidation: true } | { mode, areaName }
+ * | { mode, address }) — the backend re-validates against the tour's current
+ * pickup zones/locations.
+ */
+export function useUpdateBookingPickup() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (input: { id: string; pickup: Record<string, unknown> }) => {
+      const res = await fetchWithAuth(`/expedition/bookings/${encodeURIComponent(input.id)}/pickup`, {
+        method: 'PATCH',
+        body: JSON.stringify({ pickup: input.pickup }),
+      })
+      const payload = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        throw new Error(payload.message || `Request failed (${res.status})`)
+      }
+      return (payload.data?.pickup ?? payload) as Record<string, unknown>
+    },
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['expedition', 'bookings'] })
+      queryClient.invalidateQueries({ queryKey: ['expedition', 'bookings', vars.id, 'detail'] })
     },
   })
 }
