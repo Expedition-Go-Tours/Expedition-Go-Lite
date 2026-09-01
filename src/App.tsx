@@ -37,6 +37,7 @@ const SupplierRegisterPage = lazy(() => import('./pages/supplier/SupplierRegiste
 const SupplierLandingPage = lazy(() => import('./pages/supplier/SupplierLandingPage'))
 const BookingPage = lazy(() => import('./pages/BookingPage'))
 const BookingConfirmationPage = lazy(() => import('./pages/BookingConfirmationPage'))
+const BookingPickupPage = lazy(() => import('./pages/BookingPickupPage'))
 const HelpCentrePage = lazy(() => import('./pages/HelpCentrePage'))
 const ContactUsPage = lazy(() => import('./pages/ContactUsPage'))
 const RefundPolicyPage = lazy(() => import('./pages/RefundPolicyPage'))
@@ -217,6 +218,7 @@ function AppContent() {
           <Route path="/:tourId/booking" element={<BookingPage />} />
           <Route path="/booking/confirmation/:bookingId" element={<BookingConfirmationPage />} />
           <Route path="/booking/confirmation" element={<BookingConfirmationPage />} />
+          <Route path="/booking/:bookingId/pickup" element={<BookingPickupPage />} />
           <Route path="/login" element={
             <AuthForm
               initialMode="signin"

@@ -367,6 +367,9 @@ export default function BookingHistory() {
                       {booking.paymentTiming === 'later' && booking.paymentStatus !== 'SUCCEEDED' && (
                         <span className="booking-awaiting-payment">Awaiting payment</span>
                       )}
+                      {booking.pickupDeferred && (
+                        <span className="booking-awaiting-payment">Pickup to be arranged</span>
+                      )}
                     </div>
 
                     <div className="booking-item-content">
@@ -559,9 +562,50 @@ export default function BookingHistory() {
                         </div>
                       </div>
 
-                      {(hasMeeting || hasPickup) && (
+                      {(hasMeeting || hasPickup || detail?.pickup) && (
                         <div className="booking-modal-section">
                           <span className="booking-modal-section-title">Meeting &amp; Pickup</span>
+
+                          {(() => {
+                            const p =
+                              detail?.pickup && typeof detail.pickup === 'object'
+                                ? (detail.pickup as Record<string, unknown>)
+                                : null
+                            if (!p) return null
+                            const deferred =
+                              !!p.pickupLater || !!p.skipValidation || p.status === 'deferred'
+                            const address =
+                              p.address && typeof p.address === 'object'
+                                ? (p.address as Record<string, unknown>)
+                                : null
+                            const locationLabel =
+                              String(p.place || p.areaName || p.locationName || address?.name || address?.address || '').trim()
+                            if (deferred || !locationLabel) {
+                              return (
+                                <div className="rounded-lg border border-amber-200 bg-amber-50 px-3.5 py-3">
+                                  <p className="text-sm font-semibold text-amber-800">
+                                    Awaiting pickup details — we&rsquo;ll contact you to arrange it.
+                                  </p>
+                                  <button
+                                    onClick={() => navigate(`/booking/${detail.id}/pickup`)}
+                                    className="mt-2 inline-flex items-center gap-1 rounded-full bg-emerald-600 px-4 py-1.5 text-xs font-semibold text-white transition hover:brightness-110"
+                                  >
+                                    Add pickup location
+                                  </button>
+                                </div>
+                              )
+                            }
+                            return (
+                              <div className="mb-2 rounded-lg border border-emerald-100 bg-emerald-50/50 px-3.5 py-3">
+                                <p className="text-sm font-semibold text-slate-800">{locationLabel}</p>
+                                {!!p.time && <p className="mt-0.5 text-xs text-slate-600">Pickup {String(p.time)}</p>}
+                                {!!p.instructions && (
+                                  <p className="mt-1 text-xs leading-relaxed text-slate-500">{String(p.instructions)}</p>
+                                )}
+                              </div>
+                            )
+                          })()}
+
                           {hasMeeting && (
                             <p className="booking-modal-text">
                               <strong>{meeting.meetingPoint}</strong>
@@ -588,7 +632,7 @@ export default function BookingHistory() {
                             {price(detail.taxes) > 0 && (<><span>Taxes</span><span>{sym(detail.currency)}{price(detail.taxes).toFixed(2)}</span></>)}
                             {price(detail.discounts) > 0 && (<><span>Discount</span><span>-{sym(detail.currency)}{price(detail.discounts).toFixed(2)}</span></>)}
                             <span className="booking-modal-price-total">Total</span>
-                            <span className="booking-modal-price-total">{sym(detail.currency)}{price(detail.total).toFixed(2)}</span>
+                            <span className="booking-modal-price-total">{sym(detail.currency)}{price(detail.grossAmount).toFixed(2)}</span>
                           </div>
                         </div>
                       )}
