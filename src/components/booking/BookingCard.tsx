@@ -1,5 +1,14 @@
 import { useState, type MouseEvent } from 'react'
-import { CalendarDays, Users, MapPin, Ticket, ChevronRight, Copy, Check, Clock, CreditCard } from 'lucide-react'
+import {
+  CalendarDays,
+  Users,
+  MapPin,
+  Ticket,
+  ChevronRight,
+  Copy,
+  Check,
+  Clock,
+} from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { currencySymbol } from '../../lib/currencySymbol'
 import type { ExpeditionBookingSummary } from '../../hooks/useExpeditionBookings'
@@ -20,14 +29,17 @@ export default function BookingCard({ booking }: BookingCardProps) {
   const meta = bookingStatusMeta(booking.status, booking.paymentTiming, booking.paymentStatus)
   const open = () => navigate(`/dashboard/bookings/${booking.id}`)
   const party = partyLabel(booking.party)
+  const isPaid = booking.paymentStatus === 'SUCCEEDED'
+  const symbol = booking.currency === 'GHS' ? 'GH₵' : currencySymbol(booking.currency)
+  const amount = `${symbol}${booking.total.toFixed(2)}`
+  const time = booking.selectedTime ? formatTimeString(booking.selectedTime) : ''
 
   const copyRef = async (e: MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation()
-    const ref = booking.bookingNumber
     let ok = false
     try {
       if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(ref)
+        await navigator.clipboard.writeText(booking.bookingNumber)
         ok = true
       }
     } catch {
@@ -35,7 +47,7 @@ export default function BookingCard({ booking }: BookingCardProps) {
     }
     if (!ok) {
       const el = document.createElement('textarea')
-      el.value = ref
+      el.value = booking.bookingNumber
       el.setAttribute('readonly', '')
       el.style.position = 'fixed'
       el.style.opacity = '0'
@@ -54,10 +66,6 @@ export default function BookingCard({ booking }: BookingCardProps) {
     }
   }
 
-  const canManage = booking.status === 'PENDING' || booking.status === 'CONFIRMED'
-  const isPaid = booking.paymentStatus === 'SUCCEEDED'
-  const amount = `${booking.currency === 'GHS' ? 'GH₵' : currencySymbol(booking.currency)}${booking.total.toFixed(2)}`
-
   return (
     <article className="bk-card" onClick={open}>
       <div className="bk-media">
@@ -65,81 +73,79 @@ export default function BookingCard({ booking }: BookingCardProps) {
           <img src={booking.tourImage} alt="" loading="lazy" />
         ) : (
           <div className="bk-media-fallback">
-            <MapPin size={20} />
+            <Ticket size={24} />
           </div>
         )}
       </div>
 
       <div className="bk-body">
-        <div className="bk-top">
+        <div className="bk-topline">
           <span className={`bk-chip bk-chip-${meta.kind}`}>
             <span className="bk-chip-dot" />
             {meta.label}
           </span>
-          {booking.pickupDeferred && canManage && (
+          {booking.pickupDeferred && (
             <span className="bk-chip bk-chip-attention-soft">Pickup to be arranged</span>
           )}
+          <span className={`bk-amount${isPaid ? '' : ' is-reserved'}`}>
+            {isPaid ? `Paid ${amount}` : `${amount} reserved`}
+          </span>
         </div>
 
         <h3 className="bk-title">{booking.tourTitle}</h3>
 
-        <p className="bk-ref">
-          <Ticket size={13} />
-          <code>{booking.bookingNumber}</code>
-          <button
-            type="button"
-            className={`bk-copy${copied ? ' is-copied' : ''}`}
-            onClick={copyRef}
-            aria-label={`Copy booking reference ${booking.bookingNumber}`}
-          >
-            {copied ? <Check size={12} /> : <Copy size={12} />}
-            {copied ? 'Copied' : 'Copy'}
-          </button>
-        </p>
-
-        <div className="bk-meta">
-          <span className="bk-meta-date">
+        <div className="bk-facts">
+          <span className="bk-fact bk-fact-date">
             <CalendarDays size={14} />
             {formatMediumDate(booking.travelDate)}
-            {booking.selectedTime && (
-              <>
-                <span className="bk-meta-sep">·</span>
-                <span className="bk-meta-time">
-                  <Clock size={12} />
-                  {formatTimeString(booking.selectedTime)}
-                </span>
-              </>
+            {time && (
+              <span className="bk-fact-time">
+                <Clock size={12} />
+                {time}
+              </span>
             )}
           </span>
           {party && (
-            <span className="bk-meta-item">
+            <span className="bk-fact">
               <Users size={14} />
               {party}
             </span>
           )}
           {booking.tourLocation && (
-            <span className="bk-meta-item">
+            <span className="bk-fact">
               <MapPin size={14} />
               {booking.tourLocation}
             </span>
           )}
-          <span className={`bk-meta-item bk-meta-paid${isPaid ? '' : ' is-reserved'}`}>
-            <CreditCard size={14} />
-            {isPaid ? `Paid ${amount}` : `Total ${amount}`}
-          </span>
         </div>
-      </div>
 
-      <div className="bk-actions">
-        {canManage && (
-          <button type="button" className="bk-btn bk-btn-secondary" onClick={(e) => { e.stopPropagation(); open() }}>
-            Manage booking
+        <div className="bk-foot">
+          <p className="bk-ref">
+            <Ticket size={12} />
+            <code>{booking.bookingNumber}</code>
+            <button
+              type="button"
+              className={`bk-copy${copied ? ' is-copied' : ''}`}
+              onClick={copyRef}
+              aria-label={`Copy booking reference ${booking.bookingNumber}`}
+            >
+              {copied ? <Check size={12} /> : <Copy size={12} />}
+              {copied ? 'Copied' : 'Copy'}
+            </button>
+          </p>
+
+          <button
+            type="button"
+            className="bk-open"
+            onClick={(e) => {
+              e.stopPropagation()
+              open()
+            }}
+          >
+            View voucher / ticket
+            <ChevronRight size={15} />
           </button>
-        )}
-        <button type="button" className="bk-btn bk-btn-primary" onClick={(e) => { e.stopPropagation(); open() }}>
-          View voucher / ticket
-          <ChevronRight size={15} />
-        </button>
+        </div>
       </div>
     </article>
   )
