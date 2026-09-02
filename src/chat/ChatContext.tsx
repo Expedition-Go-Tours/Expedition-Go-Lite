@@ -391,11 +391,26 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     if (!supportId) {
       throw new Error('support_unavailable')
     }
+    // Reuse any existing thread with the support identity (it can be the same
+    // user as a booking operator) so support never spawns a duplicate empty
+    // conversation next to the real one. Prefer the thread with history.
+    const existing = conversations
+      .filter((c) => c.participants?.some((p) => p.userId === supportId))
+      .sort((a, b) => {
+        const aHas = (a.messages?.length ?? 0) > 0 ? 1 : 0
+        const bHas = (b.messages?.length ?? 0) > 0 ? 1 : 0
+        if (aHas !== bHas) return bHas - aHas
+        return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+      })[0]
+    if (existing) {
+      openConversation(existing.id)
+      return
+    }
     await startChat(
       { id: supportId, name: t('supportChat.expeditionSupport') },
       SUPPORT_CONVERSATION_TYPE,
     )
-  }, [startChat, t])
+  }, [conversations, openConversation, startChat, t])
 
   const closeConversation = useCallback(() => {
     if (activeRef.current) {
