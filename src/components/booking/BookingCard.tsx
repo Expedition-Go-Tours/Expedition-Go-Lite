@@ -31,6 +31,7 @@ export default function BookingCard({ booking, onOpen }: BookingCardProps) {
   const symbol = booking.currency === 'GHS' ? 'GHâ‚µ' : currencySymbol(booking.currency)
   const amount = `${symbol}${booking.total.toFixed(2)}`
   const time = booking.selectedTime ? formatTimeString(booking.selectedTime) : ''
+  const canManage = booking.status === 'PENDING' || booking.status === 'CONFIRMED'
 
   const copyRef = async (e: MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation()
@@ -92,6 +93,20 @@ export default function BookingCard({ booking, onOpen }: BookingCardProps) {
 
         <h3 className="bk-title">{booking.tourTitle}</h3>
 
+        <p className="bk-ref">
+          <Ticket size={12} />
+          <code>{booking.bookingNumber}</code>
+          <button
+            type="button"
+            className={`bk-copy${copied ? ' is-copied' : ''}`}
+            onClick={copyRef}
+            aria-label={`Copy booking reference ${booking.bookingNumber}`}
+          >
+            {copied ? <Check size={12} /> : <Copy size={12} />}
+            {copied ? 'Copied' : 'Copy'}
+          </button>
+        </p>
+
         <div className="bk-facts">
           <span className="bk-fact bk-fact-date">
             <CalendarDays size={14} />
@@ -117,21 +132,19 @@ export default function BookingCard({ booking, onOpen }: BookingCardProps) {
           )}
         </div>
 
-        <div className="bk-foot">
-          <p className="bk-ref">
-            <Ticket size={12} />
-            <code>{booking.bookingNumber}</code>
+        <div className="bk-actions">
+          {canManage && (
             <button
               type="button"
-              className={`bk-copy${copied ? ' is-copied' : ''}`}
-              onClick={copyRef}
-              aria-label={`Copy booking reference ${booking.bookingNumber}`}
+              className="bk-btn bk-btn-secondary bk-btn-sm bk-manage"
+              onClick={(e) => {
+                e.stopPropagation()
+                onOpen()
+              }}
             >
-              {copied ? <Check size={12} /> : <Copy size={12} />}
-              {copied ? 'Copied' : 'Copy'}
+              Manage booking
             </button>
-          </p>
-
+          )}
           <button
             type="button"
             className="bk-open"
