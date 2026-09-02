@@ -297,6 +297,10 @@ export interface ExpeditionBookingSummary {
   paymentStatus?: string
   /** True when the customer chose "pickup later" (no pickup location yet). */
   pickupDeferred?: boolean
+  /** Booked time slot (when the tour uses fixed time slots). */
+  selectedTime?: string | null
+  /** Traveler party breakdown parsed from the booking's travelers JSON. */
+  party?: { adults: number; children: number; infants: number; total: number }
   total: number
   currency: string
   createdAt: string
@@ -312,6 +316,8 @@ interface RawBookingListRecord {
   currency: string
   createdAt: string
   travelDate: string
+  selectedTime?: string | null
+  travelers?: unknown
   pickup?: Record<string, unknown> | null
   tour: {
     id: string
@@ -346,6 +352,17 @@ function mapBookingSummary(b: RawBookingListRecord): ExpeditionBookingSummary {
         (b.pickup as Record<string, unknown>).skipValidation ||
         (b.pickup as Record<string, unknown>).status === 'deferred')
     ),
+    selectedTime: typeof b.selectedTime === 'string' ? b.selectedTime : null,
+    party: (() => {
+      const t = (b.travelers && typeof b.travelers === 'object' ? b.travelers : {}) as Record<string, unknown>
+      const count = (v: unknown) => (typeof v === 'number' && v > 0 ? v : 0)
+      const adults = count(t.adults)
+      const children = count(t.children)
+      const infants = count(t.infants)
+      const details = Array.isArray(t.details) ? t.details : null
+      const total = details && details.length > 0 ? details.length : adults + children + infants
+      return { adults, children, infants, total }
+    })(),
     total: Number(b.grossAmount),
     currency: b.currency,
     createdAt: b.createdAt,
