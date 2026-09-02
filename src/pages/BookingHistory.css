@@ -353,6 +353,15 @@
   font-weight: 600;
 }
 
+/* Phone-only price (amount only, no "Paid" label). Hidden on larger screens. */
+.bk-amount-phone {
+  display: none;
+}
+
+.bk-open-label-mobile {
+  display: none;
+}
+
 .bk-foot-actions {
   display: flex;
   align-items: center;
@@ -391,7 +400,7 @@
 }
 
 /* ---------- Card responsiveness ---------- */
-@media (max-width: 959px) {
+@media (max-width: 959px) and (min-width: 761px) {
   .bk-card {
     grid-template-columns: 200px 1fr;
   }
@@ -401,60 +410,43 @@
   }
 }
 
-@media (max-width: 700px) {
+/* Mobile: vertical (stacked) card — full-width image on top, content below. */
+@media (max-width: 760px) {
   .bk-card {
-    grid-template-columns: 170px 1fr;
-  }
-
-  .bk-body {
-    padding: 14px 16px 12px;
-  }
-}
-
-/* Mobile: GetYourGuide-style compact row. */
-@media (max-width: 640px) {
-  .bk-card {
-    grid-template-columns: clamp(96px, 30vw, 128px) 1fr;
-    column-gap: 14px;
-    align-items: start;
-    border-radius: 16px;
+    grid-template-areas: 'media' 'body';
+    grid-template-columns: 1fr;
   }
 
   .bk-media {
-    align-self: start;
-    aspect-ratio: 4 / 3;
+    width: 100%;
+    height: clamp(190px, 46vw, 260px);
     min-height: 0;
     max-height: none;
-    border-radius: 12px;
+    align-self: auto;
+    aspect-ratio: auto;
+    border-radius: 0;
+  }
+
+  .bk-media img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
   }
 
   .bk-body {
-    padding: 12px 14px 12px 0;
-  }
-
-  .bk-title-row {
-    align-items: flex-start;
+    padding: 16px 18px 14px;
   }
 
   .bk-title {
-    font-size: 15px;
-    -webkit-line-clamp: 2;
+    font-size: 16px;
   }
+}
 
-  .bk-title-row .bk-chip {
-    padding: 3px 9px;
-    font-size: 10.5px;
-  }
-
-  .bk-meta {
-    margin-top: 6px;
-    font-size: 12.5px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  /* Reference + copy live on the workspace page on mobile. */
+/* Phones: single "Details" action; reference/copy live on the workspace. */
+@media (max-width: 640px) {
   .bk-ref {
     display: none;
   }
@@ -463,34 +455,41 @@
     display: none;
   }
 
-  .bk-foot {
-    margin-top: 10px;
-    padding-top: 10px;
-    border-top: 1px solid var(--bv-border);
+  .bk-amount-desktop {
+    display: none;
   }
 
-  .bk-amount {
-    font-size: 12px;
-  }
-
-  .bk-open {
+  .bk-amount-phone {
+    display: inline-block;
+    font-family: var(--font-body);
     font-size: 13px;
-    padding-left: 0;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: var(--bv-forest);
+    white-space: nowrap;
+  }
+
+  .bk-amount-phone.is-reserved {
+    color: var(--bv-text);
+    font-weight: 600;
+  }
+
+  .bk-open-label-desktop {
+    display: none;
+  }
+
+  .bk-open-label-mobile {
+    display: inline;
   }
 }
 
 @media (max-width: 380px) {
-  .bk-card {
-    grid-template-columns: clamp(88px, 32vw, 104px) 1fr;
-    column-gap: 12px;
+  .bk-media {
+    height: clamp(150px, 42vw, 200px);
   }
 
   .bk-body {
-    padding: 10px 12px 10px 0;
-  }
-
-  .bk-title {
-    -webkit-line-clamp: 3;
+    padding: 14px 14px 12px;
   }
 }
 

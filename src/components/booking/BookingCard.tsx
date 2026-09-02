@@ -95,9 +95,10 @@ export default function BookingCard({ booking, onOpen }: BookingCardProps) {
         </p>
 
         <div className="bk-foot">
-          <span className={`bk-amount${isPaid ? '' : ' is-reserved'}`}>
+          <span className={`bk-amount bk-amount-desktop${isPaid ? '' : ' is-reserved'}`}>
             {isPaid ? `Paid ${amount}` : amount}
           </span>
+          <span className={`bk-amount-phone${isPaid ? '' : ' is-reserved'}`}>{amount}</span>
 
           <div className="bk-foot-actions">
             {canManage && (
@@ -120,7 +121,8 @@ export default function BookingCard({ booking, onOpen }: BookingCardProps) {
                 onOpen()
               }}
             >
-              View voucher / ticket
+              <span className="bk-open-label-desktop">View voucher / ticket</span>
+              <span className="bk-open-label-mobile">Details</span>
               <ChevronRight size={15} />
             </button>
           </div>
