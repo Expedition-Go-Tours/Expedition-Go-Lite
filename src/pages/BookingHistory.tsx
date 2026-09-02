@@ -187,6 +187,70 @@ function toFiniteNumber(v: unknown): number | null {
   return typeof v === 'number' && Number.isFinite(v) ? v : null
 }
 
+/* ------------------------------------------------------------------ */
+/* Cancellation policy — mirrors the backend's evaluateCancellationPolicy */
+/* (utils/bookingHelpers.js) so the UI never offers a cancel the API    */
+/* will reject. Reads the supplier-authored policy from                */
+/* tour.bookingAndTickets.cancellationPolicy (set in the product       */
+/* builder's Cancellation step).                                        */
+/* ------------------------------------------------------------------ */
+interface CancellationVerdict {
+  type: 'standard' | 'all_sales_final'
+  allowed: boolean
+  windowHours: number
+  refundPct: number
+  deadline: Date | null
+}
+
+function parseJsonish(raw: unknown): unknown {
+  if (typeof raw !== 'string') return raw
+  try {
+    return JSON.parse(raw)
+  } catch {
+    return null
+  }
+}
+
+function evaluateCancellationPolicy(bookingAndTickets: unknown, travelDate?: string | null): CancellationVerdict {
+  const bt = parseJsonish(bookingAndTickets) as Record<string, unknown> | null
+  const raw = bt && typeof bt === 'object' ? bt.cancellationPolicy : undefined
+
+  let type: CancellationVerdict['type'] = 'standard'
+  let windowHours = 24
+  let refundPct = 100
+
+  if (typeof raw === 'string') {
+    // Legacy label stored as a bare string.
+    type = /non.?refund|all.?sales.?final/i.test(raw) ? 'all_sales_final' : 'standard'
+  } else if (raw && typeof raw === 'object') {
+    const pol = raw as Record<string, unknown>
+    type = pol.type === 'all_sales_final' ? 'all_sales_final' : 'standard'
+    windowHours = toFiniteNumber(pol.cancellationWindowHours) ?? 24
+    refundPct = toFiniteNumber(pol.refundPercentage) ?? 100
+  }
+
+  if (type === 'all_sales_final') {
+    return { type, allowed: true, windowHours: 0, refundPct: 0, deadline: null }
+  }
+
+  const base = travelDate ? new Date(travelDate) : null
+  const valid = base && !Number.isNaN(base.getTime()) ? base : null
+  if (!valid) return { type, allowed: false, windowHours, refundPct, deadline: null }
+
+  const deadline = new Date(valid.getTime() - windowHours * 3600 * 1000)
+  const hoursUntil = (valid.getTime() - Date.now()) / (3600 * 1000)
+  return { type, allowed: hoursUntil >= windowHours, windowHours, refundPct, deadline }
+}
+
+function formatDeadlineLabel(date: Date): string {
+  return date.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  })
+}
+
 export default function BookingHistory() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<TabStatus>('ALL')
@@ -375,7 +439,44 @@ export default function BookingHistory() {
     return null
   }, [pickup, pickupAddress, pickupLocation, meeting])
 
-  const canCancel = selectedBooking?.status === 'PENDING' || selectedBooking?.status === 'CONFIRMED'
+  const canCancelByStatus =
+    selectedBooking?.status === 'PENDING' || selectedBooking?.status === 'CONFIRMED'
+
+  const cancellation = useMemo(() => {
+    if (!selectedBooking) return null
+    const tour =
+      detail?.tour && typeof detail.tour === 'object'
+        ? (detail.tour as { bookingAndTickets?: unknown }).bookingAndTickets
+        : undefined
+    return evaluateCancellationPolicy(
+      tour,
+      typeof detail?.travelDate === 'string' ? detail.travelDate : selectedBooking.travelDate
+    )
+  }, [selectedBooking, detail])
+
+  const showCancelButton =
+    canCancelByStatus && !!detail && !!cancellation && cancellation.allowed
+
+  const policyNote = (() => {
+    if (!cancellation) return ''
+    if (cancellation.type === 'all_sales_final' || cancellation.refundPct === 0) {
+      return 'This booking is non-refundable — no refund will be issued.'
+    }
+    if (cancellation.allowed) {
+      if (cancellation.refundPct >= 100) {
+        return `Free cancellation — you will receive a full refund${
+          cancellation.windowHours > 0 && cancellation.deadline
+            ? ` if you cancel before ${formatDeadlineLabel(cancellation.deadline)}`
+            : ''
+        }.`
+      }
+      return `Cancellation available — you will receive a ${cancellation.refundPct}% refund.`
+    }
+    return cancellation.deadline
+      ? `Free cancellation ended ${formatDeadlineLabel(cancellation.deadline)} — cancellations are no longer available for this booking.`
+      : 'Cancellations are no longer available for this booking.'
+  })()
+
   const canManagePickup =
     !!selectedBooking &&
     (selectedBooking.status === 'PENDING' || selectedBooking.status === 'CONFIRMED')
@@ -428,9 +529,14 @@ export default function BookingHistory() {
   const handleCancel = () => {
     if (!selectedBooking) return
     setCancelError(null)
-    const confirmed = window.confirm(
-      'Cancel this booking? Refunds are processed per the tour cancellation policy.'
-    )
+    const refundLine = !cancellation
+      ? 'Refunds are processed per the tour cancellation policy.'
+      : cancellation.refundPct <= 0
+        ? 'This booking is non-refundable and no refund will be issued.'
+        : cancellation.refundPct >= 100
+          ? 'Free cancellation — you will receive a full refund.'
+          : `A ${cancellation.refundPct}% partial refund will be issued per the cancellation policy.`
+    const confirmed = window.confirm(`Cancel this booking?\n\n${refundLine}`)
     if (!confirmed) return
 
     cancelBooking.mutate(
@@ -1088,6 +1194,14 @@ export default function BookingHistory() {
               {/* Footer actions */}
               <div className="booking-sheet-footer">
                 {cancelError && <p className="booking-cancel-error">{cancelError}</p>}
+                {canCancelByStatus && detailLoading && (
+                  <p className="booking-cancel-policy">Checking cancellation policy…</p>
+                )}
+                {canCancelByStatus && !detailLoading && cancellation && policyNote && (
+                  <p className={`booking-cancel-policy${cancellation.allowed ? '' : ' is-closed'}`}>
+                    {policyNote}
+                  </p>
+                )}
                 <button
                   type="button"
                   className="confirmation-btn-primary booking-cta-primary"
@@ -1096,7 +1210,7 @@ export default function BookingHistory() {
                   <Ticket size={16} />
                   View confirmation
                 </button>
-                {canCancel && (
+                {showCancelButton && (
                   <button
                     type="button"
                     className="confirmation-btn-ghost"

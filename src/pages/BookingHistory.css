@@ -1112,6 +1112,18 @@
   line-height: 1.4;
 }
 
+.booking-cancel-policy {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: #137a2e;
+}
+
+.booking-cancel-policy.is-closed {
+  color: #b45309;
+}
+
 /* Mobile-first refinements */
 @media (max-width: 480px) {
   .booking-details-head {
