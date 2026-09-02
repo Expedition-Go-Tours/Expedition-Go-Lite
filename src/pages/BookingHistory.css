@@ -417,6 +417,10 @@
 
 /* Mobile: vertical (stacked) card — full-width image on top, content below. */
 @media (max-width: 760px) {
+  .bk-page {
+    padding-inline: clamp(16px, 5vw, 24px);
+  }
+
   .bk-list {
     gap: 18px;
   }
@@ -428,6 +432,7 @@
   .bk-card {
     grid-template-areas: 'media' 'body';
     grid-template-columns: 1fr;
+    border-radius: 12px;
   }
 
   .bk-media {
