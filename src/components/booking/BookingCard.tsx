@@ -1,5 +1,5 @@
 ﻿import { useState, type MouseEvent } from 'react'
-import { Ticket, ChevronRight, Copy, Check } from 'lucide-react'
+import { CalendarDays, Users, MapPin, Ticket, ChevronRight, Copy, Check } from 'lucide-react'
 import { currencySymbol } from '../../lib/currencySymbol'
 import type { ExpeditionBookingSummary } from '../../hooks/useExpeditionBookings'
 import { bookingStatusMeta, formatMediumDate, formatTimeString, partyLabel } from '../../lib/bookingUi'
@@ -24,6 +24,8 @@ export default function BookingCard({ booking, onOpen }: BookingCardProps) {
     party,
     booking.tourLocation,
   ].filter(Boolean)
+
+  const when = `${formatMediumDate(booking.travelDate)}${time ? ` · ${time}` : ''}`
 
   const copyRef = async (e: MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation()
@@ -79,6 +81,31 @@ export default function BookingCard({ booking, onOpen }: BookingCardProps) {
         </div>
 
         <p className="bk-meta">{metaParts.length > 0 ? metaParts.join(' · ') : '—'}</p>
+
+        {/* Phone-only richer meta (desktop keeps the single .bk-meta line). */}
+        <div className="bk-meta-phone" aria-hidden="true">
+          <p className="bk-when">
+            <CalendarDays size={13} />
+            <span>{when}</span>
+          </p>
+          {(party || booking.tourLocation) && (
+            <p className="bk-sub">
+              {party && (
+                <span className="bk-sub-part">
+                  <Users size={12} />
+                  {party}
+                </span>
+              )}
+              {party && booking.tourLocation && <i className="bk-sub-dot" aria-hidden="true" />}
+              {booking.tourLocation && (
+                <span className="bk-sub-part">
+                  <MapPin size={12} />
+                  {booking.tourLocation}
+                </span>
+              )}
+            </p>
+          )}
+        </div>
 
         <p className="bk-ref">
           <Ticket size={12} />

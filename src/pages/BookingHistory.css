@@ -280,6 +280,11 @@
   color: var(--bv-muted);
 }
 
+/* Phone-only richer meta block (desktop uses .bk-meta above). */
+.bk-meta-phone {
+  display: none;
+}
+
 .bk-ref {
   display: flex;
   align-items: center;
@@ -412,6 +417,14 @@
 
 /* Mobile: vertical (stacked) card — full-width image on top, content below. */
 @media (max-width: 760px) {
+  .bk-list {
+    gap: 18px;
+  }
+
+  .bk-toolbar {
+    margin-bottom: 28px;
+  }
+
   .bk-card {
     grid-template-areas: 'media' 'body';
     grid-template-columns: 1fr;
@@ -437,11 +450,11 @@
   }
 
   .bk-body {
-    padding: 16px 18px 14px;
+    padding: clamp(16px, 4vw, 20px) clamp(18px, 5vw, 22px) 16px;
   }
 
   .bk-title {
-    font-size: 16px;
+    font-size: 16.5px;
   }
 }
 
@@ -462,7 +475,7 @@
   .bk-amount-phone {
     display: inline-block;
     font-family: var(--font-body);
-    font-size: 13px;
+    font-size: 13.5px;
     font-weight: 800;
     font-variant-numeric: tabular-nums;
     color: var(--bv-forest);
@@ -481,6 +494,75 @@
   .bk-open-label-mobile {
     display: inline;
   }
+
+  /* Replace the single muted line with a structured, weighted meta block. */
+  .bk-meta {
+    display: none;
+  }
+
+  .bk-meta-phone {
+    display: block;
+    margin-top: 10px;
+  }
+
+  .bk-meta-phone .bk-when {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin: 0;
+    font-family: var(--font-body);
+    font-size: 13.5px;
+    font-weight: 650;
+    font-variant-numeric: tabular-nums;
+    color: var(--bv-ink);
+    line-height: 1.4;
+  }
+
+  .bk-meta-phone .bk-when svg {
+    color: var(--bv-accent);
+    flex-shrink: 0;
+  }
+
+  .bk-meta-phone .bk-sub {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px 10px;
+    margin: 6px 0 0;
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--bv-muted);
+    line-height: 1.45;
+  }
+
+  .bk-meta-phone .bk-sub-part {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .bk-meta-phone .bk-sub-part svg {
+    color: var(--bv-faint);
+    flex-shrink: 0;
+  }
+
+  .bk-meta-phone .bk-sub-dot {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--bv-border-strong);
+  }
+
+  .bk-title {
+    font-size: 16.5px;
+    font-weight: 800;
+  }
+
+  .bk-open {
+    min-height: 44px;
+    font-size: 14px;
+  }
 }
 
 @media (max-width: 380px) {
@@ -489,7 +571,7 @@
   }
 
   .bk-body {
-    padding: 14px 14px 12px;
+    padding: 14px 15px 12px;
   }
 }
 
