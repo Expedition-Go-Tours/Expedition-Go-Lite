@@ -1,740 +1,274 @@
-import { useState, useEffect, useMemo } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { useNavigate } from 'react-router-dom'
-import { X, MapPin, Calendar, Users, Ticket, CreditCard, Phone, Info, AlertTriangle, Clock } from 'lucide-react'
-import { Button } from '../components/ui/button'
-import { currencySymbol } from '../lib/currencySymbol'
+﻿import { useEffect, useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { Search, Ticket, AlertTriangle, ArrowRight } from 'lucide-react'
 import {
   useMyExpeditionBookings,
-  useExpeditionBookingDetail,
-  useCancelBooking,
   type ExpeditionBookingSummary,
 } from '../hooks/useExpeditionBookings'
-import { extractMeetingInfo, extractAvailabilitySchedule } from '../hooks/useExpeditionTours'
-import { formatTime12h, weeklyHoursRange, openingHoursForDay, formatTimeSlotList } from '../lib/tourAvailability'
+import BookingCard from '../components/booking/BookingCard'
+import BookingWorkspace from '../components/booking/BookingWorkspace'
+import { formatHeadingDate, toDateKey, isSameCalendarDay } from '../lib/bookingUi'
+import '../components/booking/bookingTheme.css'
 import './BookingHistory.css'
-import OptimizedImage from '@/components/shared/OptimizedImage'
 
-type TabStatus = 'ALL' | 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED'
+type Bucket = 'upcoming' | 'past'
 
-const STATUS_LABELS: Record<string, string> = {
-  PENDING: 'Pending',
-  CONFIRMED: 'Confirmed',
-  COMPLETED: 'Completed',
-  CANCELLED: 'Cancelled',
+const BUCKETS: { value: Bucket; label: string }[] = [
+  { value: 'upcoming', label: 'Upcoming' },
+  { value: 'past', label: 'Past' },
+]
+
+const ACTIVE_STATUSES = ['PENDING', 'CONFIRMED']
+const TERMINAL_STATUSES = ['CANCELLED', 'NO_SHOW']
+
+function isActiveBooking(status: string): boolean {
+  return ACTIVE_STATUSES.includes(status)
 }
 
-interface TravelersJson {
-  adults?: number
-  children?: number
-  infants?: number
-  phoneNumber?: string
-  location?: string
-  details?: { name?: string; age?: number | string; ageGroup?: string; specialRequests?: string }[]
+function isTerminalBooking(status: string): boolean {
+  return TERMINAL_STATUSES.includes(status)
+}
+
+function startOfToday(): number {
+  const d = new Date()
+  d.setHours(0, 0, 0, 0)
+  return d.getTime()
+}
+
+function bucketOf(booking: ExpeditionBookingSummary): Bucket {
+  return isActiveBooking(booking.status) ? 'upcoming' : 'past'
+}
+
+function dateMs(value: string): number {
+  const d = new Date(value)
+  return Number.isNaN(d.getTime()) ? 0 : d.getTime()
+}
+
+function groupHeading(dateKey: string, labelForHeading: string): string {
+  const today = new Date()
+  const target = new Date(dateKey + 'T00:00:00')
+  if (isSameCalendarDay(target, today)) return 'Today'
+  const tomorrow = new Date(today.getTime() + 86400000)
+  if (isSameCalendarDay(target, tomorrow)) return 'Tomorrow'
+  return labelForHeading
 }
 
 export default function BookingHistory() {
-  const navigate = useNavigate()
-  const [activeTab, setActiveTab] = useState<TabStatus>('ALL')
-  const [selectedBooking, setSelectedBooking] = useState<ExpeditionBookingSummary | null>(null)
-  const [modalTab, setModalTab] = useState<'tour' | 'travelers'>('tour')
-  const [cancelError, setCancelError] = useState<string | null>(null)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const bookingId = searchParams.get('booking')
+  const listScrollRef = useRef(0)
 
-  const {
-    data: bookings = [],
-    isLoading,
-    isError,
-    error,
-    refetch,
-  } = useMyExpeditionBookings(1, activeTab === 'ALL' ? undefined : activeTab, 100)
+  const [bucket, setBucket] = useState<Bucket>('upcoming')
+  const [query, setQuery] = useState('')
 
-  const {
-    data: detail,
-    isLoading: detailLoading,
-    isError: detailError,
-  } = useExpeditionBookingDetail(selectedBooking?.id)
+  const { data: bookings = [], isLoading, isError, error, refetch } = useMyExpeditionBookings(
+    1,
+    undefined,
+    100
+  )
 
-  const cancelBooking = useCancelBooking()
-
-  const travelers = (detail?.travelers ?? {}) as TravelersJson
-  const participantCount =
-    travelers.details?.length ??
-    (travelers.adults || 0) + (travelers.children || 0) + (travelers.infants || 0)
-
-  const detailTour = detail?.tour
-  const meeting = useMemo(() => extractMeetingInfo(detailTour ?? {}), [detailTour])
-  const schedule = useMemo(() => extractAvailabilitySchedule(detailTour ?? {}), [detailTour])
-
-  const timeLabel = (() => {
-    if (detail?.selectedTime) return formatTime12h(detail.selectedTime)
-    if (schedule.scheduleType === 'operatingHours') {
-      const day = detail?.travelDate ? openingHoursForDay(schedule, new Date(detail.travelDate)) : ''
-      if (day) return day
-      const range = weeklyHoursRange(schedule)
-      if (range) return range
-    }
-    if (schedule.timeSlots.length > 0) return formatTimeSlotList(schedule.timeSlots)
-    return 'Flexible'
-  })()
-
-  const arrivalLabel = (() => {
-    if (meeting.meetingMode !== 'meeting_point') return ''
-    if (meeting.arrivalTimeType === 'custom') return meeting.arrivalTimeCustom ? `Arrive by ${meeting.arrivalTimeCustom}` : ''
-    switch (meeting.arrivalTimeType) {
-      case '5min': return 'Arrive 5 minutes before the activity'
-      case '10min': return 'Arrive 10 minutes before the activity'
-      case '15min': return 'Arrive 15 minutes before the activity'
-      case '30min': return 'Arrive 30 minutes before the activity'
-      case 'notified': return 'Arrival time will be notified'
-      default: return ''
-    }
-  })()
-
-  const hasMeeting = meeting.meetingMode === 'meeting_point' && (meeting.meetingPoint || meeting.meetingPointAddress || arrivalLabel)
-  const pickupAreas = (meeting.pickupAreas || []).filter((a: { name?: string; address?: string }) => a && (a.name || a.address))
-  const pickupLocations = (meeting.pickupLocations || []).filter((l: { name?: string; address?: string }) => l && (l.name || l.address))
-  const hasPickup = meeting.meetingMode === 'pickup' && (pickupAreas.length > 0 || pickupLocations.length > 0 || meeting.pickupDescription)
-
-  const price = (v?: number | string | null) => {
-    const n = Number(v)
-    return Number.isFinite(n) ? n : 0
-  }
-  const sym = (c?: string) => (c === 'GHS' ? 'GH₵' : c === 'EUR' ? '€' : c === 'GBP' ? '£' : '$')
-  const showBreakdown = detail && (price(detail.subtotal) > 0 || price(detail.taxes) > 0 || price(detail.fees) > 0 || price(detail.discounts) > 0)
-
+  // Open a booking without changing the route — the list below stays mounted.
   const openBooking = (booking: ExpeditionBookingSummary) => {
-    setModalTab('tour')
-    setCancelError(null)
-    setSelectedBooking(booking)
+    setSearchParams({ booking: booking.id }, { replace: false })
   }
 
-  const closeBooking = () => {
-    setSelectedBooking(null)
-    setCancelError(null)
+  const closeDetail = () => {
+    setSearchParams({})
   }
 
-  const handleCancel = () => {
-    if (!selectedBooking) return
-    setCancelError(null)
-    const confirmed = window.confirm(
-      'Cancel this booking? Refunds are processed per the tour cancellation policy.'
-    )
-    if (!confirmed) return
-
-    cancelBooking.mutate(
-      { id: selectedBooking.id, reason: 'Customer requested cancellation' },
-      {
-        onSuccess: () => closeBooking(),
-        onError: (err: Error) => setCancelError(err.message),
-      }
-    )
-  }
-
-  const tabs: { value: TabStatus; label: string }[] = [
-    { value: 'ALL', label: 'All' },
-    { value: 'PENDING', label: 'Pending' },
-    { value: 'CONFIRMED', label: 'Confirmed' },
-    { value: 'COMPLETED', label: 'Completed' },
-    { value: 'CANCELLED', label: 'Cancelled' },
-  ]
-
-  // Lock background scroll while the details modal is open
+  // Keep the list's scroll position across the slide.
   useEffect(() => {
-    if (!selectedBooking) return
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => { document.body.style.overflow = previousOverflow }
-  }, [selectedBooking])
-
-  const getStatusColor = (status: string): string => {
-    switch (status) {
-      case 'COMPLETED':
-        return 'status-completed'
-      case 'PENDING':
-      case 'CONFIRMED':
-        return status === 'CONFIRMED' ? 'status-confirmed' : 'status-pending'
-      case 'CANCELLED':
-        return 'status-cancelled'
-      default:
-        return ''
+    if (bookingId) {
+      listScrollRef.current = window.scrollY
+      window.scrollTo({ top: 0, behavior: 'auto' })
+    } else if (listScrollRef.current) {
+      window.scrollTo({ top: listScrollRef.current, behavior: 'auto' })
+      listScrollRef.current = 0
     }
-  }
+  }, [bookingId])
 
-  const statusLabel = (status: string) => STATUS_LABELS[status] ?? status
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    const base = bookings.filter((b) => {
+      if (bucketOf(b) !== bucket) return false
+      if (!q) return true
+      return (
+        b.tourTitle.toLowerCase().includes(q) ||
+        b.bookingNumber.toLowerCase().includes(q) ||
+        b.tourLocation.toLowerCase().includes(q)
+      )
+    })
 
-  const listStatus = isError
-    ? 'error'
-    : isLoading
-      ? 'loading'
-      : 'ready'
+    if (bucket === 'upcoming') {
+      return [...base].sort((a, b) => dateMs(a.travelDate) - dateMs(b.travelDate))
+    }
+
+    const startOfTodayMs = startOfToday()
+    return [...base].sort((a, b) => {
+      const aFutureTerminal = isTerminalBooking(a.status) && dateMs(a.travelDate) >= startOfTodayMs
+      const bFutureTerminal = isTerminalBooking(b.status) && dateMs(b.travelDate) >= startOfTodayMs
+      if (aFutureTerminal !== bFutureTerminal) return aFutureTerminal ? 1 : -1
+      return dateMs(b.travelDate) - dateMs(a.travelDate)
+    })
+  }, [bookings, bucket, query])
+
+  const counts = useMemo(() => {
+    const c: Record<Bucket, number> = { upcoming: 0, past: 0 }
+    for (const b of bookings) c[bucketOf(b)] += 1
+    return c
+  }, [bookings])
+
+  const upcomingGroups = useMemo(() => {
+    const groups: { key: string; label: string; items: ExpeditionBookingSummary[] }[] = []
+    for (const b of filtered) {
+      const key = toDateKey(b.travelDate)
+      const last = groups[groups.length - 1]
+      if (!key) {
+        groups.push({ key: 'unknown', label: 'Date not set', items: [b] })
+      } else if (last && last.key === key) {
+        last.items.push(b)
+      } else {
+        groups.push({ key, label: groupHeading(key, formatHeadingDate(key)), items: [b] })
+      }
+    }
+    return groups
+  }, [filtered])
+
+  const listStatus = isError ? 'error' : isLoading ? 'loading' : 'ready'
+  const activeLabel = bucket === 'upcoming' ? 'upcoming trip' : 'past trip'
 
   return (
-    <div className="booking-history">
-      <div className="booking-tabs-container">
-        <div className="booking-tabs">
-          {tabs.map((tab) => (
-            <button
-              key={tab.value}
-              className={`booking-tab ${activeTab === tab.value ? 'active' : ''}`}
-              onClick={() => setActiveTab(tab.value)}
-            >
-              {tab.label}
-              {activeTab === tab.value && (
-                <motion.div
-                  layoutId="booking-tab-indicator"
-                  className="booking-tab-indicator"
-                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                />
-              )}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="booking-content">
-        <AnimatePresence mode="popLayout">
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.25, ease: 'easeInOut' }}
-          >
-            {listStatus === 'error' && (
-              <div className="empty-state">
-                <div className="empty-icon">
-                  <AlertTriangle size={40} />
-                </div>
-                <motion.h3
-                  className="empty-title"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2, duration: 0.4 }}
-                >
-                  Couldn't load your bookings
-                </motion.h3>
-                <motion.p
-                  className="empty-text"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3, duration: 0.4 }}
-                >
-                  {(error as Error)?.message || 'Something went wrong while fetching your bookings.'}
-                </motion.p>
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4, duration: 0.4 }}
-                >
-                  <Button onClick={() => refetch()} className="empty-cta">
-                    Try Again
-                  </Button>
-                </motion.div>
-              </div>
-            )}
-
-            {listStatus === 'loading' && (
-              <div className="empty-state">
-                <div className="loading-spinner" />
-                <motion.h3
-                  className="empty-title"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2, duration: 0.4 }}
-                >
-                  Loading your bookings…
-                </motion.h3>
-              </div>
-            )}
-
-            {listStatus === 'ready' && bookings.length === 0 && (
-              <div
-                className="empty-state"
-              >
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{
-                    delay: 0.2,
-                    type: "spring",
-                    stiffness: 200,
-                    damping: 15
-                  }}
-                >
-                  <motion.svg
-                    width="64"
-                    height="64"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="empty-icon"
-                    animate={{
-                      rotate: [0, 360]
-                    }}
-                    transition={{
-                      duration: 20,
-                      repeat: Infinity,
-                      ease: "linear"
-                    }}
+    <div className="bk-page">
+      <div className="bk-swap">
+        {/* Pane 1 — bookings list (always mounted) */}
+        <section
+          className={`bk-pane bk-pane-list${bookingId ? ' off' : ' on'}`}
+          aria-hidden={!!bookingId}
+        >
+          <div className="bk-toolbar">
+            <div className="bk-seg" role="group" aria-label="Filter bookings by time">
+              {BUCKETS.map((b) => {
+                const active = bucket === b.value
+                return (
+                  <button
+                    key={b.value}
+                    type="button"
+                    className={`bk-seg-btn${active ? ' active' : ''}`}
+                    aria-pressed={active}
+                    onClick={() => setBucket(b.value)}
                   >
-                    <circle cx="12" cy="12" r="10" />
-                    <motion.polyline
-                      points="12 6 12 12 16 14"
-                      initial={{ pathLength: 0 }}
-                      animate={{ pathLength: 1 }}
-                      transition={{ duration: 1, delay: 0.3 }}
-                    />
-                  </motion.svg>
-                </motion.div>
+                    {active && <span className="bk-seg-indicator" />}
+                    <span className="bk-seg-inner">
+                      <span className="bk-seg-label">{b.label}</span>
+                      <span className="bk-seg-count">{counts[b.value]}</span>
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
 
-                <motion.h3
-                  className="empty-title"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5, duration: 0.4 }}
-                >
-                  No Booking History
-                </motion.h3>
+            <label className="bk-search">
+              <Search size={15} />
+              <input
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search by tour or booking reference"
+                aria-label="Search bookings by tour or reference"
+              />
+            </label>
+          </div>
 
-                <motion.p
-                  className="empty-text"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.6, duration: 0.4 }}
-                >
-                  You haven't made any bookings yet. Start exploring our amazing tours!
-                </motion.p>
-
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.7, duration: 0.4 }}
-                >
-                  <Button onClick={() => window.location.href = '/'} className="empty-cta">
-                    Find an Experience
-                  </Button>
-                </motion.div>
-
-                {[0, 30, 60].map((angle, i) => (
-                  <motion.div
-                    key={i}
-                    className="clock-tick"
-                    style={{
-                      transform: `rotate(${angle}deg) translateY(-40px)`,
-                      position: 'absolute',
-                      top: '50%',
-                      left: '50%'
-                    }}
-                    initial={{ opacity: 0, scale: 0 }}
-                    animate={{
-                      opacity: [0, 0.2, 0],
-                      scale: [0, 1.5, 0]
-                    }}
-                    transition={{
-                      duration: 2,
-                      delay: 1.5 + i * 0.3,
-                      repeat: Infinity,
-                      repeatDelay: 2
-                    }}
-                  >
-                    <div style={{
-                      width: '4px',
-                      height: '4px',
-                      borderRadius: '50%',
-                      background: 'var(--dash-accent)'
-                    }} />
-                  </motion.div>
-                ))}
-              </div>
-            )}
-
-            {listStatus === 'ready' && bookings.length > 0 && (
-              <div className="booking-list">
-                {bookings.map((booking) => (
-                  <div key={booking.id} className="booking-item">
-                    <div className="booking-item-image">
-                      {booking.tourImage ? (
-                        <OptimizedImage src={booking.tourImage} alt={booking.tourTitle} width={200} />
-                      ) : (
-                        <div className="booking-item-image-placeholder" />
-                      )}
-                      <span className={`booking-status-badge ${getStatusColor(booking.status)}`}>
-                        {statusLabel(booking.status)}
-                      </span>
-                      {booking.paymentTiming === 'later' && booking.paymentStatus !== 'SUCCEEDED' && (
-                        <span className="booking-awaiting-payment">Awaiting payment</span>
-                      )}
-                      {booking.pickupDeferred && (
-                        <span className="booking-awaiting-payment">Pickup to be arranged</span>
-                      )}
-                    </div>
-
-                    <div className="booking-item-content">
-                      <div className="booking-item-header">
-                        <h3 className="booking-item-title">{booking.tourTitle}</h3>
-                        <div className="booking-item-location">
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                            <circle cx="12" cy="10" r="3" />
-                          </svg>
-                          <span>{booking.tourLocation || '—'}</span>
-                        </div>
-                      </div>
-
-                      <div className="booking-item-details">
-                        <div className="booking-detail">
-                          <span className="booking-detail-label">Date</span>
-                          <span className="booking-detail-value">
-                            {new Date(booking.travelDate).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric'
-                            })}
-                          </span>
-                        </div>
-                        <div className="booking-detail">
-                          <span className="booking-detail-label">Confirmation</span>
-                          <span className={`booking-detail-value booking-code`}>{booking.bookingNumber}</span>
-                        </div>
-                        <div className="booking-detail">
-                          <span className="booking-detail-label">Total</span>
-                          <span className={`booking-detail-value booking-price`}>
-                            {currencySymbol(booking.currency)}{booking.total.toFixed(2)}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="booking-item-footer">
-                        <Button size="sm" className="booking-view-btn" onClick={() => openBooking(booking)}>
-                          View Details
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </motion.div>
-        </AnimatePresence>
-      </div>
-
-      {/* Booking Details Modal */}
-      <AnimatePresence>
-        {selectedBooking && (
-          <motion.div
-            className="booking-modal-backdrop"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2, ease: 'easeInOut' }}
-            onClick={closeBooking}
-          >
-            <motion.div
-              className="booking-modal"
-              initial={{ opacity: 0, y: 40, scale: 0.92 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 30, scale: 0.95 }}
-              transition={{
-                type: 'spring',
-                stiffness: 320,
-                damping: 30,
-                mass: 0.9,
-                opacity: { duration: 0.2, ease: 'easeOut' },
-              }}
-              onClick={(e) => e.stopPropagation()}
-              role="dialog"
-              aria-modal="true"
-              aria-label="Booking details"
-            >
-              <button
-                className="booking-modal-close"
-                onClick={closeBooking}
-                aria-label="Close details"
-              >
-                <X size={18} />
+          {listStatus === 'error' ? (
+            <div className="bk-state">
+              <AlertTriangle size={26} />
+              <h3>Couldn't load your bookings</h3>
+              <p>{(error as Error)?.message || 'Something went wrong while fetching your bookings.'}</p>
+              <button type="button" className="bk-btn bk-btn-primary" onClick={() => refetch()}>
+                Try again
               </button>
-
-              {/* Hero image */}
-              <div className="booking-modal-hero">
-                {selectedBooking.tourImage ? (
-                  <OptimizedImage src={selectedBooking.tourImage} alt={selectedBooking.tourTitle} width={200} />
-                ) : (
-                  <div className="booking-modal-hero-placeholder" />
-                )}
-                <div className="booking-modal-hero-overlay" />
-                <span className={`booking-status-badge booking-modal-status ${getStatusColor(selectedBooking.status)}`}>
-                  {statusLabel(selectedBooking.status)}
-                </span>
-                <div className="booking-modal-hero-text">
-                  <h3 className="booking-modal-title">{selectedBooking.tourTitle}</h3>
-                  <div className="booking-modal-location">
-                    <MapPin size={15} />
-                    <span>{selectedBooking.tourLocation || '—'}</span>
+            </div>
+          ) : listStatus === 'loading' ? (
+            <div className="bk-list">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="bk-card bk-card-skeleton" aria-hidden="true">
+                  <div className="bk-media">
+                    <div className="bk-skel bk-skel-media" />
+                  </div>
+                  <div className="bk-body">
+                    <div className="bk-skel bk-skel-line bk-skel-w30" />
+                    <div className="bk-skel bk-skel-line bk-skel-w80" />
+                    <div className="bk-skel bk-skel-line bk-skel-w60" />
                   </div>
                 </div>
-              </div>
-
-              {/* Tabs */}
-              <div className="booking-modal-tabs">
+              ))}
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="bk-state">
+              <Ticket size={26} />
+              <h3>
+                {query
+                  ? 'No bookings match your search'
+                  : bucket === 'upcoming'
+                    ? 'No upcoming trips'
+                    : 'No past trips yet'}
+              </h3>
+              <p>
+                {query
+                  ? 'Try a different tour name or booking reference.'
+                  : bucket === 'upcoming'
+                    ? 'When you book an experience it will appear here.'
+                    : 'Trips you have been on, or cancelled, will be kept here for your records.'}
+              </p>
+              {!query && bucket === 'upcoming' && (
                 <button
-                  className={`booking-modal-tab ${modalTab === 'tour' ? 'active' : ''}`}
-                  onClick={() => setModalTab('tour')}
+                  type="button"
+                  className="bk-btn bk-btn-primary"
+                  onClick={() => (window.location.href = '/')}
                 >
-                  Tour Details
-                  {modalTab === 'tour' && (
-                    <motion.span layoutId="booking-modal-tab-indicator" className="booking-modal-tab-indicator" />
-                  )}
+                  Explore experiences <ArrowRight size={15} />
                 </button>
-                <button
-                  className={`booking-modal-tab ${modalTab === 'travelers' ? 'active' : ''}`}
-                  onClick={() => setModalTab('travelers')}
-                >
-                  Travelers
-                  {modalTab === 'travelers' && (
-                    <motion.span layoutId="booking-modal-tab-indicator" className="booking-modal-tab-indicator" />
-                  )}
-                </button>
+              )}
+            </div>
+          ) : bucket === 'upcoming' ? (
+            upcomingGroups.map((group) => (
+              <section key={group.key} className="bk-group">
+                <h2 className="bk-group-title">
+                  {group.label}
+                  <span className="bk-group-count">
+                    {group.items.length} {group.items.length === 1 ? 'booking' : 'bookings'}
+                  </span>
+                </h2>
+                <div className="bk-list">
+                  {group.items.map((booking) => (
+                    <BookingCard key={booking.id} booking={booking} onOpen={() => openBooking(booking)} />
+                  ))}
+                </div>
+              </section>
+            ))
+          ) : (
+            <>
+              <div className="bk-list">
+                {filtered.map((booking) => (
+                  <BookingCard key={booking.id} booking={booking} onOpen={() => openBooking(booking)} />
+                ))}
               </div>
+              <p className="bk-list-foot">
+                Showing {filtered.length} {filtered.length === 1 ? activeLabel : `${activeLabel}s`}.
+              </p>
+            </>
+          )}
+        </section>
 
-              {/* Tab panels */}
-              <div className="booking-modal-body">
-                <AnimatePresence mode="wait">
-                  {modalTab === 'tour' ? (
-                    <motion.div
-                      key="tour"
-                      initial={{ opacity: 0, x: 16 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -16 }}
-                      transition={{ duration: 0.22, ease: 'easeInOut' }}
-                      className="booking-modal-tour"
-                    >
-                      <div className="booking-modal-grid">
-                        <div className="booking-modal-detail">
-                          <div className="booking-modal-detail-icon"><Ticket size={16} /></div>
-                          <div>
-                            <span className="booking-modal-detail-label">Confirmation</span>
-                            <span className="booking-modal-detail-value">{selectedBooking.bookingNumber}</span>
-                          </div>
-                        </div>
-                        <div className="booking-modal-detail">
-                          <div className="booking-modal-detail-icon"><Calendar size={16} /></div>
-                          <div>
-                            <span className="booking-modal-detail-label">Date</span>
-                            <span className="booking-modal-detail-value">
-                              {new Date(selectedBooking.travelDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="booking-modal-detail">
-                          <div className="booking-modal-detail-icon"><Clock size={16} /></div>
-                          <div>
-                            <span className="booking-modal-detail-label">{schedule.scheduleType === 'fixedTimeSlot' ? 'Time slots' : 'Opening hours'}</span>
-                            <span className="booking-modal-detail-value">{timeLabel}</span>
-                          </div>
-                        </div>
-                        <div className="booking-modal-detail">
-                          <div className="booking-modal-detail-icon"><MapPin size={16} /></div>
-                          <div>
-                            <span className="booking-modal-detail-label">Location</span>
-                            <span className="booking-modal-detail-value">{selectedBooking.tourLocation || '—'}</span>
-                          </div>
-                        </div>
-                        <div className="booking-modal-detail">
-                          <div className="booking-modal-detail-icon"><Users size={16} /></div>
-                          <div>
-                            <span className="booking-modal-detail-label">Participants</span>
-                            <span className="booking-modal-detail-value">
-                              {detailLoading ? '…' : `${participantCount} ${participantCount === 1 ? 'Person' : 'People'}`}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="booking-modal-detail">
-                          <div className="booking-modal-detail-icon"><CreditCard size={16} /></div>
-                          <div>
-                            <span className="booking-modal-detail-label">Total Paid</span>
-                            <span className="booking-modal-detail-value booking-modal-price">
-                              {selectedBooking.currency === 'GHS' ? 'GH₵' : '$'}{selectedBooking.total.toFixed(2)}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {(hasMeeting || hasPickup || detail?.pickup) && (
-                        <div className="booking-modal-section">
-                          <span className="booking-modal-section-title">Meeting &amp; Pickup</span>
-
-                          {(() => {
-                            const p =
-                              detail?.pickup && typeof detail.pickup === 'object'
-                                ? (detail.pickup as Record<string, unknown>)
-                                : null
-                            if (!p) return null
-                            const deferred =
-                              !!p.pickupLater || !!p.skipValidation || p.status === 'deferred'
-                            const address =
-                              p.address && typeof p.address === 'object'
-                                ? (p.address as Record<string, unknown>)
-                                : null
-                            const locationLabel =
-                              String(p.place || p.areaName || p.locationName || address?.name || address?.address || '').trim()
-                            if (deferred || !locationLabel) {
-                              return (
-                                <div className="rounded-lg border border-amber-200 bg-amber-50 px-3.5 py-3">
-                                  <p className="text-sm font-semibold text-amber-800">
-                                    Awaiting pickup details — we&rsquo;ll contact you to arrange it.
-                                  </p>
-                                  <button
-                                    onClick={() => navigate(`/booking/${detail.id}/pickup`)}
-                                    className="mt-2 inline-flex items-center gap-1 rounded-full bg-emerald-600 px-4 py-1.5 text-xs font-semibold text-white transition hover:brightness-110"
-                                  >
-                                    Add pickup location
-                                  </button>
-                                </div>
-                              )
-                            }
-                            return (
-                              <div className="mb-2 rounded-lg border border-emerald-100 bg-emerald-50/50 px-3.5 py-3">
-                                <p className="text-sm font-semibold text-slate-800">{locationLabel}</p>
-                                {!!p.time && <p className="mt-0.5 text-xs text-slate-600">Pickup {String(p.time)}</p>}
-                                {!!p.instructions && (
-                                  <p className="mt-1 text-xs leading-relaxed text-slate-500">{String(p.instructions)}</p>
-                                )}
-                              </div>
-                            )
-                          })()}
-
-                          {hasMeeting && (
-                            <p className="booking-modal-text">
-                              <strong>{meeting.meetingPoint}</strong>
-                              {meeting.meetingPointAddress && meeting.meetingPointAddress !== meeting.meetingPoint ? ` — ${meeting.meetingPointAddress}` : ''}
-                            </p>
-                          )}
-                          {arrivalLabel && <p className="booking-modal-text">{arrivalLabel}</p>}
-                          {meeting.meetingPointDescription && <p className="booking-modal-text">{meeting.meetingPointDescription}</p>}
-                          {pickupAreas.length > 0 && (
-                            <p className="booking-modal-text">Pickup areas: {pickupAreas.map((a: { name?: string; address?: string }) => a.name || a.address).join(', ')}</p>
-                          )}
-                          {pickupLocations.length > 0 && (
-                            <p className="booking-modal-text">Pickup locations: {pickupLocations.map((l: { name?: string; address?: string }) => l.name || l.address).join(', ')}</p>
-                          )}
-                        </div>
-                      )}
-
-                      {showBreakdown && (
-                        <div className="booking-modal-section">
-                          <span className="booking-modal-section-title">Price Breakdown</span>
-                          <div className="booking-modal-price-grid">
-                            <span>Subtotal</span><span>{sym(detail.currency)}{price(detail.subtotal).toFixed(2)}</span>
-                            {price(detail.fees) > 0 && (<><span>Fees</span><span>{sym(detail.currency)}{price(detail.fees).toFixed(2)}</span></>)}
-                            {price(detail.taxes) > 0 && (<><span>Taxes</span><span>{sym(detail.currency)}{price(detail.taxes).toFixed(2)}</span></>)}
-                            {price(detail.discounts) > 0 && (<><span>Discount</span><span>-{sym(detail.currency)}{price(detail.discounts).toFixed(2)}</span></>)}
-                            <span className="booking-modal-price-total">Total</span>
-                            <span className="booking-modal-price-total">{sym(detail.currency)}{price(detail.grossAmount).toFixed(2)}</span>
-                          </div>
-                        </div>
-                      )}
-
-                      <button className="booking-modal-view-confirmation" onClick={() => navigate(`/booking/confirmation/${selectedBooking.id}`)}>
-                        View full confirmation →
-                      </button>
-                    </motion.div>
-                  ) : (
-                    <motion.div
-                      key="travelers"
-                      initial={{ opacity: 0, x: 16 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -16 }}
-                      transition={{ duration: 0.22, ease: 'easeInOut' }}
-                      className="booking-modal-customer"
-                    >
-                      {detailError ? (
-                        <div className="booking-modal-customer-row">
-                          <Info size={15} />
-                          <span>Couldn't load traveler details.</span>
-                        </div>
-                      ) : detailLoading ? (
-                        <div className="booking-modal-customer-row">
-                          <Info size={15} />
-                          <span>Loading traveler details…</span>
-                        </div>
-                      ) : (
-                        <>
-                          <div className="booking-modal-customer-head">
-                            <div className="booking-modal-avatar">
-                              <Users size={16} />
-                            </div>
-                            <div>
-                              <span className="booking-modal-customer-name">
-                                {travelers.adults || 0} Adult{travelers.adults === 1 ? '' : 's'}
-                                {travelers.children ? `, ${travelers.children} Children` : ''}
-                                {travelers.infants ? `, ${travelers.infants} Infants` : ''}
-                              </span>
-                              <span className="booking-modal-customer-sub">Party summary</span>
-                            </div>
-                          </div>
-
-                          <div className="booking-modal-customer-list">
-                            {travelers.details?.map((t, i) => (
-                              <div key={i} className="booking-modal-customer-row">
-                                <Users size={15} />
-                                <span>
-                                  {t.name || `Traveler ${i + 1}`}
-                                  {t.age != null ? ` (${t.age})` : ''}
-                                  {t.ageGroup ? ` — ${t.ageGroup}` : ''}
-                                  {t.specialRequests ? ` · ${t.specialRequests}` : ''}
-                                </span>
-                              </div>
-                            ))}
-                            {travelers.phoneNumber && (
-                              <div className="booking-modal-customer-row">
-                                <Phone size={15} />
-                                <span>{travelers.phoneNumber}</span>
-                              </div>
-                            )}
-                            {travelers.location && (
-                              <div className="booking-modal-customer-row">
-                                <MapPin size={15} />
-                                <span>{travelers.location}</span>
-                              </div>
-                            )}
-                            {detail.specialRequests && (
-                              <div className="booking-modal-customer-row">
-                                <Info size={15} />
-                                <span>{detail.specialRequests}</span>
-                              </div>
-                            )}
-                          </div>
-                        </>
-                      )}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              <div className="booking-modal-footer">
-                {cancelError && (
-                  <p className="booking-modal-cancel-error">{cancelError}</p>
-                )}
-                {(selectedBooking.status === 'PENDING' || selectedBooking.status === 'CONFIRMED') && (
-                  <Button
-                    className="booking-modal-cancel-btn"
-                    onClick={handleCancel}
-                    disabled={cancelBooking.isPending}
-                  >
-                    {cancelBooking.isPending ? 'Cancelling…' : 'Cancel Booking'}
-                  </Button>
-                )}
-                <Button className="booking-modal-close-btn" onClick={closeBooking}>
-                  Close
-                </Button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+        {/* Pane 2 — booking workspace (slides over the list) */}
+        <section className={`bk-pane bk-pane-detail${bookingId ? ' on' : ' off'}`}>
+          {bookingId ? (
+            <BookingWorkspace id={bookingId} onClose={closeDetail} />
+          ) : (
+            <div className="bk-pane-empty" />
+          )}
+        </section>
+      </div>
     </div>
   )
 }

@@ -168,7 +168,11 @@ function AppContent() {
       {!location.pathname.startsWith('/tour') && <SupportChatWidget onOpenAuth={handleOpenAuth} />}
       <AnimatePresence mode="wait">
         <motion.div
-          key={location.pathname}
+          // Dashboard pages manage their own keep-alive transitions internally
+          // (DashboardLayout). Keying this wrapper on the full pathname would
+          // remount the entire dashboard (sidebar + all) with a fade on every
+          // sidebar click — so group all /dashboard/* under one stable key.
+          key={location.pathname.startsWith('/dashboard') ? '/dashboard' : location.pathname}
           initial={{ opacity: 0, y: 16 }}
           animate={{
             opacity: 1,

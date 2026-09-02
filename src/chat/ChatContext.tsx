@@ -26,6 +26,7 @@ interface ChatContextValue {
   messageStatuses: Record<string, MessageStatus>
   unreadCount: number
   openConversation: (conversationId: string) => void
+  startChat: (recipient: ChatRecipient, type: ConversationType) => Promise<ChatConversation>
   openSupplierChat: (supplier: ChatRecipient) => Promise<void>
   openSupportChat: () => Promise<void>
   closeConversation: () => void
@@ -83,6 +84,16 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   // open instead of leaving the thread permanently empty.
   const messageLoadsInFlight = useRef<Record<string, boolean>>({})
   const messagesRef = useRef<Record<string, ChatMessage[]>>({})
+  // Throttle "mark read": socket receipt + REST ack can otherwise fire rapid
+  // duplicate PATCHes to /chat/conversations/:id/read while a thread is open.
+  const lastMarkedAtRef = useRef<Record<string, number>>({})
+  const markConversationRead = useCallback((conversationId: string) => {
+    const now = Date.now()
+    if (now - (lastMarkedAtRef.current[conversationId] ?? 0) < 1500) return
+    lastMarkedAtRef.current[conversationId] = now
+    getChatSocket()?.emit('chat:mark-read', { conversationId })
+    api.markConversationAsRead(conversationId).catch(() => {})
+  }, [])
 
   useEffect(() => {
     activeRef.current = activeConversationId
@@ -146,15 +157,14 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         })
         setUnreadCount((prev) => (active ? prev : prev + 1))
         if (active) {
-          // Auto mark-read while the conversation is open.
-          getChatSocket()?.emit('chat:mark-read', { conversationId })
-          api.markConversationAsRead(conversationId).catch(() => {})
+          // Auto mark-read while the conversation is open (throttled).
+          markConversationRead(conversationId)
         } else {
           refreshConversations()
         }
       }
     },
-    [refreshConversations],
+    [refreshConversations, markConversationRead],
   )
 
   const handleSocketTyping = useCallback(
@@ -357,33 +367,31 @@ export function ChatProvider({ children }: { children: ReactNode }) {
             delete messageLoadsInFlight.current[conversationId]
           })
       }
-      getChatSocket()?.emit('chat:mark-read', { conversationId })
-      api.markConversationAsRead(conversationId).catch(() => {})
+      markConversationRead(conversationId)
     },
-    [conversations, messages],
+    [conversations, messages, markConversationRead],
   )
 
-  const openRecipientChat = useCallback(
-    async (recipient: ChatRecipient, type: ConversationType) => {
-      try {
-        const conv = await api.getOrCreateConversation(recipient.id, type)
-        setConversations((prev) => {
-          if (prev.some((c) => c.id === conv.id)) return prev
-          return [conv, ...prev]
-        })
-        openConversation(conv.id)
-      } catch {
-        /* surface via caller toast */
-      }
+  /** Finds-or-creates a conversation with a recipient and opens it. Throws on
+   *  failure so callers can surface/fall back. */
+  const startChat = useCallback(
+    async (recipient: ChatRecipient, type: ConversationType): Promise<ChatConversation> => {
+      const conv = await api.getOrCreateConversation(recipient.id, type)
+      setConversations((prev) => {
+        if (prev.some((c) => c.id === conv.id)) return prev
+        return [conv, ...prev]
+      })
+      openConversation(conv.id)
+      return conv
     },
     [openConversation],
   )
 
   const openSupplierChat = useCallback(
     async (supplier: ChatRecipient) => {
-      await openRecipientChat(supplier, SUPPLIER_CONVERSATION_TYPE)
+      await startChat(supplier, SUPPLIER_CONVERSATION_TYPE)
     },
-    [openRecipientChat],
+    [startChat],
   )
 
   const openSupportChat = useCallback(async () => {
@@ -391,11 +399,26 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     if (!supportId) {
       throw new Error('support_unavailable')
     }
-    await openRecipientChat(
+    // Reuse any existing thread with the support identity (it can be the same
+    // user as a booking operator) so support never spawns a duplicate empty
+    // conversation next to the real one. Prefer the thread with history.
+    const existing = conversations
+      .filter((c) => c.participants?.some((p) => p.userId === supportId))
+      .sort((a, b) => {
+        const aHas = (a.messages?.length ?? 0) > 0 ? 1 : 0
+        const bHas = (b.messages?.length ?? 0) > 0 ? 1 : 0
+        if (aHas !== bHas) return bHas - aHas
+        return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+      })[0]
+    if (existing) {
+      openConversation(existing.id)
+      return
+    }
+    await startChat(
       { id: supportId, name: t('supportChat.expeditionSupport') },
       SUPPORT_CONVERSATION_TYPE,
     )
-  }, [openRecipientChat, t])
+  }, [conversations, openConversation, startChat, t])
 
   const closeConversation = useCallback(() => {
     if (activeRef.current) {
@@ -539,6 +562,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       messageStatuses,
       unreadCount,
       openConversation,
+      startChat,
       openSupplierChat,
       openSupportChat,
       closeConversation,
@@ -549,7 +573,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     }),
     [
       conversations, activeConversationId, messages, hasMore, typingUserId,
-      messageStatuses, unreadCount, openConversation, openSupplierChat, openSupportChat,
+      messageStatuses, unreadCount, openConversation, startChat, openSupplierChat, openSupportChat,
       closeConversation, sendMessage, loadMore, setTyping, refreshConversations,
     ],
   )

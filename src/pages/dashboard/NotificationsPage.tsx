@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+﻿import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -105,13 +105,13 @@ export default function NotificationsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20 text-[#6b7280]">Loading notifications…</div>
+      <div className="flex items-center justify-center py-20 text-[#6b7280]">Loading notificationsâ€¦</div>
     );
   }
 
   if (notifications.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-center bg-white rounded-xl border border-[#e5e4e7] w-full max-w-4xl mx-auto">
+      <div className="flex flex-col items-center justify-center py-20 text-center bg-white rounded-xl border border-[#e5e4e7] w-full mx-auto">
         <Bell size={56} className="text-[#065f46] opacity-50 mb-5" />
         <h3 className="text-xl font-heading font-semibold text-[#1a1a1a] mb-2">All Clear!</h3>
         <p className="text-[14px] text-[#6b7280] max-w-sm leading-relaxed mb-7">
@@ -125,7 +125,7 @@ export default function NotificationsPage() {
   }
 
   return (
-    <div className="w-full max-w-4xl mx-auto">
+    <div className="w-full mx-auto">
       <div className="flex items-center justify-between mb-5">
         <p className="text-[14px] text-[#6b7280]">
           {unreadCount > 0 ? `${unreadCount} unread notification${unreadCount > 1 ? "s" : ""}` : "All caught up"}

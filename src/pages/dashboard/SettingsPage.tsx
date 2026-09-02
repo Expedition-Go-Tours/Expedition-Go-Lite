@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { toast } from "sonner";
 import { getStoredAuthUser } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -57,7 +57,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto">
+    <div className="w-full mx-auto">
       <section className="bg-white rounded-xl border border-[#e5e4e7] p-8 mb-7">
         <h2 className="text-[13px] font-bold tracking-[1.5px] text-[#6b7280] uppercase mb-6 pb-4 border-b border-[#e5e4e7]">
           PERSONAL INFORMATION
