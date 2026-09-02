@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
 import {
   ArrowLeft,
   Ticket,
@@ -16,6 +17,7 @@ import {
   Info,
   AlertTriangle,
 } from 'lucide-react'
+import { useChat } from '../../chat/ChatContext'
 import { useExpeditionBookingDetail, useCancelBooking } from '../../hooks/useExpeditionBookings'
 import { extractMeetingInfo } from '../../hooks/useExpeditionTours'
 import { currencySymbol } from '../../lib/currencySymbol'
@@ -100,6 +102,9 @@ export default function BookingWorkspace({ id, onClose }: { id?: string; onClose
   const supplierName = typeof rawSupplier?.name === 'string' ? rawSupplier.name : ''
   const supplierPhone = typeof rawSupplier?.phone === 'string' ? rawSupplier.phone : ''
   const supplierEmail = typeof rawSupplier?.email === 'string' ? rawSupplier.email : ''
+  const operatorId = typeof rawSupplier?.id === 'string' ? rawSupplier.id : ''
+  const operatorPhoto = typeof rawSupplier?.photoURL === 'string' ? rawSupplier.photoURL : null
+  const chat = useChat()
   const travelDate = typeof detail?.travelDate === 'string' ? detail.travelDate : ''
   const meeting = useMemo(() => extractMeetingInfo(tour ?? {}), [tour])
 
@@ -259,6 +264,27 @@ export default function BookingWorkspace({ id, onClose }: { id?: string; onClose
   }
   const back = closeDetail
   const statusMeta = meta
+
+  // Open a SUPPLIER_CUSTOMER conversation with this booking's operator — the
+  // same thread the operator opens via Bookings → "Message customer". Falls
+  // back to the shared Expedition support channel when the tour has no
+  // operator user.
+  const handleMessageOperator = async () => {
+    try {
+      if (operatorId) {
+        const conv = await chat.startChat(
+          { id: operatorId, name: supplierName || 'Operator', photoURL: operatorPhoto },
+          'SUPPLIER_CUSTOMER',
+        )
+        navigate(`/dashboard/chat?conversation=${conv.id}`)
+        return
+      }
+      await chat.openSupportChat()
+      navigate('/dashboard/chat')
+    } catch {
+      toast.error('Unable to open chat. Please try again.')
+    }
+  }
 
   if (detailQuery.isLoading) {
     return (
@@ -505,7 +531,7 @@ export default function BookingWorkspace({ id, onClose }: { id?: string; onClose
             <button
               type="button"
               className="bk-btn bk-btn-secondary ws-action-btn"
-              onClick={() => navigate('/dashboard/chat')}
+              onClick={handleMessageOperator}
             >
               <MessageCircle size={15} /> Message the operator
             </button>

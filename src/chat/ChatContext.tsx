@@ -26,6 +26,7 @@ interface ChatContextValue {
   messageStatuses: Record<string, MessageStatus>
   unreadCount: number
   openConversation: (conversationId: string) => void
+  startChat: (recipient: ChatRecipient, type: ConversationType) => Promise<ChatConversation>
   openSupplierChat: (supplier: ChatRecipient) => Promise<void>
   openSupportChat: () => Promise<void>
   closeConversation: () => void
@@ -363,27 +364,26 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     [conversations, messages],
   )
 
-  const openRecipientChat = useCallback(
-    async (recipient: ChatRecipient, type: ConversationType) => {
-      try {
-        const conv = await api.getOrCreateConversation(recipient.id, type)
-        setConversations((prev) => {
-          if (prev.some((c) => c.id === conv.id)) return prev
-          return [conv, ...prev]
-        })
-        openConversation(conv.id)
-      } catch {
-        /* surface via caller toast */
-      }
+  /** Finds-or-creates a conversation with a recipient and opens it. Throws on
+   *  failure so callers can surface/fall back. */
+  const startChat = useCallback(
+    async (recipient: ChatRecipient, type: ConversationType): Promise<ChatConversation> => {
+      const conv = await api.getOrCreateConversation(recipient.id, type)
+      setConversations((prev) => {
+        if (prev.some((c) => c.id === conv.id)) return prev
+        return [conv, ...prev]
+      })
+      openConversation(conv.id)
+      return conv
     },
     [openConversation],
   )
 
   const openSupplierChat = useCallback(
     async (supplier: ChatRecipient) => {
-      await openRecipientChat(supplier, SUPPLIER_CONVERSATION_TYPE)
+      await startChat(supplier, SUPPLIER_CONVERSATION_TYPE)
     },
-    [openRecipientChat],
+    [startChat],
   )
 
   const openSupportChat = useCallback(async () => {
@@ -391,11 +391,11 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     if (!supportId) {
       throw new Error('support_unavailable')
     }
-    await openRecipientChat(
+    await startChat(
       { id: supportId, name: t('supportChat.expeditionSupport') },
       SUPPORT_CONVERSATION_TYPE,
     )
-  }, [openRecipientChat, t])
+  }, [startChat, t])
 
   const closeConversation = useCallback(() => {
     if (activeRef.current) {
@@ -539,6 +539,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       messageStatuses,
       unreadCount,
       openConversation,
+      startChat,
       openSupplierChat,
       openSupportChat,
       closeConversation,
@@ -549,7 +550,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     }),
     [
       conversations, activeConversationId, messages, hasMore, typingUserId,
-      messageStatuses, unreadCount, openConversation, openSupplierChat, openSupportChat,
+      messageStatuses, unreadCount, openConversation, startChat, openSupplierChat, openSupportChat,
       closeConversation, sendMessage, loadMore, setTyping, refreshConversations,
     ],
   )
