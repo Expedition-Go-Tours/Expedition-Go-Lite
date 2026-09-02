@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Star, Edit3, Trash2, ChevronDown, ChevronUp, Clock } from "lucide-react";
@@ -110,7 +110,7 @@ export default function ReviewsPage() {
   }
 
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-4">
+    <div className="w-full mx-auto space-y-4">
       <AnimatePresence mode="popLayout">
         {reviews.map((review) => {
           const canEdit = now - new Date(review.createdAt).getTime() <= EDIT_WINDOW_MS;

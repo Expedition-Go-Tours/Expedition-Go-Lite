@@ -270,7 +270,7 @@ export default function DashboardLayout() {
           isCollapsed ? "lg:ml-[64px]" : "lg:ml-[300px]"
         }`}
       >
-        <div className="px-4 sm:px-6 lg:px-10 pb-10">
+        <div className="mx-auto w-full max-w-[1120px] px-4 sm:px-6 lg:px-10 pb-10">
           <div className="flex items-center justify-center lg:justify-start mb-8 relative">
             <h1 className="text-[clamp(24px,2.4vw,32px)] font-heading font-bold text-[#1a1a1a] text-center lg:text-left">
               {title}

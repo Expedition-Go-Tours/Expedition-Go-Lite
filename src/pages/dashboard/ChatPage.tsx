@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ChevronLeft, Headphones, MessageCircle, MessagesSquare } from "lucide-react";
@@ -41,7 +41,7 @@ export default function ChatPage() {
   const activeTypingUserId = chat.activeConversationId ? chat.typingUserId[chat.activeConversationId] : null;
 
   // Deep link: /dashboard/chat?conversation=<id> (from notifications / the
-  // booking workspace). Opened once per id — the conversations list updates on
+  // booking workspace). Opened once per id â€” the conversations list updates on
   // polling/socket events, so without this guard the effect would re-open and
   // re-issue "mark read" requests on every update.
   const processedDeepLink = useRef<string | null>(null);
@@ -75,7 +75,7 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="w-full max-w-5xl mx-auto bg-white rounded-xl border border-[#e5e4e7] overflow-hidden flex flex-col md:flex-row h-[calc(100vh-240px)] min-h-[480px]">
+    <div className="w-full mx-auto bg-white rounded-xl border border-[#e5e4e7] overflow-hidden flex flex-col md:flex-row h-[calc(100vh-240px)] min-h-[480px]">
       {/* Conversation list */}
       <div
         className={`w-full md:w-80 md:border-r border-[#e5e4e7] flex flex-col min-h-0 ${
@@ -141,7 +141,7 @@ export default function ChatPage() {
                   <p className="text-[14px] font-semibold text-[#111827] truncate">{name}</p>
                   <p className="text-[12px] text-[#6b7280] truncate">
                     {last
-                      ? (last.attachmentUrl ? `📷 ${t("supportChat.imageAttachment")}` : last.content)
+                      ? (last.attachmentUrl ? `ðŸ“· ${t("supportChat.imageAttachment")}` : last.content)
                       : t("supportChat.startConversation")}
                   </p>
                 </div>

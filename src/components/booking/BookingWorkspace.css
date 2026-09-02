@@ -1,12 +1,11 @@
-/* ============================================================
+﻿/* ============================================================
    Booking WORKSPACE (voucher + details + actions).
    Tokens/buttons/chips from bookingTheme.css (imported by the
    component); these styles are workspace-specific.
    ============================================================ */
 .ws {
   width: 100%;
-  max-width: 1080px;
-  margin: 0 auto;
+  
 }
 
 .ws-back {
@@ -426,7 +425,7 @@
   }
 }
 
-/* "View on Google Maps" — revealed on hover for pointer devices. */
+/* "View on Google Maps" â€” revealed on hover for pointer devices. */
 .bk-pointmap-hint {
   position: absolute;
   inset: 0;
