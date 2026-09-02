@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ChevronLeft, Headphones, MessageCircle, MessagesSquare } from "lucide-react";
@@ -40,10 +40,20 @@ export default function ChatPage() {
     : null;
   const activeTypingUserId = chat.activeConversationId ? chat.typingUserId[chat.activeConversationId] : null;
 
-  // Deep link: /dashboard/chat?conversation=<id> (from notifications).
+  // Deep link: /dashboard/chat?conversation=<id> (from notifications / the
+  // booking workspace). Opened once per id — the conversations list updates on
+  // polling/socket events, so without this guard the effect would re-open and
+  // re-issue "mark read" requests on every update.
+  const processedDeepLink = useRef<string | null>(null);
   useEffect(() => {
     const id = searchParams.get("conversation");
-    if (id && chat.conversations.some((c) => c.id === id)) {
+    if (!id) {
+      processedDeepLink.current = null;
+      return;
+    }
+    if (processedDeepLink.current === id) return;
+    if (chat.conversations.some((c) => c.id === id)) {
+      processedDeepLink.current = id;
       chat.openConversation(id);
       setSearchParams({}, { replace: true });
     }

@@ -84,6 +84,16 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   // open instead of leaving the thread permanently empty.
   const messageLoadsInFlight = useRef<Record<string, boolean>>({})
   const messagesRef = useRef<Record<string, ChatMessage[]>>({})
+  // Throttle "mark read": socket receipt + REST ack can otherwise fire rapid
+  // duplicate PATCHes to /chat/conversations/:id/read while a thread is open.
+  const lastMarkedAtRef = useRef<Record<string, number>>({})
+  const markConversationRead = useCallback((conversationId: string) => {
+    const now = Date.now()
+    if (now - (lastMarkedAtRef.current[conversationId] ?? 0) < 1500) return
+    lastMarkedAtRef.current[conversationId] = now
+    getChatSocket()?.emit('chat:mark-read', { conversationId })
+    api.markConversationAsRead(conversationId).catch(() => {})
+  }, [])
 
   useEffect(() => {
     activeRef.current = activeConversationId
@@ -147,15 +157,14 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         })
         setUnreadCount((prev) => (active ? prev : prev + 1))
         if (active) {
-          // Auto mark-read while the conversation is open.
-          getChatSocket()?.emit('chat:mark-read', { conversationId })
-          api.markConversationAsRead(conversationId).catch(() => {})
+          // Auto mark-read while the conversation is open (throttled).
+          markConversationRead(conversationId)
         } else {
           refreshConversations()
         }
       }
     },
-    [refreshConversations],
+    [refreshConversations, markConversationRead],
   )
 
   const handleSocketTyping = useCallback(
@@ -358,10 +367,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
             delete messageLoadsInFlight.current[conversationId]
           })
       }
-      getChatSocket()?.emit('chat:mark-read', { conversationId })
-      api.markConversationAsRead(conversationId).catch(() => {})
+      markConversationRead(conversationId)
     },
-    [conversations, messages],
+    [conversations, messages, markConversationRead],
   )
 
   /** Finds-or-creates a conversation with a recipient and opens it. Throws on
