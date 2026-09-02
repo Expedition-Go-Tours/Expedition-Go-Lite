@@ -200,6 +200,7 @@ export default function BookingWorkspace() {
       return 'This booking is non-refundable — no refund will be issued.'
     }
     if (cancellation.allowed) {
+      if (!isPaid) return 'Reserved — no payment has been taken yet.'
       if (cancellation.refundPct >= 100) {
         return cancellation.windowHours > 0 && cancellation.deadline
           ? `Free cancellation — full refund until ${formatDeadlineLabel(cancellation.deadline)}.`
@@ -223,8 +224,9 @@ export default function BookingWorkspace() {
   const handleCancel = () => {
     if (!detail?.id) return
     setCancelError(null)
-    const refundLine =
-      cancellation.refundPct <= 0
+    const refundLine = !isPaid
+      ? 'This reservation has not been charged — no payment will be taken.'
+      : cancellation.refundPct <= 0
         ? 'This booking is non-refundable and no refund will be issued.'
         : cancellation.refundPct >= 100
           ? 'Free cancellation — you will receive a full refund.'
