@@ -266,12 +266,34 @@ export default function BookingWorkspace({ id, onClose }: { id?: string; onClose
   const statusMeta = meta
 
   // Open a SUPPLIER_CUSTOMER conversation with this booking's operator — the
-  // same thread the operator opens via Bookings → "Message customer". Falls
+  // same thread the operator opens via Bookings → "Message customer". Reuses
+  // any existing thread with the operator (including a prior support thread,
+  // e.g. SUPPLIER_CUSTOMER or EXPEDITION_CUSTOMER, when the operator doubles as
+  // the support identity) so we never strand messages in a duplicate. Falls
   // back to the shared Expedition support channel when the tour has no
   // operator user.
   const handleMessageOperator = async () => {
     try {
       if (operatorId) {
+        const existing = chat.conversations
+          .filter(
+            (c) =>
+              (c.type === 'SUPPLIER_CUSTOMER' || c.type === 'EXPEDITION_CUSTOMER') &&
+              c.participants?.some((p) => p.userId === operatorId),
+          )
+          .sort((a, b) => {
+            const aHas = (a.messages?.length ?? 0) > 0 ? 1 : 0
+            const bHas = (b.messages?.length ?? 0) > 0 ? 1 : 0
+            if (aHas !== bHas) return bHas - aHas
+            return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+          })[0]
+
+        if (existing) {
+          chat.openConversation(existing.id)
+          navigate(`/dashboard/chat?conversation=${existing.id}`)
+          return
+        }
+
         const conv = await chat.startChat(
           { id: operatorId, name: supplierName || 'Operator', photoURL: operatorPhoto },
           'SUPPLIER_CUSTOMER',
