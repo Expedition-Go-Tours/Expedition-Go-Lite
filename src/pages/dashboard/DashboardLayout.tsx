@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Settings, CalendarDays, Heart, Star, Bell, MessageCircle,
@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { useSidebarStore } from "@/stores/sidebarStore";
 import { getStoredAuthUser, signOutUser } from "@/lib/auth";
 import { useChat } from "@/chat/ChatContext";
+import "./DashboardLayout.css";
 import BookingHistory from "@/pages/BookingHistory";
 import Wishlist from "@/pages/Wishlist";
 import SettingsPage from "./SettingsPage";
@@ -25,14 +26,14 @@ const navItems = [
   { label: "Settings", path: "/dashboard/settings", icon: Settings },
 ];
 
-const pageTitles: Record<string, string> = {
-  "/dashboard/settings": "Account Settings",
-  "/dashboard/bookings": "Booking History",
-  "/dashboard/wishlist": "My Wishlist",
-  "/dashboard/reviews": "My Reviews",
-  "/dashboard/notifications": "Updates",
-  "/dashboard/chat": "Chat",
-};
+const ROUTES = [
+  { path: "/dashboard/settings", title: "Account Settings", Page: SettingsPage },
+  { path: "/dashboard/bookings", title: "Booking History", Page: BookingHistory },
+  { path: "/dashboard/wishlist", title: "My Wishlist", Page: Wishlist },
+  { path: "/dashboard/reviews", title: "My Reviews", Page: ReviewsPage },
+  { path: "/dashboard/notifications", title: "Updates", Page: NotificationsPage },
+  { path: "/dashboard/chat", title: "Chat", Page: ChatPage },
+] as const;
 
 function isBookingsAreaPath(pathname: string): boolean {
   return pathname === "/dashboard/bookings";
@@ -241,41 +242,23 @@ function Sidebar() {
   );
 }
 
-const pageVariants = {
-  initial: { opacity: 0, y: 14 },
-  animate: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: -14 },
-};
-
-function AnimatedPage({ children }: { children: React.ReactNode }) {
-  return (
-    <motion.div
-      initial="initial"
-      animate="animate"
-      exit="exit"
-      variants={pageVariants}
-      transition={{ duration: 0.3, ease: "easeInOut" }}
-    >
-      {children}
-    </motion.div>
-  );
-}
-
 export default function DashboardLayout() {
   const { isCollapsed } = useSidebarStore();
   const location = useLocation();
   const navigate = useNavigate();
-  const title = pageTitles[location.pathname] || "Dashboard";
 
-  // Redirect the base /dashboard path (or any unknown dashboard subpath) to a
-  // concrete page BEFORE entering the animated <Routes>. Rendering <Navigate>
-  // as a keyed child inside an AnimatePresence with mode="wait" leaves the view
-  // blank, because the redirect outputs null and never signals exit-completion.
-  const isKnownRoute = Object.keys(pageTitles).includes(location.pathname);
-  if (!isKnownRoute) {
-    return <Navigate to="/dashboard/settings" replace />;
+  // Keep every visited dashboard page mounted (hidden, not unmounted) so
+  // navigating away and back never remounts the page / refetches data.
+  const [visited, setVisited] = useState<Set<string>>(() => new Set([location.pathname]));
+  if (!visited.has(location.pathname)) {
+    setVisited((prev) => new Set(prev).add(location.pathname));
   }
 
+  const activeRoute = ROUTES.find((r) => r.path === location.pathname);
+  if (!activeRoute) {
+    return <Navigate to="/dashboard/settings" replace />;
+  }
+  const title = activeRoute.title;
   const bookingsArea = isBookingsAreaPath(location.pathname);
 
   return (
@@ -289,18 +272,9 @@ export default function DashboardLayout() {
       >
         <div className="px-4 sm:px-6 lg:px-10 pb-10">
           <div className="flex items-center justify-center lg:justify-start mb-8 relative">
-            <AnimatePresence mode="wait">
-              <motion.h1
-                key={location.pathname}
-                initial={{ opacity: 0, y: -8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 8 }}
-                transition={{ duration: 0.25, ease: "easeInOut" }}
-                className="text-[clamp(24px,2.4vw,32px)] font-heading font-bold text-[#1a1a1a] text-center lg:text-left"
-              >
-                {title}
-              </motion.h1>
-            </AnimatePresence>
+            <h1 className="text-[clamp(24px,2.4vw,32px)] font-heading font-bold text-[#1a1a1a] text-center lg:text-left">
+              {title}
+            </h1>
 
             {location.pathname === "/dashboard/settings" && (
               <button
@@ -325,16 +299,21 @@ export default function DashboardLayout() {
             )}
           </div>
 
-          <AnimatePresence mode="wait">
-            <Routes location={location} key={location.pathname}>
-            <Route path="settings" element={<AnimatedPage><SettingsPage /></AnimatedPage>} />
-            <Route path="bookings" element={<AnimatedPage><BookingHistory /></AnimatedPage>} />
-              <Route path="wishlist" element={<AnimatedPage><Wishlist /></AnimatedPage>} />
-            <Route path="reviews" element={<AnimatedPage><ReviewsPage /></AnimatedPage>} />
-            <Route path="notifications" element={<AnimatedPage><NotificationsPage /></AnimatedPage>} />
-            <Route path="chat" element={<AnimatedPage><ChatPage /></AnimatedPage>} />
-          </Routes>
-          </AnimatePresence>
+          <div className="dash-pages">
+            {ROUTES.map((r) => {
+              if (!visited.has(r.path)) return null;
+              const active = r.path === location.pathname;
+              return (
+                <section
+                  key={r.path}
+                  className={`dash-pane${active ? " active" : ""}`}
+                  hidden={!active}
+                >
+                  <r.Page />
+                </section>
+              );
+            })}
+          </div>
         </div>
       </main>
     </div>
