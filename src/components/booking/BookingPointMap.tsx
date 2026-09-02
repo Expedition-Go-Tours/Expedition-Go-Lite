@@ -41,7 +41,7 @@ export default function BookingPointMap({ lat, lng, label, className = '' }: Boo
     map = createMapLibreMap(el, {
       style: TILE_STYLE,
       center: [lng, lat],
-      zoom: 13,
+      zoom: 12,
       interactive: false,
       attributionControl: false,
     })

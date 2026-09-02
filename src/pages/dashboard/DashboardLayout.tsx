@@ -39,6 +39,10 @@ function isBookingWorkspacePath(pathname: string): boolean {
   return pathname.startsWith("/dashboard/bookings/");
 }
 
+function isBookingsAreaPath(pathname: string): boolean {
+  return pathname === "/dashboard/bookings" || isBookingWorkspacePath(pathname);
+}
+
 function Sidebar() {
   const { isCollapsed, toggle, isMobileOpen, closeMobile, toggleMobile } = useSidebarStore();
   const location = useLocation();
@@ -278,8 +282,10 @@ export default function DashboardLayout() {
     return <Navigate to="/dashboard/settings" replace />;
   }
 
+  const bookingsArea = isBookingsAreaPath(location.pathname);
+
   return (
-    <div className="min-h-screen bg-[#f8f9fb]">
+    <div className={`min-h-screen ${bookingsArea ? "bg-white" : "bg-[#f8f9fb]"}`}>
       <Sidebar />
 
       <main

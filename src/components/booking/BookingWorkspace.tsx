@@ -132,6 +132,8 @@ export default function BookingWorkspace() {
     pickup && (pickup.pickupLater || pickup.skipValidation || pickup.status === 'deferred')
   )
   const pickupTime = pickup?.time ? String(pickup.time) : null
+  const pickupInstructionsText =
+    typeof pickup?.instructions === 'string' ? pickup.instructions.trim() : ''
 
   const arrivalLabel = (() => {
     if (meeting.meetingMode !== 'meeting_point') return ''
@@ -378,6 +380,14 @@ export default function BookingWorkspace() {
                   )}
                 </dd>
               </div>
+              {pickupInstructionsText && (
+                <div className="ws-grid-row">
+                  <dt><Info size={15} /> Additional info</dt>
+                  <dd>
+                    <span className="ws-subtext">{pickupInstructionsText}</span>
+                  </dd>
+                </div>
+              )}
             </dl>
             {typeof detail.specialRequests === 'string' && detail.specialRequests && (
               <p className="ws-note">
@@ -411,24 +421,20 @@ export default function BookingWorkspace() {
                   </div>
                 ) : (
                   <>
-                    <div className="ws-where">
-                      <MapPin size={16} />
-                      <div>
-                        <p className="ws-where-value">{pickupLocation}</p>
-                        {(() => {
-                          const addrTxt = String(pickupAddress?.name || pickupAddress?.address || '').trim()
-                          return addrTxt && addrTxt !== pickupLocation ? (
-                            <p className="ws-where-sub">{addrTxt}</p>
-                          ) : null
-                        })()}
-                        {pickupTime && (
-                          <p className="ws-where-time">Pickup {formatTimeString(pickupTime)}</p>
-                        )}
-                        {typeof pickup?.instructions === 'string' && pickup.instructions && (
-                          <p className="ws-where-sub">{String(pickup.instructions)}</p>
-                        )}
+                    <dl className="ws-grid">
+                      <div className="ws-grid-row">
+                        <dt><MapPin size={15} /> Pickup</dt>
+                        <dd>
+                          {pickupLocation}
+                          {(() => {
+                            const addrTxt = String(pickupAddress?.name || pickupAddress?.address || '').trim()
+                            return addrTxt && addrTxt !== pickupLocation ? (
+                              <span className="ws-subtext">{addrTxt}</span>
+                            ) : null
+                          })()}
+                        </dd>
                       </div>
-                    </div>
+                    </dl>
                     {mapPoint && <BookingPointMap lat={mapPoint.lat} lng={mapPoint.lng} label={pickupLocation} />}
                     {activeStatus && (
                       <button
@@ -443,18 +449,18 @@ export default function BookingWorkspace() {
                 )
               ) : hasMeeting ? (
                 <>
-                  <div className="ws-where">
-                    <MapPin size={16} />
-                    <div>
-                      <p className="ws-where-value">
+                  <dl className="ws-grid">
+                    <div className="ws-grid-row">
+                      <dt><MapPin size={15} /> Meeting point</dt>
+                      <dd>
                         {[meeting.meetingPoint, meeting.meetingPointAddress].filter(Boolean).join(' — ')}
-                      </p>
-                      {arrivalLabel && <p className="ws-where-sub">{arrivalLabel}</p>}
-                      {meeting.meetingPointDescription && (
-                        <p className="ws-where-sub">{meeting.meetingPointDescription}</p>
-                      )}
+                        {arrivalLabel && <span className="ws-subtext">{arrivalLabel}</span>}
+                        {meeting.meetingPointDescription && (
+                          <span className="ws-subtext">{meeting.meetingPointDescription}</span>
+                        )}
+                      </dd>
                     </div>
-                  </div>
+                  </dl>
                   {mapPoint && (
                     <BookingPointMap
                       lat={mapPoint.lat}
@@ -470,23 +476,21 @@ export default function BookingWorkspace() {
 
         {/* Right rail — actions + operator */}
         <aside className="ws-aside no-print">
-          {activeStatus && (
+          {activeStatus && showCancel && (
             <section className="ws-card">
               <h2 className="ws-card-title">Manage this booking</h2>
               <div className="ws-actions">
-                {showCancel && (
-                  <button
-                    type="button"
-                    className="bk-btn bk-btn-danger ws-action-btn"
-                    onClick={handleCancel}
-                    disabled={cancelBooking.isPending}
-                  >
-                    {cancelBooking.isPending ? 'Cancelling…' : 'Cancel booking'}
-                  </button>
-                )}
+                <button
+                  type="button"
+                  className="bk-btn bk-btn-danger ws-action-btn"
+                  onClick={handleCancel}
+                  disabled={cancelBooking.isPending}
+                >
+                  {cancelBooking.isPending ? 'Cancelling…' : 'Cancel booking'}
+                </button>
               </div>
               {cancelError && <p className="ws-cancel-error">{cancelError}</p>}
-              {showCancel && policyNote && <p className="ws-subtext">{policyNote}</p>}
+              {policyNote && <p className="ws-subtext">{policyNote}</p>}
             </section>
           )}
 

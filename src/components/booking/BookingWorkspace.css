@@ -319,43 +319,6 @@
 }
 
 /* ---------- Where to go ---------- */
-.ws-where {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-}
-
-.ws-where > svg {
-  flex-shrink: 0;
-  margin-top: 2px;
-  color: var(--bv-accent);
-}
-
-.ws-where-value {
-  margin: 0;
-  font-family: var(--font-body);
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--bv-ink);
-  line-height: 1.4;
-}
-
-.ws-where-time {
-  margin: 6px 0 0;
-  font-family: var(--font-body);
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--bv-forest);
-}
-
-.ws-where-sub {
-  margin: 4px 0 0;
-  font-family: var(--font-body);
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--bv-muted);
-}
-
 .ws-amber {
   padding: 14px 16px;
   border-radius: 12px;
@@ -394,11 +357,12 @@
   text-decoration: underline;
 }
 
-/* ---------- Mini map ---------- */
+/* ---------- Mini map (square, larger) ---------- */
 .bk-pointmap {
-  margin-top: 14px;
+  margin-top: 16px;
+  width: min(100%, 480px);
   border: 1px solid var(--bv-border);
-  border-radius: 14px;
+  border-radius: 16px;
   overflow: hidden;
 }
 
@@ -410,7 +374,14 @@
 
 .bk-pointmap-frame {
   position: relative;
-  height: 170px;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+}
+
+@media (max-width: 480px) {
+  .bk-pointmap {
+    border-radius: 14px;
+  }
 }
 
 .bk-pointmap-canvas {
@@ -602,7 +573,7 @@
   }
 }
 
-/* ---------- Print (voucher) ---------- */
+/* ---------- Print (single-sheet ticket) ---------- */
 @media print {
   .no-print {
     display: none !important;
@@ -610,6 +581,10 @@
 
   body {
     background: #fff !important;
+  }
+
+  @page {
+    margin: 12mm;
   }
 
   .ws {
@@ -623,20 +598,29 @@
 
   .ws-aside,
   .ws-policy-note,
+  .ws-ref,
   .ws-head .bk-chip {
     display: none !important;
   }
 
-  .ws-card {
-    border: none;
-    box-shadow: none;
-    padding: 0;
+  .ws-head {
+    margin-bottom: 12px;
   }
 
-  .ws-voucher {
-    border: 1px solid #d5d9e0;
+  .ws-title {
+    font-size: 22px;
+  }
+
+  /* Print only the digital ticket on a single sheet. */
+  .ws-main > .ws-card {
+    display: none !important;
+  }
+
+  .ws-main > .ws-card.ws-voucher {
+    display: block !important;
+    border: 1px solid #d8dce3;
+    border-radius: 14px;
     padding: 18px;
-    border-radius: 12px;
     page-break-inside: avoid;
   }
 }

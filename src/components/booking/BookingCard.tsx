@@ -1,6 +1,7 @@
 import { useState, type MouseEvent } from 'react'
-import { CalendarDays, Users, MapPin, Ticket, ChevronRight, Copy, Check, Clock } from 'lucide-react'
+import { CalendarDays, Users, MapPin, Ticket, ChevronRight, Copy, Check, Clock, CreditCard } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { currencySymbol } from '../../lib/currencySymbol'
 import type { ExpeditionBookingSummary } from '../../hooks/useExpeditionBookings'
 import {
   bookingStatusMeta,
@@ -54,6 +55,8 @@ export default function BookingCard({ booking }: BookingCardProps) {
   }
 
   const canManage = booking.status === 'PENDING' || booking.status === 'CONFIRMED'
+  const isPaid = booking.paymentStatus === 'SUCCEEDED'
+  const amount = `${booking.currency === 'GHS' ? 'GH₵' : currencySymbol(booking.currency)}${booking.total.toFixed(2)}`
 
   return (
     <article className="bk-card" onClick={open}>
@@ -120,6 +123,10 @@ export default function BookingCard({ booking }: BookingCardProps) {
               {booking.tourLocation}
             </span>
           )}
+          <span className={`bk-meta-item bk-meta-paid${isPaid ? '' : ' is-reserved'}`}>
+            <CreditCard size={14} />
+            {isPaid ? `Paid ${amount}` : `Total ${amount}`}
+          </span>
         </div>
       </div>
 

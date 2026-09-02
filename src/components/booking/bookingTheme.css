@@ -11,12 +11,12 @@
   --bv-forest: #065f46;
   --bv-forest-ink: #0b2e22;
 
-  /* Neutrals */
-  --bv-canvas: #f6f7f9;
+  /* Neutrals — bright, crisp whites (GetYourGuide-style) */
+  --bv-canvas: #ffffff;
   --bv-surface: #ffffff;
   --bv-surface-2: #f9fafb;
-  --bv-border: #e7e9ee;
-  --bv-border-strong: #d5d9e0;
+  --bv-border: #eceef2;
+  --bv-border-strong: #d8dce3;
   --bv-ink: #101828;
   --bv-text: #344054;
   --bv-muted: #667085;
