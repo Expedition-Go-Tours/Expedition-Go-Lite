@@ -2,7 +2,6 @@ import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { Rocket, ArrowRight } from 'lucide-react'
-import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import './SupportPages.css'
 
@@ -15,7 +14,6 @@ export default function SupplierTermsPage() {
 
   return (
     <div className="support-page">
-      <Navbar />
       <div className="support-hero">
         <div className="support-hero-content">
           <h1 className="support-title">{t('footer.supplierTerms')}</h1>

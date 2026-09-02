@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence, type Variants } from 'framer-motion'
 import { X, Compass, Users, ShieldCheck, BadgeDollarSign, Headset, ArrowRight } from 'lucide-react'
-import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import heroImg1 from '../assets/Image01.webp'
 import heroImg2 from '../assets/Image02.webp'
@@ -196,7 +195,6 @@ export default function AboutUsPage() {
 
   return (
     <div className="about-page">
-      <Navbar />
 
       {/* ===== Hero with Moving Images ===== */}
       <div className="about-hero">

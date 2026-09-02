@@ -4,7 +4,6 @@ import { motion, AnimatePresence, useScroll, useSpring } from 'framer-motion'
 import { ArrowLeft, Calendar, Clock, Share2, ChevronRight, Sparkles } from 'lucide-react'
 import { travelStories, storySlug } from '../components/data'
 import type { TravelStory } from '../components/data'
-import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import './StoryDetailPage.css'
 import OptimizedImage from '@/components/shared/OptimizedImage'
@@ -122,7 +121,6 @@ function StoryDetailPage() {
   if (!story || !content) {
     return (
       <div className="story-detail">
-        <Navbar />
         <div className="story-notfound">
           <Sparkles size={40} />
           <h1>Story not found</h1>
@@ -141,7 +139,6 @@ function StoryDetailPage() {
       {/* Reading progress bar */}
       <motion.div className="story-progress" style={{ scaleX: progress }} />
 
-      <Navbar />
 
       <AnimatePresence mode="wait">
         <motion.div

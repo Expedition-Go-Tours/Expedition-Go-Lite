@@ -3,7 +3,6 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronLeft, ChevronRight, X, Star, ArrowLeft } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import Navbar from '../components/Navbar'
 import TourCard from '../components/TourCard'
 import TourCardSkeleton from '../components/TourCardSkeleton'
 
@@ -96,11 +95,7 @@ function applySort(tours: TourCardData[], sortKey: SortKey): TourCardData[] {
   }
 }
 
-interface AllToursPageProps {
-  onOpenAuth?: (mode: 'signin' | 'signup') => void
-}
-
-export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
+export default function AllToursPage() {
   const { t } = useTranslation()
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
@@ -350,7 +345,6 @@ export default function AllToursPage({ onOpenAuth }: AllToursPageProps) {
 
   return (
     <div className="all-tours-page">
-      <Navbar onOpenAuth={onOpenAuth} />
       <div className="all-tours-container">
         <div className="all-tours-header">
           <div className="all-tours-header-left">

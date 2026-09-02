@@ -1,7 +1,6 @@
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Route, Map, Headset, Megaphone, Mail, ArrowRight } from 'lucide-react'
-import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import './SupportPages.css'
 
@@ -39,7 +38,6 @@ export default function CareersPage() {
 
   return (
     <div className="support-page">
-      <Navbar />
       <div className="support-hero">
         <div className="support-hero-content">
           <h1 className="support-title">{t('footer.careers')}</h1>

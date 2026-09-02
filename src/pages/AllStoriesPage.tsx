@@ -5,7 +5,6 @@ import { travelStories, storySlug } from '../components/data'
 import type { TravelStory } from '../components/data'
 import { useStorySearchAutocomplete } from '../hooks/useStorySearchAutocomplete'
 import type { StorySuggestion } from '../hooks/useStorySearchAutocomplete'
-import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import './AllStoriesPage.css'
 import OptimizedImage from '@/components/shared/OptimizedImage'
@@ -102,7 +101,6 @@ export default function AllStoriesPage() {
 
   return (
     <div className="all-stories-page">
-      <Navbar />
       <div className="all-stories-hero">
         <div className="all-stories-hero-content">
           <h1 className="all-stories-title">Travel Stories & News</h1>

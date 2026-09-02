@@ -2,7 +2,6 @@ import { useEffect, useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, type Variants } from 'framer-motion'
 import { Users, User, Heart, Folder, Handshake, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react'
-import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import help1 from '../assets/foundation/help1.avif'
 import help2 from '../assets/foundation/help2.avif'
@@ -133,7 +132,6 @@ export default function FoundationPage() {
 
   return (
     <div className="foundation-page">
-      <Navbar />
 
       {/* Hero Section with Image Carousel */}
       <section className="foundation-hero">

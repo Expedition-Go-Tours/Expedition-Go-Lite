@@ -603,7 +603,7 @@ export default function SupplierLandingPage({ onOpenAuth }: SupplierLandingPageP
             <span className="supplier-landing-eyebrow">Gallery</span>
             <h2 className="supplier-landing-section-title">A glimpse of the experiences you can offer</h2>
             <p className="supplier-landing-section-desc">
-              From guided tours to adventure and culture — show travelers what they can expect.
+              From guided tours to adventure and culture, show travelers what they can expect.
             </p>
           </motion.div>
           <GalleryCarousel scrollRef={galleryScrollRef} />

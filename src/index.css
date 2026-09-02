@@ -85,9 +85,8 @@
 }
 
 html {
-  /* Reserve the vertical scrollbar gutter so the page never shifts
-     horizontally when a scrollbar appears/disappears (e.g. dropdown opens). */
-  scrollbar-gutter: stable;
+  /* Always show vertical scrollbar to prevent layout shift from dropdowns */
+  overflow-y: scroll;
   /* Clip horizontal overflow so a fixed-position overlay (dropdown panel)
      can never introduce a horizontal scrollbar that jolts the page. */
   overflow-x: clip;
@@ -98,6 +97,8 @@ body {
   /* Stop scroll-anchoring from nudging the scroll position when an overlay
      (dropdown) opens near the bottom of the page. */
   overflow-anchor: none;
+  /* Prevent any horizontal shift from dropdown portals */
+  overflow-x: clip;
 }
 
 #root {
@@ -105,6 +106,7 @@ body {
   max-width: 100%;
   margin: 0;
   min-height: 100svh;
+  overflow-x: clip;
 }
 
 /* ContactCard Component Styles */

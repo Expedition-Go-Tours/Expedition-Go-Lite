@@ -2,7 +2,6 @@ import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { Mail, MessagesSquare, HelpCircle, FileText, UserRound, MapPin } from 'lucide-react'
-import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import { openSupportChat } from '../lib/support'
 import heroImg from '../assets/images/QuadBiking.webp'
@@ -25,7 +24,6 @@ export default function HelpCentrePage() {
 
   return (
     <div className="support-page">
-      <Navbar />
       <div className="support-hero">
         <div className="support-hero-bg">
           <img src={heroImg} alt="" aria-hidden="true" />
@@ -101,6 +99,7 @@ export default function HelpCentrePage() {
             />
           </div>
           <div className="support-location-info">
+            <img src="/logo.png" alt="Expedition-Go" className="support-location-logo" />
             <div className="support-contact-label">
               <MapPin size={14} />
               Our Office

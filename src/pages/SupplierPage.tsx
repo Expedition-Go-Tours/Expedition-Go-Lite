@@ -7,7 +7,6 @@ import {
   Phone, Mail, Globe, MapPin, ChevronDown,
 } from 'lucide-react'
 import TourCard from '../components/TourCard'
-import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import { mapRawTourToListing, type TourCardData } from '../hooks/useExpeditionTours'
 import { mapSupplierProfile, normalizeWebsiteUrl, type SupplierProfileData } from '../lib/supplierProfile'
@@ -126,7 +125,6 @@ export default function SupplierPage() {
   if (profileLoading) {
     return (
       <motion.div className="min-h-screen bg-white" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
-        <Navbar />
         <div className="supplier-page-nav-offset" aria-hidden />
         <div className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center gap-4 px-4">
           <p className="text-sm text-slate-500">Loading supplier...</p>
@@ -138,7 +136,6 @@ export default function SupplierPage() {
   if (!supplierData) {
     return (
       <motion.div className="min-h-screen bg-white" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
-        <Navbar />
         <div className="supplier-page-nav-offset" aria-hidden />
         <div className="flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center gap-4 px-4">
           <p className="text-sm text-slate-500">Supplier not found</p>
@@ -158,7 +155,6 @@ export default function SupplierPage() {
       exit={{ opacity: 0 }}
       transition={{ duration: 0.4, ease: 'easeInOut' }}
     >
-      <Navbar />
       <div className="supplier-page-nav-offset" aria-hidden />
 
       <motion.main

@@ -2,16 +2,8 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronDown } from 'lucide-react'
-import i18n from '../i18n/config'
 import { useCurrency, availableCurrencies } from '../contexts/CurrencyContext'
-import { useAuthUser } from '../hooks/useAuthUser'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuTrigger,
-} from './ui/dropdown-menu'
+import LanguageCurrencyModal from './LanguageCurrencyModal'
 import './Footer.css'
 import visaSrc from '../assets/icons/visa.svg'
 import americanexpressSrc from '../assets/images/amex.png'
@@ -100,62 +92,17 @@ function FooterAccordion({ title, children, defaultOpen = false, collapsible = t
   )
 }
 
-interface FooterSelectorOption {
-  value: string
-  label: ReactNode
-}
-
-function FooterSelector({ value, onValueChange, options, ariaLabel }: {
-  value: string
-  onValueChange: (value: string) => void
-  options: FooterSelectorOption[]
-  ariaLabel: string
-}) {
-  const current = options.find((o) => o.value === value) ?? options[0]
-
-  return (
-    <div className="footer-selector">
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <button type="button" className="footer-selector-trigger group" aria-label={ariaLabel}>
-            <span className="footer-selector-trigger-value">{current?.label}</span>
-            <ChevronDown
-              className="footer-selector-chevron transition-transform duration-300 group-data-[state=open]:rotate-180"
-              size={14}
-              strokeWidth={2}
-              aria-hidden="true"
-            />
-          </button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent
-          align="start"
-          sideOffset={6}
-          className="footer-selector-content w-[var(--radix-dropdown-menu-trigger-width)] max-h-72 overflow-y-auto bg-white border-slate-200"
-        >
-          <DropdownMenuRadioGroup value={value} onValueChange={onValueChange}>
-            {options.map((o) => (
-              <DropdownMenuRadioItem key={o.value} value={o.value} className="py-2">
-                <span className="flex-1 truncate">{o.label}</span>
-              </DropdownMenuRadioItem>
-            ))}
-          </DropdownMenuRadioGroup>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
-  )
-}
-
 export default function Footer() {
   const { t, i18n: activeI18n } = useTranslation()
-  const { currency, setCurrency } = useCurrency()
-  const user = useAuthUser()
+  const { currency } = useCurrency()
   const langCode = (activeI18n.resolvedLanguage ?? activeI18n.language ?? 'en')
     .substring(0, 2)
     .toLowerCase()
-  // Signed-in users go to the application page (which redirects approved
-  // suppliers to the TravioAfrica-Supplier platform); signed-out visitors see
-  // the public "become a supplier" landing page first.
-  const supplierStartPath = user ? '/supplier/register' : '/supplier/list-experience'
+  // Language/currency are chosen via the same modal the navbar uses; the tab
+  // to open is remembered per button (language vs currency).
+  const [modalTab, setModalTab] = useState<'language' | 'currency' | null>(null)
+  const currentLang = LANGUAGES.find((lang) => lang.code === langCode)
+  const currentCurrency = availableCurrencies.find((c) => c.code === currency.code)
 
   return (
     <footer className="footer">
@@ -165,21 +112,36 @@ export default function Footer() {
           {/* Col 1: Language & Currency */}
           <div className="footer-col">
             <FooterAccordion title={t('footer.language')} collapsible={false}>
-              <FooterSelector
-                key={`lang-${langCode}`}
-                value={langCode}
-                onValueChange={(code) => i18n.changeLanguage(code)}
-                ariaLabel={t('footer.language')}
-                options={LANGUAGES.map((lang) => ({ value: lang.code, label: `${lang.flag} ${lang.label}` }))}
-              />
+              <div className="footer-selector">
+                <button
+                  type="button"
+                  className="footer-selector-trigger group"
+                  onClick={() => setModalTab('language')}
+                  aria-haspopup="dialog"
+                  aria-label={t('footer.language')}
+                >
+                  <span className="footer-selector-trigger-value">
+                    {currentLang ? `${currentLang.flag} ${currentLang.label}` : ''}
+                  </span>
+                  <ChevronDown className="footer-selector-chevron" size={14} strokeWidth={2} aria-hidden="true" />
+                </button>
+              </div>
             </FooterAccordion>
             <FooterAccordion title={t('footer.currency')} collapsible={false}>
-              <FooterSelector
-                value={currency.code}
-                onValueChange={setCurrency}
-                ariaLabel={t('footer.currency')}
-                options={availableCurrencies.map((c) => ({ value: c.code, label: `${c.code} – ${c.label} (${c.symbol})` }))}
-              />
+              <div className="footer-selector">
+                <button
+                  type="button"
+                  className="footer-selector-trigger group"
+                  onClick={() => setModalTab('currency')}
+                  aria-haspopup="dialog"
+                  aria-label={t('footer.currency')}
+                >
+                  <span className="footer-selector-trigger-value">
+                    {currentCurrency ? `${currency.code} – ${currentCurrency.label} (${currency.symbol})` : currency.code}
+                  </span>
+                  <ChevronDown className="footer-selector-chevron" size={14} strokeWidth={2} aria-hidden="true" />
+                </button>
+              </div>
             </FooterAccordion>
           </div>
 
@@ -236,7 +198,7 @@ export default function Footer() {
           <div className="footer-col">
             <FooterAccordion title={t('footer.supplierZone')}>
               <div className="footer-links">
-                <a href={supplierStartPath} target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.listYourTours')}</a>
+                <a href="/partnerships" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.listYourTours')}</a>
                 <a href="/supplier/register" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.supplierDashboard')}</a>
                 <a href="/supplier-terms" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.supplierTerms')}</a>
               </div>
@@ -286,6 +248,12 @@ export default function Footer() {
           </div>
         </div>
       </div>
+
+      <AnimatePresence>
+        {modalTab && (
+          <LanguageCurrencyModal initialTab={modalTab} onClose={() => setModalTab(null)} />
+        )}
+      </AnimatePresence>
     </footer>
   )
 }

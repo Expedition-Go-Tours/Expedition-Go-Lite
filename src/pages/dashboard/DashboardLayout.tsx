@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -9,12 +9,15 @@ import { toast } from "sonner";
 import { useSidebarStore } from "@/stores/sidebarStore";
 import { getStoredAuthUser, signOutUser } from "@/lib/auth";
 import { useChat } from "@/chat/ChatContext";
-import BookingHistory from "@/pages/BookingHistory";
-import Wishlist from "@/pages/Wishlist";
-import SettingsPage from "./SettingsPage";
-import ReviewsPage from "./ReviewsPage";
-import NotificationsPage from "./NotificationsPage";
-import ChatPage from "./ChatPage";
+
+// Dashboard sub-pages are code-split so visiting one tab (e.g. Wishlist) only
+// downloads that page's chunk instead of every dashboard page up front.
+const SettingsPage = lazy(() => import("./SettingsPage"));
+const BookingHistory = lazy(() => import("../BookingHistory"));
+const Wishlist = lazy(() => import("../Wishlist"));
+const ReviewsPage = lazy(() => import("./ReviewsPage"));
+const NotificationsPage = lazy(() => import("./NotificationsPage"));
+const ChatPage = lazy(() => import("./ChatPage"));
 
 const navItems = [
   { label: "Booking History", path: "/dashboard/bookings", icon: CalendarDays },
@@ -257,6 +260,14 @@ function AnimatedPage({ children }: { children: React.ReactNode }) {
   );
 }
 
+function PageLoader() {
+  return (
+    <div className="flex min-h-[40vh] items-center justify-center">
+      <div className="spinner" />
+    </div>
+  );
+}
+
 export default function DashboardLayout() {
   const { isCollapsed } = useSidebarStore();
   const location = useLocation();
@@ -321,13 +332,13 @@ export default function DashboardLayout() {
 
           <AnimatePresence mode="wait">
             <Routes location={location} key={location.pathname}>
-              <Route path="settings" element={<AnimatedPage><SettingsPage /></AnimatedPage>} />
-              <Route path="bookings" element={<AnimatedPage><BookingHistory /></AnimatedPage>} />
-              <Route path="wishlist" element={<AnimatedPage><Wishlist /></AnimatedPage>} />
-            <Route path="reviews" element={<AnimatedPage><ReviewsPage /></AnimatedPage>} />
-            <Route path="notifications" element={<AnimatedPage><NotificationsPage /></AnimatedPage>} />
-            <Route path="chat" element={<AnimatedPage><ChatPage /></AnimatedPage>} />
-          </Routes>
+              <Route path="settings" element={<AnimatedPage><Suspense fallback={<PageLoader />}><SettingsPage /></Suspense></AnimatedPage>} />
+              <Route path="bookings" element={<AnimatedPage><Suspense fallback={<PageLoader />}><BookingHistory /></Suspense></AnimatedPage>} />
+              <Route path="wishlist" element={<AnimatedPage><Suspense fallback={<PageLoader />}><Wishlist /></Suspense></AnimatedPage>} />
+              <Route path="reviews" element={<AnimatedPage><Suspense fallback={<PageLoader />}><ReviewsPage /></Suspense></AnimatedPage>} />
+              <Route path="notifications" element={<AnimatedPage><Suspense fallback={<PageLoader />}><NotificationsPage /></Suspense></AnimatedPage>} />
+              <Route path="chat" element={<AnimatedPage><Suspense fallback={<PageLoader />}><ChatPage /></Suspense></AnimatedPage>} />
+            </Routes>
           </AnimatePresence>
         </div>
       </main>

@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronDown } from 'lucide-react'
-import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import LiquidSurface from '@/components/lightswind/liquid-surface'
 import './SupportPages.css'
@@ -134,7 +133,6 @@ export default function FAQPage() {
 
   return (
     <div className="support-page faq-page">
-      <Navbar />
       <div className="support-hero faq-hero">
         <LiquidSurface
           scheme={1}

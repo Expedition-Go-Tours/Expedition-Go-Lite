@@ -50,6 +50,7 @@ const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'))
 const CookiesPolicyPage = lazy(() => import('./pages/CookiesPolicyPage'))
 const SupplierTermsPage = lazy(() => import('./pages/SupplierTermsPage'))
 const FoundationPage = lazy(() => import('./pages/FoundationPage'))
+const PartnerApplyPage = lazy(() => import('./pages/partner/PartnerApplyPage'))
 
 // Below-fold homepage sections (lazy loaded, mounted on scroll)
 const TopRatedSection = lazy(() => import('./components/TopRatedSection'))
@@ -187,7 +188,7 @@ function AppContent() {
             <TourDetailPage onOpenAuth={handleOpenAuth} />
           } />
           <Route path="/tours" element={
-            <AllToursPage onOpenAuth={handleOpenAuth} />
+            <AllToursPage />
           } />
           <Route path="/search" element={
             <SearchResultsPage />
@@ -199,6 +200,9 @@ function AppContent() {
           <Route path="/about-us" element={<AboutUsPage />} />
           <Route path="/careers" element={<CareersPage />} />
           <Route path="/partnerships" element={<PartnershipsPage />} />
+          <Route path="/partners/:type/apply" element={
+            <PartnerApplyPage onOpenAuth={handleOpenAuth} />
+          } />
           <Route path="/terms-and-conditions" element={<TermsAndConditionsPage />} />
           <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
           <Route path="/cookies-policy" element={<CookiesPolicyPage />} />

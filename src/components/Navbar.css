@@ -14,15 +14,25 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background-color: rgba(255, 255, 255, 0.95);
-  background-image: linear-gradient(180deg, rgba(23, 146, 55, 0.1) 0%, rgba(23, 146, 55, 0.04) 100%);
+  /* Solid white by default so every page (footer pages included) shows a
+     white navbar from the very first frame. The powdered-green translucent
+     look below only applies to the homepage hero (see .navbar--over-hero). */
+  background-color: #fff;
   backdrop-filter: blur(8px);
   z-index: 100;
   color: #333;
   transition: background-color 0.3s, box-shadow 0.3s;
 }
 
-/* Tour detail, all tours, supplier, review, stories, and story-detail pages: show shadow */
+/* Homepage only (navbar sits over the hero at the top of the page): the soft
+   translucent white + green-tint glass look. Any scroll or route change drops
+   the class and the navbar returns to solid white. */
+.navbar--over-hero {
+  background-color: rgba(255, 255, 255, 0.95);
+  background-image: linear-gradient(180deg, rgba(23, 146, 55, 0.1) 0%, rgba(23, 146, 55, 0.04) 100%);
+}
+
+/* Pages that always render a white navbar: show shadow */
 .navbar--tour-detail,
 .tour-detail-page ~ .navbar,
 body:has(.tour-detail-page) .navbar,
@@ -32,28 +42,15 @@ body:has(.supplier-landing-page) .navbar,
 body:has(.review-page) .navbar,
 body:has(.all-stories-page) .navbar,
 body:has(.story-detail) .navbar,
-body:has(.support-page) .navbar {
+body:has(.support-page) .navbar,
+body:has(.about-page) .navbar,
+body:has(.foundation-page) .navbar,
+body:has(.search-results-page) .navbar {
   box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
 }
 
 .navbar.scrolled {
   box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
-}
-
-/* Search in the navbar (homepage scrolled, or pages that always show it):
-   flat white so the green tint doesn't linger behind the search bar */
-body.hero--search-sticky .navbar,
-.navbar--tour-detail,
-body:has(.tour-detail-page) .navbar,
-body:has(.all-tours-page) .navbar,
-body:has(.supplier-page) .navbar,
-body:has(.supplier-landing-page) .navbar,
-body:has(.review-page) .navbar,
-body:has(.all-stories-page) .navbar,
-body:has(.story-detail) .navbar,
-body:has(.support-page) .navbar {
-  background-color: #fff;
-  background-image: none;
 }
 
 /* Hamburger - hidden on desktop */

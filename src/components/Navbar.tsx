@@ -9,7 +9,6 @@ import { useCurrency } from '../contexts/CurrencyContext'
 import logoSrc from '../assets/expo_trans.png'
 import userSrc from '../assets/icons/User Circle.png'
 import { subscribeToAuthState, signOutUser, getStoredAuthUser, type AuthUser } from '../lib/auth'
-import { getSupplierPortalUrl } from '../lib/supplier'
 import { useSupplierStatus } from '../hooks/useSupplierStatus'
 import { useMyBookingsCount } from '../hooks/useExpeditionBookings'
 import { useSearchAutocomplete, type SearchSuggestion } from '../hooks/useSearchAutocomplete'
@@ -45,6 +44,11 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
   const isTourDetailPage = location.pathname.startsWith('/tour')
   const [user, setUser] = useState<AuthUser | null>(getStoredAuthUser)
   const [searchBarSticky, setSearchBarSticky] = useState(false)
+  // The tinted "over the hero" navbar is only for the homepage at the very top
+  // of the page. Every other route renders a solid white navbar from the first
+  // frame, instead of starting translucent/green-tinted and flipping to white
+  // once the route's content (e.g. a footer page) mounts.
+  const isOverHero = location.pathname === '/' && !searchBarSticky
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [subDrawerTab, setSubDrawerTab] = useState<SubDrawerTab | null>(null)
@@ -157,34 +161,24 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
     navigate(`/search?q=${encodeURIComponent(q)}`)
   }, [navSearchValue, navigate])
 
+  // Navbar "List an Experience" CTA (desktop): always lands on the
+  // Partnerships page, whose "Get started" cards route into the partner /
+  // supplier flows.
   const handleListExperience = useCallback(() => {
-    if (!user) {
-      // Signed-out visitors land on the public "become a supplier" page first
-      // (how it works + FAQ) instead of being dropped straight into sign-in.
-      navigate('/supplier/list-experience')
-      return
-    }
-    // Navigate immediately — don't block the click on the portal status
-    // round-trip. Approved suppliers are redirected to the TravioAfrica-
-    // Supplier platform in the background once the check returns.
-    navigate('/supplier/register')
-    getSupplierPortalUrl()
-      .then((portalUrl) => {
-        if (portalUrl && window.location.pathname === '/supplier/register') {
-          window.location.href = portalUrl
-        }
-      })
-      .catch(() => { /* fall back to the regular register flow */ })
-  }, [user, navigate])
+    navigate('/partnerships')
+  }, [navigate])
 
-  // Warm the supplier route chunks so "List an Experience" opens instantly —
-  // fired on hover/focus and once after first idle. The landing chunk is small
-  // (three.js now loads lazily inside it), so this is a cheap cache prime.
+  // Warm the Partnerships chunk so the CTA opens instantly — fired on
+  // hover/focus of the "List an Experience" links and once after first idle.
   const prefetchSupplierRoutes = useCallback(() => {
-    void Promise.allSettled([
-      import('../pages/supplier/SupplierLandingPage'),
-      import('../pages/supplier/SupplierRegisterPage'),
-    ])
+    void import('../pages/PartnershipsPage').catch(() => {})
+  }, [])
+
+  // Warm the dashboard chunk (Wishlist / Bookings / Reviews / Settings) so
+  // opening it from the navbar is instant instead of a lazy fetch — fired on
+  // hover/focus of the wishlist and bookings entry points.
+  const prefetchDashboard = useCallback(() => {
+    void import('../pages/dashboard/DashboardLayout').catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -198,15 +192,13 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
     }
   }, [prefetchSupplierRoutes])
 
-  // Mobile "List an Experience": close the drawer so its AnimatePresence exit
-  // transition plays out smoothly in this tab, then open the supplier page in
-  // a brand-new browser tab. window.open runs inside the tap gesture so popup
-  // blockers don't swallow it.
+  // Mobile "List an Experience": same destination as desktop — the
+  // Partnerships page. The drawer closes first so its AnimatePresence exit
+  // transition plays out smoothly.
   const handleMobileListExperience = useCallback(() => {
-    const path = user ? '/supplier/register' : '/supplier/list-experience'
-    window.open(path, '_blank', 'noopener')
     setMobileMenuOpen(false)
-  }, [user])
+    navigate('/partnerships')
+  }, [navigate, setMobileMenuOpen])
 
   // Prefetch the dashboard chunk so navigating to Bookings / Dashboard /
   // Updates from the drawer (or avatar menu) is instant, not a lazy fetch.
@@ -318,7 +310,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
 
   return (
     <>
-    <nav className={`navbar${searchBarSticky ? ' scrolled' : ''}${isTourDetailPage ? ' navbar--tour-detail' : ''}`}>
+    <nav className={`navbar${isOverHero ? ' navbar--over-hero' : ''}${searchBarSticky ? ' scrolled' : ''}${isTourDetailPage ? ' navbar--tour-detail' : ''}`}>
       <div className="nav-left">
         <div className="nav-logo">
           <a href="/" onClick={(e) => { e.preventDefault(); navigate('/') }}>
@@ -516,7 +508,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
         </div>
 
         <div className="nav-icons">
-          <a href="#" className="nav-icon-item" onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate('/dashboard/wishlist') }}>
+          <a href="#" className="nav-icon-item" onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate('/dashboard/wishlist') }} onPointerEnter={prefetchDashboard} onFocus={prefetchDashboard}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
             </svg>
@@ -565,7 +557,15 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
                           markBookingsSeen()
                           navigate('/dashboard/bookings')
                         }
+                        if (link.key === 'About') {
+                          navigate('/about-us')
+                        }
+                        if (link.key === 'Contact') {
+                          navigate('/contact-us')
+                        }
                       }}
+                      onPointerEnter={link.key === 'Bookings' || link.key === 'Dashboard' ? prefetchDashboard : undefined}
+                      onFocus={link.key === 'Bookings' || link.key === 'Dashboard' ? prefetchDashboard : undefined}
                     >
                       {link.icon === 'bag' && (
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -632,7 +632,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
             <span className="nav-icon-label">{user?.name || t('nav.profile')}</span>
           </div>
         </div>
-        <a href="#" className="nav-wishlist-mobile" onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate('/dashboard/wishlist') }} aria-label={t('nav.wishlist')}>
+        <a href="#" className="nav-wishlist-mobile" onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate('/dashboard/wishlist') }} aria-label={t('nav.wishlist')} onPointerEnter={prefetchDashboard} onFocus={prefetchDashboard}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
           </svg>
@@ -717,7 +717,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
             </div>
 
             {user && (
-              <a href="#" className="nav-mobile-link" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMobileMenuOpen(false); markBookingsSeen(); navigate('/dashboard/bookings') }}>
+              <a href="#" className="nav-mobile-link" onPointerEnter={prefetchDashboard} onFocus={prefetchDashboard} onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMobileMenuOpen(false); markBookingsSeen(); navigate('/dashboard/bookings') }}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
                   <line x1="3" y1="6" x2="21" y2="6" />
@@ -728,7 +728,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
               </a>
             )}
             {user && (
-              <a href="#" className="nav-mobile-link" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMobileMenuOpen(false); navigate('/dashboard') }}>
+              <a href="#" className="nav-mobile-link" onPointerEnter={prefetchDashboard} onFocus={prefetchDashboard} onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMobileMenuOpen(false); navigate('/dashboard') }}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="3" y="3" width="7" height="7" />
                   <rect x="14" y="3" width="7" height="7" />
@@ -739,7 +739,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
               </a>
             )}
 
-            <a href="#" className="nav-mobile-link" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMobileMenuOpen(false); }}>
+            <a href="#" className="nav-mobile-link" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMobileMenuOpen(false); navigate('/about-us') }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10" />
                 <line x1="12" y1="16" x2="12" y2="12" />
@@ -747,7 +747,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
               </svg>
               {t('nav.about')}
             </a>
-            <a href="#" className="nav-mobile-link" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMobileMenuOpen(false); }}>
+            <a href="#" className="nav-mobile-link" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMobileMenuOpen(false); navigate('/contact-us') }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
                 <polyline points="22,6 12,13 2,6" />

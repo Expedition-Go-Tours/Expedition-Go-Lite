@@ -1,7 +1,6 @@
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Mail, Phone, Clock, MessagesSquare, LifeBuoy, MapPin } from 'lucide-react'
-import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import { openSupportChat } from '../lib/support'
 import heroImg from '../assets/images/painting.webp'
@@ -25,7 +24,6 @@ export default function ContactUsPage() {
 
   return (
     <div className="support-page">
-      <Navbar />
       <div className="support-hero">
         <div className="support-hero-bg">
           <img src={heroImg} alt="" aria-hidden="true" />

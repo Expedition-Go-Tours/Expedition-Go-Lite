@@ -7,7 +7,6 @@ import { motion } from 'framer-motion'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
 import i18n from '../i18n/config'
-import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import ReviewTourCard from '../pages/tour-detail/ReviewTourCard'
 import { CalendarPicker } from '../components/ui/apple-calendar-picker'
@@ -236,7 +235,6 @@ export default function ReviewExperiencePage() {
 
   return (
     <div className="review-page">
-      <Navbar />
       <div className="review-page-navbar-offset" aria-hidden />
 
       <main className="review-main">
