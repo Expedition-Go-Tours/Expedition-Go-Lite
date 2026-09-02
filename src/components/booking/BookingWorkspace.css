@@ -318,7 +318,47 @@
   line-height: 1.5;
 }
 
-/* ---------- Where to go ---------- */
+/* ---------- Where to go (location block sits below the map) ---------- */
+.ws-loc {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--bv-border);
+}
+
+.ws-loc-kicker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--bv-faint);
+}
+
+.ws-loc-kicker svg {
+  color: var(--bv-accent);
+}
+
+.ws-loc-title {
+  margin: 7px 0 0;
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.45;
+  color: var(--bv-ink);
+}
+
+.ws-loc-sub {
+  margin: 6px 0 0;
+  font-family: var(--font-body);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--bv-muted);
+}
+
 .ws-amber {
   padding: 14px 16px;
   border-radius: 12px;
@@ -359,11 +399,13 @@
 
 /* ---------- Mini map (square, larger) ---------- */
 .bk-pointmap {
+  position: relative;
   margin-top: 16px;
   width: min(100%, 480px);
   border: 1px solid var(--bv-border);
   border-radius: 16px;
   overflow: hidden;
+  cursor: pointer;
 }
 
 .bk-pointmap a {
@@ -384,6 +426,39 @@
   }
 }
 
+/* "View on Google Maps" — revealed on hover for pointer devices. */
+.bk-pointmap-hint {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  color: var(--bv-accent-strong);
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  font-weight: 700;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease;
+}
+
+@media (hover: hover) {
+  .bk-pointmap:hover .bk-pointmap-hint {
+    opacity: 1;
+  }
+}
+
+@media (hover: none) {
+  .bk-pointmap-hint {
+    display: none;
+  }
+}
+
 .bk-pointmap-canvas {
   position: absolute;
   inset: 0;
@@ -396,6 +471,7 @@
 .bk-pointmap-overlay {
   position: absolute;
   inset: 0;
+  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: center;

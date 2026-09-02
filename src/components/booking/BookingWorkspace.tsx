@@ -134,6 +134,15 @@ export default function BookingWorkspace() {
   const pickupTime = pickup?.time ? String(pickup.time) : null
   const pickupInstructionsText =
     typeof pickup?.instructions === 'string' ? pickup.instructions.trim() : ''
+  // Customer-facing location: the exact pickup point when one is stored; the
+  // supplier zone label is operator context only and is never shown to customers.
+  const pickupAddressText = String(pickupAddress?.name || pickupAddress?.address || '').trim()
+  const pickupPrimary = pickupAddressText || pickupLocation
+  const pickupKicker = pickupAddressText
+    ? 'Pickup point'
+    : pickup?.areaName
+      ? 'Pickup area'
+      : 'Pickup location'
 
   const arrivalLabel = (() => {
     if (meeting.meetingMode !== 'meeting_point') return ''
@@ -421,21 +430,15 @@ export default function BookingWorkspace() {
                   </div>
                 ) : (
                   <>
-                    <dl className="ws-grid">
-                      <div className="ws-grid-row">
-                        <dt><MapPin size={15} /> Pickup</dt>
-                        <dd>
-                          {pickupLocation}
-                          {(() => {
-                            const addrTxt = String(pickupAddress?.name || pickupAddress?.address || '').trim()
-                            return addrTxt && addrTxt !== pickupLocation ? (
-                              <span className="ws-subtext">{addrTxt}</span>
-                            ) : null
-                          })()}
-                        </dd>
-                      </div>
-                    </dl>
-                    {mapPoint && <BookingPointMap lat={mapPoint.lat} lng={mapPoint.lng} label={pickupLocation} />}
+                    {mapPoint && (
+                      <BookingPointMap lat={mapPoint.lat} lng={mapPoint.lng} label={pickupAddressText || pickupLocation} />
+                    )}
+                    <div className="ws-loc">
+                      <p className="ws-loc-kicker">
+                        <MapPin size={13} /> {pickupKicker}
+                      </p>
+                      <p className="ws-loc-title">{pickupPrimary}</p>
+                    </div>
                     {activeStatus && (
                       <button
                         type="button"
@@ -449,25 +452,25 @@ export default function BookingWorkspace() {
                 )
               ) : hasMeeting ? (
                 <>
-                  <dl className="ws-grid">
-                    <div className="ws-grid-row">
-                      <dt><MapPin size={15} /> Meeting point</dt>
-                      <dd>
-                        {[meeting.meetingPoint, meeting.meetingPointAddress].filter(Boolean).join(' — ')}
-                        {arrivalLabel && <span className="ws-subtext">{arrivalLabel}</span>}
-                        {meeting.meetingPointDescription && (
-                          <span className="ws-subtext">{meeting.meetingPointDescription}</span>
-                        )}
-                      </dd>
-                    </div>
-                  </dl>
                   {mapPoint && (
                     <BookingPointMap
                       lat={mapPoint.lat}
                       lng={mapPoint.lng}
-                      label={meeting.meetingPoint || meeting.meetingPointAddress || ''}
+                      label={[meeting.meetingPoint, meeting.meetingPointAddress].filter(Boolean).join(' — ')}
                     />
                   )}
+                  <div className="ws-loc">
+                    <p className="ws-loc-kicker">
+                      <MapPin size={13} /> Meeting point
+                    </p>
+                    <p className="ws-loc-title">
+                      {[meeting.meetingPoint, meeting.meetingPointAddress].filter(Boolean).join(' — ')}
+                    </p>
+                    {arrivalLabel && <p className="ws-loc-sub">{arrivalLabel}</p>}
+                    {meeting.meetingPointDescription && (
+                      <p className="ws-loc-sub">{meeting.meetingPointDescription}</p>
+                    )}
+                  </div>
                 </>
               ) : null}
             </section>

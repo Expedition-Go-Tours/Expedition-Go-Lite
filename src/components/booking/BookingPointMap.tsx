@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import * as maplibregl from 'maplibre-gl'
+import { ExternalLink } from 'lucide-react'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import {
   createMapLibreMap,
@@ -94,6 +95,9 @@ export default function BookingPointMap({ lat, lng, label, className = '' }: Boo
           {state === 'error' && (
             <span className="bk-pointmap-overlay">View in Google Maps →</span>
           )}
+          <span className="bk-pointmap-hint" aria-hidden="true">
+            <ExternalLink size={15} /> View on Google Maps
+          </span>
         </div>
       </a>
     </div>
