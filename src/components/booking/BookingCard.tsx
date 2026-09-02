@@ -17,7 +17,6 @@ export default function BookingCard({ booking, onOpen }: BookingCardProps) {
   const symbol = booking.currency === 'GHS' ? 'GH₵' : currencySymbol(booking.currency)
   const amount = `${symbol}${booking.total.toFixed(2)}`
   const time = booking.selectedTime ? formatTimeString(booking.selectedTime) : ''
-  const canManage = booking.status === 'PENDING' || booking.status === 'CONFIRMED'
 
   const metaParts = [
     `${formatMediumDate(booking.travelDate)}${time ? ` · ${time}` : ''}`,
@@ -128,18 +127,6 @@ export default function BookingCard({ booking, onOpen }: BookingCardProps) {
           <span className={`bk-amount-phone${isPaid ? '' : ' is-reserved'}`}>{amount}</span>
 
           <div className="bk-foot-actions">
-            {canManage && (
-              <button
-                type="button"
-                className="bk-btn bk-btn-secondary bk-btn-sm bk-manage"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onOpen()
-                }}
-              >
-                Manage booking
-              </button>
-            )}
             <button
               type="button"
               className="bk-open"
