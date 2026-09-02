@@ -522,8 +522,10 @@
   }
 
   .bk-search {
+    flex: 0 0 auto;
     min-width: 100%;
     max-width: none;
+    min-height: 44px;
   }
 
   .bk-fact {
@@ -610,12 +612,11 @@
 
 @media (max-width: 560px) {
   .bk-search {
-    min-height: 48px;
     border-radius: 12px;
   }
 
   .bk-search input {
     font-size: 15px;
-    min-height: 30px;
+    line-height: 1.2;
   }
 }
