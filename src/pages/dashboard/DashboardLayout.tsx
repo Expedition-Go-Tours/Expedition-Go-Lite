@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from "react";
+import { useState, useEffect, lazy } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -242,14 +242,6 @@ function Sidebar() {
         )}
       </AnimatePresence>
     </>
-  );
-}
-
-function PageLoader() {
-  return (
-    <div className="flex min-h-[40vh] items-center justify-center">
-      <div className="spinner" />
-    </div>
   );
 }
 
