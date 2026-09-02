@@ -10,7 +10,6 @@ import { useSidebarStore } from "@/stores/sidebarStore";
 import { getStoredAuthUser, signOutUser } from "@/lib/auth";
 import { useChat } from "@/chat/ChatContext";
 import BookingHistory from "@/pages/BookingHistory";
-import BookingWorkspace from "@/components/booking/BookingWorkspace";
 import Wishlist from "@/pages/Wishlist";
 import SettingsPage from "./SettingsPage";
 import ReviewsPage from "./ReviewsPage";
@@ -35,12 +34,8 @@ const pageTitles: Record<string, string> = {
   "/dashboard/chat": "Chat",
 };
 
-function isBookingWorkspacePath(pathname: string): boolean {
-  return pathname.startsWith("/dashboard/bookings/");
-}
-
 function isBookingsAreaPath(pathname: string): boolean {
-  return pathname === "/dashboard/bookings" || isBookingWorkspacePath(pathname);
+  return pathname === "/dashboard/bookings";
 }
 
 function Sidebar() {
@@ -270,14 +265,13 @@ export default function DashboardLayout() {
   const { isCollapsed } = useSidebarStore();
   const location = useLocation();
   const navigate = useNavigate();
-  const workspacePath = isBookingWorkspacePath(location.pathname);
-  const title = workspacePath ? "Booking details" : pageTitles[location.pathname] || "Dashboard";
+  const title = pageTitles[location.pathname] || "Dashboard";
 
   // Redirect the base /dashboard path (or any unknown dashboard subpath) to a
   // concrete page BEFORE entering the animated <Routes>. Rendering <Navigate>
   // as a keyed child inside an AnimatePresence with mode="wait" leaves the view
   // blank, because the redirect outputs null and never signals exit-completion.
-  const isKnownRoute = workspacePath || Object.keys(pageTitles).includes(location.pathname);
+  const isKnownRoute = Object.keys(pageTitles).includes(location.pathname);
   if (!isKnownRoute) {
     return <Navigate to="/dashboard/settings" replace />;
   }
@@ -335,7 +329,6 @@ export default function DashboardLayout() {
             <Routes location={location} key={location.pathname}>
             <Route path="settings" element={<AnimatedPage><SettingsPage /></AnimatedPage>} />
             <Route path="bookings" element={<AnimatedPage><BookingHistory /></AnimatedPage>} />
-            <Route path="bookings/:id" element={<AnimatedPage><BookingWorkspace /></AnimatedPage>} />
               <Route path="wishlist" element={<AnimatedPage><Wishlist /></AnimatedPage>} />
             <Route path="reviews" element={<AnimatedPage><ReviewsPage /></AnimatedPage>} />
             <Route path="notifications" element={<AnimatedPage><NotificationsPage /></AnimatedPage>} />

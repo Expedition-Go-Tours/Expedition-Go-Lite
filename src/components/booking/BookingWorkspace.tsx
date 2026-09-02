@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import {
   ArrowLeft,
   Ticket,
@@ -83,9 +83,8 @@ function startLabel(detail: Record<string, unknown>, pickupTime?: string | null)
   return 'Flexible'
 }
 
-export default function BookingWorkspace() {
+export default function BookingWorkspace({ id, onClose }: { id?: string; onClose?: () => void }) {
   const navigate = useNavigate()
-  const { id } = useParams<{ id: string }>()
   const [copied, setCopied] = useState(false)
   const [cancelError, setCancelError] = useState<string | null>(null)
 
@@ -248,13 +247,17 @@ export default function BookingWorkspace() {
     cancelBooking.mutate(
       { id: detail.id, reason: 'Customer requested cancellation' },
       {
-        onSuccess: () => navigate('/dashboard/bookings'),
+        onSuccess: closeDetail,
         onError: (err: Error) => setCancelError(err.message),
       }
     )
   }
 
-  const back = () => navigate('/dashboard/bookings')
+  const closeDetail = () => {
+    if (onClose) onClose()
+    else navigate('/dashboard/bookings')
+  }
+  const back = closeDetail
   const statusMeta = meta
 
   if (detailQuery.isLoading) {

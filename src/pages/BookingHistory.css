@@ -552,3 +552,70 @@
     transition: none;
   }
 }
+
+/* ---------- List ⇄ workspace slide (both panes stay mounted) ---------- */
+.bk-swap {
+  position: relative;
+  width: 100%;
+}
+
+.bk-pane {
+  width: 100%;
+  transition: opacity 0.18s ease, transform 0.24s cubic-bezier(0.3, 0.8, 0.4, 1);
+}
+
+.bk-pane.on {
+  position: relative;
+  z-index: 2;
+  visibility: visible;
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.bk-pane.off {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1;
+  visibility: hidden;
+  opacity: 0;
+  transform: translateX(28px);
+  pointer-events: none;
+}
+
+.bk-pane-empty {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bk-pane {
+    transition: none;
+  }
+}
+
+/* ---------- Search input normalisation ---------- */
+.bk-search input {
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.bk-search input::-webkit-search-decoration,
+.bk-search input::-webkit-search-cancel-button,
+.bk-search input::-webkit-search-results-button,
+.bk-search input::-webkit-search-results-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+@media (max-width: 560px) {
+  .bk-search {
+    min-height: 48px;
+    border-radius: 12px;
+  }
+
+  .bk-search input {
+    font-size: 15px;
+    min-height: 30px;
+  }
+}

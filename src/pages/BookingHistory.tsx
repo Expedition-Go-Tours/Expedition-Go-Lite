@@ -1,11 +1,12 @@
-﻿import { useState, useMemo } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+﻿import { useEffect, useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Search, Ticket, AlertTriangle, ArrowRight } from 'lucide-react'
 import {
   useMyExpeditionBookings,
   type ExpeditionBookingSummary,
 } from '../hooks/useExpeditionBookings'
 import BookingCard from '../components/booking/BookingCard'
+import BookingWorkspace from '../components/booking/BookingWorkspace'
 import { formatHeadingDate, toDateKey, isSameCalendarDay } from '../lib/bookingUi'
 import '../components/booking/bookingTheme.css'
 import './BookingHistory.css'
@@ -34,7 +35,6 @@ function startOfToday(): number {
   return d.getTime()
 }
 
-/** Upcoming = active (actionable) bookings; everything else is history. */
 function bucketOf(booking: ExpeditionBookingSummary): Bucket {
   return isActiveBooking(booking.status) ? 'upcoming' : 'past'
 }
@@ -54,6 +54,10 @@ function groupHeading(dateKey: string, labelForHeading: string): string {
 }
 
 export default function BookingHistory() {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const bookingId = searchParams.get('booking')
+  const listScrollRef = useRef(0)
+
   const [bucket, setBucket] = useState<Bucket>('upcoming')
   const [query, setQuery] = useState('')
 
@@ -62,6 +66,26 @@ export default function BookingHistory() {
     undefined,
     100
   )
+
+  // Open a booking without changing the route — the list below stays mounted.
+  const openBooking = (booking: ExpeditionBookingSummary) => {
+    setSearchParams({ booking: booking.id }, { replace: false })
+  }
+
+  const closeDetail = () => {
+    setSearchParams({})
+  }
+
+  // Keep the list's scroll position across the slide.
+  useEffect(() => {
+    if (bookingId) {
+      listScrollRef.current = window.scrollY
+      window.scrollTo({ top: 0, behavior: 'auto' })
+    } else if (listScrollRef.current) {
+      window.scrollTo({ top: listScrollRef.current, behavior: 'auto' })
+      listScrollRef.current = 0
+    }
+  }, [bookingId])
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -79,8 +103,6 @@ export default function BookingHistory() {
       return [...base].sort((a, b) => dateMs(a.travelDate) - dateMs(b.travelDate))
     }
 
-    // History: recent first; terminal (cancelled) bookings whose date is still
-    // in the future sit at the end so "Past" reads as history, not clutter.
     const startOfTodayMs = startOfToday()
     return [...base].sort((a, b) => {
       const aFutureTerminal = isTerminalBooking(a.status) && dateMs(a.travelDate) >= startOfTodayMs
@@ -117,136 +139,136 @@ export default function BookingHistory() {
 
   return (
     <div className="bk-page">
-      {/* Toolbar */}
-      <div className="bk-toolbar">
-        <div className="bk-seg" role="group" aria-label="Filter bookings by time">
-          {BUCKETS.map((b) => {
-            const active = bucket === b.value
-            return (
-              <button
-                key={b.value}
-                type="button"
-                className={`bk-seg-btn${active ? ' active' : ''}`}
-                aria-pressed={active}
-                onClick={() => setBucket(b.value)}
-              >
-                {active && (
-                  <motion.span
-                    layoutId="bk-seg-indicator"
-                    className="bk-seg-indicator"
-                    transition={{ type: 'spring', stiffness: 420, damping: 36 }}
-                  />
-                )}
-                <span className="bk-seg-inner">
-                  <span className="bk-seg-label">{b.label}</span>
-                  <span className="bk-seg-count">{counts[b.value]}</span>
-                </span>
-              </button>
-            )
-          })}
-        </div>
-
-        <label className="bk-search">
-          <Search size={15} />
-          <input
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by tour or booking reference"
-            aria-label="Search bookings by tour or reference"
-          />
-        </label>
-      </div>
-
-      {/* Content */}
-      <AnimatePresence mode="wait">
-        {listStatus === 'error' ? (
-          <motion.div key="error" className="bk-state" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <AlertTriangle size={26} />
-            <h3>Couldn't load your bookings</h3>
-            <p>{(error as Error)?.message || 'Something went wrong while fetching your bookings.'}</p>
-            <button type="button" className="bk-btn bk-btn-primary" onClick={() => refetch()}>
-              Try again
-            </button>
-          </motion.div>
-        ) : listStatus === 'loading' ? (
-          <motion.div key="loading" className="bk-list" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            {[0, 1, 2].map((i) => (
-              <div key={i} className="bk-card bk-card-skeleton" aria-hidden="true">
-                <div className="bk-media">
-                  <div className="bk-skel bk-skel-media" />
-                </div>
-                <div className="bk-body">
-                  <div className="bk-skel bk-skel-line bk-skel-w30" />
-                  <div className="bk-skel bk-skel-line bk-skel-w80" />
-                  <div className="bk-skel bk-skel-line bk-skel-w60" />
-                </div>
-              </div>
-            ))}
-          </motion.div>
-        ) : filtered.length === 0 ? (
-          <motion.div key="empty" className="bk-state" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <Ticket size={26} />
-            <h3>
-              {query
-                ? 'No bookings match your search'
-                : bucket === 'upcoming'
-                  ? 'No upcoming trips'
-                  : 'No past trips yet'}
-            </h3>
-            <p>
-              {query
-                ? 'Try a different tour name or booking reference.'
-                : bucket === 'upcoming'
-                  ? 'When you book an experience it will appear here.'
-                  : 'Trips you have been on, or cancelled, will be kept here for your records.'}
-            </p>
-            {!query && bucket === 'upcoming' && (
-              <button
-                type="button"
-                className="bk-btn bk-btn-primary"
-                onClick={() => (window.location.href = '/')}
-              >
-                Explore experiences <ArrowRight size={15} />
-              </button>
-            )}
-          </motion.div>
-        ) : (
-          <motion.div
-            key={bucket + (query ? '|q' : '')}
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            {bucket === 'upcoming' ? (
-              upcomingGroups.map((group) => (
-                <section key={group.key} className="bk-group">
-                  <h2 className="bk-group-title">
-                    {group.label}
-                    <span className="bk-group-count">
-                      {group.items.length} {group.items.length === 1 ? 'booking' : 'bookings'}
+      <div className="bk-swap">
+        {/* Pane 1 — bookings list (always mounted) */}
+        <section
+          className={`bk-pane bk-pane-list${bookingId ? ' off' : ' on'}`}
+          aria-hidden={!!bookingId}
+        >
+          <div className="bk-toolbar">
+            <div className="bk-seg" role="group" aria-label="Filter bookings by time">
+              {BUCKETS.map((b) => {
+                const active = bucket === b.value
+                return (
+                  <button
+                    key={b.value}
+                    type="button"
+                    className={`bk-seg-btn${active ? ' active' : ''}`}
+                    aria-pressed={active}
+                    onClick={() => setBucket(b.value)}
+                  >
+                    {active && <span className="bk-seg-indicator" />}
+                    <span className="bk-seg-inner">
+                      <span className="bk-seg-label">{b.label}</span>
+                      <span className="bk-seg-count">{counts[b.value]}</span>
                     </span>
-                  </h2>
-                  <div className="bk-list">
-                    {group.items.map((booking) => (
-                      <BookingCard key={booking.id} booking={booking} />
-                    ))}
+                  </button>
+                )
+              })}
+            </div>
+
+            <label className="bk-search">
+              <Search size={15} />
+              <input
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search by tour or booking reference"
+                aria-label="Search bookings by tour or reference"
+              />
+            </label>
+          </div>
+
+          {listStatus === 'error' ? (
+            <div className="bk-state">
+              <AlertTriangle size={26} />
+              <h3>Couldn't load your bookings</h3>
+              <p>{(error as Error)?.message || 'Something went wrong while fetching your bookings.'}</p>
+              <button type="button" className="bk-btn bk-btn-primary" onClick={() => refetch()}>
+                Try again
+              </button>
+            </div>
+          ) : listStatus === 'loading' ? (
+            <div className="bk-list">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="bk-card bk-card-skeleton" aria-hidden="true">
+                  <div className="bk-media">
+                    <div className="bk-skel bk-skel-media" />
                   </div>
-                </section>
-              ))
-            ) : (
+                  <div className="bk-body">
+                    <div className="bk-skel bk-skel-line bk-skel-w30" />
+                    <div className="bk-skel bk-skel-line bk-skel-w80" />
+                    <div className="bk-skel bk-skel-line bk-skel-w60" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="bk-state">
+              <Ticket size={26} />
+              <h3>
+                {query
+                  ? 'No bookings match your search'
+                  : bucket === 'upcoming'
+                    ? 'No upcoming trips'
+                    : 'No past trips yet'}
+              </h3>
+              <p>
+                {query
+                  ? 'Try a different tour name or booking reference.'
+                  : bucket === 'upcoming'
+                    ? 'When you book an experience it will appear here.'
+                    : 'Trips you have been on, or cancelled, will be kept here for your records.'}
+              </p>
+              {!query && bucket === 'upcoming' && (
+                <button
+                  type="button"
+                  className="bk-btn bk-btn-primary"
+                  onClick={() => (window.location.href = '/')}
+                >
+                  Explore experiences <ArrowRight size={15} />
+                </button>
+              )}
+            </div>
+          ) : bucket === 'upcoming' ? (
+            upcomingGroups.map((group) => (
+              <section key={group.key} className="bk-group">
+                <h2 className="bk-group-title">
+                  {group.label}
+                  <span className="bk-group-count">
+                    {group.items.length} {group.items.length === 1 ? 'booking' : 'bookings'}
+                  </span>
+                </h2>
+                <div className="bk-list">
+                  {group.items.map((booking) => (
+                    <BookingCard key={booking.id} booking={booking} onOpen={() => openBooking(booking)} />
+                  ))}
+                </div>
+              </section>
+            ))
+          ) : (
+            <>
               <div className="bk-list">
                 {filtered.map((booking) => (
-                  <BookingCard key={booking.id} booking={booking} />
+                  <BookingCard key={booking.id} booking={booking} onOpen={() => openBooking(booking)} />
                 ))}
               </div>
-            )}
-            <p className="bk-list-foot">
-              Showing {filtered.length} {filtered.length === 1 ? activeLabel : `${activeLabel}s`}.
-            </p>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              <p className="bk-list-foot">
+                Showing {filtered.length} {filtered.length === 1 ? activeLabel : `${activeLabel}s`}.
+              </p>
+            </>
+          )}
+        </section>
+
+        {/* Pane 2 — booking workspace (slides over the list) */}
+        <section className={`bk-pane bk-pane-detail${bookingId ? ' on' : ' off'}`}>
+          {bookingId ? (
+            <BookingWorkspace id={bookingId} onClose={closeDetail} />
+          ) : (
+            <div className="bk-pane-empty" />
+          )}
+        </section>
+      </div>
     </div>
   )
 }

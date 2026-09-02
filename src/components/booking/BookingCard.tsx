@@ -1,4 +1,4 @@
-import { useState, type MouseEvent } from 'react'
+﻿import { useState, type MouseEvent } from 'react'
 import {
   CalendarDays,
   Users,
@@ -9,7 +9,6 @@ import {
   Check,
   Clock,
 } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
 import { currencySymbol } from '../../lib/currencySymbol'
 import type { ExpeditionBookingSummary } from '../../hooks/useExpeditionBookings'
 import {
@@ -21,16 +20,15 @@ import {
 
 interface BookingCardProps {
   booking: ExpeditionBookingSummary
+  onOpen: () => void
 }
 
-export default function BookingCard({ booking }: BookingCardProps) {
-  const navigate = useNavigate()
+export default function BookingCard({ booking, onOpen }: BookingCardProps) {
   const [copied, setCopied] = useState(false)
   const meta = bookingStatusMeta(booking.status, booking.paymentTiming, booking.paymentStatus)
-  const open = () => navigate(`/dashboard/bookings/${booking.id}`)
   const party = partyLabel(booking.party)
   const isPaid = booking.paymentStatus === 'SUCCEEDED'
-  const symbol = booking.currency === 'GHS' ? 'GH₵' : currencySymbol(booking.currency)
+  const symbol = booking.currency === 'GHS' ? 'GHâ‚µ' : currencySymbol(booking.currency)
   const amount = `${symbol}${booking.total.toFixed(2)}`
   const time = booking.selectedTime ? formatTimeString(booking.selectedTime) : ''
 
@@ -67,7 +65,7 @@ export default function BookingCard({ booking }: BookingCardProps) {
   }
 
   return (
-    <article className="bk-card" onClick={open}>
+    <article className="bk-card" onClick={onOpen}>
       <div className="bk-media">
         {booking.tourImage ? (
           <img src={booking.tourImage} alt="" loading="lazy" />
@@ -139,7 +137,7 @@ export default function BookingCard({ booking }: BookingCardProps) {
             className="bk-open"
             onClick={(e) => {
               e.stopPropagation()
-              open()
+              onOpen()
             }}
           >
             View voucher / ticket
