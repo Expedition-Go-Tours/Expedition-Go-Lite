@@ -9,12 +9,16 @@ import { toast } from "sonner";
 import { useSidebarStore } from "@/stores/sidebarStore";
 import { getStoredAuthUser, signOutUser } from "@/lib/auth";
 import { useChat } from "@/chat/ChatContext";
-import BookingHistory from "@/pages/BookingHistory";
-import Wishlist from "@/pages/Wishlist";
-import SettingsPage from "./SettingsPage";
-import ReviewsPage from "./ReviewsPage";
-import NotificationsPage from "./NotificationsPage";
-import ChatPage from "./ChatPage";
+import "./DashboardLayout.css";
+
+// Dashboard sub-pages are code-split so visiting one tab (e.g. Wishlist) only
+// downloads that page's chunk instead of every dashboard page up front.
+const SettingsPage = lazy(() => import("./SettingsPage"));
+const BookingHistory = lazy(() => import("../BookingHistory"));
+const Wishlist = lazy(() => import("../Wishlist"));
+const ReviewsPage = lazy(() => import("./ReviewsPage"));
+const NotificationsPage = lazy(() => import("./NotificationsPage"));
+const ChatPage = lazy(() => import("./ChatPage"));
 
 const navItems = [
   { label: "Booking History", path: "/dashboard/bookings", icon: CalendarDays },
@@ -241,23 +245,11 @@ function Sidebar() {
   );
 }
 
-const pageVariants = {
-  initial: { opacity: 0, y: 14 },
-  animate: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: -14 },
-};
-
-function AnimatedPage({ children }: { children: React.ReactNode }) {
+function PageLoader() {
   return (
-    <motion.div
-      initial="initial"
-      animate="animate"
-      exit="exit"
-      variants={pageVariants}
-      transition={{ duration: 0.3, ease: "easeInOut" }}
-    >
-      {children}
-    </motion.div>
+    <div className="flex min-h-[40vh] items-center justify-center">
+      <div className="spinner" />
+    </div>
   );
 }
 
@@ -318,16 +310,21 @@ export default function DashboardLayout() {
             )}
           </div>
 
-          <AnimatePresence mode="wait">
-            <Routes location={location} key={location.pathname}>
-              <Route path="settings" element={<AnimatedPage><SettingsPage /></AnimatedPage>} />
-              <Route path="bookings" element={<AnimatedPage><BookingHistory /></AnimatedPage>} />
-              <Route path="wishlist" element={<AnimatedPage><Wishlist /></AnimatedPage>} />
-            <Route path="reviews" element={<AnimatedPage><ReviewsPage /></AnimatedPage>} />
-            <Route path="notifications" element={<AnimatedPage><NotificationsPage /></AnimatedPage>} />
-            <Route path="chat" element={<AnimatedPage><ChatPage /></AnimatedPage>} />
-          </Routes>
-          </AnimatePresence>
+          <div className="dash-pages">
+            {ROUTES.map((r) => {
+              if (!visited.has(r.path)) return null;
+              const active = r.path === location.pathname;
+              return (
+                <section
+                  key={r.path}
+                  className={`dash-pane${active ? " active" : ""}`}
+                  hidden={!active}
+                >
+                  <r.Page />
+                </section>
+              );
+            })}
+          </div>
         </div>
       </main>
     </div>
