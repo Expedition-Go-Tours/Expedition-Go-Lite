@@ -24,14 +24,14 @@ export default function TermsAndConditionsPage() {
         <div className="support-article">
           <h2>1. Acceptance of terms</h2>
           <p>
-            By accessing or using the Expedition-Go website, you agree to be bound by these Terms
+            By accessing or using the Expedition-Go Tours website, you agree to be bound by these Terms
             & Conditions. If you do not agree with any part of them, please do not use the
             platform.
           </p>
 
           <h2>2. Bookings and payments</h2>
           <p>
-            All tours and experiences are booked through the Expedition-Go platform. A booking is
+            All tours and experiences are booked through the Expedition-Go Tours platform. A booking is
             confirmed once payment is successfully processed and a confirmation is issued. You are
             responsible for providing accurate traveller and contact details at checkout.
           </p>
@@ -60,14 +60,14 @@ export default function TermsAndConditionsPage() {
 
           <h2>6. Supplier services</h2>
           <p>
-            Tours are operated by independent suppliers. Expedition-Go acts as the booking
+            Tours are operated by independent suppliers. Expedition-Go Tours acts as the booking
             platform and does not operate the experiences itself. Suppliers are responsible for
             delivering the service described on the tour page.
           </p>
 
           <h2>7. Liability</h2>
           <p>
-            To the maximum extent permitted by law, Expedition-Go is not liable for indirect,
+            To the maximum extent permitted by law, Expedition-Go Tours is not liable for indirect,
             incidental or consequential damages arising from the use of the platform or the
             services of third-party suppliers. Nothing in these terms limits liability that cannot
             be limited by law.
@@ -75,8 +75,8 @@ export default function TermsAndConditionsPage() {
 
           <h2>8. Intellectual property</h2>
           <p>
-            All content on the Expedition-Go platform, including text, images, logos and
-            software, is the property of Expedition-Go or its licensors and may not be
+            All content on the Expedition-Go Tours platform, including text, images, logos and
+            software, is the property of Expedition-Go Tours or its licensors and may not be
             reproduced without permission.
           </p>
 

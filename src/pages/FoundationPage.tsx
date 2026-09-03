@@ -19,7 +19,7 @@ const CORE_AREAS = [
     Icon: Users,
     title: 'Individual Support',
     subtitle: 'Helping people when they need it most.',
-    description: "A space for individuals who may need support or assistance. People can share their situation with us and tell us how Expedition-Go may be able to help.",
+    description: "A space for individuals who may need support or assistance. People can share their situation with us and tell us how Expedition-Go Tours may be able to help.",
   },
   {
     Icon: Heart,
@@ -31,7 +31,7 @@ const CORE_AREAS = [
     Icon: Folder,
     title: 'Community Projects',
     subtitle: 'Turning ideas into meaningful action.',
-    description: "Explore the projects and initiatives supported by Expedition-Go, including education, environmental conservation, local development, and other community-focused programmes.",
+    description: "Explore the projects and initiatives supported by Expedition-Go Tours, including education, environmental conservation, local development, and other community-focused programmes.",
   },
   {
     Icon: Handshake,
@@ -61,7 +61,7 @@ export default function FoundationPage() {
   const galleryRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    document.title = 'Expedition-Go Foundation | Making a Difference Through Travel'
+    document.title = 'Expedition-Go Tours Foundation | Making a Difference Through Travel'
   }, [])
 
   // Auto-advance carousel
@@ -176,7 +176,7 @@ export default function FoundationPage() {
           animate="visible"
           variants={fadeUp}
         >
-          <p className="foundation-hero-label">Expedition-Go Foundation</p>
+          <p className="foundation-hero-label">Expedition-Go Tours Foundation</p>
           <h1 className="foundation-hero-title">Every journey can make a difference.</h1>
         </motion.div>
       </section>
@@ -195,21 +195,21 @@ export default function FoundationPage() {
           </div>
           <h2 className="foundation-mission-title">Making a difference through travel</h2>
           <p className="foundation-mission-text">
-            At Expedition-Go, we believe tourism should not only create memorable experiences—it should
+            At Expedition-Go Tours, we believe tourism should not only create memorable experiences. It should
             also create a positive impact in the communities and destinations we serve.
           </p>
           <p className="foundation-mission-text">
             That's why we commit <strong>2% of every booking revenue</strong> generated through the
-            Expedition-Go platform to the Expedition-Go Foundation. Through this contribution, we support
+            Expedition-Go Tours platform to the Expedition-Go Tours Foundation. Through this contribution, we support
             individuals, local communities, and community-led projects that need a helping hand.
           </p>
           <p className="foundation-mission-text foundation-mission-highlight">
             Whether it's supporting a family in need, contributing to a local community initiative,
             helping fund an important project, or supporting sustainable development, every booking
-            with Expedition-Go helps us give back.
+            with Expedition-Go Tours helps us give back.
           </p>
           <p className="foundation-mission-text foundation-mission-cta-text">
-            When you travel with Expedition-Go, you're not just booking a journey. You're helping
+            When you travel with Expedition-Go Tours, you're not just booking a journey. You're helping
             create a better one for someone else.
           </p>
         </motion.div>
@@ -298,7 +298,7 @@ export default function FoundationPage() {
               <p className="foundation-area-subtitle">Personal support when you need it most.</p>
               <p className="foundation-area-description">
                 If you or someone you know needs support, we're here to listen. Share your
-                situation with us and let us know how Expedition-Go may be able to help.
+                situation with us and let us know how Expedition-Go Tours may be able to help.
               </p>
               <Link to="/contact-us" className="foundation-btn foundation-btn--primary">
                 Request Help
@@ -397,7 +397,7 @@ export default function FoundationPage() {
           <p className="foundation-volunteer-subtitle">Give your time. Make a difference.</p>
           <p className="foundation-volunteer-text">
             Discover opportunities to volunteer your time, skills, and experience through
-            Expedition-Go's community initiatives and projects. Your contribution, no matter
+            Expedition-Go Tours' community initiatives and projects. Your contribution, no matter
             how small, can create lasting change in someone's life.
           </p>
           <Link to="/contact-us" className="foundation-btn foundation-btn--primary">
@@ -428,7 +428,7 @@ export default function FoundationPage() {
         >
           <h2 className="foundation-cta-title">Ready to make a difference?</h2>
           <p className="foundation-cta-text">
-            Every booking with Expedition-Go helps support communities and create positive change.
+            Every booking with Expedition-Go Tours helps support communities and create positive change.
           </p>
           <div className="foundation-cta-buttons">
             <Link to="/contact-us" className="foundation-btn foundation-btn--white">

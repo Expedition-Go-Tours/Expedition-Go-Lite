@@ -3,13 +3,14 @@
  * Validates the type param, checks auth, renders the multi-step form.
  */
 import { useEffect } from "react"
-import { useParams, useNavigate } from "react-router-dom"
+import { useParams, useLocation, useNavigate } from "react-router-dom"
 import { motion } from "framer-motion"
 import { ArrowLeft } from "lucide-react"
 
 import PartnerApplicationForm from "@/components/partner/PartnerApplicationForm"
 import { getPartnerFormConfig, type PartnerType } from "@/components/partner/partnerFormConfig"
 import { useAuthUser } from "@/hooks/useAuthUser"
+import { setAuthReturnTo } from "@/lib/auth"
 import Navbar from "@/components/Navbar"
 import Footer from "@/components/Footer"
 import "./PartnerApplyPage.css"
@@ -28,12 +29,20 @@ interface PartnerApplyPageProps {
 
 export default function PartnerApplyPage({ onOpenAuth }: PartnerApplyPageProps) {
   const { type } = useParams<{ type: string }>()
+  const location = useLocation()
   const navigate = useNavigate()
   const user = useAuthUser()
 
   const partnerType = type as PartnerType | undefined
   const isValidType = partnerType && VALID_TYPES.includes(partnerType)
   const config = isValidType ? getPartnerFormConfig(partnerType) : null
+
+  // Remember where the user was so that after they sign up/sign in through the
+  // auth page, they are taken straight back to this partner application.
+  const promptAuth = (mode: "signin" | "signup") => {
+    setAuthReturnTo(location.pathname)
+    navigate(mode === "signup" ? "/login?mode=signup" : "/login")
+  }
 
   useEffect(() => {
     if (config) {
@@ -44,7 +53,7 @@ export default function PartnerApplyPage({ onOpenAuth }: PartnerApplyPageProps) 
   if (!isValidType || !config) {
     return (
       <div className="partner-apply-page">
-        <Navbar />
+        <Navbar onOpenAuth={onOpenAuth} />
         <div className="partner-apply-container">
           <div className="partner-apply-card">
             <h2>Invalid Partner Type</h2>
@@ -61,7 +70,7 @@ export default function PartnerApplyPage({ onOpenAuth }: PartnerApplyPageProps) 
 
   return (
     <div className="partner-apply-page">
-      <Navbar />
+      <Navbar onOpenAuth={onOpenAuth} />
       <div className="partner-apply-container">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
@@ -84,14 +93,14 @@ export default function PartnerApplyPage({ onOpenAuth }: PartnerApplyPageProps) 
                 <p>You need to be signed up to submit a partner application.</p>
                 <button
                   type="button"
-                  onClick={() => onOpenAuth?.("signup")}
+                  onClick={() => promptAuth("signup")}
                   className="partner-apply-auth-btn"
                 >
                   Sign Up
                 </button>
                 <p className="partner-apply-auth-alt">
                   Already have an account?{" "}
-                  <button type="button" onClick={() => onOpenAuth?.("signin")}>
+                  <button type="button" onClick={() => promptAuth("signin")}>
                     Sign in here
                   </button>
                 </p>

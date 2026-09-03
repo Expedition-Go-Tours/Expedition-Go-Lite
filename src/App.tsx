@@ -169,6 +169,10 @@ function AppContent() {
 
   const hideNav = currentPage === 'signin' || currentPage === 'signup' || location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/booking') || location.pathname.endsWith('/booking') || location.pathname.startsWith('/supplier/register') || location.pathname.startsWith('/supplier/list-experience') || location.pathname.startsWith('/login') || location.pathname.startsWith('/auth/callback')
 
+  // /login?mode=signup opens the auth page straight on the sign-up tab
+  // (used by flows like the partner application where sign-up is the primary action).
+  const loginInitialMode = new URLSearchParams(location.search).get('mode') === 'signup' ? 'signup' : 'signin'
+
   return (
     <>
       <Toaster position="top-center" duration={2500} closeButton />
@@ -239,7 +243,7 @@ function AppContent() {
           <Route path="/booking/:bookingId/pickup" element={<BookingPickupPage />} />
           <Route path="/login" element={
             <AuthForm
-              initialMode="signin"
+              initialMode={loginInitialMode}
               onBack={() => navigate('/')}
               onAuthSuccess={() => navigate('/')}
             />

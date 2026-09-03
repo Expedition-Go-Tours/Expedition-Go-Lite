@@ -26,7 +26,7 @@ const MARQUEE_IMAGES = [partners1, partners2, partners3, partners4, partners5, p
 const PARTNER_TYPES = [
   {
     title: 'Tour operators & suppliers',
-    text: 'List your experiences on Expedition-Go and reach travellers ready to book. Start by creating a supplier account.',
+    text: 'List your experiences on Expedition-Go Tours and reach travellers ready to book. Start by creating a supplier account.',
     to: '/partners/tour-operators/apply',
     image: partners2,
   },
@@ -38,7 +38,7 @@ const PARTNER_TYPES = [
   },
   {
     title: 'Travel agents & resellers',
-    text: 'Resell Expedition-Go experiences to your clients with simple, transparent partnership terms.',
+    text: 'Resell Expedition-Go Tours experiences to your clients with simple, transparent partnership terms.',
     to: '/partners/travel-agents/apply',
     image: partners9,
   },
@@ -174,7 +174,7 @@ export default function PartnershipsPage() {
           <h2>Why partner with us</h2>
           <p>
             We believe great partnerships make travel better for everyone. Whether you run tours,
-            welcome guests or create content, working with Expedition-Go means reaching travellers
+            welcome guests or create content, working with Expedition-Go Tours means reaching travellers
             who are ready to book with clear terms, fair revenue share and a dedicated partner
             team.
           </p>

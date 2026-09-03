@@ -742,6 +742,15 @@
   outline: none;
   max-height: 80px;
   line-height: 1.4;
+  overflow-y: auto;
+  scrollbar-width: none;
+  box-sizing: border-box;
+}
+
+/* The composer grows with its text; if it ever exceeds max-height, keep any
+   remaining scroll invisible so no scrollbar arrows show inside the input. */
+.support-chat-input::-webkit-scrollbar {
+  display: none;
 }
 
 .support-chat-input::placeholder {
@@ -792,6 +801,13 @@
     right: 16px;
     width: 56px;
     height: 56px;
+  }
+
+  /* The full-screen popup has its own close button in the header — hide the
+     floating toggle while open so it can't hover over the composer's send
+     button and block sending messages. */
+  .support-chat-btn.open {
+    display: none;
   }
 
   .support-chat-btn-body {

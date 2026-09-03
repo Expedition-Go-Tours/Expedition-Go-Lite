@@ -34,6 +34,20 @@
   font-family: var(--font-heading);
 }
 
+/* Hide the default number-input spinners (up/down arrows) and forbid
+   negative values in whole-number fields across the partner forms */
+.partner-apply-page input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.partner-apply-page input[type="number"]::-webkit-outer-spin-button,
+.partner-apply-page input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+
 .partner-apply-page p {
   font-family: 'Raleway', sans-serif;
 }

@@ -25,7 +25,7 @@ const DEPARTMENTS = [
   {
     Icon: Megaphone,
     title: 'Marketing',
-    text: 'Tell the Expedition-Go story and help travellers discover their next unforgettable experience.',
+    text: 'Tell the Expedition-Go Tours story and help travellers discover their next unforgettable experience.',
   },
 ]
 
@@ -49,7 +49,7 @@ export default function CareersPage() {
         <div className="support-article">
           <h2>Why work with us</h2>
           <p>
-            Expedition-Go is a small, ambitious team that loves travel and technology. We value
+            Expedition-Go Tours is a small, ambitious team that loves travel and technology. We value
             ownership, honesty and curiosity — and we work hard to make great experiences
             accessible to everyone.
           </p>
