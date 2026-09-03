@@ -31,6 +31,7 @@ interface ChatContextValue {
   openSupportChat: () => Promise<void>
   closeConversation: () => void
   sendMessage: (content: string, attachment?: { url: string; type: string }) => void
+  hideMessageForMe: (conversationId: string, messageId: string) => Promise<void>
   loadMore: (conversationId: string) => void
   setTyping: (conversationId: string, isTyping: boolean) => void
   refreshConversations: () => Promise<void>
@@ -275,6 +276,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         socket.on('chat:delivered', handleSocketDelivered)
         socket.on('chat:message-edited', handleSocketEdited)
         socket.on('chat:message-deleted', handleSocketDeleted)
+        socket.on('chat:message-deleted-for-me', handleSocketDeleted)
 
         await refreshConversations()
       } catch {
@@ -524,6 +526,41 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     [],
   )
 
+  /**
+   * "Delete for me": hide a message the current user sent from their own view
+   * only. Optimistic local removal, rolled back if the server call fails. The
+   * other participant keeps the message (no conversation-room broadcast).
+   */
+  const hideMessageForMe = useCallback(
+    async (conversationId: string, messageId: string) => {
+      const list = messagesRef.current[conversationId] ?? []
+      if (!list.some((m) => m.id === messageId)) return
+      // Optimistic removal — restore on failure.
+      setMessages((prev) => ({
+        ...prev,
+        [conversationId]: (prev[conversationId] ?? []).filter((m) => m.id !== messageId),
+      }))
+      setMessageStatuses((prev) => {
+        const next = { ...prev }
+        delete next[messageId]
+        return next
+      })
+      try {
+        await api.hideMessageForMe(conversationId, messageId)
+      } catch {
+        // Server said no (or it failed) — bring the message back.
+        setMessages((prev) => {
+          const existing = prev[conversationId] ?? []
+          if (existing.some((m) => m.id === messageId)) return prev
+          const original = list.find((m) => m.id === messageId)
+          if (!original) return prev
+          return { ...prev, [conversationId]: sortByCreatedAtAsc([...existing, original]) }
+        })
+      }
+    },
+    [],
+  )
+
   const loadMore = useCallback((conversationId: string) => {
     if (!hasMore[conversationId]) return
     const list = messages[conversationId]
@@ -567,6 +604,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       openSupportChat,
       closeConversation,
       sendMessage,
+      hideMessageForMe,
       loadMore,
       setTyping,
       refreshConversations,
@@ -574,7 +612,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     [
       conversations, activeConversationId, messages, hasMore, typingUserId,
       messageStatuses, unreadCount, openConversation, startChat, openSupplierChat, openSupportChat,
-      closeConversation, sendMessage, loadMore, setTyping, refreshConversations,
+      closeConversation, sendMessage, hideMessageForMe, loadMore, setTyping, refreshConversations,
     ],
   )
 

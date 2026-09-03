@@ -649,6 +649,38 @@
   justify-content: flex-start;
 }
 
+/* "Delete for me" — subtle, appears beside the sender's own bubbles on
+   hover, fully clickable on touch. */
+.support-chat-msg.own .support-chat-delete {
+  opacity: 0;
+  align-self: center;
+  margin-left: 4px;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  border: none;
+  background: transparent;
+  color: #8896a0;
+  cursor: pointer;
+  transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+.support-chat-msg.own:hover .support-chat-delete,
+.support-chat-msg.own .support-chat-delete:focus-visible {
+  opacity: 1;
+}
+.support-chat-msg.own .support-chat-delete:hover {
+  background: rgba(220, 38, 38, 0.08);
+  color: #dc2626;
+}
+.support-chat-msg.own .support-chat-delete:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
 .support-chat-bubble {
   max-width: 80%;
   padding: 6px 9px;

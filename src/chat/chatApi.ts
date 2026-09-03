@@ -70,6 +70,17 @@ export async function sendMessageRest(
   return payload.data.message
 }
 
+/**
+ * "Delete for me": hide a message from the current user's own view only. The
+ * other participant still sees it; the server keeps the row + attachment.
+ */
+export async function hideMessageForMe(conversationId: string, messageId: string): Promise<void> {
+  const res = await fetchWithAuth(`/chat/conversations/${conversationId}/messages/${messageId}/hide-for-me`, {
+    method: 'POST',
+  })
+  if (!res.ok) throw new Error(`Failed to delete message (${res.status})`)
+}
+
 export async function markConversationAsRead(conversationId: string): Promise<void> {
   await fetchWithAuth(`/chat/conversations/${conversationId}/read`, { method: 'PATCH' })
 }

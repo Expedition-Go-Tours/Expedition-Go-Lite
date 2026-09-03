@@ -6,6 +6,7 @@ import {
   getMessages,
   sendMessageRest,
   markConversationAsRead,
+  hideMessageForMe,
   getUnreadCount,
   getSupportUserId,
   uploadChatImage,
@@ -77,6 +78,14 @@ describe('chatApi', () => {
     mockFetchWithAuth.mockResolvedValueOnce({ ok: true } as Response)
     await markConversationAsRead('conv-1')
     expect(mockFetchWithAuth).toHaveBeenCalledWith('/chat/conversations/conv-1/read', { method: 'PATCH' })
+  })
+
+  it('hideMessageForMe posts to the hide-for-me endpoint', async () => {
+    mockFetchWithAuth.mockResolvedValueOnce({ ok: true, json: async () => ({ status: 'success', data: null }) } as unknown as Response)
+    await hideMessageForMe('conv-1', 'm1')
+    expect(mockFetchWithAuth).toHaveBeenCalledWith('/chat/conversations/conv-1/messages/m1/hide-for-me', {
+      method: 'POST',
+    })
   })
 
   it('getUnreadCount returns the count', async () => {
