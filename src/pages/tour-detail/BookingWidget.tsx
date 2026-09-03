@@ -589,9 +589,6 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
     travelerTouched &&
     totalTravelers > 0 &&
     (isPerGroup ? matchingGroupBand != null : tour.price > 0)
-  const liveTotalLabel = isPerGroup
-    ? t('booking.groupTotal', 'Group total')
-    : t('booking.total', { count: totalTravelers })
 
   // An applied promo must always produce a real discount: if the re-quoted
   // pricing comes back with zero discount (the code no longer applies to the
@@ -616,7 +613,7 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
           <div className="booking-price-main">
             {showLiveTotal ? (
               <>
-                <span className="booking-price-from">{liveTotalLabel}</span>
+                <span className="booking-price-from">{t('common.from')}</span>
                 <span className="booking-price-amount booking-price-amount--live">
                   {pricingLoading ? (
                     <span className="booking-price-spinner">
