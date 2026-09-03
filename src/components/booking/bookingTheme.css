@@ -42,14 +42,14 @@
   --bv-shadow-md: 0 10px 30px -12px rgba(16, 24, 40, 0.18);
   --bv-shadow-lg: 0 24px 60px -20px rgba(16, 24, 40, 0.28);
 
-  /* Dashboard layout tokens */
-  --dash-sidebar-bg: #ffffff;
-  --dash-sidebar-border: #e5e7eb;
-  --dash-sidebar-text: #374151;
-  --dash-sidebar-muted: #9ca3af;
-  --dash-sidebar-active-bg: #f0fdf4;
-  --dash-sidebar-active-text: #065f46;
-  --dash-sidebar-active-border: #16a34a;
+  /* Dashboard layout tokens — green sidebar */
+  --dash-sidebar-bg: #166534;
+  --dash-sidebar-border: rgba(255, 255, 255, 0.10);
+  --dash-sidebar-text: rgba(255, 255, 255, 0.65);
+  --dash-sidebar-muted: rgba(255, 255, 255, 0.38);
+  --dash-sidebar-active-bg: rgba(255, 255, 255, 0.18);
+  --dash-sidebar-active-text: #ffffff;
+  --dash-sidebar-active-border: #ffffff;
   --dash-content-bg: #f8f9fb;
   --dash-card-bg: #ffffff;
   --dash-card-border: #e5e7eb;

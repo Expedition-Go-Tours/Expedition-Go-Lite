@@ -87,21 +87,21 @@ function Sidebar() {
       >
         {/* Profile — centered avatar + name + email */}
         <div className={`shrink-0 flex flex-col items-center ${isCollapsed ? "pt-6 pb-4" : "pt-6 pb-5"}`}>
-          <div className={`rounded-full overflow-hidden bg-[var(--bv-accent-soft)] shrink-0 flex items-center justify-center ${isCollapsed ? "w-11 h-11" : "w-14 h-14"}`}>
+          <div className={`rounded-full overflow-hidden bg-white/15 shrink-0 flex items-center justify-center ${isCollapsed ? "w-11 h-11" : "w-14 h-14"}`}>
             {user?.photoURL ? (
               <img src={user.photoURL} alt="" className="w-full h-full object-cover object-center" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
             ) : (
-              <span className={`font-bold text-[var(--bv-accent-strong)] ${isCollapsed ? "text-sm" : "text-lg"}`}>
+              <span className={`font-bold text-white ${isCollapsed ? "text-sm" : "text-lg"}`}>
                 {(user?.name || "U").charAt(0).toUpperCase()}
               </span>
             )}
           </div>
           {!isCollapsed && (
             <div className="min-w-0 text-center mt-3">
-              <p className="text-[14px] font-semibold text-[var(--bv-ink)] truncate leading-tight">
+              <p className="text-[14px] font-semibold text-white truncate leading-tight">
                 {user?.name || "User"}
               </p>
-              <p className="text-[12px] text-[var(--bv-muted)] truncate leading-relaxed mt-0.5">
+              <p className="text-[12px] text-white/65 truncate leading-relaxed mt-0.5">
                 {user?.email || ""}
               </p>
             </div>
@@ -109,7 +109,7 @@ function Sidebar() {
         </div>
 
         {/* Divider */}
-        <div className={`h-px bg-[var(--bv-border)] ${isCollapsed ? "mx-3" : "mx-5"}`} />
+        <div className={`h-px bg-white/10 ${isCollapsed ? "mx-3" : "mx-5"}`} />
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 scrollbar-none px-3 py-3">
@@ -129,7 +129,7 @@ function Sidebar() {
                   className={`relative flex items-center w-full rounded-xl text-[13.5px] font-medium transition-all duration-150 group
                     ${isActive
                       ? "bg-[var(--dash-sidebar-active-bg)] text-[var(--dash-sidebar-active-text)] font-semibold"
-                      : "text-[var(--dash-sidebar-text)] hover:bg-[var(--bv-surface-2)] hover:text-[var(--bv-ink)]"
+                      : "text-white/65 hover:bg-white/10 hover:text-white"
                     }
                     ${isCollapsed ? "justify-center px-0 py-2.5" : "gap-3 px-3 py-2.5"}`}
                   title={isCollapsed ? item.label : undefined}
@@ -168,14 +168,14 @@ function Sidebar() {
         </nav>
 
         {/* Divider */}
-        <div className={`h-px bg-[var(--bv-border)] ${isCollapsed ? "mx-3" : "mx-5"}`} />
+        <div className={`h-px bg-white/10 ${isCollapsed ? "mx-3" : "mx-5"}`} />
 
         {/* Bottom actions — wrapped in subtle card */}
         <div className={`shrink-0 py-2 ${isCollapsed ? "px-3" : "px-3"}`}>
-          <div className={`rounded-xl bg-[var(--bv-surface-2)] ${isCollapsed ? "p-1" : "p-1"}`}>
+          <div className={`rounded-xl bg-white/8 ${isCollapsed ? "p-1" : "p-1"}`}>
             <button
               onClick={() => { navigate("/"); closeMobile(); }}
-              className={`flex items-center w-full rounded-lg text-[13.5px] font-medium transition-all duration-150 text-[var(--bv-accent-strong)] hover:bg-[var(--bv-accent-soft)]
+              className={`flex items-center w-full rounded-lg text-[13.5px] font-medium transition-all duration-150 text-white/80 hover:bg-white/12
                 ${isCollapsed ? "justify-center px-0 py-2" : "gap-3 px-3 py-2"}`}
               title={isCollapsed ? "Back to Homepage" : undefined}
             >
@@ -187,7 +187,7 @@ function Sidebar() {
               <button
                 onClick={() => setShowLogoutConfirm(!showLogoutConfirm)}
                 onBlur={() => setTimeout(() => setShowLogoutConfirm(false), 200)}
-                className={`flex items-center w-full rounded-lg text-[13.5px] font-medium transition-all duration-150 text-[var(--bv-danger-text)] hover:bg-[var(--bv-danger-bg)]
+                className={`flex items-center w-full rounded-lg text-[13.5px] font-medium transition-all duration-150 text-red-300 hover:bg-white/10
                   ${isCollapsed ? "justify-center px-0 py-2" : "gap-3 px-3 py-2"}`}
                 title={isCollapsed ? "Sign out" : undefined}
               >
@@ -218,10 +218,10 @@ function Sidebar() {
         </div>
 
         {/* Collapse button — desktop only */}
-        <div className={`shrink-0 hidden lg:block border-t border-[var(--bv-border)] ${isCollapsed ? "px-3 pt-3 pb-4" : "px-3 pt-3 pb-4"}`}>
+        <div className={`shrink-0 hidden lg:block border-t border-white/10 ${isCollapsed ? "px-3 pt-3 pb-4" : "px-3 pt-3 pb-4"}`}>
           <button
             onClick={toggle}
-            className={`flex items-center w-full rounded-xl text-[13px] font-medium transition-all duration-150 text-[var(--bv-faint)] hover:text-[var(--bv-text)] hover:bg-[var(--bv-surface-2)]
+            className={`flex items-center w-full rounded-xl text-[13px] font-medium transition-all duration-150 text-white/38 hover:text-white hover:bg-white/10
               ${isCollapsed ? "justify-center px-0 py-2" : "gap-2.5 px-3 py-2"}`}
             title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
