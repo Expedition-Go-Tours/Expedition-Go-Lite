@@ -7,7 +7,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useSidebarStore } from "@/stores/sidebarStore";
-import { getStoredAuthUser, signOutUser } from "@/lib/auth";
+import { signOutUser } from "@/lib/auth";
+import { useAuthUser } from "@/hooks/useAuthUser";
 import { useChat } from "@/chat/ChatContext";
 import "./DashboardLayout.css";
 
@@ -46,7 +47,7 @@ function Sidebar() {
   const { isCollapsed, toggle, isMobileOpen, closeMobile, toggleMobile } = useSidebarStore();
   const location = useLocation();
   const navigate = useNavigate();
-  const user = getStoredAuthUser();
+  const user = useAuthUser();
   const { unreadCount } = useChat();
   const [signingOut, setSigningOut] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);

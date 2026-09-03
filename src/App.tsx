@@ -20,6 +20,8 @@ import { SellOutProvider } from './context/SellOutContext'
 import { ChatProvider } from './chat/ChatContext'
 import SupportChatWidget from './components/SupportChatWidget'
 import { subscribeToAuthState, handleGoogleCallback, getAuthReturnTo, clearAuthReturnTo } from './lib/auth'
+import { AuthProvider } from './context/AuthContext'
+import { startSessionWatchdog, stopSessionWatchdog } from './auth/sessionManager'
 import { trackPageView, requestLocation } from './lib/analytics'
 import { useHomepage } from './hooks/useHomepageSections'
 
@@ -116,6 +118,12 @@ function AppContent() {
   useEffect(() => {
     const unsub = subscribeToAuthState(() => {})
     return () => { unsub.then((fn) => fn()) }   
+  }, [])
+
+  // Mount the session watchdog — runs for the lifetime of the app.
+  useEffect(() => {
+    startSessionWatchdog()
+    return () => stopSessionWatchdog()
   }, [])
 
   useEffect(() => {
@@ -283,11 +291,13 @@ function App() {
   return (
     <BrowserRouter>
       <WishlistProvider>
-        <ContinuePlanningProvider>
-          <ChatProvider>
-            <AppContent />
-          </ChatProvider>
-        </ContinuePlanningProvider>
+        <AuthProvider>
+          <ContinuePlanningProvider>
+            <ChatProvider>
+              <AppContent />
+            </ChatProvider>
+          </ContinuePlanningProvider>
+        </AuthProvider>
       </WishlistProvider>
     </BrowserRouter>
   )
