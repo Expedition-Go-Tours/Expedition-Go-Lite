@@ -353,6 +353,18 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
     navigate(`/${encodeURIComponent(tour.id)}/booking`, { state: pendingNavState.current })
   }, [navigate, tour.id])
 
+  const handleUpdatePricing = useCallback(() => {
+    // Close the picker so the recalculated price/total is visible.
+    setShowGuestSelector(false)
+    if (!selectedDate) {
+      // No date chosen yet — the live client-side estimate already reflects
+      // the current traveler selection (the checkout quote API requires a
+      // travel date), so there is nothing to re-quote.
+      return
+    }
+    doFetchPricing(selectedDate.toISOString().slice(0, 10), selectedTime)
+  }, [selectedDate, selectedTime, doFetchPricing])
+
   // Validates the current promo code against the backend's special-offer
   // engine for a concrete date (POST /tours/offers/validate-promo — the same
   // endpoint that prices the booking). On success the code is marked applied
@@ -568,6 +580,19 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
   const showPromoPrice =
     promoUnitPrice != null && promoUnitPrice > 0 && promoUnitPrice < originalUnitPrice
 
+  // Once the traveler picker has been touched, the headline switches from the
+  // static "From $X per person/group" unit to the LIVE total for the selected
+  // travelers (same figure the summary shows: server-confirmed total when a
+  // matching date quote exists, the client-side estimate otherwise). This is
+  // what makes the first price move with every +/- tap.
+  const showLiveTotal =
+    travelerTouched &&
+    totalTravelers > 0 &&
+    (isPerGroup ? matchingGroupBand != null : tour.price > 0)
+  const liveTotalLabel = isPerGroup
+    ? t('booking.groupTotal', 'Group total')
+    : t('booking.total', { count: totalTravelers })
+
   // An applied promo must always produce a real discount: if the re-quoted
   // pricing comes back with zero discount (the code no longer applies to the
   // selected date / traveler mix), clear it with an inline notice instead of
@@ -589,7 +614,20 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
       <div className="booking-widget-card">
           <div className="booking-price-section">
           <div className="booking-price-main">
-            {isPerGroup ? (
+            {showLiveTotal ? (
+              <>
+                <span className="booking-price-from">{liveTotalLabel}</span>
+                <span className="booking-price-amount booking-price-amount--live">
+                  {pricingLoading ? (
+                    <span className="booking-price-spinner">
+                      <svg className="booking-spinner" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <circle cx="12" cy="12" r="10" strokeDasharray="31.4 31.4" strokeLinecap="round" />
+                      </svg>
+                    </span>
+                  ) : formatMoney(displayTotal)}
+                </span>
+              </>
+            ) : isPerGroup ? (
               lowestGroupBand ? (
                 <>
                   <span className="booking-price-from">{t('common.from')}</span>
@@ -919,6 +957,30 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
                   {mixIssues.length > 0 && (
                     <p className="booking-slot-warning">{mixIssues[0].message}</p>
                   )}
+
+                  <button
+                    type="button"
+                    className="booking-update-btn"
+                    onClick={handleUpdatePricing}
+                    disabled={pricingLoading}
+                  >
+                    {pricingLoading ? (
+                      <span className="booking-btn-loader">
+                        <svg className="booking-spinner" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <circle cx="12" cy="12" r="10" strokeDasharray="31.4 31.4" strokeLinecap="round" />
+                        </svg>
+                        {t('booking.checking')}
+                      </span>
+                    ) : (
+                      <>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <polyline points="23 4 23 10 17 10" />
+                          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+                        </svg>
+                        {t('booking.updatePrice', 'Update')}
+                      </>
+                    )}
+                  </button>
                 </motion.div>
               )}
             </AnimatePresence>
