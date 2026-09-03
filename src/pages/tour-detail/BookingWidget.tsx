@@ -109,6 +109,11 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
   // "price updated" note); reset when a new refresh starts.
   const [priceUpdated, setPriceUpdated] = useState(false)
   const [pricingLoading, setPricingLoading] = useState(false)
+  // Live-headline strike-through: the previously displayed live total (kept
+  // across traveler changes) so the widget can show "old price struck
+  // through next to the new price" while the picker is being adjusted.
+  const [previousLiveTotal, setPreviousLiveTotal] = useState<number | null>(null)
+  const [lastLiveShown, setLastLiveShown] = useState<number | null>(null)
   const guestRef = useRef<HTMLDivElement>(null)
   const calendarRef = useRef<HTMLDivElement>(null)
 
@@ -538,6 +543,19 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
   const savedAmount = quoteMatchesSelection && pricingResult ? pricingResult.discounts : 0
   const subtotalAmount = quoteMatchesSelection && pricingResult ? pricingResult.subtotal : clientSubtotal
 
+  // Keep the previously displayed live total so the headline can strike it
+  // through next to the new price whenever the traveler selection changes the
+  // figure. React-recommended "adjust state during render" pattern — both
+  // branches settle after one pass (the conditions they flip become false).
+  const liveTracked = travelerTouched && !pricingLoading && totalTravelers > 0 && displayTotal > 0
+  if (!travelerTouched && lastLiveShown != null) {
+    setLastLiveShown(null)
+    setPreviousLiveTotal(null)
+  } else if (liveTracked && lastLiveShown !== displayTotal) {
+    setPreviousLiveTotal(lastLiveShown)
+    setLastLiveShown(displayTotal)
+  }
+
   // Special offers a supplier applied to this tour on the supplier platform.
   // The backend projection (GET /tours/:id) already filters to ACTIVE offers
   // whose date window includes today. The checkout engine auto-applies the
@@ -614,6 +632,11 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
             {showLiveTotal ? (
               <>
                 <span className="booking-price-from">{t('common.from')}</span>
+                {!pricingLoading && previousLiveTotal != null && previousLiveTotal !== displayTotal && (
+                  <span className="booking-price-amount booking-price-amount--strike">
+                    {formatMoney(previousLiveTotal)}
+                  </span>
+                )}
                 <span className="booking-price-amount booking-price-amount--live">
                   {pricingLoading ? (
                     <span className="booking-price-spinner">
