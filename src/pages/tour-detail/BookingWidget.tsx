@@ -105,6 +105,9 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
   const pricingSeqRef = useRef(0)
   const [lastQuoteKey, setLastQuoteKey] = useState<string | null>(null)
   const [pricingResult, setPricingResult] = useState<PricingResult | null>(null)
+  // Whether the last refresh produced a different total (shown as an inline
+  // "price updated" note); reset when a new refresh starts.
+  const [priceUpdated, setPriceUpdated] = useState(false)
   const [pricingLoading, setPricingLoading] = useState(false)
   const guestRef = useRef<HTMLDivElement>(null)
   const calendarRef = useRef<HTMLDivElement>(null)
@@ -150,6 +153,9 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
     const code = forceCode ?? (promoApplied ? promoCode.trim() : undefined)
     const seq = ++pricingSeqRef.current
     setPricingLoading(true)
+    // A fresh refresh starts — hide the previous "price updated" note until
+    // this quote lands with a new total.
+    setPriceUpdated(false)
     try {
       const res = await fetchWithAuth('/expedition/checkout/calculate', {
         method: 'POST',
@@ -198,8 +204,7 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
 
   // Auto-refresh the real-time price when the date or traveler mix changes
   // (Viator re-checks on date+pax selection). Debounced so +/- taps don't
-  // hammer the API; the manual Update button still forces an immediate check.
-  const [priceUpdated, setPriceUpdated] = useState(false)
+  // hammer the API.
   const lastShownTotal = useRef<number | null>(null)
   useEffect(() => {
     if (!selectedDate) return
@@ -347,18 +352,6 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
   const handleTransitionDone = useCallback(() => {
     navigate(`/${encodeURIComponent(tour.id)}/booking`, { state: pendingNavState.current })
   }, [navigate, tour.id])
-
-  const handleUpdatePricing = useCallback(() => {
-    // Close the picker so the recalculated price/total is visible.
-    setShowGuestSelector(false)
-    setPriceUpdated(false)
-    if (!selectedDate) {
-      // No date chosen yet — refresh the client-side estimate for the current
-      // traveler selection (the checkout quote API requires a travel date).
-      return
-    }
-    doFetchPricing(selectedDate.toISOString().slice(0, 10), selectedTime)
-  }, [selectedDate, selectedTime, doFetchPricing])
 
   // Validates the current promo code against the backend's special-offer
   // engine for a concrete date (POST /tours/offers/validate-promo — the same
@@ -926,30 +919,6 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
                   {mixIssues.length > 0 && (
                     <p className="booking-slot-warning">{mixIssues[0].message}</p>
                   )}
-
-                  <button
-                    type="button"
-                    className="booking-update-btn"
-                    onClick={handleUpdatePricing}
-                    disabled={pricingLoading}
-                  >
-                    {pricingLoading ? (
-                      <span className="booking-btn-loader">
-                        <svg className="booking-spinner" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                          <circle cx="12" cy="12" r="10" strokeDasharray="31.4 31.4" strokeLinecap="round" />
-                        </svg>
-                        {t('booking.checking')}
-                      </span>
-                    ) : (
-                      <>
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <polyline points="23 4 23 10 17 10" />
-                          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
-                        </svg>
-                        {t('booking.updatePrice', 'Update')}
-                      </>
-                    )}
-                  </button>
                 </motion.div>
               )}
             </AnimatePresence>
