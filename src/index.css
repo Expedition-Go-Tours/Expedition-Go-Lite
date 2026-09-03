@@ -66,7 +66,11 @@
   font-size: 18px;
   line-height: 145%;
   letter-spacing: 0.18px;
-  color-scheme: light dark;
+  /* The site is light-only (the hero relies on a translucent powdered-green
+     gradient over a light canvas). `light dark` let dark-mode OS/browsers
+     paint a dark canvas behind the transparent page background, turning the
+     hero dark. Force light so the hero always keeps its pale green. */
+  color-scheme: light;
   color: var(--text);
   background: var(--bg);
   font-synthesis: none;
@@ -86,6 +90,11 @@
 }
 
 html {
+  /* Solid light canvas: the `--bg` var used by :root only resolves inside
+     booking-scoped themes, so on regular pages the page background was
+     transparent and dark-mode browsers showed a dark canvas behind the
+     translucent hero gradient. */
+  background-color: #ffffff;
   /* Always show vertical scrollbar to prevent layout shift from dropdowns */
   overflow-y: scroll;
   /* Clip horizontal overflow so a fixed-position overlay (dropdown panel)
