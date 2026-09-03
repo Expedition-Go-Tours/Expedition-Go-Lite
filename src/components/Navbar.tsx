@@ -551,7 +551,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
                         e.stopPropagation()
                         setDropdownOpen(false)
                         if (link.key === 'Dashboard') {
-                          navigate('/dashboard')
+                          navigate('/dashboard/bookings')
                         }
                         if (link.key === 'Bookings') {
                           markBookingsSeen()
@@ -728,7 +728,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
               </a>
             )}
             {user && (
-              <a href="#" className="nav-mobile-link" onPointerEnter={prefetchDashboard} onFocus={prefetchDashboard} onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMobileMenuOpen(false); navigate('/dashboard') }}>
+              <a href="#" className="nav-mobile-link" onPointerEnter={prefetchDashboard} onFocus={prefetchDashboard} onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMobileMenuOpen(false); navigate('/dashboard/bookings') }}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="3" y="3" width="7" height="7" />
                   <rect x="14" y="3" width="7" height="7" />

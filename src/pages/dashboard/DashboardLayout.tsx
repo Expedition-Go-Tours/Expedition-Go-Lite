@@ -267,7 +267,7 @@ export default function DashboardLayout() {
 
   const activeRoute = ROUTES.find((r) => r.path === location.pathname);
   if (!activeRoute) {
-    return <Navigate to="/dashboard/settings" replace />;
+    return <Navigate to="/dashboard/bookings" replace />;
   }
   const title = activeRoute.title;
   const bookingsArea = isBookingsAreaPath(location.pathname);
