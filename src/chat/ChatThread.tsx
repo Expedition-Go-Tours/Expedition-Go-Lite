@@ -6,7 +6,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Check, CheckCheck, ImagePlus, Send, Trash2 } from 'lucide-react'
+import { ArrowDown, Check, CheckCheck, ImagePlus, Send, Trash2 } from 'lucide-react'
 import ConfirmDialog from '../components/ui/ConfirmDialog'
 import type { ChatMessage, MessageStatus } from './types'
 
@@ -37,18 +37,48 @@ function formatTime(iso: string): string {
   return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
 
+/** Format a date for the in-thread separator labels */
+function formatDateLabel(iso: string): string {
+  const d = new Date(iso)
+  const now = new Date()
+  const isToday =
+    d.getDate() === now.getDate() &&
+    d.getMonth() === now.getMonth() &&
+    d.getFullYear() === now.getFullYear()
+  const yesterday = new Date(now)
+  yesterday.setDate(yesterday.getDate() - 1)
+  const isYesterday =
+    d.getDate() === yesterday.getDate() &&
+    d.getMonth() === yesterday.getMonth() &&
+    d.getFullYear() === yesterday.getFullYear()
+  if (isToday) return 'Today'
+  if (isYesterday) return 'Yesterday'
+  return d.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+/** Check if two dates are on the same day */
+function sameDay(a: string, b: string): boolean {
+  const da = new Date(a)
+  const db = new Date(b)
+  return (
+    da.getDate() === db.getDate() &&
+    da.getMonth() === db.getMonth() &&
+    da.getFullYear() === db.getFullYear()
+  )
+}
+
 function StatusTick({ status }: { status?: MessageStatus }) {
   if (!status || status === 'sending') {
-    return <Check size={13} className="support-chat-msg-tick" />
+    return <Check size={13} className="support-chat-msg-tick" aria-label="Sending" />
   }
-  const read = status === 'read'
-  return (
-    <CheckCheck
-      size={14}
-      className="support-chat-msg-tick"
-      style={read ? { color: '#53bdeb' } : { color: '#a3b3bc' }}
-    />
-  )
+  if (status === 'sent') {
+    return <Check size={13} className="support-chat-msg-tick" aria-label="Sent" />
+  }
+  if (status === 'delivered') {
+    return <CheckCheck size={14} className="support-chat-msg-tick" aria-label="Delivered" />
+  }
+  // read
+  return <CheckCheck size={14} className="support-chat-msg-tick read-tick" aria-label="Read" />
 }
 
 export default function ChatThread({
@@ -62,11 +92,13 @@ export default function ChatThread({
   const [pendingAttachment, setPendingAttachment] = useState<{ url: string; type: string } | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const stickToBottomRef = useRef(true)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
+  const [showScrollFab, setShowScrollFab] = useState(false)
 
   // Auto-grow the composer as the message gets longer so the text stays
   // visible instead of overflowing into a scrollbar (max-height caps growth).
@@ -78,9 +110,12 @@ export default function ChatThread({
   }, [input])
 
   // Track whether the user is near the bottom; auto-scroll only then.
+  // Also control the scroll-to-bottom FAB visibility.
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const el = e.currentTarget
-    stickToBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 120
+    const distFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight
+    stickToBottomRef.current = distFromBottom < 120
+    setShowScrollFab(distFromBottom > 300)
   }
 
   useEffect(() => {
@@ -88,6 +123,12 @@ export default function ChatThread({
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }
   }, [messages.length, isTyping])
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    stickToBottomRef.current = true
+    setShowScrollFab(false)
+  }
 
   const confirmDelete = async () => {
     if (!pendingDeleteId) return
@@ -143,7 +184,12 @@ export default function ChatThread({
 
   return (
     <>
-      <div className="support-chat-messages" onScroll={handleScroll}>
+      <div
+        className="support-chat-messages"
+        ref={scrollContainerRef}
+        onScroll={handleScroll}
+        style={{ position: 'relative' }}
+      >
         {hasMore && (
           <div className="support-chat-load-more-wrap">
             <button type="button" className="support-chat-load-more" onClick={onLoadMore} disabled={showLoader}>
@@ -162,6 +208,8 @@ export default function ChatThread({
           const own = msg.senderId === myUserId
           const isFirstInGroup = !prev || prev.senderId !== msg.senderId
           const isLastInGroup = !next || next.senderId !== msg.senderId
+          const isGrouped = prev && prev.senderId === msg.senderId
+          const showDateSep = !prev || !sameDay(prev.createdAt, msg.createdAt)
           // Live status wins; otherwise fall back to the other participant's
           // lastReadAt so history messages keep their read state after a
           // reload (no live events replay for old messages).
@@ -170,46 +218,58 @@ export default function ChatThread({
             (otherLastReadAt && msg.createdAt <= otherLastReadAt ? 'read' : undefined)
 
           return (
-            <div
-              key={msg.id}
-              className={`support-chat-msg ${own ? 'own' : 'other'} ${isFirstInGroup ? 'mt-2' : 'mt-0.5'}`}
-            >
+            <div key={msg.id}>
+              {/* Date separator */}
+              {showDateSep && (
+                <div className="dash-chat-date-sep">
+                  <span>{formatDateLabel(msg.createdAt)}</span>
+                </div>
+              )}
+
               <div
-                className={`support-chat-bubble ${own ? 'own' : 'other'} ${
-                  isFirstInGroup && isLastInGroup
-                    ? 'rounded-lg'
-                    : isFirstInGroup
-                      ? own ? 'rounded-t-lg rounded-bl-lg rounded-br-sm' : 'rounded-t-lg rounded-br-lg rounded-bl-sm'
-                      : isLastInGroup
-                        ? own ? 'rounded-lg rounded-br-sm' : 'rounded-lg rounded-bl-sm'
-                        : own ? 'rounded-lg rounded-br-sm rounded-bl-lg' : 'rounded-lg rounded-bl-sm rounded-br-lg'
+                className={`support-chat-msg ${own ? 'own' : 'other'} ${
+                  isGrouped ? 'mt-0.5' : 'mt-2'
+                } ${isGrouped && isLastInGroup ? 'dash-chat-msg-group-last' : ''} ${
+                  isGrouped && isFirstInGroup ? 'dash-chat-msg-group-first' : ''
                 }`}
               >
-                {msg.attachmentUrl && (
-                  <a href={msg.attachmentUrl} target="_blank" rel="noreferrer" className="support-chat-attachment">
-                    <img src={msg.attachmentUrl} alt="" loading="lazy" />
-                  </a>
-                )}
-                {msg.content && <div className={isLastInGroup ? 'pb-0.5' : ''}>{msg.content}</div>}
-                {isLastInGroup && (
-                  <p className={`support-chat-msg-time ${own ? 'own' : 'other'}`}>
-                    {formatTime(msg.createdAt)}
-                    {own && <StatusTick status={status} />}
-                  </p>
+                <div
+                  className={`support-chat-bubble ${own ? 'own' : 'other'} ${
+                    isFirstInGroup && isLastInGroup
+                      ? 'rounded-lg'
+                      : isFirstInGroup
+                        ? own ? 'rounded-t-lg rounded-bl-lg rounded-br-sm' : 'rounded-t-lg rounded-br-lg rounded-bl-sm'
+                        : isLastInGroup
+                          ? own ? 'rounded-lg rounded-br-sm' : 'rounded-lg rounded-bl-sm'
+                          : own ? 'rounded-lg rounded-br-sm rounded-bl-lg' : 'rounded-lg rounded-bl-sm rounded-br-lg'
+                  }`}
+                >
+                  {msg.attachmentUrl && (
+                    <a href={msg.attachmentUrl} target="_blank" rel="noreferrer" className="support-chat-attachment dash-chat-bubble-image">
+                      <img src={msg.attachmentUrl} alt={t('supportChat.imageAttachment', 'Photo')} loading="lazy" />
+                    </a>
+                  )}
+                  {msg.content && <div className={isLastInGroup ? 'pb-0.5' : ''}>{msg.content}</div>}
+                  {isLastInGroup && (
+                    <p className={`support-chat-msg-time ${own ? 'own' : 'other'}`}>
+                      {formatTime(msg.createdAt)}
+                      {own && <StatusTick status={status} />}
+                    </p>
+                  )}
+                </div>
+                {own && allowDelete && onDeleteMessage && (
+                  <button
+                    type="button"
+                    className="support-chat-delete"
+                    aria-label={t('supportChat.deleteForMe', 'Delete for me')}
+                    title={t('supportChat.deleteForMe', 'Delete for me')}
+                    disabled={deletingId === msg.id}
+                    onClick={() => setPendingDeleteId(msg.id)}
+                  >
+                    <Trash2 size={12} />
+                  </button>
                 )}
               </div>
-              {own && allowDelete && onDeleteMessage && (
-                <button
-                  type="button"
-                  className="support-chat-delete"
-                  aria-label={t('supportChat.deleteForMe', 'Delete for me')}
-                  title={t('supportChat.deleteForMe', 'Delete for me')}
-                  disabled={deletingId === msg.id}
-                  onClick={() => setPendingDeleteId(msg.id)}
-                >
-                  <Trash2 size={12} />
-                </button>
-              )}
             </div>
           )
         })}
@@ -239,6 +299,24 @@ export default function ChatThread({
         </AnimatePresence>
 
         <div ref={messagesEndRef} />
+
+        {/* Scroll-to-bottom FAB */}
+        <AnimatePresence>
+          {showScrollFab && (
+            <motion.button
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ duration: 0.15 }}
+              className="dash-chat-scroll-fab"
+              onClick={scrollToBottom}
+              aria-label={t('supportChat.scrollToBottom', 'Scroll to latest')}
+              type="button"
+            >
+              <ArrowDown size={18} />
+            </motion.button>
+          )}
+        </AnimatePresence>
       </div>
 
       <div className="support-chat-input-bar">
@@ -271,6 +349,7 @@ export default function ChatThread({
               type="button"
               className="support-chat-attach-btn"
               aria-label={t('supportChat.attachImage')}
+              title={t('supportChat.attachImage', 'Attach image')}
               disabled={sendingAttachment}
               onClick={() => fileRef.current?.click()}
             >
@@ -286,13 +365,16 @@ export default function ChatThread({
           placeholder={t('supportChat.typeMessage')}
           rows={1}
           className="support-chat-input"
+          aria-label={t('supportChat.typeMessage', 'Type a message')}
         />
         <button
           onClick={handleSend}
           disabled={!input.trim() && !pendingAttachment}
           className="support-chat-send-btn"
+          aria-label={t('supportChat.send', 'Send')}
+          title={t('supportChat.send', 'Send')}
         >
-          <Send size={15} />
+          <Send size={16} />
         </button>
       </div>
 
