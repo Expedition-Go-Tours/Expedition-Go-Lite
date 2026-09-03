@@ -1,7 +1,7 @@
 ﻿import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Search, Ticket, AlertTriangle, ArrowRight, CalendarDays, CheckCircle2, Wallet, MapPin } from 'lucide-react'
+import { Search, Ticket, AlertTriangle, ArrowRight, CalendarDays, CheckCircle2, Wallet } from 'lucide-react'
 import {
   useMyExpeditionBookings,
   type ExpeditionBookingSummary,
@@ -79,7 +79,7 @@ export default function BookingHistory() {
     for (const b of bookings) {
       if (isActiveBooking(b.status)) upcoming++
       else if (b.status === 'CONFIRMED' || b.status === 'COMPLETED') completed++
-      totalSpent += b.totalAmount ?? 0
+      totalSpent += b.total ?? 0
     }
     return { total: bookings.length, upcoming, completed, totalSpent }
   }, [bookings])
