@@ -283,9 +283,11 @@ export default function DashboardLayout() {
       >
         <div className="mx-auto w-full max-w-[1120px] px-4 sm:px-6 lg:px-10 pb-10">
           <div className="flex items-center justify-center lg:justify-start mb-8 relative">
-            <h1 className="text-[clamp(24px,2.4vw,32px)] font-heading font-bold text-[var(--bv-ink)] text-center lg:text-left">
-              {title}
-            </h1>
+            {location.pathname !== "/dashboard/notifications" && (
+              <h1 className="text-[clamp(24px,2.4vw,32px)] font-heading font-bold text-[var(--bv-ink)] text-center lg:text-left">
+                {title}
+              </h1>
+            )}
 
             {location.pathname === "/dashboard/settings" && (
               <button
