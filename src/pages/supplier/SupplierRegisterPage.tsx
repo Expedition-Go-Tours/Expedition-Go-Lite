@@ -31,7 +31,7 @@ export default function SupplierRegisterPage({ onOpenAuth }: SupplierRegisterPag
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const user = useAuthUser()
-  const { profile, isLoading } = useSupplierStatus()
+  const { profile, isLoading } = useSupplierStatus({ forceEnabled: true })
   const [redirecting, setRedirecting] = useState(false)
 
   const userId = getAuthUserId(user)
