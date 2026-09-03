@@ -3,6 +3,10 @@
  * Signed-out users are prompted to sign in first. Signed-in users without an
  * existing application see the multi-step SupplierApplicationForm. Users who
  * already applied see their application status.
+ *
+ * Supplier status is fetched through the shared useSupplierStatus() hook (the
+ * single source of truth also used by Navbar) so a page visit fires ONE
+ * status request instead of several independent ones.
  */
 import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
@@ -12,7 +16,10 @@ import { ArrowLeft, LoaderCircle, ShieldCheck } from "lucide-react"
 
 import { SupplierApplicationForm } from "@/components/supplier/SupplierApplicationForm"
 import { useAuthUser } from "@/hooks/useAuthUser"
-import { getSupplierApplicationStatus, getSupplierPortalUrl, isApprovedSupplier, type SupplierProfile } from "@/lib/supplier"
+import { useSupplierStatus, supplierStatusKey } from "@/hooks/useSupplierStatus"
+import { getSupplierPortalUrl, isApprovedSupplier } from "@/lib/supplier"
+import { useQueryClient } from "@tanstack/react-query"
+import { getAuthUserId } from "@/lib/auth"
 import { Button } from "@/components/ui/button"
 
 interface SupplierRegisterPageProps {
@@ -22,52 +29,37 @@ interface SupplierRegisterPageProps {
 export default function SupplierRegisterPage({ onOpenAuth }: SupplierRegisterPageProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const user = useAuthUser()
-  const [checking, setChecking] = useState(false)
-  const [application, setApplication] = useState<SupplierProfile | null>(null)
-  const [statusError, setStatusError] = useState("")
+  const { profile, isLoading } = useSupplierStatus()
   const [redirecting, setRedirecting] = useState(false)
 
+  const userId = getAuthUserId(user)
+
+  // Invalidate cached status after a fresh application so the page flips to
+  // the "submitted" state once the profile exists.
+  const refreshStatus = () => {
+    void queryClient.invalidateQueries({ queryKey: supplierStatusKey(userId) })
+  }
+
+  // Already-approved suppliers skip this page and go straight to the
+  // TravioAfrica-Supplier platform to log in securely. profile comes from the
+  // shared cache, so no extra status request is fired here.
   useEffect(() => {
-    if (!user) {
-      window.setTimeout(() => setChecking(false), 0)
-      window.setTimeout(() => setApplication(null), 0)
-      return
-    }
-
+    if (!profile || !isApprovedSupplier(profile.status)) return
     let cancelled = false
-    window.setTimeout(() => setChecking(true), 0)
-    window.setTimeout(() => setStatusError(""), 0)
-
-    getSupplierApplicationStatus()
-      .then(async (profile) => {
-        if (cancelled) return
-        setApplication(profile)
-        // Already-approved suppliers skip this page and go straight to the
-        // TravioAfrica-Supplier platform to log in securely.
-        if (profile && isApprovedSupplier(profile.status)) {
-          const portalUrl = await getSupplierPortalUrl(profile)
-          if (cancelled) return
-          if (portalUrl) {
-            setRedirecting(true)
-            window.location.replace(portalUrl)
-            return
-          }
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setStatusError("Unable to check your application status. Please try again.")
-      })
-      .finally(() => {
-        if (!cancelled) setChecking(false)
-      })
-
+    ;(async () => {
+      const portalUrl = await getSupplierPortalUrl(profile)
+      if (cancelled || !portalUrl) return
+      setRedirecting(true)
+      window.location.replace(portalUrl)
+    })()
     return () => {
       cancelled = true
     }
-  }, [user])
+  }, [profile])
 
-  const alreadyApplied = !!application
+  const application = profile
 
   // "Sign in here" — verified suppliers go straight to their dashboard login
   // (SSO into the TravioAfrica-Supplier platform). Anyone else falls back to
@@ -96,7 +88,7 @@ export default function SupplierRegisterPage({ onOpenAuth }: SupplierRegisterPag
           if (window.history.length > 1) {
             navigate(-1)
           } else {
-            navigate("/supplier/list-experience")
+            navigate("/partnerships")
           }
         }}
         className="absolute left-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition-colors hover:bg-slate-50 hover:text-slate-900 sm:left-6 sm:top-6"
@@ -118,7 +110,7 @@ export default function SupplierRegisterPage({ onOpenAuth }: SupplierRegisterPag
           </p>
         </div>
 
-        {checking || redirecting ? (
+        {(isLoading || redirecting) && !application ? (
           <div className="flex items-center justify-center py-24">
             <LoaderCircle className="size-6 animate-spin text-primary" />
             {redirecting && (
@@ -147,7 +139,7 @@ export default function SupplierRegisterPage({ onOpenAuth }: SupplierRegisterPag
               {t("supplierAuth.signUpButton", "Sign Up")}
             </Button>
           </div>
-        ) : alreadyApplied ? (
+        ) : application ? (
           <div className="rounded-[1.4rem] border border-emerald-100 bg-emerald-50 p-8 text-center">
             <ShieldCheck className="mx-auto mb-3 size-10 text-emerald-600" />
             <h2 className="text-lg font-bold text-slate-900">
@@ -165,12 +157,7 @@ export default function SupplierRegisterPage({ onOpenAuth }: SupplierRegisterPag
           </div>
         ) : (
           <>
-            {statusError && (
-              <div className="mb-4 rounded-[1.3rem] border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                {statusError}
-              </div>
-            )}
-            <SupplierApplicationForm />
+            <SupplierApplicationForm onSubmitted={refreshStatus} />
           </>
         )}
 
