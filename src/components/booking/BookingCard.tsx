@@ -3,6 +3,7 @@ import { CalendarDays, Users, MapPin, Ticket, ChevronRight, Copy, Check } from '
 import { currencySymbol } from '../../lib/currencySymbol'
 import type { ExpeditionBookingSummary } from '../../hooks/useExpeditionBookings'
 import { bookingStatusMeta, formatMediumDate, formatTimeString, partyLabel } from '../../lib/bookingUi'
+import { formatDuration } from '../../hooks/useExpeditionTours'
 
 interface BookingCardProps {
   booking: ExpeditionBookingSummary
@@ -17,6 +18,8 @@ export default function BookingCard({ booking, onOpen }: BookingCardProps) {
   const symbol = booking.currency === 'GHS' ? 'GH₵' : currencySymbol(booking.currency)
   const amount = `${symbol}${booking.total.toFixed(2)}`
   const time = booking.selectedTime ? formatTimeString(booking.selectedTime) : ''
+
+  const duration = formatDuration(booking.tourDurationMinutes)
 
   const metaParts = [
     `${formatMediumDate(booking.travelDate)}${time ? ` · ${time}` : ''}`,
@@ -81,12 +84,23 @@ export default function BookingCard({ booking, onOpen }: BookingCardProps) {
 
         <p className="bk-meta">{metaParts.length > 0 ? metaParts.join(' · ') : '—'}</p>
 
+        {duration && (
+          <p className="bk-duration">
+            <span>Duration: {duration}</span>
+          </p>
+        )}
+
         {/* Phone-only richer meta (desktop keeps the single .bk-meta line). */}
         <div className="bk-meta-phone" aria-hidden="true">
           <p className="bk-when">
             <CalendarDays size={13} />
             <span>{when}</span>
           </p>
+          {duration && (
+            <p className="bk-when">
+              <span>Duration: {duration}</span>
+            </p>
+          )}
           {(party || booking.tourLocation) && (
             <p className="bk-sub">
               {party && (

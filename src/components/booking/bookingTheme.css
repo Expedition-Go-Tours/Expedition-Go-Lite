@@ -42,7 +42,20 @@
   --bv-shadow-md: 0 10px 30px -12px rgba(16, 24, 40, 0.18);
   --bv-shadow-lg: 0 24px 60px -20px rgba(16, 24, 40, 0.28);
 
-  /* Dashboard layout tokens — green sidebar */
+  /* Dashboard layout tokens — top bar (desktop) */
+  --dash-topbar-height: 100px;
+  --dash-topbar-bg: #ffffff;
+  --dash-topbar-border: rgba(0, 0, 0, 0.06);
+  --dash-topbar-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  --dash-topbar-active-color: var(--bv-forest);
+  --dash-topbar-active-underline: var(--bv-accent);
+  --dash-dropdown-bg: #ffffff;
+  --dash-dropdown-border: rgba(0, 0, 0, 0.08);
+  --dash-dropdown-shadow: 0 12px 40px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.06);
+  --dash-dropdown-hover: #f0fdf4;
+  --dash-dropdown-radius: 16px;
+
+  /* Legacy sidebar tokens — kept for backward compat, unused */
   --dash-sidebar-bg: #166534;
   --dash-sidebar-border: rgba(255, 255, 255, 0.10);
   --dash-sidebar-text: rgba(255, 255, 255, 0.65);
@@ -50,6 +63,7 @@
   --dash-sidebar-active-bg: rgba(255, 255, 255, 0.18);
   --dash-sidebar-active-text: #ffffff;
   --dash-sidebar-active-border: #ffffff;
+
   --dash-content-bg: #f8f9fb;
   --dash-card-bg: #ffffff;
   --dash-card-border: #e5e7eb;

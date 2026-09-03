@@ -379,6 +379,24 @@
   color: var(--bv-muted);
 }
 
+.bk-duration {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 6px 0 0;
+  padding: 3px 10px 3px 10px;
+  border-radius: 999px;
+  background: var(--bv-surface-2);
+  border: 1px solid var(--bv-border);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--bv-text);
+  line-height: 1;
+  white-space: nowrap;
+  width: fit-content;
+}
+
 /* Phone-only richer meta block (desktop uses .bk-meta above). */
 .bk-meta-phone {
   display: none;

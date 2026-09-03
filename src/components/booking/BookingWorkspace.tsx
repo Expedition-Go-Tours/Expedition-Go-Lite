@@ -13,13 +13,17 @@ import {
   MapPin,
   MessageCircle,
   Phone,
-  Mail,
   Info,
   AlertTriangle,
+  ChevronDown,
+  ChevronUp,
+  CheckCircle2,
+  XCircle,
+  Navigation,
 } from 'lucide-react'
 import { useChat } from '../../chat/ChatContext'
 import { useExpeditionBookingDetail, useCancelBooking } from '../../hooks/useExpeditionBookings'
-import { extractMeetingInfo } from '../../hooks/useExpeditionTours'
+import { extractMeetingInfo, formatDuration } from '../../hooks/useExpeditionTours'
 import { currencySymbol } from '../../lib/currencySymbol'
 import {
   bookingStatusMeta,
@@ -32,6 +36,8 @@ import {
   type PartyCount,
 } from '../../lib/bookingUi'
 import BookingPointMap from './BookingPointMap'
+import TourItineraryPreview from '../../pages/tour-detail/TourItineraryPreview'
+import { extractItinerary } from '../../hooks/useExpeditionTours'
 import './bookingTheme.css'
 import './BookingWorkspace.css'
 
@@ -85,6 +91,100 @@ function startLabel(detail: Record<string, unknown>, pickupTime?: string | null)
   return 'Flexible'
 }
 
+const KNOW_BEFORE_PREVIEW_COUNT = 5
+
+function KnowBeforeYouGo({
+  included,
+  excluded,
+  notes,
+  highlights,
+}: {
+  included: string[]
+  excluded: string[]
+  notes: string
+  highlights: string[]
+}) {
+  const [expanded, setExpanded] = useState(false)
+  const hasLongList = included.length > KNOW_BEFORE_PREVIEW_COUNT || excluded.length > KNOW_BEFORE_PREVIEW_COUNT
+  const visibleInc = expanded ? included : included.slice(0, KNOW_BEFORE_PREVIEW_COUNT)
+  const visibleExc = expanded ? excluded : excluded.slice(0, KNOW_BEFORE_PREVIEW_COUNT)
+  const truncated = !expanded && hasLongList
+
+  return (
+    <section className="ws-card ws-know-before">
+      <h2 className="ws-card-title">Know before you go</h2>
+
+      {highlights.length > 0 && (
+        <div className="ws-kwb-section">
+          <h3 className="ws-kwb-subtitle">Highlights</h3>
+          <ul className="ws-kwb-list ws-kwb-highlights">
+            {highlights.map((item, i) => (
+              <li key={i} className="ws-kwb-item">
+                <CheckCircle2 size={15} className="ws-kwb-icon ws-kwb-icon-highlight" />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {included.length > 0 && (
+        <div className="ws-kwb-section">
+          <h3 className="ws-kwb-subtitle">What&apos;s included</h3>
+          <ul className="ws-kwb-list">
+            {visibleInc.map((item, i) => (
+              <li key={i} className="ws-kwb-item">
+                <CheckCircle2 size={15} className="ws-kwb-icon ws-kwb-icon-inc" />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {excluded.length > 0 && (
+        <div className="ws-kwb-section">
+          <h3 className="ws-kwb-subtitle">What&apos;s not included</h3>
+          <ul className="ws-kwb-list">
+            {visibleExc.map((item, i) => (
+              <li key={i} className="ws-kwb-item">
+                <XCircle size={15} className="ws-kwb-icon ws-kwb-icon-exc" />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {notes && (
+        <div className="ws-kwb-section">
+          <h3 className="ws-kwb-subtitle">Notes from the activity provider</h3>
+          <p className="ws-kwb-notes">{notes}</p>
+        </div>
+      )}
+
+      {truncated && (
+        <button
+          type="button"
+          className="ws-kwb-toggle"
+          onClick={() => setExpanded(true)}
+        >
+          Show all <ChevronDown size={14} />
+        </button>
+      )}
+      {expanded && hasLongList && (
+        <button
+          type="button"
+          className="ws-kwb-toggle"
+          onClick={() => setExpanded(false)}
+        >
+          Show less <ChevronUp size={14} />
+        </button>
+      )}
+    </section>
+  )
+}
+
 export default function BookingWorkspace({ id, onClose }: { id?: string; onClose?: () => void }) {
   const navigate = useNavigate()
   const [copied, setCopied] = useState(false)
@@ -101,7 +201,6 @@ export default function BookingWorkspace({ id, onClose }: { id?: string; onClose
       : null
   const supplierName = typeof rawSupplier?.name === 'string' ? rawSupplier.name : ''
   const supplierPhone = typeof rawSupplier?.phone === 'string' ? rawSupplier.phone : ''
-  const supplierEmail = typeof rawSupplier?.email === 'string' ? rawSupplier.email : ''
   const operatorId = typeof rawSupplier?.id === 'string' ? rawSupplier.id : ''
   const operatorPhoto = typeof rawSupplier?.photoURL === 'string' ? rawSupplier.photoURL : null
   const chat = useChat()
@@ -342,6 +441,27 @@ export default function BookingWorkspace({ id, onClose }: { id?: string; onClose
   }
 
   const title = tour?.title || (typeof detail.tourTitle === 'string' ? detail.tourTitle : 'Booking')
+  const duration = tour?.durationMinutes ? formatDuration(Number(tour.durationMinutes)) : ''
+
+  // Extract product content for includes/excludes/itinerary/knowBeforeYouGo
+  const productContent = tour?.productContent && typeof tour.productContent === 'object'
+    ? (tour.productContent as Record<string, any>)
+    : null
+  const includedItems: string[] = Array.isArray(productContent?.included) ? productContent.included : []
+  const excludedItems: string[] = Array.isArray(productContent?.excluded) ? productContent.excluded : []
+  const knowBeforeYouGo = typeof productContent?.knowBeforeYouGo === 'string' ? productContent.knowBeforeYouGo
+    : typeof productContent?.additionalInfo === 'string' ? productContent.additionalInfo : ''
+  const highlights: string[] = Array.isArray(productContent?.highlights) ? productContent.highlights : []
+  const itinerary = extractItinerary(detail.tour)
+
+  // Drop-off info
+  const btData = tour?.bookingAndTickets && typeof tour.bookingAndTickets === 'object'
+    ? (tour.bookingAndTickets as Record<string, any>)
+    : null
+  const dropoffOption = productContent?.dropoffOption || btData?.dropoffOption || ''
+  const dropoffLocationName = productContent?.dropoffLocation?.name || btData?.dropoffLocation?.name || ''
+  const dropoffLocationAddr = productContent?.dropoffLocation?.address || btData?.dropoffLocation?.address || ''
+  const hasDropoff = dropoffOption === 'different_location' && (dropoffLocationName || dropoffLocationAddr)
 
   return (
     <div className="ws">
@@ -358,6 +478,9 @@ export default function BookingWorkspace({ id, onClose }: { id?: string; onClose
           <span className="ws-paid">{isPaid ? `Paid ${currencySymbol(currency)}${gross.toFixed(2)}` : 'Reserved'}</span>
         </div>
         <h1 className="ws-title">{title}</h1>
+        {duration && (
+          <p className="ws-duration"><Clock size={14} /> Duration: {duration}</p>
+        )}
         <p className="ws-ref">
           <span className="ws-ref-label">Booking</span>
           <Ticket size={13} />
@@ -448,6 +571,17 @@ export default function BookingWorkspace({ id, onClose }: { id?: string; onClose
                   </dd>
                 </div>
               )}
+              {hasDropoff && (
+                <div className="ws-grid-row">
+                  <dt><Navigation size={15} /> Drop-off</dt>
+                  <dd>
+                    {dropoffLocationName && <span>{dropoffLocationName}</span>}
+                    {dropoffLocationAddr && dropoffLocationAddr !== dropoffLocationName && (
+                      <span className="ws-subtext">{dropoffLocationAddr}</span>
+                    )}
+                  </dd>
+                </div>
+              )}
             </dl>
             {typeof detail.specialRequests === 'string' && detail.specialRequests && (
               <p className="ws-note">
@@ -455,6 +589,35 @@ export default function BookingWorkspace({ id, onClose }: { id?: string; onClose
               </p>
             )}
           </section>
+
+          {/* Know before you go */}
+          {(includedItems.length > 0 || excludedItems.length > 0 || knowBeforeYouGo || highlights.length > 0) && (
+            <KnowBeforeYouGo
+              included={includedItems}
+              excluded={excludedItems}
+              notes={knowBeforeYouGo}
+              highlights={highlights}
+            />
+          )}
+
+          {/* Itinerary */}
+          {itinerary.length > 0 && (
+            <section className="ws-card ws-itinerary-card">
+              <TourItineraryPreview
+                itinerary={itinerary}
+                meeting={meeting}
+                dropoff={productContent ? {
+                  dropoffOption: productContent.dropoffOption,
+                  dropoffLocation: productContent.dropoffLocation?.name,
+                  dropoffLocationAddress: productContent.dropoffLocation?.address,
+                  dropoffDescription: productContent.dropoffDescription,
+                } : undefined}
+                accommodationIncluded={!!productContent?.transportationProvided}
+                meals={productContent?.meals}
+                dayLogistics={productContent?.dayLogistics}
+              />
+            </section>
+          )}
 
           {/* Where to go */}
           {(bookingIsPickup || hasMeeting) && (
@@ -530,50 +693,113 @@ export default function BookingWorkspace({ id, onClose }: { id?: string; onClose
 
         {/* Right rail — actions + operator */}
         <aside className="ws-aside no-print">
-          {activeStatus && showCancel && (
-            <section className="ws-card">
-              <h2 className="ws-card-title">Manage this booking</h2>
-              <div className="ws-actions">
-                <button
-                  type="button"
-                  className="bk-btn bk-btn-danger ws-action-btn"
-                  onClick={handleCancel}
-                  disabled={cancelBooking.isPending}
-                >
-                  {cancelBooking.isPending ? 'Cancelling…' : 'Cancel booking'}
-                </button>
-              </div>
-              {cancelError && <p className="ws-cancel-error">{cancelError}</p>}
-              {policyNote && <p className="ws-subtext">{policyNote}</p>}
-            </section>
-          )}
+          {/* Manage this booking */}
+          <section className="ws-card ws-manage-card">
+            <h2 className="ws-card-title">Manage your booking</h2>
 
+            {/* Cancellation info */}
+            {activeStatus && (
+              <div className="ws-manage-section">
+                <p className="ws-manage-label">Cancellation policy</p>
+                {policyNote && <p className="ws-manage-policy">{policyNote}</p>}
+                {cancellation.deadline && cancellation.allowed && (
+                  <p className="ws-manage-deadline">
+                    <Clock size={13} />
+                    Deadline: {formatDeadlineLabel(cancellation.deadline)}
+                  </p>
+                )}
+                {showCancel && (
+                  <button
+                    type="button"
+                    className="bk-btn bk-btn-danger ws-action-btn"
+                    onClick={handleCancel}
+                    disabled={cancelBooking.isPending}
+                  >
+                    {cancelBooking.isPending ? 'Cancelling…' : 'Cancel booking'}
+                  </button>
+                )}
+                {cancelError && <p className="ws-cancel-error">{cancelError}</p>}
+              </div>
+            )}
+
+            {!activeStatus && policyNote && (
+              <div className="ws-manage-section">
+                <p className="ws-manage-policy">{policyNote}</p>
+              </div>
+            )}
+
+            {/* Contact provider */}
+            {supplierName && (
+              <div className="ws-manage-section ws-manage-contact">
+                <p className="ws-manage-label">Organized by</p>
+                <div className="ws-operator-row">
+                  {operatorPhoto ? (
+                    <button
+                      type="button"
+                      className="ws-operator-avatar-btn"
+                      onClick={handleMessageOperator}
+                      title={`Message ${supplierName}`}
+                    >
+                      <img src={operatorPhoto} alt={supplierName} className="ws-operator-avatar" />
+                      <span className="ws-operator-avatar-badge">
+                        <MessageCircle size={11} />
+                      </span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="ws-operator-avatar-btn ws-operator-avatar-fallback"
+                      onClick={handleMessageOperator}
+                      title={`Message ${supplierName}`}
+                    >
+                      <span className="ws-operator-avatar-initial">
+                        {supplierName.charAt(0).toUpperCase()}
+                      </span>
+                      <span className="ws-operator-avatar-badge">
+                        <MessageCircle size={11} />
+                      </span>
+                    </button>
+                  )}
+                  <div className="ws-operator-info">
+                    <p className="ws-manage-operator">{supplierName}</p>
+                    {supplierPhone && (
+                      <a className="ws-operator-phone" href={`tel:${supplierPhone}`}>
+                        <Phone size={12} /> {supplierPhone}
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </section>
+
+          {/* Need help? */}
           <section className="ws-card">
             <h2 className="ws-card-title">Need help?</h2>
+            <p className="ws-help-text">
+              For questions about meeting or pickup point, activity details, or special requests, contact your activity provider.
+            </p>
+            {supplierPhone && (
+              <a className="ws-help-link" href={`tel:${supplierPhone}`}>
+                <Phone size={14} /> {supplierPhone}
+              </a>
+            )}
             <button
               type="button"
               className="bk-btn bk-btn-secondary ws-action-btn"
               onClick={handleMessageOperator}
             >
-              <MessageCircle size={15} /> Message the operator
+              <MessageCircle size={15} /> Message your activity provider
             </button>
-            {supplierName && (
-              <div className="ws-contact">
-                <p className="ws-contact-name">{supplierName}</p>
-                {supplierPhone && (
-                  <a className="ws-contact-link" href={`tel:${supplierPhone}`}>
-                    <Phone size={13} /> {supplierPhone}
-                  </a>
-                )}
-                {supplierEmail && (
-                  <a className="ws-contact-link" href={`mailto:${supplierEmail}`}>
-                    <Mail size={13} /> {supplierEmail}
-                  </a>
-                )}
-              </div>
-            )}
           </section>
         </aside>
+      </div>
+
+      {/* Footer message */}
+      <div className="ws-footer-thanks">
+        <p className="ws-thanks-text">
+          <strong>Thanks for booking with us and enjoy your journey.</strong>
+        </p>
       </div>
     </div>
   )
