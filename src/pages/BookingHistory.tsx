@@ -1,19 +1,22 @@
 ﻿import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Search, Ticket, AlertTriangle, ArrowRight } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { Search, Ticket, AlertTriangle, ArrowRight, CalendarDays, CheckCircle2, Wallet, MapPin } from 'lucide-react'
 import {
   useMyExpeditionBookings,
   type ExpeditionBookingSummary,
 } from '../hooks/useExpeditionBookings'
+import { useAuthUser } from '@/hooks/useAuthUser'
 import BookingCard from '../components/booking/BookingCard'
 import BookingWorkspace from '../components/booking/BookingWorkspace'
 import { formatHeadingDate, toDateKey, isSameCalendarDay } from '../lib/bookingUi'
 import '../components/booking/bookingTheme.css'
 import './BookingHistory.css'
 
-type Bucket = 'upcoming' | 'past'
+type Bucket = 'all' | 'upcoming' | 'past'
 
 const BUCKETS: { value: Bucket; label: string }[] = [
+  { value: 'all', label: 'All' },
   { value: 'upcoming', label: 'Upcoming' },
   { value: 'past', label: 'Past' },
 ]
@@ -57,8 +60,9 @@ export default function BookingHistory() {
   const [searchParams, setSearchParams] = useSearchParams()
   const bookingId = searchParams.get('booking')
   const listScrollRef = useRef(0)
+  const user = useAuthUser()
 
-  const [bucket, setBucket] = useState<Bucket>('upcoming')
+  const [bucket, setBucket] = useState<Bucket>('all')
   const [query, setQuery] = useState('')
 
   const { data: bookings = [], isLoading, isError, error, refetch } = useMyExpeditionBookings(
@@ -66,6 +70,34 @@ export default function BookingHistory() {
     undefined,
     100
   )
+
+  // Banner stats
+  const bannerStats = useMemo(() => {
+    let upcoming = 0
+    let completed = 0
+    let totalSpent = 0
+    for (const b of bookings) {
+      if (isActiveBooking(b.status)) upcoming++
+      else if (b.status === 'CONFIRMED' || b.status === 'COMPLETED') completed++
+      totalSpent += b.totalAmount ?? 0
+    }
+    return { total: bookings.length, upcoming, completed, totalSpent }
+  }, [bookings])
+
+  // Next upcoming trip for the greeting
+  const nextTrip = useMemo(() => {
+    const now = new Date()
+    const upcoming = bookings
+      .filter((b) => isActiveBooking(b.status) && new Date(b.travelDate) > now)
+      .sort((a, b) => new Date(a.travelDate).getTime() - new Date(b.travelDate).getTime())
+    return upcoming[0] ?? null
+  }, [bookings])
+
+  const daysUntilNext = useMemo(() => {
+    if (!nextTrip) return null
+    const diff = Math.ceil((new Date(nextTrip.travelDate).getTime() - Date.now()) / 86400000)
+    return diff <= 0 ? 'today' : diff === 1 ? 'tomorrow' : `in ${diff} days`
+  }, [nextTrip])
 
   // Open a booking without changing the route — the list below stays mounted.
   const openBooking = (booking: ExpeditionBookingSummary) => {
@@ -90,7 +122,7 @@ export default function BookingHistory() {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
     const base = bookings.filter((b) => {
-      if (bucketOf(b) !== bucket) return false
+      if (bucket !== 'all' && bucketOf(b) !== bucket) return false
       if (!q) return true
       return (
         b.tourTitle.toLowerCase().includes(q) ||
@@ -99,8 +131,20 @@ export default function BookingHistory() {
       )
     })
 
-    if (bucket === 'upcoming') {
-      return [...base].sort((a, b) => dateMs(a.travelDate) - dateMs(b.travelDate))
+    if (bucket === 'upcoming' || bucket === 'all') {
+      const startOfTodayMs = startOfToday()
+      return [...base].sort((a, b) => {
+        if (bucket === 'upcoming') return dateMs(a.travelDate) - dateMs(b.travelDate)
+        // All: active first by date asc, then terminal by date desc
+        const aActive = isActiveBooking(a.status)
+        const bActive = isActiveBooking(b.status)
+        if (aActive !== bActive) return aActive ? -1 : 1
+        if (aActive) return dateMs(a.travelDate) - dateMs(b.travelDate)
+        const aFutureTerminal = isTerminalBooking(a.status) && dateMs(a.travelDate) >= startOfTodayMs
+        const bFutureTerminal = isTerminalBooking(b.status) && dateMs(b.travelDate) >= startOfTodayMs
+        if (aFutureTerminal !== bFutureTerminal) return aFutureTerminal ? 1 : -1
+        return dateMs(b.travelDate) - dateMs(a.travelDate)
+      })
     }
 
     const startOfTodayMs = startOfToday()
@@ -113,8 +157,11 @@ export default function BookingHistory() {
   }, [bookings, bucket, query])
 
   const counts = useMemo(() => {
-    const c: Record<Bucket, number> = { upcoming: 0, past: 0 }
-    for (const b of bookings) c[bucketOf(b)] += 1
+    const c: Record<Bucket, number> = { all: 0, upcoming: 0, past: 0 }
+    for (const b of bookings) {
+      c[bucketOf(b)] += 1
+      c.all += 1
+    }
     return c
   }, [bookings])
 
@@ -135,7 +182,7 @@ export default function BookingHistory() {
   }, [filtered])
 
   const listStatus = isError ? 'error' : isLoading ? 'loading' : 'ready'
-  const activeLabel = bucket === 'upcoming' ? 'upcoming trip' : 'past trip'
+  const activeLabel = bucket === 'all' ? 'trip' : bucket === 'upcoming' ? 'upcoming trip' : 'past trip'
 
   return (
     <div className="bk-page">
@@ -145,6 +192,55 @@ export default function BookingHistory() {
           className={`bk-pane bk-pane-list${bookingId ? ' off' : ' on'}`}
           aria-hidden={!!bookingId}
         >
+          {/* Welcome banner */}
+          {bookings.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
+              className="bk-banner"
+            >
+              <div className="bk-banner-text">
+                <h2 className="bk-banner-greeting">
+                  Welcome back, {user?.name?.split(' ')[0] || 'there'}
+                </h2>
+                <p className="bk-banner-sub">
+                  {nextTrip
+                    ? <>Your next trip: <strong>{nextTrip.tourTitle}</strong> {daysUntilNext}</>
+                    : "Here's an overview of your trips."
+                  }
+                </p>
+              </div>
+
+              <div className="bk-banner-stats">
+                <button type="button" className="bk-banner-stat" onClick={() => setBucket('all')}>
+                  <CalendarDays size={18} className="bk-banner-stat-icon" />
+                  <span className="bk-banner-stat-value">{bannerStats.total}</span>
+                  <span className="bk-banner-stat-label">Total</span>
+                </button>
+                <button type="button" className="bk-banner-stat" onClick={() => setBucket('upcoming')}>
+                  <span className="bk-banner-stat-dot bg-[var(--bv-success-dot)]" />
+                  <span className="bk-banner-stat-value">{bannerStats.upcoming}</span>
+                  <span className="bk-banner-stat-label">Upcoming</span>
+                </button>
+                <button type="button" className="bk-banner-stat" onClick={() => setBucket('past')}>
+                  <CheckCircle2 size={18} className="bk-banner-stat-icon" />
+                  <span className="bk-banner-stat-value">{bannerStats.completed}</span>
+                  <span className="bk-banner-stat-label">Completed</span>
+                </button>
+                <div className="bk-banner-stat">
+                  <Wallet size={18} className="bk-banner-stat-icon" />
+                  <span className="bk-banner-stat-value">
+                    {bannerStats.totalSpent >= 1000
+                      ? `$${(bannerStats.totalSpent / 1000).toFixed(1)}k`
+                      : `$${bannerStats.totalSpent}`}
+                  </span>
+                  <span className="bk-banner-stat-label">Spent</span>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
           <div className="bk-toolbar">
             <div className="bk-seg" role="group" aria-label="Filter bookings by time">
               {BUCKETS.map((b) => {
@@ -209,17 +305,30 @@ export default function BookingHistory() {
               <h3>
                 {query
                   ? 'No bookings match your search'
-                  : bucket === 'upcoming'
-                    ? 'No upcoming trips'
-                    : 'No past trips yet'}
+                  : bucket === 'all'
+                    ? 'No bookings yet'
+                    : bucket === 'upcoming'
+                      ? 'No upcoming trips'
+                      : 'No past trips yet'}
               </h3>
               <p>
                 {query
                   ? 'Try a different tour name or booking reference.'
-                  : bucket === 'upcoming'
+                  : bucket === 'all'
                     ? 'When you book an experience it will appear here.'
-                    : 'Trips you have been on, or cancelled, will be kept here for your records.'}
+                    : bucket === 'upcoming'
+                      ? 'When you book an experience it will appear here.'
+                      : 'Trips you have been on, or cancelled, will be kept here for your records.'}
               </p>
+              {!query && bucket === 'all' && (
+                <button
+                  type="button"
+                  className="bk-btn bk-btn-primary"
+                  onClick={() => (window.location.href = '/')}
+                >
+                  Explore experiences <ArrowRight size={15} />
+                </button>
+              )}
               {!query && bucket === 'upcoming' && (
                 <button
                   type="button"
@@ -230,7 +339,18 @@ export default function BookingHistory() {
                 </button>
               )}
             </div>
-          ) : bucket === 'upcoming' ? (
+          ) : bucket === 'past' ? (
+            <>
+              <div className="bk-list">
+                {filtered.map((booking) => (
+                  <BookingCard key={booking.id} booking={booking} onOpen={() => openBooking(booking)} />
+                ))}
+              </div>
+              <p className="bk-list-foot">
+                Showing {filtered.length} {filtered.length === 1 ? activeLabel : `${activeLabel}s`}.
+              </p>
+            </>
+          ) : (
             upcomingGroups.map((group) => (
               <section key={group.key} className="bk-group">
                 <h2 className="bk-group-title">
@@ -246,17 +366,6 @@ export default function BookingHistory() {
                 </div>
               </section>
             ))
-          ) : (
-            <>
-              <div className="bk-list">
-                {filtered.map((booking) => (
-                  <BookingCard key={booking.id} booking={booking} onOpen={() => openBooking(booking)} />
-                ))}
-              </div>
-              <p className="bk-list-foot">
-                Showing {filtered.length} {filtered.length === 1 ? activeLabel : `${activeLabel}s`}.
-              </p>
-            </>
           )}
         </section>
 
