@@ -1,3 +1,12 @@
+/* Design tokens (--bv-* / --primary and friends) must exist on EVERY page
+   from the first paint: many global components (SearchBar, Navbar, tour
+   cards, ...) style themselves with var(--primary) = var(--bv-accent).
+   bookingTheme.css declares those tokens but was only imported by lazy
+   booking/dashboard chunks, so public pages rendered token-colored
+   elements (e.g. the hero Search button) transparent until some later
+   chunk happened to load. Import it globally. */
+@import './components/booking/bookingTheme.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

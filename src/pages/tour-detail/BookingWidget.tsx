@@ -99,7 +99,15 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
   // state for a newer code / date (the user can edit the code or change the
   // date while a validation request is in flight).
   const promoCheckRef = useRef(0)
+  // Monotonic token so a stale CHECKOUT quote (older traveler mix / date) can
+  // never overwrite a newer one, plus the key of the quote currently in state
+  // so the summary only shows server figures while they match the selection.
+  const pricingSeqRef = useRef(0)
+  const [lastQuoteKey, setLastQuoteKey] = useState<string | null>(null)
   const [pricingResult, setPricingResult] = useState<PricingResult | null>(null)
+  // Whether the last refresh produced a different total (shown as an inline
+  // "price updated" note); reset when a new refresh starts.
+  const [priceUpdated, setPriceUpdated] = useState(false)
   const [pricingLoading, setPricingLoading] = useState(false)
   const guestRef = useRef<HTMLDivElement>(null)
   const calendarRef = useRef<HTMLDivElement>(null)
@@ -143,7 +151,11 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
     // A validated promo code (or the code currently applied) is threaded into
     // the checkout engine so the quoted total matches what will be charged.
     const code = forceCode ?? (promoApplied ? promoCode.trim() : undefined)
+    const seq = ++pricingSeqRef.current
     setPricingLoading(true)
+    // A fresh refresh starts — hide the previous "price updated" note until
+    // this quote lands with a new total.
+    setPriceUpdated(false)
     try {
       const res = await fetchWithAuth('/expedition/checkout/calculate', {
         method: 'POST',
@@ -165,6 +177,9 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
       if (!res.ok) {
         throw new Error(payload.message || `Checkout API error (${res.status})`)
       }
+      // Only the latest issued request may update state — a slower response
+      // for an older traveler mix / date must never overwrite a newer quote.
+      if (seq !== pricingSeqRef.current) return
       const data = payload.data ?? payload
       if (data.pricing) {
         setPricingResult({
@@ -174,28 +189,22 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
           discounts: Number(data.pricing.discounts) || 0,
           total: Number(data.pricing.total) || 0,
         })
+        // Remember exactly what this quote was for, so the summary only shows
+        // server figures while they still match the current selection.
+        setLastQuoteKey(`${date}|${time ?? ''}|${JSON.stringify(travelersPayload)}|${code ?? ''}`)
       }
     } catch {
+      if (seq !== pricingSeqRef.current) return
       setPricingResult(null)
       toast.error('Could not load pricing. Please try again.')
     } finally {
-      setPricingLoading(false)
+      if (seq === pricingSeqRef.current) setPricingLoading(false)
     }
   }, [tour.id, travelersPayload, promoApplied, promoCode])
 
-  const pricingFetched = useRef(false)
-  useEffect(() => {
-    if (!tour.id || pricingFetched.current) return
-    pricingFetched.current = true
-    const tomorrow = new Date()
-    tomorrow.setDate(tomorrow.getDate() + 1)
-    doFetchPricing(tomorrow.toISOString().slice(0, 10))
-  }, [tour.id, doFetchPricing])
-
   // Auto-refresh the real-time price when the date or traveler mix changes
   // (Viator re-checks on date+pax selection). Debounced so +/- taps don't
-  // hammer the API; the manual Update button still forces an immediate check.
-  const [priceUpdated, setPriceUpdated] = useState(false)
+  // hammer the API.
   const lastShownTotal = useRef<number | null>(null)
   useEffect(() => {
     if (!selectedDate) return
@@ -299,6 +308,13 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
 
     const dateISO = selectedDate.toISOString().slice(0, 10)
 
+    // Only hand the server-confirmed total to the booking page while it
+    // matches the current selection; otherwise the live estimate is sent.
+    const quoteIsCurrent =
+      pricingResult != null &&
+      lastQuoteKey ===
+        `${dateISO}|${selectedTime ?? ''}|${JSON.stringify(travelersPayload)}|${promoApplied ? promoCode.trim() : ''}`
+
     // Stash the navigation payload, then play spinner → transition → booking.
     pendingNavState.current = {
       tour: buildBookingTour(tour, {
@@ -310,7 +326,7 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
         adults: travelersPayload.adults || 0,
         children: travelersPayload.children || 0,
         infants: travelersPayload.infants || 0,
-        price: isPerGroup ? (matchingGroupBand?.price ?? clientSubtotal) : (pricingResult ? totalPrice : clientSubtotal),
+        price: isPerGroup ? (matchingGroupBand?.price ?? clientSubtotal) : (quoteIsCurrent ? totalPrice : clientSubtotal),
         selectedTime,
         promoCode: promoApplied ? promoCode.trim() : null,
         appliedPromo: appliedPromo ? { name: appliedPromo.name, discountAmount: appliedPromo.discountAmount } : null,
@@ -331,23 +347,11 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
     setIsBooking(true)
     // Spinner on the button for a moment, then reveal the travel transition.
     setTimeout(() => setShowTransition(true), 1100)
-  }, [selectedDate, selectedTime, t, tour, isPerGroup, groupHeadcount, travelerGroups, categoryCounts, travelersPayload, matchingGroupBand, totalPrice, clientSubtotal, pricingResult, getSelectedDayInfo, openingHoursLabel, promoApplied, promoCode, appliedPromo, totalTravelers])
+  }, [selectedDate, selectedTime, t, tour, isPerGroup, groupHeadcount, travelerGroups, categoryCounts, travelersPayload, matchingGroupBand, totalPrice, clientSubtotal, pricingResult, lastQuoteKey, getSelectedDayInfo, openingHoursLabel, promoApplied, promoCode, appliedPromo, totalTravelers])
 
   const handleTransitionDone = useCallback(() => {
     navigate(`/${encodeURIComponent(tour.id)}/booking`, { state: pendingNavState.current })
   }, [navigate, tour.id])
-
-  const handleUpdatePricing = useCallback(() => {
-    // Close the picker so the recalculated price/total is visible.
-    setShowGuestSelector(false)
-    setPriceUpdated(false)
-    if (!selectedDate) {
-      // No date chosen yet — refresh the client-side estimate for the current
-      // traveler selection (the checkout quote API requires a travel date).
-      return
-    }
-    doFetchPricing(selectedDate.toISOString().slice(0, 10), selectedTime)
-  }, [selectedDate, selectedTime, doFetchPricing])
 
   // Validates the current promo code against the backend's special-offer
   // engine for a concrete date (POST /tours/offers/validate-promo — the same
@@ -503,16 +507,30 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
     return t('booking.tooManyTravelers', 'Only {{count}} spot(s) left on this date', { count: Math.max(0, remaining) })
   })()
 
-  // Authoritative figure from the API when available; client mirror before that.
-  const displayTotal = pricingResult ? pricingResult.total : clientSubtotal
+  // The server quote is only authoritative while it matches the CURRENT
+  // selection (date / time / traveler mix / promo). The moment the selection
+  // changes — e.g. the traveler +/- steppers before the debounced re-quote
+  // lands — the totals fall back to the live client-side estimate so the
+  // price always tracks what the traveler sees in the picker.
+  const currentQuoteKey = (() => {
+    if (!selectedDate) return null
+    const code = promoApplied ? promoCode.trim() : ''
+    return `${selectedDate.toISOString().slice(0, 10)}|${selectedTime ?? ''}|${JSON.stringify(travelersPayload)}|${code}`
+  })()
+  const quoteMatchesSelection = currentQuoteKey != null && lastQuoteKey === currentQuoteKey && pricingResult != null
+
+  // Authoritative figure from the API when it matches the selection; live
+  // client-side estimate otherwise.
+  const displayTotal = quoteMatchesSelection && pricingResult ? pricingResult.total : clientSubtotal
+  // Server-side offer/promo figures only apply alongside a matching quote.
+  const savedAmount = quoteMatchesSelection && pricingResult ? pricingResult.discounts : 0
+  const subtotalAmount = quoteMatchesSelection && pricingResult ? pricingResult.subtotal : clientSubtotal
 
   // Special offers a supplier applied to this tour on the supplier platform.
   // The backend projection (GET /tours/:id) already filters to ACTIVE offers
   // whose date window includes today. The checkout engine auto-applies the
   // best one — `discounts` is the ground truth of what was actually applied.
   const activeOffers: SpecialOfferData[] = Array.isArray(tour.specialOffers) ? tour.specialOffers : []
-  const savedAmount = pricingResult?.discounts ?? 0
-  const subtotalAmount = pricingResult?.subtotal ?? 0
   // Round like the tour cards (FormattedPrice) so the widget's headline and
   // totals show the same rounded figures as the card on the homepage.
   const formatMoney = (n: number) => `${currency.symbol}${Math.round(convertPrice(n)).toLocaleString()}`
@@ -901,30 +919,6 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
                   {mixIssues.length > 0 && (
                     <p className="booking-slot-warning">{mixIssues[0].message}</p>
                   )}
-
-                  <button
-                    type="button"
-                    className="booking-update-btn"
-                    onClick={handleUpdatePricing}
-                    disabled={pricingLoading}
-                  >
-                    {pricingLoading ? (
-                      <span className="booking-btn-loader">
-                        <svg className="booking-spinner" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                          <circle cx="12" cy="12" r="10" strokeDasharray="31.4 31.4" strokeLinecap="round" />
-                        </svg>
-                        {t('booking.checking')}
-                      </span>
-                    ) : (
-                      <>
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <polyline points="23 4 23 10 17 10" />
-                          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
-                        </svg>
-                        {t('booking.updatePrice', 'Update')}
-                      </>
-                    )}
-                  </button>
                 </motion.div>
               )}
             </AnimatePresence>
