@@ -6,7 +6,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Check, CheckCheck, ImagePlus, Send } from 'lucide-react'
+import { Check, CheckCheck, ImagePlus, Send, Trash2 } from 'lucide-react'
+import ConfirmDialog from '../components/ui/ConfirmDialog'
 import type { ChatMessage, MessageStatus } from './types'
 
 interface ChatThreadProps {
@@ -23,6 +24,9 @@ interface ChatThreadProps {
   hasMore?: boolean
   onTyping?: (isTyping: boolean) => void
   onUpload?: (file: File) => Promise<{ url: string; type: string }>
+  /** When true, own messages get a "delete for me" control. */
+  allowDelete?: boolean
+  onDeleteMessage?: (messageId: string) => void | Promise<void>
   emptyText?: string
   showLoader?: boolean
 }
@@ -50,6 +54,7 @@ function StatusTick({ status }: { status?: MessageStatus }) {
 export default function ChatThread({
   messages, myUserId, statuses, otherLastReadAt, isTyping, typingName,
   onSend, onLoadMore, hasMore, onTyping, onUpload, emptyText, showLoader,
+  allowDelete = false, onDeleteMessage,
 }: ChatThreadProps) {
   const { t } = useTranslation()
   const [input, setInput] = useState('')
@@ -60,6 +65,8 @@ export default function ChatThread({
   const fileRef = useRef<HTMLInputElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const stickToBottomRef = useRef(true)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
 
   // Auto-grow the composer as the message gets longer so the text stays
   // visible instead of overflowing into a scrollbar (max-height caps growth).
@@ -81,6 +88,18 @@ export default function ChatThread({
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }
   }, [messages.length, isTyping])
+
+  const confirmDelete = async () => {
+    if (!pendingDeleteId) return
+    setDeletingId(pendingDeleteId)
+    const id = pendingDeleteId
+    setPendingDeleteId(null)
+    try {
+      await onDeleteMessage?.(id)
+    } finally {
+      setDeletingId(null)
+    }
+  }
 
   const handleSend = () => {
     const text = input.trim()
@@ -179,6 +198,18 @@ export default function ChatThread({
                   </p>
                 )}
               </div>
+              {own && allowDelete && onDeleteMessage && (
+                <button
+                  type="button"
+                  className="support-chat-delete"
+                  aria-label={t('supportChat.deleteForMe', 'Delete for me')}
+                  title={t('supportChat.deleteForMe', 'Delete for me')}
+                  disabled={deletingId === msg.id}
+                  onClick={() => setPendingDeleteId(msg.id)}
+                >
+                  <Trash2 size={12} />
+                </button>
+              )}
             </div>
           )
         })}
@@ -264,6 +295,20 @@ export default function ChatThread({
           <Send size={15} />
         </button>
       </div>
+
+      <ConfirmDialog
+        open={!!pendingDeleteId}
+        title={t('supportChat.deleteForMeTitle', 'Delete message?')}
+        message={t(
+          'supportChat.deleteForMeConfirm',
+          'This message will be deleted for you only. The other person will still see it.',
+        )}
+        confirmLabel={t('supportChat.deleteForMe', 'Delete for me')}
+        cancelLabel={t('common.cancel', 'Cancel')}
+        tone="danger"
+        onConfirm={confirmDelete}
+        onClose={() => setPendingDeleteId(null)}
+      />
     </>
   )
 }

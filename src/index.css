@@ -51,13 +51,14 @@
 }
 
 :root {
-  --dash-accent: #065f46;
-  --primary: #179237;
-  --primary-hover: #137a2e;
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
+  /* Legacy aliases — map to the unified --bv-* / --dash-* tokens */
+  --dash-accent: var(--bv-forest);
+  --primary: var(--bv-accent);
+  --primary-hover: var(--bv-accent-strong);
+  --text: var(--bv-muted);
+  --text-h: var(--bv-ink);
+  --bg: var(--bv-canvas);
+  --border: var(--bv-border);
   --font-heading: 'GT Esti Pro Display', sans-serif;
   --font-body: 'Raleway', sans-serif;
 

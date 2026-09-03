@@ -7,8 +7,10 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useSidebarStore } from "@/stores/sidebarStore";
-import { getStoredAuthUser, signOutUser } from "@/lib/auth";
+import { signOutUser } from "@/lib/auth";
+import { useAuthUser } from "@/hooks/useAuthUser";
 import { useChat } from "@/chat/ChatContext";
+import "../../components/booking/bookingTheme.css";
 import "./DashboardLayout.css";
 
 // Dashboard sub-pages are code-split so visiting one tab (e.g. Wishlist) only
@@ -21,7 +23,7 @@ const NotificationsPage = lazy(() => import("./NotificationsPage"));
 const ChatPage = lazy(() => import("./ChatPage"));
 
 const navItems = [
-  { label: "Booking History", path: "/dashboard/bookings", icon: CalendarDays },
+  { label: "Bookings", path: "/dashboard/bookings", icon: CalendarDays },
   { label: "Wishlist", path: "/dashboard/wishlist", icon: Heart },
   { label: "Reviews", path: "/dashboard/reviews", icon: Star },
   { label: "Updates", path: "/dashboard/notifications", icon: Bell },
@@ -43,10 +45,10 @@ function isBookingsAreaPath(pathname: string): boolean {
 }
 
 function Sidebar() {
-  const { isCollapsed, toggle, isMobileOpen, closeMobile, toggleMobile } = useSidebarStore();
+  const { isCollapsed, toggle, isMobileOpen, closeMobile } = useSidebarStore();
   const location = useLocation();
   const navigate = useNavigate();
-  const user = getStoredAuthUser();
+  const user = useAuthUser();
   const { unreadCount } = useChat();
   const [signingOut, setSigningOut] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -55,8 +57,6 @@ function Sidebar() {
   useEffect(() => {
     requestAnimationFrame(() => setMounted(true));
   }, []);
-
-  const sinceDate = "Jul 2026";
 
   const handleSignOut = async () => {
     setSigningOut(true);
@@ -70,8 +70,8 @@ function Sidebar() {
     <>
       {/* Mobile hamburger */}
       <button
-        onClick={toggleMobile}
-        className={`fixed top-0 left-0 z-[70] p-3 rounded-br-xl bg-[#065f46] text-white shadow-lg hover:bg-[#047857] transition-colors ${isMobileOpen ? "hidden" : "lg:hidden"}`}
+        onClick={() => useSidebarStore.getState().toggleMobile()}
+        className={`fixed top-0 left-0 z-[70] p-3 rounded-br-xl bg-white border border-[var(--bv-border)] shadow-sm text-[var(--bv-text)] hover:bg-[var(--bv-surface-2)] transition-colors ${isMobileOpen ? "hidden" : "lg:hidden"}`}
         aria-label="Toggle menu"
       >
         <Menu size={20} />
@@ -79,39 +79,41 @@ function Sidebar() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed left-0 top-0 h-screen bg-[#065f46] z-50 flex flex-col
-          ${mounted ? "transition-transform duration-[500ms] ease-[cubic-bezier(0.25,0.46,0.45,0.94)]" : ""}
+        className={`fixed left-0 top-0 h-screen bg-[var(--dash-sidebar-bg)] border-r border-[var(--dash-sidebar-border)] z-[60] flex flex-col
+          ${mounted ? "transition-all duration-[400ms] ease-[cubic-bezier(0.25,0.46,0.45,0.94)]" : ""}
           ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
-          ${isCollapsed ? "lg:w-[64px] lg:translate-x-0" : "lg:w-[300px] lg:translate-x-0"}
+          ${isCollapsed ? "lg:w-[72px] lg:translate-x-0" : "lg:w-[272px] lg:translate-x-0"}
           w-[280px]`}
       >
-        {/* Profile */}
-        <div className={`shrink-0 ${isCollapsed ? "flex flex-col items-center pt-8 pb-4" : "flex flex-col items-center px-6 pt-8 pb-6"}`}>
-          <div className={`${isCollapsed ? "flex flex-col items-center gap-2" : "flex flex-col items-center gap-1.5"}`}>
-            <div className={`rounded-full overflow-hidden bg-white/15 ring-2 ring-white/20 shrink-0 flex items-center justify-center ${isCollapsed ? "w-10 h-10" : "w-[52px] h-[52px]"}`}>
-              {user?.photoURL ? (
-                <img src={user.photoURL} alt="" className="w-full h-full object-cover object-center" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
-              ) : (
-                <span className="text-lg font-bold text-white">
-                  {(user?.name || "U").charAt(0).toUpperCase()}
-                </span>
-              )}
-            </div>
-            {!isCollapsed && (
-              <div className="text-center min-w-0 mt-1">
-                <p className="text-sm font-semibold text-white truncate leading-tight">
-                  {user?.name || "User"}
-                </p>
-                <p className="text-[11px] text-white/50 truncate leading-relaxed">{user?.email || ""}</p>
-                <p className="text-[10px] text-white/30 mt-0.5">Member since {sinceDate}</p>
-              </div>
+        {/* Profile — centered avatar + name + email */}
+        <div className={`shrink-0 flex flex-col items-center ${isCollapsed ? "pt-6 pb-4" : "pt-6 pb-5"}`}>
+          <div className={`rounded-full overflow-hidden bg-[var(--bv-accent-soft)] shrink-0 flex items-center justify-center ${isCollapsed ? "w-11 h-11" : "w-14 h-14"}`}>
+            {user?.photoURL ? (
+              <img src={user.photoURL} alt="" className="w-full h-full object-cover object-center" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+            ) : (
+              <span className={`font-bold text-[var(--bv-accent-strong)] ${isCollapsed ? "text-sm" : "text-lg"}`}>
+                {(user?.name || "U").charAt(0).toUpperCase()}
+              </span>
             )}
           </div>
+          {!isCollapsed && (
+            <div className="min-w-0 text-center mt-3">
+              <p className="text-[14px] font-semibold text-[var(--bv-ink)] truncate leading-tight">
+                {user?.name || "User"}
+              </p>
+              <p className="text-[12px] text-[var(--bv-muted)] truncate leading-relaxed mt-0.5">
+                {user?.email || ""}
+              </p>
+            </div>
+          )}
         </div>
 
+        {/* Divider */}
+        <div className={`h-px bg-[var(--bv-border)] ${isCollapsed ? "mx-3" : "mx-5"}`} />
+
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 scrollbar-none">
-          <div className={`space-y-[2px] ${isCollapsed ? "px-2 mt-3" : "px-4 mt-4"}`}>
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 scrollbar-none px-3 py-3">
+          <div className="space-y-0.5">
             {navItems.map((item) => {
               const isActive =
                 location.pathname === item.path ||
@@ -124,38 +126,38 @@ function Sidebar() {
                     navigate(item.path);
                     closeMobile();
                   }}
-                  className={`relative flex items-center w-full rounded-lg text-sm font-medium transition-all duration-200 group
+                  className={`relative flex items-center w-full rounded-xl text-[13.5px] font-medium transition-all duration-150 group
                     ${isActive
-                      ? "bg-white/15 text-white font-semibold"
-                      : "text-white/70 hover:bg-white/10 hover:text-white"
+                      ? "bg-[var(--dash-sidebar-active-bg)] text-[var(--dash-sidebar-active-text)] font-semibold"
+                      : "text-[var(--dash-sidebar-text)] hover:bg-[var(--bv-surface-2)] hover:text-[var(--bv-ink)]"
                     }
                     ${isCollapsed ? "justify-center px-0 py-2.5" : "gap-3 px-3 py-2.5"}`}
                   title={isCollapsed ? item.label : undefined}
                 >
                   {isActive && (
                     <motion.span
-                      layoutId="active-indicator"
-                      transition={{ type: "spring", stiffness: 400, damping: 35 }}
-                      className="absolute left-0 inset-y-2.5 w-[3px] bg-white rounded-r-full"
+                      layoutId="sidebar-active"
+                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                      className="absolute left-0 inset-y-2 w-[3px] rounded-r-full bg-[var(--dash-sidebar-active-border)]"
                     />
                   )}
                   <motion.span
                     layout
-                    transition={{ type: "spring", stiffness: 400, damping: 35 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
                     className="shrink-0"
                   >
-                    <item.icon size={20} />
+                    <item.icon size={18} strokeWidth={isActive ? 2.2 : 1.7} />
                   </motion.span>
                   {!isCollapsed && (
-                    <span className="truncate text-[15px]">{item.label}</span>
+                    <span className="truncate">{item.label}</span>
                   )}
                   {item.path === "/dashboard/chat" && unreadCount > 0 && (
-                    <span className={`ml-auto min-w-[18px] h-[18px] px-1 rounded-full bg-[#ef4444] text-white text-[11px] font-bold flex items-center justify-center ${isCollapsed ? "absolute top-1 right-1" : ""}`}>
+                    <span className={`ml-auto min-w-[18px] h-[18px] px-1 rounded-full bg-[var(--bv-danger-dot)] text-white text-[10px] font-bold flex items-center justify-center ${isCollapsed ? "absolute top-1 right-1" : ""}`}>
                       {unreadCount > 99 ? "99+" : unreadCount}
                     </span>
                   )}
                   {isCollapsed && (
-                    <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 px-2.5 py-1.5 bg-white text-[#333] text-xs font-medium rounded-lg shadow-lg border border-[#eaeaea] whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 pointer-events-none z-[70]">
+                    <div className="absolute left-full ml-2.5 top-1/2 -translate-y-1/2 px-2.5 py-1.5 bg-[var(--bv-ink)] text-white text-xs font-medium rounded-lg shadow-lg whitespace-nowrap opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 pointer-events-none z-[70]">
                       {item.label}
                     </div>
                   )}
@@ -165,63 +167,68 @@ function Sidebar() {
           </div>
         </nav>
 
-        {/* Bottom actions */}
-        <div className={`shrink-0 ${isCollapsed ? "space-y-[2px] px-2" : "space-y-[2px] px-4"}`}>
-          <button
-            onClick={() => { navigate("/"); closeMobile(); }}
-            className={`flex items-center w-full rounded-lg text-sm font-medium transition-all duration-200 text-white/50 hover:text-white hover:bg-white/10
-              ${isCollapsed ? "justify-center px-0 py-2.5" : "gap-3 px-3 py-2.5"}`}
-            title={isCollapsed ? "Back to Homepage" : undefined}
-          >
-            <Home size={20} />
-            {!isCollapsed && <span className="text-[15px]">Back to Homepage</span>}
-          </button>
+        {/* Divider */}
+        <div className={`h-px bg-[var(--bv-border)] ${isCollapsed ? "mx-3" : "mx-5"}`} />
 
-          <div className="relative">
+        {/* Bottom actions — wrapped in subtle card */}
+        <div className={`shrink-0 py-2 ${isCollapsed ? "px-3" : "px-3"}`}>
+          <div className={`rounded-xl bg-[var(--bv-surface-2)] ${isCollapsed ? "p-1" : "p-1"}`}>
             <button
-              onClick={() => setShowLogoutConfirm(!showLogoutConfirm)}
-              onBlur={() => setTimeout(() => setShowLogoutConfirm(false), 200)}
-              className={`flex items-center w-full rounded-lg text-sm font-medium transition-all duration-200 text-white/50 hover:text-red-300 hover:bg-white/5
-                ${isCollapsed ? "justify-center px-0 py-2.5" : "gap-3 px-3 py-2.5"}`}
-              title={isCollapsed ? "Sign out" : undefined}
+              onClick={() => { navigate("/"); closeMobile(); }}
+              className={`flex items-center w-full rounded-lg text-[13.5px] font-medium transition-all duration-150 text-[var(--bv-accent-strong)] hover:bg-[var(--bv-accent-soft)]
+                ${isCollapsed ? "justify-center px-0 py-2" : "gap-3 px-3 py-2"}`}
+              title={isCollapsed ? "Back to Homepage" : undefined}
             >
-              <LogOut size={20} />
-              {!isCollapsed && <span className="text-[15px]">{signingOut ? "Signing out..." : "Sign out"}</span>}
+              <Home size={18} strokeWidth={1.8} />
+              {!isCollapsed && <span>Back to Homepage</span>}
             </button>
-            {showLogoutConfirm && (
-              <div className={`absolute bottom-full mb-2 bg-white rounded-xl shadow-xl shadow-black/10 p-3 min-w-[200px] z-[70] border border-[#eaeaea] ${isCollapsed ? "left-0" : "left-1/2 -translate-x-1/2"}`}>
-                <p className="text-xs font-medium text-[#464255] mb-2.5 text-center whitespace-nowrap">Sign out of dashboard?</p>
-                <div className="flex gap-1.5">
-                  <button
-                    onClick={() => setShowLogoutConfirm(false)}
-                    className="flex-1 px-3 py-1.5 text-xs font-medium text-[#64748b] bg-[#f5f5f5] hover:bg-[#eaeaea] rounded-lg transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleSignOut}
-                    className="flex-1 px-3 py-1.5 text-xs font-medium text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors"
-                  >
-                    Sign out
-                  </button>
+
+            <div className="relative">
+              <button
+                onClick={() => setShowLogoutConfirm(!showLogoutConfirm)}
+                onBlur={() => setTimeout(() => setShowLogoutConfirm(false), 200)}
+                className={`flex items-center w-full rounded-lg text-[13.5px] font-medium transition-all duration-150 text-[var(--bv-danger-text)] hover:bg-[var(--bv-danger-bg)]
+                  ${isCollapsed ? "justify-center px-0 py-2" : "gap-3 px-3 py-2"}`}
+                title={isCollapsed ? "Sign out" : undefined}
+              >
+                <LogOut size={18} strokeWidth={1.8} />
+                {!isCollapsed && <span>{signingOut ? "Signing out..." : "Sign out"}</span>}
+              </button>
+              {showLogoutConfirm && (
+                <div className={`absolute bottom-full mb-2 bg-white rounded-xl shadow-xl p-3 min-w-[200px] z-[70] border border-[var(--bv-border)] ${isCollapsed ? "left-0" : "left-1/2 -translate-x-1/2"}`}>
+                  <p className="text-[13px] font-medium text-[var(--bv-text)] mb-2.5 text-center whitespace-nowrap">Sign out of dashboard?</p>
+                  <div className="flex gap-1.5">
+                    <button
+                      onClick={() => setShowLogoutConfirm(false)}
+                      className="flex-1 px-3 py-1.5 text-[13px] font-medium text-[var(--bv-muted)] bg-[var(--bv-surface-2)] hover:bg-[var(--bv-border)] rounded-lg transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSignOut}
+                      className="flex-1 px-3 py-1.5 text-[13px] font-medium text-white bg-[var(--bv-danger-dot)] hover:bg-red-600 rounded-lg transition-colors"
+                    >
+                      Sign out
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Collapse button */}
-        <div className={`shrink-0 hidden lg:block ${isCollapsed ? "px-2 pt-4 pb-4" : "px-4 pt-3 pb-4"}`}>
+        {/* Collapse button — desktop only */}
+        <div className={`shrink-0 hidden lg:block border-t border-[var(--bv-border)] ${isCollapsed ? "px-3 pt-3 pb-4" : "px-3 pt-3 pb-4"}`}>
           <button
             onClick={toggle}
-            className={`flex items-center w-full rounded-lg text-sm font-medium transition-all duration-200 text-white/40 hover:text-white hover:bg-white/10
-              ${isCollapsed ? "justify-center px-0 py-2.5" : "gap-3 px-3 py-2.5"}`}
+            className={`flex items-center w-full rounded-xl text-[13px] font-medium transition-all duration-150 text-[var(--bv-faint)] hover:text-[var(--bv-text)] hover:bg-[var(--bv-surface-2)]
+              ${isCollapsed ? "justify-center px-0 py-2" : "gap-2.5 px-3 py-2"}`}
             title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
-            {isCollapsed ? <ChevronRight size={17} /> : (
+            {isCollapsed ? <ChevronRight size={16} /> : (
               <>
-                <ChevronLeft size={17} />
-                <span className="text-[13px]">Collapse</span>
+                <ChevronLeft size={16} />
+                <span>Collapse</span>
               </>
             )}
           </button>
@@ -249,6 +256,7 @@ export default function DashboardLayout() {
   const { isCollapsed } = useSidebarStore();
   const location = useLocation();
   const navigate = useNavigate();
+  const { unreadCount } = useChat();
 
   // Keep every visited dashboard page mounted (hidden, not unmounted) so
   // navigating away and back never remounts the page / refetches data.
@@ -265,17 +273,17 @@ export default function DashboardLayout() {
   const bookingsArea = isBookingsAreaPath(location.pathname);
 
   return (
-    <div className={`min-h-screen ${bookingsArea ? "bg-white" : "bg-[#f8f9fb]"}`}>
+    <div className={`min-h-screen ${bookingsArea ? "bg-white" : "bg-[var(--dash-content-bg)]"}`}>
       <Sidebar />
 
       <main
         className={`min-h-screen transition-all duration-300 pt-6 lg:pt-10 ${
-          isCollapsed ? "lg:ml-[64px]" : "lg:ml-[300px]"
+          isCollapsed ? "lg:ml-[72px]" : "lg:ml-[272px]"
         }`}
       >
         <div className="mx-auto w-full max-w-[1120px] px-4 sm:px-6 lg:px-10 pb-10">
           <div className="flex items-center justify-center lg:justify-start mb-8 relative">
-            <h1 className="text-[clamp(24px,2.4vw,32px)] font-heading font-bold text-[#1a1a1a] text-center lg:text-left">
+            <h1 className="text-[clamp(24px,2.4vw,32px)] font-heading font-bold text-[var(--bv-ink)] text-center lg:text-left">
               {title}
             </h1>
 
@@ -283,7 +291,7 @@ export default function DashboardLayout() {
               <button
                 type="button"
                 onClick={() => navigate("/")}
-                className="lg:hidden absolute right-0 flex h-9 w-9 items-center justify-center rounded-full border border-[#e5e4e7] bg-white text-[#1a1a1a] shadow-sm transition-colors hover:bg-[#f8f9fb]"
+                className="lg:hidden absolute right-0 flex h-9 w-9 items-center justify-center rounded-full border border-[var(--bv-border)] bg-white text-[var(--bv-text)] shadow-sm transition-colors hover:bg-[var(--bv-surface-2)]"
                 aria-label="Back to home"
               >
                 <ArrowLeft size={16} strokeWidth={2.2} />
@@ -294,7 +302,7 @@ export default function DashboardLayout() {
               <button
                 type="button"
                 onClick={() => navigate("/", { state: { openMobileMenu: true } })}
-                className="lg:hidden absolute right-0 flex h-9 w-9 items-center justify-center rounded-full border border-[#e5e4e7] bg-white text-[#1a1a1a] shadow-sm transition-colors hover:bg-[#f8f9fb]"
+                className="lg:hidden absolute right-0 flex h-9 w-9 items-center justify-center rounded-full border border-[var(--bv-border)] bg-white text-[var(--bv-text)] shadow-sm transition-colors hover:bg-[var(--bv-surface-2)]"
                 aria-label="Back to menu"
               >
                 <ArrowLeft size={16} strokeWidth={2.2} />
@@ -319,6 +327,48 @@ export default function DashboardLayout() {
           </div>
         </div>
       </main>
+
+      {/* Mobile bottom tab bar */}
+      <nav className="dash-bottom-bar lg:hidden" aria-label="Dashboard navigation">
+        <div className="dash-bottom-bar-inner">
+          {navItems.map((item) => {
+            const isActive =
+              location.pathname === item.path ||
+              location.pathname.startsWith(item.path + "/");
+            const badge =
+              item.path === "/dashboard/chat" ? unreadCount : 0;
+            return (
+              <motion.button
+                key={item.path}
+                onClick={() => navigate(item.path)}
+                className={`dash-bottom-tab${isActive ? " active" : ""}`}
+                aria-current={isActive ? "page" : undefined}
+                whileTap={{ scale: 0.88 }}
+                transition={{ type: "spring", stiffness: 500, damping: 30 }}
+              >
+                <span className="dash-bottom-icon-wrap">
+                  <motion.span
+                    className="dash-bottom-icon"
+                    animate={{ scale: isActive ? 1.08 : 1 }}
+                    transition={{ type: "spring", stiffness: 500, damping: 25 }}
+                  >
+                    <item.icon size={22} strokeWidth={isActive ? 2.2 : 1.7} />
+                  </motion.span>
+                  {badge > 0 && (
+                    <span className="dash-bottom-badge">
+                      {badge > 99 ? "99+" : badge}
+                    </span>
+                  )}
+                </span>
+                <span className="dash-bottom-label">
+                  {item.label}
+                </span>
+                {isActive && <span className="dash-bottom-active-dot" />}
+              </motion.button>
+            );
+          })}
+        </div>
+      </nav>
     </div>
   );
 }

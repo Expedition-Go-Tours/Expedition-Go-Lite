@@ -77,7 +77,7 @@ export default function ReviewsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-20 text-sm text-[#6b7280]">
+      <div className="flex items-center justify-center py-20 text-sm text-[var(--bv-muted)]">
         Loading your reviews...
       </div>
     );
@@ -85,9 +85,9 @@ export default function ReviewsPage() {
 
   if (isError) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 px-6 text-center bg-white rounded-2xl border border-[#e5e4e7] shadow-sm">
-        <h3 className="text-xl font-heading font-semibold text-[#1a1a1a] mb-2">Couldn't load your reviews</h3>
-        <p className="text-sm text-[#6b7280] max-w-sm leading-relaxed">
+      <div className="flex flex-col items-center justify-center py-20 px-6 text-center bg-white rounded-2xl border border-[var(--bv-border)] shadow-sm">
+        <h3 className="text-xl font-heading font-semibold text-[var(--bv-ink)] mb-2">Couldn't load your reviews</h3>
+        <p className="text-sm text-[var(--bv-muted)] max-w-sm leading-relaxed">
           Something went wrong while fetching your reviews. Please try again later.
         </p>
       </div>
@@ -96,15 +96,15 @@ export default function ReviewsPage() {
 
   if (reviews.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 px-6 text-center bg-white rounded-2xl border border-[#e5e4e7] shadow-sm">
-        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#065f46] to-[#10b981] flex items-center justify-center mb-5 shadow-lg shadow-[#065f46]/20">
-          <Star size={30} className="text-white fill-white" />
+      <div className="flex flex-col items-center justify-center py-20 px-6 text-center bg-white rounded-2xl border border-[var(--bv-border)] shadow-sm">
+        <div className="w-16 h-16 rounded-2xl bg-[var(--bv-accent-soft)] flex items-center justify-center mb-5">
+          <Star size={28} className="text-[var(--bv-accent)] fill-[var(--bv-accent)]" />
         </div>
-        <h3 className="text-xl font-heading font-semibold text-[#1a1a1a] mb-2">No Reviews Yet</h3>
-        <p className="text-sm text-[#6b7280] max-w-sm leading-relaxed mb-7">
+        <h3 className="text-xl font-heading font-semibold text-[var(--bv-ink)] mb-2">No Reviews Yet</h3>
+        <p className="text-sm text-[var(--bv-muted)] max-w-sm leading-relaxed mb-7">
           You haven't reviewed any tours yet. Share your experience to help other travelers!
         </p>
-        <Button onClick={() => navigate('/tours')} className="bg-[#065f46] text-white hover:bg-[#047857]">Browse Tours</Button>
+        <Button onClick={() => navigate('/tours')} className="bg-[var(--bv-accent)] text-white hover:bg-[var(--bv-accent-strong)] rounded-xl">Browse Tours</Button>
       </div>
     );
   }
@@ -124,10 +124,10 @@ export default function ReviewsPage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, x: -50 }}
               transition={{ duration: 0.25 }}
-              className="bg-white rounded-2xl border border-[#e5e4e7] overflow-hidden shadow-sm"
+              className="bg-white rounded-2xl border border-[var(--bv-border)] overflow-hidden shadow-sm"
             >
               <div className="flex flex-col sm:flex-row sm:gap-4 sm:p-5">
-                <div className="relative w-full h-44 sm:w-[72px] sm:h-[72px] sm:rounded-lg overflow-hidden shrink-0 bg-[#f3f4f6]">
+                <div className="relative w-full h-44 sm:w-[72px] sm:h-[72px] sm:rounded-lg overflow-hidden shrink-0 bg-[var(--bv-surface-2)]">
                   {review.tourImage && (
                     <OptimizedImage src={review.tourImage} alt={review.tourTitle} className="w-full h-full object-cover" width={200} />
                   )}
@@ -136,8 +136,8 @@ export default function ReviewsPage() {
                 <div className="flex-1 min-w-0 p-4 sm:p-0">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <h3 className="text-[15px] font-heading font-semibold text-[#1a1a1a] line-clamp-2 sm:truncate">{review.tourTitle}</h3>
-                      <p className="text-[13px] text-[#6b7280] mt-0.5">{review.tourLocation}</p>
+                      <h3 className="text-[15px] font-heading font-semibold text-[var(--bv-ink)] line-clamp-2 sm:truncate">{review.tourTitle}</h3>
+                      <p className="text-[13px] text-[var(--bv-muted)] mt-0.5">{review.tourLocation}</p>
                       {review.status === 'PENDING' && (
                         <span className="inline-block mt-1 text-[11px] font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-full px-2 py-0.5">
                           Pending approval
@@ -150,54 +150,54 @@ export default function ReviewsPage() {
                           <Star
                             key={i}
                             size={14}
-                            className={i < review.rating ? "text-[#179237] fill-[#179237]" : "text-[#d1d5db]"}
+                            className={i < review.rating ? "text-[var(--bv-success-text)] fill-[var(--bv-success-text)]" : "text-[var(--bv-faint)]"}
                           />
                         ))}
                       </div>
-                      <span className="text-[13px] font-semibold text-[#1a1a1a]">
+                      <span className="text-[13px] font-semibold text-[var(--bv-ink)]">
                         {Number(review.rating).toFixed(1)}
                       </span>
                     </div>
                   </div>
 
                   {review.title && (
-                    <p className="text-[14px] font-semibold text-[#1a1a1a] mt-2">{review.title}</p>
+                    <p className="text-[14px] font-semibold text-[var(--bv-ink)] mt-2">{review.title}</p>
                   )}
-                  <p className={`text-[14px] text-[#4b5563] mt-1 leading-relaxed ${expandedId !== review.id && review.comment.length > 120 ? "line-clamp-2" : ""}`}>
+                  <p className={`text-[14px] text-[var(--bv-muted)] mt-1 leading-relaxed ${expandedId !== review.id && review.comment.length > 120 ? "line-clamp-2" : ""}`}>
                     {review.comment}
                   </p>
 
                   {review.comment.length > 120 && (
                     <button
                       onClick={() => setExpandedId(expandedId === review.id ? null : review.id)}
-                      className="flex items-center gap-1 text-[13px] font-medium text-[#065f46] mt-1.5 hover:underline"
+                      className="flex items-center gap-1 text-[13px] font-medium text-[var(--bv-accent-strong)] mt-1.5 hover:underline"
                     >
                       {expandedId === review.id ? "Show less" : "Read more"}
                       {expandedId === review.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                     </button>
                   )}
 
-                  <div className="flex items-center justify-between gap-2 mt-3 pt-3 border-t border-[#e5e4e7] flex-nowrap min-w-0">
-                    <span className="text-[13px] text-[#9ca3af] truncate min-w-0">
+                  <div className="flex items-center justify-between gap-2 mt-3 pt-3 border-t border-[var(--bv-border)] flex-nowrap min-w-0">
+                    <span className="text-[13px] text-[var(--bv-faint)] truncate min-w-0">
                       {new Date(review.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                     </span>
                     <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
                       {canEdit ? (
                         <button
                           onClick={() => handleEdit(review)}
-                          className="flex items-center gap-1 sm:gap-1.5 text-[12px] sm:text-[13px] font-medium text-[#6b7280] hover:text-[#065f46] transition-colors px-2 sm:px-2.5 py-1.5 rounded-lg hover:bg-[#f0fdf4]"
+                          className="flex items-center gap-1 sm:gap-1.5 text-[12px] sm:text-[13px] font-medium text-[var(--bv-muted)] hover:text-[var(--bv-accent-strong)] transition-colors px-2 sm:px-2.5 py-1.5 rounded-lg hover:bg-[var(--bv-accent-soft)]"
                         >
                           <Edit3 size={12} className="sm:size-[13px]" />
                           Edit
                           {timeLeft && (
-                            <span className="hidden sm:flex items-center gap-0.5 text-[11px] text-[#9ca3af] ml-1">
+                            <span className="hidden sm:flex items-center gap-0.5 text-[11px] text-[var(--bv-faint)] ml-1">
                               <Clock size={10} />
                               {timeLeft}
                             </span>
                           )}
                         </button>
                       ) : (
-                        <span className="flex items-center gap-1 sm:gap-1.5 text-[12px] sm:text-[13px] text-[#d1d5db] px-2 sm:px-2.5 py-1.5 select-none cursor-not-allowed">
+                        <span className="flex items-center gap-1 sm:gap-1.5 text-[12px] sm:text-[13px] text-[var(--bv-faint)] px-2 sm:px-2.5 py-1.5 select-none cursor-not-allowed">
                           <Edit3 size={12} className="sm:size-[13px]" />
                           Edit
                         </span>
@@ -205,7 +205,7 @@ export default function ReviewsPage() {
                       <button
                         onClick={() => handleDelete(review)}
                         disabled={deleteReview.isPending}
-                        className="flex items-center gap-1 sm:gap-1.5 text-[12px] sm:text-[13px] font-medium text-[#6b7280] hover:text-[#ef4444] transition-colors px-2 sm:px-2.5 py-1.5 rounded-lg hover:bg-red-50 disabled:opacity-50"
+                        className="flex items-center gap-1 sm:gap-1.5 text-[12px] sm:text-[13px] font-medium text-[var(--bv-muted)] hover:text-[var(--bv-danger-dot)] transition-colors px-2 sm:px-2.5 py-1.5 rounded-lg hover:bg-red-50 disabled:opacity-50"
                       >
                         <Trash2 size={12} className="sm:size-[13px]" />
                         Delete

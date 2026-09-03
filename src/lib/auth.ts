@@ -433,7 +433,7 @@ export async function refreshStoredUserFromBackend(): Promise<AuthUser | null> {
   return null
 }
 
-function decodeJwtPayload(token: string): Record<string, unknown> | null {
+export function decodeJwtPayload(token: string): Record<string, unknown> | null {
   try {
     const parts = token.split('.')
     if (parts.length !== 3) return null
@@ -443,6 +443,34 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
   } catch {
     return null
   }
+}
+
+/** Decode the current access token to extract exp (epoch seconds) and userId. */
+export function decodeAccessToken(): { exp: number; userId: string } | null {
+  const { accessToken } = getStoredAuth()
+  if (!accessToken) return null
+  const payload = decodeJwtPayload(accessToken)
+  if (!payload) return null
+  return {
+    exp: typeof payload.exp === 'number' ? payload.exp : 0,
+    userId: String(payload.userId || payload.sub || ''),
+  }
+}
+
+/** Access token expiry as epoch milliseconds, or null if no session. */
+export function getAccessTokenExpiryMs(): number | null {
+  const decoded = decodeAccessToken()
+  if (!decoded || !decoded.exp) return null
+  return decoded.exp * 1000
+}
+
+/** True if a stored access token exists and has not yet expired. */
+export function isSessionValid(): boolean {
+  const { accessToken } = getStoredAuth()
+  if (!accessToken) return false
+  const decoded = decodeAccessToken()
+  if (!decoded) return false
+  return decoded.exp * 1000 > Date.now()
 }
 
 export async function handleGoogleCallback(): Promise<boolean> {

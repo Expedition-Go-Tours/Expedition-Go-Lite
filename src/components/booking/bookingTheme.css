@@ -1,7 +1,7 @@
 /* ============================================================
-   Bookings design system — shared tokens, buttons, chips.
-   Loaded by both the bookings list page and the booking
-   workspace so they always render on one visual language.
+   Design system — shared tokens, buttons, chips.
+   Loaded globally via index.css so every page renders on
+   one visual language (bookings, dashboard, settings, etc.).
    ============================================================ */
 :root {
   /* Brand — refined emerald/forest scale */
@@ -41,6 +41,23 @@
   --bv-shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.05);
   --bv-shadow-md: 0 10px 30px -12px rgba(16, 24, 40, 0.18);
   --bv-shadow-lg: 0 24px 60px -20px rgba(16, 24, 40, 0.28);
+
+  /* Dashboard layout tokens */
+  --dash-sidebar-bg: #ffffff;
+  --dash-sidebar-border: #e5e7eb;
+  --dash-sidebar-text: #374151;
+  --dash-sidebar-muted: #9ca3af;
+  --dash-sidebar-active-bg: #f0fdf4;
+  --dash-sidebar-active-text: #065f46;
+  --dash-sidebar-active-border: #16a34a;
+  --dash-content-bg: #f8f9fb;
+  --dash-card-bg: #ffffff;
+  --dash-card-border: #e5e7eb;
+  --dash-card-radius: 16px;
+  --dash-card-shadow: 0 1px 3px rgba(16, 24, 40, 0.06), 0 1px 2px rgba(16, 24, 40, 0.04);
+  --dash-card-shadow-hover: 0 4px 12px rgba(16, 24, 40, 0.08), 0 1px 3px rgba(16, 24, 40, 0.06);
+  --dash-section-gap: 24px;
+  --dash-page-padding: 40px;
 }
 
 /* ---------- Buttons (system-wide) ---------- */
