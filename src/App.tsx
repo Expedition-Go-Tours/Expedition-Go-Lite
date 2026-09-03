@@ -177,7 +177,7 @@ function AppContent() {
     <>
       <Toaster position="top-center" duration={2500} closeButton />
       {!hideNav && <Navbar onOpenAuth={handleOpenAuth} />}
-      {!location.pathname.startsWith('/tour') && <SupportChatWidget onOpenAuth={handleOpenAuth} />}
+      {!location.pathname.startsWith('/tour') && !location.pathname.startsWith('/login') && !(currentPage === 'signin' || currentPage === 'signup') && <SupportChatWidget onOpenAuth={handleOpenAuth} />}
       <AnimatePresence mode="wait">
         <motion.div
           // Dashboard pages manage their own keep-alive transitions internally
