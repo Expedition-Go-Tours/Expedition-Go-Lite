@@ -98,10 +98,10 @@ function Sidebar() {
           </div>
           {!isCollapsed && (
             <div className="min-w-0 text-center mt-3">
-              <p className="text-[14px] font-semibold text-white truncate leading-tight">
+              <p className="text-[15px] font-semibold text-white truncate leading-tight tracking-[-0.01em]">
                 {user?.name || "User"}
               </p>
-              <p className="text-[12px] text-white/65 truncate leading-relaxed mt-0.5">
+              <p className="text-[12.5px] text-white/65 truncate leading-relaxed mt-0.5 tracking-[0.01em]">
                 {user?.email || ""}
               </p>
             </div>
@@ -126,7 +126,7 @@ function Sidebar() {
                     navigate(item.path);
                     closeMobile();
                   }}
-                  className={`relative flex items-center w-full rounded-xl text-[13.5px] font-medium transition-all duration-150 group
+                  className={`relative flex items-center w-full rounded-xl text-[14px] font-medium tracking-[0.01em] transition-all duration-150 group
                     ${isActive
                       ? "bg-[var(--dash-sidebar-active-bg)] text-[var(--dash-sidebar-active-text)] font-semibold"
                       : "text-white/65 hover:bg-white/10 hover:text-white"
@@ -175,7 +175,7 @@ function Sidebar() {
           <div className={`rounded-xl bg-white/8 ${isCollapsed ? "p-1" : "p-1"}`}>
             <button
               onClick={() => { navigate("/"); closeMobile(); }}
-              className={`flex items-center w-full rounded-lg text-[13.5px] font-medium transition-all duration-150 text-white/80 hover:bg-white/12
+              className={`flex items-center w-full rounded-lg text-[13px] font-medium tracking-[0.01em] transition-all duration-150 text-white/80 hover:bg-white/12
                 ${isCollapsed ? "justify-center px-0 py-2" : "gap-3 px-3 py-2"}`}
               title={isCollapsed ? "Back to Homepage" : undefined}
             >
@@ -187,7 +187,7 @@ function Sidebar() {
               <button
                 onClick={() => setShowLogoutConfirm(!showLogoutConfirm)}
                 onBlur={() => setTimeout(() => setShowLogoutConfirm(false), 200)}
-                className={`flex items-center w-full rounded-lg text-[13.5px] font-medium transition-all duration-150 text-red-300 hover:bg-white/10
+                className={`flex items-center w-full rounded-lg text-[13px] font-medium tracking-[0.01em] transition-all duration-150 text-red-300 hover:bg-white/10
                   ${isCollapsed ? "justify-center px-0 py-2" : "gap-3 px-3 py-2"}`}
                 title={isCollapsed ? "Sign out" : undefined}
               >
@@ -221,7 +221,7 @@ function Sidebar() {
         <div className={`shrink-0 hidden lg:block border-t border-white/10 ${isCollapsed ? "px-3 pt-3 pb-4" : "px-3 pt-3 pb-4"}`}>
           <button
             onClick={toggle}
-            className={`flex items-center w-full rounded-xl text-[13px] font-medium transition-all duration-150 text-white/38 hover:text-white hover:bg-white/10
+            className={`flex items-center w-full rounded-xl text-[12px] font-medium tracking-[0.02em] transition-all duration-150 text-white/38 hover:text-white hover:bg-white/10
               ${isCollapsed ? "justify-center px-0 py-2" : "gap-2.5 px-3 py-2"}`}
             title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
