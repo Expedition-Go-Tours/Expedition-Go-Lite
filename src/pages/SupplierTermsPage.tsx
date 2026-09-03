@@ -26,7 +26,7 @@ export default function SupplierTermsPage() {
           <h2>1. Introduction</h2>
           <p>
             These Supplier Terms apply to tour operators, activity providers and independent
-            guides who list and sell tours on the Expedition-Go marketplace. By registering as a
+            guides who list and sell tours on the Expedition-Go Tours marketplace. By registering as a
             supplier, you agree to these terms alongside our general{' '}
             <Link to="/terms-and-conditions">Terms & Conditions</Link>.
           </p>
@@ -54,7 +54,7 @@ export default function SupplierTermsPage() {
           <h2>4. Commission</h2>
           <p>
             There is no cost to add or maintain an activity on the platform. For every successful
-            booking, Expedition-Go charges a flat <strong>15% commission</strong> — you keep the
+            booking, Expedition-Go Tours charges a flat <strong>15% commission</strong> — you keep the
             remaining <strong>85%</strong> of each booking. The commission covers platform
             management, tools, insights and promoting your activities across our marketing
             channels.
@@ -62,7 +62,7 @@ export default function SupplierTermsPage() {
 
           <h2>5. Payouts</h2>
           <p>
-            Client payments are consolidated by Expedition-Go and paid out to you on a monthly or
+            Client payments are consolidated by Expedition-Go Tours and paid out to you on a monthly or
             bi-monthly schedule, depending on your preference. Each pay run includes all fulfilled
             bookings minus the commission fee.
           </p>
@@ -83,7 +83,7 @@ export default function SupplierTermsPage() {
           <h2>7. Conduct and quality standards</h2>
           <p>
             You agree to operate your experiences safely, professionally and in compliance with
-            all applicable laws and regulations. Expedition-Go is registered with the Ghana
+            all applicable laws and regulations. Expedition-Go Tours is registered with the Ghana
             Tourism Authority (GTA), and we expect our partners to uphold the same standards of
             safety, professionalism and quality.
           </p>
@@ -98,10 +98,10 @@ export default function SupplierTermsPage() {
 
           <h2>9. Liability and intellectual property</h2>
           <p>
-            You retain the rights to the content you provide, and you grant Expedition-Go a
+            You retain the rights to the content you provide, and you grant Expedition-Go Tours a
             licence to display and promote your listings on the platform and partner channels.
-            Expedition-Go's platform content and branding remain our property. To the maximum
-            extent permitted by law, Expedition-Go is not liable for indirect or consequential
+            Expedition-Go Tours' platform content and branding remain our property. To the maximum
+            extent permitted by law, Expedition-Go Tours is not liable for indirect or consequential
             losses arising from the sale or delivery of your experiences.
           </p>
 

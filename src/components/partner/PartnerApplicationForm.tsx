@@ -31,6 +31,7 @@ import {
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { cn } from "@/lib/utils"
 import {
   type PartnerType,
   type PartnerFormConfig,
@@ -393,6 +394,42 @@ function MultiSelect({
   )
 }
 
+/**
+ * Whole-number input for non-negative counts ("Years in business", room count,
+ * fleet size, group sizes, ...). Blocks the minus/exponent characters and
+ * strips anything that is not a digit, so negative values can never be entered.
+ */
+function WholeNumberField(props: React.ComponentProps<typeof Input>) {
+  const { onChange, onKeyDown, className, ...rest } = props
+  return (
+    <Input
+      {...rest}
+      type="number"
+      inputMode="numeric"
+      min={0}
+      onKeyDown={(e) => {
+        if (e.key === "-" || e.key === "+" || e.key === "e" || e.key === "E") {
+          e.preventDefault()
+        }
+        onKeyDown?.(e)
+      }}
+      onChange={(e) => {
+        if (!onChange) return
+        const digits = e.target.value.replace(/\D/g, "")
+        if (digits === e.target.value) {
+          onChange(e)
+          return
+        }
+        onChange({ ...e, target: { ...e.target, value: digits } } as React.ChangeEvent<HTMLInputElement>)
+      }}
+      className={cn(
+        "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none",
+        className
+      )}
+    />
+  )
+}
+
 function FileUploadField({
   label,
   file,
@@ -597,7 +634,7 @@ function SocialPlatformsGrid({
                         placeholder="handle"
                         value={socialLinks[platform.id] || ""}
                         onChange={(e) => onChange(platform.id, e.target.value)}
-                        className="w-full rounded-r-lg border-0 bg-transparent px-2 py-2.5 text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-0"
+                        className="w-full rounded-r-lg border-0 bg-transparent px-2 py-2.5 text-base text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-0"
                         autoFocus
                       />
                     </div>
@@ -756,6 +793,14 @@ export default function PartnerApplicationForm({
 
       {/* Right Content */}
       <div className="flex flex-1 flex-col p-4 sm:p-6 lg:p-8">
+        {/* Application type title */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+            {config.title}
+          </h1>
+          <p className="mt-2 text-sm text-slate-500 sm:text-base">{config.subtitle}</p>
+        </div>
+
         {/* Progress Bar (mobile only — desktop shows it in the top row next to the back button) */}
         <div className="mb-6 lg:hidden">
           <div className="mb-2 flex items-center justify-between text-xs text-slate-500">
@@ -807,11 +852,8 @@ export default function PartnerApplicationForm({
                 </div>
               ) : (
                 <>
-                  <h2 className="mb-1 text-2xl font-bold tracking-tight text-slate-900">
+                  <p className="mb-6 text-sm font-semibold uppercase tracking-wide text-slate-400">
                     {steps[step].label}
-                  </h2>
-                  <p className="mb-6 text-sm text-slate-500">
-                    {config.subtitle}
                   </p>
 
                   <FormCard>
@@ -888,7 +930,7 @@ export default function PartnerApplicationForm({
                   placeholder="Enter legal business name"
                   value={form.legalName || ""}
                   onChange={(e) => setField("legalName", e.target.value)}
-                  className="h-12 rounded-xl"
+                  className="h-12 rounded-xl text-base"
                 />
               </div>
               <div>
@@ -897,7 +939,7 @@ export default function PartnerApplicationForm({
                   placeholder="Name shown to travellers"
                   value={form.displayName || ""}
                   onChange={(e) => setField("displayName", e.target.value)}
-                  className="h-12 rounded-xl"
+                  className="h-12 rounded-xl text-base"
                 />
               </div>
               <div>
@@ -922,7 +964,7 @@ export default function PartnerApplicationForm({
                   placeholder="Street, area, city"
                   value={form.fullAddress || ""}
                   onChange={(e) => setField("fullAddress", e.target.value)}
-                  className="h-12 rounded-xl"
+                  className="h-12 rounded-xl text-base"
                 />
               </div>
               <div>
@@ -931,7 +973,7 @@ export default function PartnerApplicationForm({
                   placeholder="+233 ..."
                   value={form.phone || ""}
                   onChange={(e) => setField("phone", e.target.value)}
-                  className="h-12 rounded-xl"
+                  className="h-12 rounded-xl text-base"
                 />
               </div>
               <div>
@@ -941,7 +983,7 @@ export default function PartnerApplicationForm({
                   placeholder="https://..."
                   value={form.website || ""}
                   onChange={(e) => setField("website", e.target.value)}
-                  className="h-12 rounded-xl"
+                  className="h-12 rounded-xl text-base"
                 />
               </div>
             </div>
@@ -976,12 +1018,11 @@ export default function PartnerApplicationForm({
               </div>
               <div>
                 <FieldLabel>Years in business</FieldLabel>
-                <Input
-                  type="number"
+                <WholeNumberField
                   placeholder="e.g. 5"
                   value={form.yearsInBusiness || ""}
                   onChange={(e) => setField("yearsInBusiness", e.target.value)}
-                  className="h-12 rounded-xl"
+                  className="h-12 rounded-xl text-base"
                 />
               </div>
               <div>
@@ -1012,7 +1053,7 @@ export default function PartnerApplicationForm({
                   placeholder="Contact person's full name"
                   value={form.repFullName || ""}
                   onChange={(e) => setField("repFullName", e.target.value)}
-                  className="h-12 rounded-xl"
+                  className="h-12 rounded-xl text-base"
                 />
               </div>
               <div>
@@ -1022,7 +1063,7 @@ export default function PartnerApplicationForm({
                   placeholder="e.g. rep@email.com"
                   value={form.repEmail || ""}
                   onChange={(e) => setField("repEmail", e.target.value)}
-                  className="h-12 rounded-xl"
+                  className="h-12 rounded-xl text-base"
                 />
               </div>
               <div>
@@ -1031,7 +1072,7 @@ export default function PartnerApplicationForm({
                   type="date"
                   value={form.repDateOfBirth || ""}
                   onChange={(e) => setField("repDateOfBirth", e.target.value)}
-                  className="h-12 rounded-xl"
+                  className="h-12 rounded-xl text-base"
                 />
               </div>
               <div>
@@ -1048,7 +1089,7 @@ export default function PartnerApplicationForm({
                   placeholder="Representative's address"
                   value={form.repFullAddress || ""}
                   onChange={(e) => setField("repFullAddress", e.target.value)}
-                  className="h-12 rounded-xl"
+                  className="h-12 rounded-xl text-base"
                 />
               </div>
             </div>
@@ -1120,7 +1161,7 @@ export default function PartnerApplicationForm({
                 placeholder="Enter full name"
                 value={form.fullName || ""}
                 onChange={(e) => setField("fullName", e.target.value)}
-                className="h-12 rounded-xl"
+                className="h-12 rounded-xl text-base"
               />
             </div>
             <div>
@@ -1130,7 +1171,7 @@ export default function PartnerApplicationForm({
                 placeholder="e.g. youremail@gmail.com"
                 value={form.email || ""}
                 onChange={(e) => setField("email", e.target.value)}
-                className="h-12 rounded-xl"
+                className="h-12 rounded-xl text-base"
               />
             </div>
             <div>
@@ -1151,7 +1192,7 @@ export default function PartnerApplicationForm({
                   placeholder="000 000 000"
                   value={form.phoneNumber || ""}
                   onChange={(e) => setField("phoneNumber", e.target.value)}
-                  className="h-12 flex-1 rounded-xl"
+                  className="h-12 flex-1 rounded-xl text-base"
                 />
               </div>
             </div>
@@ -1187,7 +1228,7 @@ export default function PartnerApplicationForm({
                 placeholder="Enter company name"
                 value={form.companyName || ""}
                 onChange={(e) => setField("companyName", e.target.value)}
-                className="h-12 rounded-xl"
+                className="h-12 rounded-xl text-base"
               />
             </div>
             <div>
@@ -1204,13 +1245,12 @@ export default function PartnerApplicationForm({
             </div>
             <div>
               <FieldLabel>Years in operation</FieldLabel>
-              <Input
-                type="number"
-                placeholder="e.g. 5"
-                value={form.yearsInOperation || ""}
-                onChange={(e) => setField("yearsInOperation", e.target.value)}
-                className="h-12 rounded-xl"
-              />
+                <WholeNumberField
+                  placeholder="e.g. 5"
+                  value={form.yearsInOperation || ""}
+                  onChange={(e) => setField("yearsInOperation", e.target.value)}
+                  className="h-12 rounded-xl text-base"
+                />
             </div>
             <div>
               <FieldLabel>Website</FieldLabel>
@@ -1219,7 +1259,7 @@ export default function PartnerApplicationForm({
                 placeholder="https://..."
                 value={form.website || ""}
                 onChange={(e) => setField("website", e.target.value)}
-                className="h-12 rounded-xl"
+                className="h-12 rounded-xl text-base"
               />
             </div>
           </div>
@@ -1247,22 +1287,20 @@ export default function PartnerApplicationForm({
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <FieldLabel>Min group size</FieldLabel>
-                <Input
-                  type="number"
+                <WholeNumberField
                   placeholder="1"
                   value={form.groupSizeMin || ""}
                   onChange={(e) => setField("groupSizeMin", e.target.value)}
-                  className="h-12 rounded-xl"
+                  className="h-12 rounded-xl text-base"
                 />
               </div>
               <div>
                 <FieldLabel>Max group size</FieldLabel>
-                <Input
-                  type="number"
+                <WholeNumberField
                   placeholder="20"
                   value={form.groupSizeMax || ""}
                   onChange={(e) => setField("groupSizeMax", e.target.value)}
-                  className="h-12 rounded-xl"
+                  className="h-12 rounded-xl text-base"
                 />
               </div>
             </div>
@@ -1288,7 +1326,7 @@ export default function PartnerApplicationForm({
                 placeholder="Enter property name"
                 value={form.propertyName || ""}
                 onChange={(e) => setField("propertyName", e.target.value)}
-                className="h-12 rounded-xl"
+                className="h-12 rounded-xl text-base"
               />
             </div>
             <div>
@@ -1302,13 +1340,12 @@ export default function PartnerApplicationForm({
             </div>
             <div>
               <FieldLabel>Number of rooms</FieldLabel>
-              <Input
-                type="number"
-                placeholder="e.g. 30"
-                value={form.numberOfRooms || ""}
-                onChange={(e) => setField("numberOfRooms", e.target.value)}
-                className="h-12 rounded-xl"
-              />
+                <WholeNumberField
+                  placeholder="e.g. 30"
+                  value={form.numberOfRooms || ""}
+                  onChange={(e) => setField("numberOfRooms", e.target.value)}
+                  className="h-12 rounded-xl text-base"
+                />
             </div>
             <div>
               <FieldLabel>Amenities</FieldLabel>
@@ -1330,7 +1367,7 @@ export default function PartnerApplicationForm({
                 placeholder="Street address, area, city"
                 value={form.fullAddress || ""}
                 onChange={(e) => setField("fullAddress", e.target.value)}
-                className="h-12 rounded-xl"
+                className="h-12 rounded-xl text-base"
               />
             </div>
             <div>
@@ -1339,7 +1376,7 @@ export default function PartnerApplicationForm({
                 placeholder="e.g. 5.6037, -0.1870"
                 value={form.gpsCoordinates || ""}
                 onChange={(e) => setField("gpsCoordinates", e.target.value)}
-                className="h-12 rounded-xl"
+                className="h-12 rounded-xl text-base"
               />
             </div>
             <div>
@@ -1348,7 +1385,7 @@ export default function PartnerApplicationForm({
                 placeholder="Direct line to front desk"
                 value={form.frontDeskPhone || ""}
                 onChange={(e) => setField("frontDeskPhone", e.target.value)}
-                className="h-12 rounded-xl"
+                className="h-12 rounded-xl text-base"
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -1358,7 +1395,7 @@ export default function PartnerApplicationForm({
                   type="time"
                   value={form.checkInTime || ""}
                   onChange={(e) => setField("checkInTime", e.target.value)}
-                  className="h-12 rounded-xl"
+                  className="h-12 rounded-xl text-base"
                 />
               </div>
               <div>
@@ -1367,7 +1404,7 @@ export default function PartnerApplicationForm({
                   type="time"
                   value={form.checkOutTime || ""}
                   onChange={(e) => setField("checkOutTime", e.target.value)}
-                  className="h-12 rounded-xl"
+                  className="h-12 rounded-xl text-base"
                 />
               </div>
             </div>
@@ -1384,7 +1421,7 @@ export default function PartnerApplicationForm({
                 placeholder="Enter agency name"
                 value={form.agencyName || ""}
                 onChange={(e) => setField("agencyName", e.target.value)}
-                className="h-12 rounded-xl"
+                className="h-12 rounded-xl text-base"
               />
             </div>
             <div>
@@ -1393,17 +1430,16 @@ export default function PartnerApplicationForm({
                 placeholder="Travel agency license number"
                 value={form.licenseNumber || ""}
                 onChange={(e) => setField("licenseNumber", e.target.value)}
-                className="h-12 rounded-xl"
+                className="h-12 rounded-xl text-base"
               />
             </div>
             <div>
               <FieldLabel>Years in business</FieldLabel>
-              <Input
-                type="number"
+              <WholeNumberField
                 placeholder="e.g. 3"
                 value={form.yearsInBusiness || ""}
                 onChange={(e) => setField("yearsInBusiness", e.target.value)}
-                className="h-12 rounded-xl"
+                className="h-12 rounded-xl text-base"
               />
             </div>
             <div>
@@ -1426,7 +1462,7 @@ export default function PartnerApplicationForm({
                 placeholder="Website, OTAs, booking platforms..."
                 value={form.onlinePlatforms || ""}
                 onChange={(e) => setField("onlinePlatforms", e.target.value)}
-                className="h-12 rounded-xl"
+                className="h-12 rounded-xl text-base"
               />
             </div>
             <div>
@@ -1435,7 +1471,7 @@ export default function PartnerApplicationForm({
                 placeholder="Office addresses, storefronts..."
                 value={form.retailLocations || ""}
                 onChange={(e) => setField("retailLocations", e.target.value)}
-                className="h-12 rounded-xl"
+                className="h-12 rounded-xl text-base"
               />
             </div>
             <div>
@@ -1460,7 +1496,7 @@ export default function PartnerApplicationForm({
                 placeholder="e.g. adacreates"
                 value={form.displayName || ""}
                 onChange={(e) => setField("displayName", e.target.value)}
-                className="h-12 rounded-xl"
+                className="h-12 rounded-xl text-base"
               />
             </div>
             <div>
@@ -1512,7 +1548,7 @@ export default function PartnerApplicationForm({
                 placeholder="Link to portfolio or media kit"
                 value={form.portfolioUrl || ""}
                 onChange={(e) => setField("portfolioUrl", e.target.value)}
-                className="h-12 rounded-xl"
+                className="h-12 rounded-xl text-base"
               />
             </div>
           </div>
@@ -1565,23 +1601,21 @@ export default function PartnerApplicationForm({
             </div>
             <div>
               <FieldLabel required>Fleet size</FieldLabel>
-              <Input
-                type="number"
-                placeholder="Number of vehicles"
-                value={form.fleetSize || ""}
-                onChange={(e) => setField("fleetSize", e.target.value)}
-                className="h-12 rounded-xl"
-              />
+                <WholeNumberField
+                  placeholder="Number of vehicles"
+                  value={form.fleetSize || ""}
+                  onChange={(e) => setField("fleetSize", e.target.value)}
+                  className="h-12 rounded-xl text-base"
+                />
             </div>
             <div>
               <FieldLabel>Passenger capacity (per vehicle)</FieldLabel>
-              <Input
-                type="number"
-                placeholder="e.g. 12"
-                value={form.passengerCapacity || ""}
-                onChange={(e) => setField("passengerCapacity", e.target.value)}
-                className="h-12 rounded-xl"
-              />
+                <WholeNumberField
+                  placeholder="e.g. 12"
+                  value={form.passengerCapacity || ""}
+                  onChange={(e) => setField("passengerCapacity", e.target.value)}
+                  className="h-12 rounded-xl text-base"
+                />
             </div>
           </div>
         )
@@ -1595,7 +1629,7 @@ export default function PartnerApplicationForm({
                 placeholder="e.g. Accra - Kumasi, Accra - Cape Coast"
                 value={form.primaryRoutes || ""}
                 onChange={(e) => setField("primaryRoutes", e.target.value)}
-                className="h-12 rounded-xl"
+                className="h-12 rounded-xl text-base"
               />
             </div>
             <div>

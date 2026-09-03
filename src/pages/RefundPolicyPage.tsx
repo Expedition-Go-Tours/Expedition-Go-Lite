@@ -25,7 +25,7 @@ export default function RefundPolicyPage() {
         <div className="support-article">
           <h2>Summary</h2>
           <p>
-            Every tour on Expedition-Go has its own cancellation policy, which is shown on the
+            Every tour on Expedition-Go Tours has its own cancellation policy, which is shown on the
             tour page before you book. Most tours are free to cancel up to 24 hours before the
             start time for a full refund. Some experiences are non-refundable and will clearly
             state "Non-refundable" on the card and booking page.
@@ -47,7 +47,7 @@ export default function RefundPolicyPage() {
 
           <h2>Cancellation by the operator</h2>
           <p>
-            If a tour is cancelled by the operator or by Expedition-Go (for example due to weather,
+            If a tour is cancelled by the operator or by Expedition-Go Tours (for example due to weather,
             safety, or operational reasons), you are always entitled to:
           </p>
           <ul>

@@ -99,7 +99,7 @@ export default function HelpCentrePage() {
             />
           </div>
           <div className="support-location-info">
-            <img src="/logo.png" alt="Expedition-Go" className="support-location-logo" />
+            <img src="/logo.png" alt="Expedition-Go Tours" className="support-location-logo" />
             <div className="support-contact-label">
               <MapPin size={14} />
               Our Office

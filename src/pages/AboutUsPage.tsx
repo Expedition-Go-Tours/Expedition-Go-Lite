@@ -38,7 +38,7 @@ const VALUES = [
   {
     Icon: Compass,
     title: 'Hand-picked experiences',
-    text: 'Every tour on Expedition-Go is reviewed and curated so you always book something worth your time.',
+    text: 'Every tour on Expedition-Go Tours is reviewed and curated so you always book something worth your time.',
   },
   {
     Icon: Users,
@@ -233,7 +233,7 @@ export default function AboutUsPage() {
               It all started with a <em>simple idea</em>
             </h2>
             <p className="about-story-body">
-              Expedition-Go was built on a simple idea: travel should feel effortless, authentic and
+              Expedition-Go Tours was built on a simple idea: travel should feel effortless, authentic and
               personal. We connect travellers with hand-picked experiences, from day trips and
               cultural tours to multi-day adventures, operated by local experts who know their
               destinations inside out.

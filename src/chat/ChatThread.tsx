@@ -58,7 +58,17 @@ export default function ChatThread({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
   const stickToBottomRef = useRef(true)
+
+  // Auto-grow the composer as the message gets longer so the text stays
+  // visible instead of overflowing into a scrollbar (max-height caps growth).
+  useEffect(() => {
+    const el = inputRef.current
+    if (!el) return
+    el.style.height = "0px"
+    el.style.height = `${Math.min(el.scrollHeight, 120)}px`
+  }, [input])
 
   // Track whether the user is near the bottom; auto-scroll only then.
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -238,6 +248,7 @@ export default function ChatThread({
           </>
         )}
         <textarea
+          ref={inputRef}
           value={input}
           onChange={(e) => handleTypingChange(e.target.value)}
           onKeyDown={handleKeyDown}
