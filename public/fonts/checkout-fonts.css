@@ -1,0 +1,17 @@
+/* Brand fonts served for the Stripe Payment Element iframe (loadStripe can't
+   reach our bundled font assets, so they are copied to /public/fonts). */
+@font-face {
+  font-family: 'Raleway';
+  src: url('/fonts/Raleway-VariableFont_wght.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'GT Esti Pro Display';
+  src: url('/fonts/gteestiprodisplay_regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}

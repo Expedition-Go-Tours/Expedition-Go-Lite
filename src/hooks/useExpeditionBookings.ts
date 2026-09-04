@@ -187,9 +187,13 @@ interface ConfirmBookingInput {
   travelDate: string
   selectedTime?: string | null
   travelers: Record<string, number | string | boolean | { name: string; age: number; ageGroup: string; specialRequests?: string }[] | undefined>
-  /** Required for reserve-now-pay-later (card captured for auto-charge). Pay-now redirects to Stripe's hosted Checkout and never sends a card. */
+  /** Required for reserve-now-pay-later (card captured for auto-charge). Pay-now with the
+   * branded Payment Element checkout never sends a card. */
   paymentMethodId?: string
   paymentTiming?: 'now' | 'later'
+  /** Pay-now checkout mode. 'hosted' = Stripe Checkout redirect (legacy); 'payment-element'
+   * = branded custom checkout (server-created PaymentIntent, settled by webhook). */
+  checkoutFlow?: 'hosted' | 'payment-element'
   specialRequests?: string
   /** Validated promo code — the backend re-prices with it (expeditionController.confirmBooking). */
   promoCode?: string
@@ -211,10 +215,21 @@ interface ConfirmBookingResponse {
     grossAmount?: number | string
     currency: string
   }
-  /** Pay-now: hosted Stripe Checkout redirect. The frontend navigates the browser to `checkout.url`. */
+  /** Pay-now: hosted Stripe Checkout redirect (legacy). The frontend navigates to `checkout.url`. */
   checkout?: {
     id: string
     url: string
+  }
+  /** Pay-now: branded Payment Element checkout. The backend minted an unconfirmed
+   * PaymentIntent from the server-calculated amount; success is settled ONLY by the
+   * payment_intent.succeeded webhook (never by the frontend saying "it worked"). */
+  payment?: {
+    draftId: string
+    paymentIntentId: string
+    clientSecret: string
+    expiresAt: string
+    amount: number
+    currency: string
   }
   /** Reserve-now-pay-later: uncharged PaymentIntent (captured by the auto-charge sweep near the activity date). */
   clientSecret?: string
@@ -224,6 +239,29 @@ interface ConfirmBookingResponse {
     status: string
     requiresAction?: boolean
   }
+}
+
+/** Server-authoritative order summary for the branded checkout page. */
+export interface CheckoutDraftSummary {
+  id: string
+  expiresAt: string
+  tour: {
+    id: string
+    title: string
+    slug: string
+    coverPhoto: string | null
+    location: string
+    durationMinutes: number | null
+  }
+  travelDate: string
+  selectedTime: string | null
+  party: { adults: number; children: number; infants: number; total: number }
+  leadTraveler: { name: string | null; email: string | null }
+  promoCode: string | null
+  currency: string
+  pricing: { subtotal: number; total: number; discount: number; fees: number; taxes: number }
+  paymentIntentId: string | null
+  clientSecret: string | null
 }
 
 export function useCreateBooking() {
@@ -534,6 +572,47 @@ export function useUpdateBookingPickup() {
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ['expedition', 'bookings'] })
       queryClient.invalidateQueries({ queryKey: ['expedition', 'bookings', vars.id, 'detail'] })
+    },
+  })
+}
+
+/**
+ * Loads the current customer's HOLDING checkout draft (server-authoritative
+ * order summary + fresh PaymentIntent client secret). Used by the branded
+ * Payment Element page so it survives a hard refresh mid-payment.
+ */
+export function useCheckoutDraft(draftId: string | undefined) {
+  return useQuery<CheckoutDraftSummary | null>({
+    queryKey: ['expedition', 'checkout-draft', draftId],
+    enabled: !!draftId,
+    queryFn: async () => {
+      const res = await fetchWithAuth(`/expedition/checkout/draft/${encodeURIComponent(draftId!)}`)
+      const payload = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(payload.message || `Request failed (${res.status})`)
+      return (payload.data?.draft ?? null) as CheckoutDraftSummary | null
+    },
+    staleTime: 30_000,
+  })
+}
+
+/**
+ * Explicitly frees the seat hold (and cancels the unconfirmed PaymentIntent)
+ * when the customer abandons the branded checkout page.
+ */
+export function useReleaseCheckoutDraft() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetchWithAuth(`/expedition/checkout/draft/${encodeURIComponent(id)}/release`, {
+        method: 'POST',
+        body: JSON.stringify({}),
+      })
+      const payload = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(payload.message || `Request failed (${res.status})`)
+      return payload.data
+    },
+    onSuccess: (_data, id) => {
+      queryClient.invalidateQueries({ queryKey: ['expedition', 'checkout-draft', id] })
     },
   })
 }

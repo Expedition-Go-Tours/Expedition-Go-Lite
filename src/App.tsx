@@ -40,6 +40,7 @@ const SupplierRegisterPage = lazy(() => import('./pages/supplier/SupplierRegiste
 const SupplierLandingPage = lazy(() => import('./pages/supplier/SupplierLandingPage'))
 const BookingPage = lazy(() => import('./pages/BookingPage'))
 const BookingConfirmationPage = lazy(() => import('./pages/BookingConfirmationPage'))
+const CheckoutPage = lazy(() => import('./pages/CheckoutPage'))
 const BookingPickupPage = lazy(() => import('./pages/BookingPickupPage'))
 const HelpCentrePage = lazy(() => import('./pages/HelpCentrePage'))
 const ContactUsPage = lazy(() => import('./pages/ContactUsPage'))
@@ -168,7 +169,19 @@ function AppContent() {
     requestLocation()
   }, [])
 
-  const hideNav = currentPage === 'signin' || currentPage === 'signup' || location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/booking') || location.pathname.endsWith('/booking') || location.pathname.startsWith('/supplier/register') || location.pathname.startsWith('/supplier/list-experience') || location.pathname.startsWith('/login') || location.pathname.startsWith('/auth/callback')
+  const isBookingConfirmation = location.pathname.startsWith('/booking/confirmation')
+  // The confirmation receipt is a normal page (keeps the navbar + footer). The
+  // checkout + pickup steps stay focused (no chrome) to reduce distraction.
+  const hideNav =
+    currentPage === 'signin' ||
+    currentPage === 'signup' ||
+    location.pathname.startsWith('/dashboard') ||
+    (location.pathname.startsWith('/booking') && !isBookingConfirmation) ||
+    location.pathname.endsWith('/booking') ||
+    location.pathname.startsWith('/supplier/register') ||
+    location.pathname.startsWith('/supplier/list-experience') ||
+    location.pathname.startsWith('/login') ||
+    location.pathname.startsWith('/auth/callback')
 
   // /login?mode=signup opens the auth page straight on the sign-up tab
   // (used by flows like the partner application where sign-up is the primary action).
@@ -227,6 +240,7 @@ function AppContent() {
           } />
           <Route path="/booking" element={<BookingPage />} />
           <Route path="/:tourId/booking" element={<BookingPage />} />
+          <Route path="/booking/checkout" element={<CheckoutPage />} />
           <Route path="/booking/confirmation/:bookingId" element={<BookingConfirmationPage />} />
           <Route path="/booking/confirmation" element={<BookingConfirmationPage />} />
           <Route path="/booking/:bookingId/pickup" element={<BookingPickupPage />} />

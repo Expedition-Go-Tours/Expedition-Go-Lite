@@ -1161,7 +1161,7 @@ function PaymentDetailsStep({
             {data.paymentTiming === 'now' ? (
               <div className="flex items-center justify-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50/50 px-4 py-3 text-sm text-emerald-700">
                 <ShieldCheck className="size-4 shrink-0" />
-                <span>You'll be redirected to Stripe's secure checkout to complete payment.</span>
+                <span>Secure payment powered by Stripe — you'll finish on the next step.</span>
               </div>
             ) : (
               <CardField onReady={setCardHandle} />
@@ -1926,6 +1926,9 @@ export default function BookingPage() {
         },
         ...(paymentMethodId ? { paymentMethodId } : {}),
         paymentTiming,
+        // Pay-now uses the branded Payment Element checkout (the server mints
+        // the PaymentIntent; the amount is never trusted from the browser).
+        ...(paymentTiming === 'now' ? { checkoutFlow: 'payment-element' as const } : {}),
         specialRequests: '',
         // Lead traveler details from the "Lead Traveler Details" step so the
         // supplier dashboard and confirmation emails show the traveler rather
@@ -1942,9 +1945,16 @@ export default function BookingPage() {
 
       const result = await createBooking.mutateAsync(payload)
 
-      // Pay now: the backend returned a hosted Stripe Checkout URL. Hand the
-      // browser over to Stripe — the checkout.session.completed webhook settles
-      // the booking and the confirmation page polls until it lands.
+      // Pay now (branded Payment Element): the backend minted an unconfirmed
+      // PaymentIntent for the reserved spot. Continue on our own checkout page —
+      // success is settled ONLY by the payment_intent.succeeded webhook, and the
+      // confirmation page polls the by-session endpoint until it lands.
+      if (result?.payment?.clientSecret) {
+        navigate(`/booking/checkout?draft=${encodeURIComponent(result.payment.draftId)}`)
+        return
+      }
+
+      // Legacy pay-now: hosted Stripe Checkout URL (kept for other storefronts).
       if (result?.checkout?.url) {
         window.location.assign(result.checkout.url)
         return
