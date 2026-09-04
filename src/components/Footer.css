@@ -323,8 +323,11 @@
 /* ===== TABLET (769px - 1023px) ===== */
 @media (max-width: 1023px) {
   .footer-grid {
-    grid-template-columns: repeat(6, 1fr);
-    gap: 20px;
+    /* Six 1fr columns at ~108px each wrap text into 3-4 stacked lines and
+       hard-ellipsize the Language/Currency selector values. Collapse to two
+       wider columns instead. */
+    grid-template-columns: repeat(2, 1fr);
+    gap: 28px 24px;
   }
 
   .footer-container {

@@ -22,6 +22,7 @@
   margin: 0 0 24px;
   line-height: 1.2;
   text-align: center;
+  text-wrap: balance;
 }
 
 .partners-track-wrap {
@@ -35,12 +36,27 @@
   animation: partners-scroll 40s linear infinite;
 }
 
+/* Pause on hover so readers can inspect a logo without chasing it. */
+.partners-track-wrap:hover .partners-track {
+  animation-play-state: paused;
+}
+
 @keyframes partners-scroll {
   0% {
     transform: translateX(0);
   }
   100% {
     transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .partners-track {
+    animation: none;
+    width: auto;
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: 16px;
   }
 }
 

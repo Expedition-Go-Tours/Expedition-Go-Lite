@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Toaster } from 'sonner'
 import Navbar from './components/Navbar'
 import Hero from './components/Hero'
+import RouteErrorBoundary from './components/RouteErrorBoundary'
 import ContinuePlanningSection from './components/ContinuePlanningSection'
 import MoodSection from './components/MoodSection'
 import RecommendSection from './components/RecommendSection'
@@ -178,25 +179,13 @@ function AppContent() {
       <Toaster position="top-center" duration={2500} closeButton />
       {!hideNav && <Navbar onOpenAuth={handleOpenAuth} />}
       {!location.pathname.startsWith('/tour') && !location.pathname.startsWith('/login') && !(currentPage === 'signin' || currentPage === 'signup') && <SupportChatWidget onOpenAuth={handleOpenAuth} />}
-      <AnimatePresence mode="wait">
-        <motion.div
-          // Dashboard pages manage their own keep-alive transitions internally
-          // (DashboardLayout). Keying this wrapper on the full pathname would
-          // remount the entire dashboard (sidebar + all) with a fade on every
-          // sidebar click — so group all /dashboard/* under one stable key.
-          key={location.pathname.startsWith('/dashboard') ? '/dashboard' : location.pathname}
-          initial={{ opacity: 0, y: 16 }}
-          animate={{
-            opacity: 1,
-            y: 0,
-            transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] },
-          }}
-          exit={{
-            opacity: 0,
-            y: -16,
-            transition: { duration: 0.25, ease: [0.4, 0, 1, 1] },
-          }}
-        >
+      {/* Route shell: keyed so each navigation mounts a fresh subtree, but NOT
+          animated to opacity 0 — an interrupted fade used to leave the new
+          page permanently invisible (blank white until a manual refresh). */}
+      <div
+        key={location.pathname.startsWith('/dashboard') ? '/dashboard' : location.pathname}
+      >
+        <RouteErrorBoundary>
         <Suspense fallback={<div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div className="spinner" /></div>}>
         <Routes>
           <Route path="/dashboard/*" element={<DashboardLayout />} />
@@ -285,8 +274,8 @@ function AppContent() {
           } />
         </Routes>
         </Suspense>
-        </motion.div>
-      </AnimatePresence>
+        </RouteErrorBoundary>
+      </div>
     </>
   )
 }

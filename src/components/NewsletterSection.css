@@ -171,4 +171,33 @@
   .newsletter-section {
     padding: 30px 0;
   }
+
+  .newsletter-container {
+    padding: 0 16px;
+  }
+}
+
+/* Very small screens: stack the submit button under the input so the field
+   keeps a usable typing area (the in-input overlay leaves ~46px otherwise). */
+@media (max-width: 480px) {
+  .newsletter-input-wrap {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .newsletter-input {
+    padding: 16px 22px;
+  }
+
+  .newsletter-btn {
+    position: static;
+    transform: none;
+    width: 100%;
+    padding: 13px 24px;
+  }
+
+  .newsletter-heading {
+    text-wrap: balance;
+  }
 }

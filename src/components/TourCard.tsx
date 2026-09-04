@@ -318,7 +318,7 @@ export default function TourCard({ id, title, duration, features, price, rating,
           </span>
           {discount && <span className="tour-card-discount">{discount}</span>}
         </div>
-        <h3 className="tour-card-title">{title}</h3>
+        <h3 className="tour-card-title" title={title}>{title}</h3>
         <div className="tour-card-meta">
           {meetingMode === 'meeting_point' ? (
             <span className="tour-card-badge tour-card-badge-meeting">

@@ -253,11 +253,11 @@ export default function ContinuePlanningSection() {
   // On mobile the section reuses the Recommended carousel's vertical TourCard
   // so the two sections look identical; desktop keeps the horizontal card.
   const [isMobile, setIsMobile] = useState(
-    () => typeof window !== 'undefined' && !!window.matchMedia && window.matchMedia('(max-width: 767px)').matches,
+    () => typeof window !== 'undefined' && !!window.matchMedia && window.matchMedia('(max-width: 768px)').matches,
   )
 
   useEffect(() => {
-    const mq = window.matchMedia('(max-width: 767px)')
+    const mq = window.matchMedia('(max-width: 768px)')
     const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
     mq.addEventListener('change', handler)
     return () => mq.removeEventListener('change', handler)
