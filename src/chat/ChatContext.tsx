@@ -10,6 +10,7 @@ import {
 import { useTranslation } from 'react-i18next'
 import { useAuthUser } from '../hooks/useAuthUser'
 import { getAuthToken, refreshAuthToken } from '../lib/auth'
+import { queryClient } from '../lib/queryClient'
 import * as api from './chatApi'
 import { connectChatSocket, disconnectChatSocket, getChatSocket } from './chatSocket'
 import type {
@@ -277,6 +278,17 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         socket.on('chat:message-edited', handleSocketEdited)
         socket.on('chat:message-deleted', handleSocketDeleted)
         socket.on('chat:message-deleted-for-me', handleSocketDeleted)
+
+        // Real-time badge: the backend pushes user notifications (Socket.IO
+        // room `user:{id}`) when a booking is confirmed. Refreshing the
+        // bookings queries here makes the navbar badge appear instantly on any
+        // open tab/device; the count query's 60s poll is the fallback.
+        socket.on('notification', (payload: { type?: string } | undefined) => {
+          const type = payload?.type
+          if (type === 'BOOKING_CONFIRMED' || type === 'BOOKING_AWAITING_CONFIRMATION') {
+            queryClient.invalidateQueries({ queryKey: ['expedition', 'bookings'] })
+          }
+        })
 
         await refreshConversations()
       } catch {

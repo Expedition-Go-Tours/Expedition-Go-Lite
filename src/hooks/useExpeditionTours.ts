@@ -199,6 +199,8 @@ export interface TourCardData {
   specialOffers?: SpecialOfferData[]
   /** Discount badge label (e.g. "-30%") shown on cards. */
   discount?: string
+  /** Whether the tour is flagged as new (drives the "New" pill on the card). */
+  isNew?: boolean
   /** Whether the tour is flagged as likely to sell out (drives the red tag on the card image). */
   likelyToSellOut?: boolean
 }
@@ -273,7 +275,7 @@ function extractDifficultyFromTour(tour: any): string | null {
   }
 }
 
-function formatCancellationPolicy(policy: any): string | null {
+export function formatCancellationPolicy(policy: any): string | null {
   if (policy == null) return null
   if (typeof policy === 'string') {
     const trimmed = policy.trim()

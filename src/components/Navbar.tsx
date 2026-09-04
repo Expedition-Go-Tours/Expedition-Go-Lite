@@ -9,6 +9,7 @@ import { useCurrency } from '../contexts/CurrencyContext'
 import logoSrc from '../assets/expo_trans.png'
 import userSrc from '../assets/icons/User Circle.png'
 import { subscribeToAuthState, signOutUser, getStoredAuthUser, type AuthUser } from '../lib/auth'
+import { readBookingsSeen, writeBookingsSeen } from '../lib/bookingsBadge'
 import { useSupplierStatus } from '../hooks/useSupplierStatus'
 import { useMyBookingsCount } from '../hooks/useExpeditionBookings'
 import { useSearchAutocomplete, type SearchSuggestion } from '../hooks/useSearchAutocomplete'
@@ -32,6 +33,23 @@ const navDropdownVariants: Variants = {
     scale: 0.985,
     transition: { duration: 0.15, ease: 'easeIn' },
   },
+}
+
+/* GetYourGuide "Bookings" glyph — exact outline taken from GetYourGuide's own
+   Compass icon font (glyph: tickets). Filled so it inherits currentColor. */
+function BookingsIcon({ size = 22, className }: { size?: number; className?: string }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M11.875245365321701 1.6113413304252993 12.839258451472192 2.6320610687022894Q13.224863685932387 3.0516902944383855 13.746564885496182 3.2728462377317333Q14.268266085059977 3.494002181025081 14.835332606324972 3.494002181025081Q15.402399127589966 3.494002181025081 15.918429661941111 3.2728462377317333Q16.434460196292257 3.0516902944383855 16.820065430752454 2.6320610687022894L17.784078516902945 1.6113413304252993H22.388658669574703V20.50599781897492H17.784078516902945L16.820065430752454 19.485278080697928Q16.434460196292257 19.065648854961832 15.918429661941111 18.844492911668482Q15.402399127589966 18.623336968375135 14.835332606324972 18.623336968375135Q14.268266085059977 18.623336968375135 13.746564885496182 18.844492911668482Q13.224863685932387 19.065648854961832 12.839258451472192 19.485278080697928L11.875245365321701 20.50599781897492H7.270665212649945V16.536532170119955L3.244492911668484 4.208505997818975L7.270665212649945 2.892911668484187V1.6113413304252993ZM9.164667393675026 3.494002181025081V18.623336968375135H11.058669574700108L11.466957470010906 18.19236641221374Q12.113413304253 17.489203925845146 12.992366412213741 17.1092693565976Q13.871319520174481 16.729334787350055 14.829661941112322 16.729334787350055Q15.788004362050163 16.729334787350055 16.666957470010907 17.1092693565976Q17.545910577971647 17.489203925845146 18.20370774263904 18.19236641221374L18.600654307524536 18.623336968375135H20.50599781897492V3.494002181025081H18.600654307524536L18.20370774263904 3.9249727371864767Q17.545910577971647 4.62813522355507 16.666957470010907 5.008069792802616Q15.788004362050163 5.388004362050163 14.829661941112322 5.388004362050163Q13.871319520174481 5.388004362050163 12.992366412213741 5.008069792802616Q12.113413304253 4.62813522355507 11.466957470010906 3.9249727371864767L11.058669574700108 3.494002181025081ZM5.626172300981461 5.410687022900762 7.270665212649945 10.446237731733914V4.877644492911668Z" />
+    </svg>
+  )
 }
 
 interface NavbarProps {
@@ -80,21 +98,11 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
   const { data: bookingsCount = 0 } = useMyBookingsCount('CONFIRMED,PENDING', !!user)
   // Bookings counter is dismissed once the user taps the Bookings item — it
   // only comes back when the count grows beyond what was last seen.
-  const [bookingsSeen, setBookingsSeen] = useState(() => {
-    try {
-      return Number(localStorage.getItem('navBookingsSeen') ?? 0) || 0
-    } catch {
-      return 0
-    }
-  })
+  const [bookingsSeen, setBookingsSeen] = useState(() => readBookingsSeen())
   const showBookingsBadge = bookingsCount > 0 && bookingsCount > bookingsSeen
   const markBookingsSeen = useCallback(() => {
     setBookingsSeen(bookingsCount)
-    try {
-      localStorage.setItem('navBookingsSeen', String(bookingsCount))
-    } catch {
-      /* storage unavailable */
-    }
+    writeBookingsSeen(bookingsCount)
   }, [bookingsCount])
 
   useEffect(() => {
@@ -179,6 +187,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
   // hover/focus of the wishlist and bookings entry points.
   const prefetchDashboard = useCallback(() => {
     void import('../pages/dashboard/DashboardLayout').catch(() => {})
+    void import('../pages/BookingHistory').catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -205,11 +214,13 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
   useEffect(() => {
     if (!user) return
     import('../pages/dashboard/DashboardLayout').catch(() => {})
+    import('../pages/BookingHistory').catch(() => {})
   }, [user])
 
   useEffect(() => {
     if (mobileMenuOpen && user) {
       import('../pages/dashboard/DashboardLayout').catch(() => {})
+      import('../pages/BookingHistory').catch(() => {})
     }
   }, [mobileMenuOpen, user])
 
@@ -295,8 +306,6 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
   }, [])
 
   const dropdownLinks: { label: string; key: string; icon: string }[] = [
-    ...(user ? [{ label: t('nav.bookings'), key: 'Bookings' as const, icon: 'bag' as const }] : []),
-    ...(user ? [{ label: t('nav.dashboard'), key: 'Dashboard' as const, icon: 'grid' as const }] : []),
     { label: t('nav.about'), key: 'About' as const, icon: 'info' as const },
     { label: t('nav.contact'), key: 'Contact' as const, icon: 'mail' as const },
   ]
@@ -508,6 +517,15 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
         </div>
 
         <div className="nav-icons">
+          {user && (
+            <a href="#" className="nav-icon-item" onClick={(e) => { e.preventDefault(); e.stopPropagation(); markBookingsSeen(); navigate('/dashboard/bookings') }} aria-label={t('nav.bookings')} onPointerEnter={prefetchDashboard} onFocus={prefetchDashboard}>
+              <span className="nav-icon-glyph">
+                <BookingsIcon size={22} />
+                {showBookingsBadge && <span className="nav-icon-badge">{bookingsCount}</span>}
+              </span>
+              <span className="nav-icon-label">{t('nav.bookings')}</span>
+            </a>
+          )}
           <a href="#" className="nav-icon-item" onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate('/dashboard/wishlist') }} onPointerEnter={prefetchDashboard} onFocus={prefetchDashboard}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
@@ -550,13 +568,6 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
                         e.preventDefault()
                         e.stopPropagation()
                         setDropdownOpen(false)
-                        if (link.key === 'Dashboard') {
-                          navigate('/dashboard/bookings')
-                        }
-                        if (link.key === 'Bookings') {
-                          markBookingsSeen()
-                          navigate('/dashboard/bookings')
-                        }
                         if (link.key === 'About') {
                           navigate('/about-us')
                         }
@@ -564,24 +575,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
                           navigate('/contact-us')
                         }
                       }}
-                      onPointerEnter={link.key === 'Bookings' || link.key === 'Dashboard' ? prefetchDashboard : undefined}
-                      onFocus={link.key === 'Bookings' || link.key === 'Dashboard' ? prefetchDashboard : undefined}
                     >
-                      {link.icon === 'bag' && (
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-                          <line x1="3" y1="6" x2="21" y2="6" />
-                          <path d="M16 10a4 4 0 0 1-8 0" />
-                        </svg>
-                      )}
-                      {link.icon === 'grid' && (
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <rect x="3" y="3" width="7" height="7" />
-                          <rect x="14" y="3" width="7" height="7" />
-                          <rect x="14" y="14" width="7" height="7" />
-                          <rect x="3" y="14" width="7" height="7" />
-                        </svg>
-                      )}
                       {link.icon === 'info' && (
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <circle cx="12" cy="12" r="10" />
@@ -596,9 +590,6 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
                         </svg>
                       )}
                       {link.label}
-                      {link.key === 'Bookings' && showBookingsBadge && (
-                        <span className="nav-dropdown-badge">{bookingsCount}</span>
-                      )}
                     </a>
                   ))}
 
@@ -632,10 +623,22 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
             <span className="nav-icon-label">{user?.name || t('nav.profile')}</span>
           </div>
         </div>
+        {user && (
+          <a href="#" className="nav-bookings-mobile" onClick={(e) => { e.preventDefault(); e.stopPropagation(); markBookingsSeen(); navigate('/dashboard/bookings') }} aria-label={t('nav.bookings')} onPointerEnter={prefetchDashboard} onFocus={prefetchDashboard}>
+            <span className="nav-icon-glyph">
+              <BookingsIcon size={22} />
+              {showBookingsBadge && <span className="nav-icon-badge">{bookingsCount}</span>}
+            </span>
+            <span className="nav-icon-label">{t('nav.bookings')}</span>
+          </a>
+        )}
         <a href="#" className="nav-wishlist-mobile" onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate('/dashboard/wishlist') }} aria-label={t('nav.wishlist')} onPointerEnter={prefetchDashboard} onFocus={prefetchDashboard}>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-          </svg>
+          <span className="nav-icon-glyph">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+            </svg>
+          </span>
+          <span className="nav-icon-label">{t('nav.wishlist')}</span>
         </a>
         <button className="nav-hamburger" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-label="Toggle menu">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -715,29 +718,6 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
               <DollarSign size={18} />
               {t('nav.currency')}
             </div>
-
-            {user && (
-              <a href="#" className="nav-mobile-link" onPointerEnter={prefetchDashboard} onFocus={prefetchDashboard} onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMobileMenuOpen(false); markBookingsSeen(); navigate('/dashboard/bookings') }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-                  <line x1="3" y1="6" x2="21" y2="6" />
-                  <path d="M16 10a4 4 0 0 1-8 0" />
-                </svg>
-                {t('nav.bookings')}
-                {showBookingsBadge && <span className="nav-mobile-badge">{bookingsCount}</span>}
-              </a>
-            )}
-            {user && (
-              <a href="#" className="nav-mobile-link" onPointerEnter={prefetchDashboard} onFocus={prefetchDashboard} onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMobileMenuOpen(false); navigate('/dashboard/bookings') }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="3" width="7" height="7" />
-                  <rect x="14" y="3" width="7" height="7" />
-                  <rect x="14" y="14" width="7" height="7" />
-                  <rect x="3" y="14" width="7" height="7" />
-                </svg>
-                {t('nav.dashboard')}
-              </a>
-            )}
 
             <a href="#" className="nav-mobile-link" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMobileMenuOpen(false); navigate('/about-us') }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

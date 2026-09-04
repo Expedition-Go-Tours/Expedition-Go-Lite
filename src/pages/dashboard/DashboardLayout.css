@@ -4,8 +4,29 @@
   width: 100%;
 }
 
+/* Inner Suspense skeleton for lazy-loaded sub-pages */
+.dash-page-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 24px 0;
+}
+
+.dash-page-skeleton-bar {
+  height: 18px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #e8e8e8 25%, #f0f0f0 50%, #e8e8e8 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.2s ease-in-out infinite;
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
 .dash-main-content {
-  padding-top: calc(var(--dash-topbar-height, 100px) - 24px);
+  padding-top: 32px;
 }
 
 .dash-pane.active {
@@ -68,31 +89,6 @@
   gap: 8px;
 }
 
-/* Mobile hamburger — hidden on desktop (lg+) */
-.dash-topbar-hamburger {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border: none;
-  background: none;
-  border-radius: 8px;
-  color: #374151;
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-
-@media (min-width: 1024px) {
-  .dash-topbar-hamburger {
-    display: none;
-  }
-}
-
-.dash-topbar-hamburger:hover {
-  background: #f3f4f6;
-}
-
 /* Logo */
 .dash-topbar-logo {
   display: flex;
@@ -115,7 +111,7 @@
 
 @media (max-width: 1023px) {
   .dash-topbar-logo-img {
-    height: 56px;
+    height: 90px;
   }
 }
 
@@ -500,43 +496,6 @@
 }
 
 /* ================================================================
-   MOBILE DRAWER NAV ITEMS
-   ================================================================ */
-.dash-drawer-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  height: 44px;
-  padding: 0 12px;
-  border: none;
-  background: none;
-  border-radius: 10px;
-  font-family: var(--font-body);
-  font-size: 14px;
-  font-weight: 500;
-  color: #374151;
-  cursor: pointer;
-  transition: background 0.12s ease, color 0.12s ease;
-  text-align: left;
-  outline: none;
-}
-
-.dash-drawer-item:hover {
-  background: #f3f4f6;
-}
-
-.dash-drawer-item.active {
-  background: #f0fdf4;
-  color: var(--bv-accent-strong, #166534);
-  font-weight: 600;
-}
-
-.dash-drawer-item.active svg {
-  color: var(--bv-accent-strong, #166534);
-}
-
-/* ================================================================
    MOBILE BOTTOM TAB BAR
    ================================================================ */
 .dash-bottom-bar {
@@ -576,6 +535,7 @@
   }
 
   .dash-main-content {
+    padding-top: 20px;
     padding-bottom: 90px !important;
   }
 }

@@ -63,7 +63,7 @@ function AttractionCard({
           <span>{attraction.tourCount} {t('sections.tours', { defaultValue: 'tours' })}</span>
         </div>
         <div className="attraction-card-title-row">
-          <h3 className="attraction-card-title">{attraction.name}</h3>
+          <h3 className="attraction-card-title" title={attraction.name}>{attraction.name}</h3>
           {priceStr && (
             <div className="attraction-card-price">
               <p className="attraction-card-from">{t('common.from')}</p>

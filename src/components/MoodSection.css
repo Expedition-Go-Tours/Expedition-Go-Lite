@@ -23,6 +23,7 @@
   color: #1a1a1a;
   margin: 0;
   line-height: 1.15;
+  text-wrap: balance;
 }
 
 .mood-arrows {
@@ -235,7 +236,19 @@
     display: none;
   }
 
+  /* The keyword tag duplicates the bottom .mood-card-title and collides with
+     the tour-count pill on narrow cards — drop it on mobile. */
+  .mood-tag {
+    display: none;
+  }
+
+  .mood-arrow-btn {
+    width: 36px;
+    height: 36px;
+  }
+
   .mood-card-title {
     font-size: 18px;
+    text-wrap: balance;
   }
 }

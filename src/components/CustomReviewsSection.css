@@ -18,6 +18,10 @@
 
 .reviews-elfsight {
   margin-top: 20px;
+  /* Reserve space while the lazy widget injects (prevents layout shift) and
+     clip any iframe that exceeds the container on narrow phones. */
+  overflow: hidden;
+  min-height: 380px;
 }
 
 /* ===== Powered by Tripadvisor ===== */
@@ -51,10 +55,5 @@
 
   .reviews-viewport {
     max-width: 100%;
-  }
-
-  .reviews-rating-bar {
-    flex-direction: column;
-    align-items: flex-start;
   }
 }

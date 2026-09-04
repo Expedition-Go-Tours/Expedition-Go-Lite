@@ -354,6 +354,7 @@
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  overflow-wrap: anywhere;
 }
 
 .tour-card-features {
@@ -442,7 +443,7 @@
   }
 
   .tour-card-title {
-    font-size: 13px;
+    font-size: 14px;
   }
 
   .tour-card-price-value {

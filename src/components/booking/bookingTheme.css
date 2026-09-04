@@ -42,6 +42,17 @@
   --bv-shadow-md: 0 10px 30px -12px rgba(16, 24, 40, 0.18);
   --bv-shadow-lg: 0 24px 60px -20px rgba(16, 24, 40, 0.28);
 
+  /* Countdown timer + engagement CTA */
+  --countdown-bg: #ffffff;
+  --countdown-border: var(--bv-border);
+  --countdown-radius: 20px;
+  --countdown-value-size: 16px;
+  --countdown-label-size: 13px;
+  --countdown-label-color: var(--bv-muted);
+  --cta-bg: var(--bv-ink);
+  --cta-radius: 24px;
+  --cta-font-size: 14px;
+
   /* Dashboard layout tokens — top bar (desktop) */
   --dash-topbar-height: 100px;
   --dash-topbar-bg: #ffffff;

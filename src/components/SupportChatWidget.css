@@ -1285,9 +1285,9 @@
 }
 
 .dash-chat-search:focus-within {
-  border-color: var(--bv-accent, #16a34a);
-  box-shadow: 0 0 0 3px var(--bv-focus, rgba(22, 163, 74, 0.15));
-  background: #fff;
+  border-color: transparent;
+  box-shadow: none;
+  background: var(--bv-surface-2, #f9fafb);
 }
 
 .dash-chat-search input {

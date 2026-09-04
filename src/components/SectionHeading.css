@@ -18,6 +18,8 @@
   color: #1a1a1a;
   margin: 0;
   line-height: 1.2;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
 }
 
 .section-subtitle {
@@ -88,5 +90,22 @@
 
   .section-arrows {
     display: none;
+  }
+}
+
+/* Very narrow screens: a long localized heading should not fight a nowrap
+   "View all" for one row — stack the title on its own line. */
+@media (max-width: 480px) {
+  .section-heading {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+
+  .section-heading-text {
+    flex: 1 1 100%;
+  }
+
+  .section-heading-actions {
+    margin-left: auto;
   }
 }

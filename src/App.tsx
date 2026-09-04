@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Toaster } from 'sonner'
 import Navbar from './components/Navbar'
 import Hero from './components/Hero'
+import RouteErrorBoundary from './components/RouteErrorBoundary'
 import ContinuePlanningSection from './components/ContinuePlanningSection'
 import MoodSection from './components/MoodSection'
 import RecommendSection from './components/RecommendSection'
@@ -39,6 +40,7 @@ const SupplierRegisterPage = lazy(() => import('./pages/supplier/SupplierRegiste
 const SupplierLandingPage = lazy(() => import('./pages/supplier/SupplierLandingPage'))
 const BookingPage = lazy(() => import('./pages/BookingPage'))
 const BookingConfirmationPage = lazy(() => import('./pages/BookingConfirmationPage'))
+const CheckoutPage = lazy(() => import('./pages/CheckoutPage'))
 const BookingPickupPage = lazy(() => import('./pages/BookingPickupPage'))
 const HelpCentrePage = lazy(() => import('./pages/HelpCentrePage'))
 const ContactUsPage = lazy(() => import('./pages/ContactUsPage'))
@@ -169,7 +171,19 @@ function AppContent() {
     requestLocation()
   }, [])
 
-  const hideNav = currentPage === 'signin' || currentPage === 'signup' || location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/booking') || location.pathname.endsWith('/booking') || location.pathname.startsWith('/supplier/register') || location.pathname.startsWith('/supplier/list-experience') || location.pathname.startsWith('/login') || location.pathname.startsWith('/auth/callback')
+  const isBookingConfirmation = location.pathname.startsWith('/booking/confirmation')
+  // The confirmation receipt is a normal page (keeps the navbar + footer). The
+  // checkout + pickup steps stay focused (no chrome) to reduce distraction.
+  const hideNav =
+    currentPage === 'signin' ||
+    currentPage === 'signup' ||
+    location.pathname.startsWith('/dashboard') ||
+    (location.pathname.startsWith('/booking') && !isBookingConfirmation) ||
+    location.pathname.endsWith('/booking') ||
+    location.pathname.startsWith('/supplier/register') ||
+    location.pathname.startsWith('/supplier/list-experience') ||
+    location.pathname.startsWith('/login') ||
+    location.pathname.startsWith('/auth/callback')
 
   // /login?mode=signup opens the auth page straight on the sign-up tab
   // (used by flows like the partner application where sign-up is the primary action).
@@ -179,26 +193,14 @@ function AppContent() {
     <>
       <Toaster position="top-center" duration={2500} closeButton />
       {!hideNav && <Navbar onOpenAuth={handleOpenAuth} />}
-      {!location.pathname.startsWith('/tour') && !location.pathname.startsWith('/login') && !(currentPage === 'signin' || currentPage === 'signup') && <SupportChatWidget onOpenAuth={handleOpenAuth} />}
-      <AnimatePresence mode="wait">
-        <motion.div
-          // Dashboard pages manage their own keep-alive transitions internally
-          // (DashboardLayout). Keying this wrapper on the full pathname would
-          // remount the entire dashboard (sidebar + all) with a fade on every
-          // sidebar click — so group all /dashboard/* under one stable key.
-          key={location.pathname.startsWith('/dashboard') ? '/dashboard' : location.pathname}
-          initial={{ opacity: 0, y: 16 }}
-          animate={{
-            opacity: 1,
-            y: 0,
-            transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] },
-          }}
-          exit={{
-            opacity: 0,
-            y: -16,
-            transition: { duration: 0.25, ease: [0.4, 0, 1, 1] },
-          }}
-        >
+      {!location.pathname.startsWith('/tour') && !location.pathname.startsWith('/login') && !location.pathname.startsWith('/booking/checkout') && !(currentPage === 'signin' || currentPage === 'signup') && <SupportChatWidget onOpenAuth={handleOpenAuth} />}
+      {/* Route shell: keyed so each navigation mounts a fresh subtree, but NOT
+          animated to opacity 0 — an interrupted fade used to leave the new
+          page permanently invisible (blank white until a manual refresh). */}
+      <div
+        key={location.pathname.startsWith('/dashboard') ? '/dashboard' : location.pathname}
+      >
+        <RouteErrorBoundary>
         <Suspense fallback={<div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div className="spinner" /></div>}>
         <Routes>
           <Route path="/dashboard/*" element={<DashboardLayout />} />
@@ -255,6 +257,7 @@ function AppContent() {
           } />
           <Route path="/booking" element={<BookingPage />} />
           <Route path="/:tourId/booking" element={<BookingPage />} />
+          <Route path="/booking/checkout" element={<CheckoutPage />} />
           <Route path="/booking/confirmation/:bookingId" element={<BookingConfirmationPage />} />
           <Route path="/booking/confirmation" element={<BookingConfirmationPage />} />
           <Route path="/booking/:bookingId/pickup" element={<BookingPickupPage />} />
@@ -303,8 +306,8 @@ function AppContent() {
           } />
         </Routes>
         </Suspense>
-        </motion.div>
-      </AnimatePresence>
+        </RouteErrorBoundary>
+      </div>
     </>
   )
 }

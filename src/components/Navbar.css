@@ -58,9 +58,29 @@ body:has(.search-results-page) .navbar {
   display: none;
 }
 
-/* Mobile wishlist - hidden on desktop (desktop uses .nav-icons wishlist) */
-.nav-wishlist-mobile {
+/* Mobile wishlist + bookings - hidden on desktop (desktop uses .nav-icons) */
+.nav-wishlist-mobile,
+.nav-bookings-mobile {
   display: none;
+}
+
+/* Mobile bookings + wishlist render icon over a responsive, lowercase label */
+.nav-wishlist-mobile,
+.nav-bookings-mobile {
+  flex-direction: column;
+  gap: 1px;
+}
+
+.nav-wishlist-mobile .nav-icon-label,
+.nav-bookings-mobile .nav-icon-label {
+  font-family: 'Raleway', sans-serif;
+  font-size: clamp(7px, 1.8vw, 9.5px);
+  font-weight: 500;
+  letter-spacing: 0.15px;
+  text-transform: lowercase;
+  color: inherit;
+  line-height: 1.1;
+  white-space: nowrap;
 }
 
 /* Logo */
@@ -346,6 +366,42 @@ body:has(.story-detail) .navbar-compact-search {
 
 .nav-icon-item:hover .nav-icon-label::after {
   transform: scaleX(1);
+}
+
+/* Icon glyph wrapper (positioned anchor for the unread badge) */
+.nav-icon-glyph {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
+
+/* Unread bookings-count bubble on the top-bar icon */
+.nav-icon-badge {
+  position: absolute;
+  top: -5px;
+  right: -9px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #179237;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  pointer-events: none;
+  z-index: 1;
+}
+
+@media (max-width: 1024px) {
+  .nav-icon-badge {
+    right: -8px;
+  }
 }
 
 /* List an Experience — desktop pill CTA. Sits inline with the icon items
@@ -1141,7 +1197,8 @@ body:has(.story-detail) .navbar-compact-search {
     display: none;
   }
 
-  .nav-wishlist-mobile {
+  .nav-wishlist-mobile,
+  .nav-bookings-mobile {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1151,7 +1208,8 @@ body:has(.story-detail) .navbar-compact-search {
     transition: color 0.2s;
   }
 
-  .nav-wishlist-mobile:hover {
+  .nav-wishlist-mobile:hover,
+  .nav-bookings-mobile:hover {
     color: var(--primary);
   }
 
@@ -1188,7 +1246,8 @@ body:has(.story-detail) .navbar-compact-search {
 
   body.hero--search-sticky .nav-globe-trigger,
   body.hero--search-sticky .nav-hamburger,
-  body.hero--search-sticky .nav-wishlist-mobile {
+  body.hero--search-sticky .nav-wishlist-mobile,
+  body.hero--search-sticky .nav-bookings-mobile {
     display: none;
   }
 

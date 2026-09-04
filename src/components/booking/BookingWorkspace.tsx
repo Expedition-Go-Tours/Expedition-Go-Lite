@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import {
@@ -15,15 +15,15 @@ import {
   Phone,
   Info,
   AlertTriangle,
-  ChevronDown,
-  ChevronUp,
-  CheckCircle2,
-  XCircle,
+  ChevronRight,
   Navigation,
+  Flag,
 } from 'lucide-react'
 import { useChat } from '../../chat/ChatContext'
 import { useExpeditionBookingDetail, useCancelBooking } from '../../hooks/useExpeditionBookings'
-import { extractMeetingInfo, formatDuration } from '../../hooks/useExpeditionTours'
+import { extractMeetingInfo, formatDuration, type TourCardData } from '../../hooks/useExpeditionTours'
+import { useRecommendedTours, type RecommendedTour } from '../../hooks/useRecommendedTours'
+import { formatItineraryDuration, type ItineraryDay } from '../../lib/tourTypes'
 import { currencySymbol } from '../../lib/currencySymbol'
 import {
   bookingStatusMeta,
@@ -36,8 +36,8 @@ import {
   type PartyCount,
 } from '../../lib/bookingUi'
 import BookingPointMap from './BookingPointMap'
-import TourItineraryPreview from '../../pages/tour-detail/TourItineraryPreview'
 import { extractItinerary } from '../../hooks/useExpeditionTours'
+import TourCard from '../TourCard'
 import './bookingTheme.css'
 import './BookingWorkspace.css'
 
@@ -111,16 +111,18 @@ function KnowBeforeYouGo({
   const truncated = !expanded && hasLongList
 
   return (
-    <section className="ws-card ws-know-before">
-      <h2 className="ws-card-title">Know before you go</h2>
+    <section className="ws-card ws-kyb">
+      <h2 className="ws-kyb-title">Know before you go</h2>
 
       {highlights.length > 0 && (
-        <div className="ws-kwb-section">
-          <h3 className="ws-kwb-subtitle">Highlights</h3>
-          <ul className="ws-kwb-list ws-kwb-highlights">
+        <div className="ws-kyb-row">
+          <span className="ws-kyb-label">Highlights</span>
+          <ul className="ws-kyb-items">
             {highlights.map((item, i) => (
-              <li key={i} className="ws-kwb-item">
-                <CheckCircle2 size={15} className="ws-kwb-icon ws-kwb-icon-highlight" />
+              <li key={i} className="ws-kyb-item">
+                <svg className="ws-kyb-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00aa6c" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
                 <span>{item}</span>
               </li>
             ))}
@@ -129,12 +131,14 @@ function KnowBeforeYouGo({
       )}
 
       {included.length > 0 && (
-        <div className="ws-kwb-section">
-          <h3 className="ws-kwb-subtitle">What&apos;s included</h3>
-          <ul className="ws-kwb-list">
+        <div className="ws-kyb-row">
+          <span className="ws-kyb-label">Includes</span>
+          <ul className="ws-kyb-items">
             {visibleInc.map((item, i) => (
-              <li key={i} className="ws-kwb-item">
-                <CheckCircle2 size={15} className="ws-kwb-icon ws-kwb-icon-inc" />
+              <li key={i} className="ws-kyb-item">
+                <svg className="ws-kyb-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00aa6c" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
                 <span>{item}</span>
               </li>
             ))}
@@ -143,12 +147,15 @@ function KnowBeforeYouGo({
       )}
 
       {excluded.length > 0 && (
-        <div className="ws-kwb-section">
-          <h3 className="ws-kwb-subtitle">What&apos;s not included</h3>
-          <ul className="ws-kwb-list">
+        <div className="ws-kyb-row">
+          <span className="ws-kyb-label">What&apos;s not included</span>
+          <ul className="ws-kyb-items">
             {visibleExc.map((item, i) => (
-              <li key={i} className="ws-kwb-item">
-                <XCircle size={15} className="ws-kwb-icon ws-kwb-icon-exc" />
+              <li key={i} className="ws-kyb-item ws-kyb-item-exc">
+                <svg className="ws-kyb-x" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d93b3b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
                 <span>{item}</span>
               </li>
             ))}
@@ -157,29 +164,300 @@ function KnowBeforeYouGo({
       )}
 
       {notes && (
-        <div className="ws-kwb-section">
-          <h3 className="ws-kwb-subtitle">Notes from the activity provider</h3>
-          <p className="ws-kwb-notes">{notes}</p>
+        <div className="ws-kyb-row">
+          <span className="ws-kyb-label">Notes from the activity provider</span>
+          <p className="ws-kyb-notes">{notes}</p>
         </div>
       )}
 
       {truncated && (
-        <button
-          type="button"
-          className="ws-kwb-toggle"
-          onClick={() => setExpanded(true)}
-        >
-          Show all <ChevronDown size={14} />
+        <button type="button" className="ws-kyb-toggle" onClick={() => setExpanded(true)}>
+          More <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
         </button>
       )}
       {expanded && hasLongList && (
-        <button
-          type="button"
-          className="ws-kwb-toggle"
-          onClick={() => setExpanded(false)}
-        >
-          Show less <ChevronUp size={14} />
+        <button type="button" className="ws-kyb-toggle" onClick={() => setExpanded(false)}>
+          Less <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15" /></svg>
         </button>
+      )}
+    </section>
+  )
+}
+
+function ItineraryAccordion({
+  itinerary,
+  meeting,
+  dropoff,
+}: {
+  itinerary: ItineraryDay[]
+  meeting?: { meetingMode?: string; meetingPoint?: string; pickupType?: string; pickupAreas?: { name?: string; address?: string }[]; pickupLocations?: { name?: string; address?: string }[] }
+  dropoff?: { dropoffOption?: string; dropoffLocation?: string; dropoffLocationAddress?: string }
+}) {
+  const [openIndex, setOpenIndex] = useState<number | null>(null)
+
+  if (!itinerary || itinerary.length === 0) return null
+
+  const isMultiDay = itinerary.some((stop) => (stop.day || 1) > 1)
+
+  const admissionLabel = (stop: ItineraryDay) => {
+    if (stop.admissionIncluded === 'yes') return 'Ticket included'
+    if (stop.admissionIncluded === 'no') return 'Pay separately'
+    if (stop.admissionIncluded === 'passby') return 'Pass by'
+    return stop.additionalFee ? 'Pay separately' : 'Ticket included'
+  }
+
+  const formatStopMeta = (stop: ItineraryDay) => {
+    const parts: string[] = []
+    const dur = formatItineraryDuration(stop.duration, stop.durationUnit)
+    if (dur) parts.push(dur)
+    parts.push(admissionLabel(stop))
+    return parts.join(' \u00B7 ')
+  }
+
+  // Build pickup label
+  const pickupLabel = (() => {
+    if (!meeting) return null
+    if (meeting.meetingMode === 'pickup') {
+      if (meeting.pickupType === 'area') {
+        return meeting.pickupAreas?.map((a) => a.name || a.address).filter(Boolean).join(', ') || 'Pickup areas'
+      }
+      return meeting.pickupLocations?.map((l) => l.name || l.address).filter(Boolean).join(', ') || 'Pickup locations'
+    }
+    if (meeting.meetingMode === 'meeting_point') return meeting.meetingPoint || 'Meeting point'
+    return null
+  })()
+
+  const pickupAddress = (() => {
+    if (!meeting || meeting.meetingMode !== 'meeting_point') return null
+    return meeting.meetingPoint || null
+  })()
+
+  // Group stops by day for multi-day
+  const stopsByDay = isMultiDay
+    ? Array.from(
+        itinerary.reduce((map, stop) => {
+          const d = stop.day || 1
+          if (!map.has(d)) map.set(d, [])
+          map.get(d)!.push(stop)
+          return map
+        }, new Map<number, ItineraryDay[]>())
+      )
+    : null
+
+  return (
+    <section className="ws-card ws-itinerary-accordion">
+      <h2 className="ws-card-title">Your itinerary</h2>
+      <div className="ws-itin-list">
+        {/* Pickup / Start node */}
+        {pickupLabel && (
+          <div className="ws-itin-node ws-itin-start">
+            <div className="ws-itin-node-icon-wrap ws-itin-node-icon-start">
+              <MapPin size={16} strokeWidth={2.4} />
+            </div>
+            <div className="ws-itin-node-body">
+              <p className="ws-itin-node-label">Pickup</p>
+              <p className="ws-itin-node-text">{pickupLabel}</p>
+              {pickupAddress && <p className="ws-itin-node-sub">{pickupAddress}</p>}
+            </div>
+          </div>
+        )}
+
+        {/* Stops */}
+        {isMultiDay && stopsByDay ? (
+          stopsByDay.map(([day, stops]) => (
+            <div key={day} className="ws-itin-day-group">
+              <div className="ws-itin-day-badge">Day {day}</div>
+              {stops.map((stop, i) => {
+                const globalIdx = itinerary.indexOf(stop)
+                const isOpen = openIndex === globalIdx
+                const title = stop.locationName || stop.title
+                const meta = formatStopMeta(stop)
+                const locLine = [stop.locationCity, stop.locationCountry].filter(Boolean).join(', ')
+                return (
+                  <div key={i} className={`ws-itin-stop${isOpen ? ' open' : ''}`}>
+                    <button
+                      type="button"
+                      className="ws-itin-stop-header"
+                      onClick={() => setOpenIndex(isOpen ? null : globalIdx)}
+                      aria-expanded={isOpen}
+                    >
+                      <div className="ws-itin-node-icon-wrap ws-itin-node-icon-stop">
+                        <span className="ws-itin-stop-num">{stops.indexOf(stop) + 1}</span>
+                      </div>
+                      <div className="ws-itin-stop-info">
+                        <p className="ws-itin-stop-title">{title}</p>
+                        <p className="ws-itin-stop-meta">{meta}</p>
+                      </div>
+                      <ChevronRight
+                        size={16}
+                        className={`ws-itin-chevron${isOpen ? ' rotated' : ''}`}
+                      />
+                    </button>
+                    {isOpen && (
+                      <div className="ws-itin-stop-detail">
+                        {locLine && <p className="ws-itin-stop-loc">{locLine}</p>}
+                        {stop.locationAddress && <p className="ws-itin-stop-addr">{stop.locationAddress}</p>}
+                        {stop.description && <p className="ws-itin-stop-desc">{stop.description}</p>}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          ))
+        ) : (
+          itinerary.map((stop, i) => {
+            const isOpen = openIndex === i
+            const title = stop.locationName || stop.title
+            const meta = formatStopMeta(stop)
+            const locLine = [stop.locationCity, stop.locationCountry].filter(Boolean).join(', ')
+            return (
+              <div key={i} className={`ws-itin-stop${isOpen ? ' open' : ''}`}>
+                <button
+                  type="button"
+                  className="ws-itin-stop-header"
+                  onClick={() => setOpenIndex(isOpen ? null : i)}
+                  aria-expanded={isOpen}
+                >
+                  <div className="ws-itin-node-icon-wrap ws-itin-node-icon-stop">
+                    <span className="ws-itin-stop-num">{i + 1}</span>
+                  </div>
+                  <div className="ws-itin-stop-info">
+                    <p className="ws-itin-stop-title">{title}</p>
+                    <p className="ws-itin-stop-meta">{meta}</p>
+                  </div>
+                  <ChevronRight
+                    size={16}
+                    className={`ws-itin-chevron${isOpen ? ' rotated' : ''}`}
+                  />
+                </button>
+                {isOpen && (
+                  <div className="ws-itin-stop-detail">
+                    {locLine && <p className="ws-itin-stop-loc">{locLine}</p>}
+                    {stop.locationAddress && <p className="ws-itin-stop-addr">{stop.locationAddress}</p>}
+                    {stop.description && <p className="ws-itin-stop-desc">{stop.description}</p>}
+                  </div>
+                )}
+              </div>
+            )
+          })
+        )}
+
+        {/* Drop-off / End node */}
+        {dropoff && dropoff.dropoffOption !== 'none' && (
+          <div className="ws-itin-node ws-itin-end">
+            <div className="ws-itin-node-icon-wrap ws-itin-node-icon-end">
+              <Flag size={16} strokeWidth={2.4} />
+            </div>
+            <div className="ws-itin-node-body">
+              <p className="ws-itin-node-label">
+                {dropoff.dropoffOption === 'same_location' ? 'Returns to pickup point' : 'Drop-off'}
+              </p>
+              {dropoff.dropoffOption === 'different_location' && dropoff.dropoffLocation && (
+                <>
+                  <p className="ws-itin-node-text">{dropoff.dropoffLocation}</p>
+                  {dropoff.dropoffLocationAddress && <p className="ws-itin-node-sub">{dropoff.dropoffLocationAddress}</p>}
+                </>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  )
+}
+
+function recDurationLabel(min: number | null | undefined): string {
+  if (!min || min <= 0) return ''
+  if (min >= 1440) {
+    const d = Math.round(min / 1440)
+    return d === 1 ? '1 day' : `${d} days`
+  }
+  const h = Math.round(min / 60)
+  return h === 1 ? '1 hour' : `${h} hours`
+}
+
+function toRecommendedCardData(tour: RecommendedTour): TourCardData {
+  return {
+    id: tour.id,
+    title: tour.title || '',
+    slug: tour.slug || '',
+    category: tour.category || '',
+    duration: recDurationLabel(tour.durationMinutes),
+    features: '',
+    price: tour.startingPrice != null ? `$${tour.startingPrice}` : '',
+    priceValue: tour.startingPrice,
+    rating: tour.averageRating != null ? String(tour.averageRating) : '',
+    reviews: tour.reviewCount ?? 0,
+    location: [tour.city, tour.country].filter(Boolean).join(', '),
+    image: tour.coverPhoto || (tour.photos && tour.photos[0]) || '',
+    photos: tour.photos,
+    source: 'expedition-go',
+    specialOffers: (tour.specialOffers ?? []) as unknown as TourCardData['specialOffers'],
+    isNew: tour.isNew,
+    likelyToSellOut: tour.likelyToSellOut,
+  }
+}
+
+function RecommendedExperiences({ tourId, location }: { tourId: string; location: string }) {
+  const { data, isLoading } = useRecommendedTours(tourId, 6)
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const [canScrollLeft, setCanScrollLeft] = useState(false)
+  const [canScrollRight, setCanScrollRight] = useState(true)
+
+  const tours = useMemo(() => data?.data?.tours ?? [], [data])
+
+  const checkScroll = useCallback(() => {
+    const el = scrollRef.current
+    if (!el) return
+    setCanScrollLeft(el.scrollLeft > 10)
+    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 10)
+  }, [])
+
+  const scroll = useCallback((dir: 'left' | 'right') => {
+    const el = scrollRef.current
+    if (!el) return
+    const slot = el.querySelector<HTMLElement>('.ws-rec-card-slot')
+    const step = slot ? slot.offsetWidth + 16 : 300
+    el.scrollBy({ left: dir === 'left' ? -step : step, behavior: 'smooth' })
+    setTimeout(checkScroll, 350)
+  }, [checkScroll])
+
+  if (isLoading || tours.length === 0) return null
+
+  return (
+    <section className="ws-recommended">
+      <div className="ws-recommended-header">
+        <h2 className="ws-recommended-title">More popular experiences</h2>
+        {location && (
+          <p className="ws-recommended-subtitle">
+            Recommended activities for you near <strong>{location}</strong>
+          </p>
+        )}
+      </div>
+      <div className="ws-recommended-scroll-wrap">
+        {canScrollLeft && (
+          <button type="button" className="ws-recommended-arrow ws-recommended-arrow-left" onClick={() => scroll('left')} aria-label="Scroll left">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+          </button>
+        )}
+        <div ref={scrollRef} className="ws-recommended-scroll" onScroll={checkScroll}>
+          {tours.map(({ id: recordId, tour }) => (
+            <div key={recordId} className="ws-rec-card-slot">
+              <TourCard {...toRecommendedCardData(tour)} />
+            </div>
+          ))}
+        </div>
+        {canScrollRight && (
+          <button type="button" className="ws-recommended-arrow ws-recommended-arrow-right" onClick={() => scroll('right')} aria-label="Scroll right">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+          </button>
+        )}
+      </div>
+      {location && (
+        <a href={`/tours?city=${encodeURIComponent(location)}`} className="ws-recommended-link">
+          Find more things to do in {location} &rsaquo;
+        </a>
       )}
     </section>
   )
@@ -239,7 +517,10 @@ export default function BookingWorkspace({ id, onClose }: { id?: string; onClose
     typeof pickup?.instructions === 'string' ? pickup.instructions.trim() : ''
   // Customer-facing location: the exact pickup point when one is stored; the
   // supplier zone label is operator context only and is never shown to customers.
-  const pickupAddressText = String(pickupAddress?.name || pickupAddress?.address || '').trim()
+  // For area-type pickups the address may only live in travelers.location
+  // (the checkout payload), so fall back to it when pickup.address is empty.
+  const travelerLocation = typeof travelers.location === 'string' ? travelers.location.trim() : ''
+  const pickupAddressText = String(pickupAddress?.name || pickupAddress?.address || travelerLocation || '').trim()
   const pickupPrimary = pickupAddressText || pickupLocation
   const pickupKicker = pickupAddressText
     ? 'Pickup point'
@@ -602,21 +883,15 @@ export default function BookingWorkspace({ id, onClose }: { id?: string; onClose
 
           {/* Itinerary */}
           {itinerary.length > 0 && (
-            <section className="ws-card ws-itinerary-card">
-              <TourItineraryPreview
-                itinerary={itinerary}
-                meeting={meeting}
-                dropoff={productContent ? {
-                  dropoffOption: productContent.dropoffOption,
-                  dropoffLocation: productContent.dropoffLocation?.name,
-                  dropoffLocationAddress: productContent.dropoffLocation?.address,
-                  dropoffDescription: productContent.dropoffDescription,
-                } : undefined}
-                accommodationIncluded={!!productContent?.transportationProvided}
-                meals={productContent?.meals}
-                dayLogistics={productContent?.dayLogistics}
-              />
-            </section>
+            <ItineraryAccordion
+              itinerary={itinerary}
+              meeting={meeting}
+              dropoff={productContent ? {
+                dropoffOption: productContent.dropoffOption,
+                dropoffLocation: productContent.dropoffLocation?.name,
+                dropoffLocationAddress: productContent.dropoffLocation?.address,
+              } : undefined}
+            />
           )}
 
           {/* Where to go */}
@@ -801,6 +1076,14 @@ export default function BookingWorkspace({ id, onClose }: { id?: string; onClose
           <strong>Thanks for booking with us and enjoy your journey.</strong>
         </p>
       </div>
+
+      {/* Recommended experiences near the tour location */}
+      {detail?.tourId && (
+        <RecommendedExperiences
+          tourId={detail.tourId}
+          location={tour?.city || tour?.country || ''}
+        />
+      )}
     </div>
   )
 }
