@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { Search, Clock, User, ArrowRight, TrendingUp, BookOpen } from 'lucide-react'
 import { travelStories, storySlug } from '../components/data'
@@ -53,7 +52,7 @@ function FeaturedCard({ story }: { story: TravelStory }) {
   )
 }
 
-function StoryCardSmall({ story, index }: { story: TravelStory; index: number }) {
+function StoryCardSmall({ story }: { story: TravelStory }) {
   return (
     <motion.div
       variants={fadeUp}
@@ -81,7 +80,6 @@ function StoryCardSmall({ story, index }: { story: TravelStory; index: number })
 }
 
 export default function BlogPage({ onOpenAuth }: BlogPageProps) {
-  const { t } = useTranslation()
   const [searchQuery, setSearchQuery] = useState('')
   const [activeCategory, setActiveCategory] = useState('All')
 
@@ -183,8 +181,8 @@ export default function BlogPage({ onOpenAuth }: BlogPageProps) {
             viewport={{ once: true, margin: '-50px' }}
             variants={stagger}
           >
-            {remaining.map((story, i) => (
-              <StoryCardSmall key={story.title} story={story} index={i} />
+            {remaining.map((story) => (
+              <StoryCardSmall key={story.title} story={story} />
             ))}
           </motion.div>
         </div>

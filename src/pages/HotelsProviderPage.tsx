@@ -7,8 +7,6 @@ import {
   ArrowRight,
 } from 'lucide-react'
 import heroBg from '../assets/images/painting.webp'
-import partners2 from '../assets/partners/partners2.avif'
-import partners7 from '../assets/partners/partners7.avif'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import { useAuthUser } from '../hooks/useAuthUser'

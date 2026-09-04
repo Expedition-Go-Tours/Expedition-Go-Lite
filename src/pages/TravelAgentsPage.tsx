@@ -7,10 +7,6 @@ import {
   ChevronDown, ArrowRight,
 } from 'lucide-react'
 import heroImg from '../assets/partners/partners9.avif'
-import tour1 from '../assets/tours/tour1.avif'
-import tour2 from '../assets/tours/tour2.avif'
-import tour3 from '../assets/tours/tour3.avif'
-import tour4 from '../assets/tours/tour4.avif'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import { useAuthUser } from '../hooks/useAuthUser'
