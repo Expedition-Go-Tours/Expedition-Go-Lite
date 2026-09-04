@@ -116,7 +116,7 @@ export default function CheckoutElements({
     <div>
       <div
         ref={containerRef}
-        className="checkout-payment-element rounded-xl border border-[var(--bv-border)] bg-white p-1 transition-colors focus-within:border-[var(--bv-accent)] focus-within:ring-2 focus-within:ring-[var(--bv-focus)]"
+        className="checkout-payment-element rounded-xl border border-[var(--bv-border)] bg-white p-1"
       />
       {fatal && (
         <p className="mt-2 text-xs font-medium text-rose-600" role="alert">

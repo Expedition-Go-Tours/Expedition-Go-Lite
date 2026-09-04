@@ -23,10 +23,11 @@ export function checkoutElementsOptions(clientSecret: string): StripeElementsOpt
         fontSizeBase: '15px',
         borderRadius: '10px',
         spacingUnit: '3px',
-        focusBoxShadow: '0 0 0 3px rgba(22, 163, 74, 0.35)',
+        focusBoxShadow: 'none',
       },
       rules: {
         '.Input': { backgroundColor: '#ffffff' },
+        '.Input:focus': { borderColor: '#c2c8d1' },
         '.Tab, .Input, .Block': { boxShadow: 'none' },
         '.Tab:hover': { color: '#101828' },
         '.Label': { color: '#344054' },
