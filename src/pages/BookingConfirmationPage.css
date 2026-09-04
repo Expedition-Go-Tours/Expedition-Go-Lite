@@ -63,6 +63,18 @@
   background: #fee2e2;
   color: #dc2626;
 }
+.confirmation-icon.processing {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.confirmation-spinner {
+  animation: confirmation-spin 0.9s linear infinite;
+}
+
+@keyframes confirmation-spin {
+  to { transform: rotate(360deg); }
+}
 
 .confirmation-title {
   font-size: 26px;
@@ -365,6 +377,37 @@
   .confirmation-tour-image {
     width: 100%;
     height: 180px;
+  }
+}
+
+/* ── Post-booking engagement sections ───────────────────────────────── */
+
+.confirmation-engagement {
+  max-width: 680px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 24px 0 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.confirmation-sections {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+@media (max-width: 768px) {
+  .confirmation-engagement {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 16px 0 12px;
+  }
+
+  .confirmation-sections {
+    padding: 0 12px;
   }
 }
 

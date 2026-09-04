@@ -1,0 +1,11 @@
+.confirmation-sections-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+}
+
+@media (max-width: 768px) {
+  .confirmation-sections-inner {
+    gap: 32px;
+  }
+}

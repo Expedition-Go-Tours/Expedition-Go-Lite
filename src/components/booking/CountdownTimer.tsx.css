@@ -1,0 +1,35 @@
+.countdown-timer {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  font-size: 14px;
+}
+
+.countdown-label {
+  font-size: 13px;
+  font-weight: 400;
+  color: #6b7280;
+}
+
+.countdown-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+}
+
+.countdown-num {
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+  font-variant-numeric: tabular-nums;
+}
+
+.countdown-sep {
+  color: #d1d5db;
+  font-size: 14px;
+  font-weight: 400;
+}

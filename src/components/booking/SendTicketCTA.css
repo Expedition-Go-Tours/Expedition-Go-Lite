@@ -1,0 +1,38 @@
+.send-ticket-cta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.send-ticket-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px;
+  background: #111827;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 24px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+.send-ticket-btn:hover {
+  background: #1f2937;
+}
+
+.send-ticket-hint {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+@media (max-width: 768px) {
+  .send-ticket-cta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+}

@@ -1,15 +1,17 @@
-﻿import { useEffect, useMemo, useRef, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+﻿import { useEffect, useMemo, useRef, useState, lazy, Suspense } from 'react'
+import { useSearchParams, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Search, Ticket, AlertTriangle, ArrowRight, CalendarDays, CheckCircle2, Wallet } from 'lucide-react'
 import {
   useMyExpeditionBookings,
+  useMyBookingsCount,
   type ExpeditionBookingSummary,
 } from '../hooks/useExpeditionBookings'
 import { useAuthUser } from '@/hooks/useAuthUser'
 import BookingCard from '../components/booking/BookingCard'
-import BookingWorkspace from '../components/booking/BookingWorkspace'
+const BookingWorkspace = lazy(() => import('../components/booking/BookingWorkspace'))
 import { formatHeadingDate, toDateKey, isSameCalendarDay } from '../lib/bookingUi'
+import { writeBookingsSeen } from '../lib/bookingsBadge'
 import '../components/booking/bookingTheme.css'
 import './BookingHistory.css'
 
@@ -58,6 +60,7 @@ function groupHeading(dateKey: string, labelForHeading: string): string {
 
 export default function BookingHistory() {
   const [searchParams, setSearchParams] = useSearchParams()
+  const location = useLocation()
   const bookingId = searchParams.get('booking')
   const listScrollRef = useRef(0)
   const user = useAuthUser()
@@ -70,6 +73,20 @@ export default function BookingHistory() {
     undefined,
     100
   )
+
+  // Live total of CONFIRMED/PENDING bookings — the number the navbar badge
+  // compares against. Watching it here keeps the badge's "seen" marker in sync
+  // so opening Bookings from any entry point (top tab, bottom bar, mobile
+  // drawer, or the navbar icon) dismisses the badge once the list is visible.
+  const { data: liveCount } = useMyBookingsCount('CONFIRMED,PENDING', !!user)
+
+  // DashboardLayout keeps every visited pane mounted, so only persist the
+  // seen-marker while this Bookings list is the pane actually on screen.
+  useEffect(() => {
+    if (!user || liveCount == null) return
+    if (location.pathname !== '/dashboard/bookings') return
+    writeBookingsSeen(liveCount)
+  }, [user, liveCount, location.pathname])
 
   // Banner stats
   const bannerStats = useMemo(() => {
@@ -372,7 +389,15 @@ export default function BookingHistory() {
         {/* Pane 2 — booking workspace (slides over the list) */}
         <section className={`bk-pane bk-pane-detail${bookingId ? ' on' : ' off'}`}>
           {bookingId ? (
-            <BookingWorkspace id={bookingId} onClose={closeDetail} />
+            <Suspense
+              fallback={
+                <div className="ws-loading">
+                  <div className="ws-loading-spinner" />
+                </div>
+              }
+            >
+              <BookingWorkspace id={bookingId} onClose={closeDetail} />
+            </Suspense>
           ) : (
             <div className="bk-pane-empty" />
           )}

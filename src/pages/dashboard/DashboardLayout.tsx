@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, lazy } from "react";
+import { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -11,11 +11,9 @@ import {
   LogOut,
   Home,
   ArrowLeft,
-  Menu,
   ChevronDown,
 } from "lucide-react";
 import { toast } from "sonner";
-import { useSidebarStore } from "@/stores/sidebarStore";
 import { signOutUser } from "@/lib/auth";
 import { useAuthUser } from "@/hooks/useAuthUser";
 import { useChat } from "@/chat/ChatContext";
@@ -241,7 +239,6 @@ function TopBar() {
   const navigate = useNavigate();
   const user = useAuthUser();
   const { unreadCount } = useChat();
-  const { isMobileOpen, closeMobile, toggleMobile } = useSidebarStore();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -262,17 +259,8 @@ function TopBar() {
       {/* Top bar */}
       <header className="dash-topbar">
         <div className="dash-topbar-inner">
-          {/* Left: Logo + hamburger (mobile) */}
+          {/* Left: Logo */}
           <div className="dash-topbar-left">
-            {/* Mobile hamburger */}
-            <button
-              onClick={toggleMobile}
-              className="dash-topbar-hamburger lg:hidden"
-              aria-label="Toggle menu"
-            >
-              <Menu size={20} />
-            </button>
-
             {/* Logo */}
             <a
               href="/"
@@ -389,92 +377,6 @@ function TopBar() {
           </div>
         </div>
       </header>
-
-      {/* Mobile drawer overlay */}
-      <AnimatePresence>
-        {isMobileOpen && (
-          <>
-            <motion.div
-              className="fixed inset-0 bg-black/30 z-[70] lg:hidden"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              onClick={closeMobile}
-            />
-            {/* Mobile drawer */}
-            <motion.div
-              className="fixed left-0 top-0 h-screen w-[280px] bg-white z-[80] lg:hidden flex flex-col shadow-2xl"
-              initial={{ x: "-100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "-100%" }}
-              transition={{ type: "spring", stiffness: 400, damping: 35 }}
-            >
-              {/* Drawer header */}
-              <div className="flex items-center justify-between px-5 pt-5 pb-4">
-                <a href="/" className="flex items-center gap-2.5" onClick={closeMobile}>
-                  <img src={logoSrc} alt="Expedition Go" className="h-14" />
-                  <span className="text-[17px] font-bold text-[var(--bv-ink)] tracking-[-0.01em]">
-                    Expedition Go
-                  </span>
-                </a>
-                <button
-                  onClick={closeMobile}
-                  className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
-                  aria-label="Close menu"
-                >
-                  <span className="text-xl leading-none">&times;</span>
-                </button>
-              </div>
-
-              <div className="h-px bg-gray-100 mx-4" />
-
-              {/* Drawer nav */}
-              <nav className="flex-1 overflow-y-auto px-3 py-3" aria-label="Dashboard navigation">
-                {allNavItems.map((item) => {
-                  const active = isActive(item.path);
-                  const badge =
-                    item.path === "/dashboard/chat" ? unreadCount : 0;
-                  return (
-                    <button
-                      key={item.path}
-                      className={`dash-drawer-item${active ? " active" : ""}`}
-                      onClick={() => {
-                        navigate(item.path);
-                        closeMobile();
-                      }}
-                    >
-                      <item.icon size={18} strokeWidth={active ? 2.2 : 1.7} />
-                      <span>{item.label}</span>
-                      {badge > 0 && (
-                        <span className="ml-auto min-w-[18px] h-[18px] px-1 rounded-full bg-[var(--bv-danger-dot)] text-white text-[10px] font-bold flex items-center justify-center">
-                          {badge > 99 ? "99+" : badge}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </nav>
-
-              <div className="h-px bg-gray-100 mx-4" />
-
-              {/* Drawer footer */}
-              <div className="px-3 py-3 space-y-0.5">
-                <button
-                  className="dash-drawer-item"
-                  onClick={() => {
-                    navigate("/");
-                    closeMobile();
-                  }}
-                >
-                  <Home size={18} strokeWidth={1.7} />
-                  <span>Back to Homepage</span>
-                </button>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
     </>
   );
 }
@@ -526,19 +428,6 @@ export default function DashboardLayout() {
                 <ArrowLeft size={16} strokeWidth={2.2} />
               </button>
             )}
-
-            {location.pathname === "/dashboard/bookings" && (
-              <button
-                type="button"
-                onClick={() =>
-                  navigate("/", { state: { openMobileMenu: true } })
-                }
-                className="lg:hidden absolute right-0 flex h-9 w-9 items-center justify-center rounded-full border border-[var(--bv-border)] bg-white text-[var(--bv-text)] shadow-sm transition-colors hover:bg-[var(--bv-surface-2)]"
-                aria-label="Back to menu"
-              >
-                <ArrowLeft size={16} strokeWidth={2.2} />
-              </button>
-            )}
           </div>
 
           <div className="dash-pages">
@@ -551,7 +440,17 @@ export default function DashboardLayout() {
                   className={`dash-pane${active ? " active" : ""}`}
                   hidden={!active}
                 >
-                  <r.Page />
+                  <Suspense
+                    fallback={
+                      <div className="dash-page-skeleton">
+                        <div className="dash-page-skeleton-bar w-1/3" />
+                        <div className="dash-page-skeleton-bar w-2/3" />
+                        <div className="dash-page-skeleton-bar w-1/2" />
+                      </div>
+                    }
+                  >
+                    <r.Page />
+                  </Suspense>
                 </section>
               );
             })}

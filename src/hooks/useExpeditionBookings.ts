@@ -404,6 +404,14 @@ export function useMyBookingsCount(status: string = 'CONFIRMED,PENDING', enabled
       const total = data?.pagination?.totalCount ?? payload?.pagination?.totalCount ?? 0
       return typeof total === 'number' ? total : Number(total) || 0
     },
+    // Badge freshness: poll while the navbar is visible so a new booking
+    // surfaces within ~60s, pause when the tab is hidden (no wasted work),
+    // and refresh immediately when the user returns to the tab. Push events
+    // (socket 'notification') invalidate this query for near-instant updates;
+    // this interval is the self-healing fallback for missed pushes.
+    refetchInterval: enabled ? 60_000 : false,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
   })
 }
 

@@ -216,8 +216,8 @@
 }
 
 .bk-search:focus-within {
-  border-color: var(--bv-accent);
-  box-shadow: 0 0 0 3px var(--bv-focus);
+  border-color: var(--bv-border);
+  box-shadow: none;
 }
 
 .bk-search input {
