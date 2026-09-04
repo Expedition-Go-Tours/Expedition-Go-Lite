@@ -40,7 +40,13 @@ export default function PartnersSection() {
     <section className="partners-section">
       <div className="partners-container">
         <div className="partners-viewport">
+          <div className="partners-divider">
+            <span className="partners-divider-line"></span>
+            <span className="partners-divider-star">&#10022;</span>
+            <span className="partners-divider-line"></span>
+          </div>
           <h2 className="partners-heading">{t('partners.heading')}</h2>
+          <p className="partners-subtitle">{t('partners.subtitle')}</p>
           <div className="partners-track-wrap">
             <div className="partners-track">
               {[...logos, ...logos].map((logo, i) => (

@@ -190,6 +190,7 @@ export default function Footer() {
                 <a href="/careers" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.careers')}</a>
                 <a href="/partnerships" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.partnerships')}</a>
                 <a href="/foundation" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.foundation')}</a>
+                <a href="/supplier-terms" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.supplierTerms')}</a>
               </div>
             </FooterAccordion>
           </div>
@@ -198,9 +199,11 @@ export default function Footer() {
           <div className="footer-col">
             <FooterAccordion title={t('footer.supplierZone')}>
               <div className="footer-links">
-                <a href="/partnerships" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.listYourTours')}</a>
-                <a href="/supplier/register" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.supplierDashboard')}</a>
-                <a href="/supplier-terms" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.supplierTerms')}</a>
+                <a href="/content-creators" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.asContentCreator')}</a>
+                <a href="/supplier/list-experience" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.asSupplier')}</a>
+                <a href="/hotels" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.asAccommodationProvider')}</a>
+                <a href="/travel-agents" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.asTravelAgentReseller')}</a>
+                <a href="/transport-providers" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.asTransportProvider')}</a>
               </div>
             </FooterAccordion>
           </div>
@@ -211,6 +214,7 @@ export default function Footer() {
               <div className="footer-links">
                 <a href="/" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.home')}</a>
                 <a href="/tours" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.tours')}</a>
+                <a href="/blog" target="_blank" rel="noopener noreferrer" className="footer-link">Blog</a>
               </div>
             </FooterAccordion>
           </div>

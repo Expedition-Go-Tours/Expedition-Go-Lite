@@ -118,15 +118,17 @@
     "tours": "{{count}}+ Tours"
   },
   "features": {
-    "whyBookHeading": "Why Book With Us",
-    "whyBookPaymentsDesc": "Secure payments with multiple payment options",
-    "whyBookPaymentsTitle": "Secure Payments",
-    "whyBookReviewsDesc": "Real reviews from verified travelers",
-    "whyBookReviewsTitle": "Verified Reviews",
-    "whyBookSupportDesc": "24/7 customer support for all your needs",
-    "whyBookSupportTitle": "24/7 Support",
-    "whyBookVerifiedDesc": "All tours are carefully vetted for quality",
-    "whyBookVerifiedTitle": "Verified Tours"
+    "whyBookHeading": "Why travellers book with us",
+    "whyBookDescription": "Local expertise, trusted partners and care at every step\u2014so you can explore Ghana with total confidence.",
+    "whyBookBadge": "Locally vetted in Ghana",
+    "whyBookPaymentsDesc": "Book confidently with trusted payment options.",
+    "whyBookPaymentsTitle": "Secure, flexible payments",
+    "whyBookReviewsDesc": "Genuine feedback from verified travellers.",
+    "whyBookReviewsTitle": "Reviews you can trust",
+    "whyBookSupportDesc": "Friendly help before, during and after your trip.",
+    "whyBookSupportTitle": "Support when you need it",
+    "whyBookVerifiedDesc": "Every tour is reviewed for quality, safety and authenticity.",
+    "whyBookVerifiedTitle": "Handpicked experiences"
   },
   "feedback": {
     "no": "No",
@@ -163,6 +165,11 @@
     "foundation": "Expedition-Go Foundation",
     "supplierDashboard": "Supplier Dashboard",
     "supplierTerms": "Supplier Terms",
+    "asContentCreator": "As a Content Creator",
+    "asSupplier": "As a Supplier / Tour Operator",
+    "asAccommodationProvider": "As Accommodation Provider",
+    "asTravelAgentReseller": "As Travel Agent & Reseller",
+    "asTransportProvider": "As Transport Provider",
     "tours": "Tours"
   },
   "gallery": {
@@ -216,7 +223,8 @@
     "title": "Stay in the Know"
   },
   "partners": {
-    "heading": "Companies We Work With"
+    "heading": "Trusted across the world's leading travel platforms",
+    "subtitle": "We partner with the most respected names in travel to bring Ghana to the world."
   },
   "search": {
     "clearRecent": "Clear recent searches",
@@ -598,6 +606,7 @@
     "aboutUsSubtitle": "Discover who we are and what drives Expedition-Go.",
     "careersSubtitle": "Join our team and help travellers experience the world.",
     "partnershipsSubtitle": "Grow your business with Expedition-Go partnerships.",
+    "contentCreatorsSubtitle": "Turn your travel content into income.",
     "termsSubtitle": "The terms that govern your use of Expedition-Go.",
     "privacySubtitle": "How we collect, use and protect your information.",
     "cookiesSubtitle": "How we use cookies and how you can control them."

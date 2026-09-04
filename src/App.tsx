@@ -11,7 +11,7 @@ import PopularLocations from './components/PopularLocations'
 import CustomReviewsSection from './components/CustomReviewsSection'
 import PartnersSection from './components/PartnersSection'
 import WhyBookSection from './components/WhyBookSection'
-import NewsletterSection from './components/NewsletterSection'
+
 import Footer from './components/Footer'
 import MountOnView from './components/MountOnView'
 import { WishlistProvider } from './context/WishlistContext'
@@ -53,6 +53,12 @@ const CookiesPolicyPage = lazy(() => import('./pages/CookiesPolicyPage'))
 const SupplierTermsPage = lazy(() => import('./pages/SupplierTermsPage'))
 const FoundationPage = lazy(() => import('./pages/FoundationPage'))
 const PartnerApplyPage = lazy(() => import('./pages/partner/PartnerApplyPage'))
+const ContentCreatorsPage = lazy(() => import('./pages/ContentCreatorsPage'))
+const TravelAgentsPage = lazy(() => import('./pages/TravelAgentsPage'))
+const HotelsProviderPage = lazy(() => import('./pages/HotelsProviderPage'))
+const TransportPage = lazy(() => import('./pages/TransportPage'))
+const TransportProviderPage = lazy(() => import('./pages/TransportProviderPage'))
+const BlogPage = lazy(() => import('./pages/BlogPage'))
 
 // Below-fold homepage sections (lazy loaded, mounted on scroll)
 const TopRatedSection = lazy(() => import('./components/TopRatedSection'))
@@ -60,7 +66,6 @@ const SellOutSection = lazy(() => import('./components/SellOutSection'))
 const LastMinuteDealsSection = lazy(() => import('./components/LastMinuteDealsSection'))
 const NewExperiencesSection = lazy(() => import('./components/NewExperiencesSection'))
 const TopAttractionsNearbySection = lazy(() => import('./components/TopAttractionsNearbySection'))
-const TravelStoriesSection = lazy(() => import('./components/TravelStoriesSection'))
 
 
 type PageView = 'home' | 'signin' | 'signup'
@@ -80,7 +85,6 @@ function HomePage() {
       import('./components/LastMinuteDealsSection')
       import('./components/NewExperiencesSection')
       import('./components/TopAttractionsNearbySection')
-      import('./components/TravelStoriesSection')
     }
     if ('requestIdleCallback' in window) {
       (window as any).requestIdleCallback(prefetch, { timeout: 3000 })
@@ -102,8 +106,6 @@ function HomePage() {
       <MountOnView><Suspense fallback={sectionFallback}><NewExperiencesSection isLoading={isLoading} /></Suspense></MountOnView>
       <MountOnView><Suspense fallback={sectionFallback}><TopAttractionsNearbySection preloaded={homepage?.attractions} /></Suspense></MountOnView>
       <MountOnView><CustomReviewsSection /></MountOnView>
-      <MountOnView><Suspense fallback={sectionFallback}><TravelStoriesSection /></Suspense></MountOnView>
-      <MountOnView><NewsletterSection /></MountOnView>
       <MountOnView><PartnersSection /></MountOnView>
       <MountOnView><WhyBookSection /></MountOnView>
       <Footer />
@@ -216,6 +218,21 @@ function AppContent() {
           <Route path="/about-us" element={<AboutUsPage />} />
           <Route path="/careers" element={<CareersPage />} />
           <Route path="/partnerships" element={<PartnershipsPage />} />
+          <Route path="/content-creators" element={
+            <ContentCreatorsPage onOpenAuth={handleOpenAuth} />
+          } />
+          <Route path="/travel-agents" element={
+            <TravelAgentsPage onOpenAuth={handleOpenAuth} />
+          } />
+          <Route path="/hotels" element={
+            <HotelsProviderPage onOpenAuth={handleOpenAuth} />
+          } />
+          <Route path="/transport" element={
+            <TransportPage onOpenAuth={handleOpenAuth} />
+          } />
+          <Route path="/transport-providers" element={
+            <TransportProviderPage onOpenAuth={handleOpenAuth} />
+          } />
           <Route path="/partners/:type/apply" element={
             <PartnerApplyPage onOpenAuth={handleOpenAuth} />
           } />
@@ -255,6 +272,7 @@ function AppContent() {
           } />
           <Route path="/stories" element={<AllStoriesPage />} />
           <Route path="/stories/:slug" element={<StoryDetailPage />} />
+          <Route path="/blog" element={<BlogPage onOpenAuth={handleOpenAuth} />} />
           <Route path="/*" element={
             <AnimatePresence mode="wait">
               {currentPage === 'signin' || currentPage === 'signup' ? (

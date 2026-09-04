@@ -83,15 +83,17 @@
     "tours": "{{count}}+ Tours"
   },
   "features": {
-    "whyBookHeading": "Waarom Bij Ons Boeken",
-    "whyBookPaymentsDesc": "Veilige betalingen met meerdere betaalopties",
-    "whyBookPaymentsTitle": "Veilige Betalingen",
-    "whyBookReviewsDesc": "Echte beoordelingen van geverifieerde reizigers",
-    "whyBookReviewsTitle": "Geverifieerde Beoordelingen",
-    "whyBookSupportDesc": "24/7 klantenservice voor al je vragen",
-    "whyBookSupportTitle": "24/7 Ondersteuning",
-    "whyBookVerifiedDesc": "Alle tours zijn zorgvuldig gecontroleerd op kwaliteit",
-    "whyBookVerifiedTitle": "Geverifieerde Tours"
+    "whyBookHeading": "Waarom reizigers bij ons boeken",
+    "whyBookDescription": "Lokale expertise, vertrouwde partners en zorg op elke stap \u2014 zodat u Ghana met totaal vertrouwen kunt verkennen.",
+    "whyBookBadge": "Lokaal gecontroleerd in Ghana",
+    "whyBookPaymentsDesc": "Boek met vertrouwen via betrouwbare betaalopties.",
+    "whyBookPaymentsTitle": "Veilige, flexibele betalingen",
+    "whyBookReviewsDesc": "Echte feedback van geverifieerde reizigers.",
+    "whyBookReviewsTitle": "Beoordelingen waar u op kunt vertrouwen",
+    "whyBookSupportDesc": "Vriendelijke hulp voor, tijdens en na uw reis.",
+    "whyBookSupportTitle": "Ondersteuning wanneer u het nodig heeft",
+    "whyBookVerifiedDesc": "Elke tour is beoordeeld op kwaliteit, veiligheid en authenticiteit.",
+    "whyBookVerifiedTitle": "Met zorg geselecteerde ervaringen"
   },
   "feedback": {
     "no": "Nee",
@@ -179,7 +181,8 @@
     "title": "Blijf op de Hoogte"
   },
   "partners": {
-    "heading": "Bedrijven waarmee we samenwerken"
+    "heading": "Vertrouwd over de toonaangevende reisplatforms ter wereld",
+    "subtitle": "Wij werken samen met de meest gerespecteerde namen in reizen om Ghana naar de wereld te brengen."
   },
   "search": {
     "clearRecent": "Recente zoekopdrachten wissen",

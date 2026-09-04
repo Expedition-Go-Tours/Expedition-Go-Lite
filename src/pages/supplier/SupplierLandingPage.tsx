@@ -447,6 +447,8 @@ export default function SupplierLandingPage({ onOpenAuth }: SupplierLandingPageP
   const handleBecomeSupplier = () => {
     if (!user) {
       setAuthReturnTo('/supplier/register')
+      onOpenAuth?.('signup')
+      return
     }
     navigate('/supplier/register')
   }

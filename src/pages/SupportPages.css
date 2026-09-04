@@ -608,7 +608,8 @@ a.support-contact-value:hover {
   margin: 0 0 12px;
 }
 
-.support-article ul {
+.support-article ul,
+.support-article ol {
   margin: 0 0 14px;
   padding-left: 20px;
 }

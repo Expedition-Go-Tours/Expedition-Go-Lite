@@ -83,15 +83,17 @@
     "tours": "{{count}}+ Circuits"
   },
   "features": {
-    "whyBookHeading": "Pourquoi Réserver Avec Nous",
-    "whyBookPaymentsDesc": "Paiements sécurisés avec plusieurs options",
-    "whyBookPaymentsTitle": "Paiements Sécurisés",
-    "whyBookReviewsDesc": "Vrais avis de voyageurs vérifiés",
-    "whyBookReviewsTitle": "Avis Vérifiés",
-    "whyBookSupportDesc": "Support client 24h/24 pour tous vos besoins",
-    "whyBookSupportTitle": "Support 24h/24",
-    "whyBookVerifiedDesc": "Tous les circuits sont soigneusement sélectionnés",
-    "whyBookVerifiedTitle": "Circuits Vérifiés"
+    "whyBookHeading": "Pourquoi les voyageurs réservent avec nous",
+    "whyBookDescription": "Expertise locale, partenaires de confiance et accompagnement à chaque étape \u2014 pour explorer le Ghana en toute sérénité.",
+    "whyBookBadge": "Vérifié localement au Ghana",
+    "whyBookPaymentsDesc": "Réservez en toute confiance avec des options de paiement fiables.",
+    "whyBookPaymentsTitle": "Paiements sécurisés et flexibles",
+    "whyBookReviewsDesc": "Des retours authentiques de voyageurs vérifiés.",
+    "whyBookReviewsTitle": "Des avis en lesquels vous pouvez avoir confiance",
+    "whyBookSupportDesc": "Une aide chaleureuse avant, pendant et après votre voyage.",
+    "whyBookSupportTitle": "Un support quand vous en avez besoin",
+    "whyBookVerifiedDesc": "Chaque circuit est évalué pour sa qualité, sa sécurité et son authenticité.",
+    "whyBookVerifiedTitle": "Des expériences soigneusement sélectionnées"
   },
   "feedback": {
     "no": "Non",
@@ -179,7 +181,8 @@
     "title": "Restez Informé"
   },
   "partners": {
-    "heading": "Entreprises avec lesquelles nous travaillons"
+    "heading": "Apprécié sur les principales plateformes de voyage mondiales",
+    "subtitle": "Nous nous associons aux noms les plus respectés du voyage pour amener le Ghana au monde."
   },
   "search": {
     "clearRecent": "Effacer les recherches récentes",

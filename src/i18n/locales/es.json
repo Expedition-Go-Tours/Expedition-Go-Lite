@@ -83,15 +83,17 @@
     "tours": "{{count}}+ Tours"
   },
   "features": {
-    "whyBookHeading": "Por Qué Reservar Con Nosotros",
-    "whyBookPaymentsDesc": "Pagos seguros con múltiples opciones de pago",
-    "whyBookPaymentsTitle": "Pagos Seguros",
-    "whyBookReviewsDesc": "Reseñas reales de viajeros verificados",
-    "whyBookReviewsTitle": "Reseñas Verificadas",
-    "whyBookSupportDesc": "Atención al cliente 24/7 para todas tus necesidades",
-    "whyBookSupportTitle": "Soporte 24/7",
-    "whyBookVerifiedDesc": "Todos los tours son cuidadosamente evaluados",
-    "whyBookVerifiedTitle": "Tours Verificados"
+    "whyBookHeading": "Por qué los viajeros reservan con nosotros",
+    "whyBookDescription": "Experiencia local, socios de confianza y atención en cada paso \u2014 para que explores Ghana con total confianza.",
+    "whyBookBadge": "Verificado localmente en Ghana",
+    "whyBookPaymentsDesc": "Reserva con confianza usando opciones de pago confiables.",
+    "whyBookPaymentsTitle": "Pagos seguros y flexibles",
+    "whyBookReviewsDesc": "Comentarios genuinos de viajeros verificados.",
+    "whyBookReviewsTitle": "Reseñas en las que puedes confiar",
+    "whyBookSupportDesc": "Ayuda amigable antes, durante y después de tu viaje.",
+    "whyBookSupportTitle": "Soporte cuando lo necesitas",
+    "whyBookVerifiedDesc": "Cada recorrido es evaluado por calidad, seguridad y autenticidad.",
+    "whyBookVerifiedTitle": "Experiencias seleccionadas"
   },
   "feedback": {
     "no": "No",
@@ -179,7 +181,8 @@
     "title": "Mantente Informado"
   },
   "partners": {
-    "heading": "Empresas con las que trabajamos"
+    "heading": "Confianza en las principales plataformas de viaje del mundo",
+    "subtitle": "Nos asociamos con los nombres más respetados del viaje para llevar Ghana al mundo."
   },
   "search": {
     "clearRecent": "Borrar búsquedas recientes",

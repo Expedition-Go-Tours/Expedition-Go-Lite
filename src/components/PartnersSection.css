@@ -19,9 +19,40 @@
   font-weight: 700;
   font-size: clamp(24px, 2.2vw, 32px);
   color: #1a1a1a;
-  margin: 0 0 24px;
+  margin: 0 0 8px;
   line-height: 1.2;
   text-align: center;
+}
+
+.partners-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.partners-divider-line {
+  width: 60px;
+  height: 2px;
+  background-color: #2d6a4f;
+  display: block;
+}
+
+.partners-divider-star {
+  color: #f5a623;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.partners-subtitle {
+  font-family: 'GT Esti Pro Display', sans-serif;
+  font-weight: 400;
+  font-size: clamp(14px, 1.2vw, 16px);
+  color: #555;
+  margin: 0 0 24px;
+  text-align: center;
+  line-height: 1.5;
 }
 
 .partners-track-wrap {

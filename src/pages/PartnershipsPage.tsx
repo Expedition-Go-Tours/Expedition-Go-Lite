@@ -33,25 +33,25 @@ const PARTNER_TYPES = [
   {
     title: 'Hotels & accommodations',
     text: 'Offer your guests exclusive experiences and earn through every successful booking.',
-    to: '/partners/hotels/apply',
+    to: '/hotels',
     image: partners7,
   },
   {
     title: 'Travel agents & resellers',
     text: 'Resell Expedition-Go Tours experiences to your clients with simple, transparent partnership terms.',
-    to: '/partners/travel-agents/apply',
+    to: '/travel-agents',
     image: partners9,
   },
   {
     title: 'Content creators & influencers',
     text: 'Collaborate with us to create inspiring travel content and earn through your audience.',
-    to: '/partners/content-creators/apply',
+    to: '/content-creators',
     image: partners6,
   },
   {
     title: 'Transport providers',
     text: 'Partner with us to offer seamless transport solutions for travellers across all destinations.',
-    to: '/partners/transport-providers/apply',
+    to: '/transport-providers',
     image: tnt3,
   },
 ]
