@@ -9,8 +9,14 @@
   background: #fff;
 }
 
-/* ── Desktop: split-screen columns that touch (no rounded corners) ── */
-@media (min-width: 921px) {
+/* ── Phone base: single flowing column (payment only). MUST come before the
+   split-screen media query so the >=720px grid rule wins the cascade. ── */
+.co-body {
+  display: block;
+}
+
+/* ── Split-screen columns that touch (Stripe geometry) — >= 720px ── */
+@media (min-width: 720px) {
   .co-page {
     height: 100vh;
     height: 100dvh;
@@ -24,11 +30,6 @@
     height: 100vh;
     height: 100dvh;
   }
-}
-
-/* Mobile/tablet base: single flowing column (payment only). */
-.co-body {
-  display: block;
 }
 
 /* ── LEFT — brand panel (desktop only) ── */
@@ -167,6 +168,18 @@
   white-space: nowrap;
 }
 
+/* Tour short description under the item rows */
+.co-item-desc {
+  margin: 10px 0 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.8);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 .co-rules {
   height: 1px;
   background: rgba(255, 255, 255, 0.32);
@@ -223,7 +236,7 @@
 }
 
 /* center-divider seam between the two touching columns */
-@media (min-width: 921px) {
+@media (min-width: 720px) {
   .co-right {
     border-left: 1px solid #e6e8eb;
   }
@@ -367,6 +380,10 @@
   color: #667085;
 }
 
+.co-order--light .co-item-desc {
+  color: #475467;
+}
+
 .co-order--light .co-item-price {
   color: #101828;
 }
@@ -391,7 +408,7 @@
   color: #047857;
 }
 
-@media (max-width: 920px) {
+@media (max-width: 719px) {
   .co-left {
     display: none;
   }
@@ -601,7 +618,7 @@
   height: 380px;
 }
 
-@media (max-width: 920px) {
+@media (max-width: 719px) {
   .co-skeleton .co-skel-card {
     margin-top: 24px;
   }

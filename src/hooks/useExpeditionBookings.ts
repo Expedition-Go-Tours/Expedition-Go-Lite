@@ -252,6 +252,7 @@ export interface CheckoutDraftSummary {
     coverPhoto: string | null
     location: string
     durationMinutes: number | null
+    description?: string | null
   }
   travelDate: string
   selectedTime: string | null

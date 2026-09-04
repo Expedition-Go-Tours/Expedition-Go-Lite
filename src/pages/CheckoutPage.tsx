@@ -74,6 +74,8 @@ function OrderSummary({
         <div className="co-item-price">{formatMoney(draft.pricing.subtotal + draft.pricing.fees, draft.currency)}</div>
       </div>
 
+      {draft.tour.description && <p className="co-item-desc">{draft.tour.description}</p>}
+
       <div className="co-rules" />
 
       <div className="co-row">

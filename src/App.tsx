@@ -191,7 +191,7 @@ function AppContent() {
     <>
       <Toaster position="top-center" duration={2500} closeButton />
       {!hideNav && <Navbar onOpenAuth={handleOpenAuth} />}
-      {!location.pathname.startsWith('/tour') && !location.pathname.startsWith('/login') && !(currentPage === 'signin' || currentPage === 'signup') && <SupportChatWidget onOpenAuth={handleOpenAuth} />}
+      {!location.pathname.startsWith('/tour') && !location.pathname.startsWith('/login') && !location.pathname.startsWith('/booking/checkout') && !(currentPage === 'signin' || currentPage === 'signup') && <SupportChatWidget onOpenAuth={handleOpenAuth} />}
       {/* Route shell: keyed so each navigation mounts a fresh subtree, but NOT
           animated to opacity 0 — an interrupted fade used to leave the new
           page permanently invisible (blank white until a manual refresh). */}
