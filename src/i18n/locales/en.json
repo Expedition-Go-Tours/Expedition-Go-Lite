@@ -533,6 +533,8 @@
     "title": "Booking Confirmed",
     "subtitle": "Thank you! Your booking has been placed successfully.",
     "bookingNumber": "Booking number",
+    "bookingReference": "Booking reference",
+    "emailSentTo": "Confirmation sent to",
     "status": "Status",
     "statusConfirmed": "Confirmed",
     "statusReserved": "Reserved — pay later",

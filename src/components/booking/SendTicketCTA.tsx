@@ -27,12 +27,9 @@ export default function SendTicketCTA({ email, bookingNumber, tourTitle }: SendT
   }
 
   return (
-    <div className="send-ticket-cta">
-      <button className="send-ticket-btn" onClick={handleClick} type="button">
-        <Mail size={16} />
-        Email my confirmation
-      </button>
-      <span className="send-ticket-hint">We'll send your booking details to your email</span>
-    </div>
+    <button className="send-ticket-btn" onClick={handleClick} type="button">
+      <Mail size={16} />
+      Email my confirmation
+    </button>
   )
 }

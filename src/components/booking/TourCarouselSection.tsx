@@ -70,16 +70,18 @@ export default function TourCarouselSection({
 
   return (
     <div className={`carousel-viewport ${className}`}>
-      <SectionHeading
-        title={title}
-        subtitle={subtitle}
-        viewAllLink={viewAllLink}
-        onScrollLeft={() => scroll('left')}
-        onScrollRight={() => scroll('right')}
-        disableLeft={!canScrollLeft}
-        disableRight={!canScrollRight}
-      />
-      {titleRight && <div className="carousel-title-right">{titleRight}</div>}
+      <div className="carousel-head">
+        <SectionHeading
+          title={title}
+          subtitle={subtitle}
+          viewAllLink={viewAllLink}
+          onScrollLeft={() => scroll('left')}
+          onScrollRight={() => scroll('right')}
+          disableLeft={!canScrollLeft}
+          disableRight={!canScrollRight}
+        />
+        {titleRight && <div className="carousel-title-right">{titleRight}</div>}
+      </div>
       <div className="carousel-clip">
         <div className="carousel-track" ref={scrollRef} style={{ gap }}>
           {isLoading && !tours.length

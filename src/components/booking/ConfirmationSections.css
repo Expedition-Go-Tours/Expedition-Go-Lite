@@ -1,11 +1,18 @@
 .confirmation-sections-inner {
+  width: 100%;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 48px;
+  align-items: center;
+  gap: 56px;
+}
+
+.confirmation-sections-inner > * {
+  width: 100%;
 }
 
 @media (max-width: 768px) {
   .confirmation-sections-inner {
-    gap: 32px;
+    gap: 36px;
   }
 }

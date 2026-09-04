@@ -12,7 +12,6 @@ import { evaluateCancellationPolicy } from '../lib/bookingUi'
 import { currencySymbol } from '../lib/currencySymbol'
 import OptimizedImage from '@/components/shared/OptimizedImage'
 import ConfirmationSections from '../components/booking/ConfirmationSections'
-import SendTicketCTA from '../components/booking/SendTicketCTA'
 import AddToCalendar from '../components/booking/AddToCalendar'
 import './BookingConfirmationPage.css'
 
@@ -30,6 +29,7 @@ interface ConfirmationTour {
   id?: string
   slug?: string
   title?: string
+  description?: string | null
   coverPhoto?: string | null
   photos?: string[]
   durationMinutes?: number | null
@@ -347,23 +347,35 @@ export default function BookingConfirmationPage() {
   return (
     <div className="confirmation-page">
       <div className="confirmation-print-area">
-        {/* Header */}
+        {/* Header — typographic confirmation (GYG-style) */}
         <div className="confirmation-card confirmation-card-hero">
           <div className="confirmation-hero">
-            <span className="confirmation-hero-icon">
-              <Check size={28} strokeWidth={2.6} />
-            </span>
-            <h1 className="confirmation-title">{t('confirmation.title')}</h1>
-            <p className="confirmation-subtitle">{t('confirmation.subtitle')}</p>
-            <div className="confirmation-badges">
-              <span className="confirmation-badge confirmation-badge-code">
-                <Ticket size={14} />
-                {b.bookingNumber}
-              </span>
-              <span className={`confirmation-badge ${isPaid ? 'confirmation-badge-paid' : 'confirmation-badge-pending'}`}>
+            <div className="confirmation-hero-kicker">
+              <span className={`confirmation-status-pill${isPaid ? ' is-confirmed' : ' is-reserved'}`}>
+                <Check size={13} strokeWidth={3} />
                 {statusLabel}
               </span>
             </div>
+            <h1 className="confirmation-title">{t('confirmation.title')}</h1>
+            <p className="confirmation-subtitle">{t('confirmation.subtitle')}</p>
+
+            <ul className="confirmation-hero-facts">
+              {user?.email && (
+                <li>
+                  <Mail size={14} />
+                  <span>
+                    {t('confirmation.emailSentTo')} <strong>{user.email}</strong>
+                  </span>
+                </li>
+              )}
+              <li>
+                <Ticket size={14} />
+                <span>
+                  {t('confirmation.bookingReference')}: <span className="confirmation-ref">{b.bookingNumber}</span>
+                </span>
+              </li>
+            </ul>
+
             {awaitingConfirmation && (
               <p className="confirmation-note confirmation-awaiting-note">
                 {t('confirmation.awaitingConfirmation')}
@@ -374,38 +386,59 @@ export default function BookingConfirmationPage() {
                 {t('confirmation.confirmingPayment')}
               </p>
             )}
+
+            <div className="confirmation-hero-actions">
+              <AddToCalendar
+                title={tour.title || ''}
+                date={booking?.travelDate}
+                time={booking?.selectedTime}
+                location={location}
+              />
+            </div>
           </div>
         </div>
 
+        <div className="confirmation-body">
+          <div className="confirmation-main">
         {/* Tour card */}
-        <div className="confirmation-card">
-          <div className="confirmation-section-title">{t('confirmation.tourDetails')}</div>
+        <div className="confirmation-card confirmation-tour-card">
           <div className="confirmation-tour">
             {image && (
               <div className="confirmation-tour-image">
-                <OptimizedImage src={image} alt={tour.title || ''} width={400} />
+                <OptimizedImage src={image} alt={tour.title || ''} width={900} />
               </div>
             )}
             <div className="confirmation-tour-info">
               <h2 className="confirmation-tour-title">{tour.title}</h2>
-              {location && (
-                <p className="confirmation-tour-row">
-                  <MapPin size={14} />
-                  {location}
+              {tour.description ? (
+                <p className="confirmation-tour-desc">
+                  {tour.description.length > 170
+                    ? `${tour.description.slice(0, 170).trimEnd()}…`
+                    : tour.description}
                 </p>
-              )}
-              {tour.durationMinutes != null && (
-                <p className="confirmation-tour-row">
-                  <Clock size={14} />
-                  {formatDuration(Number(tour.durationMinutes))}
-                </p>
-              )}
-              {tour.supplier?.name && (
-                <p className="confirmation-tour-row">
-                  <Globe size={14} />
-                  {t('confirmation.operator')}: {tour.supplier.name}
-                </p>
-              )}
+              ) : null}
+              <div className="confirmation-tour-rows">
+                {location && (
+                  <p className="confirmation-tour-row">
+                    <MapPin size={15} />
+                    <span>{location}</span>
+                  </p>
+                )}
+                {tour.durationMinutes != null && (
+                  <p className="confirmation-tour-row">
+                    <Clock size={15} />
+                    <span>{formatDuration(Number(tour.durationMinutes))}</span>
+                  </p>
+                )}
+                {tour.supplier?.name && (
+                  <p className="confirmation-tour-row">
+                    <Globe size={15} />
+                    <span>
+                      {t('confirmation.operator')}: {tour.supplier.name}
+                    </span>
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -557,7 +590,7 @@ export default function BookingConfirmationPage() {
                 </div>
               </div>
             )}
-            {hasPickup && (
+            {!b.pickup && hasPickup && (
               <div className="confirmation-grid">
                 {pickupAreas.length > 0 && (
                   <div className="confirmation-grid-item confirmation-grid-item-wide">
@@ -586,8 +619,11 @@ export default function BookingConfirmationPage() {
           </div>
         )}
 
+          </div>
+
+          <aside className="confirmation-aside">
         {/* Price breakdown */}
-        <div className="confirmation-card">
+        <div className="confirmation-card confirmation-price-card">
           <div className="confirmation-section-title">{t('confirmation.priceBreakdown')}</div>
           <div className="confirmation-price">
             <div className="confirmation-price-row">
@@ -649,22 +685,9 @@ export default function BookingConfirmationPage() {
             )}
           </div>
           <p className="confirmation-note">{t('confirmation.emailSent')}</p>
-        </div>
-      </div>
-
-      {/* Post-booking engagement */}
-      <div className="confirmation-engagement confirmation-no-print">
-        <SendTicketCTA
-          email={user?.email}
-          bookingNumber={b.bookingNumber}
-          tourTitle={tour.title}
-        />
-        <AddToCalendar
-          title={tour.title || ''}
-          date={booking?.travelDate}
-          time={booking?.selectedTime}
-          location={[tour.city, tour.country].filter(Boolean).join(', ')}
-        />
+          </div>
+          </aside>
+          </div>
       </div>
 
       <div className="confirmation-sections confirmation-no-print">
@@ -677,15 +700,16 @@ export default function BookingConfirmationPage() {
         />
       </div>
 
-      {/* Actions (hidden when printing) */}
-      <div className="confirmation-actions confirmation-no-print">
-        <button className="confirmation-btn-primary" onClick={() => window.print()}>
-          <Printer size={16} />
+      {/* Quiet text actions */}
+      <div className="confirmation-footer-links confirmation-no-print">
+        <button type="button" className="confirmation-text-link" onClick={() => window.print()}>
+          <Printer size={15} />
           {t('confirmation.printTicket')}
         </button>
         {effectiveReviewSlug && b.status === 'COMPLETED' && (
           <button
-            className="confirmation-btn-secondary"
+            type="button"
+            className="confirmation-text-link"
             onClick={() =>
               navigate(`/review/${encodeURIComponent(effectiveReviewSlug)}`, {
                 state: {
@@ -695,15 +719,15 @@ export default function BookingConfirmationPage() {
               })
             }
           >
-            <Star size={16} />
+            <Star size={15} />
             {t('confirmation.writeReview')}
           </button>
         )}
-        <button className="confirmation-btn-secondary" onClick={() => navigate('/dashboard/bookings')}>
-          <CreditCard size={16} />
+        <button type="button" className="confirmation-text-link" onClick={() => navigate('/dashboard/bookings')}>
+          <CreditCard size={15} />
           {t('confirmation.viewBookings')}
         </button>
-        <button className="confirmation-btn-ghost" onClick={() => navigate('/')}>
+        <button type="button" className="confirmation-text-link" onClick={() => navigate('/')}>
           {t('confirmation.backToHome')}
         </button>
       </div>

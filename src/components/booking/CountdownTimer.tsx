@@ -6,12 +6,17 @@ interface CountdownTimerProps {
   label?: string
 }
 
+interface Segment {
+  value: string
+  unit: string
+}
+
 function padTwo(n: number): string {
   return String(n).padStart(2, '0')
 }
 
 export default function CountdownTimer({ deadline, label = 'Deals expire in' }: CountdownTimerProps) {
-  const [remaining, setRemaining] = useState<{ hours: number; minutes: number; seconds: number } | null>(null)
+  const [remaining, setRemaining] = useState<Segment[] | null>(null)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
@@ -27,10 +32,21 @@ export default function CountdownTimer({ deadline, label = 'Deals expire in' }: 
         if (intervalRef.current) clearInterval(intervalRef.current)
         return
       }
-      const hours = Math.floor(diff / 3600000)
-      const minutes = Math.floor((diff % 3600000) / 60000)
-      const seconds = Math.floor((diff % 60000) / 1000)
-      setRemaining({ hours, minutes, seconds })
+
+      const totalSeconds = Math.max(0, Math.floor(diff / 1000))
+      const totalMinutes = Math.floor(totalSeconds / 60)
+      const totalHours = Math.floor(totalMinutes / 60)
+      const days = Math.floor(totalHours / 24)
+      const hours = totalHours % 24
+      const minutes = totalMinutes % 60
+      const seconds = totalSeconds % 60
+
+      const segs: Segment[] = []
+      if (days > 0) segs.push({ value: String(days), unit: days === 1 ? 'day' : 'days' })
+      segs.push({ value: padTwo(hours), unit: hours === 1 ? 'hour' : 'hours' })
+      segs.push({ value: padTwo(minutes), unit: minutes === 1 ? 'minute' : 'minutes' })
+      segs.push({ value: padTwo(seconds), unit: seconds === 1 ? 'second' : 'seconds' })
+      setRemaining(segs)
     }
 
     tick()
@@ -46,17 +62,13 @@ export default function CountdownTimer({ deadline, label = 'Deals expire in' }: 
     <div className="countdown-timer" role="timer" aria-live="polite">
       <span className="countdown-label">{label}</span>
       <span className="countdown-value">
-        {remaining.hours > 24 && (
-          <>
-            <span className="countdown-num">{padTwo(Math.floor(remaining.hours / 24))}d</span>
-            <span className="countdown-sep">{' '}</span>
-          </>
-        )}
-        <span className="countdown-num">{padTwo(remaining.hours % 24)}</span>
-        <span className="countdown-sep">:</span>
-        <span className="countdown-num">{padTwo(remaining.minutes)}</span>
-        <span className="countdown-sep">:</span>
-        <span className="countdown-num">{padTwo(remaining.seconds)}</span>
+        {remaining.map((seg, i) => (
+          <span key={seg.unit} className="countdown-group">
+            <span className="countdown-num">{seg.value}</span>
+            <span className="countdown-unit">{seg.unit}</span>
+            {i < remaining.length - 1 && <span className="countdown-sep">:</span>}
+          </span>
+        ))}
       </span>
     </div>
   )
