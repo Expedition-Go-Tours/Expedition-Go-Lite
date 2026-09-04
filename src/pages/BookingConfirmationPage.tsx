@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useQueryClient } from '@tanstack/react-query'
 import { Check, CalendarDays, Clock, Users, MapPin, CreditCard, ShieldCheck, Phone, Mail, Printer, Star, Ticket, Globe, AlertTriangle, Loader2 } from 'lucide-react'
 import { useExpeditionBookingDetail, useBookingBySession } from '../hooks/useExpeditionBookings'
-import { extractMeetingInfo, extractAvailabilitySchedule, formatDuration } from '../hooks/useExpeditionTours'
+import { extractMeetingInfo, extractAvailabilitySchedule, formatCancellationPolicy, formatDuration } from '../hooks/useExpeditionTours'
 import { buildE164Phone, isValidPhoneInput } from '../lib/phone'
 import { formatTime12h, weeklyHoursRange, openingHoursForDay, formatTimeSlotList } from '../lib/tourAvailability'
 import { useAuthUser } from '../hooks/useAuthUser'
@@ -38,7 +38,7 @@ interface ConfirmationTour {
   productContent?: unknown
   bookingAndTickets?: unknown
   schedulesAndPricing?: unknown
-  cancellationPolicy?: string | null
+  cancellationPolicy?: unknown
   supplier?: { id?: string; name?: string | null; photoURL?: string | null; phone?: string | null; email?: string | null }
 }
 
@@ -326,14 +326,10 @@ export default function BookingConfirmationPage() {
     ? travelers.phoneNumber
     : (buildE164Phone('+', travelers.phoneNumber || '') ?? travelers.phoneNumber)
 
-  const bt = (tour.bookingAndTickets ?? {}) as { cancellationPolicy?: string | null; meetingPoint?: unknown }
+  const bt = (tour.bookingAndTickets ?? {}) as { cancellationPolicy?: unknown; meetingPoint?: unknown }
   const cancellation = (() => {
-    const raw = bt.cancellationPolicy || tour.cancellationPolicy || ''
-    const lower = String(raw).toLowerCase()
-    if (lower === 'all_sales_final' || lower === 'non-refundable' || lower === 'non_refundable') {
-      return t('confirmation.nonRefundable')
-    }
-    return raw || t('confirmation.cancellationDefault')
+    const rawPolicy = bt.cancellationPolicy ?? tour.cancellationPolicy ?? null
+    return formatCancellationPolicy(rawPolicy) || t('confirmation.cancellationDefault')
   })()
 
   const hasMeeting = meeting.meetingMode === 'meeting_point' && (meeting.meetingPoint || meeting.meetingPointAddress || arrivalLabel)

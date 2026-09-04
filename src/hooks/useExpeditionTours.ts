@@ -275,7 +275,7 @@ function extractDifficultyFromTour(tour: any): string | null {
   }
 }
 
-function formatCancellationPolicy(policy: any): string | null {
+export function formatCancellationPolicy(policy: any): string | null {
   if (policy == null) return null
   if (typeof policy === 'string') {
     const trimmed = policy.trim()
