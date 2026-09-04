@@ -7,6 +7,7 @@ export interface RecommendedTour {
   slug: string
   description?: string | null
   coverPhoto?: string | null
+  photos?: string[]
   category?: string | null
   durationMinutes?: number | null
   averageRating?: number | null

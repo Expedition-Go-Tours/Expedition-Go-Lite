@@ -199,6 +199,8 @@ export interface TourCardData {
   specialOffers?: SpecialOfferData[]
   /** Discount badge label (e.g. "-30%") shown on cards. */
   discount?: string
+  /** Whether the tour is flagged as new (drives the "New" pill on the card). */
+  isNew?: boolean
   /** Whether the tour is flagged as likely to sell out (drives the red tag on the card image). */
   likelyToSellOut?: boolean
 }
