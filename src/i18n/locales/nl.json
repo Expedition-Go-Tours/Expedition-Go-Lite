@@ -229,7 +229,8 @@
     "tours": "{{count}} tours",
     "aboutThisSupplier": "Over deze aanbieder",
     "viewMore": "Bekijk meer",
-    "toursBySupplier": "Tours van deze aanbieder"
+    "toursBySupplier": "Tours van deze aanbieder",
+    "termsSubtitle": "De voorwaarden voor het verkopen van je tours en ervaringen op Expedition-Go."
   },
   "supportChat": {
     "adminSupport": "Admin Ondersteuning",
@@ -497,8 +498,5 @@
     "termsSubtitle": "De voorwaarden die gelden voor je gebruik van Expedition-Go.",
     "privacySubtitle": "Hoe we je gegevens verzamelen, gebruiken en beschermen.",
     "cookiesSubtitle": "Hoe we cookies gebruiken en hoe je ze kunt beheren."
-  },
-  "supplier": {
-    "termsSubtitle": "De voorwaarden voor het verkopen van je tours en ervaringen op Expedition-Go."
   }
 }

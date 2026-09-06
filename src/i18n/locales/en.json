@@ -271,7 +271,8 @@
     "tours": "{{count}} tours",
     "aboutThisSupplier": "About this supplier",
     "viewMore": "View More",
-    "toursBySupplier": "Tours by this supplier"
+    "toursBySupplier": "Tours by this supplier",
+    "termsSubtitle": "The terms that govern selling your tours and experiences on Expedition-Go."
   },
   "supportChat": {
     "adminSupport": "Admin Support",
@@ -623,8 +624,5 @@
     "termsSubtitle": "The terms that govern your use of Expedition-Go.",
     "privacySubtitle": "How we collect, use and protect your information.",
     "cookiesSubtitle": "How we use cookies and how you can control them."
-  },
-  "supplier": {
-    "termsSubtitle": "The terms that govern selling your tours and experiences on Expedition-Go."
   }
 }

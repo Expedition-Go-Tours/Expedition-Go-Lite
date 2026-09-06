@@ -229,7 +229,8 @@
     "tours": "{{count}} Touren",
     "aboutThisSupplier": "Über diesen Anbieter",
     "viewMore": "Mehr anzeigen",
-    "toursBySupplier": "Touren von diesem Anbieter"
+    "toursBySupplier": "Touren von diesem Anbieter",
+    "termsSubtitle": "Die Bedingungen für den Verkauf Ihrer Touren und Erlebnisse auf Expedition-Go."
   },
   "supportChat": {
     "adminSupport": "Admin-Support",
@@ -497,8 +498,5 @@
     "termsSubtitle": "Die Bedingungen für Ihre Nutzung von Expedition-Go.",
     "privacySubtitle": "Wie wir Ihre Daten erfassen, nutzen und schützen.",
     "cookiesSubtitle": "Wie wir Cookies verwenden und wie Sie sie kontrollieren können."
-  },
-  "supplier": {
-    "termsSubtitle": "Die Bedingungen für den Verkauf Ihrer Touren und Erlebnisse auf Expedition-Go."
   }
 }

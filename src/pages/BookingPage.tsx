@@ -1583,6 +1583,17 @@ export default function BookingPage() {
   const draft = useMemo(() => readBookingDraft(), [])
   const freshTour = location.state?.tour
 
+  // A partial router-state tour (e.g. the wishlist's Book Now hand-builds a
+  // stub with no supplier meeting/pickup/schedule config) can't drive the
+  // booking steps. Treat it like a direct-URL arrival: re-fetch the real tour
+  // by its URL id and rebuild the full context from the detail. Only genuine
+  // tour ids (backend cuids) are refetched — legacy mock/hash ids have no
+  // server record and keep their offline stub.
+  const freshTourPartial =
+    freshTour != null && !('pickupIncluded' in (freshTour as Record<string, unknown>))
+  const plausibleTourId =
+    typeof urlTourId === 'string' && urlTourId.length > 0 && /^[A-Za-z0-9_-]{8,}$/.test(urlTourId)
+
   // The URL carries the tour id (/{tourId}/booking) so a refresh can rebuild
   // the booking context. The persisted draft is only trusted when it belongs
   // to THIS URL's tour — a stale draft for another tour must never bleed in.
@@ -1590,12 +1601,19 @@ export default function BookingPage() {
 
   // Restore the tour from router state when arriving fresh from a tour detail
   // page, otherwise fall back to the matching persisted draft (refresh /
-  // sign-in round-trip). With neither, re-fetch the tour by its URL id so the
-  // booking context survives even when the draft is missing or was cleared.
-  const needFetch = !freshTour && !draftMatches && !!urlTourId
+  // sign-in round-trip). With neither — or with only a partial stub — re-fetch
+  // the tour by its URL id so the booking context survives even when the draft
+  // is missing or was cleared.
+  const needFetch = ((freshTourPartial && plausibleTourId) || (!freshTour && !draftMatches)) && !!urlTourId
   const { data: fetchedTour, isLoading: tourLoading } = useExpeditionTour(needFetch ? urlTourId : undefined)
 
-  const [tour, setTour] = useState(() => freshTour || (draftMatches ? draft?.tour : FALLBACK_TOUR))
+  const [tour, setTour] = useState(() => {
+    if (!freshTourPartial) return freshTour || (draftMatches ? draft?.tour : FALLBACK_TOUR)
+    // Partial stub with a refetchable id: hold the placeholder until the
+    // by-id fetch rebuilds the full context. Stubs without a plausible id
+    // (legacy mock content) stay on the stub itself — no fetch will run.
+    return plausibleTourId ? FALLBACK_TOUR : (freshTour as typeof FALLBACK_TOUR)
+  })
 
   // Only restore the form fields when we're NOT arriving fresh (i.e. this is a
   // sign-in/refresh round-trip) and the stored draft belongs to this tour —
@@ -1636,15 +1654,28 @@ export default function BookingPage() {
   const [showSignInPrompt, setShowSignInPrompt] = useState(false)
   const lastActivityAt = useRef(0)
 
-  // Refresh / direct-URL arrival with no usable draft: once the by-URL-id fetch
+  // Refresh / direct-URL / partial-stub arrival: once the by-URL-id fetch
   // lands, rebuild the tour context (and its editable selection) from the
   // fetched detail so the page never sits on the "Loading..." placeholder.
   // React-recommended "adjust state during render" pattern — guarded so the
-  // rebuild runs exactly once (setting the tour id flips the guard).
-  if (!tour?.id && fetchedTour) {
+  // rebuild runs exactly once (setting the fetched tour's id flips the guard).
+  if (needFetch && fetchedTour && !tour?.id) {
     const built = buildBookingTour(fetchedTour)
     setTour(built)
     setEditableTour(buildEditableTour(built))
+  } else if (
+    needFetch &&
+    freshTourPartial &&
+    !tourLoading &&
+    !fetchedTour &&
+    !tour?.id
+  ) {
+    // The by-id refetch failed (legacy/mock wishlist items have no backend
+    // record): fall back to the partial stub so the item still books with the
+    // data it carries — no supplier pickup config exists for it anyway.
+    const stub = freshTour as typeof FALLBACK_TOUR
+    setTour(stub)
+    setEditableTour(buildEditableTour(stub))
   }
 
   // Bring a restored later step into view (mount-only; no state changes).
@@ -2058,9 +2089,11 @@ export default function BookingPage() {
     [tour, editableTour, finalPrice],
   )
 
-  // Refresh / direct-URL arrival with no draft: show a spinner while the tour
-  // is re-fetched by the URL id, instead of a broken "Loading..." placeholder.
-  if (needFetch && tourLoading && !tour?.id) {
+  // Refresh / direct-URL arrival with no usable draft (or only a partial
+  // router-state stub): show a spinner while the tour is re-fetched by the
+  // URL id, instead of a broken "Loading..." placeholder or a stub that hides
+  // the supplier's pickup configuration.
+  if (needFetch && tourLoading) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-white">
         <Loader2 className="size-8 animate-spin text-emerald-600" />

@@ -12,6 +12,7 @@ import { subscribeToAuthState, signOutUser, getStoredAuthUser, type AuthUser } f
 import { readBookingsSeen, writeBookingsSeen } from '../lib/bookingsBadge'
 import { useSupplierStatus } from '../hooks/useSupplierStatus'
 import { useMyBookingsCount } from '../hooks/useExpeditionBookings'
+import { useWishlist } from '../context/WishlistContext'
 import { useSearchAutocomplete, type SearchSuggestion } from '../hooks/useSearchAutocomplete'
 import { useRecentSearches } from '../hooks/useRecentSearches'
 import LanguageCurrencyModal from './LanguageCurrencyModal'
@@ -85,6 +86,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
   const dropdownRef = useRef<HTMLDivElement>(null)
   const { t } = useTranslation()
   const { currency } = useCurrency()
+  const { wishlistCount } = useWishlist()
   const [navSearchValue, setNavSearchValue] = useState('')
   const [showNavDropdown, setShowNavDropdown] = useState(false)
   const [navHighlightedIndex, setNavHighlightedIndex] = useState(-1)
@@ -182,12 +184,13 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
     void import('../pages/PartnershipsPage').catch(() => {})
   }, [])
 
-  // Warm the dashboard chunk (Wishlist / Bookings / Reviews / Settings) so
-  // opening it from the navbar is instant instead of a lazy fetch — fired on
+  // Warm the dashboard chunks (Wishlist / Bookings / Reviews / Settings) so
+  // opening them from the navbar is instant instead of a lazy fetch — fired on
   // hover/focus of the wishlist and bookings entry points.
   const prefetchDashboard = useCallback(() => {
     void import('../pages/dashboard/DashboardLayout').catch(() => {})
     void import('../pages/BookingHistory').catch(() => {})
+    void import('../pages/Wishlist').catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -209,20 +212,41 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
     navigate('/partnerships')
   }, [navigate, setMobileMenuOpen])
 
-  // Prefetch the dashboard chunk so navigating to Bookings / Dashboard /
-  // Updates from the drawer (or avatar menu) is instant, not a lazy fetch.
+  // Prefetch the dashboard chunks so navigating to Bookings / Wishlist /
+  // Dashboard / Updates from the drawer (or avatar menu) is instant, not a
+  // lazy fetch.
   useEffect(() => {
     if (!user) return
     import('../pages/dashboard/DashboardLayout').catch(() => {})
     import('../pages/BookingHistory').catch(() => {})
+    import('../pages/Wishlist').catch(() => {})
   }, [user])
 
   useEffect(() => {
     if (mobileMenuOpen && user) {
       import('../pages/dashboard/DashboardLayout').catch(() => {})
       import('../pages/BookingHistory').catch(() => {})
+      import('../pages/Wishlist').catch(() => {})
     }
   }, [mobileMenuOpen, user])
+
+  // Prefetch the dashboard + wishlist chunks during browser idle so the first
+  // tap on the wishlist/bookings icons is instant even on touch devices
+  // (which never fire the hover/focus prefetches above).
+  useEffect(() => {
+    const prefetchDashboardIdle = () => {
+      import('../pages/dashboard/DashboardLayout').catch(() => {})
+      import('../pages/Wishlist').catch(() => {})
+    }
+    const canIdle = 'requestIdleCallback' in window
+    const id = canIdle
+      ? window.requestIdleCallback(prefetchDashboardIdle, { timeout: 4000 })
+      : window.setTimeout(prefetchDashboardIdle, 4000)
+    return () => {
+      if (canIdle) window.cancelIdleCallback(id)
+      else window.clearTimeout(id)
+    }
+  }, [])
 
   // "Back to menu" from the dashboard reopens the mobile drawer on arrival.
   useEffect(() => {
@@ -526,10 +550,13 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
               <span className="nav-icon-label">{t('nav.bookings')}</span>
             </a>
           )}
-          <a href="#" className="nav-icon-item" onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate('/dashboard/wishlist') }} onPointerEnter={prefetchDashboard} onFocus={prefetchDashboard}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-            </svg>
+          <a href="#" className="nav-icon-item" onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate('/dashboard/wishlist') }} aria-label={t('nav.wishlist')} onPointerEnter={prefetchDashboard} onFocus={prefetchDashboard}>
+            <span className="nav-icon-glyph">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+              </svg>
+              {wishlistCount > 0 && <span className="nav-icon-badge">{wishlistCount}</span>}
+            </span>
             <span className="nav-icon-label">{t('nav.wishlist')}</span>
           </a>
           <div className="nav-icon-item" onClick={() => setDropdownOpen(!dropdownOpen)}>
@@ -637,6 +664,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
             </svg>
+            {wishlistCount > 0 && <span className="nav-icon-badge">{wishlistCount}</span>}
           </span>
           <span className="nav-icon-label">{t('nav.wishlist')}</span>
         </a>

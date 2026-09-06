@@ -229,7 +229,8 @@
     "tours": "{{count}} circuits",
     "aboutThisSupplier": "À propos de ce fournisseur",
     "viewMore": "Voir plus",
-    "toursBySupplier": "Circuits de ce fournisseur"
+    "toursBySupplier": "Circuits de ce fournisseur",
+    "termsSubtitle": "Les conditions qui régissent la vente de vos circuits et expériences sur Expedition-Go."
   },
   "supportChat": {
     "adminSupport": "Support Administratif",
@@ -497,8 +498,5 @@
     "termsSubtitle": "Les conditions qui régissent votre utilisation d'Expedition-Go.",
     "privacySubtitle": "Comment nous collectons, utilisons et protégeons vos informations.",
     "cookiesSubtitle": "Comment nous utilisons les cookies et comment vous pouvez les contrôler."
-  },
-  "supplier": {
-    "termsSubtitle": "Les conditions qui régissent la vente de vos circuits et expériences sur Expedition-Go."
   }
 }

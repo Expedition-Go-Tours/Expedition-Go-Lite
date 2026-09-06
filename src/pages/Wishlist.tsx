@@ -1,13 +1,17 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, lazy, Suspense } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import { Button } from '../components/ui/button'
 import { useWishlist, type WishlistItem } from '../context/WishlistContext'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-import BookingTransition from '../components/BookingTransition'
 import './Wishlist.css'
 import OptimizedImage from '@/components/shared/OptimizedImage'
+
+// The full-screen transit animation (three.js scenes for helicopter/ATV) is
+// only needed after "Book Now" is clicked, so it loads lazily instead of
+// bloating the initial wishlist chunk download.
+const BookingTransition = lazy(() => import('../components/BookingTransition'))
 
 export default function Wishlist() {
   const { t } = useTranslation()
@@ -266,7 +270,9 @@ const handleBookNow = (item: WishlistItem) => {
 
       <AnimatePresence>
         {showTransition && (
-          <BookingTransition onDone={handleTransitionDone} vehicleIndex={transitVehicle} />
+          <Suspense fallback={null}>
+            <BookingTransition onDone={handleTransitionDone} vehicleIndex={transitVehicle} />
+          </Suspense>
         )}
       </AnimatePresence>
     </div>

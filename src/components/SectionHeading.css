@@ -93,19 +93,21 @@
   }
 }
 
-/* Very narrow screens: a long localized heading should not fight a nowrap
-   "View all" for one row — stack the title on its own line. */
+/* Narrow screens: keep the title and "View all" horizontally aligned on one
+   row — the title may wrap, but the link stays vertically centered on the right. */
 @media (max-width: 480px) {
   .section-heading {
-    flex-wrap: wrap;
-    row-gap: 8px;
+    align-items: center;
+    gap: 12px;
   }
 
   .section-heading-text {
-    flex: 1 1 100%;
+    flex: 1 1 auto;
+    min-width: 0;
   }
 
   .section-heading-actions {
-    margin-left: auto;
+    margin-left: 0;
+    flex-shrink: 0;
   }
 }
