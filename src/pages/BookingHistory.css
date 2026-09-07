@@ -919,7 +919,7 @@
 .bk-empty-anim {
   max-width: 500px;
   margin: 0 auto 20px;
-  filter: hue-rotate(-150deg) saturate(1.2);
+  filter: hue-rotate(210deg) saturate(1.4) brightness(1.05);
 }
 
 .bk-empty-anim svg {
