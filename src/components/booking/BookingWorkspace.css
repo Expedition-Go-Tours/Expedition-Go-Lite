@@ -1275,8 +1275,61 @@
   letter-spacing: -0.01em;
 }
 
+/* ---------- Pay-later "complete payment now" banner ---------- */
+.ws-paylater {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 16px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--bv-accent-soft);
+  border: 1px solid rgba(22, 163, 74, 0.22);
+}
+
+.ws-paylater-copy {
+  flex: 1 1 260px;
+  min-width: 0;
+}
+
+.ws-paylater-title {
+  margin: 0 0 3px;
+  font-family: var(--font-heading, inherit);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--bv-accent-strong);
+}
+
+.ws-paylater-desc {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #374151;
+}
+
+.ws-paylater-btn {
+  white-space: nowrap;
+}
+
+.ws-paylater-error {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--bv-warn-text);
+}
+
 /* ---------- Responsive ---------- */
 @media (max-width: 640px) {
+  .ws-paylater {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .ws-paylater-btn {
+    width: 100%;
+  }
+
   .ws-card {
     padding: 16px;
     border-radius: 14px;

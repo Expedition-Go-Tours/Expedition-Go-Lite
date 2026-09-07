@@ -20,7 +20,7 @@ import {
   Flag,
 } from 'lucide-react'
 import { useChat } from '../../chat/ChatContext'
-import { useExpeditionBookingDetail, useCancelBooking } from '../../hooks/useExpeditionBookings'
+import { useExpeditionBookingDetail, useCancelBooking, useBookingPaymentState, useStartPayLaterPayNow } from '../../hooks/useExpeditionBookings'
 import { extractMeetingInfo, formatDuration, type TourCardData } from '../../hooks/useExpeditionTours'
 import { useRecommendedTours, type RecommendedTour } from '../../hooks/useRecommendedTours'
 import { formatItineraryDuration, type ItineraryDay } from '../../lib/tourTypes'
@@ -471,6 +471,23 @@ export default function BookingWorkspace({ id, onClose }: { id?: string; onClose
   const detailQuery = useExpeditionBookingDetail(id)
   const detail = detailQuery.data as Record<string, any> | undefined
   const cancelBooking = useCancelBooking()
+  const { data: paymentState } = useBookingPaymentState(id)
+  const startPayLater = useStartPayLaterPayNow()
+  const [payNowError, setPayNowError] = useState<string | null>(null)
+
+  // Reserve-now-pay-later: complete the deferred payment now (3DS / card update
+  // / pay early) by redirecting to the hosted Stripe Checkout session.
+  const handlePayLaterPayNow = async () => {
+    if (!id || startPayLater.isPending) return
+    setPayNowError(null)
+    try {
+      const url = await startPayLater.mutateAsync(id)
+      if (!url) throw new Error('Payment could not be started — please try again.')
+      window.location.assign(url)
+    } catch (err) {
+      setPayNowError(err instanceof Error ? err.message : 'Payment could not be started — please try again.')
+    }
+  }
 
   const tour = detail?.tour && typeof detail.tour === 'object' ? (detail.tour as Record<string, any>) : null
   const rawSupplier =
@@ -802,6 +819,30 @@ export default function BookingWorkspace({ id, onClose }: { id?: string; onClose
         </p>
       )}
 
+      {paymentState?.canPayNow && (
+        <div className="ws-paylater no-print">
+          <div className="ws-paylater-copy">
+            <p className="ws-paylater-title">
+              {paymentState.requiresAction ? 'Action needed to keep your spot' : 'Pay now — optional'}
+            </p>
+            <p className="ws-paylater-desc">
+              {paymentState.requiresAction
+                ? `We could not charge your card automatically for ${currencySymbol(currency)}${gross.toFixed(2)}. Complete your payment (or update your card) to keep this reservation.`
+                : `This reservation is reserved and will be charged before your activity date. You can also pay now with a different card.`}
+            </p>
+          </div>
+          <button
+            type="button"
+            className="bk-btn bk-btn-primary ws-paylater-btn"
+            onClick={handlePayLaterPayNow}
+            disabled={startPayLater.isPending}
+          >
+            {startPayLater.isPending ? 'Starting secure payment…' : paymentState.requiresAction ? 'Complete payment' : 'Pay now'}
+          </button>
+          {payNowError && <p className="ws-paylater-error">{payNowError}</p>}
+        </div>
+      )}
+
       <div className="ws-layout">
         <div className="ws-main">
           {/* Digital ticket */}
@@ -1009,6 +1050,31 @@ export default function BookingWorkspace({ id, onClose }: { id?: string; onClose
                   onClick={handleWriteReview}
                 >
                   Write a review now
+                </button>
+              </div>
+            )}
+
+            {/* Self-service edits — party size / date / time */}
+            {activeStatus && detail?.modify?.allowed === true && (
+              <div className="ws-manage-section ws-modify-section">
+                <p className="ws-manage-label">Changes</p>
+                <p className="ws-manage-policy">
+                  {detail.modify.pendingPayment
+                    ? 'A change on this booking is waiting to be paid.'
+                    : 'Need to adjust the date, time or number of travellers?'}
+                </p>
+                {detail.modify.deadline && (
+                  <p className="ws-manage-deadline">
+                    <Clock size={13} />
+                    Changes open until {formatDeadlineLabel(detail.modify.deadline)}
+                  </p>
+                )}
+                <button
+                  type="button"
+                  className="bk-btn bk-btn-secondary ws-action-btn"
+                  onClick={() => navigate(`/booking/${detail.id}/modify`)}
+                >
+                  {detail.modify.pendingPayment ? 'Review pending change' : 'Edit trip'}
                 </button>
               </div>
             )}

@@ -1,5 +1,5 @@
-﻿import { useEffect, useMemo, useRef, useState, lazy, Suspense } from 'react'
-import { useSearchParams, useLocation } from 'react-router-dom'
+import { useEffect, useMemo, useRef, useState, lazy, Suspense } from 'react'
+import { useSearchParams, useLocation, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Search, Ticket, AlertTriangle, ArrowRight, CalendarDays, CheckCircle2, Wallet } from 'lucide-react'
 import {
@@ -7,8 +7,10 @@ import {
   useMyBookingsCount,
   type ExpeditionBookingSummary,
 } from '../hooks/useExpeditionBookings'
+import { useMoodKeywords } from '../hooks/useHomepageSections'
 import { useAuthUser } from '@/hooks/useAuthUser'
 import BookingCard from '../components/booking/BookingCard'
+import TravelEmptyAnimation from '../components/booking/TravelEmptyAnimation'
 const BookingWorkspace = lazy(() => import('../components/booking/BookingWorkspace'))
 import { formatHeadingDate, toDateKey, isSameCalendarDay } from '../lib/bookingUi'
 import { writeBookingsSeen } from '../lib/bookingsBadge'
@@ -81,6 +83,10 @@ export default function BookingHistory() {
     undefined,
     100
   )
+
+  // Curated "ways to explore" chips for the zero-bookings state (same source
+  // as the homepage mood rail — each keyword has live tours behind it).
+  const { data: moodKeywords, isLoading: moodsLoading } = useMoodKeywords(4)
 
   // Live total of CONFIRMED/PENDING bookings — the number the navbar badge
   // compares against. Watching it here keeps the badge's "seen" marker in sync
@@ -340,49 +346,162 @@ export default function BookingHistory() {
               ))}
             </div>
           ) : filtered.length === 0 ? (
-            <div className="bk-state">
-              <Ticket size={26} />
-              <h3>
-                {query
-                  ? 'No bookings match your search'
-                  : bucket === 'all'
-                    ? 'No bookings yet'
+            bookings.length === 0 && !query ? (
+              <motion.div
+                className="bk-empty"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5 }}
+              >
+                {/* Animated hero */}
+                <div className="bk-empty-hero">
+                  <motion.div
+                    className="bk-empty-anim"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.6, delay: 0.1, ease: [0.25, 0.46, 0.45, 0.94] }}
+                  >
+                    <TravelEmptyAnimation />
+                  </motion.div>
+
+                  <motion.h2
+                    className="bk-empty-title"
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.3 }}
+                  >
+                    No trips yet
+                  </motion.h2>
+                  <motion.p
+                    className="bk-empty-text"
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.4 }}
+                  >
+                    Every adventure starts with a booking. Explore unforgettable experiences
+                    and we&apos;ll handle the rest. Your trips will live here.
+                  </motion.p>
+
+                  <motion.div
+                    className="bk-empty-actions"
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.5 }}
+                  >
+                    <Link className="bk-btn bk-btn-primary bk-empty-primary" to="/">
+                      Explore experiences
+                    </Link>
+                    <Link className="bk-btn bk-btn-secondary bk-empty-secondary" to="/tours">
+                      Browse all tours
+                    </Link>
+                  </motion.div>
+                </div>
+
+                {/* Chips */}
+                <motion.div
+                  className="bk-empty-chips-block"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.6 }}
+                >
+                  <p className="bk-empty-chips-label">Popular ways to explore</p>
+                  {moodsLoading && !moodKeywords ? (
+                    <div className="bk-empty-chips bk-empty-chips-loading" aria-hidden="true">
+                      {[0, 1, 2, 3].map((i) => (
+                        <span key={i} className="bk-chip-skel" />
+                      ))}
+                    </div>
+                  ) : (
+                    moodKeywords && moodKeywords.filter((k) => (k.tourCount ?? 0) > 0).length > 0 && (
+                      <div className="bk-empty-chips">
+                        {moodKeywords
+                          .filter((k) => (k.tourCount ?? 0) > 0)
+                          .map((k) => (
+                            <Link
+                              key={k.keyword}
+                              className="bk-empty-chip"
+                              to={`/tours?mood=${encodeURIComponent(k.keyword)}`}
+                            >
+                              {k.keyword}
+                            </Link>
+                          ))}
+                      </div>
+                    )
+                  )}
+                </motion.div>
+
+                {/* How it works */}
+                <motion.div
+                  className="bk-empty-steps"
+                  aria-label="How it works"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.7 }}
+                >
+                  {[
+                    { num: '1', title: 'Pick an experience', desc: 'Browse tours, compare reviews, and find your match.' },
+                    { num: '2', title: 'Reserve in seconds', desc: 'Secure your spot instantly with a simple checkout.' },
+                    { num: '3', title: 'We confirm & you go', desc: 'Manage your trip and get reminders right here.' },
+                  ].map((step) => (
+                    <div key={step.num} className="bk-empty-step">
+                      <span className="bk-empty-step-num">{step.num}</span>
+                      <div>
+                        <p className="bk-empty-step-title">{step.title}</p>
+                        <p className="bk-empty-step-text">{step.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </motion.div>
+
+                <motion.p
+                  className="bk-empty-note"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.4, delay: 0.8 }}
+                >
+                  Payments are secure and cancellations are easy.
+                </motion.p>
+              </motion.div>
+            ) : (
+              <div className="bk-state">
+                <Ticket size={26} />
+                <h3>
+                  {query
+                    ? 'No bookings match your search'
                     : bucket === 'upcoming'
                       ? 'No upcoming trips'
                       : bucket === 'reserved'
                         ? 'No reservations yet'
                         : 'No past trips yet'}
-              </h3>
-              <p>
-                {query
-                  ? 'Try a different tour name or booking reference.'
-                  : bucket === 'all'
-                    ? 'When you book an experience it will appear here.'
-                    : bucket === 'upcoming'
-                      ? 'When you book an experience it will appear here.'
-                      : bucket === 'reserved'
-                        ? 'Reserved trips you haven\u2019t paid for yet will appear here.'
-                        : 'Trips you have been on, or cancelled, will be kept here for your records.'}
-              </p>
-              {!query && bucket === 'all' && (
-                <button
-                  type="button"
-                  className="bk-btn bk-btn-primary"
-                  onClick={() => (window.location.href = '/')}
-                >
-                  Explore experiences <ArrowRight size={15} />
-                </button>
-              )}
-              {!query && bucket === 'upcoming' && (
-                <button
-                  type="button"
-                  className="bk-btn bk-btn-primary"
-                  onClick={() => (window.location.href = '/')}
-                >
-                  Explore experiences <ArrowRight size={15} />
-                </button>
-              )}
-            </div>
+                </h3>
+                <p>
+                  {query
+                    ? 'Try a different tour name or booking reference.'
+                    : bucket === 'reserved'
+                      ? 'Reserved trips you haven\u2019t paid for yet will appear here.'
+                      : bucket === 'past'
+                        ? 'Trips you have been on, or cancelled, will be kept here for your records.'
+                        : 'When you book an experience it will appear here.'}
+                </p>
+                <div className="bk-state-actions">
+                  {!query && (bucket === 'all' || bucket === 'upcoming') && (
+                    <Link className="bk-btn bk-btn-primary" to="/tours">
+                      Browse all tours <ArrowRight size={15} />
+                    </Link>
+                  )}
+                  {!query && (bucket === 'reserved' || bucket === 'past') && (
+                    <button type="button" className="bk-btn bk-btn-secondary" onClick={() => setBucket('all')}>
+                      View all bookings
+                    </button>
+                  )}
+                  {query && (
+                    <button type="button" className="bk-btn bk-btn-secondary" onClick={() => setQuery('')}>
+                      Clear search
+                    </button>
+                  )}
+                </div>
+              </div>
+            )
           ) : bucket === 'past' ? (
             <>
               <div className="bk-list">

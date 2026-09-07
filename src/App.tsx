@@ -42,6 +42,7 @@ const BookingPage = lazy(() => import('./pages/BookingPage'))
 const BookingConfirmationPage = lazy(() => import('./pages/BookingConfirmationPage'))
 const CheckoutPage = lazy(() => import('./pages/CheckoutPage'))
 const BookingPickupPage = lazy(() => import('./pages/BookingPickupPage'))
+const BookingModifyPage = lazy(() => import('./pages/BookingModifyPage'))
 const HelpCentrePage = lazy(() => import('./pages/HelpCentrePage'))
 const ContactUsPage = lazy(() => import('./pages/ContactUsPage'))
 const RefundPolicyPage = lazy(() => import('./pages/RefundPolicyPage'))
@@ -261,6 +262,7 @@ function AppContent() {
           <Route path="/booking/confirmation/:bookingId" element={<BookingConfirmationPage />} />
           <Route path="/booking/confirmation" element={<BookingConfirmationPage />} />
           <Route path="/booking/:bookingId/pickup" element={<BookingPickupPage />} />
+          <Route path="/booking/:bookingId/modify" element={<BookingModifyPage />} />
           <Route path="/login" element={
             <AuthForm
               initialMode={loginInitialMode}

@@ -581,8 +581,7 @@ export function useUpdateBookingPickup() {
  * Loads the current customer's HOLDING checkout draft (server-authoritative
  * order summary + fresh PaymentIntent client secret). Used by the branded
  * Payment Element page so it survives a hard refresh mid-payment.
- */
-export function useCheckoutDraft(draftId: string | undefined) {
+ */export function useCheckoutDraft(draftId: string | undefined) {
   return useQuery<CheckoutDraftSummary | null>({
     queryKey: ['expedition', 'checkout-draft', draftId],
     enabled: !!draftId,
@@ -614,6 +613,243 @@ export function useReleaseCheckoutDraft() {
     },
     onSuccess: (_data, id) => {
       queryClient.invalidateQueries({ queryKey: ['expedition', 'checkout-draft', id] })
+    },
+  })
+}
+
+/** Pay-later actionability of an own booking (used to drive the UI CTA). */
+export interface PayLaterPaymentState {
+  canPayNow: boolean
+  requiresAction: boolean
+  autoChargeScheduled: boolean
+  bookingNumber: string
+  travelDate?: string | null
+}
+
+/**
+ * Reads whether an unpaid reserve-now-pay-later booking can be paid now online
+ * (3DS / card failure escalation, or simply paying early). 404 (not found /
+ * not yours) is treated as "no action available".
+ */
+export function useBookingPaymentState(id: string | null | undefined) {
+  return useQuery<PayLaterPaymentState | null>({
+    queryKey: ['expedition', 'bookings', id, 'payment-state'],
+    enabled: !!id,
+    staleTime: 30_000,
+    retry: false,
+    queryFn: async () => {
+      if (!id) return null
+      const res = await fetchWithAuth(`/expedition/bookings/${encodeURIComponent(id)}/payment-state`)
+      if (res.status === 404) return null
+      const payload = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(payload.message || `Request failed (${res.status})`)
+      return (payload.data?.paymentState ?? null) as PayLaterPaymentState | null
+    },
+  })
+}
+
+/**
+ * Starts a hosted Stripe Checkout session to complete an unpaid pay-later
+ * booking now (resolves 3DS / card update / pay early). Returns the Stripe
+ * hosted URL the caller should redirect to.
+ */
+export function useStartPayLaterPayNow() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetchWithAuth(`/expedition/bookings/${encodeURIComponent(id)}/pay-now`, {
+        method: 'POST',
+        body: JSON.stringify({}),
+      })
+      const payload = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(payload.message || `Request failed (${res.status})`)
+      return (payload.data?.url ?? null) as string | null
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['expedition', 'bookings'] })
+    },
+  })
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Booking modification ("Edit trip") — party size / date / time.
+// Mirrors the backend contract in
+// Expedition-Go-Backend/utils/bookingModify.js + expeditionController.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type ModifyMoneyMode = 'refund' | 'topup' | 'none' | 'paylater-update'
+
+export interface BookingModifyPolicy {
+  allowed: boolean
+  reason?: string | null
+  cutoffHours: number | null
+  deadline?: string | null
+}
+
+export interface BookingModifyPendingPayment {
+  changeId: string
+  amount: number | null
+  expiresAt?: string | null
+  createdAt?: string
+}
+
+export interface ModifyQuoteResponse {
+  bookingId: string
+  bookingNumber: string
+  allowed: boolean
+  policy: BookingModifyPolicy
+  current: {
+    travelDate: string
+    selectedTime: string | null
+    travelerTotal: number
+    travelers: Record<string, number>
+    grossAmount: number
+  }
+  quote: {
+    travelDate: string
+    selectedTime: string | null
+    travelers: Record<string, number>
+    travelerTotal: number
+    subtotal: number
+    discount: number
+    previousTotal: number
+    newTotal: number
+    delta: number
+    currency: string
+    moneyMode: ModifyMoneyMode
+    changes: { label: string; detail: string }[]
+    capacity?: { availableSpots?: number; groupsRemaining?: number | null }
+  }
+}
+
+export interface ModifyApplyResult {
+  bookingId: string
+  status: 'APPLIED' | 'PENDING_PAYMENT'
+  bookingNumber?: string
+  changeId?: string
+  expiresAt?: string
+  money?: { mode: ModifyMoneyMode; previousTotal: number; newTotal: number; delta: number; currency: string }
+  quote?: { travelDate: string; selectedTime: string | null; travelerTotal: number; travelers: Record<string, number> }
+  payment?: {
+    paymentIntentId: string
+    clientSecret: string
+    amount: number
+    currency: string
+    expiresAt: string
+  }
+}
+
+export interface BookingModifyChanges {
+  travelDate?: string
+  selectedTime?: string | null
+  travelers?: Record<string, number>
+}
+
+/** Which parts of the request actually differ from the booking. */
+function modifyChangeKeys(booking: { travelDate: string; selectedTime: string | null; travelers: Record<string, number> } | undefined, changes: BookingModifyChanges) {
+  const keys: string[] = []
+  if (!booking) return keys
+  if (changes.travelDate && changes.travelDate !== String(booking.travelDate).slice(0, 10)) keys.push('travelDate')
+  if (changes.selectedTime !== undefined && changes.selectedTime !== (booking.selectedTime || null)) keys.push('selectedTime')
+  if (changes.travelers && Object.keys(changes.travelers).length > 0) {
+    const cur = booking.travelers || {}
+    const different = Object.keys(changes.travelers).some((k) => changes.travelers![k] !== (cur[k] ?? 0))
+    if (different) keys.push('travelers')
+  }
+  return keys
+}
+
+/**
+ * Live quote for a booking modification. The query is enabled only when at
+ * least one field actually differs from the current booking.
+ */
+export function useBookingModifyQuote(
+  id: string | null | undefined,
+  booking: { travelDate: string; selectedTime: string | null; travelers: Record<string, number> } | undefined,
+  changes: BookingModifyChanges
+) {
+  const keys = modifyChangeKeys(booking, changes)
+  const serialized = JSON.stringify(changes)
+  return useQuery<ModifyQuoteResponse>({
+    queryKey: ['expedition', 'bookings', id, 'modify-quote', serialized],
+    enabled: !!id && !!booking && keys.length > 0,
+    staleTime: 20_000,
+    retry: false,
+    queryFn: async () => {
+      const res = await fetchWithAuth(`/expedition/bookings/${encodeURIComponent(id!)}/modify/quote`, {
+        method: 'POST',
+        body: JSON.stringify(changes),
+      })
+      const payload = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(payload.message || `Request failed (${res.status})`)
+      return (payload.data ?? payload) as ModifyQuoteResponse
+    },
+  })
+}
+
+/**
+ * Applies a modification. Returns APPLIED (no extra payment) or PENDING_PAYMENT
+ * with the server-minted top-up PaymentIntent the Payment Element must confirm.
+ */
+export function useApplyBookingModify() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: { id: string; changes: BookingModifyChanges }): Promise<ModifyApplyResult> => {
+      const res = await fetchWithAuth(`/expedition/bookings/${encodeURIComponent(input.id)}/modify`, {
+        method: 'PATCH',
+        body: JSON.stringify(input.changes),
+      })
+      const payload = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(payload.message || `Request failed (${res.status})`)
+      return (payload.data ?? payload) as ModifyApplyResult
+    },
+    onSuccess: (result, vars) => {
+      if (result.status === 'APPLIED') {
+        queryClient.invalidateQueries({ queryKey: ['expedition', 'bookings'] })
+        queryClient.invalidateQueries({ queryKey: ['expedition', 'bookings', vars.id, 'detail'] })
+      }
+    },
+  })
+}
+
+/**
+ * Discards a parked modification top-up (cancels the PaymentIntent).
+ */
+export function useDiscardBookingModify() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: { id: string; changeId: string }): Promise<{ status: string }> => {
+      const res = await fetchWithAuth(
+        `/expedition/bookings/${encodeURIComponent(input.id)}/modify/${encodeURIComponent(input.changeId)}/discard`,
+        { method: 'POST', body: JSON.stringify({}) }
+      )
+      const payload = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(payload.message || `Request failed (${res.status})`)
+      return (payload.data ?? payload) as { status: string }
+    },
+    onSuccess: (_data, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['expedition', 'bookings', vars.id, 'detail'] })
+      queryClient.invalidateQueries({ queryKey: ['expedition', 'bookings', vars.id, 'modify-quote'] })
+    },
+  })
+}
+
+/**
+ * Polls until a just-paid top-up has been applied by the webhook (the booking's
+ * parked PENDING_PAYMENT change disappears and totals change). Stops when done
+ * or the client gives up after `maxTries`.
+ */
+export function useBookingModifySettled(id: string | null | undefined, active: boolean) {
+  return useQuery({
+    queryKey: ['expedition', 'bookings', id, 'detail'],
+    enabled: !!id && active,
+    refetchInterval: active ? 2500 : false,
+    retry: false,
+    staleTime: 0,
+    queryFn: async () => {
+      const payload = await expeditionFetchRaw(`/expedition/bookings/${encodeURIComponent(id!)}`)
+      const data = payload.data ?? payload
+      return data.booking as Record<string, any>
     },
   })
 }

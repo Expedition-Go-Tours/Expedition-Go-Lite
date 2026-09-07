@@ -128,10 +128,16 @@ export function evaluateCancellationPolicy(
   return { type, allowed: hoursUntil >= windowHours, windowHours, refundPct, deadline }
 }
 
-export function formatDeadlineLabel(date: Date): string {
-  return date.toLocaleString('en-US', {
+/** e.g. "Sep 9, 9:00 PM" — deadline line (accepts ISO strings or Dates). */
+export function formatDeadlineLabel(date: Date | string | null | undefined): string {
+  if (!date) return '—'
+  const d = date instanceof Date ? date : new Date(date)
+  if (Number.isNaN(d.getTime())) return '—'
+  const showYear = d.getFullYear() !== new Date().getFullYear()
+  return d.toLocaleString('en-US', {
     month: 'short',
     day: 'numeric',
+    ...(showYear ? { year: 'numeric' } : {}),
     hour: 'numeric',
     minute: '2-digit',
   })
