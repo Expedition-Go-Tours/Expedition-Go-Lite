@@ -2104,7 +2104,7 @@ export default function BookingPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-white">
-      <div className="relative flex items-center justify-center px-4 pt-5 sm:justify-between sm:px-6 lg:px-8">
+      <div className="relative mx-auto flex w-full max-w-[1200px] items-center justify-center px-4 pt-5 sm:justify-between sm:px-6 lg:px-8">
         <motion.button
           onClick={() => navigate(-1)}
           whileTap={{ scale: 0.97 }}

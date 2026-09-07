@@ -99,7 +99,11 @@ export default function ContentCreatorsPage({ onOpenAuth }: ContentCreatorsPageP
               <img
                 src={img}
                 alt={i < CREATOR_IMAGES.length ? `Content creator ${i + 1}` : ''}
+                width={300}
+                height={400}
+                decoding="async"
                 loading={i < 2 ? 'eager' : 'lazy'}
+                fetchPriority={i < 2 ? 'high' : undefined}
               />
             </div>
           ))}

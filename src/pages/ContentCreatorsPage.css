@@ -61,6 +61,7 @@
   border-radius: 20px;
   overflow: hidden;
   position: relative;
+  background: #d1d5db;
   box-shadow: 0 6px 18px rgba(15, 36, 24, 0.1);
 }
 
@@ -248,26 +249,28 @@
 .content-creator-example-rows {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 16px;
   margin-bottom: 16px;
 }
 
+/* Mobile: stacked capsule cards */
 .content-creator-example-row {
   display: flex;
-  align-items: center;
-  border-radius: 12px;
+  flex-direction: column;
+  border-radius: 16px;
   overflow: hidden;
-  min-height: 52px;
+  background: #fff;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
 }
 
 .content-creator-example-label {
-  flex: 0 0 140px;
-  padding: 14px 20px;
+  padding: 12px 20px;
   background: #dbeafe;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   color: #0f2418;
   text-align: center;
+  letter-spacing: 0.3px;
 }
 
 .content-creator-example-bar {
@@ -275,17 +278,50 @@
   padding: 14px 20px;
   background: #065f46;
   color: #fff;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
 }
 
 .content-creator-example-earning {
   font-weight: 700;
-  font-size: 15px;
+  font-size: 14px;
   white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Tablet+: horizontal capsule layout */
+@media (min-width: 640px) {
+  .content-creator-example-rows {
+    gap: 10px;
+  }
+
+  .content-creator-example-row {
+    flex-direction: row;
+    border-radius: 12px;
+    overflow: hidden;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .content-creator-example-label {
+    flex: 0 0 140px;
+    padding: 14px 20px;
+    font-size: 14px;
+  }
+
+  .content-creator-example-bar {
+    padding: 14px 20px;
+    font-size: 14px;
+    gap: 0;
+  }
+
+  .content-creator-example-earning {
+    font-size: 15px;
+  }
 }
 
 .content-creator-how-section {

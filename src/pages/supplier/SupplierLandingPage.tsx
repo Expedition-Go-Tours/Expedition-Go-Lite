@@ -1,13 +1,14 @@
 /**
  * Public "become a supplier" landing page (/supplier/list-experience).
  * Explains how the supplier platform works and answers common questions
- * via an FAQ accordion. Signed-out visitors land here from the navbar's
- * "List an Experience" link before being asked to sign in; the CTA on this
- * page routes signed-in users straight to the application form
- * (/supplier/register) and signed-out users through the sign-in flow first.
+ * via an FAQ accordion. Signed-out visitors land here from the footer's
+ * "As Supplier/tour operator" link; the CTA on this page routes signed-in
+ * users straight to the new tour-operator application form
+ * (/partners/tour-operators/apply) and signed-out users through the
+ * sign-in flow first.
  *
- * @see components/Navbar.tsx (entry point)
- * @see pages/supplier/SupplierRegisterPage.tsx (application form)
+ * @see components/Footer.tsx (entry point)
+ * @see pages/partner/PartnerApplyPage.tsx (new application form)
  */
 import { useState, useEffect, useRef, lazy, Suspense } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -446,11 +447,11 @@ export default function SupplierLandingPage({ onOpenAuth }: SupplierLandingPageP
 
   const handleBecomeSupplier = () => {
     if (!user) {
-      setAuthReturnTo('/supplier/register')
+      setAuthReturnTo('/partners/tour-operators/apply')
       onOpenAuth?.('signup')
       return
     }
-    navigate('/supplier/register')
+    navigate('/partners/tour-operators/apply')
   }
 
   const handleReadFaq = (e: React.MouseEvent<HTMLAnchorElement>) => {
