@@ -1,26 +1,24 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, MotionConfig } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import {
   MessageCircle, X, ChevronLeft, ChevronRight,
-  Phone, Mail, Clock, Headphones, MessagesSquare, LogIn,
+  Phone, Mail, Clock, Headphones, LogIn, Send,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import './SupportChatWidget.css';
+import './SupportChatMessenger.css';
 import { useChat, otherParticipant } from '../chat/ChatContext';
 import { useAuthUser } from '../hooks/useAuthUser';
 import ChatThread from '../chat/ChatThread';
 import { uploadChatImage } from '../chat/chatApi';
 import type { ChatRecipient } from '../chat/types';
 
-const SUPPORT_PHONE = "+233 XX XXX XXXX";
-const SUPPORT_EMAIL = "support@expedition-go.com";
-const SUPPORT_HOURS = [
-  { label: "Mon - Fri", value: "8:00 AM - 6:00 PM" },
-  { label: "Saturday", value: "9:00 AM - 2:00 PM" },
-  { label: "Sunday", value: "Closed" },
-];
+/** Contact details come from env; rows are hidden when unset (no fake data). */
+const SUPPORT_PHONE = import.meta.env.VITE_SUPPORT_PHONE || '';
+const SUPPORT_EMAIL = import.meta.env.VITE_SUPPORT_EMAIL || '';
+const SUPPORT_HOURS_LABEL = import.meta.env.VITE_SUPPORT_HOURS || 'Mon–Fri 8:00–18:00 GMT · Sat 9:00–14:00 GMT';
 
 interface SupportChatWidgetProps {
   initialOpen?: boolean
@@ -29,18 +27,7 @@ interface SupportChatWidgetProps {
   onOpenAuth?: (mode: 'signin' | 'signup') => void
 }
 
-function timeAgo(iso: string): string {
-  const now = Date.now();
-  const then = new Date(iso).getTime();
-  const mins = Math.floor((now - then) / 60000);
-  if (mins < 1) return "now";
-  if (mins < 60) return `${mins}m`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h`;
-  const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d`;
-  return new Date(iso).toLocaleDateString([], { month: "short", day: "numeric" });
-}
+type SupportView = 'welcome' | 'signin' | 'contact' | 'chat'
 
 export default function SupportChatWidget({ initialOpen, initialRecipient, onOpenAuth }: SupportChatWidgetProps) {
   const { t } = useTranslation();
@@ -52,26 +39,60 @@ export default function SupportChatWidget({ initialOpen, initialRecipient, onOpe
   const myUserId = user?.id || user?._id || user?.uid || user?.firebaseUid;
 
   const [isOpen, setIsOpen] = useState(!!initialOpen);
-  const [view, setView] = useState<"welcome" | "signin" | "contact" | "chats" | "chat">(
-    initialRecipient?.id ? "chat" : "welcome",
-  );
+  const [view, setView] = useState<SupportView>(() => (initialRecipient?.id ? "chat" : "welcome"));
   const [isMobile, setIsMobile] = useState(false);
   const autoOpenedRef = useRef(false);
+  const pendingIntentRef = useRef<null | 'support' | 'supplier'>(null);
+  const pendingRecipientRef = useRef<ChatRecipient | null>(initialRecipient ?? null);
 
-  // External trigger: pages like the Help Centre / Contact Us dispatch
-  // 'expedition:open-support-chat' to raise the widget programmatically.
+  // Pick the most recent existing support thread (unread first) so reopening
+  // the bubble resumes the conversation instead of showing welcome each time.
+  const pickExistingSupportThread = useCallback(() => {
+    const candidates = chat.conversations.filter(
+      (c) => c.type === "USER_SUPPORT" || c.type === "EXPEDITION_CUSTOMER",
+    );
+    if (candidates.length === 0) return null;
+    return candidates.slice().sort((a, b) => {
+      const aUnread = (a.unreadCount ?? 0) > 0 ? 1 : 0;
+      const bUnread = (b.unreadCount ?? 0) > 0 ? 1 : 0;
+      if (aUnread !== bUnread) return bUnread - aUnread;
+      return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+    })[0];
+  }, [chat.conversations]);
+
+  const openWidget = useCallback(async () => {
+    setIsOpen(true);
+    const existing = pickExistingSupportThread();
+    if (existing) {
+      try {
+        await chat.openConversation(existing.id);
+        setView("chat");
+        return;
+      } catch {
+        // fall through to welcome if the thread can't be opened
+      }
+    }
+    setView("welcome");
+  }, [pickExistingSupportThread, chat]);
+
+  // External trigger: pages like the Help Centre / Contact Us raise the widget.
   useEffect(() => {
-    const open = () => {
-      setIsOpen(true);
-      setView("welcome");
-    };
+    const open = () => { void openWidget(); };
     window.addEventListener("expedition:open-support-chat", open);
     return () => window.removeEventListener("expedition:open-support-chat", open);
-  }, []);
+  }, [openWidget]);
 
   const activeConversation = chat.conversations.find((c) => c.id === chat.activeConversationId) ?? null;
   const other = activeConversation ? otherParticipant(activeConversation, myUserId) : undefined;
-  const activeName = other?.name || activeConversation?.title || t('supportChat.expeditionSupport');
+  // Platform support threads (admin "Customer Support" / legacy expedition
+  // support) are answered by staff — never show a staff member's personal
+  // name/photo in the header; brand it as "Admin Support" instead.
+  const activeType = activeConversation?.type;
+  const isSupportActive =
+    view === "chat" &&
+    !!activeType &&
+    (activeType === "USER_SUPPORT" || activeType === "EXPEDITION_CUSTOMER");
+  const activeName = other?.name || activeConversation?.title || t('supportChat.customerSupport');
   const activePhoto = other?.photoURL ?? null;
   const activeMessages = chat.activeConversationId ? (chat.messages[chat.activeConversationId] ?? []) : [];
   const otherLastReadAt = other
@@ -80,51 +101,35 @@ export default function SupportChatWidget({ initialOpen, initialRecipient, onOpe
   const activeTypingUserId = chat.activeConversationId ? chat.typingUserId[chat.activeConversationId] : null;
   const activeTypingName = activeTypingUserId === other?.id ? other.name : undefined;
 
-  // Tour detail: open the supplier conversation immediately.
+  // Tour detail: open the supplier conversation immediately when signed in.
   useEffect(() => {
     if (!isOpen || autoOpenedRef.current) return;
     if (initialRecipient?.id && user) {
       autoOpenedRef.current = true;
+      // View already starts as "chat" for an initialRecipient; just open the
+      // thread (state settles once the conversation resolves, avoiding a
+      // synchronous setState inside the effect).
       chat.openSupplierChat(initialRecipient).catch(() => {
         toast.error(t('supportChat.chatStartFailed'));
       });
     }
   }, [isOpen, initialRecipient, user, chat, t]);
 
-  // Track the mobile breakpoint (matches the full-screen popup CSS at 480px)
+  // Mobile sheet tracking + body scroll lock.
   useEffect(() => {
-    const mq = window.matchMedia("(max-width: 480px)");
+    const mq = window.matchMedia("(max-width: 720px)");
     const update = () => setIsMobile(mq.matches);
     update();
     mq.addEventListener("change", update);
     return () => mq.removeEventListener("change", update);
   }, []);
 
-  // Lock background scroll while the chat is open so the page behind the
-  // full-screen overlay doesn't scroll.
   useEffect(() => {
     if (!isOpen || !isMobile) return;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
+    return () => { document.body.style.overflow = previousOverflow; };
   }, [isOpen, isMobile]);
-
-  const openWidget = () => {
-    setIsOpen(true);
-    setView("welcome");
-  };
-
-  const closeWidget = () => {
-    setIsOpen(false);
-    setView("welcome");
-    chat.closeConversation();
-  };
-
-  const goChats = useCallback(() => {
-    setView(user ? "chats" : "signin");
-  }, [user]);
 
   const goSupportChat = useCallback(async () => {
     try {
@@ -135,18 +140,56 @@ export default function SupportChatWidget({ initialOpen, initialRecipient, onOpe
     }
   }, [chat, t]);
 
-  const goConversation = useCallback((id: string) => {
-    chat.openConversation(id);
-    setView("chat");
-  }, [chat]);
+  const closeWidget = () => {
+    setIsOpen(false);
+    setView("welcome");
+    chat.closeConversation();
+  };
+
+  const backToWelcome = () => setView("welcome");
+
+  const openContact = () => setView("contact");
+
+  // Resume a pending intent after the user finishes sign-in / sign-up.
+  useEffect(() => {
+    if (!user || !isOpen) return;
+    const pending = pendingIntentRef.current;
+    if (!pending) return;
+    pendingIntentRef.current = null;
+    if (pending === 'supplier' && pendingRecipientRef.current) {
+      chat.openSupplierChat(pendingRecipientRef.current).catch(() => {
+        toast.error(t('supportChat.chatStartFailed'));
+      });
+      setView('chat');
+    } else {
+      goSupportChat();
+    }
+  }, [user, isOpen, goSupportChat, chat, t]);
+
+  const openSupportIntent = useCallback(() => {
+    if (user) {
+      goSupportChat();
+      return;
+    }
+    pendingIntentRef.current = 'support';
+    setView('signin');
+  }, [user, goSupportChat]);
+
+  const signInCTA = () => {
+    pendingIntentRef.current = 'support';
+    onOpenAuth?.('signup');
+  };
 
   if (!isPublicPage) return null;
 
-  const conversations = chat.conversations;
+  const headerTitle = view === "chat" && !isSupportActive ? activeName : t('supportChat.adminSupport');
+  const headerSub = t('supportChat.typicalReply');
+  const showBack = view !== "welcome";
 
   return (
     <>
-      {/* Edge toggle */}
+      <MotionConfig reducedMotion="user">
+      {/* Launcher (unchanged trigger) */}
       <button
         onClick={isOpen ? closeWidget : openWidget}
         className={`support-chat-btn${isOpen ? " open" : ""}`}
@@ -176,301 +219,188 @@ export default function SupportChatWidget({ initialOpen, initialRecipient, onOpe
         </span>
       </button>
 
-      {/* Popup */}
-      <AnimatePresence onExitComplete={() => setView("welcome")}>
+      {/* Messenger */}
+      <AnimatePresence>
         {isOpen && (
-            <motion.div
-              className="support-chat-backdrop"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              onClick={closeWidget}
-            >
-              <div className="support-chat-popup-wrap">
-                <motion.div
-                  className="support-chat-popup"
-                  initial={isMobile ? { y: "100%" } : { opacity: 0, y: 16, scale: 0.96 }}
-                  animate={isMobile ? { y: 0 } : { opacity: 1, y: 0, scale: 1 }}
-                  exit={isMobile ? { y: "100%" } : { opacity: 0, y: 24, scale: 0.94 }}
-                  transition={isMobile
-                    ? { type: "tween", duration: 0.34, ease: [0.4, 0, 0.2, 1] }
-                    : { duration: 0.28, ease: [0.16, 1, 0.3, 1] }
-                  }
-                  onClick={(e) => e.stopPropagation()}
-                >
+          <motion.div
+            key="messenger"
+            className={`msc-layer${isMobile ? " msc-mobile" : ""}`}
+            initial={isMobile ? { y: "100%" } : { opacity: 0, y: 16, scale: 0.97 }}
+            animate={isMobile ? { y: 0 } : { opacity: 1, y: 0, scale: 1 }}
+            exit={isMobile ? { y: "100%" } : { opacity: 0, y: 20, scale: 0.97 }}
+            transition={isMobile
+              ? { type: "tween", duration: 0.3, ease: [0.32, 0.72, 0, 1] }
+              : { duration: 0.22, ease: [0.16, 1, 0.3, 1] }
+            }
+            role="dialog"
+            aria-modal="true"
+            aria-label={t('supportChat.customerSupport')}
+          >
+            {/* Click-outside close (desktop only) */}
+            {!isMobile && <button type="button" className="msc-scrim" onClick={closeWidget} aria-label={t('supportChat.closeChat')} />}
+
+            <div className="msc-panel">
               {/* Header */}
-              <div className="support-chat-header">
-                <div className="support-chat-header-left">
-                  {view === "chat" && (
-                    <button onClick={() => setView("chats")} className="support-chat-back-btn">
-                      <ChevronLeft size={16} />
-                    </button>
-                  )}
-                  {view === "chats" || view === "contact" || view === "signin" ? (
-                    <button onClick={() => setView("welcome")} className="support-chat-back-btn">
-                      <ChevronLeft size={16} />
-                    </button>
-                  ) : null}
-                  <div className="support-chat-avatar">
+              <header className="msc-header">
+                {showBack ? (
+                  <button type="button" className="msc-ghost" onClick={backToWelcome} aria-label={t('supportChat.back')}>
+                    <ChevronLeft size={18} />
+                  </button>
+                ) : (
+                  <span className="msc-ghost msc-ghost-spacer" />
+                )}
+                <div className="msc-header-main">
+                  <span className="msc-avatar">
                     {view === "chat" && activePhoto ? (
                       <img src={activePhoto} alt="" />
                     ) : (
-                      <Headphones size={16} />
+                      <Headphones size={17} />
                     )}
-                  </div>
-                  <div className="support-chat-header-info">
-                    <p className="support-chat-header-title">
-                      {view === "chat" ? activeName : view === "chats" ? t('supportChat.myChats') : t('supportChat.adminSupport')}
-                      {view === "chats" && chat.unreadCount > 0 && (
-                        <span className="support-chat-header-count">{chat.unreadCount > 99 ? "99+" : chat.unreadCount}</span>
-                      )}
-                    </p>
-                    <p className="support-chat-header-sub">
-                      {view === "chat" ? (
-                        <span className="support-chat-online">
-                          <span className="support-chat-online-dot" />
-                          {t('supportChat.online')}
-                        </span>
-                      ) : view === "chats" ? (
-                        t('supportChat.typicalReply')
-                      ) : (
-                        t('supportChat.typicalReply')
-                      )}
-                    </p>
-                  </div>
+                  </span>
+                    <span className="msc-header-text">
+                      <span className="msc-header-title">{headerTitle}</span>
+                      <span className="msc-header-sub">{headerSub}</span>
+                    </span>
                 </div>
-                <button onClick={closeWidget} className="support-chat-close-btn">
-                  <X size={16} />
+                <button type="button" className="msc-ghost" onClick={closeWidget} aria-label={t('supportChat.closeChat')}>
+                  <X size={18} />
                 </button>
-              </div>
+              </header>
 
-              {/* Body */}
-              <AnimatePresence mode="popLayout">
-                {view === "welcome" && (
-                  <motion.div
-                    key="welcome"
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -12 }}
-                    transition={{ duration: 0.18 }}
-                    className="support-chat-body"
-                  >
-                    <div className="support-chat-welcome">
-                      <div className="support-chat-welcome-icon">
-                        <MessageCircle size={28} />
+              <div className="msc-body">
+                <AnimatePresence mode="popLayout">
+                  {view === "welcome" && (
+                    <motion.div
+                      key="welcome"
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      transition={{ duration: 0.18 }}
+                      className="msc-view msc-welcome"
+                    >
+                      <div className="msc-welcome-head">
+                        <span className="msc-welcome-icon"><MessageCircle size={26} /></span>
+                        <h3 className="msc-welcome-title">{t('supportChat.welcomeTitle')}</h3>
+                        <p className="msc-welcome-text">{t('supportChat.welcomeText')}</p>
                       </div>
-                      <h3 className="support-chat-welcome-title">{t('supportChat.welcomeTitle')}</h3>
-                      <p className="support-chat-welcome-text">
-                        {t('supportChat.welcomeText')}
-                      </p>
-                      <div className="support-chat-options">
-                        <button
-                          onClick={() => setView("contact")}
-                          className="support-chat-option"
-                        >
-                          <div className="support-chat-option-icon">
-                            <Phone size={16} />
-                          </div>
-                          <div className="support-chat-option-text">
-                            <p className="support-chat-option-title">{t('supportChat.contactUs')}</p>
-                            <p className="support-chat-option-sub">{t('supportChat.contactUsSub')}</p>
-                          </div>
-                          <ChevronRight size={16} className="support-chat-option-arrow" />
-                        </button>
-                        <button onClick={goChats} className="support-chat-option">
-                          <div className="support-chat-option-icon">
-                            <MessagesSquare size={16} />
-                          </div>
-                          <div className="support-chat-option-text">
-                            <p className="support-chat-option-title">{t('supportChat.chatWithUs')}</p>
-                            <p className="support-chat-option-sub">{t('supportChat.chatWithUsSub')}</p>
-                          </div>
-                          <ChevronRight size={16} className="support-chat-option-arrow" />
+
+                      <button type="button" className="msc-cta" onClick={openSupportIntent}>
+                        <span className="msc-cta-icon"><Send size={16} /></span>
+                        <span className="msc-cta-text">
+                          <span className="msc-cta-title">{t('supportChat.chatWithUs')}</span>
+                          <span className="msc-cta-sub">{t('supportChat.chatWithSupportSub')}</span>
+                        </span>
+                        <ChevronRight size={18} className="msc-cta-arrow" />
+                      </button>
+
+                      <div className="msc-options">
+                        <button type="button" className="msc-option" onClick={openContact}>
+                          <Phone size={15} />
+                          <span>{t('supportChat.contactUs')}</span>
                         </button>
                       </div>
-                    </div>
-                  </motion.div>
-                )}
 
-                {view === "signin" && (
-                  <motion.div
-                    key="signin"
-                    initial={{ opacity: 0, x: 24 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -24 }}
-                    transition={{ duration: 0.18 }}
-                    className="support-chat-body"
-                  >
-                    <div className="support-chat-signin">
-                      <div className="support-chat-welcome-icon">
-                        <LogIn size={26} />
-                      </div>
-                      <h3 className="support-chat-welcome-title">{t('supportChat.signInToChat')}</h3>
-                      <p className="support-chat-welcome-text">{t('supportChat.signInPrompt')}</p>
-                      <button
-                        className="support-chat-signin-btn"
-                        onClick={() => onOpenAuth?.('signup')}
-                      >
+                      <p className="msc-trust">{t('supportChat.typicallyMinutes')}</p>
+                    </motion.div>
+                  )}
+
+                  {view === "signin" && (
+                    <motion.div
+                      key="signin"
+                      initial={{ opacity: 0, x: 16 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -16 }}
+                      transition={{ duration: 0.18 }}
+                      className="msc-view msc-center"
+                    >
+                      <div className="msc-center-icon"><LogIn size={24} /></div>
+                      <h3 className="msc-welcome-title">{t('supportChat.signInToChat')}</h3>
+                      <p className="msc-welcome-text">{t('supportChat.signInPrompt')}</p>
+                      <button type="button" className="msc-cta msc-cta-full" onClick={signInCTA}>
                         {t('supportChat.signIn')}
                       </button>
-                    </div>
-                  </motion.div>
-                )}
+                    </motion.div>
+                  )}
 
-                {view === "contact" && (
-                  <motion.div
-                    key="contact"
-                    initial={{ opacity: 0, x: 24 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -24 }}
-                    transition={{ duration: 0.18 }}
-                    className="support-chat-body"
-                  >
-                    <div className="support-chat-contact">
-                      <div className="support-chat-contact-header">
-                        <div className="support-chat-contact-icon">
-                          <Headphones size={24} />
+                  {view === "contact" && (
+                    <motion.div
+                      key="contact"
+                      initial={{ opacity: 0, x: 16 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -16 }}
+                      transition={{ duration: 0.18 }}
+                      className="msc-view"
+                    >
+                      <div className="msc-contact">
+                        <div className="msc-contact-head">
+                          <span className="msc-center-icon"><Headphones size={22} /></span>
+                          <h3 className="msc-welcome-title">{t('supportChat.getInTouch')}</h3>
+                          <p className="msc-welcome-text">{t('supportChat.getInTouchSub')}</p>
                         </div>
-                        <h3 className="support-chat-contact-title">{t('supportChat.getInTouch')}</h3>
-                        <p className="support-chat-contact-text">
-                          {t('supportChat.getInTouchSub')}
-                        </p>
-                      </div>
-                      <a href={`tel:${SUPPORT_PHONE.replace(/\s/g, "")}`} className="support-chat-contact-item">
-                        <div className="support-chat-contact-item-icon call">
-                          <Phone size={15} />
-                        </div>
-                        <div className="support-chat-contact-item-text">
-                          <p className="support-chat-contact-item-label">{t('supportChat.callUs')}</p>
-                          <p className="support-chat-contact-item-value">{SUPPORT_PHONE}</p>
-                        </div>
-                        <span className="support-chat-contact-item-action">{t('supportChat.call')}</span>
-                      </a>
-                      <a href={`mailto:${SUPPORT_EMAIL}`} className="support-chat-contact-item">
-                        <div className="support-chat-contact-item-icon email">
-                          <Mail size={15} />
-                        </div>
-                        <div className="support-chat-contact-item-text">
-                          <p className="support-chat-contact-item-label">{t('supportChat.emailUs')}</p>
-                          <p className="support-chat-contact-item-value">{SUPPORT_EMAIL}</p>
-                        </div>
-                        <span className="support-chat-contact-item-action">{t('supportChat.email')}</span>
-                      </a>
-                      <div className="support-chat-hours">
-                        <div className="support-chat-hours-header">
-                          <Clock size={14} />
-                          <span>{t('supportChat.businessHours')}</span>
-                        </div>
-                        {SUPPORT_HOURS.map((item) => (
-                          <div key={item.label} className="support-chat-hours-row">
-                            <span>{item.label}</span>
-                            <span className={item.value === "Closed" ? "support-chat-hours-closed" : ""}>
-                              {item.value}
+
+                        {SUPPORT_PHONE && (
+                          <a href={`tel:${SUPPORT_PHONE.replace(/\s/g, "")}`} className="msc-contact-item">
+                            <span className="msc-contact-icon call"><Phone size={15} /></span>
+                            <span className="msc-contact-text">
+                              <span className="msc-contact-label">{t('supportChat.callUs')}</span>
+                              <span className="msc-contact-value">{SUPPORT_PHONE}</span>
                             </span>
-                          </div>
-                        ))}
+                          </a>
+                        )}
+                        {SUPPORT_EMAIL && (
+                          <a href={`mailto:${SUPPORT_EMAIL}`} className="msc-contact-item">
+                            <span className="msc-contact-icon email"><Mail size={15} /></span>
+                            <span className="msc-contact-text">
+                              <span className="msc-contact-label">{t('supportChat.emailUs')}</span>
+                              <span className="msc-contact-value">{SUPPORT_EMAIL}</span>
+                            </span>
+                          </a>
+                        )}
+                        <div className="msc-hours">
+                          <span className="msc-hours-icon"><Clock size={14} /></span>
+                          <span>{SUPPORT_HOURS_LABEL}</span>
+                        </div>
+
+                        <button type="button" className="msc-option msc-option-cta" onClick={openSupportIntent}>
+                          <Send size={14} />
+                          <span>{t('supportChat.chatWithUs')}</span>
+                        </button>
                       </div>
-                    </div>
-                  </motion.div>
-                )}
+                    </motion.div>
+                  )}
 
-                {view === "chats" && (
-                  <motion.div
-                    key="chats"
-                    initial={{ opacity: 0, x: 24 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -24 }}
-                    transition={{ duration: 0.18 }}
-                    className="support-chat-body support-chat-body-chats"
-                  >
-                    <div className="support-chat-conv-list">
-                      <button className="support-chat-conv-support" onClick={goSupportChat}>
-                        <div className="support-chat-conv-avatar">
-                          <Headphones size={16} />
-                        </div>
-                        <div className="support-chat-conv-info">
-                          <p className="support-chat-conv-name">{t('supportChat.expeditionSupport')}</p>
-                          <p className="support-chat-conv-preview">{t('supportChat.chatWithSupportSub')}</p>
-                        </div>
-                        <ChevronRight size={16} className="support-chat-conv-arrow" />
-                      </button>
-
-                      {conversations.length === 0 && (
-                        <div className="support-chat-conv-empty">
-                          <MessagesSquare size={28} className="support-chat-conv-empty-icon" />
-                          <p>{t('supportChat.noConversations')}</p>
-                          <span>{t('supportChat.noConversationsSub')}</span>
-                        </div>
-                      )}
-
-                      {conversations.map((conv) => {
-                        const otherUser = otherParticipant(conv, myUserId);
-                        const name = otherUser?.name || conv.title || t('supportChat.expeditionSupport');
-                        const last = conv.messages?.[0];
-                        return (
-                          <button
-                            key={conv.id}
-                            className="support-chat-conv-item"
-                            onClick={() => goConversation(conv.id)}
-                          >
-                            <div className="support-chat-conv-avatar">
-                              {otherUser?.photoURL ? <img src={otherUser.photoURL} alt="" /> : <MessageCircle size={16} />}
-                            </div>
-                            <div className="support-chat-conv-info">
-                              <p className="support-chat-conv-name">{name}</p>
-                              <p className="support-chat-conv-preview">
-                                {last
-                                  ? (last.attachmentUrl ? `📷 ${t('supportChat.imageAttachment')}` : last.content)
-                                  : t('supportChat.startConversation')}
-                              </p>
-                            </div>
-                            <div className="support-chat-conv-meta">
-                              <span className="support-chat-conv-time">{timeAgo(conv.updatedAt)}</span>
-                              {(conv.unreadCount ?? 0) > 0 && (
-                                <span className="support-chat-conv-unread">
-                                  {Math.min(conv.unreadCount ?? 0, 99)}
-                                </span>
-                              )}
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </motion.div>
-                )}
-
-                {view === "chat" && (
-                  <motion.div
-                    key="chat"
-                    initial={{ opacity: 0, x: 24 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -24 }}
-                    transition={{ duration: 0.18 }}
-                    className="support-chat-body support-chat-body-chat"
-                  >
-                    <ChatThread
-                      messages={activeMessages}
-                      myUserId={myUserId}
-                      statuses={chat.messageStatuses}
-                      otherLastReadAt={otherLastReadAt}
-                      isTyping={!!activeTypingUserId}
-                      typingName={activeTypingName}
-                      onSend={chat.sendMessage}
-                      onLoadMore={() => chat.activeConversationId && chat.loadMore(chat.activeConversationId)}
-                      hasMore={chat.activeConversationId ? chat.hasMore[chat.activeConversationId] : false}
-                      onTyping={(v) => chat.activeConversationId && chat.setTyping(chat.activeConversationId, v)}
-                      onUpload={uploadChatImage}
-                      emptyText={t('supportChat.startConversation')}
-                    />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-              </motion.div>
+                  {view === "chat" && (
+                    <motion.div
+                      key="chat"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.18 }}
+                      className="msc-view msc-thread"
+                    >
+                      <ChatThread
+                        messages={activeMessages}
+                        myUserId={myUserId}
+                        statuses={chat.messageStatuses}
+                        otherLastReadAt={otherLastReadAt}
+                        isTyping={!!activeTypingUserId}
+                        typingName={activeTypingName}
+                        onSend={chat.sendMessage}
+                        onLoadMore={() => chat.activeConversationId && chat.loadMore(chat.activeConversationId)}
+                        hasMore={chat.activeConversationId ? chat.hasMore[chat.activeConversationId] : false}
+                        onTyping={(v) => chat.activeConversationId && chat.setTyping(chat.activeConversationId, v)}
+                        onUpload={uploadChatImage}
+                        emptyText={t('supportChat.startConversation')}
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
-            </motion.div>
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
+      </MotionConfig>
     </>
   );
 }

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
-import { Link, useParams, useNavigate, useLocation } from 'react-router-dom'
+import { Link, useParams, useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import {
-  ChevronRight, ArrowLeft, Calendar, Camera, Image, Info,
+  ChevronRight, ArrowLeft, Calendar, Camera, Info, Plus,
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
@@ -11,6 +11,7 @@ import Footer from '../components/Footer'
 import ReviewTourCard from '../pages/tour-detail/ReviewTourCard'
 import { CalendarPicker } from '../components/ui/apple-calendar-picker'
 import { useCreateReview, useUpdateReview } from '../hooks/useExpeditionReviews'
+import { useExpeditionTour } from '../hooks/useExpeditionTours'
 import './ReviewExperiencePage.css'
 
 const REVIEW_DRAFT_PREFIX = 'eg_review_draft:'
@@ -87,21 +88,62 @@ export default function ReviewExperiencePage() {
   const location = useLocation()
   const stateTour = location.state?.tour
   const returnTo = location.state?.returnTo || `/tour/${tourSlugParam || ''}#reviews`
-  const stateBookingId: string | undefined = location.state?.bookingId
+  // Cold opens (email/notification links) pass bookingId/tourId as query params.
+  const [searchParams] = useSearchParams()
+  const urlBookingId = searchParams.get('bookingId') || undefined
+  const urlTourId = searchParams.get('tourId') || undefined
+  const stateBookingId: string | undefined = location.state?.bookingId || urlBookingId
   const editingReviewId: string | undefined = location.state?.editingReviewId
 
-  const tour = useMemo(() => stateTour || {
-    title: tourSlugParam ? decodeURIComponent(tourSlugParam).replace(/-/g, ' ') : 'Tour',
-    rating: 4.8,
-    reviews: 248,
-    duration: '8h',
-    price: 85,
-    image: 'https://images.unsplash.com/photo-1589656966895-2f33e7653819?auto=format&fit=crop&w=600&q=80',
-    location: 'Accra, Ghana',
-    slug: tourSlugParam || '',
-    supplierName: 'Expedition-Go Tours Ltd',
-    supplierLogo: 'https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?auto=format&fit=crop&w=120&q=80',
-  }, [stateTour, tourSlugParam])
+  // Hydrate the tour card with the real tour (image, rating, meta) from the
+  // backend so the review page never relies on thin router state or fake data.
+  const { data: fetchedRaw } = useExpeditionTour(tourSlugParam)
+
+  const tour = useMemo(() => {
+    const fetched = (fetchedRaw as Record<string, any> | undefined) || {}
+    const state: Record<string, any> = stateTour || {}
+    const slugTitle = tourSlugParam ? decodeURIComponent(tourSlugParam).replace(/-/g, ' ') : 'Tour'
+
+    const cover =
+      fetched.coverPhoto ||
+      (Array.isArray(fetched.photos) ? fetched.photos[0] : null) ||
+      state.image ||
+      null
+    const city = fetched.city as string | undefined
+    const country = fetched.country as string | undefined
+    const supplierName = fetched.supplierName || fetched.supplier?.name || state.supplierName || undefined
+    const supplierLogo =
+      fetched.supplierPhoto || fetched.supplier?.photoURL || state.supplierLogo || undefined
+    const ratingNum = fetched.averageRating ?? state.rating
+    const reviewCount = fetched.reviewCount ?? state.reviews
+    const durationMin = fetched.durationMinutes
+    const durationLabel =
+      Number.isFinite(durationMin) && Number(durationMin) > 0
+        ? Number(durationMin) >= 1440
+          ? `${Math.round(Number(durationMin) / 1440)}d`
+          : `${Math.round(Number(durationMin) / 60)}h`
+        : state.duration || undefined
+
+    return {
+      id: state.id || state.tourId || fetched.id || undefined,
+      title: state.title || fetched.title || slugTitle,
+      slug: state.slug || fetched.slug || tourSlugParam || slugTitle,
+      tourId: state.tourId || urlTourId || fetched.id || undefined,
+      image: cover,
+      images: Array.isArray(fetched.photos) && fetched.photos.length ? fetched.photos : undefined,
+      rating: ratingNum,
+      reviews: reviewCount,
+      duration: durationLabel,
+      location:
+        fetched.location ||
+        [city, country].filter(Boolean).join(', ') ||
+        state.location ||
+        undefined,
+      price: state.price || fetched.startingPrice || undefined,
+      supplierName,
+      supplierLogo,
+    }
+  }, [fetchedRaw, stateTour, tourSlugParam, urlTourId])
 
   const tourCardImages = [tour.image, ...(Array.isArray(tour.images) ? tour.images : [])].filter(Boolean)
 
@@ -187,12 +229,14 @@ export default function ReviewExperiencePage() {
 
     setIsSubmitting(true)
     try {
+      const photos = uploadedPhotos.length > 0 ? uploadedPhotos : undefined
       if (editingReviewId) {
         await updateReview.mutateAsync({
           id: editingReviewId,
           rating: overallRating,
           title: reviewTitle.trim() || undefined,
           comment: reviewText.trim(),
+          photos,
         })
       } else {
         await createReview.mutateAsync({
@@ -200,6 +244,7 @@ export default function ReviewExperiencePage() {
           rating: overallRating,
           title: reviewTitle.trim() || undefined,
           comment: reviewText.trim(),
+          photos,
         })
       }
 
@@ -388,23 +433,25 @@ export default function ReviewExperiencePage() {
 
                 {/* Photos */}
                 <section className="review-form-section">
-                  <h2 className="review-form-section-title">{t('reviews.addPhotos')}</h2>
-                  <p className="review-photos-subtitle">{t('common.optional')}</p>
+                  <div className="review-photos-head">
+                    <h2 className="review-form-section-title">{t('reviews.addPhotos')}</h2>
+                    <span className="review-optional-badge">{t('common.optional')}</span>
+                  </div>
+
                   <div className="review-photos-info">
-                    <div className="review-photos-info-icon">
-                      <Camera size={20} />
-                    </div>
-                    <div>
+                    <span className="review-photos-info-icon"><Camera size={18} /></span>
+                    <div className="review-photos-info-copy">
                       <p className="review-photos-info-title">{t('reviews.photosMilestone')}</p>
                       <p className="review-photos-info-desc">{t('reviews.photosMilestoneDesc')}</p>
                     </div>
                   </div>
+
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     className="review-photos-upload"
                   >
-                    <Image size={32} />
+                    <span className="review-photos-upload-icon"><Plus size={20} /></span>
                     <span className="review-photos-upload-text">{t('reviews.clickToAddPhotos')}</span>
                     <span className="review-photos-upload-hint">{t('reviews.dragAndDrop')}</span>
                   </button>
@@ -416,16 +463,27 @@ export default function ReviewExperiencePage() {
                     onChange={handlePhotoUpload}
                     className="review-photos-input"
                   />
+
                   {uploadedPhotos.length > 0 && (
-                    <div className="review-photos-previews">
-                      {photoPreviews.map((url, i) => (
-                        <div key={i} className="review-photo-preview">
-                          <img src={url} alt={t('reviews.uploadAlt', { number: i + 1 })} />
-                          <button type="button" onClick={() => removePhoto(i)} className="review-photo-remove">
-                            ✕
-                          </button>
-                        </div>
-                      ))}
+                    <div className="review-photos-previews-block">
+                      <div className="review-photos-count">
+                        <span>{uploadedPhotos.length}/10 {t('reviews.uploaded')}</span>
+                      </div>
+                      <div className="review-photos-previews">
+                        {photoPreviews.map((url, i) => (
+                          <div key={i} className="review-photo-preview">
+                            <img src={url} alt={t('reviews.uploadAlt', { number: i + 1 })} />
+                            <button
+                              type="button"
+                              onClick={() => removePhoto(i)}
+                              className="review-photo-remove"
+                              aria-label={t('reviews.removePhoto')}
+                            >
+                              <span aria-hidden="true">✕</span>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </section>

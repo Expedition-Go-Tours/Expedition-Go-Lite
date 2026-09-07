@@ -577,6 +577,13 @@ export default function BookingWorkspace({ id, onClose }: { id?: string; onClose
   const meta = bookingStatusMeta(status, detail?.paymentTiming ?? null, detail?.paymentStatus ?? null)
   const activeStatus = status === 'PENDING' || status === 'CONFIRMED'
 
+  // Completed + paid + travel date passed + never-reviewed → eligible (mirrors
+  // the backend's review eligibility check exactly).
+  const travelMs = typeof detail?.travelDate === 'string' ? new Date(detail.travelDate).getTime() : NaN
+  // eslint-disable-next-line react-hooks/purity -- wall-clock read for review eligibility
+  const tripPassed = Number.isFinite(travelMs) && travelMs <= Date.now()
+  const canWriteReview = status === 'COMPLETED' && isPaid && tripPassed && !(detail && detail.review)
+
   const currency = typeof detail?.currency === 'string' ? detail.currency : 'USD'
   const gross = Number(detail?.grossAmount ?? 0) || 0
 
@@ -592,7 +599,7 @@ export default function BookingWorkspace({ id, onClose }: { id?: string; onClose
   const policyNote = (() => {
     if (!detail) return ''
     if (cancellation.type === 'all_sales_final' || cancellation.refundPct === 0) {
-      return 'This booking is non-refundable — no refund will be issued.'
+      return 'This booking is non-refundable, so no refund will be issued.'
     }
     if (cancellation.allowed) {
       if (!isPaid) return 'Reserved — no payment has been taken yet.'
@@ -622,7 +629,7 @@ export default function BookingWorkspace({ id, onClose }: { id?: string; onClose
     const refundLine = !isPaid
       ? 'This reservation has not been charged — no payment will be taken.'
       : cancellation.refundPct <= 0
-        ? 'This booking is non-refundable and no refund will be issued.'
+        ? 'This booking is non-refundable, so no refund will be issued.'
         : cancellation.refundPct >= 100
           ? 'Free cancellation — you will receive a full refund.'
           : `A ${cancellation.refundPct}% partial refund will be issued per the cancellation policy.`
@@ -636,6 +643,22 @@ export default function BookingWorkspace({ id, onClose }: { id?: string; onClose
         onError: (err: Error) => setCancelError(err.message),
       }
     )
+  }
+
+  const handleWriteReview = () => {
+    if (!id || !detail) return
+    const title = typeof tour?.title === 'string' ? tour.title : ''
+    const slug =
+      typeof tour?.slug === 'string' && tour.slug
+        ? tour.slug
+        : title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+    navigate(`/review/${encodeURIComponent(slug)}`, {
+      state: {
+        tour: { title, slug, tourId: detail?.tourId },
+        bookingId: id,
+        returnTo: `/dashboard/bookings?booking=${encodeURIComponent(id)}`,
+      },
+    })
   }
 
   const closeDetail = () => {
@@ -971,6 +994,24 @@ export default function BookingWorkspace({ id, onClose }: { id?: string; onClose
           {/* Manage this booking */}
           <section className="ws-card ws-manage-card">
             <h2 className="ws-card-title">Manage your booking</h2>
+
+            {/* Review invitation — completed + paid + travel date passed + not yet reviewed */}
+            {canWriteReview && (
+              <div className="ws-review-invite">
+                <p className="ws-review-invite-label">Booking complete</p>
+                <h3 className="ws-review-invite-title">Your trip is complete</h3>
+                <p className="ws-review-invite-text">
+                  How was it? Share your experience to help other travelers choose well.
+                </p>
+                <button
+                  type="button"
+                  className="bk-btn bk-btn-primary ws-action-btn"
+                  onClick={handleWriteReview}
+                >
+                  Write a review now
+                </button>
+              </div>
+            )}
 
             {/* Cancellation info */}
             {activeStatus && (

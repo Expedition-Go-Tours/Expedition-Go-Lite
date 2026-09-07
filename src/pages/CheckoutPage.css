@@ -80,7 +80,7 @@
 }
 
 .co-logo {
-  height: 40px;
+  height: 120px;
   width: auto;
   object-fit: contain;
 }
@@ -435,7 +435,7 @@
   }
 
   .co-mobile-top .co-logo {
-    height: 36px;
+    height: 90px;
   }
 
   .co-mobile-summary {

@@ -413,11 +413,15 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     if (!supportId) {
       throw new Error('support_unavailable')
     }
-    // Reuse any existing thread with the support identity (it can be the same
-    // user as a booking operator) so support never spawns a duplicate empty
-    // conversation next to the real one. Prefer the thread with history.
+    // Reuse an existing admin Customer Support (USER_SUPPORT) thread so support
+    // never spawns a duplicate; fall back to the most recently updated thread
+    // with this identity if a legacy one exists. Prefer the thread with history.
     const existing = conversations
-      .filter((c) => c.participants?.some((p) => p.userId === supportId))
+      .filter((c) => {
+        const isSupport = c.type === SUPPORT_CONVERSATION_TYPE
+        const hasSupportParticipant = c.participants?.some((p) => p.userId === supportId)
+        return isSupport || (hasSupportParticipant && c.type === 'EXPEDITION_CUSTOMER')
+      })
       .sort((a, b) => {
         const aHas = (a.messages?.length ?? 0) > 0 ? 1 : 0
         const bHas = (b.messages?.length ?? 0) > 0 ? 1 : 0
@@ -429,7 +433,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       return
     }
     await startChat(
-      { id: supportId, name: t('supportChat.expeditionSupport') },
+      { id: supportId, name: t('supportChat.customerSupport') },
       SUPPORT_CONVERSATION_TYPE,
     )
   }, [conversations, openConversation, startChat, t])

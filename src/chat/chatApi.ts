@@ -92,11 +92,18 @@ export async function getUnreadCount(): Promise<number> {
   return payload.data?.unreadCount ?? 0
 }
 
-/** Shared support identity (the account all travelers reach for support). */
+/** Shared support identity — the account that answers storefront "Customer
+ *  Support". Prefers the shared admin id (admin console "Customer Support"
+ *  inbox); falls back to the expedition support identity so chat never breaks. */
 export async function getSupportUserId(): Promise<string | null> {
-  const res = await fetchWithAuth('/chat/expedition-support')
-  if (!res.ok) return null
-  const payload = (await res.json().catch(() => ({}))) as ApiEnvelope<{ expeditionId: string }>
+  const res = await fetchWithAuth('/chat/admin-support')
+  if (res.ok) {
+    const payload = (await res.json().catch(() => ({}))) as ApiEnvelope<{ adminId: string }>
+    if (payload.data?.adminId) return payload.data.adminId
+  }
+  const fallback = await fetchWithAuth('/chat/expedition-support')
+  if (!fallback.ok) return null
+  const payload = (await fallback.json().catch(() => ({}))) as ApiEnvelope<{ expeditionId: string }>
   return payload.data?.expeditionId ?? null
 }
 

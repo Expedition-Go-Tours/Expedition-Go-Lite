@@ -1408,3 +1408,37 @@
     page-break-inside: avoid;
   }
 }
+
+/* ── "Write a review now" invitation (completed bookings) ── */
+.ws-review-invite {
+  padding: 0 0 4px;
+}
+
+.ws-review-invite-label {
+  margin: 0 0 2px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--bv-accent, #16a34a);
+}
+
+.ws-review-invite-title {
+  margin: 0 0 4px;
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--bv-ink, #101828);
+  letter-spacing: -0.01em;
+}
+
+.ws-review-invite-text {
+  margin: 0 0 14px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--bv-muted, #667085);
+}
+
+.ws-review-invite .ws-action-btn {
+  width: 100%;
+}

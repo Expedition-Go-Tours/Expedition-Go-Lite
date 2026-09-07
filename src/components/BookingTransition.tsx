@@ -27,6 +27,7 @@ const TOTAL_MS = 2600
 interface BookingTransitionProps {
   onDone: () => void
   vehicleIndex: number
+  caption?: string
 }
 
 // Background clouds — varied size / position / speed for a parallax feel.
@@ -38,7 +39,7 @@ const CLOUDS = [
   { top: '72%', size: 130, duration: 3.3, delay: 1.1 },
 ]
 
-export default function BookingTransition({ onDone, vehicleIndex }: BookingTransitionProps) {
+export default function BookingTransition({ onDone, vehicleIndex, caption = 'Preparing your booking' }: BookingTransitionProps) {
   const [errored, setErrored] = useState(false)
   const src = TRANSIT_VEHICLES[vehicleIndex % TRANSIT_VEHICLES.length]
 
@@ -103,7 +104,7 @@ export default function BookingTransition({ onDone, vehicleIndex }: BookingTrans
       })()}
 
       <div className="bt-caption">
-        <span>Preparing your booking</span>
+        <span>{caption}</span>
         <span className="bt-dots">
           {[0, 1, 2].map((i) => (
             <motion.span

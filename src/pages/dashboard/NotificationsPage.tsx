@@ -22,6 +22,11 @@ interface BackendNotification {
     senderId?: string;
     bookingId?: string;
     tourName?: string;
+    tourId?: string;
+    tourSlug?: string;
+    tourTitle?: string;
+    source?: string;
+    clientOrigin?: string;
     travelDate?: string;
     amount?: number;
     currency?: string;
@@ -72,6 +77,12 @@ const typeConfig: Record<
     iconClass: "",
     label: "Review",
   },
+  REVIEW_REQUEST: {
+    icon: Star,
+    colorClass: "review",
+    iconClass: "",
+    label: "Review",
+  },
   NEW_MESSAGE: {
     icon: MessageCircle,
     colorClass: "message",
@@ -112,7 +123,7 @@ function matchesFilter(n: BackendNotification, filter: FilterKey): boolean {
     return n.type === "BOOKING_CONFIRMED" || n.type === "BOOKING_CANCELLED";
   if (filter === "message") return n.type === "NEW_MESSAGE";
   if (filter === "payment") return n.type === "PAYMENT_RECEIVED";
-  if (filter === "review") return n.type === "REVIEW_RECEIVED";
+  if (filter === "review") return n.type === "REVIEW_RECEIVED" || n.type === "REVIEW_REQUEST";
   return true;
 }
 
@@ -160,21 +171,47 @@ function formatDate(dateStr?: string): string | null {
 }
 
 /* ── Deep-link resolver ─────────────────────────────────────────── */
-function getNotificationHref(n: BackendNotification): string | null {
+type NavTarget = { path: string; state?: Record<string, unknown> } | { url: string } | null;
+
+function getNotificationTarget(n: BackendNotification): NavTarget {
   if (n.type === "NEW_MESSAGE" && n.data?.conversationId) {
-    return `/dashboard/chat?conversation=${n.data.conversationId}`;
+    return { path: `/dashboard/chat?conversation=${n.data.conversationId}` };
   }
   if (
     (n.type === "BOOKING_CONFIRMED" || n.type === "BOOKING_CANCELLED") &&
     n.data?.bookingId
   ) {
-    return `/dashboard/bookings?booking=${n.data.bookingId}`;
+    return { path: `/dashboard/bookings?booking=${n.data.bookingId}` };
   }
   if (n.type === "PAYMENT_RECEIVED" && n.data?.bookingId) {
-    return `/dashboard/bookings?booking=${n.data.bookingId}`;
+    return { path: `/dashboard/bookings?booking=${n.data.bookingId}` };
   }
   if (n.type === "REVIEW_RECEIVED") {
-    return "/dashboard/reviews";
+    return { path: "/dashboard/reviews" };
+  }
+  if (n.type === "REVIEW_REQUEST" && n.data?.bookingId) {
+    const { bookingId, tourId, tourSlug, tourTitle, clientOrigin } = n.data;
+    // The booking was made on another brand's storefront — open that app's
+    // review page so the customer can actually review it.
+    const appOrigin = typeof window !== "undefined" ? window.location.origin : "";
+    if (clientOrigin && appOrigin && clientOrigin !== appOrigin) {
+      const params = new URLSearchParams({ bookingId });
+      if (tourId) params.set("tourId", tourId);
+      const slug = encodeURIComponent(tourSlug || tourId || bookingId);
+      return { url: `${clientOrigin}/review/${slug}?${params.toString()}` };
+    }
+    if (tourSlug) {
+      return {
+        path: `/review/${encodeURIComponent(tourSlug)}`,
+        state: {
+          bookingId,
+          returnTo: "/dashboard/notifications",
+          tour: { title: tourTitle || undefined, slug: tourSlug, tourId: tourId || undefined },
+        },
+      };
+    }
+    // No slug — the booking workspace still offers its own "write a review" CTA.
+    return { path: `/dashboard/bookings?booking=${bookingId}` };
   }
   return null;
 }
@@ -184,6 +221,7 @@ function getActionLabel(n: BackendNotification): string | null {
   if (n.type === "BOOKING_CONFIRMED" || n.type === "BOOKING_CANCELLED") return "View Booking";
   if (n.type === "PAYMENT_RECEIVED") return "View Booking";
   if (n.type === "REVIEW_RECEIVED") return "View Reviews";
+  if (n.type === "REVIEW_REQUEST") return "Write a review";
   return null;
 }
 
@@ -200,6 +238,7 @@ export default function NotificationsPage() {
     BOOKING_CANCELLED: true,
     PAYMENT_RECEIVED: true,
     REVIEW_RECEIVED: true,
+    REVIEW_REQUEST: true,
     NEW_MESSAGE: true,
     SYSTEM_ALERT: true,
   });
@@ -243,10 +282,18 @@ export default function NotificationsPage() {
     fetchWithAuth(`/notifications/${id}`, { method: "DELETE" }).catch(() => {});
   };
 
+  const activate = (target: NavTarget) => {
+    if (!target) return;
+    if ("url" in target) {
+      window.location.assign(target.url);
+    } else {
+      navigate(target.path, { state: target.state });
+    }
+  };
+
   const handleCardClick = (n: BackendNotification) => {
     if (!n.read) markRead(n.id);
-    const href = getNotificationHref(n);
-    if (href) navigate(href);
+    activate(getNotificationTarget(n));
   };
 
   /* ── Derived ────────────────────────────────────────────────────── */
@@ -271,7 +318,7 @@ export default function NotificationsPage() {
       if (n.type === "BOOKING_CONFIRMED" || n.type === "BOOKING_CANCELLED") counts.booking++;
       if (n.type === "NEW_MESSAGE") counts.message++;
       if (n.type === "PAYMENT_RECEIVED") counts.payment++;
-      if (n.type === "REVIEW_RECEIVED") counts.review++;
+      if (n.type === "REVIEW_RECEIVED" || n.type === "REVIEW_REQUEST") counts.review++;
     }
     return counts;
   }, [notifications]);
@@ -441,7 +488,7 @@ export default function NotificationsPage() {
                   const Icon = config.icon;
                   const isUnread = !notification.read;
                   const isUrgent = notification.type === "BOOKING_CANCELLED";
-                  const href = getNotificationHref(notification);
+                  const target = getNotificationTarget(notification);
                   const actionLabel = getActionLabel(notification);
                   const tourName = notification.data?.tourName;
                   const travelDate = notification.data?.travelDate;
@@ -510,12 +557,12 @@ export default function NotificationsPage() {
 
                         {/* Card actions */}
                         <div className="notif-card-actions">
-                          {href && actionLabel && (
+                          {target && actionLabel && (
                             <button
                               className="notif-action-link primary"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                navigate(href);
+                                activate(target);
                               }}
                             >
                               {actionLabel}
@@ -615,6 +662,7 @@ export default function NotificationsPage() {
                     { key: "BOOKING_CANCELLED", label: "Booking Cancelled", desc: "When a booking is cancelled", icon: CalendarX2, bg: "var(--notif-booking-cancelled-bg)", fg: "var(--notif-booking-cancelled-fg)" },
                     { key: "PAYMENT_RECEIVED", label: "Payment Updates", desc: "Payment confirmations and receipts", icon: CreditCard, bg: "var(--notif-payment-bg)", fg: "var(--notif-payment-fg)" },
                     { key: "REVIEW_RECEIVED", label: "Review Reminders", desc: "Reminders to leave reviews", icon: Star, bg: "var(--notif-review-bg)", fg: "var(--notif-review-fg)" },
+                    { key: "REVIEW_REQUEST", label: "Trip Complete", desc: "When a completed trip is ready for your review", icon: Star, bg: "var(--notif-review-bg)", fg: "var(--notif-review-fg)" },
                     { key: "NEW_MESSAGE", label: "Messages", desc: "Direct messages from operators", icon: MessageCircle, bg: "var(--notif-message-bg)", fg: "var(--notif-message-fg)" },
                     { key: "SYSTEM_ALERT", label: "System Alerts", desc: "Important platform updates", icon: Info, bg: "var(--notif-system-bg)", fg: "var(--notif-system-fg)" },
                   ].map((item) => {

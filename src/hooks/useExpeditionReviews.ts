@@ -122,6 +122,7 @@ interface CreateReviewInput {
   rating: number
   title?: string
   comment: string
+  photos?: File[]
 }
 
 export function useCreateReview() {
@@ -129,17 +130,29 @@ export function useCreateReview() {
 
   return useMutation({
     mutationFn: async (input: CreateReviewInput) => {
-      const res = await fetchWithAuth('/expedition/reviews', {
+      // Canonical create endpoint (multipart) — the shared handler verifies the
+      // booking (COMPLETED + paid + owned + travelDate past), stores one review
+      // per booking (DB unique) and aggregates ratings + notifies the supplier.
+      const form = new FormData()
+      form.append('bookingId', input.bookingId)
+      form.append('rating', String(input.rating))
+      if (input.title) form.append('title', input.title)
+      form.append('comment', input.comment)
+      if (Array.isArray(input.photos)) {
+        input.photos.forEach((f) => form.append('photos', f))
+      }
+      const res = await fetchWithAuth('/reviews', {
         method: 'POST',
-        body: JSON.stringify(input),
+        body: form,
       })
       const payload = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(payload.message || `Request failed (${res.status})`)
       return payload.data ?? payload
     },
-    onSuccess: () => {
+    onSuccess: (_data, vars) => {
       queryClient.invalidateQueries({ queryKey: ['expedition', 'tours'] })
       queryClient.invalidateQueries({ queryKey: ['expedition', 'bookings'] })
+      queryClient.invalidateQueries({ queryKey: ['expedition', 'bookings', vars.bookingId, 'detail'] })
       queryClient.invalidateQueries({ queryKey: ['my-reviews'] })
     },
   })
@@ -158,6 +171,8 @@ export interface MyReviewData {
   comment: string
   createdAt: string
   status: string
+  supplierResponse?: string | null
+  supplierResponseAt?: string | null
 }
 
 /**
@@ -194,6 +209,8 @@ export function useMyReviews() {
               comment: review.comment || '',
               createdAt: review.createdAt,
               status: review.status,
+              supplierResponse: review.supplierResponse || null,
+              supplierResponseAt: review.supplierResponseAt || null,
             } as MyReviewData
           } catch {
             return null
@@ -211,6 +228,7 @@ interface UpdateReviewInput {
   rating?: number
   title?: string
   comment?: string
+  photos?: File[]
 }
 
 export function useUpdateReview() {
@@ -222,6 +240,9 @@ export function useUpdateReview() {
       if (input.rating != null) formData.append('rating', String(input.rating))
       if (input.title != null) formData.append('title', input.title)
       if (input.comment != null) formData.append('comment', input.comment)
+      if (Array.isArray(input.photos)) {
+        input.photos.forEach((f) => formData.append('photos', f))
+      }
 
       const res = await fetchWithAuth(`/reviews/${encodeURIComponent(id)}`, {
         method: 'PATCH',

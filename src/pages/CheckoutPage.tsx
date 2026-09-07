@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { AnimatePresence } from 'framer-motion'
 import { ArrowLeft, ChevronDown, Loader2, Lock, ShieldCheck } from 'lucide-react'
 import { useCheckoutDraft, useReleaseCheckoutDraft, type CheckoutDraftSummary } from '../hooks/useExpeditionBookings'
 import CheckoutElements, { type CheckoutElementsHandle } from '../components/booking/CheckoutElements'
+import BookingTransition from '../components/BookingTransition'
 import { currencySymbol } from '../lib/currencySymbol'
 import OptimizedImage from '@/components/shared/OptimizedImage'
 import logoSrc from '../assets/expo_trans.png'
@@ -128,6 +130,7 @@ export default function CheckoutPage() {
   const [elementsState, setElementsState] = useState({ ready: false, complete: false })
   const [paymentError, setPaymentError] = useState<string | null>(null)
   const [processing, setProcessing] = useState(false)
+  const [showAnimation, setShowAnimation] = useState(false)
   const [mobileSummaryOpen, setMobileSummaryOpen] = useState(false)
   const expiryReleasedRef = useRef(false)
   const elementsHandleRef = useRef<CheckoutElementsHandle | null>(null)
@@ -161,12 +164,15 @@ export default function CheckoutPage() {
     if (!elementsHandleRef.current || processing || holdExpired || !draft) return
     setProcessing(true)
     setPaymentError(null)
+    setShowAnimation(true)
     const result = await elementsHandleRef.current.confirm()
     if (result.error) {
       setPaymentError(result.error.message || 'Payment could not be completed. Please try again.')
       setProcessing(false)
+      setShowAnimation(false)
     }
-    // On success Stripe redirects the browser — nothing more to do here.
+    // On success Stripe redirects the browser — the overlay stays up until the
+    // redirect lands, then this React tree unmounts cleanly.
   }, [processing, holdExpired, draft])
 
   const handleCancel = useCallback(() => {
@@ -358,6 +364,12 @@ export default function CheckoutPage() {
           </div>
         </section>
       </div>
+
+      <AnimatePresence>
+        {showAnimation && (
+          <BookingTransition onDone={() => {}} vehicleIndex={0} caption="Processing your payment" />
+        )}
+      </AnimatePresence>
     </div>
   )
 }
