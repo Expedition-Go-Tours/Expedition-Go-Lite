@@ -110,16 +110,27 @@
   margin-bottom: 26px;
 }
 
-/* Segmented control — elevated pill container. */
+/* Segmented control — elevated pill container. With six tabs this must stay
+   readable at every width: buttons stretch equally when there is room, and the
+   whole bar scrolls horizontally on narrow screens rather than squishing. */
 .bk-seg {
   position: relative;
-  display: inline-flex;
+  display: flex;
   gap: 3px;
   padding: 4px;
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
   background: var(--bv-surface);
   border: 1px solid var(--bv-border);
   border-radius: 14px;
   box-shadow: var(--bv-shadow-sm);
+}
+
+.bk-seg::-webkit-scrollbar {
+  display: none;
 }
 
 .bk-seg-btn {
@@ -127,7 +138,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex: 1;
+  flex: 1 1 0;
+  min-width: max-content;
   padding: 8px 16px;
   border: none;
   border-radius: 10px;
@@ -777,7 +789,8 @@
   }
 
   .bk-seg-btn {
-    padding: 9px 12px;
+    flex: 0 0 auto;
+    padding: 9px 13px;
     font-size: 13px;
   }
 

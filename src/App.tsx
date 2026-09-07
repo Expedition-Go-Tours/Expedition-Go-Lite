@@ -1,5 +1,5 @@
 import { useState, useEffect, lazy, Suspense } from 'react'
-import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation, useParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Toaster } from 'sonner'
 import Navbar from './components/Navbar'
@@ -42,7 +42,12 @@ const BookingPage = lazy(() => import('./pages/BookingPage'))
 const BookingConfirmationPage = lazy(() => import('./pages/BookingConfirmationPage'))
 const CheckoutPage = lazy(() => import('./pages/CheckoutPage'))
 const BookingPickupPage = lazy(() => import('./pages/BookingPickupPage'))
-const BookingModifyPage = lazy(() => import('./pages/BookingModifyPage'))
+
+/** Old flat "Edit trip" URL → the dashboard-hosted page (keeps deep links working). */
+function BookingModifyRedirect() {
+  const { bookingId = '' } = useParams<{ bookingId: string }>()
+  return <Navigate to={`/dashboard/bookings/${encodeURIComponent(bookingId)}/modify`} replace />
+}
 const HelpCentrePage = lazy(() => import('./pages/HelpCentrePage'))
 const ContactUsPage = lazy(() => import('./pages/ContactUsPage'))
 const RefundPolicyPage = lazy(() => import('./pages/RefundPolicyPage'))
@@ -262,7 +267,7 @@ function AppContent() {
           <Route path="/booking/confirmation/:bookingId" element={<BookingConfirmationPage />} />
           <Route path="/booking/confirmation" element={<BookingConfirmationPage />} />
           <Route path="/booking/:bookingId/pickup" element={<BookingPickupPage />} />
-          <Route path="/booking/:bookingId/modify" element={<BookingModifyPage />} />
+          <Route path="/booking/:bookingId/modify" element={<BookingModifyRedirect />} />
           <Route path="/login" element={
             <AuthForm
               initialMode={loginInitialMode}

@@ -343,6 +343,9 @@ export interface ExpeditionBookingSummary {
   total: number
   currency: string
   createdAt: string
+  /** Customer-facing refund state: 'open' (refund pending / under review),
+   *  'closed' (money back), or null (no refund lifecycle). */
+  refundState?: 'open' | 'closed' | null
 }
 
 interface RawBookingListRecord {
@@ -358,6 +361,9 @@ interface RawBookingListRecord {
   selectedTime?: string | null
   travelers?: unknown
   pickup?: Record<string, unknown> | null
+  refundedAt?: string | null
+  refundState?: 'open' | 'closed' | null
+  disputes?: { id: string; status: string }[]
   tour: {
     id: string
     title: string
@@ -405,6 +411,7 @@ function mapBookingSummary(b: RawBookingListRecord): ExpeditionBookingSummary {
     total: Number(b.grossAmount),
     currency: b.currency,
     createdAt: b.createdAt,
+    refundState: b.refundState ?? null,
   }
 }
 

@@ -165,12 +165,23 @@ export interface StatusMeta {
   kind: 'ok' | 'attention' | 'done' | 'cancelled' | 'neutral'
 }
 
-/** Semantic booking-status chip used on cards + workspace. */
+/**
+ * Semantic booking-status chip used on cards + workspace.
+ *
+ * `refundState` is customer-facing ('open' refund pending / 'closed' money
+ * back) and, when present, takes precedence over the raw status so a booking
+ * that is refunded or mid-refund reads that way instead of as plain
+ * cancelled/confirmed.
+ */
 export function bookingStatusMeta(
   status?: string | null,
   paymentTiming?: string | null,
-  paymentStatus?: string | null
+  paymentStatus?: string | null,
+  refundState?: 'open' | 'closed' | null
 ): StatusMeta {
+  if (refundState === 'open') return { label: 'Refund pending', kind: 'attention' }
+  if (refundState === 'closed') return { label: 'Refunded', kind: 'done' }
+
   switch (status) {
     case 'COMPLETED':
       return { label: 'Completed', kind: 'done' }

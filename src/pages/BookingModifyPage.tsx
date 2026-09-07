@@ -10,6 +10,9 @@ import {
   useTourAvailability,
   type BookingModifyChanges,
 } from '../hooks/useExpeditionBookings'
+import { useExpeditionTour } from '../hooks/useExpeditionTours'
+import { useTravelerSelection, type TravelerSelectionTour } from '../hooks/useTravelerSelection'
+import { sumCountsToBuckets } from '../lib/travelerBuckets'
 import CheckoutElements, { type CheckoutElementsHandle } from '../components/booking/CheckoutElements'
 import './BookingModifyPage.css'
 
@@ -21,11 +24,7 @@ type Phase =
   | { name: 'applied' }
   | { name: 'error'; message: string }
 
-interface TravelerCounts {
-  [category: string]: number
-}
-
-const META_KEYS = ['phoneNumber', 'location', 'details']
+const TRAVELER_META_KEYS = ['phoneNumber', 'location', 'details']
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -46,9 +45,8 @@ function parseYmd(iso: string): [number, number, number] | null {
 function fmtDateNice(iso: string): string {
   const p = parseYmd(iso)
   if (!p) return iso || '—'
-  const [y, mo, d] = p
-  const wd = new Date(Date.UTC(y, mo - 1, d)).getUTCDay()
-  return `${WEEKDAYS[wd]}, ${MONTHS[mo - 1]} ${d}, ${y}`
+  const wd = new Date(Date.UTC(p[0], p[1] - 1, p[2])).getUTCDay()
+  return `${WEEKDAYS[wd]}, ${MONTHS[p[1] - 1]} ${p[2]}, ${p[0]}`
 }
 
 /** "Sep 9" short form. */
@@ -58,22 +56,47 @@ function fmtDateShort(iso: string): string {
   return `${MONTHS[p[1] - 1]} ${p[2]}`
 }
 
-function travelerCategories(travelers: unknown): string[] {
-  if (!travelers || typeof travelers !== 'object') return []
-  return Object.entries(travelers as Record<string, unknown>)
-    .filter(([key, val]) => !META_KEYS.includes(key) && typeof val === 'number')
-    .map(([key]) => key)
-}
-
-function toCountMap(travelers: unknown, categories: string[]): TravelerCounts {
-  const raw = travelers && typeof travelers === 'object' ? (travelers as Record<string, unknown>) : {}
-  const out: TravelerCounts = {}
-  for (const key of categories) out[key] = typeof raw[key] === 'number' ? (raw[key] as number) : 0
+function numericTravelerPayload(travelers: unknown): Record<string, number> {
+  const out: Record<string, number> = {}
+  if (!travelers || typeof travelers !== 'object') return out
+  for (const [key, value] of Object.entries(travelers as Record<string, unknown>)) {
+    if (TRAVELER_META_KEYS.includes(key)) continue
+    if (typeof value === 'number' && Number.isInteger(value) && value > 0) out[key] = value
+  }
   return out
 }
 
-function countTotal(counts: TravelerCounts): number {
-  return Object.values(counts).reduce((sum, v) => sum + (v || 0), 0)
+/** Canonical checkout payload (adults/children/infants + extra supplier keys). */
+function baselinePayload(travelers: unknown): Record<string, number> {
+  return sumCountsToBuckets(numericTravelerPayload(travelers))
+}
+
+/**
+ * Seed map for the traveler picker BEFORE pricing loads. Buckets a booking's
+ * canonical payload back to the category keys checkout uses (adult/child/infant
+ * + singularized extra categories like senior/youth) so an async-fetched tour
+ * never resets the saved mix (see useTravelerSelection's initialCounts guard).
+ */
+function categorySeedFromPayload(travelers: unknown): Record<string, number> {
+  const payload = numericTravelerPayload(travelers)
+  const seed: Record<string, number> = {}
+  const canonical: [string, string][] = [
+    ['adults', 'adult'],
+    ['children', 'child'],
+    ['infants', 'infant'],
+  ]
+  for (const [bucket, key] of canonical) {
+    if (payload[bucket]) seed[key] = payload[bucket]
+  }
+  for (const [key, value] of Object.entries(payload)) {
+    if (canonical.some(([bucket]) => bucket === key)) continue
+    seed[key.endsWith('s') ? key.slice(0, -1) : key] = value
+  }
+  return seed
+}
+
+function countPositive(counts: Record<string, number>): number {
+  return Object.values(counts).reduce((sum, v) => sum + (v > 0 ? v : 0), 0)
 }
 
 function fmtMoney(amount: number | null | undefined, currency = 'USD'): string {
@@ -83,11 +106,6 @@ function fmtMoney(amount: number | null | undefined, currency = 'USD'): string {
   } catch {
     return `$${value.toFixed(2)}`
   }
-}
-
-function fmtLabel(key: string): string {
-  const pretty = key.charAt(0).toUpperCase() + key.replace(/([A-Z])/g, ' $1').slice(1)
-  return pretty.endsWith('s') ? pretty : pretty
 }
 
 function timeLabel(value: string | null | undefined): string {
@@ -106,30 +124,21 @@ function timeLabel(value: string | null | undefined): string {
 
 interface BookingLike {
   bookingNumber?: string
-  bookingId?: string
   status?: string
-  paymentTiming?: string
-  paymentStatus?: string
   currency?: string
   grossAmount?: number | string | null
   travelDate?: string
   selectedTime?: string | null
   travelers?: unknown
   tour?: {
-    id?: string
     slug?: string
     title?: string
     coverPhoto?: string
-    durationMinutes?: number
-    location?: string
-    city?: string
-    country?: string
     supplier?: { name?: string }
   }
   modify?: {
     allowed?: boolean
     reason?: string | null
-    cutoffHours?: number | null
     deadline?: string | null
     pendingPayment?: {
       changeId: string
@@ -146,10 +155,8 @@ function ModifyForm({ booking, bookingId, redirectStatus }: { booking: BookingLi
   const pendingChange = booking.modify?.pendingPayment ?? null
   const currency = booking.currency || 'USD'
 
-  const categories = useMemo(() => travelerCategories(booking.travelers), [booking.travelers])
   const [travelDate, setTravelDate] = useState(() => asIsoDate(booking.travelDate))
   const [time, setTime] = useState<string | null>(() => booking.selectedTime || null)
-  const [counts, setCounts] = useState<TravelerCounts>(() => toCountMap(booking.travelers, categories))
   const [phase, setPhase] = useState<Phase>(() =>
     redirectStatus === 'succeeded'
       ? { name: 'paid' }
@@ -164,40 +171,69 @@ function ModifyForm({ booking, bookingId, redirectStatus }: { booking: BookingLi
   const [paying, setPaying] = useState(false)
   const [payError, setPayError] = useState<string | null>(null)
 
+  /* ---- Pricing context (same source as the booking widget / change modal) ---- */
+  const tourQuery = useExpeditionTour(tour.slug)
+  const tourDetail = tourQuery.data
+
+  const selectionTour = useMemo<TravelerSelectionTour>(() => {
+    const pricing = Array.isArray(tourDetail?.travelerPricing)
+      ? tourDetail!.travelerPricing.filter((g) => g && g.notAllowed !== true)
+      : []
+    const isPerGroup = tourDetail?.pricingModel === 'perGroup'
+    return {
+      pricingModel: isPerGroup ? 'perGroup' : 'perPerson',
+      travelerPricing: isPerGroup ? [] : pricing,
+      groupSizePricing: tourDetail?.groupSizePricing,
+      minParticipants: tourDetail?.minParticipants ?? null,
+      maxParticipants: tourDetail?.maxParticipants ?? null,
+      price: 0,
+    }
+  }, [tourDetail])
+
+  const hasPricing =
+    !!tourDetail &&
+    (selectionTour.pricingModel === 'perGroup'
+      ? (tourDetail.groupSizePricing?.length ?? 0) > 0
+      : (selectionTour.travelerPricing?.length ?? 0) > 0)
+
+  const bookedTotal = useMemo(() => countPositive(baselinePayload(booking.travelers)), [booking.travelers])
+  const seedCounts = useMemo(() => categorySeedFromPayload(booking.travelers), [booking.travelers])
+
+  const travelerSel = useTravelerSelection(selectionTour, {
+    initialCounts: seedCounts,
+    initialHeadcount: Math.max(1, bookedTotal),
+  })
+
+  /* ---- Availability for the chosen date (time-slot picker) ---- */
   const availability = useTourAvailability(tour.slug, travelDate, travelDate)
   const day = availability.data?.find((d) => d.date === travelDate)
   const slots = (day?.timeSlots ?? []).filter((s) => (s.remaining ?? 0) > 0)
 
-  const currentShape = useMemo(
-    () => ({
-      travelDate: asIsoDate(booking.travelDate),
-      selectedTime: booking.selectedTime || null,
-      travelers: toCountMap(booking.travelers, categories),
-    }),
-    [booking.travelDate, booking.selectedTime, booking.travelers, categories]
-  )
-
-  const baseCounts = currentShape.travelers
-  const activeCategories = categories.filter((k) => (baseCounts[k] ?? 0) > 0 || (counts[k] ?? 0) > 0)
+  const baseTravelers = useMemo(() => baselinePayload(booking.travelers), [booking.travelers])
+  const proposedTravelers = hasPricing ? travelerSel.travelersPayload : baseTravelers
+  const partyChanged = JSON.stringify(proposedTravelers) !== JSON.stringify(baseTravelers)
 
   const changes: BookingModifyChanges = useMemo(() => {
     const c: BookingModifyChanges = {}
-    if (travelDate && travelDate !== currentShape.travelDate) c.travelDate = travelDate
-    if (time !== undefined && time !== currentShape.selectedTime) c.selectedTime = time
-    const changed = categories.some((k) => (counts[k] ?? 0) !== (baseCounts[k] ?? 0))
-    if (changed) {
-      c.travelers = {}
-      for (const k of categories) c.travelers[k] = counts[k] ?? 0
-    }
+    if (travelDate && travelDate !== asIsoDate(booking.travelDate)) c.travelDate = travelDate
+    if (time !== undefined && time !== (booking.selectedTime || null)) c.selectedTime = time
+    if (partyChanged) c.travelers = proposedTravelers
     return c
-  }, [travelDate, time, counts, categories, currentShape.travelDate, currentShape.selectedTime, baseCounts])
+  }, [travelDate, time, partyChanged, proposedTravelers, booking.travelDate, booking.selectedTime])
 
   const hasChanges = Object.keys(changes).length > 0
   const dateChanged = !!changes.travelDate
-  const timeChanged = changes.selectedTime !== undefined && changes.selectedTime !== currentShape.selectedTime
-  const partyChanged = !!changes.travelers
+  const timeChanged = changes.selectedTime !== undefined && changes.selectedTime !== (booking.selectedTime || null)
 
-  const quoteQuery = useBookingModifyQuote(bookingId, currentShape, changes)
+  const quoteBase = useMemo(
+    () => ({
+      travelDate: asIsoDate(booking.travelDate),
+      selectedTime: booking.selectedTime || null,
+      travelers: baseTravelers,
+    }),
+    [booking.travelDate, booking.selectedTime, baseTravelers]
+  )
+  const quoteQuery = useBookingModifyQuote(bookingId, quoteBase, changes)
   const quote = quoteQuery.data?.quote
   const applyModify = useApplyBookingModify()
   const discardModify = useDiscardBookingModify()
@@ -244,17 +280,7 @@ function ModifyForm({ booking, bookingId, redirectStatus }: { booking: BookingLi
     }
   }
 
-  const bump = (key: string, delta: number) => {
-    setCounts((prev) => {
-      const current = Math.max(0, prev[key] ?? 0)
-      const nextVal = Math.max(0, Math.min(50, current + delta))
-      if (nextVal === current) return prev
-      return { ...prev, [key]: nextVal }
-    })
-  }
-
-  const totalNow = countTotal(baseCounts)
-  const totalNext = countTotal(toCountMap(counts, categories))
+  const totalNext = hasPricing ? travelerSel.totalTravelers : bookedTotal
 
   const moneyCopy = (() => {
     if (!quote) return null
@@ -365,9 +391,10 @@ function ModifyForm({ booking, bookingId, redirectStatus }: { booking: BookingLi
 
   /* ---------------- Main editor ---------------- */
 
+  const totalNow = countPositive(baseTravelers)
+
   return (
     <>
-      {/* Pending top-up banner */}
       {pendingChange && (
         <div className="bkmod-banner">
           <div className="bkmod-banner-text">
@@ -380,7 +407,6 @@ function ModifyForm({ booking, bookingId, redirectStatus }: { booking: BookingLi
         </div>
       )}
 
-      {/* Trip context */}
       <section className="bkmod-tour">
         {tour.coverPhoto ? (
           <img className="bkmod-tour-img" src={tour.coverPhoto} alt="" />
@@ -391,13 +417,13 @@ function ModifyForm({ booking, bookingId, redirectStatus }: { booking: BookingLi
           <p className="bkmod-tour-meta">Booking {booking.bookingNumber}</p>
           <h2>{tourTitle}</h2>
           <div className="bkmod-tour-chips">
-            <span className="bkmod-chip-static">{fmtDateNice(currentShape.travelDate)}</span>
-            {currentShape.selectedTime && <span className="bkmod-chip-static">{timeLabel(currentShape.selectedTime)}</span>}
+            <span className="bkmod-chip-static">{fmtDateNice(asIsoDate(booking.travelDate))}</span>
+            {booking.selectedTime && <span className="bkmod-chip-static">{timeLabel(booking.selectedTime)}</span>}
             <span className="bkmod-chip-static">{totalNow} traveller{totalNow === 1 ? '' : 's'}</span>
             {tour.supplier?.name && <span className="bkmod-chip-static">Hosted by {tour.supplier.name}</span>}
           </div>
           <p className="bkmod-tour-hint">
-            Plan a change below — we’ll show the new date, party and price before you confirm.
+            Plan a change below — we’ll show the new date, travellers and price before you confirm.
             {booking.modify?.deadline && (
               <> Free changes until {fmtDateShort(asIsoDate(booking.modify.deadline))} (24&nbsp;h before the activity).</>
             )}
@@ -413,7 +439,7 @@ function ModifyForm({ booking, bookingId, redirectStatus }: { booking: BookingLi
               <span className="bkmod-step-num">1</span>
               <div>
                 <h3>Choose a new date</h3>
-                <p>Currently booked for {fmtDateNice(currentShape.travelDate)}{currentShape.selectedTime ? ` at ${timeLabel(currentShape.selectedTime)}` : ''}.</p>
+                <p>Currently booked for {fmtDateNice(asIsoDate(booking.travelDate))}{booking.selectedTime ? ` at ${timeLabel(booking.selectedTime)}` : ''}.</p>
               </div>
               {dateChanged && <span className="bkmod-step-badge">Changing</span>}
             </div>
@@ -428,7 +454,7 @@ function ModifyForm({ booking, bookingId, redirectStatus }: { booking: BookingLi
                 min={minDate}
                 onChange={(e) => setTravelDate(e.target.value)}
               />
-              {dateChanged && <p className="bkmod-date-change">{fmtDateNice(currentShape.travelDate)} → {fmtDateNice(travelDate)}</p>}
+              {dateChanged && <p className="bkmod-date-change">{fmtDateNice(asIsoDate(booking.travelDate))} → {fmtDateNice(travelDate)}</p>}
 
               {availability.isFetching && <p className="bkmod-hint">Checking availability for {fmtDateNice(travelDate)}…</p>}
 
@@ -452,56 +478,92 @@ function ModifyForm({ booking, bookingId, redirectStatus }: { booking: BookingLi
                     ))}
                   </div>
                   {timeChanged && (
-                    <p className="bkmod-date-change">{timeLabel(currentShape.selectedTime)} → {timeLabel(time)}</p>
+                    <p className="bkmod-date-change">{timeLabel(booking.selectedTime)} → {timeLabel(time)}</p>
                   )}
                 </>
               )}
             </div>
           </section>
 
-          {/* Step 2 — travellers */}
+          {/* Step 2 — travellers (built from the tour's pricing tiers) */}
           <section className="bkmod-card bkmod-step">
             <div className="bkmod-step-head">
               <span className="bkmod-step-num">2</span>
               <div>
                 <h3>Adjust your travellers</h3>
-                <p>{totalNow} traveller{totalNow === 1 ? '' : 's'} booked · the lead traveller stays the same.</p>
+                <p>
+                  {hasPricing
+                    ? `${totalNow} booked · priced by this tour’s traveller tiers — the price updates as you add people.`
+                    : 'Loading this tour’s traveller pricing…'}
+                </p>
               </div>
-              {partyChanged && <span className="bkmod-step-badge">Changing</span>}
+              {partyChanged && <span className="bkmod-step-badge">{totalNext} total</span>}
             </div>
 
             <div className="bkmod-step-body">
-              {activeCategories.length === 0 && (
-                <p className="bkmod-hint">No traveller categories are editable for this booking.</p>
-              )}
-              <div className="bkmod-travellers">
-                {activeCategories.map((key) => {
-                  const from = baseCounts[key] ?? 0
-                  const to = counts[key] ?? 0
-                  const delta = to - from
-                  return (
-                    <div className="bkmod-traveller-row" key={key}>
-                      <div className="bkmod-traveller-name">
-                        <span>{fmtLabel(key)}</span>
-                        {delta !== 0 && (
-                          <span className={delta > 0 ? 'bkmod-delta up' : 'bkmod-delta down'}>
-                            {delta > 0 ? `+${delta}` : delta}
-                          </span>
-                        )}
-                      </div>
-                      <div className="bkmod-stepper">
-                        <button aria-label={`Fewer ${fmtLabel(key)}`} onClick={() => bump(key, -1)} disabled={(counts[key] ?? 0) <= 0} type="button">−</button>
-                        <span className="bkmod-count">{counts[key] ?? 0}</span>
-                        <button aria-label={`More ${fmtLabel(key)}`} onClick={() => bump(key, 1)} type="button">+</button>
-                      </div>
+              {!hasPricing ? (
+                tourQuery.isError ? (
+                  <p className="bkmod-hint bkmod-warn">
+                    We couldn’t load this tour’s traveller pricing. You can still change the date or time; traveller edits will be available shortly.
+                  </p>
+                ) : (
+                  <div className="bkmod-traveller-skeleton" aria-hidden="true">
+                    <div className="bkmod-skel-row" />
+                    <div className="bkmod-skel-row" />
+                    <div className="bkmod-skel-row" />
+                  </div>
+                )
+              ) : travelerSel.isPerGroup ? (
+                <div className="bkmod-group-row">
+                  <div className="bkmod-traveller-label">
+                    <div className="bkmod-traveller-name">
+                      <span>Travellers</span>
+                      {travelerSel.totalTravelers > 1 && travelerSel.activeGroupBandLabel && (
+                        <span className="bkmod-delta neutral">{travelerSel.activeGroupBandLabel}</span>
+                      )}
                     </div>
-                  )
-                })}
-              </div>
-              {partyChanged && (
-                <p className="bkmod-date-change">
-                  {totalNow} traveller{totalNow === 1 ? '' : 's'} → {totalNext} traveller{totalNext === 1 ? '' : 's'}
-                </p>
+                    <p className="bkmod-tier-note">Flat group rate based on the total headcount.</p>
+                  </div>
+                  <div className="bkmod-stepper">
+                    <button aria-label="Fewer travellers" onClick={() => travelerSel.decrement('travelers')} disabled={!travelerSel.canDecrementCount('travelers')} type="button">−</button>
+                    <span className="bkmod-count">{travelerSel.totalTravelers}</span>
+                    <button aria-label="More travellers" onClick={() => travelerSel.increment('travelers')} disabled={!travelerSel.canIncrementCount('travelers')} type="button">+</button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="bkmod-travellers">
+                    {travelerSel.travelerOptions.map((opt) => {
+                      const delta = (travelerSel.categoryCounts[opt.key] ?? 0) - (seedCounts[opt.key] ?? 0)
+                      return (
+                        <div className="bkmod-traveller-row" key={opt.key}>
+                          <div className="bkmod-traveller-label">
+                            <div className="bkmod-traveller-name">
+                              <span>{opt.label}</span>
+                              {delta !== 0 && (
+                                <span className={delta > 0 ? 'bkmod-delta up' : 'bkmod-delta down'}>
+                                  {delta > 0 ? `+${delta}` : delta}
+                                </span>
+                              )}
+                            </div>
+                            {opt.age && <p className="bkmod-tier-note">{opt.age}</p>}
+                          </div>
+                          <div className="bkmod-stepper">
+                            <button aria-label={`Fewer ${opt.label}`} onClick={() => travelerSel.decrement(opt.key)} disabled={!travelerSel.canDecrementCount(opt.key)} type="button">−</button>
+                            <span className="bkmod-count">{opt.count}</span>
+                            <button aria-label={`More ${opt.label}`} onClick={() => travelerSel.increment(opt.key)} disabled={!travelerSel.canIncrementCount(opt.key)} type="button">+</button>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                  {travelerSel.mixIssues.length > 0 && (
+                    <p className="bkmod-hint bkmod-warn">The traveller mix needs a valid party size — see the booking rules.</p>
+                  )}
+                  <p className="bkmod-hint">
+                    Your current total stays exactly as paid until you confirm — the new total in the summary updates live with your changes.
+                  </p>
+                </>
               )}
             </div>
           </section>
@@ -521,10 +583,10 @@ function ModifyForm({ booking, bookingId, redirectStatus }: { booking: BookingLi
               <>
                 <ul className="bkmod-changelist">
                   {dateChanged && (
-                    <li><span>Date</span><em>{fmtDateShort(currentShape.travelDate)} → {fmtDateShort(changes.travelDate!)}</em></li>
+                    <li><span>Date</span><em>{fmtDateShort(asIsoDate(booking.travelDate))} → {fmtDateShort(changes.travelDate!)}</em></li>
                   )}
                   {timeChanged && (
-                    <li><span>Start time</span><em>{timeLabel(currentShape.selectedTime)} → {timeLabel(changes.selectedTime ?? null)}</em></li>
+                    <li><span>Start time</span><em>{timeLabel(booking.selectedTime)} → {timeLabel(changes.selectedTime ?? null)}</em></li>
                   )}
                   {partyChanged && (
                     <li><span>Travellers</span><em>{totalNow} → {totalNext}</em></li>
@@ -588,11 +650,15 @@ function ModifyForm({ booking, bookingId, redirectStatus }: { booking: BookingLi
   )
 }
 
-export default function BookingModifyPage() {
-  const { bookingId = '' } = useParams<{ bookingId: string }>()
+export default function BookingModifyPage({ bookingId: bookingIdProp }: { bookingId?: string } = {}) {
+  const { bookingId: bookingIdParam = '' } = useParams<{ bookingId: string }>()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const redirectStatus = searchParams.get('redirect_status')
+  // The dashboard hosts this page without a react-router :bookingId segment, so
+  // DashboardLayout passes the parsed id as a prop; the standalone redirect URL
+  // (/booking/:id/modify) still resolves it from params.
+  const bookingId = bookingIdProp || bookingIdParam
 
   const { data: detail, isLoading } = useExpeditionBookingDetail(bookingId)
   const booking = (detail ?? {}) as BookingLike

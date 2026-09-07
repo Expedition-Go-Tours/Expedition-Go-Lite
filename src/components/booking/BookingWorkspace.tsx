@@ -591,7 +591,7 @@ export default function BookingWorkspace({ id, onClose }: { id?: string; onClose
 
   const status = typeof detail?.status === 'string' ? detail.status : ''
   const isPaid = detail?.paymentStatus === 'SUCCEEDED'
-  const meta = bookingStatusMeta(status, detail?.paymentTiming ?? null, detail?.paymentStatus ?? null)
+  const meta = bookingStatusMeta(status, detail?.paymentTiming ?? null, detail?.paymentStatus ?? null, detail?.refundState ?? null)
   const activeStatus = status === 'PENDING' || status === 'CONFIRMED'
 
   // Completed + paid + travel date passed + never-reviewed → eligible (mirrors
@@ -1072,7 +1072,7 @@ export default function BookingWorkspace({ id, onClose }: { id?: string; onClose
                 <button
                   type="button"
                   className="bk-btn bk-btn-secondary ws-action-btn"
-                  onClick={() => navigate(`/booking/${detail.id}/modify`)}
+                  onClick={() => navigate(`/dashboard/bookings/${encodeURIComponent(detail.id)}/modify`)}
                 >
                   {detail.modify.pendingPayment ? 'Review pending change' : 'Edit trip'}
                 </button>

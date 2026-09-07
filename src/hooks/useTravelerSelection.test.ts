@@ -1,6 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { act, renderHook } from '@testing-library/react'
-import { useTravelerSelection } from './useTravelerSelection'
+import {
+  useTravelerSelection,
+  type TravelerSelectionTour,
+  type TravelerSelectionOptions,
+} from './useTravelerSelection'
 
 vi.mock('../contexts/CurrencyContext', () => ({
   useCurrency: () => ({
@@ -43,6 +47,30 @@ describe('useTravelerSelection', () => {
     expect(result.current.categoryCounts.adult).toBe(3)
     expect(result.current.totalTravelers).toBe(3)
     expect(result.current.mixIssues).toEqual([])
+  })
+
+  it('keeps supplied initialCounts when pricing arrives late (async tour fetch)', () => {
+    const noPricing: TravelerSelectionTour = {
+      pricingModel: 'perPerson',
+      travelerPricing: [],
+      minParticipants: 3,
+      maxParticipants: 10,
+      price: 300,
+    }
+    const opts: TravelerSelectionOptions = { initialCounts: { adult: 2 } }
+    const { result, rerender } = renderHook(
+      (props: { tour: TravelerSelectionTour; options: TravelerSelectionOptions }) => useTravelerSelection(props.tour, props.options),
+      { initialProps: { tour: noPricing, options: opts } }
+    )
+    // Seeded from the booking before the pricing model has loaded.
+    expect(result.current.totalTravelers).toBe(2)
+
+    // Pricing categories arrive — the supplied mix must NOT be replaced by the
+    // default 2+ adult seed (this is what lets the edit page restore a booking).
+    rerender({ tour: perPersonTour, options: opts })
+    expect(result.current.categoryCounts.adult).toBe(2)
+    expect(result.current.categoryCounts.child).toBeUndefined()
+    expect(result.current.totalTravelers).toBe(2)
   })
 
   it('blocks decrement below the supplier minimum, across categories', () => {

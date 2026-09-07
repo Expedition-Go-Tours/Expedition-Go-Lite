@@ -29,6 +29,7 @@ const Wishlist = lazy(() => import("../Wishlist"));
 const ReviewsPage = lazy(() => import("./ReviewsPage"));
 const NotificationsPage = lazy(() => import("./NotificationsPage"));
 const ChatPage = lazy(() => import("./ChatPage"));
+const BookingModifyPage = lazy(() => import("../BookingModifyPage"));
 
 // Navigation items split: top-bar visible items vs dropdown overflow
 const topBarItems = [
@@ -399,11 +400,16 @@ export default function DashboardLayout() {
   }
 
   const activeRoute = ROUTES.find((r) => r.path === location.pathname);
-  if (!activeRoute) {
+  // Self-service "Edit your trip" for one booking — a booking-scoped page that
+  // keeps the dashboard chrome (top bar + mobile tabs) so the customer can jump
+  // back to Bookings/Wishlist/etc. instead of being stranded on a bare page.
+  const modifyMatch = location.pathname.match(/^\/dashboard\/bookings\/([^/]+)\/modify$/);
+  const modifyBookingId = modifyMatch ? decodeURIComponent(modifyMatch[1]) : null;
+
+  if (!activeRoute && !modifyBookingId) {
     return <Navigate to="/dashboard/bookings" replace />;
   }
-  const title = activeRoute.title;
-  const bookingsArea = isBookingsAreaPath(location.pathname);
+  const bookingsArea = isBookingsAreaPath(location.pathname) || !!modifyBookingId;
 
   return (
     <div className={`min-h-screen ${bookingsArea ? "bg-white" : "bg-[var(--dash-content-bg)]"}`}>
@@ -411,50 +417,69 @@ export default function DashboardLayout() {
 
       <main className="min-h-screen dash-main-content">
         <div className="mx-auto w-full max-w-[1120px] px-4 sm:px-6 lg:px-10 pb-10">
-          <div className="flex items-center justify-center lg:justify-start mb-4 relative">
-            {location.pathname !== "/dashboard/notifications" && (
-              <h1 className="text-[clamp(24px,2.4vw,32px)] font-heading font-bold text-[var(--bv-ink)] text-center lg:text-left">
-                {title}
-              </h1>
-            )}
-
-            {location.pathname === "/dashboard/settings" && (
-              <button
-                type="button"
-                onClick={() => navigate("/")}
-                className="lg:hidden absolute right-0 flex h-9 w-9 items-center justify-center rounded-full border border-[var(--bv-border)] bg-white text-[var(--bv-text)] shadow-sm transition-colors hover:bg-[var(--bv-surface-2)]"
-                aria-label="Back to home"
+          {modifyBookingId ? (
+            /* "Edit your trip" — booking-scoped page inside the dashboard chrome. */
+            <div className="dash-modify-wrap">
+              <Suspense
+                fallback={
+                  <div className="dash-page-skeleton">
+                    <div className="dash-page-skeleton-bar w-1/3" />
+                    <div className="dash-page-skeleton-bar w-2/3" />
+                    <div className="dash-page-skeleton-bar w-1/2" />
+                  </div>
+                }
               >
-                <ArrowLeft size={16} strokeWidth={2.2} />
-              </button>
-            )}
-          </div>
+                <BookingModifyPage key={`modify-${modifyBookingId}`} bookingId={modifyBookingId} />
+              </Suspense>
+            </div>
+          ) : activeRoute ? (
+            <>
+              <div className="flex items-center justify-center lg:justify-start mb-4 relative">
+                {location.pathname !== "/dashboard/notifications" && (
+                  <h1 className="text-[clamp(24px,2.4vw,32px)] font-heading font-bold text-[var(--bv-ink)] text-center lg:text-left">
+                    {activeRoute.title}
+                  </h1>
+                )}
 
-          <div className="dash-pages">
-            {ROUTES.map((r) => {
-              if (!visited.has(r.path)) return null;
-              const active = r.path === location.pathname;
-              return (
-                <section
-                  key={r.path}
-                  className={`dash-pane${active ? " active" : ""}`}
-                  hidden={!active}
-                >
-                  <Suspense
-                    fallback={
-                      <div className="dash-page-skeleton">
-                        <div className="dash-page-skeleton-bar w-1/3" />
-                        <div className="dash-page-skeleton-bar w-2/3" />
-                        <div className="dash-page-skeleton-bar w-1/2" />
-                      </div>
-                    }
+                {location.pathname === "/dashboard/settings" && (
+                  <button
+                    type="button"
+                    onClick={() => navigate("/")}
+                    className="lg:hidden absolute right-0 flex h-9 w-9 items-center justify-center rounded-full border border-[var(--bv-border)] bg-white text-[var(--bv-text)] shadow-sm transition-colors hover:bg-[var(--bv-surface-2)]"
+                    aria-label="Back to home"
                   >
-                    <r.Page />
-                  </Suspense>
-                </section>
-              );
-            })}
-          </div>
+                    <ArrowLeft size={16} strokeWidth={2.2} />
+                  </button>
+                )}
+              </div>
+
+              <div className="dash-pages">
+                {ROUTES.map((r) => {
+                  if (!visited.has(r.path)) return null;
+                  const active = r.path === location.pathname;
+                  return (
+                    <section
+                      key={r.path}
+                      className={`dash-pane${active ? " active" : ""}`}
+                      hidden={!active}
+                    >
+                      <Suspense
+                        fallback={
+                          <div className="dash-page-skeleton">
+                            <div className="dash-page-skeleton-bar w-1/3" />
+                            <div className="dash-page-skeleton-bar w-2/3" />
+                            <div className="dash-page-skeleton-bar w-1/2" />
+                          </div>
+                        }
+                      >
+                        <r.Page />
+                      </Suspense>
+                    </section>
+                  );
+                })}
+              </div>
+            </>
+          ) : null}
         </div>
       </main>
 

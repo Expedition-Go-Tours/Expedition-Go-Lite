@@ -252,32 +252,57 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 2px;
+  gap: 16px;
+  padding: 14px 2px;
   border-bottom: 1px solid #eef2ef;
 }
 
-.bkmod-traveller-row:last-child { border-bottom: none; padding-bottom: 4px; }
+.bkmod-traveller-row:last-child { border-bottom: none; padding-bottom: 6px; }
+
+.bkmod-traveller-label {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.bkmod-group-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
 
 .bkmod-traveller-name {
   display: flex;
   align-items: center;
-  gap: 9px;
-  font-size: 15px;
+  gap: 10px;
+  font-size: 15.5px;
   font-weight: 800;
   color: #10180f;
+}
+
+.bkmod-tier-note {
+  margin: 0;
+  font-size: 12.5px;
+  color: #64706a;
+  line-height: 1.45;
 }
 
 .bkmod-delta {
   font-size: 11.5px;
   font-weight: 800;
-  padding: 2px 7px;
+  padding: 2px 8px;
   border-radius: 999px;
+  white-space: nowrap;
 }
 
 .bkmod-delta.up { background: #e7f5ea; color: #168a35; }
 .bkmod-delta.down { background: #fdeeee; color: #b3261e; }
+.bkmod-delta.neutral { background: #eef4ef; color: #2a3a2f; }
 
-.bkmod-stepper { display: inline-flex; align-items: center; gap: 16px; }
+.bkmod-stepper { display: inline-flex; align-items: center; gap: 14px; flex: none; }
 
 .bkmod-stepper button {
   width: 34px;
@@ -295,7 +320,19 @@
 .bkmod-stepper button:hover:not(:disabled) { border-color: #168a35; background: #eef6f0; color: #168a35; }
 .bkmod-stepper button:disabled { opacity: 0.3; cursor: not-allowed; }
 
-.bkmod-count { min-width: 24px; text-align: center; font-weight: 800; font-size: 16px; color: #10180f; }
+.bkmod-count { min-width: 26px; text-align: center; font-weight: 800; font-size: 16px; color: #10180f; }
+
+.bkmod-traveller-skeleton { display: flex; flex-direction: column; gap: 12px; padding: 6px 0; }
+
+.bkmod-skel-row {
+  height: 46px;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #eef2ef 25%, #f7faf7 50%, #eef2ef 75%);
+  background-size: 200% 100%;
+  animation: bkmod-shimmer 1.4s ease infinite;
+}
+
+@keyframes bkmod-shimmer { to { background-position: -200% 0; } }
 
 .bkmod-hint { margin: 10px 0 0; font-size: 12.5px; color: #64706a; line-height: 1.5; }
 .bkmod-warn { margin: 10px 0 0; font-size: 12.5px; font-weight: 700; color: #b45309; }
@@ -492,7 +529,9 @@
 
 @media (max-width: 960px) {
   .bkmod-layout { grid-template-columns: 1fr; }
-  .bkmod-summary { position: static; order: -1; }
+  /* Keep the editor's natural order (date → travellers → summary) on mobile —
+     the summary card must come AFTER the steps, not before them. */
+  .bkmod-summary { position: static; order: 0; }
 }
 
 @media (max-width: 560px) {
@@ -500,4 +539,29 @@
   .bkmod-tour { flex-direction: column; }
   .bkmod-tour-img { width: 100%; height: 150px; }
   .bkmod-card.bkmod-step, .bkmod-summary-card, .bkmod-result, .bkmod-error-card, .bkmod-paycard { padding: 16px; border-radius: 16px; }
+  .bkmod-traveller-row { gap: 10px; }
+  .bkmod-stepper { gap: 10px; }
+  .bkmod-stepper button { width: 30px; height: 30px; }
+}
+
+/* ---------- Embedded under the dashboard navbar ---------- */
+
+.dash-modify-wrap .bkmod-page {
+  background: transparent;
+  padding: 0 0 8px;
+  min-height: 0;
+}
+
+.dash-modify-wrap .bkmod-head {
+  margin-top: 2px;
+  margin-bottom: 16px;
+}
+
+.dash-modify-wrap .bkmod-banner,
+.dash-modify-wrap .bkmod-tour {
+  margin-top: 0;
+}
+
+.dash-modify-wrap .bkmod-head h1 {
+  font-size: clamp(20px, 2.6vw, 26px);
 }

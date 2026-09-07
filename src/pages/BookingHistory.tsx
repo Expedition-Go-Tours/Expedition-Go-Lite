@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, lazy, Suspense } from 'react'
 import { useSearchParams, useLocation, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Search, Ticket, AlertTriangle, ArrowRight, CalendarDays, CheckCircle2, Wallet } from 'lucide-react'
+import { Search, Ticket, AlertTriangle, ArrowRight, CheckCircle2, Wallet } from 'lucide-react'
 import {
   useMyExpeditionBookings,
   useMyBookingsCount,
@@ -17,30 +17,28 @@ import { writeBookingsSeen } from '../lib/bookingsBadge'
 import '../components/booking/bookingTheme.css'
 import './BookingHistory.css'
 
-type Bucket = 'all' | 'upcoming' | 'reserved' | 'past'
+type Bucket = 'upcoming' | 'reserved' | 'cancelled' | 'refund' | 'past'
 
 const BUCKETS: { value: Bucket; label: string }[] = [
-  { value: 'all', label: 'All' },
   { value: 'upcoming', label: 'Upcoming' },
   { value: 'reserved', label: 'Reserved' },
+  { value: 'cancelled', label: 'Cancelled' },
+  { value: 'refund', label: 'Refund' },
   { value: 'past', label: 'Past' },
 ]
 
 const ACTIVE_STATUSES = ['PENDING', 'CONFIRMED']
-const TERMINAL_STATUSES = ['CANCELLED', 'NO_SHOW']
 
 function isActiveBooking(status: string): boolean {
   return ACTIVE_STATUSES.includes(status)
 }
 
-function isTerminalBooking(status: string): boolean {
-  return TERMINAL_STATUSES.includes(status)
-}
-
-/** Reserve-now-pay-later trips that haven't been charged yet. Once the
- *  auto-charge succeeds the booking leaves this bucket and lands in Upcoming. */
 function isReservedBooking(b: ExpeditionBookingSummary): boolean {
   return isActiveBooking(b.status) && b.paymentTiming === 'later' && b.paymentStatus !== 'SUCCEEDED'
+}
+
+function hasRefundLifecycle(b: ExpeditionBookingSummary): boolean {
+  return b.refundState === 'open' || b.refundState === 'closed'
 }
 
 function startOfToday(): number {
@@ -49,9 +47,31 @@ function startOfToday(): number {
   return d.getTime()
 }
 
+/** A booking belongs to exactly one tab. Order of precedence:
+ *  1. Reserved  — unpaid reserve-now-pay-later
+ *  2. Refund    — refund open (pending) or closed (money back)
+ *  3. Cancelled — customer-cancelled (no refund lifecycle)
+ *  4. Past      — finished trips (Completed / No show) or already-passed active
+ *  5. Upcoming  — every paid (Paid Successful) future trip, whatever the date. */
 function bucketOf(booking: ExpeditionBookingSummary): Bucket {
   if (isReservedBooking(booking)) return 'reserved'
-  return isActiveBooking(booking.status) ? 'upcoming' : 'past'
+  if (hasRefundLifecycle(booking)) return 'refund'
+  if (booking.status === 'CANCELLED') return 'cancelled'
+  if (booking.status === 'COMPLETED' || booking.status === 'NO_SHOW') return 'past'
+
+  const isPaidActive =
+    (booking.status === 'CONFIRMED' || booking.status === 'PENDING') &&
+    (booking.paymentStatus === 'SUCCEEDED' || booking.paymentTiming === 'now')
+
+  if (isPaidActive && booking.status !== 'CANCELLED') {
+    // Trip date already fully past and not yet auto-completed → treat as Past.
+    if (dateMs(booking.travelDate) < startOfToday()) return 'past'
+    return 'upcoming'
+  }
+
+  // Anything else with an active status still falls through by date; refunded /
+  // cancelled statuses that slipped past the checks above are treated as past.
+  return 'past'
 }
 
 function dateMs(value: string): number {
@@ -75,7 +95,7 @@ export default function BookingHistory() {
   const listScrollRef = useRef(0)
   const user = useAuthUser()
 
-  const [bucket, setBucket] = useState<Bucket>('all')
+  const [bucket, setBucket] = useState<Bucket>('upcoming')
   const [query, setQuery] = useState('')
 
   const { data: bookings = [], isLoading, isError, error, refetch } = useMyExpeditionBookings(
@@ -104,17 +124,14 @@ export default function BookingHistory() {
 
   // Banner stats
   const bannerStats = useMemo(() => {
-    let upcoming = 0
-    let reserved = 0
-    let completed = 0
+    const c: Record<Bucket, number> = { upcoming: 0, reserved: 0, cancelled: 0, refund: 0, past: 0 }
     let totalSpent = 0
     for (const b of bookings) {
-      if (isReservedBooking(b)) reserved++
-      else if (isActiveBooking(b.status)) upcoming++
-      else if (b.status === 'CONFIRMED' || b.status === 'COMPLETED') completed++
-      totalSpent += b.total ?? 0
+      c[bucketOf(b)] += 1
+      // Only count money actually paid (not reserved/refunded/cancelled).
+      if (b.paymentStatus === 'SUCCEEDED' && !hasRefundLifecycle(b)) totalSpent += b.total ?? 0
     }
-    return { total: bookings.length, upcoming, reserved, completed, totalSpent }
+    return { total: bookings.length, ...c, totalSpent }
   }, [bookings])
 
   // Next upcoming trip for the greeting
@@ -156,7 +173,7 @@ export default function BookingHistory() {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
     const base = bookings.filter((b) => {
-      if (bucket !== 'all' && bucketOf(b) !== bucket) return false
+      if (bucketOf(b) !== bucket) return false
       if (!q) return true
       return (
         b.tourTitle.toLowerCase().includes(q) ||
@@ -165,36 +182,20 @@ export default function BookingHistory() {
       )
     })
 
-    if (bucket === 'upcoming' || bucket === 'reserved' || bucket === 'all') {
-      const startOfTodayMs = startOfToday()
-      return [...base].sort((a, b) => {
-        if (bucket === 'upcoming' || bucket === 'reserved') return dateMs(a.travelDate) - dateMs(b.travelDate)
-        // All: active first by date asc, then terminal by date desc
-        const aActive = isActiveBooking(a.status)
-        const bActive = isActiveBooking(b.status)
-        if (aActive !== bActive) return aActive ? -1 : 1
-        if (aActive) return dateMs(a.travelDate) - dateMs(b.travelDate)
-        const aFutureTerminal = isTerminalBooking(a.status) && dateMs(a.travelDate) >= startOfTodayMs
-        const bFutureTerminal = isTerminalBooking(b.status) && dateMs(b.travelDate) >= startOfTodayMs
-        if (aFutureTerminal !== bFutureTerminal) return aFutureTerminal ? 1 : -1
-        return dateMs(b.travelDate) - dateMs(a.travelDate)
-      })
-    }
-
-    const startOfTodayMs = startOfToday()
-    return [...base].sort((a, b) => {
-      const aFutureTerminal = isTerminalBooking(a.status) && dateMs(a.travelDate) >= startOfTodayMs
-      const bFutureTerminal = isTerminalBooking(b.status) && dateMs(b.travelDate) >= startOfTodayMs
-      if (aFutureTerminal !== bFutureTerminal) return aFutureTerminal ? 1 : -1
-      return dateMs(b.travelDate) - dateMs(a.travelDate)
-    })
+    // Date-forward tabs sort by soonest travel date; the history/status tabs
+    // (cancelled / refund / past) sort newest-first.
+    const dateForward = bucket === 'upcoming' || bucket === 'reserved'
+    return [...base].sort((a, b) =>
+      dateForward
+        ? dateMs(a.travelDate) - dateMs(b.travelDate)
+        : dateMs(b.travelDate) - dateMs(a.travelDate)
+    )
   }, [bookings, bucket, query])
 
   const counts = useMemo(() => {
-    const c: Record<Bucket, number> = { all: 0, upcoming: 0, reserved: 0, past: 0 }
+    const c: Record<Bucket, number> = { upcoming: 0, reserved: 0, cancelled: 0, refund: 0, past: 0 }
     for (const b of bookings) {
       c[bucketOf(b)] += 1
-      c.all += 1
     }
     return c
   }, [bookings])
@@ -217,13 +218,15 @@ export default function BookingHistory() {
 
   const listStatus = isError ? 'error' : isLoading ? 'loading' : 'ready'
   const activeLabel =
-    bucket === 'all'
-      ? 'trip'
-      : bucket === 'upcoming'
-        ? 'upcoming trip'
-        : bucket === 'reserved'
-          ? 'reserved trip'
-          : 'past trip'
+    bucket === 'upcoming'
+      ? 'upcoming trip'
+      : bucket === 'reserved'
+        ? 'reserved trip'
+        : bucket === 'cancelled'
+          ? 'cancelled trip'
+          : bucket === 'refund'
+            ? 'refund'
+            : 'past trip'
 
   return (
     <div className="bk-page">
@@ -254,11 +257,6 @@ export default function BookingHistory() {
               </div>
 
               <div className="bk-banner-stats">
-                <button type="button" className="bk-banner-stat" onClick={() => setBucket('all')}>
-                  <CalendarDays size={18} className="bk-banner-stat-icon" />
-                  <span className="bk-banner-stat-value">{bannerStats.total}</span>
-                  <span className="bk-banner-stat-label">Total</span>
-                </button>
                 <button type="button" className="bk-banner-stat" onClick={() => setBucket('upcoming')}>
                   <span className="bk-banner-stat-dot bg-[var(--bv-success-dot)]" />
                   <span className="bk-banner-stat-value">{bannerStats.upcoming}</span>
@@ -269,10 +267,15 @@ export default function BookingHistory() {
                   <span className="bk-banner-stat-value">{bannerStats.reserved}</span>
                   <span className="bk-banner-stat-label">Reserved</span>
                 </button>
+                <button type="button" className="bk-banner-stat" onClick={() => setBucket('cancelled')}>
+                  <Ticket size={18} className="bk-banner-stat-icon" />
+                  <span className="bk-banner-stat-value">{bannerStats.cancelled + bannerStats.refund}</span>
+                  <span className="bk-banner-stat-label">Cancelled &amp; Refunded</span>
+                </button>
                 <button type="button" className="bk-banner-stat" onClick={() => setBucket('past')}>
                   <CheckCircle2 size={18} className="bk-banner-stat-icon" />
-                  <span className="bk-banner-stat-value">{bannerStats.completed}</span>
-                  <span className="bk-banner-stat-label">Completed</span>
+                  <span className="bk-banner-stat-value">{bannerStats.past}</span>
+                  <span className="bk-banner-stat-label">Past</span>
                 </button>
                 <div className="bk-banner-stat">
                   <Wallet size={18} className="bk-banner-stat-icon" />
@@ -472,26 +475,34 @@ export default function BookingHistory() {
                       ? 'No upcoming trips'
                       : bucket === 'reserved'
                         ? 'No reservations yet'
-                        : 'No past trips yet'}
+                        : bucket === 'cancelled'
+                          ? 'No cancelled bookings'
+                          : bucket === 'refund'
+                            ? 'No refunds'
+                            : 'No past trips yet'}
                 </h3>
                 <p>
                   {query
                     ? 'Try a different tour name or booking reference.'
-                    : bucket === 'reserved'
-                      ? 'Reserved trips you haven\u2019t paid for yet will appear here.'
-                      : bucket === 'past'
-                        ? 'Trips you have been on, or cancelled, will be kept here for your records.'
-                        : 'When you book an experience it will appear here.'}
+                    : bucket === 'upcoming'
+                      ? 'When you book an experience it will appear here.'
+                      : bucket === 'reserved'
+                        ? 'Reserved trips you haven\u2019t paid for yet will appear here.'
+                        : bucket === 'cancelled'
+                          ? 'Bookings you have cancelled will appear here.'
+                          : bucket === 'refund'
+                            ? 'Refunds and money-back bookings will appear here.'
+                            : 'Trips you have been on, or no-shows, will be kept here for your records.'}
                 </p>
                 <div className="bk-state-actions">
-                  {!query && (bucket === 'all' || bucket === 'upcoming') && (
+                  {!query && bucket === 'upcoming' && (
                     <Link className="bk-btn bk-btn-primary" to="/tours">
                       Browse all tours <ArrowRight size={15} />
                     </Link>
                   )}
-                  {!query && (bucket === 'reserved' || bucket === 'past') && (
-                    <button type="button" className="bk-btn bk-btn-secondary" onClick={() => setBucket('all')}>
-                      View all bookings
+                  {!query && (bucket === 'reserved' || bucket === 'past' || bucket === 'cancelled' || bucket === 'refund') && (
+                    <button type="button" className="bk-btn bk-btn-secondary" onClick={() => setBucket('upcoming')}>
+                      View upcoming trips
                     </button>
                   )}
                   {query && (
@@ -502,11 +513,16 @@ export default function BookingHistory() {
                 </div>
               </div>
             )
-          ) : bucket === 'past' ? (
+          ) : ['past', 'cancelled', 'refund'].includes(bucket) ? (
             <>
               <div className="bk-list">
                 {filtered.map((booking) => (
-                  <BookingCard key={booking.id} booking={booking} onOpen={() => openBooking(booking)} />
+                  <BookingCard
+                    key={booking.id}
+                    booking={booking}
+                    onOpen={() => openBooking(booking)}
+                    chipLabel={bucket === 'past' && booking.status !== 'NO_SHOW' ? 'Completed' : undefined}
+                  />
                 ))}
               </div>
               <p className="bk-list-foot">

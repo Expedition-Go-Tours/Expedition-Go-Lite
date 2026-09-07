@@ -8,11 +8,16 @@ import { formatDuration } from '../../hooks/useExpeditionTours'
 interface BookingCardProps {
   booking: ExpeditionBookingSummary
   onOpen: () => void
+  /** Optional override for the status chip (e.g. "Completed" in the Past view). */
+  chipLabel?: string
 }
 
-export default function BookingCard({ booking, onOpen }: BookingCardProps) {
+export default function BookingCard({ booking, onOpen, chipLabel }: BookingCardProps) {
   const [copied, setCopied] = useState(false)
-  const meta = bookingStatusMeta(booking.status, booking.paymentTiming, booking.paymentStatus)
+  const meta =
+    chipLabel && booking.refundState !== 'open' && booking.refundState !== 'closed'
+      ? { label: chipLabel, kind: chipLabel === 'Completed' ? 'done' : 'ok' }
+      : bookingStatusMeta(booking.status, booking.paymentTiming, booking.paymentStatus, booking.refundState)
   const party = partyLabel(booking.party)
   const isPaid = booking.paymentStatus === 'SUCCEEDED'
   const symbol = booking.currency === 'GHS' ? 'GH₵' : currencySymbol(booking.currency)
