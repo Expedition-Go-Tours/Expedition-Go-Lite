@@ -1,4 +1,4 @@
-import { useRef, useState, lazy, Suspense } from 'react'
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
 import { Button } from '../components/ui/button'
@@ -8,19 +8,11 @@ import { useNavigate } from 'react-router-dom'
 import './Wishlist.css'
 import OptimizedImage from '@/components/shared/OptimizedImage'
 
-// The full-screen transit animation (three.js scenes for helicopter/ATV) is
-// only needed after "Book Now" is clicked, so it loads lazily instead of
-// bloating the initial wishlist chunk download.
-const BookingTransition = lazy(() => import('../components/BookingTransition'))
-
 export default function Wishlist() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { wishlist: wishlistItems, removeFromWishlist } = useWishlist()
-  const [showTransition, setShowTransition] = useState(false)
-  const [transitVehicle, setTransitVehicle] = useState(0)
   const [removingId, setRemovingId] = useState<string | null>(null)
-  const pendingNavState = useRef<unknown>(null)
 
   const handleRemove = (id: string) => {
     setRemovingId(id)
@@ -28,51 +20,9 @@ export default function Wishlist() {
     toast.success(t('common.removedFromWishlist'))
   }
 
-  const handleTransitionDone = () => {
-    const tourId = (pendingNavState.current as { tour?: { id?: string } } | null)?.tour?.id
-    navigate(`/${encodeURIComponent(tourId || '')}/booking`, { state: pendingNavState.current })
-  }
-
-const handleBookNow = (item: WishlistItem) => {
-  const dateISO = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
-  const dateLabel = new Date(dateISO).toLocaleDateString('en-US', {
-    weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
-  })
-
-  pendingNavState.current = {
-    tour: {
-      id: item.tourId || item.id,
-      slug: item.tourId || item.id,
-      title: item.title,
-      image: item.imageUrl,
-      provider: 'Expedition GO Tours',
-      rating: item.rating,
-      reviews: item.reviewCount,
-      date: dateLabel,
-      dateISO,
-      time: '9:00 AM',
-      duration: item.duration,
-      travelers: '1 adult',
-      travelersCount: 1,
-      adults: 1,
-      children: 0,
-      infants: 0,
-      price: item.price,
-      cancellation: 'Free cancellation up to 24 hours before',
-      language: 'English',
-    },
-  }
-
-    let bookingCount = 0
-    try {
-      bookingCount = parseInt(localStorage.getItem('eg_booking_count') || '0', 10) || 0
-      localStorage.setItem('eg_booking_count', String(bookingCount + 1))
-    } catch {
-      /* ignore */
-    }
-    setTransitVehicle(bookingCount % 3)
-
-    setShowTransition(true)
+  const handleBookNow = (item: WishlistItem) => {
+    const slug = item.tourId || item.id
+    navigate(`/tour/${encodeURIComponent(slug)}`)
   }
 
   return (
@@ -268,13 +218,6 @@ const handleBookNow = (item: WishlistItem) => {
         </>
       )}
 
-      <AnimatePresence>
-        {showTransition && (
-          <Suspense fallback={null}>
-            <BookingTransition onDone={handleTransitionDone} vehicleIndex={transitVehicle} />
-          </Suspense>
-        )}
-      </AnimatePresence>
     </div>
   )
 }
