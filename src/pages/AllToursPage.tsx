@@ -37,37 +37,6 @@ const RATING_OPTIONS = [
   { value: '1', label: '1' },
 ] as const
 
-const TOUR_TYPE_OPTIONS = [
-  { value: 'day', label: 'Day Tours' },
-  { value: 'multi-day', label: 'Multi-Day' },
-] as const
-
-const DURATION_BUCKETS = [
-  { value: 'under-4', label: '< 4 hours', match: (m: number) => m > 0 && m < 240 },
-  { value: '4-6', label: '4–6 hours', match: (m: number) => m >= 240 && m <= 360 },
-  { value: 'full-day', label: 'Full Day (6+)', match: (m: number) => m > 360 && m < 1440 },
-  { value: '2-3-days', label: '2–3 Days', match: (m: number) => m >= 2880 && m <= 4320 },
-  { value: '4-plus-days', label: '4+ Days', match: (m: number) => m > 4320 },
-]
-
-const PRICE_RANGES = [
-  { value: 'under-50', label: 'Under $50', match: (p: number) => p < 50 },
-  { value: '50-100', label: '$50 – $100', match: (p: number) => p >= 50 && p <= 100 },
-  { value: '100-200', label: '$100 – $200', match: (p: number) => p > 100 && p <= 200 },
-  { value: 'over-200', label: '$200+', match: (p: number) => p > 200 },
-]
-
-const SECTION_TITLES: Record<string, string> = {
-  'Recommended': 'Recommended For You',
-  'Day Tours': 'Day Tours',
-  'Multi-Day Tours': 'Multi-Day Tours',
-  'Top Rated': 'Top Rated by Travellers',
-  'Sell Out': 'Likely to Sell Out',
-  'Last Minute Deals': 'Special Offers',
-  'Top Attractions Nearby': 'Top Attractions Nearby',
-  'New Experiences': 'New Experiences',
-}
-
 /** Maps a homepage section to a client-side sort key used when the user hasn't
     picked an explicit sort (the "recommended" default). */
 function sectionSortKey(sectionParam: string): 'rating' | 'popular' | 'recommended' {
@@ -118,6 +87,45 @@ export default function AllToursPage() {
   const sortByVal = (sortBy[0] || 'recommended') as SortKey
   const effectiveSortKey: SortKey =
     sortByVal === 'recommended' && sectionParam ? sectionSortKey(sectionParam) : sortByVal
+
+  const TOUR_TYPE_OPTIONS = useMemo(() => [
+    { value: 'day', label: t('allTours.typeDay') },
+    { value: 'multi-day', label: t('allTours.typeMulti') },
+  ] as const, [t])
+
+  const DURATION_BUCKETS = useMemo(() => [
+    { value: 'under-4', label: t('allTours.duration1'), match: (m: number) => m > 0 && m < 240 },
+    { value: '4-6', label: t('allTours.duration2'), match: (m: number) => m >= 240 && m <= 360 },
+    { value: 'full-day', label: t('allTours.duration3'), match: (m: number) => m > 360 && m < 1440 },
+    { value: '2-3-days', label: t('allTours.duration4'), match: (m: number) => m >= 2880 && m <= 4320 },
+    { value: '4-plus-days', label: t('allTours.duration5'), match: (m: number) => m > 4320 },
+  ], [t])
+
+  const PRICE_RANGES = useMemo(() => [
+    { value: 'under-50', label: t('allTours.price1'), match: (p: number) => p < 50 },
+    { value: '50-100', label: t('allTours.price2'), match: (p: number) => p >= 50 && p <= 100 },
+    { value: '100-200', label: t('allTours.price3'), match: (p: number) => p > 100 && p <= 200 },
+    { value: 'over-200', label: t('allTours.price4'), match: (p: number) => p > 200 },
+  ], [t])
+
+  const SECTION_TITLES: Record<string, string> = useMemo(() => ({
+    'Recommended': t('allTours.sectionRecommended'),
+    'Day Tours': t('allTours.sectionDayTours'),
+    'Multi-Day Tours': t('allTours.sectionMultiDay'),
+    'Top Rated': t('allTours.sectionTopRated'),
+    'Sell Out': t('allTours.sectionSellOut'),
+    'Last Minute Deals': t('allTours.sectionSpecial'),
+    'Top Attractions Nearby': t('allTours.sectionAttractions'),
+    'New Experiences': t('allTours.sectionNew'),
+  }), [t])
+
+  const sortOptions = useMemo(() => [
+    { value: 'recommended', label: t('allTours.sortPopular') },
+    { value: 'rating', label: t('allTours.sortPriceLow') },
+    { value: 'popular', label: t('allTours.sortPriceHigh') },
+    { value: 'price-low', label: t('allTours.sortPriceLow') },
+    { value: 'price-high', label: t('allTours.sortPriceHigh') },
+  ] as const, [t])
 
   const { data: allTours, isLoading, isError, error } = useAllExpeditionTours(moodParam ? { mood: moodParam } : undefined)
   const { data: filterOptionData } = useTourFilterOptions()
@@ -241,7 +249,7 @@ export default function AllToursPage() {
     }
 
     return applySort(list, effectiveSortKey)
-  }, [allTours, tourTypes, durationFilter, priceFilter, ratingFilter, categories, destinations, effectiveSortKey, sectionTourIds, attractionTourIds])
+  }, [allTours, tourTypes, durationFilter, priceFilter, ratingFilter, categories, destinations, effectiveSortKey, sectionTourIds, attractionTourIds, DURATION_BUCKETS, PRICE_RANGES])
 
   const totalCount = filteredTours.length
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
@@ -273,7 +281,7 @@ export default function AllToursPage() {
     filterOptions.categories.forEach(c => pills.push({ key: `cat-${c.value}`, value: c.value, label: c.label }))
     RATING_OPTIONS.forEach(r => pills.push({ key: `rating-${r.value}`, value: r.value, label: r.label }))
     return pills
-  }, [filterOptions])
+  }, [filterOptions, TOUR_TYPE_OPTIONS, DURATION_BUCKETS, PRICE_RANGES])
 
   const isPillActive = (value: string) => {
     return tourTypes.includes(value) || destinations.includes(value) ||
@@ -296,15 +304,7 @@ export default function AllToursPage() {
     ? moodParam
     : locationParam
     ? t('sections.toursIn', { location: locationParam })
-    : SECTION_TITLES[sectionParam] || t('sections.allToursTitle')
-
-  const sortOptions = useMemo(() => [
-    { value: 'recommended', label: t('sections.recommendedTitle') },
-    { value: 'rating', label: t('sections.topRatedTitle') },
-    { value: 'popular', label: 'Most Popular' },
-    { value: 'price-low', label: 'Price: Low – High' },
-    { value: 'price-high', label: 'Price: High – Low' },
-  ] as const, [t])
+    : SECTION_TITLES[sectionParam] || t('allTours.pageTitle')
 
   const handleMulti = (setter: React.Dispatch<React.SetStateAction<string[]>>) =>
     (value: string) => setter(prev => prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value])
@@ -360,16 +360,18 @@ export default function AllToursPage() {
             <div>
               <h1 className="all-tours-title">{pageTitle}</h1>
               {isLoading ? (
-                <p className="all-tours-count">Loading tours...</p>
+                <p className="all-tours-count">{t('allTours.loading')}</p>
               ) : (
                 <p className="all-tours-count">
-                  {totalCount} tour{totalCount !== 1 ? 's' : ''} found
+                  {totalCount === 1
+                    ? t('allTours.tourFound')
+                    : t('allTours.toursFound', { count: totalCount })}
                 </p>
               )}
             </div>
           </div>
           {activeFilterCount > 0 && (
-            <button className="all-tours-clear" onClick={clearAll}>Clear all filters</button>
+            <button className="all-tours-clear" onClick={clearAll}>{t('allTours.clearFilters')}</button>
           )}
         </div>
 
@@ -379,7 +381,7 @@ export default function AllToursPage() {
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6, flexShrink: 0 }}>
                 <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
               </svg>
-              Filters
+              {t('allTours.filters')}
               {activeFilterCount > 0 && <span className="filter-count-badge">{activeFilterCount}</span>}
             </button>
 
@@ -460,8 +462,8 @@ export default function AllToursPage() {
 
         {isError && (
           <div className="all-tours-empty">
-            <h3>Failed to load tours</h3>
-            <p>{(error as Error)?.message || 'Please try again later.'}</p>
+            <h3>{t('allTours.failedToLoad')}</h3>
+            <p>{(error as Error)?.message || t('allTours.tryAgain')}</p>
           </div>
         )}
 
@@ -517,9 +519,9 @@ export default function AllToursPage() {
               <circle cx="11" cy="11" r="8" />
               <line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
-            <h3>No tours match your filters</h3>
-            <p>Try adjusting or clearing your filters to see more results.</p>
-            <button className="all-tours-clear-btn" onClick={clearAll}>Clear All Filters</button>
+            <h3>{t('allTours.noMatch')}</h3>
+            <p>{t('allTours.noMatchDesc')}</p>
+            <button className="all-tours-clear-btn" onClick={clearAll}>{t('allTours.clearAll')}</button>
           </div>
         )}
 
@@ -532,10 +534,10 @@ export default function AllToursPage() {
                 disabled={!hasPrevPage}
                 style={{ opacity: hasPrevPage ? 1 : 0.4 }}
               >
-                Previous
+                {t('allTours.prev')}
               </button>
               <span className="pagination-indicator">
-                Page {page} of {totalPages}
+                {t('allTours.pageOf', { page, totalPages })}
               </span>
               <button
                 className="all-tours-load-btn"
@@ -543,7 +545,7 @@ export default function AllToursPage() {
                 disabled={!hasNextPage}
                 style={{ opacity: hasNextPage ? 1 : 0.4 }}
               >
-                Next
+                {t('allTours.next')}
               </button>
             </div>
           </div>
@@ -569,14 +571,14 @@ export default function AllToursPage() {
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
             >
               <div className="filter-drawer-header">
-                <h2 className="filter-drawer-title">Filters</h2>
+                <h2 className="filter-drawer-title">{t('allTours.filters')}</h2>
                 <button type="button" className="filter-drawer-close" onClick={() => setDrawerOpen(false)}>
                   <X size={18} />
                 </button>
               </div>
               {activeFilterCount > 0 && (
                 <button className="filter-drawer-clear" onClick={() => { clearAll(); }}>
-                  Clear all filters ({activeFilterCount})
+                  {t('allTours.clearFilters')} ({activeFilterCount})
                 </button>
               )}
 
@@ -589,12 +591,10 @@ export default function AllToursPage() {
                     ))}
                   </span>
                 )} />
-                <FilterSection title="Type" options={[...TOUR_TYPE_OPTIONS]} selected={tourTypes} onChange={handleMulti(setTourTypes)} />
-                <FilterSection title={t('common.duration')} options={DURATION_BUCKETS.map(b => ({ value: b.value, label: b.label }))} selected={durationFilter} onChange={handleMulti(setDurationFilter)} />
-                <FilterSection title="Price" options={PRICE_RANGES.map(r => ({ value: r.value, label: r.label }))} selected={priceFilter} onChange={handleMulti(setPriceFilter)} />
-                <FilterSection title={t('hero.destination')} options={filterOptions.destinations} selected={destinations} onChange={handleMulti(setDestinations)} />
-                <FilterSection title="Category" options={filterOptions.categories} selected={categories} onChange={handleMulti(setCategories)} />
-                <FilterSection title="Sort" options={[...sortOptions]} selected={sortBy} onChange={handleSingle(setSortBy)} single />
+                <FilterSection title={t('allTours.filterType')} options={[...TOUR_TYPE_OPTIONS]} selected={tourTypes} onChange={handleMulti(setTourTypes)} />
+                <FilterSection title={t('allTours.filterPrice')} options={PRICE_RANGES.map(r => ({ value: r.value, label: r.label }))} selected={priceFilter} onChange={handleMulti(setPriceFilter)} />
+                <FilterSection title={t('allTours.filterCategory')} options={filterOptions.categories} selected={categories} onChange={handleMulti(setCategories)} />
+                <FilterSection title={t('allTours.filterSort')} options={[...sortOptions]} selected={sortBy} onChange={handleSingle(setSortBy)} single />
               </div>
             </motion.div>
           </>

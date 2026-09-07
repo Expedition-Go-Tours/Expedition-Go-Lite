@@ -17,54 +17,6 @@ interface TransportProviderPageProps {
   onOpenAuth?: (mode: 'signin' | 'signup') => void
 }
 
-const INTEGRATION_STEPS = [
-  {
-    num: 1,
-    title: 'List your fleet and reach more travelers',
-    points: [
-      'Showcase your vehicles to a global audience',
-      'Get started in minutes with easy onboarding',
-      'Maximize your fleet utilization',
-    ],
-  },
-  {
-    num: 2,
-    title: 'Connect directly with tour operators',
-    points: [
-      'Receive instant booking requests',
-      'Manage availability in real-time',
-      'Build lasting partner relationships',
-    ],
-  },
-  {
-    num: 3,
-    title: 'Grow with a trusted travel platform',
-    points: [
-      'Access marketing and promotional support',
-      'Benefit from secure payment processing',
-      'Join a network of verified transport providers',
-    ],
-  },
-]
-
-const WHY_JOIN = [
-  {
-    icon: DollarSign,
-    title: 'Earn competitive rates',
-    desc: 'Set your own prices and earn more by partnering with tour operators who need reliable transport. Get paid securely for every booking.',
-  },
-  {
-    icon: Layout,
-    title: 'Easy fleet management',
-    desc: 'Our platform makes it simple to manage your vehicles, availability, and bookings all in one place. No complex setup required.',
-  },
-  {
-    icon: Mail,
-    title: 'Dedicated partner support',
-    desc: 'Get a dedicated account manager, access to our resource center, and ongoing support to help you succeed on the platform.',
-  },
-]
-
 export default function TransportProviderPage({ onOpenAuth }: TransportProviderPageProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -73,8 +25,56 @@ export default function TransportProviderPage({ onOpenAuth }: TransportProviderP
   const [activeStep, setActiveStep] = useState(0)
 
   useEffect(() => {
-    document.title = `${t('footer.asTransportProvider', 'Transport Provider')} | Expedition-Go Tours`
+    document.title = `${t('transport.pageTitle', 'Transport Providers | Expedition-Go Tours')} | Expedition-Go Tours`
   }, [t])
+
+  const INTEGRATION_STEPS = [
+    {
+      num: 1,
+      title: 'List your fleet and reach more travelers',
+      points: [
+        'Showcase your vehicles to a global audience',
+        'Get started in minutes with easy onboarding',
+        'Maximize your fleet utilization',
+      ],
+    },
+    {
+      num: 2,
+      title: 'Connect directly with tour operators',
+      points: [
+        'Receive instant booking requests',
+        'Manage availability in real-time',
+        'Build lasting partner relationships',
+      ],
+    },
+    {
+      num: 3,
+      title: 'Grow with a trusted travel platform',
+      points: [
+        'Access marketing and promotional support',
+        'Benefit from secure payment processing',
+        'Join a network of verified transport providers',
+      ],
+    },
+  ]
+
+  const WHY_JOIN = [
+    {
+      icon: DollarSign,
+      title: 'Earn competitive rates',
+      desc: 'Set your own prices and earn more by partnering with tour operators who need reliable transport. Get paid securely for every booking.',
+    },
+    {
+      icon: Layout,
+      title: 'Easy fleet management',
+      desc: 'Our platform makes it simple to manage your vehicles, availability, and bookings all in one place. No complex setup required.',
+    },
+    {
+      icon: Mail,
+      title: 'Dedicated partner support',
+      desc: 'Get a dedicated account manager, access to our resource center, and ongoing support to help you succeed on the platform.',
+    },
+  ]
 
   const handleSignUp = () => {
     if (!user) {
@@ -123,13 +123,13 @@ export default function TransportProviderPage({ onOpenAuth }: TransportProviderP
           transition={{ duration: 0.7, ease: 'easeOut' }}
         >
           <h1 className="transport-hero-title">
-            Partner with us and <span className="transport-hero-accent">grow your transport business</span>
+            {t('transport.heroTitle', 'Partner with us and grow your transport business')}
           </h1>
           <p className="transport-hero-subtitle">
-            Connect with tour operators and travelers who need reliable, safe, and comfortable transport across Ghana.
+            {t('transport.heroDesc', 'Connect with tour operators and travelers who need reliable, safe, and comfortable transport across Ghana.')}
           </p>
           <button type="button" className="transport-btn transport-btn-primary" onClick={handleSignUp}>
-            Sign up for free
+            {t('transport.heroBtn', 'Sign up for free')}
           </button>
         </motion.div>
       </section>
@@ -139,9 +139,9 @@ export default function TransportProviderPage({ onOpenAuth }: TransportProviderP
         <div className="transport-container">
           <div className="transport-stats-grid">
             {[
-              { value: '500+', label: 'Verified transport providers' },
-              { value: '50+', label: 'Destinations covered' },
-              { value: '10k+', label: 'Monthly bookings' },
+              { value: '500+', label: t('transport.stat1Label', 'Verified transport providers') },
+              { value: '50+', label: t('transport.stat2Label', 'Destinations covered') },
+              { value: '10k+', label: t('transport.stat3Label', 'Monthly bookings') },
             ].map((stat, i) => (
               <motion.div
                 key={stat.label}
@@ -169,9 +169,9 @@ export default function TransportProviderPage({ onOpenAuth }: TransportProviderP
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
           >
-            <h2 className="transport-section-title">How to get started</h2>
+            <h2 className="transport-section-title">{t('transport.startTitle', 'How to get started')}</h2>
             <p className="transport-section-desc">
-              We make it easy for transport providers to join our platform and start earning. No complicated setup required.
+              {t('transport.startDesc', 'We make it easy for transport providers to join our platform and start earning. No complicated setup required.')}
             </p>
           </motion.div>
           <div className="transport-integration-grid" ref={carouselRef} onScroll={handleScroll}>
@@ -203,7 +203,7 @@ export default function TransportProviderPage({ onOpenAuth }: TransportProviderP
                 key={i}
                 className={`transport-integration-dot${i === activeStep ? ' active' : ''}`}
                 onClick={() => scrollToStep(i)}
-                aria-label={`Go to step ${i + 1}`}
+                aria-label={t('transport.goToStep', { number: i + 1, defaultValue: `Go to step ${i + 1}` })}
               />
             ))}
           </div>
@@ -220,7 +220,7 @@ export default function TransportProviderPage({ onOpenAuth }: TransportProviderP
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
           >
-            Why partner with Expedition-Go Tours
+            {t('transport.whyTitle', 'Why partner with Expedition-Go Tours')}
           </motion.h2>
           <div className="transport-why-grid">
             {WHY_JOIN.map((item, i) => (
@@ -253,7 +253,7 @@ export default function TransportProviderPage({ onOpenAuth }: TransportProviderP
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
           >
-            About the Expedition-Go Tours Partner Program
+            {t('transport.aboutTitle', 'About the Expedition-Go Tours Partner Program')}
           </motion.h2>
           <motion.div
             className="transport-about-card"
@@ -263,10 +263,10 @@ export default function TransportProviderPage({ onOpenAuth }: TransportProviderP
             transition={{ duration: 0.5, delay: 0.1 }}
           >
             <p className="transport-about-card-text">
-              For inquiries, contact <strong>partners@expedition-go.com</strong>
+              {t('transport.contactText', 'For inquiries, contact partners@expedition-go.com')}
             </p>
             <a href="/contact-us" className="transport-btn transport-btn-contact">
-              Contact Us
+              {t('transport.contactBtn', 'Contact Us')}
             </a>
           </motion.div>
         </div>
@@ -282,10 +282,10 @@ export default function TransportProviderPage({ onOpenAuth }: TransportProviderP
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
           >
-            <h2 className="transport-cta-title">Ready to grow your transport business?</h2>
-            <p className="transport-cta-subtitle">Join hundreds of transport partners already earning with us.</p>
+            <h2 className="transport-cta-title">{t('transport.ctaTitle', 'Ready to grow your transport business?')}</h2>
+            <p className="transport-cta-subtitle">{t('transport.ctaDesc', 'Join hundreds of transport partners already earning with us.')}</p>
             <button type="button" className="transport-btn transport-btn-primary transport-btn-lg" onClick={handleSignUp}>
-              Get started <ArrowRight size={18} />
+              {t('transport.ctaBtn', 'Get started')} <ArrowRight size={18} />
             </button>
           </motion.div>
         </div>

@@ -21,33 +21,6 @@ const fadeUp = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' as const } },
 }
 
-const FEATURES = [
-  {
-    icon: DollarSign,
-    text: 'Earn a minimum commission rate of 8%, paid monthly',
-  },
-  {
-    icon: Zap,
-    text: 'Optimize your earnings through an easy-to-use analytics suite, automatic widgets, and integrations that fit your content',
-  },
-  {
-    icon: Heart,
-    text: 'Have access to a dedicated support system and resources',
-  },
-]
-
-const CREATOR_EXAMPLES = [
-  { label: 'Creator #1', clicks: '170 clicks and bookings to Expedition-Go Tours', earning: 'GH₵ 60 /mo' },
-  { label: 'Creator #2', clicks: '6,500 clicks and bookings to Expedition-Go Tours', earning: 'GH₵ 2,300 /mo' },
-  { label: 'Creator #3', clicks: '950 clicks and bookings to Expedition-Go Tours', earning: 'GH₵ 110 /mo' },
-]
-
-const HOW_IT_WORKS = [
-  'Sign up for our content creator program',
-  'Create integrations & earn commissions',
-  'Join our travel community & apply for free experiences',
-]
-
 const CREATOR_IMAGES = [content1, content2, content3, content4, content5, content6, content7]
 
 interface ContentCreatorsPageProps {
@@ -58,6 +31,33 @@ export default function ContentCreatorsPage({ onOpenAuth }: ContentCreatorsPageP
   const { t } = useTranslation()
   const navigate = useNavigate()
   const user = useAuthUser()
+
+  const FEATURES = [
+    {
+      icon: DollarSign,
+      text: t('contentCreators.feature1'),
+    },
+    {
+      icon: Zap,
+      text: t('contentCreators.feature2'),
+    },
+    {
+      icon: Heart,
+      text: t('contentCreators.feature3'),
+    },
+  ]
+
+  const CREATOR_EXAMPLES = [
+    { label: 'Creator #1', clicks: '170 clicks and bookings to Expedition-Go Tours', earning: 'GH₵ 60 /mo' },
+    { label: 'Creator #2', clicks: '6,500 clicks and bookings to Expedition-Go Tours', earning: 'GH₵ 2,300 /mo' },
+    { label: 'Creator #3', clicks: '950 clicks and bookings to Expedition-Go Tours', earning: 'GH₵ 110 /mo' },
+  ]
+
+  const HOW_IT_WORKS = [
+    t('contentCreators.step1'),
+    t('contentCreators.step2'),
+    t('contentCreators.step3'),
+  ]
 
   useEffect(() => {
     document.title = `${t('footer.asContentCreator')} | Expedition-Go Tours`
@@ -83,7 +83,7 @@ export default function ContentCreatorsPage({ onOpenAuth }: ContentCreatorsPageP
           variants={fadeUp}
         >
           <h1 className="content-creator-hero-top-title">
-            Monetize your travel content with Expedition-Go Tours
+            {t('contentCreators.heroTitle')}
           </h1>
         </motion.div>
       </section>
@@ -110,11 +110,11 @@ export default function ContentCreatorsPage({ onOpenAuth }: ContentCreatorsPageP
         </div>
         <div className="content-creator-grow-overlay">
           <h2 className="content-creator-grow-title">
-            Grow your social media presence by joining our travel community
+            {t('contentCreators.growTitle')}
           </h2>
           <ul className="content-creator-grow-list">
-            <li>Apply for sponsored Expedition-Go experiences</li>
-            <li>Participate in workshops, networking events, and giveaways</li>
+            <li>{t('contentCreators.growItem1')}</li>
+            <li>{t('contentCreators.growItem2')}</li>
           </ul>
         </div>
       </section>
@@ -123,7 +123,7 @@ export default function ContentCreatorsPage({ onOpenAuth }: ContentCreatorsPageP
       <section className="content-creator-make-section">
         <div className="content-creator-make-inner">
           <h2 className="content-creator-make-title">
-            Make money through your website or blog
+            {t('contentCreators.makeTitle')}
           </h2>
           <div className="content-creator-features">
             {FEATURES.map((feature) => (
@@ -136,7 +136,7 @@ export default function ContentCreatorsPage({ onOpenAuth }: ContentCreatorsPageP
             ))}
           </div>
           <button type="button" className="content-creator-cta" onClick={handleSignUp}>
-            Sign up
+            {t('contentCreators.signupBtn')}
           </button>
         </div>
       </section>
@@ -145,7 +145,7 @@ export default function ContentCreatorsPage({ onOpenAuth }: ContentCreatorsPageP
       <section className="content-creator-examples-section">
         <div className="content-creator-examples-inner">
           <h2 className="content-creator-examples-title">
-            Examples of creators we work with and how their traffic converts to bookings
+            {t('contentCreators.examplesTitle')}
           </h2>
           <div className="content-creator-example-rows">
             {CREATOR_EXAMPLES.map((row) => (
@@ -164,7 +164,7 @@ export default function ContentCreatorsPage({ onOpenAuth }: ContentCreatorsPageP
       {/* Section 3b: How it works */}
       <section className="content-creator-how-section">
         <div className="content-creator-how-inner">
-          <h2 className="content-creator-how-title">How it works</h2>
+          <h2 className="content-creator-how-title">{t('contentCreators.howTitle')}</h2>
           <div className="content-creator-how-steps">
             {HOW_IT_WORKS.map((step) => (
               <div key={step} className="content-creator-how-card">
@@ -179,21 +179,21 @@ export default function ContentCreatorsPage({ onOpenAuth }: ContentCreatorsPageP
       <section className="content-creator-partner-section">
         <div className="content-creator-partner-inner">
           <div className="content-creator-partner-col">
-            <h2>Become a partner</h2>
+            <h2>{t('contentCreators.partnerTitle')}</h2>
             <p>
-              Sign up to become a partner with Expedition-Go Tours to grow and monetize your platforms.
+              {t('contentCreators.partnerDesc')}
             </p>
             <button type="button" className="content-creator-cta" onClick={handleSignUp}>
-              Sign up
+              {t('contentCreators.signupBtn')}
             </button>
           </div>
           <div className="content-creator-partner-col">
-            <h2>Need help?</h2>
+            <h2>{t('contentCreators.helpTitle')}</h2>
             <p>
-              Check out our Partner Resource Center or reach out to our support team if you need further assistance.
+              {t('contentCreators.helpDesc')}
             </p>
             <a href="/help-centre" className="content-creator-cta">
-              Visit Help Centre
+              {t('contentCreators.helpBtn')}
             </a>
           </div>
         </div>

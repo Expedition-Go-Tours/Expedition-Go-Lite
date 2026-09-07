@@ -367,7 +367,7 @@ export default function CheckoutPage() {
 
       <AnimatePresence>
         {showAnimation && (
-          <BookingTransition onDone={() => {}} vehicleIndex={0} caption="Processing your payment" />
+          <BookingTransition onDone={() => {}} caption="Processing your payment" />
         )}
       </AnimatePresence>
     </div>

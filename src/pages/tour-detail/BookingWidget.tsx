@@ -87,7 +87,7 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
   const hasSupplierUnread = (supplierConv?.unreadCount ?? 0) > 0
   const [isBooking, setIsBooking] = useState(false)
   const [showTransition, setShowTransition] = useState(false)
-  const [transitVehicle, setTransitVehicle] = useState(0)
+
   const pendingNavState = useRef<unknown>(null)
   const [promoCode, setPromoCode] = useState('')
   const [promoApplied, setPromoApplied] = useState(false)
@@ -337,17 +337,6 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
         appliedPromo: appliedPromo ? { name: appliedPromo.name, discountAmount: appliedPromo.discountAmount } : null,
       }),
     }
-
-    // Pick the vehicle for this booking, cycling helicopter → tram → truck
-    // across successive bookings (persisted so it advances each time).
-    let bookingCount = 0
-    try {
-      bookingCount = parseInt(localStorage.getItem('eg_booking_count') || '0', 10) || 0
-      localStorage.setItem('eg_booking_count', String(bookingCount + 1))
-    } catch {
-      /* ignore */
-    }
-    setTransitVehicle(bookingCount % 3)
 
     setIsBooking(true)
     // Spinner on the button for a moment, then reveal the travel transition.
@@ -632,7 +621,7 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
             {showLiveTotal ? (
               <>
                 <span className="booking-price-from">{t('common.from')}</span>
-                {!pricingLoading && previousLiveTotal != null && previousLiveTotal !== displayTotal && (
+                {!pricingLoading && previousLiveTotal != null && previousLiveTotal !== displayTotal && showPromoPrice && (
                   <span className="booking-price-amount booking-price-amount--strike">
                     {formatMoney(previousLiveTotal)}
                   </span>
@@ -1180,7 +1169,7 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
 
       <AnimatePresence>
         {showTransition && (
-          <BookingTransition onDone={handleTransitionDone} vehicleIndex={transitVehicle} />
+          <BookingTransition onDone={handleTransitionDone} />
         )}
       </AnimatePresence>
     </div>

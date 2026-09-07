@@ -46,8 +46,9 @@ import './TourDetailPage.css'
 
 /** Skeleton placeholder shown while the tour loads: header, image gallery and booking widget. */
 function TourDetailSkeleton() {
+  const { t } = useTranslation()
   return (
-    <div className="tour-detail-skeleton" role="status" aria-label="Loading tour">
+    <div className="tour-detail-skeleton" role="status" aria-label={t('tourDetail.loadingTour')}>
       <div className="tour-detail-container">
         {/* Header skeleton */}
         <div className="tour-detail-header-row">
@@ -96,7 +97,7 @@ interface TourDetailPageProps {
 export default function TourDetailPage({ onOpenAuth }: TourDetailPageProps = {}) {
   const { t } = useTranslation()
   const tourDetailTabs = useMemo(() => [
-    { key: 'overview', label: 'Overview' },
+    { key: 'overview', label: t('tourDetail.tabOverview') },
     { key: 'additional', label: t('tourDetail.additionalInformation') },
     { key: 'reviews', label: t('sections.reviews') },
     { key: 'supplier', label: t('tourDetail.supplier') },
@@ -375,11 +376,11 @@ export default function TourDetailPage({ onOpenAuth }: TourDetailPageProps = {})
 
   const reviewBreakdown = useMemo(() => {
     const labels = [
-      { label: '5 stars', stars: 5 },
-      { label: '4 stars', stars: 4 },
-      { label: '3 stars', stars: 3 },
-      { label: '2 stars', stars: 2 },
-      { label: '1 star', stars: 1 },
+      { label: t('reviews.starsCount', { count: 5 }), stars: 5 },
+      { label: t('reviews.starsCount', { count: 4 }), stars: 4 },
+      { label: t('reviews.starsCount', { count: 3 }), stars: 3 },
+      { label: t('reviews.starsCount', { count: 2 }), stars: 2 },
+      { label: t('reviews.starsCount', { count: 1 }), stars: 1 },
     ]
     const counts: Record<number, number> = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
     allReviewCards.forEach((r) => { if (counts[r.rating] !== undefined) counts[r.rating]++ })
@@ -728,7 +729,7 @@ export default function TourDetailPage({ onOpenAuth }: TourDetailPageProps = {})
   }, [tour])
 
   const highlights = tour?.highlights || []
-  const cancellationPolicy = tour?.cancellationPolicy || 'Free cancellation up to 24 hours before'
+  const cancellationPolicy = tour?.cancellationPolicy || t('tourDetail.fallbackCancellation')
 
   const descriptionSteps = useMemo(() => {
     const desc = tour?.description
@@ -778,7 +779,7 @@ export default function TourDetailPage({ onOpenAuth }: TourDetailPageProps = {})
       fallback: {
         name: tour?.supplierName || 'Expedition-Go Tours Ltd',
         logo: tour?.supplierPhoto || '',
-        description: tour?.supplierName ? `${tour.supplierName} offers authentic guided experiences.` : null,
+        description: tour?.supplierName ? t('tourDetail.supplierDescription', { name: tour.supplierName }) : null,
         rating: tour?.rating,
         toursCount: relatedTours.length,
       },
@@ -786,7 +787,7 @@ export default function TourDetailPage({ onOpenAuth }: TourDetailPageProps = {})
     return {
       name: mapped.name || tour?.supplierName || 'Expedition-Go Tours Ltd',
       logo: mapped.logo || tour?.supplierPhoto || '',
-      description: mapped.description || (tour?.supplierName ? `${tour.supplierName} offers authentic guided experiences.` : ''),
+      description: mapped.description || (tour?.supplierName ? t('tourDetail.supplierDescription', { name: tour.supplierName }) : ''),
       rating: mapped.rating ?? (tour?.rating ?? null),
       totalTours: relatedTours.length,
       phone: mapped.phone || '',
@@ -796,7 +797,7 @@ export default function TourDetailPage({ onOpenAuth }: TourDetailPageProps = {})
       verified: mapped.verified,
       supplierType: mapped.supplierType,
     }
-  }, [tour, relatedTours])
+  }, [tour, relatedTours, t])
 
   // Same full TourCardData as the "similar experiences" row — the Supplier
   // tab cards must carry the identical props (photos carousel, priceValue for
@@ -896,7 +897,7 @@ export default function TourDetailPage({ onOpenAuth }: TourDetailPageProps = {})
                 }}>
                   <img src="/travio_logo.png" alt="Travio Africa" style={{ height: 32, marginBottom: 16 }} />
                   <p style={{ fontSize: 14, color: '#6b7280', marginBottom: 16 }}>
-                    This tour is operated by a partner on Travio Africa
+                    {t('tourDetail.operatedByPartner')}
                   </p>
                   <a
                     href={tour.externalUrl}
@@ -908,7 +909,7 @@ export default function TourDetailPage({ onOpenAuth }: TourDetailPageProps = {})
                       fontWeight: 600, textDecoration: 'none', fontSize: 16,
                     }}
                   >
-                    Book on Travio Africa
+                    {t('tourDetail.bookOnTravioAfrica')}
                   </a>
                 </div>
               ) : (

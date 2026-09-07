@@ -456,6 +456,10 @@
     height: 175px;
   }
 
+  .tour-card-dots {
+    display: none;
+  }
+
   .tour-card-body {
     padding: 12px;
   }

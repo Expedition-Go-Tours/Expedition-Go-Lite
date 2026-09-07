@@ -17,58 +17,64 @@ interface HotelsProviderPageProps {
   onOpenAuth?: (mode: 'signin' | 'signup') => void
 }
 
-const INTEGRATION_STEPS = [
-  {
-    num: 1,
-    title: 'Earn money with easy white label integration',
-    points: [
-      'Promote our products under your brand',
-      'Get started in minutes',
-      'Enjoy the best conversion rates',
-    ],
-  },
-  {
-    num: 2,
-    title: 'Include tours and activities in your checkout',
-    points: [
-      'Add touchpoints instantly',
-      'Benefit from fast implementation',
-      'Display relevant content',
-    ],
-  },
-  {
-    num: 3,
-    title: 'Add recommended tours to marketing emails',
-    points: [
-      'Enjoy top conversion opportunities',
-      'Create customer loyalty',
-      'Learn best practices',
-    ],
-  },
-]
-
-const WHY_JOIN = [
-  {
-    icon: DollarSign,
-    title: 'Earn competitive commissions',
-    desc: 'Monetize your guest base by offering curated local experiences. Earn a commission on every booking made through your platform.',
-  },
-  {
-    icon: Layout,
-    title: 'Seamless integration',
-    desc: 'Our white-label solution integrates directly into your existing booking flow. No heavy engineering required — go live in days.',
-  },
-  {
-    icon: Mail,
-    title: 'Dedicated partner support',
-    desc: 'Get a dedicated account manager, access to our resource center, and ongoing optimization tips to maximize your revenue.',
-  },
-]
-
 export default function HotelsProviderPage({ onOpenAuth }: HotelsProviderPageProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const user = useAuthUser()
+
+  const INTEGRATION_STEPS = [
+    {
+      num: 1,
+      title: 'Earn money with easy white label integration',
+      points: [
+        'Promote our products under your brand',
+        'Get started in minutes',
+        'Enjoy the best conversion rates',
+      ],
+    },
+    {
+      num: 2,
+      title: 'Include tours and activities in your checkout',
+      points: [
+        'Add touchpoints instantly',
+        'Benefit from fast implementation',
+        'Display relevant content',
+      ],
+    },
+    {
+      num: 3,
+      title: 'Add recommended tours to marketing emails',
+      points: [
+        'Enjoy top conversion opportunities',
+        'Create customer loyalty',
+        'Learn best practices',
+      ],
+    },
+  ]
+
+  const WHY_JOIN = [
+    {
+      icon: DollarSign,
+      title: 'Earn competitive commissions',
+      desc: 'Monetize your guest base by offering curated local experiences. Earn a commission on every booking made through your platform.',
+    },
+    {
+      icon: Layout,
+      title: 'Seamless integration',
+      desc: 'Our white-label solution integrates directly into your existing booking flow. No heavy engineering required — go live in days.',
+    },
+    {
+      icon: Mail,
+      title: 'Dedicated partner support',
+      desc: 'Get a dedicated account manager, access to our resource center, and ongoing optimization tips to maximize your revenue.',
+    },
+  ]
+
+  const STATS = [
+    { value: '200k+', label: t('hotels.stat1Label') },
+    { value: '18k+', label: t('hotels.stat2Label') },
+    { value: '30M+', label: t('hotels.stat3Label') },
+  ]
 
   useEffect(() => {
     document.title = `${t('footer.asAccommodationProvider', 'Hotels & Accommodations')} | Expedition-Go Tours`
@@ -100,13 +106,13 @@ export default function HotelsProviderPage({ onOpenAuth }: HotelsProviderPagePro
           transition={{ duration: 0.7, ease: 'easeOut' }}
         >
           <h1 className="hotel-hero-title">
-            Connect your customers to <span className="hotel-hero-accent">incredible experiences</span>
+            {t('hotels.heroTitle')}
           </h1>
           <p className="hotel-hero-subtitle">
-            Help your customers plan every step of their trip with the world's largest marketplace for tours and activities.
+            {t('hotels.heroDesc')}
           </p>
           <button type="button" className="hotel-btn hotel-btn-primary" onClick={handleSignUp}>
-            Sign up for free
+            {t('hotels.heroBtn')}
           </button>
         </motion.div>
       </section>
@@ -115,11 +121,7 @@ export default function HotelsProviderPage({ onOpenAuth }: HotelsProviderPagePro
       <section className="hotel-stats">
         <div className="hotel-container">
           <div className="hotel-stats-grid">
-            {[
-              { value: '200k+', label: 'Curated experiences worldwide' },
-              { value: '18k+', label: 'Destinations covered' },
-              { value: '30M+', label: 'Travelers served annually' },
-            ].map((stat, i) => (
+            {STATS.map((stat, i) => (
               <motion.div
                 key={stat.label}
                 className="hotel-stat-item"
@@ -146,9 +148,9 @@ export default function HotelsProviderPage({ onOpenAuth }: HotelsProviderPagePro
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
           >
-            <h2 className="hotel-section-title">Drive revenue via seamless integration</h2>
+            <h2 className="hotel-section-title">{t('hotels.intTitle')}</h2>
             <p className="hotel-section-desc">
-              We make integration easy so our partners can focus on what matters — driving revenue. No engineering required.
+              {t('hotels.intDesc')}
             </p>
           </motion.div>
           <div className="hotel-integration-grid">
@@ -187,7 +189,7 @@ export default function HotelsProviderPage({ onOpenAuth }: HotelsProviderPagePro
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
           >
-            Why partner with Expedition-Go Tours
+            {t('hotels.whyTitle')}
           </motion.h2>
           <div className="hotel-why-grid">
             {WHY_JOIN.map((item, i) => (
@@ -220,7 +222,7 @@ export default function HotelsProviderPage({ onOpenAuth }: HotelsProviderPagePro
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
           >
-            About the Expedition-Go Tours Partner Program
+            {t('hotels.aboutTitle')}
           </motion.h2>
           <motion.div
             className="hotel-about-card"
@@ -230,10 +232,10 @@ export default function HotelsProviderPage({ onOpenAuth }: HotelsProviderPagePro
             transition={{ duration: 0.5, delay: 0.1 }}
           >
             <p className="hotel-about-card-text">
-              For inquiries, contact <strong>partners@expedition-go.com</strong>
+              {t('hotels.contactText')}
             </p>
             <a href="/contact-us" className="hotel-btn hotel-btn-contact">
-              Contact Us
+              {t('hotels.contactBtn')}
             </a>
           </motion.div>
         </div>
@@ -249,10 +251,10 @@ export default function HotelsProviderPage({ onOpenAuth }: HotelsProviderPagePro
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
           >
-            <h2 className="hotel-cta-title">Ready to grow your business?</h2>
-            <p className="hotel-cta-subtitle">Join thousands of accommodation partners already earning with us.</p>
+            <h2 className="hotel-cta-title">{t('hotels.ctaTitle')}</h2>
+            <p className="hotel-cta-subtitle">{t('hotels.ctaDesc')}</p>
             <button type="button" className="hotel-btn hotel-btn-primary hotel-btn-lg" onClick={handleSignUp}>
-              Get started <ArrowRight size={18} />
+              {t('hotels.ctaBtn')} <ArrowRight size={18} />
             </button>
           </motion.div>
         </div>

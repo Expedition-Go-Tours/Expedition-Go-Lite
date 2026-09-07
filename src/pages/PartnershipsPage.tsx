@@ -23,39 +23,6 @@ const HERO_IMAGES = [partners1, partners3, partners4]
 
 const MARQUEE_IMAGES = [partners1, partners2, partners3, partners4, partners5, partners6, partners7, partners8, partners9, tnt1, tnt2]
 
-const PARTNER_TYPES = [
-  {
-    title: 'Tour operators & suppliers',
-    text: 'List your experiences on Expedition-Go Tours and reach travellers ready to book. Start by creating a supplier account.',
-    to: '/partners/tour-operators/apply',
-    image: partners2,
-  },
-  {
-    title: 'Hotels & accommodations',
-    text: 'Offer your guests exclusive experiences and earn through every successful booking.',
-    to: '/hotels',
-    image: partners7,
-  },
-  {
-    title: 'Travel agents & resellers',
-    text: 'Resell Expedition-Go Tours experiences to your clients with simple, transparent partnership terms.',
-    to: '/travel-agents',
-    image: partners9,
-  },
-  {
-    title: 'Content creators & influencers',
-    text: 'Collaborate with us to create inspiring travel content and earn through your audience.',
-    to: '/content-creators',
-    image: partners6,
-  },
-  {
-    title: 'Transport providers',
-    text: 'Partner with us to offer seamless transport solutions for travellers across all destinations.',
-    to: '/transport-providers',
-    image: tnt3,
-  },
-]
-
 export default function PartnershipsPage() {
   const { t } = useTranslation()
   const [currentSlide, setCurrentSlide] = useState(0)
@@ -64,6 +31,39 @@ export default function PartnershipsPage() {
   const partnerRef = useRef<HTMLDivElement>(null)
   const marqueeRef = useRef<HTMLDivElement>(null)
   const marqueeResumeRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const PARTNER_TYPES = [
+    {
+      title: t('partnerships.type1Title'),
+      text: t('partnerships.type1Text'),
+      to: '/partners/tour-operators/apply',
+      image: partners2,
+    },
+    {
+      title: t('partnerships.type2Title'),
+      text: t('partnerships.type2Text'),
+      to: '/hotels',
+      image: partners7,
+    },
+    {
+      title: t('partnerships.type3Title'),
+      text: t('partnerships.type3Text'),
+      to: '/travel-agents',
+      image: partners9,
+    },
+    {
+      title: t('partnerships.type4Title'),
+      text: t('partnerships.type4Text'),
+      to: '/content-creators',
+      image: partners6,
+    },
+    {
+      title: t('partnerships.type5Title'),
+      text: t('partnerships.type5Text'),
+      to: '',
+      image: tnt3,
+    },
+  ]
 
   const handleMarqueeTap = () => {
     const track = marqueeRef.current?.querySelector('.partner-marquee-track')
@@ -142,14 +142,14 @@ export default function PartnershipsPage() {
         <button
           className="support-hero-nav support-hero-nav--prev"
           onClick={prevSlide}
-          aria-label="Previous image"
+          aria-label={t('partnerships.prevImage')}
         >
           <ChevronLeft size={28} />
         </button>
         <button
           className="support-hero-nav support-hero-nav--next"
           onClick={nextSlide}
-          aria-label="Next image"
+          aria-label={t('partnerships.nextImage')}
         >
           <ChevronRight size={28} />
         </button>
@@ -159,7 +159,7 @@ export default function PartnershipsPage() {
               key={index}
               className={`support-hero-dot ${index === currentSlide ? 'active' : ''}`}
               onClick={() => goToSlide(index)}
-              aria-label={`Go to slide ${index + 1}`}
+              aria-label={t('partnerships.goToSlide')}
             />
           ))}
         </div>
@@ -171,13 +171,8 @@ export default function PartnershipsPage() {
 
       <div className="support-container">
         <div className="support-article">
-          <h2>Why partner with us</h2>
-          <p>
-            We believe great partnerships make travel better for everyone. Whether you run tours,
-            welcome guests or create content, working with Expedition-Go Tours means reaching travellers
-            who are ready to book with clear terms, fair revenue share and a dedicated partner
-            team.
-          </p>
+          <h2>{t('partnerships.whyTitle')}</h2>
+          <p>{t('partnerships.whyText')}</p>
         </div>
 
         {/* Auto-scrolling Partners Marquee */}
@@ -191,7 +186,7 @@ export default function PartnershipsPage() {
           </div>
         </div>
 
-        <h2 className="support-section-title">Who we work with</h2>
+        <h2 className="support-section-title">{t('partnerships.whoTitle')}</h2>
         <div
           className="partner-carousel"
           ref={partnerRef}
@@ -212,7 +207,7 @@ export default function PartnershipsPage() {
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    Get started
+                    {t('partnerships.getStarted')}
                     <ArrowRight size={14} />
                   </Link>
                 ) : (
@@ -220,9 +215,9 @@ export default function PartnershipsPage() {
                     type="button"
                     className="partner-card-btn"
                     disabled
-                    title="Coming soon"
+                    title={t('partnerships.comingSoon')}
                   >
-                    Get started
+                    {t('partnerships.getStarted')}
                     <ArrowRight size={14} />
                   </button>
                 )}
@@ -237,19 +232,19 @@ export default function PartnershipsPage() {
               key={index}
               className={`partner-dot ${index === partnerSlide ? 'active' : ''}`}
               onClick={() => scrollToPartner(index)}
-              aria-label={`Go to slide ${index + 1}`}
+              aria-label={t('partnerships.goToSlide')}
             />
           ))}
         </div>
 
-        <h2 className="support-section-title">Let's talk</h2>
+        <h2 className="support-section-title">{t('partnerships.letsTalk')}</h2>
         <div className="support-actions">
           <a href={`mailto:${PARTNERS_EMAIL}`} className="support-btn support-btn-primary">
             <Mail size={16} />
-            Partner with us
+            {t('partnerships.partnerBtn')}
           </a>
           <Link to="/contact-us" className="support-btn support-btn-secondary">
-            Contact support
+            {t('partnerships.contactBtn')}
           </Link>
         </div>
       </div>

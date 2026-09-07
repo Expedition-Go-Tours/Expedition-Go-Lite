@@ -804,6 +804,7 @@ function ActivityDetailsStep({
     <MapErrorBoundary resetKey={mapTour || tour}>
       <LocationMap
         tour={(mapTour || tour) as PickupZoneMapTour}
+        suppressDraggablePin={tour.meetingMode === 'meeting_point'}
         userMarker={selectedPin ? null : { lat: contact.pickupLat, lng: contact.pickupLng, label: contact.location }}
         userOutOfRange={mapUserOutOfRange}
         userChosen={contact.pickupLat != null && contact.pickupLng != null && !selectedPin}

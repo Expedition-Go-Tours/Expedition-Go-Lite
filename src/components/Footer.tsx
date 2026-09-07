@@ -214,7 +214,7 @@ export default function Footer() {
               <div className="footer-links">
                 <a href="/" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.home')}</a>
                 <a href="/tours" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.tours')}</a>
-                <a href="/blog" target="_blank" rel="noopener noreferrer" className="footer-link">Blog</a>
+                <a href="/blog" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.blog')}</a>
               </div>
             </FooterAccordion>
           </div>

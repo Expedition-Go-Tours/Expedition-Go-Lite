@@ -6,31 +6,31 @@ import './SupportPages.css'
 
 const CAREERS_EMAIL = 'careers@expedition-go.com'
 
-const DEPARTMENTS = [
-  {
-    Icon: Route,
-    title: 'Operations',
-    text: 'Build and improve the tour experiences our travellers love — from onboarding new operators to quality control.',
-  },
-  {
-    Icon: Map,
-    title: 'Technology',
-    text: 'Design and build the platform that powers bookings, payments, chat and search for thousands of travellers.',
-  },
-  {
-    Icon: Headset,
-    title: 'Customer Support',
-    text: 'Be the friendly voice travellers rely on before, during and after their trips.',
-  },
-  {
-    Icon: Megaphone,
-    title: 'Marketing',
-    text: 'Tell the Expedition-Go Tours story and help travellers discover their next unforgettable experience.',
-  },
-]
-
 export default function CareersPage() {
   const { t } = useTranslation()
+
+  const DEPARTMENTS = [
+    {
+      Icon: Route,
+      title: t('careers.dept1Title'),
+      text: t('careers.dept1Text'),
+    },
+    {
+      Icon: Map,
+      title: t('careers.dept2Title'),
+      text: t('careers.dept2Text'),
+    },
+    {
+      Icon: Headset,
+      title: t('careers.dept3Title'),
+      text: t('careers.dept3Text'),
+    },
+    {
+      Icon: Megaphone,
+      title: t('careers.dept4Title'),
+      text: t('careers.dept4Text'),
+    },
+  ]
 
   useEffect(() => {
     document.title = `${t('footer.careers')} | Expedition-Go Tours`
@@ -47,20 +47,12 @@ export default function CareersPage() {
 
       <div className="support-container">
         <div className="support-article">
-          <h2>Why work with us</h2>
-          <p>
-            Expedition-Go Tours is a small, ambitious team that loves travel and technology. We value
-            ownership, honesty and curiosity — and we work hard to make great experiences
-            accessible to everyone.
-          </p>
-          <p>
-            We don't currently list open positions on this page. If you're excited about what we
-            do, send your CV and a short note about yourself — we're always happy to hear from
-            talented people.
-          </p>
+          <h2>{t('careers.whyTitle')}</h2>
+          <p>{t('careers.whyText1')}</p>
+          <p>{t('careers.whyText2')}</p>
         </div>
 
-        <h2 className="support-section-title">Where you could fit in</h2>
+        <h2 className="support-section-title">{t('careers.departmentsTitle')}</h2>
         <div className="support-card-grid">
           {DEPARTMENTS.map((dept) => (
             <div key={dept.title} className="support-card">
@@ -73,14 +65,14 @@ export default function CareersPage() {
           ))}
         </div>
 
-        <h2 className="support-section-title">How to apply</h2>
+        <h2 className="support-section-title">{t('careers.applyTitle')}</h2>
         <div className="support-actions">
           <a href={`mailto:${CAREERS_EMAIL}`} className="support-btn support-btn-primary">
             <Mail size={16} />
-            Send your CV
+            {t('careers.applyBtn')}
           </a>
           <a href="/about-us" className="support-btn support-btn-secondary">
-            Learn about us
+            {t('careers.learnBtn')}
             <ArrowRight size={16} />
           </a>
         </div>

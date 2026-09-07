@@ -17,88 +17,6 @@ interface TravelAgentsPageProps {
   onOpenAuth?: (mode: 'signin' | 'signup') => void
 }
 
-const STATS = [
-  { value: '200k+', label: 'Activities worldwide' },
-  { value: '100k+', label: 'Travel agents in our program' },
-  { value: '1k+', label: 'Daily travel agent bookings' },
-]
-
-const FEATURES = [
-  {
-    icon: Globe,
-    title: 'Access to 200,000+ curated experiences',
-    desc: 'Pick from a multitude of travel experiences worldwide to guarantee your clients unforgettable memories.',
-  },
-  {
-    icon: DollarSign,
-    title: 'Monetize your expertise',
-    desc: 'Earn a competitive commission for every booking you make, paid out monthly.',
-  },
-  {
-    icon: Headset,
-    title: 'Dedicated customer support',
-    desc: 'Access our in-depth resource center, tutorial videos and support team. All with the mission of guaranteeing your success.',
-  },
-  {
-    icon: Zap,
-    title: 'Save 10+ hours weekly on research',
-    desc: 'Get access to exclusive hidden gems, top-proofed activities and suppliers. Reduce booking errors by 89% with smart validation.',
-  },
-]
-
-const STEPS = [
-  {
-    num: 1,
-    title: 'Sign Up',
-    desc: 'Click on a sign up button fitting your profile. Provide basic contact and business details.',
-  },
-  {
-    num: 2,
-    title: 'Confirm your affiliate account',
-    desc: "From there, you'll receive a confirmation email in your inbox. Allowing you access to your partner portal.",
-  },
-  {
-    num: 3,
-    title: 'Log in to your portal',
-    desc: 'Once logged in, you can begin making bookings for your clients or sharing your personal link for them to book.',
-  },
-]
-
-const FAQ_ITEMS = [
-  {
-    q: 'What is the Travel Agent portal?',
-    a: 'The Travel Agent portal is a dedicated platform where you can browse, recommend, and book travel experiences for your clients. It gives you access to a wide range of curated activities and tools to manage your bookings efficiently.',
-  },
-  {
-    q: 'What experiences are available?',
-    a: 'You have access to over 200,000 curated experiences across 18,000+ cities worldwide. This includes guided tours, adventure activities, cultural experiences, food tours, and much more.',
-  },
-  {
-    q: 'How do I know which experiences to recommend?',
-    a: 'Our platform provides personalized recommendations based on your clients\' preferences, destination, and travel style. You can also filter by category, rating, and price to find the perfect match.',
-  },
-  {
-    q: 'How much can I potentially earn?',
-    a: 'Earnings vary based on the number of bookings you make. You earn a competitive commission on every successful booking, with top agents earning significant monthly income.',
-  },
-  {
-    q: 'How and when do I get paid?',
-    a: 'Commissions are paid out monthly via bank transfer. You can track your earnings in real-time through your partner dashboard.',
-  },
-  {
-    q: 'What support is available when I need help?',
-    a: 'You have access to a dedicated support team, an extensive resource center with tutorial videos, and a community of fellow travel agents. We are here to guarantee your success.',
-  },
-  {
-    q: 'Can I use this for clients who want to book some things themselves?',
-    a: 'Yes! You can share your personal booking link with clients so they can browse and book experiences directly, while you still earn commission on their bookings.',
-  },
-  {
-    q: 'What happens when I sign up?',
-    a: 'After signing up, you will receive a confirmation email. Once confirmed, you gain access to your partner portal where you can start browsing experiences and making bookings for your clients immediately.',
-  },
-]
-
 export default function TravelAgentsPage({ onOpenAuth }: TravelAgentsPageProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -106,8 +24,90 @@ export default function TravelAgentsPage({ onOpenAuth }: TravelAgentsPageProps) 
   const [openFaq, setOpenFaq] = useState<number | null>(null)
 
   useEffect(() => {
-    document.title = `${t('footer.asTravelAgentReseller', 'Travel Agents & Resellers')} | Expedition-Go Tours`
+    document.title = `${t('travelAgents.pageTitle', 'Travel Agents | Expedition-Go Tours')} | Expedition-Go Tours`
   }, [t])
+
+  const STATS = [
+    { value: '200k+', label: 'Activities worldwide' },
+    { value: '100k+', label: 'Travel agents in our program' },
+    { value: '1k+', label: 'Daily travel agent bookings' },
+  ]
+
+  const FEATURES = [
+    {
+      icon: Globe,
+      title: 'Access to 200,000+ curated experiences',
+      desc: 'Pick from a multitude of travel experiences worldwide to guarantee your clients unforgettable memories.',
+    },
+    {
+      icon: DollarSign,
+      title: 'Monetize your expertise',
+      desc: 'Earn a competitive commission for every booking you make, paid out monthly.',
+    },
+    {
+      icon: Headset,
+      title: 'Dedicated customer support',
+      desc: 'Access our in-depth resource center, tutorial videos and support team. All with the mission of guaranteeing your success.',
+    },
+    {
+      icon: Zap,
+      title: 'Save 10+ hours weekly on research',
+      desc: 'Get access to exclusive hidden gems, top-proofed activities and suppliers. Reduce booking errors by 89% with smart validation.',
+    },
+  ]
+
+  const STEPS = [
+    {
+      num: 1,
+      title: 'Sign Up',
+      desc: 'Click on a sign up button fitting your profile. Provide basic contact and business details.',
+    },
+    {
+      num: 2,
+      title: 'Confirm your affiliate account',
+      desc: "From there, you'll receive a confirmation email in your inbox. Allowing you access to your partner portal.",
+    },
+    {
+      num: 3,
+      title: 'Log in to your portal',
+      desc: 'Once logged in, you can begin making bookings for your clients or sharing your personal link for them to book.',
+    },
+  ]
+
+  const FAQ_ITEMS = [
+    {
+      q: 'What is the Travel Agent portal?',
+      a: 'The Travel Agent portal is a dedicated platform where you can browse, recommend, and book travel experiences for your clients. It gives you access to a wide range of curated activities and tools to manage your bookings efficiently.',
+    },
+    {
+      q: 'What experiences are available?',
+      a: 'You have access to over 200,000 curated experiences across 18,000+ cities worldwide. This includes guided tours, adventure activities, cultural experiences, food tours, and much more.',
+    },
+    {
+      q: 'How do I know which experiences to recommend?',
+      a: 'Our platform provides personalized recommendations based on your clients\' preferences, destination, and travel style. You can also filter by category, rating, and price to find the perfect match.',
+    },
+    {
+      q: 'How much can I potentially earn?',
+      a: 'Earnings vary based on the number of bookings you make. You earn a competitive commission on every successful booking, with top agents earning significant monthly income.',
+    },
+    {
+      q: 'How and when do I get paid?',
+      a: 'Commissions are paid out monthly via bank transfer. You can track your earnings in real-time through your partner dashboard.',
+    },
+    {
+      q: 'What support is available when I need help?',
+      a: 'You have access to a dedicated support team, an extensive resource center with tutorial videos, and a community of fellow travel agents. We are here to guarantee your success.',
+    },
+    {
+      q: 'Can I use this for clients who want to book some things themselves?',
+      a: 'Yes! You can share your personal booking link with clients so they can browse and book experiences directly, while you still earn commission on their bookings.',
+    },
+    {
+      q: 'What happens when I sign up?',
+      a: 'After signing up, you will receive a confirmation email. Once confirmed, you gain access to your partner portal where you can start browsing experiences and making bookings for your clients immediately.',
+    },
+  ]
 
   const handleSignUp = () => {
     if (!user) {
@@ -132,13 +132,13 @@ export default function TravelAgentsPage({ onOpenAuth }: TravelAgentsPageProps) 
             transition={{ duration: 0.6, ease: 'easeOut' }}
           >
             <h1 className="ta-hero-title">
-              Save up to <span className="ta-highlight">10+ hours weekly</span> with smart experience booking
+              {t('travelAgents.heroTitle', 'Save up to 10+ hours weekly with smart experience booking')}
             </h1>
             <p className="ta-hero-subtitle">
-              Start monetizing your expertise and offer unforgettable experiences to your clients with a click of a button.
+              {t('travelAgents.heroDesc', 'Start monetizing your expertise and offer unforgettable experiences to your clients with a click of a button.')}
             </p>
             <button type="button" className="ta-btn ta-btn-primary" onClick={handleSignUp}>
-              Sign Up <ArrowRight size={16} />
+              {t('travelAgents.heroBtn', 'Sign Up')} <ArrowRight size={16} />
             </button>
           </motion.div>
           <motion.div
@@ -165,7 +165,7 @@ export default function TravelAgentsPage({ onOpenAuth }: TravelAgentsPageProps) 
             transition={{ duration: 0.6 }}
           >
             <h2 className="ta-stats-title">
-              A trusted, globally recognized platform, we help our travel agents unlock new revenue streams effortlessly
+              {t('travelAgents.trustedTitle', 'A trusted, globally recognized platform, we help our travel agents unlock new revenue streams effortlessly')}
             </h2>
           </motion.div>
           <div className="ta-stats-cards">
@@ -196,7 +196,7 @@ export default function TravelAgentsPage({ onOpenAuth }: TravelAgentsPageProps) 
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
           >
-            Why join Expedition-Go Tours
+            {t('travelAgents.whyTitle', 'Why join Expedition-Go Tours')}
           </motion.h2>
           <div className="ta-features-grid">
             {FEATURES.map((feat, i) => (
@@ -230,10 +230,10 @@ export default function TravelAgentsPage({ onOpenAuth }: TravelAgentsPageProps) 
             transition={{ duration: 0.6 }}
           >
             <div className="ta-gs-dark-card">
-              <p className="ta-gs-eyebrow">Getting started is easy</p>
-              <h3 className="ta-gs-dark-title">Make your first booking in under 30 minutes</h3>
+              <p className="ta-gs-eyebrow">{t('travelAgents.gettingStarted', 'Getting started is easy')}</p>
+              <h3 className="ta-gs-dark-title">{t('travelAgents.makeFirstBooking', 'Make your first booking in under 30 minutes')}</h3>
               <button type="button" className="ta-btn ta-btn-primary" onClick={handleSignUp}>
-                Sign Up <ArrowRight size={16} />
+                {t('travelAgents.heroBtn', 'Sign Up')} <ArrowRight size={16} />
               </button>
             </div>
             <div className="ta-gs-steps">
@@ -262,7 +262,7 @@ export default function TravelAgentsPage({ onOpenAuth }: TravelAgentsPageProps) 
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
           >
-            Your questions answered
+            {t('travelAgents.questionsTitle', 'Your questions answered')}
           </motion.h2>
           <div className="ta-faq-layout">
             <div className="ta-faq-list">
@@ -303,9 +303,9 @@ export default function TravelAgentsPage({ onOpenAuth }: TravelAgentsPageProps) 
             </div>
             <div className="ta-faq-sidebar">
               <div className="ta-faq-sidebar-card">
-                <h4 className="ta-faq-sidebar-title">Resource center</h4>
-                <p className="ta-faq-sidebar-desc">Search our knowledge base for answers to common questions.</p>
-                <a href="/help-centre" className="ta-faq-sidebar-link">Visit the help centre</a>
+                <h4 className="ta-faq-sidebar-title">{t('travelAgents.resourceTitle', 'Resource center')}</h4>
+                <p className="ta-faq-sidebar-desc">{t('travelAgents.resourceDesc', 'Search our knowledge base for answers to common questions.')}</p>
+                <a href="/help-centre" className="ta-faq-sidebar-link">{t('travelAgents.resourceBtn', 'Visit the help centre')}</a>
               </div>
             </div>
           </div>
@@ -322,10 +322,10 @@ export default function TravelAgentsPage({ onOpenAuth }: TravelAgentsPageProps) 
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
           >
-            <h2 className="ta-cta-title">Sign up to become a partner with Expedition-Go Tours</h2>
-            <p className="ta-cta-subtitle">Grow and monetize your expertise</p>
+            <h2 className="ta-cta-title">{t('travelAgents.ctaTitle', 'Sign up to become a partner with Expedition-Go Tours')}</h2>
+            <p className="ta-cta-subtitle">{t('travelAgents.ctaDesc', 'Grow and monetize your expertise')}</p>
             <button type="button" className="ta-btn ta-btn-cta" onClick={handleSignUp}>
-              Sign Up <ArrowRight size={16} />
+              {t('travelAgents.ctaBtn', 'Sign Up')} <ArrowRight size={16} />
             </button>
           </motion.div>
         </div>

@@ -34,34 +34,6 @@ const STORY_IMAGES = [
 
 const HERO_IMAGES = [heroImg1, heroImg2, heroImg3, heroImg4]
 
-const VALUES = [
-  {
-    Icon: Compass,
-    title: 'Hand-picked experiences',
-    text: 'Every tour on Expedition-Go Tours is reviewed and curated so you always book something worth your time.',
-  },
-  {
-    Icon: Users,
-    title: 'Local experts',
-    text: 'We work directly with local operators and guides who know their destinations best.',
-  },
-  {
-    Icon: ShieldCheck,
-    title: 'Safety first',
-    text: 'Our suppliers meet clear safety and quality standards, and we vet every new experience before it goes live.',
-  },
-  {
-    Icon: BadgeDollarSign,
-    title: 'Transparent pricing',
-    text: 'The price you see is the price you pay, no hidden fees, with clear cancellation policies on every tour.',
-  },
-  {
-    Icon: Headset,
-    title: 'Dedicated support',
-    text: 'Our support team is here before, during and after your trip, by email or live chat.',
-  },
-]
-
 const fadeUp: Variants = {
   hidden: { opacity: 0, y: 30 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } },
@@ -92,6 +64,7 @@ function useIsMobile(query = '(max-width: 900px)') {
  * swipes step one card at a time — no native scroll/snap quirks.
  */
 function SwipeCarousel({ slides, ariaLabel }: { slides: ReactNode[]; ariaLabel: string }) {
+  const { t } = useTranslation()
   const [index, setIndex] = useState(0)
   const trackRef = useRef<HTMLDivElement>(null)
   const touchStartX = useRef<number | null>(null)
@@ -161,7 +134,7 @@ function SwipeCarousel({ slides, ariaLabel }: { slides: ReactNode[]; ariaLabel: 
               key={i}
               type="button"
               className={`about-swipe-dot${i === index ? ' active' : ''}`}
-              aria-label={`Go to slide ${i + 1}`}
+              aria-label={t('about.goToSlide', { number: i + 1 })}
               onClick={() => setIndex(i)}
             />
           ))}
@@ -177,6 +150,34 @@ export default function AboutUsPage() {
   const isMobile = useIsMobile()
 
   const closeFocused = useCallback(() => setFocusedImg(null), [])
+
+  const VALUES = [
+    {
+      Icon: Compass,
+      title: t('about.value1Title'),
+      text: t('about.value1Text'),
+    },
+    {
+      Icon: Users,
+      title: t('about.value2Title'),
+      text: t('about.value2Text'),
+    },
+    {
+      Icon: ShieldCheck,
+      title: t('about.value3Title'),
+      text: t('about.value3Text'),
+    },
+    {
+      Icon: BadgeDollarSign,
+      title: t('about.value4Title'),
+      text: t('about.value4Text'),
+    },
+    {
+      Icon: Headset,
+      title: t('about.value5Title'),
+      text: t('about.value5Text'),
+    },
+  ]
 
   useEffect(() => {
     if (!focusedImg) return
@@ -212,8 +213,8 @@ export default function AboutUsPage() {
           animate="visible"
           variants={fadeUp}
         >
-          <p className="about-hero-label">About Us</p>
-          <h1 className="about-hero-title">Travel. Discover. Connect.</h1>
+          <p className="about-hero-label">{t('about.heroLabel')}</p>
+          <h1 className="about-hero-title">{t('about.heroTitle')}</h1>
           <p className="about-hero-subtitle">{t('company.aboutUsSubtitle')}</p>
         </motion.div>
       </div>
@@ -228,26 +229,21 @@ export default function AboutUsPage() {
           variants={stagger}
         >
           <motion.div className="about-story-text" variants={fadeUp}>
-            <p className="about-story-label">Our Story</p>
+            <p className="about-story-label">{t('about.storyLabel')}</p>
             <h2 className="about-story-heading">
-              It all started with a <em>simple idea</em>
+              {t('about.storyTitle')}
             </h2>
             <p className="about-story-body">
-              Expedition-Go Tours was built on a simple idea: travel should feel effortless, authentic and
-              personal. We connect travellers with hand-picked experiences, from day trips and
-              cultural tours to multi-day adventures, operated by local experts who know their
-              destinations inside out.
+              {t('about.storyText1')}
             </p>
             <p className="about-story-body">
-              Every experience on our platform is reviewed before it goes live and refined based on
-              real traveller feedback. That means the tour you book today is one we would happily
-              take ourselves.
+              {t('about.storyText2')}
             </p>
           </motion.div>
 
           {isMobile ? (
             <SwipeCarousel
-              ariaLabel="Our story photos"
+              ariaLabel={t('about.storyLabel')}
               slides={STORY_IMAGES.map((img) => (
                 <div
                   key={img.alt}
@@ -290,20 +286,16 @@ export default function AboutUsPage() {
         >
           <motion.div className="about-callout-text" variants={fadeUp}>
             <h2 className="about-callout-heading">
-              We connect travellers with <span>hand-picked experiences</span>, from day trips to
-              multi-day adventures
+              {t('about.calloutHeading')}
             </h2>
             <p className="about-callout-body">
-              Our mission is to make discovering those moments simple, safe and rewarding, for
-              travellers and for the local businesses that make every trip special. We believe the
-              best travel stories come from the places you discover and the people you meet along
-              the way.
+              {t('about.calloutBody')}
             </p>
           </motion.div>
 
           {isMobile ? (
             <SwipeCarousel
-              ariaLabel="Featured categories"
+              ariaLabel={t('about.categoriesLabel')}
               slides={CARD_CATEGORIES.map((cat) => (
                 <div
                   key={`callout-${cat.label}`}
@@ -349,13 +341,13 @@ export default function AboutUsPage() {
           variants={stagger}
         >
           <motion.div variants={fadeUp}>
-            <p className="about-section-label">What we stand for</p>
-            <h2 className="about-section-title">Our values</h2>
+            <p className="about-section-label">{t('about.valuesLabel')}</p>
+            <h2 className="about-section-title">{t('about.valuesTitle')}</h2>
           </motion.div>
 
           {isMobile ? (
             <SwipeCarousel
-              ariaLabel="Our values"
+              ariaLabel={t('about.valuesTitle')}
               slides={VALUES.map((value) => (
                 <div key={value.title} className="about-value-card">
                   <div className="about-value-icon">
@@ -392,14 +384,14 @@ export default function AboutUsPage() {
           <div className="about-dot-pattern about-dot-pattern--1" />
           <div className="about-dot-pattern about-dot-pattern--2" />
           <div className="about-cta-content">
-            <h2 className="about-cta-title">Ready to explore?</h2>
+            <h2 className="about-cta-title">{t('about.ctaTitle')}</h2>
             <div className="about-cta-actions">
               <Link to="/tours" className="about-btn about-btn--primary">
-                Browse tours
+                {t('about.ctaBrowse')}
                 <ArrowRight size={16} />
               </Link>
               <Link to="/contact-us" className="about-btn about-btn--secondary">
-                Contact us
+                {t('about.ctaContact')}
               </Link>
             </div>
           </div>

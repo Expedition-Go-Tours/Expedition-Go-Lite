@@ -9,14 +9,14 @@ import './SupportPages.css'
 
 const SUPPORT_EMAIL = 'support@expedition-go.com'
 
-const SUPPORT_HOURS = [
-  { label: 'Mon - Fri', value: '8:00 AM - 6:00 PM', closed: false },
-  { label: 'Saturday', value: '9:00 AM - 2:00 PM', closed: false },
-  { label: 'Sunday', value: 'Closed', closed: true },
-]
-
 export default function HelpCentrePage() {
   const { t } = useTranslation()
+
+  const SUPPORT_HOURS = [
+    { label: t('help:hours1Label'), value: t('help:hours1Value'), closed: false },
+    { label: t('help:hours2Label'), value: t('help:hours2Value'), closed: false },
+    { label: t('help:hours3Label'), value: t('help:hours3Value'), closed: true },
+  ]
 
   useEffect(() => {
     document.title = `${t('footer.helpCentre')} | Expedition-Go Tours`
@@ -33,7 +33,7 @@ export default function HelpCentrePage() {
         <div className="support-hero-orb support-hero-orb--3" />
         <div className="support-hero-orb support-hero-orb--4" />
         <div className="support-hero-content">
-          <h1 className="support-title">{t('footer.helpCentre')}</h1>
+          <h1 className="support-title">{t('help:pageTitle')}</h1>
           <p className="support-subtitle">{t('support.helpCentreSubtitle')}</p>
         </div>
       </div>
@@ -47,7 +47,7 @@ export default function HelpCentrePage() {
             </div>
             <h3 className="support-card-title">{t('footer.faq')}</h3>
             <p className="support-card-text">
-              Quick answers about bookings, cancellations, payments, pickup and more.
+              {t('help:faqDesc')}
             </p>
           </Link>
 
@@ -57,7 +57,7 @@ export default function HelpCentrePage() {
             </div>
             <h3 className="support-card-title">{t('footer.refundPolicy')}</h3>
             <p className="support-card-text">
-              How cancellations and refunds work on free-cancellation and non-refundable tours.
+              {t('help:refundDesc')}
             </p>
           </Link>
 
@@ -67,7 +67,7 @@ export default function HelpCentrePage() {
             </div>
             <h3 className="support-card-title">{t('footer.contactUs')}</h3>
             <p className="support-card-text">
-              Reach our team by email or live chat during support hours.
+              {t('help:contactDesc')}
             </p>
           </Link>
         </div>
@@ -84,11 +84,11 @@ export default function HelpCentrePage() {
           </ul>
         </div>
 
-        <h2 className="support-section-title">Visit Us</h2>
+        <h2 className="support-section-title">{t('help:visitUs')}</h2>
         <div className="support-location-card">
           <div className="support-location-map">
             <iframe
-              title="Expedition-Go Tours Ltd Office Location"
+              title={t('help:officeIframeTitle')}
               src="https://www.google.com/maps?q=Expedition-Go+Tours+Ltd,+Accra,+Ghana&output=embed"
               width="100%"
               height="100%"
@@ -102,12 +102,12 @@ export default function HelpCentrePage() {
             <img src="/logo.png" alt="Expedition-Go Tours" className="support-location-logo" />
             <div className="support-contact-label">
               <MapPin size={14} />
-              Our Office
+              {t('help:officeLabel')}
             </div>
-            <h3 className="support-location-name">Expedition-Go Tours Ltd</h3>
+            <h3 className="support-location-name">{t('help:companyName')}</h3>
             <p className="support-location-address">
-              Accra, Ghana<br />
-              West Africa
+              {t('help:addressLine1')}<br />
+              {t('help:addressLine2')}
             </p>
             <a
               href="https://www.google.com/maps/dir/?api=1&destination=Expedition-Go+Tours+Ltd,+Accra,+Ghana&travelmode=driving"
@@ -116,7 +116,7 @@ export default function HelpCentrePage() {
               className="support-btn support-btn-secondary support-btn-secondary--filled"
             >
               <MapPin size={14} />
-              Get Directions
+              {t('help:getDirections')}
             </a>
           </div>
         </div>

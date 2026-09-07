@@ -1,47 +1,27 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { motion } from 'framer-motion'
-import HelicopterScene from './HelicopterScene'
-import AtvScene from './AtvScene'
+import { DotLottieReact } from '@lottiefiles/dotlottie-react'
 import './BookingTransition.css'
 
 /**
  * Full-screen transition played between clicking "Book Now" and landing on the
- * booking page. The chosen vehicle stays fixed in the centre while the
- * background (clouds + ground) scrolls to portray motion.
+ * booking page. Shows the Sandy Loading Lottie animation with a caption and
+ * progress bar.
  *
  * Rendered via a portal to <body> so it sits above the navbar and all page
- * chrome (gallery buttons, share, wishlist, etc.). The vehicle cycles per
- * booking (helicopter → tram → truck → repeat) via `vehicleIndex`.
- * Vehicle art lives in /public/transit/.
+ * chrome (gallery buttons, share, wishlist, etc.).
  */
-
-export const TRANSIT_VEHICLES = [
-  '/transit/helicopter.png',
-  '/transit/tram.png',
-  '/transit/truck.png',
-]
 
 const TOTAL_MS = 2600
 
 interface BookingTransitionProps {
   onDone: () => void
-  vehicleIndex: number
   caption?: string
 }
 
-// Background clouds — varied size / position / speed for a parallax feel.
-const CLOUDS = [
-  { top: '12%', size: 120, duration: 3.6, delay: 0 },
-  { top: '22%', size: 80, duration: 4.6, delay: 0.8 },
-  { top: '34%', size: 150, duration: 3.0, delay: 1.4 },
-  { top: '60%', size: 90, duration: 4.0, delay: 0.3 },
-  { top: '72%', size: 130, duration: 3.3, delay: 1.1 },
-]
-
-export default function BookingTransition({ onDone, vehicleIndex, caption = 'Preparing your booking' }: BookingTransitionProps) {
-  const [errored, setErrored] = useState(false)
-  const src = TRANSIT_VEHICLES[vehicleIndex % TRANSIT_VEHICLES.length]
+export default function BookingTransition({ onDone, caption = 'Preparing your booking' }: BookingTransitionProps) {
+  const [ready, setReady] = useState(false)
 
   useEffect(() => {
     const timer = setTimeout(onDone, TOTAL_MS)
@@ -61,47 +41,18 @@ export default function BookingTransition({ onDone, vehicleIndex, caption = 'Pre
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3, ease: 'easeInOut' }}
     >
-      {/* Moving background clouds (right → left = forward motion) */}
-      {CLOUDS.map((c, i) => (
-        <motion.span
-          key={`cloud-${i}`}
-          className="bt-cloud"
-          style={{ top: c.top, width: c.size, height: c.size * 0.5 }}
-          initial={{ x: '112vw' }}
-          animate={{ x: '-30vw' }}
-          transition={{ duration: c.duration, delay: c.delay, repeat: Infinity, ease: 'linear' }}
+      <div className="bt-lottie">
+        <DotLottieReact
+          src="/animations/sandy-loading.lottie"
+          loop
+          autoplay
+          dotLottieRefCallback={() => setReady(true)}
+          style={{ width: '100%', height: '100%' }}
         />
-      ))}
-
-      {/* Speed lines just behind the vehicle */}
-      {[0, 1, 2, 3].map((i) => (
-        <motion.span
-          key={`line-${i}`}
-          className="bt-speedline"
-          style={{ top: `${42 + i * 6}%` }}
-          initial={{ x: '112vw', opacity: 0 }}
-          animate={{ x: '-30vw', opacity: [0, 0.6, 0] }}
-          transition={{ duration: 0.9, delay: i * 0.14, repeat: Infinity, ease: 'linear' }}
-        />
-      ))}
-
-      {/* Fixed vehicle — premium scenes for helicopter & ATV, image otherwise */}
-      {!errored && (() => {
-        const idx = vehicleIndex % TRANSIT_VEHICLES.length
-        if (idx === 0) return <HelicopterScene onError={() => setErrored(true)} />
-        if (idx === 2) return <AtvScene onError={() => setErrored(true)} />
-        return (
-          <motion.img
-            key={src}
-            src={src}
-            alt=""
-            className="bt-vehicle"
-            onError={() => setErrored(true)}
-            animate={{ y: [0, -10, 0] }}
-            transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
-          />
-        )
-      })()}
+        {!ready && (
+          <div className="bt-lottie-placeholder" />
+        )}
+      </div>
 
       <div className="bt-caption">
         <span>{caption}</span>
