@@ -126,10 +126,11 @@ function mapDay(raw: RawAvailabilityDay): DayAvailabilityInfo {
 export function useTourAvailability(
   slug: string | undefined,
   startDate: string | undefined,
-  endDate: string | undefined
+  endDate: string | undefined,
+  optionId?: string | null
 ) {
   return useQuery({
-    queryKey: ['expedition', 'tours', slug, 'availability', startDate, endDate],
+    queryKey: ['expedition', 'tours', slug, 'availability', startDate, endDate, optionId || 'default'],
     enabled: !!slug && !!startDate && !!endDate,
     // Availability is the most time-sensitive piece of the booking widget —
     // suppliers edit it live. The global queryClient default (staleTime: 5min)
@@ -145,7 +146,8 @@ export function useTourAvailability(
     queryFn: async () => {
       const payload = await expeditionFetchRaw(
         `/expedition/tours/${encodeURIComponent(slug!)}/availability`
-        + `?startDate=${startDate!}&endDate=${endDate!}`,
+        + `?startDate=${startDate!}&endDate=${endDate!}`
+        + (optionId ? `&option=${encodeURIComponent(optionId)}` : ''),
         true
       )
       const data = payload.data ?? payload
@@ -158,6 +160,8 @@ interface CalculateCheckoutInput {
   tourId: string
   travelDate: string
   travelers: Record<string, number>
+  /** Multi-option tours: quote against this option (default when omitted). */
+  optionId?: string
 }
 
 // Mirrors the actual shape returned by
@@ -204,6 +208,8 @@ interface ConfirmBookingInput {
   travelDate: string
   selectedTime?: string | null
   travelers: Record<string, number | string | boolean | { name: string; age: number; ageGroup: string; specialRequests?: string }[] | undefined>
+  /** Multi-option tours: the sellable option being booked. */
+  optionId?: string
   /** Required for reserve-now-pay-later (card captured for auto-charge). Pay-now with the
    * branded Payment Element checkout never sends a card. */
   paymentMethodId?: string
