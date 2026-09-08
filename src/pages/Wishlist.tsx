@@ -5,6 +5,7 @@ import { Button } from '../components/ui/button'
 import { useWishlist, type WishlistItem } from '../context/WishlistContext'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
+import { useCurrency } from '../contexts/CurrencyContext'
 import './Wishlist.css'
 import OptimizedImage from '@/components/shared/OptimizedImage'
 
@@ -16,6 +17,7 @@ export default function Wishlist() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { wishlist: wishlistItems, removeFromWishlist } = useWishlist()
+  const { formatPrice } = useCurrency()
   const [removingId, setRemovingId] = useState<string | null>(null)
 
   const handleRemove = (id: string) => {
@@ -113,7 +115,7 @@ export default function Wishlist() {
                 >
                   <div className="wishlist-card-image">
                     <OptimizedImage
-                      src={item.image}
+                      src={item.imageUrl}
                       alt={item.title}
                       className="wishlist-img"
                       width={400}
@@ -135,7 +137,7 @@ export default function Wishlist() {
                     <p className="wishlist-card-location">{item.location}</p>
                     <div className="wishlist-card-footer">
                       <span className="wishlist-card-price">
-                        {item.currency}{item.price}
+                        {formatPrice(item.price)}
                       </span>
                       <Button
                         onClick={() => handleBookNow(item)}
