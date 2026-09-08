@@ -86,7 +86,11 @@
     "openPrefix": "Open",
     "unreadMessages": "Unread messages",
     "bookingsClosed": "Bookings closed",
-    "bookingsCloseAt": "Bookings close {{time}}"
+    "bookingsCloseAt": "Bookings close {{time}}",
+    "selectOption": "Choose your option",
+    "optionFrom": "from",
+    "optionPrivate": "Private",
+    "optionValidDays": "Valid {{value}} {{unit}} from booking"
   },
   "card": {
     "likelyToSellOut": "Likely to sell out",
