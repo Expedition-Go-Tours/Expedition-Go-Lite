@@ -10,9 +10,11 @@ interface BookingCardProps {
   onOpen: () => void
   /** Optional override for the status chip (e.g. "Completed" in the Past view). */
   chipLabel?: string
+  /** Optional — when set, the card shows a "Write a review" action. */
+  onWriteReview?: () => void
 }
 
-export default function BookingCard({ booking, onOpen, chipLabel }: BookingCardProps) {
+export default function BookingCard({ booking, onOpen, chipLabel, onWriteReview }: BookingCardProps) {
   const [copied, setCopied] = useState(false)
   const meta =
     chipLabel && booking.refundState !== 'open' && booking.refundState !== 'closed'
@@ -146,6 +148,18 @@ export default function BookingCard({ booking, onOpen, chipLabel }: BookingCardP
           <span className={`bk-amount-phone${isPaid ? '' : ' is-reserved'}`}>{amount}</span>
 
           <div className="bk-foot-actions">
+            {onWriteReview && (
+              <button
+                type="button"
+                className="bk-review"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onWriteReview()
+                }}
+              >
+                <span>Write a review</span>
+              </button>
+            )}
             <button
               type="button"
               className="bk-open"

@@ -363,6 +363,8 @@ export interface ExpeditionBookingSummary {
   /** Customer-facing refund state: 'open' (refund pending / under review),
    *  'closed' (money back), or null (no refund lifecycle). */
   refundState?: 'open' | 'closed' | null
+  /** True when the customer has already left a review for this booking. */
+  reviewed?: boolean
 }
 
 interface RawBookingListRecord {
@@ -380,6 +382,7 @@ interface RawBookingListRecord {
   pickup?: Record<string, unknown> | null
   refundedAt?: string | null
   refundState?: 'open' | 'closed' | null
+  reviewed?: boolean
   disputes?: { id: string; status: string }[]
   tour: {
     id: string
@@ -429,6 +432,7 @@ function mapBookingSummary(b: RawBookingListRecord): ExpeditionBookingSummary {
     currency: b.currency,
     createdAt: b.createdAt,
     refundState: b.refundState ?? null,
+    reviewed: !!b.reviewed,
   }
 }
 
