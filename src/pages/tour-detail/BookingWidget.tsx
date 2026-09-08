@@ -21,8 +21,6 @@ import SupportChatWidget from '../../components/SupportChatWidget'
 import BookingTransition from '../../components/BookingTransition'
 import { fetchWithAuth } from '../../lib/api'
 import { buildPromoValidationPayload, isValidPromoCodeFormat, normalizePromoCode, PROMO_CODE_MIN_LENGTH } from '../../lib/promo'
-import type { TourOption } from '../../lib/tourTypes'
-import OptionSelector from '../../components/booking/OptionSelector'
 import './BookingWidget.css'
 
 interface BookingWidgetProps {
@@ -36,10 +34,6 @@ interface BookingWidgetProps {
   onSelectedDateChange?: (date: Date | null) => void
   /** Opens the app's auth modal when a signed-out visitor starts a chat. */
   onOpenAuth?: (mode: 'signin' | 'signup') => void
-  /** Multi-option products: the sellable options + currently chosen option. */
-  tourOptions?: TourOption[]
-  selectedOptionId?: string | null
-  onOptionChange?: (optionId: string) => void
 }
 
 interface PricingResult {
@@ -68,7 +62,7 @@ const dropdownVariants = {
   exit: { opacity: 0, y: -8, scale: 0.96 },
 }
 
-export default function BookingWidget({ tour, getAvailability: propGetAvailability, getDayInfo, availabilityLoading, onMonthChange, onSelectedDateChange, onOpenAuth, tourOptions = [], selectedOptionId, onOptionChange }: BookingWidgetProps) {
+export default function BookingWidget({ tour, getAvailability: propGetAvailability, getDayInfo, availabilityLoading, onMonthChange, onSelectedDateChange, onOpenAuth }: BookingWidgetProps) {
   const { t } = useTranslation()
   const { currency, convertPrice } = useCurrency()
   const navigate = useNavigate()
@@ -106,13 +100,6 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
   // date while a validation request is in flight).
   const promoCheckRef = useRef(0)
 
-  const handleOptionChange = (optionId: string) => {
-    onOptionChange?.(optionId)
-    // Options own their availability — switching must never keep another
-    // option's date/time selection or a stale price on screen.
-    setSelectedDate(null)
-    setSelectedTime(null)
-  }
   // Monotonic token so a stale CHECKOUT quote (older traveler mix / date) can
   // never overwrite a newer one, plus the key of the quote currently in state
   // so the summary only shows server figures while they match the selection.
@@ -190,7 +177,6 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
           // rate instead of folding them into adults.
           travelers: travelersPayload,
           ...(code ? { promoCode: code } : {}),
-          ...(selectedOptionId ? { optionId: selectedOptionId } : {}),
         }),
       })
       const payload = await res.json().catch(() => ({}))
@@ -220,7 +206,7 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
     } finally {
       if (seq === pricingSeqRef.current) setPricingLoading(false)
     }
-  }, [tour.id, travelersPayload, promoApplied, promoCode, selectedOptionId])
+  }, [tour.id, travelersPayload, promoApplied, promoCode])
 
   // Auto-refresh the real-time price when the date or traveler mix changes
   // (Viator re-checks on date+pax selection). Debounced so +/- taps don't
@@ -637,16 +623,7 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
 
   return (
     <div className="booking-widget-desktop">
-        <div className="booking-widget-card">
-          {tourOptions.length > 1 && (
-            <OptionSelector
-              options={tourOptions}
-              value={selectedOptionId}
-              onChange={handleOptionChange}
-              loading={availabilityLoading}
-            />
-          )}
-
+      <div className="booking-widget-card">
           <div className="booking-price-section">
           <div className="booking-price-main">
             {showLiveTotal ? (
