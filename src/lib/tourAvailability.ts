@@ -17,11 +17,16 @@ export interface DayTimeSlot {
   remaining: number | null
   groupsBooked?: number
   groupsRemaining?: number | null
+  /** True when the slot's booking cut-off has already passed. */
+  closed?: boolean
+  /** ISO instant when the slot stops accepting bookings (null = always open). */
+  closesAt?: string | null
 }
 
 export interface DayAvailabilityInfo {
   date: string
   dayOfWeek: string
+  timezone?: string
   isOperatingDay: boolean
   status: DayAvailability
   capacity: number
@@ -35,6 +40,10 @@ export interface DayAvailabilityInfo {
   groupsPerSlot: number | null
   maxGroupSize: number | null
   isPast: boolean
+  /** Operating-hours/flexible days whose whole-day booking window has closed. */
+  closedCutoff?: boolean
+  /** ISO instant when the date stops accepting bookings (whole-day tours). */
+  closesAt?: string | null
   timeSlots: DayTimeSlot[]
 }
 

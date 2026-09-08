@@ -38,6 +38,9 @@ interface RawAvailabilityDay {
   capacityUnit?: 'groups' | 'people'
   groupsPerSlot?: number | null
   maxGroupSize?: number | null
+  /** Operating-hours/flexible days whose whole-day booking window has closed. */
+  closedCutoff?: boolean
+  closesAt?: string | null
 }
 
 interface RawAvailabilitySlot {
@@ -47,6 +50,10 @@ interface RawAvailabilitySlot {
   remaining: number
   groupsBooked?: number
   groupsRemaining?: number
+  /** True when the slot's booking cut-off has already passed. */
+  closed?: boolean
+  /** ISO instant when the slot stops accepting bookings (null = always open). */
+  closesAt?: string | null
 }
 
 function mapDayStatus(raw: RawAvailabilityDay['status']): DayAvailability {
@@ -68,6 +75,8 @@ function mapDay(raw: RawAvailabilityDay): DayAvailabilityInfo {
         remaining: s.remaining ?? Math.max(0, (s.capacity || 0) - (s.booked || 0)),
         groupsBooked: s.groupsBooked ?? 0,
         groupsRemaining: s.groupsRemaining ?? null,
+        closed: s.closed === true,
+        closesAt: s.closesAt ?? null,
       }))
     : []
   const capacityUnit = raw.capacityUnit === 'groups' ? 'groups' as const : 'people' as const
@@ -85,10 +94,16 @@ function mapDay(raw: RawAvailabilityDay): DayAvailabilityInfo {
   ) {
     status = 'limited'
   }
+  // Operating-hours / flexible days whose whole-day booking window has closed
+  // must read as blocked so the calendar never offers an unbookable date.
+  if (raw.closedCutoff === true && !raw.isPast && slots.length === 0 && (status === 'available' || status === 'limited')) {
+    status = 'blocked'
+  }
 
   return {
     date: raw.date,
     dayOfWeek: raw.dayOfWeek,
+    timezone: raw.timezone ?? undefined,
     isOperatingDay: raw.isOperatingDay,
     status,
     capacity: raw.capacity,
@@ -102,6 +117,8 @@ function mapDay(raw: RawAvailabilityDay): DayAvailabilityInfo {
     groupsPerSlot: raw.groupsPerSlot ?? null,
     maxGroupSize: raw.maxGroupSize ?? null,
     isPast: raw.isPast,
+    closedCutoff: raw.closedCutoff === true,
+    closesAt: raw.closesAt ?? null,
     timeSlots: slots,
   }
 }

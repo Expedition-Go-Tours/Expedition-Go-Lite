@@ -51,6 +51,13 @@ const formatSlotTime = (time: string): string => {
   return m ? `${hour12}:${String(m).padStart(2, '0')} ${period}` : `${hour12} ${period}`
 }
 
+const formatCutoffTime = (iso?: string | null): string => {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+}
+
 const toDateKey = (date: Date): string =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 
@@ -366,20 +373,27 @@ export default function ChangeBookingModal({ tour, isOpen, onClose, onReserve, i
                             <div className="booking-slot-grid booking-slot-grid-compact">
                               {selectedDaySlots.map((slot) => {
                                 const slotFull = slot.remaining != null && slot.remaining <= 0
+                                const slotClosed = slot.closed === true
                                 const isSelectedSlot = selectedTime === slot.time
                                 return (
                                   <button
                                     key={slot.time}
                                     type="button"
-                                    disabled={slotFull}
+                                    disabled={slotFull || slotClosed}
                                     onClick={() => {
                                       setSelectedTime(slot.time)
                                       setShowCalendar(false)
                                     }}
-                                    className={`booking-slot-chip${isSelectedSlot ? ' booking-slot-chip-active' : ''}`}
+                                    className={`booking-slot-chip${isSelectedSlot ? ' booking-slot-chip-active' : ''}${slotClosed ? ' booking-slot-chip-closed' : ''}`}
                                   >
                                     <span className="booking-slot-time">{formatSlotTime(slot.time)}</span>
-                                    {slot.remaining != null && (
+                                    {slotClosed ? (
+                                      <span className="booking-slot-cap">
+                                        {slot.closesAt
+                                          ? t('booking.bookingsCloseAt', 'Bookings close {{time}}', { time: formatCutoffTime(slot.closesAt) })
+                                          : t('booking.bookingsClosed', 'Bookings closed')}
+                                      </span>
+                                    ) : slot.remaining != null ? (
                                       <span className="booking-slot-cap">
                                         {slotFull
                                           ? t('booking.soldOut', 'Sold out')
@@ -387,7 +401,7 @@ export default function ChangeBookingModal({ tour, isOpen, onClose, onReserve, i
                                             ? `${Math.max(0, slot.groupsRemaining ?? 0)} ${t('booking.groupSlots', 'group slots')}`
                                             : `${Math.max(0, slot.remaining)} ${t('booking.spotsLeft', 'spots left')}`}
                                       </span>
-                                    )}
+                                    ) : null}
                                   </button>
                                 )
                               })}

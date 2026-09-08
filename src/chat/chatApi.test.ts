@@ -93,13 +93,24 @@ describe('chatApi', () => {
     expect(await getUnreadCount()).toBe(3)
   })
 
-  it('getSupportUserId returns the expedition identity', async () => {
-    mockFetchWithAuth.mockResolvedValueOnce(jsonResponse({ expeditionId: 'exp-1' }))
+  it('getSupportUserId returns the expedition identity (falls back from admin support)', async () => {
+    mockFetchWithAuth
+      .mockResolvedValueOnce({ ok: false, status: 404 } as Response)
+      .mockResolvedValueOnce(jsonResponse({ expeditionId: 'exp-1' }))
     expect(await getSupportUserId()).toBe('exp-1')
+    expect(mockFetchWithAuth).toHaveBeenNthCalledWith(1, '/chat/admin-support')
+    expect(mockFetchWithAuth).toHaveBeenNthCalledWith(2, '/chat/expedition-support')
+  })
+
+  it('getSupportUserId returns the admin support identity when available', async () => {
+    mockFetchWithAuth.mockResolvedValueOnce(jsonResponse({ adminId: 'admin-1' }))
+    expect(await getSupportUserId()).toBe('admin-1')
   })
 
   it('getSupportUserId returns null when unavailable', async () => {
-    mockFetchWithAuth.mockResolvedValueOnce({ ok: false, status: 404 } as Response)
+    mockFetchWithAuth
+      .mockResolvedValueOnce({ ok: false, status: 404 } as Response)
+      .mockResolvedValueOnce({ ok: false, status: 404 } as Response)
     expect(await getSupportUserId()).toBeNull()
   })
 
