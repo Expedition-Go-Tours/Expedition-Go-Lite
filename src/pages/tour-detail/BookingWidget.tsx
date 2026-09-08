@@ -99,6 +99,7 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
   // state for a newer code / date (the user can edit the code or change the
   // date while a validation request is in flight).
   const promoCheckRef = useRef(0)
+
   // Monotonic token so a stale CHECKOUT quote (older traveler mix / date) can
   // never overwrite a newer one, plus the key of the quote currently in state
   // so the summary only shows server figures while they match the selection.
@@ -270,6 +271,13 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
     const period = h >= 12 ? 'PM' : 'AM'
     const hour12 = h % 12 === 0 ? 12 : h % 12
     return m ? `${hour12}:${String(m).padStart(2, '0')} ${period}` : `${hour12} ${period}`
+  }
+
+  const formatCutoffTime = (iso?: string | null): string => {
+    if (!iso) return ''
+    const d = new Date(iso)
+    if (Number.isNaN(d.getTime())) return ''
+    return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
   }
 
   const handleBookNow = useCallback(() => {
@@ -793,20 +801,27 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
                             <div className="booking-slot-grid booking-slot-grid-compact">
                               {selectedDaySlots.map((slot) => {
                                 const slotFull = slot.remaining != null && slot.remaining <= 0
+                                const slotClosed = slot.closed === true
                                 const isSelectedSlot = selectedTime === slot.time
                                 return (
                                   <button
                                     key={slot.time}
                                     type="button"
-                                    disabled={slotFull}
+                                    disabled={slotFull || slotClosed}
                                     onClick={() => {
                                       setSelectedTime(slot.time)
                                       setShowCalendar(false)
                                     }}
-                                    className={`booking-slot-chip${isSelectedSlot ? ' booking-slot-chip-active' : ''}`}
+                                    className={`booking-slot-chip${isSelectedSlot ? ' booking-slot-chip-active' : ''}${slotClosed ? ' booking-slot-chip-closed' : ''}`}
                                   >
                                     <span className="booking-slot-time">{formatSlotTime(slot.time)}</span>
-                                    {slot.remaining != null && (
+                                    {slotClosed ? (
+                                      <span className="booking-slot-cap">
+                                        {slot.closesAt
+                                          ? t('booking.bookingsCloseAt', 'Bookings close {{time}}', { time: formatCutoffTime(slot.closesAt) })
+                                          : t('booking.bookingsClosed', 'Bookings closed')}
+                                      </span>
+                                    ) : slot.remaining != null ? (
                                       <span className="booking-slot-cap">
                                         {slotFull
                                           ? t('booking.soldOut', 'Sold out')
@@ -814,7 +829,7 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
                                             ? `${Math.max(0, slot.groupsRemaining ?? 0)} ${t('booking.groupSlots', 'group slots')}`
                                             : `${Math.max(0, slot.remaining)} ${t('booking.spotsLeft', 'spots left')}`}
                                       </span>
-                                    )}
+                                    ) : null}
                                   </button>
                                 )
                               })}

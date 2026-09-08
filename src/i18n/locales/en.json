@@ -84,7 +84,13 @@
     "pricingError": "Could not load pricing. Please try again.",
     "flexibleTime": "Flexible time",
     "openPrefix": "Open",
-    "unreadMessages": "Unread messages"
+    "unreadMessages": "Unread messages",
+    "bookingsClosed": "Bookings closed",
+    "bookingsCloseAt": "Bookings close {{time}}",
+    "selectOption": "Choose your option",
+    "optionFrom": "from",
+    "optionPrivate": "Private",
+    "optionValidDays": "Valid {{value}} {{unit}} from booking"
   },
   "card": {
     "likelyToSellOut": "Likely to sell out",
@@ -124,7 +130,7 @@
   },
   "features": {
     "whyBookHeading": "Why travellers book with us",
-    "whyBookDescription": "Local expertise, trusted partners and care at every step\u2014so you can explore Ghana with total confidence.",
+    "whyBookDescription": "Local expertise, trusted partners and care at every step—so you can explore Ghana with total confidence.",
     "whyBookBadge": "Locally vetted in Ghana",
     "whyBookPaymentsDesc": "Book confidently with trusted payment options.",
     "whyBookPaymentsTitle": "Secure, flexible payments",

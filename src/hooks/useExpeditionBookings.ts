@@ -38,6 +38,9 @@ interface RawAvailabilityDay {
   capacityUnit?: 'groups' | 'people'
   groupsPerSlot?: number | null
   maxGroupSize?: number | null
+  /** Operating-hours/flexible days whose whole-day booking window has closed. */
+  closedCutoff?: boolean
+  closesAt?: string | null
 }
 
 interface RawAvailabilitySlot {
@@ -47,6 +50,10 @@ interface RawAvailabilitySlot {
   remaining: number
   groupsBooked?: number
   groupsRemaining?: number
+  /** True when the slot's booking cut-off has already passed. */
+  closed?: boolean
+  /** ISO instant when the slot stops accepting bookings (null = always open). */
+  closesAt?: string | null
 }
 
 function mapDayStatus(raw: RawAvailabilityDay['status']): DayAvailability {
@@ -68,6 +75,8 @@ function mapDay(raw: RawAvailabilityDay): DayAvailabilityInfo {
         remaining: s.remaining ?? Math.max(0, (s.capacity || 0) - (s.booked || 0)),
         groupsBooked: s.groupsBooked ?? 0,
         groupsRemaining: s.groupsRemaining ?? null,
+        closed: s.closed === true,
+        closesAt: s.closesAt ?? null,
       }))
     : []
   const capacityUnit = raw.capacityUnit === 'groups' ? 'groups' as const : 'people' as const
@@ -85,10 +94,16 @@ function mapDay(raw: RawAvailabilityDay): DayAvailabilityInfo {
   ) {
     status = 'limited'
   }
+  // Operating-hours / flexible days whose whole-day booking window has closed
+  // must read as blocked so the calendar never offers an unbookable date.
+  if (raw.closedCutoff === true && !raw.isPast && slots.length === 0 && (status === 'available' || status === 'limited')) {
+    status = 'blocked'
+  }
 
   return {
     date: raw.date,
     dayOfWeek: raw.dayOfWeek,
+    timezone: raw.timezone ?? undefined,
     isOperatingDay: raw.isOperatingDay,
     status,
     capacity: raw.capacity,
@@ -102,6 +117,8 @@ function mapDay(raw: RawAvailabilityDay): DayAvailabilityInfo {
     groupsPerSlot: raw.groupsPerSlot ?? null,
     maxGroupSize: raw.maxGroupSize ?? null,
     isPast: raw.isPast,
+    closedCutoff: raw.closedCutoff === true,
+    closesAt: raw.closesAt ?? null,
     timeSlots: slots,
   }
 }
@@ -109,10 +126,11 @@ function mapDay(raw: RawAvailabilityDay): DayAvailabilityInfo {
 export function useTourAvailability(
   slug: string | undefined,
   startDate: string | undefined,
-  endDate: string | undefined
+  endDate: string | undefined,
+  optionId?: string | null
 ) {
   return useQuery({
-    queryKey: ['expedition', 'tours', slug, 'availability', startDate, endDate],
+    queryKey: ['expedition', 'tours', slug, 'availability', startDate, endDate, optionId || 'default'],
     enabled: !!slug && !!startDate && !!endDate,
     // Availability is the most time-sensitive piece of the booking widget —
     // suppliers edit it live. The global queryClient default (staleTime: 5min)
@@ -128,7 +146,8 @@ export function useTourAvailability(
     queryFn: async () => {
       const payload = await expeditionFetchRaw(
         `/expedition/tours/${encodeURIComponent(slug!)}/availability`
-        + `?startDate=${startDate!}&endDate=${endDate!}`,
+        + `?startDate=${startDate!}&endDate=${endDate!}`
+        + (optionId ? `&option=${encodeURIComponent(optionId)}` : ''),
         true
       )
       const data = payload.data ?? payload
@@ -141,6 +160,8 @@ interface CalculateCheckoutInput {
   tourId: string
   travelDate: string
   travelers: Record<string, number>
+  /** Multi-option tours: quote against this option (default when omitted). */
+  optionId?: string
 }
 
 // Mirrors the actual shape returned by
@@ -187,6 +208,8 @@ interface ConfirmBookingInput {
   travelDate: string
   selectedTime?: string | null
   travelers: Record<string, number | string | boolean | { name: string; age: number; ageGroup: string; specialRequests?: string }[] | undefined>
+  /** Multi-option tours: the sellable option being booked. */
+  optionId?: string
   /** Required for reserve-now-pay-later (card captured for auto-charge). Pay-now with the
    * branded Payment Element checkout never sends a card. */
   paymentMethodId?: string
@@ -346,6 +369,8 @@ export interface ExpeditionBookingSummary {
   /** Customer-facing refund state: 'open' (refund pending / under review),
    *  'closed' (money back), or null (no refund lifecycle). */
   refundState?: 'open' | 'closed' | null
+  /** True when the customer has already left a review for this booking. */
+  reviewed?: boolean
 }
 
 interface RawBookingListRecord {
@@ -363,6 +388,7 @@ interface RawBookingListRecord {
   pickup?: Record<string, unknown> | null
   refundedAt?: string | null
   refundState?: 'open' | 'closed' | null
+  reviewed?: boolean
   disputes?: { id: string; status: string }[]
   tour: {
     id: string
@@ -412,6 +438,7 @@ function mapBookingSummary(b: RawBookingListRecord): ExpeditionBookingSummary {
     currency: b.currency,
     createdAt: b.createdAt,
     refundState: b.refundState ?? null,
+    reviewed: !!b.reviewed,
   }
 }
 

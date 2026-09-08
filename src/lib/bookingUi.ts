@@ -192,7 +192,10 @@ export function bookingStatusMeta(
     case 'NO_SHOW':
       return { label: 'No show', kind: 'cancelled' }
     case 'PENDING':
-      if (paymentStatus === 'SUCCEEDED') return { label: 'Awaiting confirmation', kind: 'attention' }
+      // Paid bookings read "Confirmed" (any SUCCEEDED payment is a confirmed
+      // booking from the traveller's perspective); only unpaid reserve-now-
+      // pay-later reservations stay labeled "Reserved".
+      if (paymentStatus === 'SUCCEEDED') return { label: 'Confirmed', kind: 'ok' }
       if (paymentTiming === 'later') return { label: 'Reserved', kind: 'attention' }
       return { label: 'Pending', kind: 'attention' }
     default:

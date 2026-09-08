@@ -1,6 +1,7 @@
 import type { TourDetailData } from '../hooks/useExpeditionTours'
 import type { PickupAreaShape } from './pickupZone'
 import type { TourScheduleInfo } from './tourAvailability'
+import type { TourOption } from './tourTypes'
 
 /**
  * The booking page's tour object — the supplier's meeting/pickup/drop-off
@@ -67,6 +68,10 @@ export interface BookingTour {
   ticketValidity?: string
   promoCode?: string | null
   appliedPromo?: { name: string; discountAmount: number } | null
+  /** Sellable options (private included — the booking page filters them). */
+  options?: TourOption[]
+  /** The supplier's default option; falls back to the first sellable one. */
+  defaultOptionId?: string | null
 }
 
 /** Neutral placeholder used while no tour context is available yet. */
@@ -218,5 +223,7 @@ export function buildBookingTour(tour: TourDetailData, opts: BuildBookingTourOpt
     groupSizePricing: tour.groupSizePricing,
     promoCode: opts.promoCode ?? null,
     appliedPromo: opts.appliedPromo ?? null,
+    options: tour.options,
+    defaultOptionId: tour.defaultOptionId ?? null,
   }
 }

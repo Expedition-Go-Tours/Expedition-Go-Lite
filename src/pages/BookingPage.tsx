@@ -7,7 +7,7 @@ import { toast } from 'sonner'
 import {
   Check, ArrowLeft, MapPin, CalendarDays, CalendarCheck, Users, Info, X,
   Phone, MessageSquare, ShieldCheck, Star, Clock, Globe, Loader2,
-  Car, CreditCard, Ticket, ExternalLink,
+  Car, CreditCard, Ticket, ExternalLink, Layers,
 } from 'lucide-react'
 import logoSrc from '../assets/expo_trans.png'
 import Footer from '../components/Footer'
@@ -17,12 +17,14 @@ import ChangeBookingModal from '../components/booking/ChangeBookingModal'
 import ExpiredHoldModal from '../components/booking/ExpiredHoldModal'
 import SignInPromptModal from '../components/booking/SignInPromptModal'
 import CardField from '../components/booking/CardField'
+import OptionSelector from '../components/booking/OptionSelector'
 import { useAuthUser } from '../hooks/useAuthUser'
 import { setAuthReturnTo } from '../lib/auth'
 import type { CardElementHandle } from '../components/booking/CardField'
 import { fetchWithAuth } from '../lib/api'
-import { useCreateBooking } from '../hooks/useExpeditionBookings'
+import { useCreateBooking, useCalculateCheckout } from '../hooks/useExpeditionBookings'
 import { buildE164Phone, isValidPhoneInput, COUNTRY_CODES } from '../lib/phone'
+import type { TourOption } from '../lib/tourTypes'
 import { hasLocationOnlyAreas, isPickupLocationSatisfied, pickupZoneStatus, distanceMeters, type PickupAreaShape } from '../lib/pickupZone'
 import LocationMap from '../components/booking/LocationMap'
 import MapErrorBoundary from '../components/booking/MapErrorBoundary'
@@ -692,6 +694,7 @@ function ActivityDetailsStep({
   tour, onNext, step, onNavigate, hasError, disabled,
   contact, onContactChange, showPickupLocation, locationValid,
   isCapturingLocation,
+  options, optionValue, onOptionChange, optionQuoting, optionError,
 }: {
   tour: typeof FALLBACK_TOUR
   onNext: () => void
@@ -704,6 +707,13 @@ function ActivityDetailsStep({
   showPickupLocation: boolean
   locationValid: boolean
   isCapturingLocation: boolean
+  /** Multi-option tours: sellable (non-private) options for the GYG-style
+      "Choose your option" picker shown at the top of step 1. */
+  options?: TourOption[]
+  optionValue?: string | null
+  onOptionChange?: (optionId: string) => void
+  optionQuoting?: boolean
+  optionError?: string
 }) {
   const isActive = step === 1
   const isCompleted = step > 1
@@ -883,6 +893,58 @@ function ActivityDetailsStep({
     />
   )
 
+  // GYG parity: the "Choose your option" picker renders only when the tour
+  // offers >1 sellable option. Single-option tours show nothing (and never
+  // send an optionId). Built as a fragment so `options` narrows past the
+  // length guard.
+  const optionPicker = (() => {
+    if (!options || options.length <= 1) return null
+    return (
+      <div className="space-y-3">
+        <div>
+          <h3 className="text-base font-bold text-slate-900 tracking-tight">Choose your option</h3>
+          {optionQuoting ? (
+            <p className="mt-1 flex items-center gap-1.5 text-xs font-medium text-emerald-600">
+              <Loader2 className="size-3 animate-spin" />
+              Updating price…
+            </p>
+          ) : (
+            <p className="mt-1 text-xs text-slate-400">
+              Each option has its own availability and pricing — switching re-prices your booking.
+            </p>
+          )}
+        </div>
+        <OptionSelector
+          options={options}
+          value={optionValue}
+          onChange={(id) => onOptionChange?.(id)}
+          disabledIds={optionQuoting ? new Set(options.map((o) => o.id)) : undefined}
+        />
+        {optionError && (
+          <p role="alert" className="rounded-lg bg-rose-50 px-4 py-2.5 text-xs font-semibold text-rose-600">
+            {optionError}
+          </p>
+        )}
+      </div>
+    )
+  })()
+
+  // Chosen-option summary row shown once the step is collapsed (steps 2-3).
+  const optionSummaryCollapsed = (() => {
+    if (!options || options.length <= 1 || !optionValue) return null
+    const title = options.find((o) => o.id === optionValue)?.title
+    if (!title) return null
+    return (
+      <div className="flex items-start gap-2 text-sm text-slate-600">
+        <Layers className="mt-0.5 size-3.5 shrink-0 text-emerald-600" />
+        <p>
+          <span className="font-semibold text-slate-800">Option:</span>{' '}
+          <span>{title}</span>
+        </p>
+      </div>
+    )
+  })()
+
   return (
     <>
     <StepCard id="booking-step-1">
@@ -927,6 +989,8 @@ function ActivityDetailsStep({
             exit="exit"
             className="space-y-5 p-7 sm:p-9"
           >
+            {optionPicker}
+
             {!showPickupLocation && meetingSummaryCard}
 
             {showPickupLocation && (
@@ -993,6 +1057,7 @@ function ActivityDetailsStep({
             animate="visible"
             className="space-y-3 p-7 sm:p-9"
           >
+            {optionSummaryCollapsed}
             {meetingSummaryCollapsed}
             {/* The map stays out of the collapsed summary — the traveller just
                 picked their location on it, so only the ETA chip remains. */}
@@ -1554,6 +1619,8 @@ interface EditableTourState {
   selectedDate: string
   selectedTime: string | null
   price: number
+  /** Multi-option tours: the sellable option chosen for this booking. */
+  optionId?: string | null
 }
 
 interface BookingDraftData {
@@ -1574,6 +1641,19 @@ function readBookingDraft(): BookingDraftData | null {
   }
 }
 
+// Default sellable option for a multi-option tour: the supplier's
+// defaultOptionId when it is one of the sellable (non-private) options, else
+// the first sellable option. Null on single-option tours so nothing ever
+// sends an optionId there.
+function resolveDefaultOptionId(options: TourOption[], defaultOptionId?: string | null): string | null {
+  if (!Array.isArray(options)) return null
+  const selectable = options.filter((o) => !o.isPrivate)
+  if (selectable.length === 0) return null
+  const def = defaultOptionId ?? null
+  if (def && selectable.some((o) => o.id === def)) return def
+  return selectable[0]?.id ?? null
+}
+
 function buildEditableTour(tour: typeof FALLBACK_TOUR): EditableTourState {
   const travelersCount =
     tour.travelersCount && typeof tour.travelersCount === 'object'
@@ -1590,6 +1670,7 @@ function buildEditableTour(tour: typeof FALLBACK_TOUR): EditableTourState {
     selectedDate: String(tour.selectedDate || tour.dateISO || ''),
     selectedTime: (tour.selectedTime as string | null | undefined) ?? null,
     price: Number(tour.price) || 0,
+    optionId: resolveDefaultOptionId(tour.options || [], tour.defaultOptionId),
   }
 }
 
@@ -1812,6 +1893,77 @@ export default function BookingPage() {
 
   const trackActivity = () => { lastActivityAt.current = Date.now() }
 
+  /* Multi-option tours (GYG parity) — the "Choose your option" picker lives on
+     this details step (post-"Book now"), before lead traveler/payment. Only
+     tours with >1 sellable (non-private) option show the picker; single-option
+     tours stay untouched and never send an optionId. */
+  const selectableOptions = useMemo(
+    () => (Array.isArray(tour.options) ? (tour.options as TourOption[]).filter((o) => !o.isPrivate) : []),
+    [tour.options],
+  )
+  const hasMultipleOptions = selectableOptions.length > 1
+  const optionDefaultId = useMemo(
+    () => (hasMultipleOptions ? resolveDefaultOptionId(selectableOptions, tour.defaultOptionId) : null),
+    [hasMultipleOptions, selectableOptions, tour.defaultOptionId],
+  )
+  const selectedOptionId = useMemo(() => {
+    if (!hasMultipleOptions) return null
+    const stored = editableTour.optionId ?? null
+    if (stored && selectableOptions.some((o) => o.id === stored)) return stored
+    return optionDefaultId
+  }, [hasMultipleOptions, selectableOptions, optionDefaultId, editableTour.optionId])
+
+  const calculateOption = useCalculateCheckout()
+  const [optionQuoting, setOptionQuoting] = useState(false)
+  const [optionError, setOptionError] = useState('')
+
+  // Re-quote against /expedition/checkout/calculate whenever the traveller
+  // switches option, so the totals stay live for the selected option. Quote
+  // failures (e.g. the chosen date/time isn't offered by that option) roll the
+  // switch back — another option's date/time or a stale price is never kept.
+  const quoteOption = useCallback(async (optionId: string) => {
+    const travelDate = editableTour.selectedDate || editableTour.date || ''
+    const travelers = editableTour.travelersCount || { adults: 1, children: 0, infants: 0 }
+    setOptionQuoting(true)
+    setOptionError('')
+    try {
+      if (travelDate) {
+        const res = await calculateOption.mutateAsync({
+          tourId: tour.id || tour.slug,
+          travelDate,
+          travelers,
+          ...(editableTour.selectedTime ? { selectedTime: editableTour.selectedTime } : {}),
+          optionId,
+        })
+        if (!res?.available) {
+          throw new Error('This option is not available on the selected date.')
+        }
+        setEditableTour((prev) => ({
+          ...prev,
+          optionId,
+          price: Number(res?.pricing?.total) || prev.price,
+        }))
+        return
+      }
+      // No concrete date/time yet — record the option; the price is re-derived
+      // once a date/traveler selection is made.
+      setEditableTour((prev) => ({ ...prev, optionId }))
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Could not update the price for this option. Please try again.'
+      setOptionError(msg)
+      throw err
+    } finally {
+      setOptionQuoting(false)
+    }
+  }, [calculateOption, editableTour.selectedDate, editableTour.date, editableTour.selectedTime, editableTour.travelersCount, tour.id, tour.slug])
+
+  const handleOptionChange = useCallback((optionId: string) => {
+    trackActivity()
+    if (!hasMultipleOptions) return
+    if (optionId === selectedOptionId) return
+    void quoteOption(optionId).catch(() => { /* handled inline via optionError */ })
+  }, [hasMultipleOptions, selectedOptionId, quoteOption])
+
   const handleContactChange = (key: string, value: string | boolean | number | null) => {
     trackActivity()
     setContact((prev) => ({ ...prev, [key]: value }))
@@ -2031,6 +2183,9 @@ export default function BookingPage() {
         tourId: tour.id || tour.slug,
         travelDate: editableTour.selectedDate || editableTour.date,
         ...(editableTour.selectedTime ? { selectedTime: editableTour.selectedTime } : {}),
+        // Multi-option tours only: the "Choose your option" picker's selection.
+        // Single-option tours never send an optionId (legacy behavior).
+        ...(hasMultipleOptions && selectedOptionId ? { optionId: selectedOptionId } : {}),
         ...(pickupSelection ? { pickup: pickupSelection } : {}),
         travelers: {
           ...counts,
@@ -2087,7 +2242,7 @@ export default function BookingPage() {
     } finally {
       setIsBooking(false)
     }
-  }, [createBooking, contact, editableTour, tour, showPickupLocation, zonesDrawn, isBooking, isActive, pollBooking, user, payment.paymentTiming, appliedPromo, promoCode])
+  }, [createBooking, contact, editableTour, tour, showPickupLocation, zonesDrawn, isBooking, isActive, pollBooking, user, payment.paymentTiming, appliedPromo, promoCode, hasMultipleOptions, selectedOptionId])
 
   const handleApplyPromo = useCallback(async () => {
     const code = promoCode.trim().toUpperCase()
@@ -2242,6 +2397,11 @@ export default function BookingPage() {
                   showPickupLocation={showPickupLocation}
                   locationValid={locationValid}
                   isCapturingLocation={isCapturingLocation}
+                  options={hasMultipleOptions ? selectableOptions : undefined}
+                  optionValue={selectedOptionId}
+                  onOptionChange={handleOptionChange}
+                  optionQuoting={optionQuoting}
+                  optionError={optionError}
                 />
                 <ContactDetailsStep
                   tour={activeTour}
@@ -2311,6 +2471,7 @@ export default function BookingPage() {
             initialTravelers={(activeTour.adults || 0) + (activeTour.children || 0) + (activeTour.infants || 0)}
             initialDate={editableTour.selectedDate || ''}
             travelersCount={editableTour.travelersCount}
+            optionId={selectedOptionId}
             onReserve={(updates) => setEditableTour((prev) => {
               // The modal prices a specific travellers mix; use that exact
               // payload so the displayed total matches what gets confirmed.

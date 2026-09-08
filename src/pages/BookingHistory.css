@@ -529,6 +529,46 @@
   outline-offset: 2px;
 }
 
+/* "Write a review" card action — bottom-right next to View details.
+   Modern OTA treatment: a quiet outline pill that fills on hover (no icon,
+   crisp type, generous tap target, soft shadow on lift). */
+.bk-review {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 15px;
+  border: 1px solid var(--bv-accent);
+  border-radius: 999px;
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  color: var(--bv-accent-strong, #007a4d);
+  cursor: pointer;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.18s ease, background-color 0.18s ease,
+    border-color 0.18s ease, box-shadow 0.18s ease, transform 0.12s ease;
+}
+
+.bk-review:hover {
+  background: var(--bv-accent, #00aa6c);
+  border-color: var(--bv-accent, #00aa6c);
+  color: #fff;
+  box-shadow: 0 3px 10px -2px rgba(0, 140, 90, 0.4);
+}
+
+.bk-review:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 4px -1px rgba(0, 140, 90, 0.35);
+}
+
+.bk-review:focus-visible {
+  outline: 2px solid var(--bv-accent, #00aa6c);
+  outline-offset: 2px;
+}
+
 /* ---------- Card responsiveness ---------- */
 @media (max-width: 959px) and (min-width: 761px) {
   .bk-card {
@@ -1218,4 +1258,299 @@
   .bk-empty-chips {
     justify-content: flex-start;
   }
+
+  .bk-foot {
+    flex-wrap: wrap;
+  }
+
+  .bk-foot-actions {
+    justify-content: flex-end;
+    width: auto;
+  }
+
+  .bk-review {
+    font-size: 12.5px;
+    padding: 6px 13px;
+  }
+}
+
+/* ---------- Request refund modal ---------- */
+.rf-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.rf-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(9, 30, 24, 0.55);
+  backdrop-filter: blur(2px);
+}
+
+.rf-card {
+  position: relative;
+  width: 100%;
+  max-width: 560px;
+  max-height: 92vh;
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.18);
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  animation: rf-pop 0.18s ease-out;
+}
+
+@keyframes rf-pop {
+  from { opacity: 0; transform: translateY(10px) scale(0.99); }
+  to { opacity: 1; transform: none; }
+}
+
+.rf-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 999px;
+  background: #f2f5f3;
+  color: #3f4f49;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.rf-close:hover { background: #e6ece9; }
+
+.rf-summary {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding-right: 28px;
+}
+
+.rf-summary-photo {
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  overflow: hidden;
+  flex: 0 0 auto;
+  background: #eef3f0;
+  display: grid;
+  place-items: center;
+  color: var(--bv-accent);
+}
+
+.rf-summary-photo img { width: 100%; height: 100%; object-fit: cover; }
+
+.rf-summary-main { min-width: 0; }
+
+.rf-title { margin: 0; font-size: 16px; font-weight: 800; color: var(--bv-forest, #0c2e23); line-height: 1.3; }
+
+.rf-sub { margin: 3px 0 0; font-size: 12.5px; color: #5c6b65; line-height: 1.4; }
+
+.rf-paid { margin: 4px 0 0; font-size: 12.5px; font-weight: 800; color: var(--bv-accent-strong, #007a4d); }
+
+.rf-step-title { margin: 4px 0 0; font-size: 15px; font-weight: 800; color: var(--bv-forest); }
+
+.rf-step-reason { font-weight: 600; color: #5c6b65; }
+
+.rf-reasons { display: flex; flex-direction: column; gap: 8px; }
+
+.rf-reason {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  text-align: left;
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--bv-border, #e2e8e5);
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.rf-reason:hover { border-color: #b7d6c9; background: #fbfefc; }
+
+.rf-reason.selected { border-color: var(--bv-accent, #00aa6c); background: #eefbf5; }
+
+.rf-reason-radio {
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  border-radius: 999px;
+  border: 2px solid #c7d2cd;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  transition: border-color 0.15s ease;
+}
+
+.rf-reason.selected .rf-reason-radio { border-color: var(--bv-accent); }
+
+.rf-reason.selected .rf-reason-radio::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--bv-accent);
+}
+
+.rf-reason-text { display: flex; flex-direction: column; gap: 2px; }
+
+.rf-reason-text strong { font-size: 13.5px; font-weight: 700; color: #14342a; }
+
+.rf-reason-text small { font-size: 12px; color: #66746e; }
+
+.rf-details { display: flex; flex-direction: column; gap: 6px; margin-top: 2px; }
+
+.rf-details > span { font-size: 13px; font-weight: 600; color: #31463d; }
+
+.rf-details em { font-weight: 400; color: #8a9791; font-style: normal; }
+
+.rf-details textarea {
+  resize: vertical;
+  border: 1px solid var(--bv-border, #e2e8e5);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 13.5px;
+  font-family: var(--font-body, inherit);
+  color: #173229;
+  outline: none;
+  min-height: 70px;
+}
+
+.rf-details textarea:focus { border-color: var(--bv-accent, #00aa6c); box-shadow: 0 0 0 3px rgba(0, 170, 108, 0.12); }
+
+.rf-types { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.rf-type {
+  border: 1px solid var(--bv-border, #e2e8e5);
+  border-radius: 12px;
+  padding: 14px 12px;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.rf-type strong { font-size: 14px; font-weight: 800; color: #14342a; }
+
+.rf-type span { font-size: 12.5px; color: #5c6b65; }
+
+.rf-type.selected { border-color: var(--bv-accent, #00aa6c); background: #eefbf5; }
+
+.rf-amount { display: flex; flex-direction: column; gap: 6px; }
+
+.rf-amount > span { font-size: 13px; font-weight: 600; color: #31463d; }
+
+.rf-amount-input {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--bv-border, #e2e8e5);
+  border-radius: 12px;
+  padding: 2px 12px;
+  max-width: 220px;
+}
+
+.rf-amount-input span { font-weight: 800; color: #14342a; }
+
+.rf-amount-input input {
+  border: none;
+  outline: none;
+  width: 100%;
+  padding: 10px 0;
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.rf-note {
+  font-size: 12.5px;
+  color: #6b7a74;
+  background: #f6faf8;
+  border: 1px solid #e5efea;
+  border-radius: 10px;
+  padding: 10px 12px;
+  line-height: 1.5;
+}
+
+.rf-error { color: #b3261e; font-size: 13px; margin: 0; }
+
+.rf-error-text { color: #b3261e; font-size: 12px; }
+
+.rf-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 2px; }
+
+.rf-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #d3ded8;
+  background: #fff;
+  color: #31463d;
+  border-radius: 999px;
+  padding: 9px 16px;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.rf-back:hover { background: #f4f8f6; }
+
+.rf-cta { border-radius: 999px; }
+
+.rf-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 4px;
+}
+
+.rf-icon-ok { background: #e4f7ee; color: var(--bv-accent-strong, #007a4d); }
+
+.spin { animation: rf-spin 0.9s linear infinite; }
+
+@keyframes rf-spin { to { transform: rotate(360deg); } }
+
+/* Request-refund link on the booking card (far right, same line as the ref). */
+.bk-ref-right { margin-left: auto; }
+
+.bk-ref-request {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: none;
+  background: transparent;
+  padding: 4px 2px 4px 10px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #b3261e;
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+.bk-ref-request:hover { color: #8f1d17; background: #fff1f0; }
+
+.bk-ref-request:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+
+@media (max-width: 640px) {
+  .rf-desk { display: none; }
+}
+@media (min-width: 641px) {
+  .rf-mobile { display: none; }
 }

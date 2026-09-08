@@ -1634,6 +1634,25 @@ function buildTourDetailFromRawTour(rawTour: any): TourDetailData {
     minParticipants: extractParticipantsBound(rawTour, 'minParticipants'),
     maxParticipants: extractParticipantsBound(rawTour, 'maxParticipants'),
     specialOffers: mapSpecialOffers(rawTour),
+    options: Array.isArray(rawTour?.options)
+      ? (rawTour.options as any[]).map((o) => ({
+          id: String((o && o.id) ?? ''),
+          title: String((o && o.title) ?? ''),
+          refCode: (o && o.refCode) || undefined,
+          isPrivate: !!(o && o.isPrivate),
+          skipTheLine: (o && o.skipTheLine) || undefined,
+          description: (o && o.description) || null,
+          audioGuide: !!(o && o.audioGuide),
+          infoBooklet: !!(o && o.infoBooklet),
+          maxGroupSize: (o && o.maxGroupSize != null ? o.maxGroupSize : null),
+          validityType: (o && o.validityType) || null,
+          validity: o && o.validity != null ? Number(o.validity) : null,
+          validityUnit: (o && o.validityUnit) || null,
+          fromPrice: o && o.fromPrice != null ? Number(o.fromPrice) : null,
+          currency: (o && o.currency) || undefined,
+        }))
+      : [],
+    defaultOptionId: rawTour?.defaultOptionId ?? null,
   }
 }
 

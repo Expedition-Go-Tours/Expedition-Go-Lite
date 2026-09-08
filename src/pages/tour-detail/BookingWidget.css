@@ -977,3 +977,7 @@
     font-size: 17px;
   }
 }
+
+/* Cut-off: a slot whose booking window has closed */
+.booking-slot-chip-closed { opacity: 0.6; cursor: not-allowed; }
+.booking-slot-chip-closed .booking-slot-cap { color: #9a6b1f; font-weight: 600; }
