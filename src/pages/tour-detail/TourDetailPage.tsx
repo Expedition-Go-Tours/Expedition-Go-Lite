@@ -131,7 +131,18 @@ export default function TourDetailPage({ onOpenAuth }: TourDetailPageProps = {})
     const d = new Date(availMonth.year, availMonth.month + 1, 0)
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
   }, [availMonth])
-  const { data: availabilityCalendar, isFetching: availabilityLoading } = useTourAvailability(tourId, availStart, availEnd)
+  // Sellable options (>1 ⇒ the widget shows a GYG-style picker). Private
+  // options are not offered to storefront customers.
+  const selectableTourOptions = useMemo(() => (tour?.options || []).filter((o) => !o.isPrivate), [tour])
+  const [optionId, setOptionId] = useState<string | null>(null)
+  const resolvedOptionId = useMemo(() => {
+    if (selectableTourOptions.length === 0) return null
+    if (optionId && selectableTourOptions.some((o) => o.id === optionId)) return optionId
+    const def = tour?.defaultOptionId ?? null
+    if (def && selectableTourOptions.some((o) => o.id === def)) return def
+    return selectableTourOptions[0]?.id ?? null
+  }, [optionId, selectableTourOptions, tour?.defaultOptionId])
+  const { data: availabilityCalendar, isFetching: availabilityLoading } = useTourAvailability(tourId, availStart, availEnd, resolvedOptionId || null)
 
   const availabilityMap = useMemo(() => {
     const map = new Map<string, DayAvailability>()
@@ -929,6 +940,9 @@ export default function TourDetailPage({ onOpenAuth }: TourDetailPageProps = {})
                   onMonthChange={handleAvailabilityMonthChange}
                   onOpenAuth={onOpenAuth}
                   onSelectedDateChange={setWidgetSelectedDate}
+                  tourOptions={selectableTourOptions}
+                  selectedOptionId={resolvedOptionId}
+                  onOptionChange={(id) => setOptionId(id)}
                 />
               )}
             </aside>
