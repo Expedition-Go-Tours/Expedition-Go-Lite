@@ -12,9 +12,19 @@ interface BookingCardProps {
   chipLabel?: string
   /** Optional — when set, the card shows a "Write a review" action. */
   onWriteReview?: () => void
+  /** Optional — when set, the card shows a "Request refund" action. */
+  canRequestRefund?: boolean
+  onRequestRefund?: () => void
 }
 
-export default function BookingCard({ booking, onOpen, chipLabel, onWriteReview }: BookingCardProps) {
+export default function BookingCard({
+  booking,
+  onOpen,
+  chipLabel,
+  onWriteReview,
+  canRequestRefund,
+  onRequestRefund,
+}: BookingCardProps) {
   const [copied, setCopied] = useState(false)
   const meta =
     chipLabel && booking.refundState !== 'open' && booking.refundState !== 'closed'
@@ -139,6 +149,20 @@ export default function BookingCard({ booking, onOpen, chipLabel, onWriteReview 
             {copied ? <Check size={12} /> : <Copy size={12} />}
             {copied ? 'Copied' : 'Copy'}
           </button>
+          {canRequestRefund && onRequestRefund && (
+            <span className="bk-ref-right">
+              <button
+                type="button"
+                className="bk-ref-request rf-desk"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onRequestRefund()
+                }}
+              >
+                Request refund
+              </button>
+            </span>
+          )}
         </p>
 
         <div className="bk-foot">
@@ -148,6 +172,18 @@ export default function BookingCard({ booking, onOpen, chipLabel, onWriteReview 
           <span className={`bk-amount-phone${isPaid ? '' : ' is-reserved'}`}>{amount}</span>
 
           <div className="bk-foot-actions">
+            {canRequestRefund && onRequestRefund && (
+              <button
+                type="button"
+                className="bk-ref-request rf-mobile"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onRequestRefund()
+                }}
+              >
+                Request refund
+              </button>
+            )}
             {onWriteReview && (
               <button
                 type="button"

@@ -10,6 +10,7 @@ import {
 import { useMoodKeywords } from '../hooks/useHomepageSections'
 import { useAuthUser } from '@/hooks/useAuthUser'
 import BookingCard from '../components/booking/BookingCard'
+import RequestRefundModal from '../components/booking/RequestRefundModal'
 import TravelEmptyAnimation from '../components/booking/TravelEmptyAnimation'
 const BookingWorkspace = lazy(() => import('../components/booking/BookingWorkspace'))
 import { formatHeadingDate, toDateKey, isSameCalendarDay } from '../lib/bookingUi'
@@ -134,6 +135,7 @@ export default function BookingHistory() {
 
   const [bucket, setBucket] = useState<Bucket>('upcoming')
   const [query, setQuery] = useState('')
+  const [refundBooking, setRefundBooking] = useState<Booking | null>(null)
 
   const { data: bookings = [], isLoading, isError, error, refetch } = useMyExpeditionBookings(
     1,
@@ -220,6 +222,15 @@ export default function BookingHistory() {
       },
     })
   }
+
+  // Completed + paid + no refund already open/closed + within the 30-day claim
+  // window → the "Request refund" action shows on the card.
+  const isClaimable = (b: Booking): boolean =>
+    b.status === 'COMPLETED' &&
+    isPaidBooking(b) &&
+    (b.refundState === undefined || b.refundState === null) &&
+    // eslint-disable-next-line react-hooks/purity -- wall-clock read for claim window
+    Date.now() - dateMs(b.travelDate) <= 30 * 24 * 60 * 60 * 1000
 
   // Keep the list's scroll position across the slide.
   useEffect(() => {
@@ -593,6 +604,8 @@ export default function BookingHistory() {
                     onOpen={() => openBooking(booking)}
                     chipLabel={bucket === 'past' && booking.status !== 'NO_SHOW' ? 'Completed' : undefined}
                     onWriteReview={isReviewable(booking) ? () => openReview(booking) : undefined}
+                    canRequestRefund={isClaimable(booking)}
+                    onRequestRefund={isClaimable(booking) ? () => setRefundBooking(booking) : undefined}
                   />
                 ))}
               </div>
@@ -616,6 +629,8 @@ export default function BookingHistory() {
                       booking={booking}
                       onOpen={() => openBooking(booking)}
                       onWriteReview={isReviewable(booking) ? () => openReview(booking) : undefined}
+                      canRequestRefund={isClaimable(booking)}
+                      onRequestRefund={isClaimable(booking) ? () => setRefundBooking(booking) : undefined}
                     />
                   ))}
                 </div>
@@ -641,6 +656,17 @@ export default function BookingHistory() {
           )}
         </section>
       </div>
+
+      {refundBooking && (
+        <RequestRefundModal
+          booking={refundBooking}
+          onClose={() => setRefundBooking(null)}
+          onSubmitted={() => {
+            setRefundBooking(null)
+            refetch()
+          }}
+        />
+      )}
     </div>
   )
 }
