@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+﻿import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
 import { ArrowLeft, ChevronDown, Loader2, Lock, ShieldCheck } from 'lucide-react'
@@ -39,7 +39,7 @@ function BackButton({ onClick }: { onClick: () => void }) {
   )
 }
 
-/** Full order summary — rendered on the desktop left pane (forest tone) and,
+/** Full order summary â€” rendered on the desktop left pane (forest tone) and,
  *  when expanded, in the mobile collapsed summary (light tone). */
 function OrderSummary({
   draft,
@@ -66,11 +66,11 @@ function OrderSummary({
           <p className="co-item-title">{draft.tour.title}</p>
           <p className="co-item-meta">
             {formatHeadingDate(draft.travelDate)}
-            {draft.selectedTime ? ` · ${draft.selectedTime}` : ''}
+            {draft.selectedTime ? ` Â· ${draft.selectedTime}` : ''}
           </p>
           <p className="co-item-meta">
             {partyLabel(draft.party)}
-            {draft.tour.durationMinutes ? ` · ${formatDuration(draft.tour.durationMinutes)}` : ''}
+            {draft.tour.durationMinutes ? ` Â· ${formatDuration(draft.tour.durationMinutes)}` : ''}
           </p>
         </div>
         <div className="co-item-price">{formatMoney(draft.pricing.subtotal + draft.pricing.fees, draft.currency)}</div>
@@ -151,7 +151,7 @@ export default function CheckoutPage() {
     setElementsState(s)
   }, [])
 
-  // Release the hold exactly once when the countdown runs out (ref guard — the
+  // Release the hold exactly once when the countdown runs out (ref guard â€” the
   // mutation itself is idempotent server-side).
   useEffect(() => {
     if (holdExpired && draftId && !expiryReleasedRef.current) {
@@ -171,7 +171,7 @@ export default function CheckoutPage() {
       setProcessing(false)
       setShowAnimation(false)
     }
-    // On success Stripe redirects the browser — the overlay stays up until the
+    // On success Stripe redirects the browser â€” the overlay stays up until the
     // redirect lands, then this React tree unmounts cleanly.
   }, [processing, holdExpired, draft])
 
@@ -203,7 +203,7 @@ export default function CheckoutPage() {
     )
   }
 
-  // Unavailable / expired checkout — full-page state (no split layout).
+  // Unavailable / expired checkout â€” full-page state (no split layout).
   if (isError || !draft || !clientSecret || !returnUrl) {
     return (
       <div className="co-page">
@@ -256,17 +256,17 @@ export default function CheckoutPage() {
   return (
     <div className="co-page">
       <div className="co-body">
-        {/* LEFT — brand panel + order summary (desktop/tablet) */}
+        {/* LEFT â€” brand panel + order summary (desktop/tablet) */}
         <aside className="co-left">
           <header className="co-header">
             <BackButton onClick={handleCancel} />
-            <div className="co-brand">
-              <img src={logoSrc} alt="Expedition-Go" className="co-logo" />
-            </div>
-            <div className="co-header-spacer" />
           </header>
 
           <div className="co-left-inner">
+            <div className="co-brand">
+              <img src={logoSrc} alt="Expedition-Go" className="co-logo" />
+            </div>
+
             <div className="co-lockup">
               <span className="co-eyebrow">Secure checkout</span>
               <h1 className="co-title">Complete your booking</h1>
@@ -282,7 +282,7 @@ export default function CheckoutPage() {
           </div>
         </aside>
 
-        {/* RIGHT — payment (mobile shows only this pane) */}
+        {/* RIGHT â€” payment (mobile shows only this pane) */}
         <section className="co-right" aria-label="Payment details">
           <header className="co-mobile-top">
             <BackButton onClick={handleCancel} />
@@ -350,7 +350,7 @@ export default function CheckoutPage() {
               {processing ? (
                 <>
                   <Loader2 size={18} className="co-spin" />
-                  Processing…
+                  Processingâ€¦
                 </>
               ) : (
                 <>Pay {formatMoney(draft.pricing.total, draft.currency)}</>
@@ -373,4 +373,6 @@ export default function CheckoutPage() {
     </div>
   )
 }
+
+
 
