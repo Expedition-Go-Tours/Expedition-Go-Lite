@@ -1,4 +1,4 @@
-/* ===== WISHLIST CONTAINER ===== */
+﻿/* ===== WISHLIST CONTAINER ===== */
 .wishlist-container {
   width: 100%;
 }
@@ -74,7 +74,7 @@
   transform: scale(1.05);
 }
 
-/* Remove Button — explicit X on the image's top-right corner. */
+/* Remove Button â€” explicit X on the image's top-right corner. */
 .wishlist-remove-btn {
   position: absolute;
   top: 12px;
@@ -319,13 +319,33 @@
 /* Animated empty-state icon */
 .empty-icon-wrap {
   position: relative;
-  width: 120px;
-  height: 120px;
-  margin-bottom: 24px;
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto 24px;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 2;
+}
+
+.empty-icon-wrap .wishlist-lottie {
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+}
+
+/* Grey to green animation for Lottie */
+.empty-icon-wrap .wishlist-lottie {
+  animation: greyToGreen 2s ease-in-out forwards;
+}
+
+@keyframes greyToGreen {
+  0% {
+    filter: grayscale(100%) brightness(0.8);
+  }
+  100% {
+    filter: grayscale(0%) hue-rotate(95deg) saturate(1.6) brightness(0.9);
+  }
 }
 
 .empty-halo {
@@ -333,7 +353,7 @@
   width: 96px;
   height: 96px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(22, 163, 74, 0.35) 0%, rgba(22, 163, 74, 0) 70%);
+  background: radial-gradient(circle, rgba(34, 175, 71, 0.35) 0%, rgba(34, 175, 71, 0) 70%);
   pointer-events: none;
 }
 
@@ -705,3 +725,4 @@
     font-size: 14px !important;
   }
 }
+

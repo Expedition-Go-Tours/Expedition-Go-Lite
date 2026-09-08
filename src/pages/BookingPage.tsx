@@ -47,6 +47,8 @@ import {
   type TourScheduleInfo,
 } from '../lib/tourAvailability'
 import { freeCancellationDateLabel } from '../lib/cancellationLabel'
+import { requestLocation } from '../lib/analytics'
+import { reverseGeocode } from '../lib/locations'
 
 /* --- Tour data from location state --- */
 
@@ -246,7 +248,7 @@ function referenceStartLabel(value?: string): string {
 // Drop-off is appended when the supplier configured one.
 // `embedded` renders it as a sub-section (no outer card border/background) so
 // it can sit inside the tour summary card without a nested box.
-function MeetingPickupCard({ tour, embedded = false, onOpenMap, showMapLink = true, showDirections = false }: {
+function MeetingPickupCard({ tour, embedded = false, onOpenMap, showMapLink = true, showDirections = false, capturedLocation, isCapturingLocation }: {
   tour: typeof FALLBACK_TOUR
   embedded?: boolean
   /** Opens the map modal (a pin per pickup spot). */
@@ -255,6 +257,10 @@ function MeetingPickupCard({ tour, embedded = false, onOpenMap, showMapLink = tr
   showMapLink?: boolean
   /** Whether the Google/Apple Maps directions links (meeting-point tours) are shown. */
   showDirections?: boolean
+  /** User's captured location address for meeting point tours. */
+  capturedLocation?: string
+  /** Whether location is still being captured. */
+  isCapturingLocation?: boolean
 }) {
   const mode = tour.meetingMode
 
@@ -397,6 +403,18 @@ function MeetingPickupCard({ tour, embedded = false, onOpenMap, showMapLink = tr
             )}
             {tour.meetingPointDescription && (
               <p className="pl-[22px] leading-relaxed text-slate-500">{tour.meetingPointDescription}</p>
+            )}
+            {isCapturingLocation && (
+              <p className="flex items-center gap-2 pl-[22px] text-sm text-slate-500">
+                <Loader2 size={13} className="animate-spin" />
+                Detecting your location…
+              </p>
+            )}
+            {capturedLocation && !isCapturingLocation && (
+              <p className="flex items-center gap-2 pl-[22px] text-sm text-slate-600">
+                <MapPin className="size-3.5 shrink-0 text-emerald-600" />
+                Your location: {capturedLocation}
+              </p>
             )}
             </div>
         )}
@@ -673,6 +691,7 @@ function ContactDetailsStep({
 function ActivityDetailsStep({
   tour, onNext, step, onNavigate, hasError, disabled,
   contact, onContactChange, showPickupLocation, locationValid,
+  isCapturingLocation,
 }: {
   tour: typeof FALLBACK_TOUR
   onNext: () => void
@@ -684,6 +703,7 @@ function ActivityDetailsStep({
   onContactChange: (key: string, value: string | boolean | number | null) => void
   showPickupLocation: boolean
   locationValid: boolean
+  isCapturingLocation: boolean
 }) {
   const isActive = step === 1
   const isCompleted = step > 1
@@ -784,6 +804,8 @@ function ActivityDetailsStep({
         embedded
         onOpenMap={handleOpenMap}
         showDirections
+        capturedLocation={contact.location}
+        isCapturingLocation={isCapturingLocation}
       />
     </div>
   )
@@ -1597,8 +1619,15 @@ export default function BookingPage() {
 
   // The URL carries the tour id (/{tourId}/booking) so a refresh can rebuild
   // the booking context. The persisted draft is only trusted when it belongs
-  // to THIS URL's tour — a stale draft for another tour must never bleed in.
-  const draftMatches = !freshTour && Boolean(draft) && !!urlTourId && draft?.tourId === urlTourId
+  // to THIS tour — matched against the URL id (refresh / back-from-checkout /
+  // sign-in round-trip) or the arriving state tour's own id/slug (browser Back
+  // restores that entry's router state, and checkout's back link may deep-link
+  // with the slug instead of the id). A stale draft for another tour must
+  // never bleed in.
+  const freshTourId = freshTour ? String((freshTour as Record<string, unknown>).id || (freshTour as Record<string, unknown>).slug || '') : ''
+  const matchesUrlTour = !!urlTourId && Boolean(draft) && draft?.tourId === urlTourId
+  const matchesFreshTour = !!freshTour && Boolean(draft) && freshTourId !== '' && draft?.tourId === freshTourId
+  const draftMatches = matchesUrlTour || matchesFreshTour
 
   // Restore the tour from router state when arriving fresh from a tour detail
   // page, otherwise fall back to the matching persisted draft (refresh /
@@ -1616,9 +1645,11 @@ export default function BookingPage() {
     return plausibleTourId ? FALLBACK_TOUR : (freshTour as typeof FALLBACK_TOUR)
   })
 
-  // Only restore the form fields when we're NOT arriving fresh (i.e. this is a
-  // sign-in/refresh round-trip) and the stored draft belongs to this tour —
-  // otherwise a draft from a previous booking would bleed its data in.
+  // Restore the form fields whenever a draft exists for THIS tour — whether
+  // arriving fresh from the tour page (a matching draft means the traveller
+  // was mid-booking: returning from checkout or a previous attempt resumes
+  // instead of wiping), or on a refresh / sign-in round-trip (no state tour).
+  // Drafts for a different tour never restore.
   const canRestore = draftMatches
 
   const user = useAuthUser()
@@ -1635,14 +1666,27 @@ export default function BookingPage() {
   const [appliedPromo, setAppliedPromo] = useState<{ name: string; discountAmount: number } | null>(null)
   const [discount, setDiscount] = useState(0)
 
-  const [contact, setContact] = useState(() =>
-    canRestore && draft?.contact ? { ...DEFAULT_CONTACT, ...draft.contact } : DEFAULT_CONTACT,
-  )
+  const [contact, setContact] = useState(() => {
+    const restored = canRestore && draft?.contact
+      ? { ...DEFAULT_CONTACT, ...draft.contact }
+      : { ...DEFAULT_CONTACT }
+    // Signed-in traveller: prefill the Lead Traveler email with the login
+    // email, but only while the field is still empty — a draft email the user
+    // typed (or a deliberate clearing) is never overwritten.
+    if (!restored.email.trim() && user?.email) restored.email = user.email
+    return restored
+  })
 
   const [isChangeModalOpen, setIsChangeModalOpen] = useState(false)
-  const [editableTour, setEditableTour] = useState<EditableTourState>(() =>
-    canRestore && draft?.editableTour ? draft.editableTour : buildEditableTour(tour),
-  )
+  const [editableTour, setEditableTour] = useState<EditableTourState>(() => {
+    // When arriving with router-state tour context (fresh widget click, or
+    // browser Back restoring that entry) the state tour already carries the
+    // traveller's chosen date/time/party — building from it keeps the step
+    // selections in sync with the arriving tour. The draft's editableTour is
+    // only authoritative when there is no state tour (refresh / deep link).
+    if (canRestore && draft?.editableTour && !freshTour) return draft.editableTour
+    return buildEditableTour(tour)
+  })
   const [payment, setPayment] = useState(() =>
     canRestore && draft?.payment ? { ...DEFAULT_PAYMENT, ...draft.payment } : DEFAULT_PAYMENT,
   )
@@ -1653,6 +1697,7 @@ export default function BookingPage() {
   const [isExpired, setIsExpired] = useState(false)
   const [showExpiredModal, setShowExpiredModal] = useState(false)
   const [showSignInPrompt, setShowSignInPrompt] = useState(false)
+  const [isCapturingLocation, setIsCapturingLocation] = useState(false)
   const lastActivityAt = useRef(0)
 
   // Refresh / direct-URL / partial-stub arrival: once the by-URL-id fetch
@@ -1775,6 +1820,45 @@ export default function BookingPage() {
     trackActivity()
     setPayment((prev) => ({ ...prev, [key]: value }))
   }
+
+  // Auto-capture user location for meeting point tours so the backend
+  // receives travellers.location (required for all tours).
+  useEffect(() => {
+    if (tour.meetingMode !== 'meeting_point' || contact.location) return
+
+    let active = true
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsCapturingLocation(true)
+
+    requestLocation().then((loc) => {
+      if (!active || !loc) {
+        if (active) setIsCapturingLocation(false)
+        return
+      }
+
+      reverseGeocode(loc.lat, loc.lng).then((result) => {
+        if (active) {
+          const address = result?.formatted || `${loc.lat}, ${loc.lng}`
+          handleContactChange('location', address)
+          handleContactChange('pickupLat', loc.lat)
+          handleContactChange('pickupLng', loc.lng)
+          setIsCapturingLocation(false)
+        }
+      }).catch(() => {
+        if (active) {
+          handleContactChange('location', `${loc.lat}, ${loc.lng}`)
+          handleContactChange('pickupLat', loc.lat)
+          handleContactChange('pickupLng', loc.lng)
+          setIsCapturingLocation(false)
+        }
+      })
+    }).catch(() => {
+      if (active) setIsCapturingLocation(false)
+    })
+
+    return () => { active = false }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tour.meetingMode])
 
   const scrollToStep = (n: number) => {
     // Wait for the step-content swap (exit ~0.1s) to settle before scrolling,
@@ -2157,6 +2241,7 @@ export default function BookingPage() {
                   onContactChange={handleContactChange}
                   showPickupLocation={showPickupLocation}
                   locationValid={locationValid}
+                  isCapturingLocation={isCapturingLocation}
                 />
                 <ContactDetailsStep
                   tour={activeTour}

@@ -367,9 +367,10 @@ export default function CheckoutPage() {
 
       <AnimatePresence>
         {showAnimation && (
-          <BookingTransition onDone={() => {}} caption="Processing your payment" />
+          <BookingTransition onDone={() => {}} caption="Processing your payment" animationSrc="/animations/cash-or-card.lottie" />
         )}
       </AnimatePresence>
     </div>
   )
 }
+

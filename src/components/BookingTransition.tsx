@@ -15,13 +15,26 @@ import './BookingTransition.css'
 
 const TOTAL_MS = 2600
 
+const ANIMATION_PATHS = [
+  '/animations/sandy-loading.lottie',
+  '/animations/globe.lottie',
+  '/animations/dice-roll.lottie',
+  '/animations/countdown.lottie',
+]
+
+function getRandomAnimation(): string {
+  return ANIMATION_PATHS[Math.floor(Math.random() * ANIMATION_PATHS.length)]
+}
+
 interface BookingTransitionProps {
   onDone: () => void
   caption?: string
+  animationSrc?: string
 }
 
-export default function BookingTransition({ onDone, caption = 'Preparing your booking' }: BookingTransitionProps) {
+export default function BookingTransition({ onDone, caption = 'Preparing your booking', animationSrc }: BookingTransitionProps) {
   const [ready, setReady] = useState(false)
+  const [selectedAnimation] = useState(() => animationSrc || getRandomAnimation())
 
   useEffect(() => {
     const timer = setTimeout(onDone, TOTAL_MS)
@@ -43,7 +56,7 @@ export default function BookingTransition({ onDone, caption = 'Preparing your bo
     >
       <div className="bt-lottie">
         <DotLottieReact
-          src="/animations/sandy-loading.lottie"
+          src={selectedAnimation}
           loop
           autoplay
           dotLottieRefCallback={() => setReady(true)}
@@ -81,3 +94,5 @@ export default function BookingTransition({ onDone, caption = 'Preparing your bo
 
   return createPortal(overlay, document.body)
 }
+
+

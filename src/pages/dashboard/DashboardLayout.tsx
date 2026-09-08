@@ -416,7 +416,7 @@ export default function DashboardLayout() {
       <TopBar />
 
       <main className="min-h-screen dash-main-content">
-        <div className="mx-auto w-full max-w-[1120px] px-4 sm:px-6 lg:px-10 pb-10">
+        <div className="mx-auto w-full max-w-[1200px] px-6 pb-10">
           {modifyBookingId ? (
             /* "Edit your trip" — booking-scoped page inside the dashboard chrome. */
             <div className="dash-modify-wrap">

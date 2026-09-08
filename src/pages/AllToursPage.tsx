@@ -534,10 +534,11 @@ export default function AllToursPage() {
                 disabled={!hasPrevPage}
                 style={{ opacity: hasPrevPage ? 1 : 0.4 }}
               >
+                <ChevronLeft size={14} />
                 {t('allTours.prev')}
               </button>
               <span className="pagination-indicator">
-                {t('allTours.pageOf', { page, totalPages })}
+                {t('allTours.pageOf', { page, total: totalPages })}
               </span>
               <button
                 className="all-tours-load-btn"
@@ -546,6 +547,7 @@ export default function AllToursPage() {
                 style={{ opacity: hasNextPage ? 1 : 0.4 }}
               >
                 {t('allTours.next')}
+                <ChevronRight size={14} />
               </button>
             </div>
           </div>
