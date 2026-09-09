@@ -1,6 +1,6 @@
 .hero {
   position: relative;
-  min-height: 39vh;
+  min-height: 33vh;
   background: linear-gradient(180deg, rgba(23, 146, 55, 0.08) 0%, rgba(23, 146, 55, 0.03) 40%, #ffffff 100%);
 }
 
@@ -12,7 +12,7 @@
   align-items: center;
   justify-content: center;
   height: 100%;
-  min-height: 39vh;
+  min-height: 33vh;
   text-align: center;
   color: #1a1a1a;
   padding: 0.15vh 20px 0;
@@ -42,11 +42,6 @@
 }
 
 @media (max-width: 768px) {
-  .hero,
-  .hero-content {
-    min-height: 33vh;
-  }
-
   .hero-headline {
     font-size: 24px;
     letter-spacing: -0.5px;
