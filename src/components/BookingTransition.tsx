@@ -16,10 +16,10 @@ import './BookingTransition.css'
 const TOTAL_MS = 2600
 
 const ANIMATION_PATHS = [
+  '/animations/vintage-car.lottie',
   '/animations/sandy-loading.lottie',
   '/animations/globe.lottie',
   '/animations/dice-roll.lottie',
-  '/animations/countdown.lottie',
 ]
 
 function getRandomAnimation(): string {

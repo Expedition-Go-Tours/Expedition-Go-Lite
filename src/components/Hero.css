@@ -42,6 +42,16 @@
 }
 
 @media (max-width: 768px) {
+  .hero,
+  .hero-content {
+    min-height: 35vh;
+  }
+
+  /* A little extra breathing room above the headline on small screens. */
+  .hero-content {
+    padding-top: 36px;
+  }
+
   .hero-headline {
     font-size: 24px;
     letter-spacing: -0.5px;

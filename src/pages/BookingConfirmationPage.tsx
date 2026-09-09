@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useQueryClient } from '@tanstack/react-query'
+import confetti from 'canvas-confetti'
 import { Check, CalendarDays, Clock, Users, MapPin, CreditCard, ShieldCheck, Phone, Mail, Printer, Star, Ticket, Globe, AlertTriangle, Loader2 } from 'lucide-react'
 import { useExpeditionBookingDetail, useBookingBySession } from '../hooks/useExpeditionBookings'
 import { extractMeetingInfo, extractAvailabilitySchedule, formatCancellationPolicy, formatDuration } from '../hooks/useExpeditionTours'
@@ -174,6 +175,31 @@ export default function BookingConfirmationPage() {
     const verdict = evaluateCancellationPolicy(bt, travelDate)
     return verdict.deadline
   }, [booking?.tour?.bookingAndTickets, booking?.travelDate])
+
+  // Fire confetti when a confirmed booking loads
+  const confettiFiredRef = useRef(false)
+  useEffect(() => {
+    if (confettiFiredRef.current) return
+    if (!booking) return
+    const b = booking as ConfirmationBooking
+    const isPaid = b.paymentStatus === 'SUCCEEDED'
+    if (!isPaid) return
+    confettiFiredRef.current = true
+
+    const defaults = { startVelocity: 30, spread: 360, ticks: 80, zIndex: 99999 }
+    const end = Date.now() + 3000
+
+    const frame = () => {
+      confetti({
+        ...defaults,
+        particleCount: 3,
+        origin: { x: Math.random(), y: 0 },
+        colors: ['#166534', '#22c55e', '#facc15', '#60a5fa', '#f472b6'],
+      })
+      if (Date.now() < end) requestAnimationFrame(frame)
+    }
+    frame()
+  }, [booking])
 
   if (!user) {
     return (

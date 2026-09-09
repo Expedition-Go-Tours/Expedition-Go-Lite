@@ -47,7 +47,10 @@ export default function SearchBar() {
     setShowDropdown(false)
     setInputValue('')
     setHighlightedIndex(-1)
-    if (suggestion.type === 'tour' && suggestion.slug) {
+    if (suggestion.type === 'destination') {
+      addSearch({ slug: suggestion.title, title: suggestion.title, type: 'destination' })
+      navigate(`/tours?location=${encodeURIComponent(suggestion.title)}`)
+    } else if (suggestion.type === 'tour' && suggestion.slug) {
       navigate(`/tour/${suggestion.slug}`)
     }
   }, [navigate, addSearch])
@@ -58,7 +61,9 @@ export default function SearchBar() {
     setHighlightedIndex(-1)
     setIsFocused(false)
     inputRef.current?.blur()
-    if (item.type === 'tour' && item.slug) {
+    if (item.type === 'destination') {
+      navigate(`/tours?location=${encodeURIComponent(item.title)}`)
+    } else if (item.type === 'tour' && item.slug) {
       navigate(`/tour/${item.slug}`)
     }
   }, [navigate])

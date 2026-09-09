@@ -13,9 +13,9 @@ export default function HelpCentrePage() {
   const { t } = useTranslation()
 
   const SUPPORT_HOURS = [
-    { label: t('help:hours1Label'), value: t('help:hours1Value'), closed: false },
-    { label: t('help:hours2Label'), value: t('help:hours2Value'), closed: false },
-    { label: t('help:hours3Label'), value: t('help:hours3Value'), closed: true },
+    { label: t('help.hours1Label'), value: t('help.hours1Value'), closed: false },
+    { label: t('help.hours2Label'), value: t('help.hours2Value'), closed: false },
+    { label: t('help.hours3Label'), value: t('help.hours3Value'), closed: true },
   ]
 
   useEffect(() => {
@@ -47,7 +47,7 @@ export default function HelpCentrePage() {
             </div>
             <h3 className="support-card-title">{t('footer.faq')}</h3>
             <p className="support-card-text">
-              {t('help:faqDesc')}
+              {t('help.faqDesc')}
             </p>
           </Link>
 
@@ -57,7 +57,7 @@ export default function HelpCentrePage() {
             </div>
             <h3 className="support-card-title">{t('footer.refundPolicy')}</h3>
             <p className="support-card-text">
-              {t('help:refundDesc')}
+              {t('help.refundDesc')}
             </p>
           </Link>
 
@@ -67,7 +67,7 @@ export default function HelpCentrePage() {
             </div>
             <h3 className="support-card-title">{t('footer.contactUs')}</h3>
             <p className="support-card-text">
-              {t('help:contactDesc')}
+              {t('help.contactDesc')}
             </p>
           </Link>
         </div>
@@ -84,11 +84,11 @@ export default function HelpCentrePage() {
           </ul>
         </div>
 
-        <h2 className="support-section-title">{t('help:visitUs')}</h2>
+        <h2 className="support-section-title">{t('help.visitUs')}</h2>
         <div className="support-location-card">
           <div className="support-location-map">
             <iframe
-              title={t('help:officeIframeTitle')}
+              title={t('help.officeIframeTitle')}
               src="https://www.google.com/maps?q=Expedition-Go+Tours+Ltd,+Accra,+Ghana&output=embed"
               width="100%"
               height="100%"
@@ -102,12 +102,12 @@ export default function HelpCentrePage() {
             <img src="/logo.png" alt="Expedition-Go Tours" className="support-location-logo" />
             <div className="support-contact-label">
               <MapPin size={14} />
-              {t('help:officeLabel')}
+              {t('help.officeLabel')}
             </div>
-            <h3 className="support-location-name">{t('help:companyName')}</h3>
+            <h3 className="support-location-name">{t('help.companyName')}</h3>
             <p className="support-location-address">
-              {t('help:addressLine1')}<br />
-              {t('help:addressLine2')}
+              {t('help.addressLine1')}<br />
+              {t('help.addressLine2')}
             </p>
             <a
               href="https://www.google.com/maps/dir/?api=1&destination=Expedition-Go+Tours+Ltd,+Accra,+Ghana&travelmode=driving"
@@ -116,7 +116,7 @@ export default function HelpCentrePage() {
               className="support-btn support-btn-secondary support-btn-secondary--filled"
             >
               <MapPin size={14} />
-              {t('help:getDirections')}
+              {t('help.getDirections')}
             </a>
           </div>
         </div>

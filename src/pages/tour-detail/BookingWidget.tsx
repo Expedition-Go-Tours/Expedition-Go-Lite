@@ -7,7 +7,7 @@ import { buildBookingTour } from '../../lib/bookingTour'
 import { Button } from '../../components/ui/button'
 import { CalendarPicker } from '../../components/ui/apple-calendar-picker'
 import { motion, AnimatePresence } from 'framer-motion'
-import { CalendarDays, Users, Minus, Plus, MessageSquare, Clock as ClockIcon, BadgePercent, ShieldCheck } from 'lucide-react'
+import { CalendarDays, Users, Minus, Plus, Clock as ClockIcon, BadgePercent, ShieldCheck } from 'lucide-react'
 import { toast } from 'sonner'
 import { useCurrency } from '../../contexts/CurrencyContext'
 import type { DayAvailability, DayAvailabilityInfo, DayTimeSlot } from '../../lib/tourAvailability'
@@ -16,8 +16,7 @@ import { freeCancellationDateLabel } from '../../lib/cancellationLabel'
 import { categoryKey } from '../../lib/travelerBuckets'
 import { useTravelerSelection } from '../../hooks/useTravelerSelection'
 import { headlineUnitPrice, cardParityUnitPrice } from '../../lib/startingPrice'
-import { useChat } from '../../chat/ChatContext'
-import SupportChatWidget from '../../components/SupportChatWidget'
+import BookingDeadlineTimer from './BookingDeadlineTimer'
 import BookingTransition from '../../components/BookingTransition'
 import { fetchWithAuth } from '../../lib/api'
 import { buildPromoValidationPayload, isValidPromoCodeFormat, normalizePromoCode, PROMO_CODE_MIN_LENGTH } from '../../lib/promo'
@@ -62,7 +61,7 @@ const dropdownVariants = {
   exit: { opacity: 0, y: -8, scale: 0.96 },
 }
 
-export default function BookingWidget({ tour, getAvailability: propGetAvailability, getDayInfo, availabilityLoading, onMonthChange, onSelectedDateChange, onOpenAuth }: BookingWidgetProps) {
+export default function BookingWidget({ tour, getAvailability: propGetAvailability, getDayInfo, availabilityLoading, onMonthChange, onSelectedDateChange }: BookingWidgetProps) {
   const { t } = useTranslation()
   const { currency, convertPrice } = useCurrency()
   const navigate = useNavigate()
@@ -70,21 +69,11 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
   const [showCalendar, setShowCalendar] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [selectedTime, setSelectedTime] = useState<string | null>(null)
-  const [showChat, setShowChat] = useState(false)
   // Headline latch: the "From $X" price matches the tour card until the user
   // touches the traveler picker; the first +/- tap flips it to the live
   // headcount-aware unit price (and it stays live from then on).
   const [travelerTouched, setTravelerTouched] = useState(false)
 
-  // Unread indicator for the supplier's chat: a red dot on "Start a Chat"
-  // when that supplier has sent messages the traveler hasn't opened yet.
-  const chatCtx = useChat()
-  const supplierId = tour.supplierProfile?.id ?? null
-  const supplierConv = chatCtx.conversations.find(
-    (c) => c.type === 'SUPPLIER_CUSTOMER' && !!supplierId &&
-      c.participants?.some((p) => p.userId === supplierId),
-  )
-  const hasSupplierUnread = (supplierConv?.unreadCount ?? 0) > 0
   const [isBooking, setIsBooking] = useState(false)
   const [showTransition, setShowTransition] = useState(false)
 
@@ -864,6 +853,12 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
             </AnimatePresence>
           </div>
 
+          {/* Booking deadline countdown — shows hours left when the supplier
+              has set a near-term cutoff for the selected date. */}
+          {selectedDate && selectedDayInfo?.closesAt && (
+            <BookingDeadlineTimer closesAt={selectedDayInfo.closesAt} />
+          )}
+
           {/* Guest selector */}
           <div className="booking-field" ref={guestRef}>
             <label className="booking-label">
@@ -1158,29 +1153,8 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
               {cancellationNote}
             </p>
           )}
-
-          {/* Assistance */}
-          <div className="booking-assistance">
-            <p className="booking-assistance-title">{t('tourDetail.needFurtherAssistance')}</p>
-            <button type="button" className="booking-assistance-btn" onClick={() => setShowChat(true)}>
-              <MessageSquare size={16} />
-              {t('tourDetail.startChat')}
-              {hasSupplierUnread && <span className="booking-assistance-unread" aria-label="Unread messages" />}
-            </button>
-          </div>
         </div>
       </div>
-      {showChat && (
-        <SupportChatWidget
-          initialOpen
-          initialRecipient={
-            tour.supplierProfile?.id
-              ? { id: tour.supplierProfile.id, name: tour.supplierProfile.name, photoURL: tour.supplierProfile.photoURL }
-              : null
-          }
-          onOpenAuth={onOpenAuth}
-        />
-      )}
 
       <AnimatePresence>
         {showTransition && (
