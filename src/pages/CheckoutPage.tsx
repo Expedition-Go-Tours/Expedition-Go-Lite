@@ -131,7 +131,7 @@ export default function CheckoutPage() {
   const [paymentError, setPaymentError] = useState<string | null>(null)
   const [processing, setProcessing] = useState(false)
   const [showAnimation, setShowAnimation] = useState(false)
-  const [mobileSummaryOpen, setMobileSummaryOpen] = useState(false)
+  const [mobileSummaryOpen, setMobileSummaryOpen] = useState(true)
   const expiryReleasedRef = useRef(false)
   const elementsHandleRef = useRef<CheckoutElementsHandle | null>(null)
 
