@@ -1024,6 +1024,7 @@ a.support-contact-value:hover {
 
 /* --- Location Card --- */
 .support-location-card {
+  position: relative;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 24px;

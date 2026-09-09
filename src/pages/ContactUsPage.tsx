@@ -33,7 +33,7 @@ export default function ContactUsPage() {
         <div className="support-hero-orb support-hero-orb--3" />
         <div className="support-hero-orb support-hero-orb--4" />
         <div className="support-hero-content">
-          <h1 className="support-title">{t('contact:pageTitle')}</h1>
+          <h1 className="support-title">{t('footer.contactUs')}</h1>
           <p className="support-subtitle">{t('support.contactUsSubtitle')}</p>
         </div>
       </div>
@@ -156,9 +156,10 @@ export default function ContactUsPage() {
             <LifeBuoy size={14} />
             {t('support.exploreTopics')}
           </div>
-          <p className="support-card-text">
-            {t('contact:preAnswerNote')}
-          </p>
+          <p
+            className="support-card-text"
+            dangerouslySetInnerHTML={{ __html: t('contact:preAnswerNote') }}
+          />
         </div>
       </div>
 

@@ -33,7 +33,7 @@ export default function HelpCentrePage() {
         <div className="support-hero-orb support-hero-orb--3" />
         <div className="support-hero-orb support-hero-orb--4" />
         <div className="support-hero-content">
-          <h1 className="support-title">{t('help:pageTitle')}</h1>
+          <h1 className="support-title">{t('footer.helpCentre')}</h1>
           <p className="support-subtitle">{t('support.helpCentreSubtitle')}</p>
         </div>
       </div>

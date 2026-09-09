@@ -83,7 +83,7 @@ export default function FAQPage() {
   ]
 
   useEffect(() => {
-    document.title = `${t('faq:pageTitle')} | Expedition-Go Tours`
+    document.title = `${t('footer.faq')} | Expedition-Go Tours`
   }, [t])
 
   return (
@@ -95,7 +95,7 @@ export default function FAQPage() {
           theme="light"
         />
         <div className="support-hero-content">
-          <h1 className="support-title">{t('faq:pageTitle')}</h1>
+          <h1 className="support-title">{t('footer.faq')}</h1>
           <p className="support-subtitle">{t('support.faqSubtitle')}</p>
         </div>
       </div>
