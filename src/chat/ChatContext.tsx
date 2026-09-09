@@ -12,6 +12,7 @@ import { useAuthUser } from '../hooks/useAuthUser'
 import { getAuthToken, refreshAuthToken } from '../lib/auth'
 import { queryClient } from '../lib/queryClient'
 import * as api from './chatApi'
+import type { ChatStartContext } from './chatApi'
 import { connectChatSocket, disconnectChatSocket, getChatSocket } from './chatSocket'
 import type {
   ChatConversation, ChatMessage, ChatRecipient, ConversationType, MessageStatus,
@@ -27,8 +28,12 @@ interface ChatContextValue {
   messageStatuses: Record<string, MessageStatus>
   unreadCount: number
   openConversation: (conversationId: string) => void
-  startChat: (recipient: ChatRecipient, type: ConversationType) => Promise<ChatConversation>
-  openSupplierChat: (supplier: ChatRecipient) => Promise<void>
+  startChat: (
+    recipient: ChatRecipient,
+    type: ConversationType,
+    context?: ChatStartContext,
+  ) => Promise<ChatConversation>
+  openSupplierChat: (supplier: ChatRecipient, context?: ChatStartContext) => Promise<void>
   openSupportChat: () => Promise<void>
   closeConversation: () => void
   sendMessage: (content: string, attachment?: { url: string; type: string }) => void
@@ -387,10 +392,15 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   )
 
   /** Finds-or-creates a conversation with a recipient and opens it. Throws on
-   *  failure so callers can surface/fall back. */
+   *  failure so callers can surface/fall back. `context` attaches the booking a
+   *  booking-originated chat is about (used by messaging emails). */
   const startChat = useCallback(
-    async (recipient: ChatRecipient, type: ConversationType): Promise<ChatConversation> => {
-      const conv = await api.getOrCreateConversation(recipient.id, type)
+    async (
+      recipient: ChatRecipient,
+      type: ConversationType,
+      context?: ChatStartContext,
+    ): Promise<ChatConversation> => {
+      const conv = await api.getOrCreateConversation(recipient.id, type, context)
       setConversations((prev) => {
         if (prev.some((c) => c.id === conv.id)) return prev
         return [conv, ...prev]
@@ -402,8 +412,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   )
 
   const openSupplierChat = useCallback(
-    async (supplier: ChatRecipient) => {
-      await startChat(supplier, SUPPLIER_CONVERSATION_TYPE)
+    async (supplier: ChatRecipient, context?: ChatStartContext) => {
+      await startChat(supplier, SUPPLIER_CONVERSATION_TYPE, context)
     },
     [startChat],
   )

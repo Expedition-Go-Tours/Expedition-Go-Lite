@@ -717,6 +717,11 @@ export default function BookingWorkspace({ id, onClose }: { id?: string; onClose
         const conv = await chat.startChat(
           { id: operatorId, name: supplierName || 'Operator', photoURL: operatorPhoto },
           'SUPPLIER_CUSTOMER',
+          {
+            bookingId: detail?.id,
+            bookingNumber: detail?.bookingNumber,
+            tourTitle: typeof tour?.title === 'string' ? tour.title : undefined,
+          },
         )
         navigate(`/dashboard/chat?conversation=${conv.id}`)
         return

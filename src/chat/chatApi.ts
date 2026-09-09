@@ -18,13 +18,29 @@ export async function getConversations(): Promise<ChatConversation[]> {
   return payload.data?.conversations ?? []
 }
 
+export interface ChatStartContext {
+  /** id of the Booking this conversation is about (when started from one) */
+  bookingId?: string
+  /** booking.bookingNumber, e.g. EXP-12345678-2026-09 */
+  bookingNumber?: string
+  /** tour/experience title so emails show "About: <tour> · Ref <booking>" */
+  tourTitle?: string
+}
+
 export async function getOrCreateConversation(
   recipientId: string,
   type: ConversationType,
+  context?: ChatStartContext,
 ): Promise<ChatConversation> {
+  const body: Record<string, unknown> = { recipientId, type }
+  if (context) {
+    if (context.bookingId) body.bookingId = context.bookingId
+    if (context.bookingNumber) body.bookingNumber = context.bookingNumber
+    if (context.tourTitle) body.tourTitle = context.tourTitle
+  }
   const res = await fetchWithAuth('/chat/conversations', {
     method: 'POST',
-    body: JSON.stringify({ recipientId, type }),
+    body: JSON.stringify(body),
   })
   if (!res.ok) {
     const payload = await res.json().catch(() => ({}))
