@@ -1547,3 +1547,39 @@ body:has(.story-detail) .navbar-compact-search {
   font-size: 14px;
   color: #94a3b8;
 }
+
+/* Support pages (Help Centre / Contact Us / FAQ & shared .support-page shell):
+   center the navbar content on the support container's inner content edges
+   (max-width 1280px + 24px gutters) so the logo (left) and profile icon
+   (right) line up with the page grid instead of the homepage column. */
+body:has(.support-page) .navbar {
+  padding-left: max(24px, calc((100vw - 1280px) / 2 + 24px));
+  padding-right: max(24px, calc((100vw - 1280px) / 2 + 24px));
+}
+
+@media (max-width: 768px) {
+  body:has(.support-page) .navbar {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
+
+/* All Tours (/tours — homepage "View all", mood/location/attraction filters)
+   and Search results (/search — city/free-text search): the content column is
+   max-width 1400px with 40px gutters. Desktop+ aligns the navbar items on that
+   column's inner content edges, matching the support-page fix. */
+@media (min-width: 1025px) {
+  body:has(.all-tours-page) .navbar,
+  body:has(.search-results-page) .navbar {
+    padding-left: max(40px, calc((100vw - 1400px) / 2 + 40px));
+    padding-right: max(40px, calc((100vw - 1400px) / 2 + 40px));
+  }
+}
+
+/* Search page keeps 40px gutters down to 601px; align the navbar there too. */
+@media (min-width: 601px) and (max-width: 1024px) {
+  body:has(.search-results-page) .navbar {
+    padding-left: 40px;
+    padding-right: 40px;
+  }
+}
