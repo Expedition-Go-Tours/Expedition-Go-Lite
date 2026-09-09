@@ -1706,7 +1706,14 @@ export default function BookingPage() {
   // with the slug instead of the id). A stale draft for another tour must
   // never bleed in.
   const freshTourId = freshTour ? String((freshTour as Record<string, unknown>).id || (freshTour as Record<string, unknown>).slug || '') : ''
-  const matchesUrlTour = !!urlTourId && Boolean(draft) && draft?.tourId === urlTourId
+  // The persisted draft stores the whole tour, so it can be matched against a
+  // URL that carries the tour's id OR its slug — checkout's back links deep-link
+  // with the slug ({slug}/booking) while the widget navigates with the id.
+  const draftTour = (draft?.tour ?? null) as { id?: string; slug?: string } | null | undefined
+  const matchesUrlTour =
+    !!urlTourId &&
+    Boolean(draft) &&
+    (urlTourId === String(draft?.tourId ?? '') || urlTourId === draftTour?.id || urlTourId === draftTour?.slug)
   const matchesFreshTour = !!freshTour && Boolean(draft) && freshTourId !== '' && draft?.tourId === freshTourId
   const draftMatches = matchesUrlTour || matchesFreshTour
 
@@ -1818,6 +1825,10 @@ export default function BookingPage() {
   /* Save draft to localStorage on field changes (also persists the tour on
      first arrival so a refresh / sign-in round-trip can restore it). */
   useEffect(() => {
+    // While the placeholder tour is still being fetched for an unmatched URL,
+    // never overwrite an existing draft with the placeholder + reset fields —
+    // that would destroy the traveller's data before the real tour arrives.
+    if (needFetch && !tour?.id) return
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
         tour,
@@ -1828,7 +1839,7 @@ export default function BookingPage() {
         payment,
       }))
     } catch { /* ignore */ }
-  }, [tour, contact, editableTour, step, payment])
+  }, [tour, contact, editableTour, step, payment, needFetch])
 
   const clearDraft = () => {
     try { localStorage.removeItem(STORAGE_KEY) } catch { /* ignore */ }
