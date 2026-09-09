@@ -1,5 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { fetchWithAuth } from '../lib/api'
+import { getStoredAuthTokens } from '../lib/auth'
+import { useAuthUser } from './useAuthUser'
 import type { DayAvailability, DayAvailabilityInfo, DayTimeSlot } from '../lib/tourAvailability'
 
 /**
@@ -505,34 +507,49 @@ interface RawBookingDetailRecord {
  * or the booking id string if one exists.
  */
 export function useReviewableBookingForTour(tourSlugOrId: string | undefined) {
+  // The query only has meaning for an authenticated customer, and its endpoint
+  // is protected. Gate it on a real session so signed-out visitors / dead
+  // sessions never fire pointless requests (401 spam + retries), scope the
+  // cache per user, and fail soft to null — eligibility is informational.
+  const user = useAuthUser()
+  const hasToken = Boolean(getStoredAuthTokens().accessToken)
+
   return useQuery({
-    queryKey: ['expedition', 'bookings', 'reviewable', tourSlugOrId],
-    enabled: !!tourSlugOrId,
+    queryKey: ['expedition', 'bookings', 'reviewable', user?.id ?? 'anon', tourSlugOrId],
+    enabled: !!tourSlugOrId && !!user && hasToken,
+    retry: 0,
+    refetchOnWindowFocus: false,
     queryFn: async (): Promise<string | null> => {
-      // getMyBookings doesn't expose a tour filter or the review relation,
-      // so pull completed bookings and match client-side against the tour,
-      // then verify via the single-booking endpoint (which does include
-      // `review`) whether it's still eligible.
-      const payload = await expeditionFetchRaw('/expedition/bookings?status=COMPLETED&limit=100')
-      const data = payload.data ?? payload
-      const records: RawBookingListRecord[] = data.bookings || []
-      const bookings = records.map(mapBookingSummary)
-
-      const match = bookings.find(
-        (b) => b.tourSlug === tourSlugOrId || b.tourId === tourSlugOrId
-      )
-      if (!match) return null
-
       try {
-        const detailPayload = await expeditionFetchRaw(`/expedition/bookings/${encodeURIComponent(match.id)}`)
-        const detail: RawBookingDetailRecord = (detailPayload.data ?? detailPayload)?.booking ?? {}
-        if (detail.review) return null // already reviewed
-        return match.id
+        // getMyBookings doesn't expose a tour filter or the review relation,
+        // so pull completed bookings and match client-side against the tour,
+        // then verify via the single-booking endpoint (which does include
+        // `review`) whether it's still eligible.
+        const payload = await expeditionFetchRaw('/expedition/bookings?status=COMPLETED&limit=100')
+        const data = payload.data ?? payload
+        const records: RawBookingListRecord[] = data.bookings || []
+        const bookings = records.map(mapBookingSummary)
+
+        const match = bookings.find(
+          (b) => b.tourSlug === tourSlugOrId || b.tourId === tourSlugOrId
+        )
+        if (!match) return null
+
+        try {
+          const detailPayload = await expeditionFetchRaw(`/expedition/bookings/${encodeURIComponent(match.id)}`)
+          const detail: RawBookingDetailRecord = (detailPayload.data ?? detailPayload)?.booking ?? {}
+          if (detail.review) return null // already reviewed
+          return match.id
+        } catch {
+          // If the detail fetch fails, fall back to the summary match — the
+          // create-review call will still correctly reject it if a review
+          // already exists (409 "already reviewed").
+          return match.id
+        }
       } catch {
-        // If the detail fetch fails, fall back to the summary match — the
-        // create-review call will still correctly reject it if a review
-        // already exists (409 "already reviewed").
-        return match.id
+        // Signed-out / expired session (401) or a transient failure resolves to
+        // "no eligible booking" rather than throwing and retry-spamming.
+        return null
       }
     },
   })
