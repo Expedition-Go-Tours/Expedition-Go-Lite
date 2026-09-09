@@ -468,10 +468,7 @@ export default function BookingHistory() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 0.5 }}
                   >
-                    <Link className="bk-btn bk-btn-primary bk-empty-primary" to="/">
-                      Explore experiences
-                    </Link>
-                    <Link className="bk-btn bk-btn-secondary bk-empty-secondary" to="/tours">
+                    <Link className="bk-btn bk-btn-primary bk-empty-primary" to="/tours">
                       Browse all tours
                     </Link>
                   </motion.div>

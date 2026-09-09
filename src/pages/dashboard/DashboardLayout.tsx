@@ -73,9 +73,7 @@ function ProfileDropdown({
   signingOut: boolean;
 }) {
   const navigate = useNavigate();
-  const location = useLocation();
   const user = useAuthUser();
-  const { unreadCount } = useChat();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -98,14 +96,6 @@ function ProfileDropdown({
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
   }, [open, onClose]);
-
-  const isActive = (path: string) =>
-    location.pathname === path || location.pathname.startsWith(path + "/");
-
-  const navigateAndClose = (path: string) => {
-    navigate(path);
-    onClose();
-  };
 
   return (
     <AnimatePresence>
@@ -146,41 +136,6 @@ function ProfileDropdown({
 
           <div className="dash-profile-divider" />
 
-          {/* Nav items */}
-          {allNavItems.map((item) => {
-            const active = isActive(item.path);
-            const badge =
-              item.path === "/dashboard/chat" ? unreadCount : 0;
-            return (
-              <button
-                key={item.path}
-                role="menuitem"
-                className={`dash-profile-item${active ? " active" : ""}`}
-                onClick={() => navigateAndClose(item.path)}
-              >
-                <item.icon size={16} strokeWidth={active ? 2.2 : 1.7} />
-                <span>{item.label}</span>
-                {badge > 0 && (
-                  <span className="dash-profile-badge">
-                    {badge > 99 ? "99+" : badge}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-
-          <div className="dash-profile-divider" />
-
-          {/* Account settings */}
-          <button
-            role="menuitem"
-            className="dash-profile-item"
-            onClick={() => navigateAndClose("/dashboard/settings")}
-          >
-            <Settings size={16} strokeWidth={1.7} />
-            <span>Account Settings</span>
-          </button>
-
           {/* Back to homepage */}
           <button
             role="menuitem"
@@ -193,8 +148,6 @@ function ProfileDropdown({
             <Home size={16} strokeWidth={1.7} />
             <span>Back to Homepage</span>
           </button>
-
-          <div className="dash-profile-divider" />
 
           {/* Sign out */}
           {!showLogoutConfirm ? (

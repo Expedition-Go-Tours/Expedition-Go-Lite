@@ -1166,12 +1166,8 @@
     text-align: left;
   }
 
-  .bk-empty-actions {
-    width: 100%;
-  }
-
   .bk-empty-actions .bk-btn {
-    flex: 1;
+    flex: 0 0 auto;
     justify-content: center;
   }
 
