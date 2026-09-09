@@ -18,6 +18,7 @@ import ExpiredHoldModal from '../components/booking/ExpiredHoldModal'
 import SignInPromptModal from '../components/booking/SignInPromptModal'
 import CardField from '../components/booking/CardField'
 import OptionSelector from '../components/booking/OptionSelector'
+import BookingTransition from '../components/BookingTransition'
 import { useAuthUser } from '../hooks/useAuthUser'
 import { setAuthReturnTo } from '../lib/auth'
 import type { CardElementHandle } from '../components/booking/CardField'
@@ -1819,6 +1820,8 @@ export default function BookingPage() {
     canRestore && draft?.payment ? { ...DEFAULT_PAYMENT, ...draft.payment } : DEFAULT_PAYMENT,
   )
   const [isBooking, setIsBooking] = useState(false)
+  const [showCheckoutTransition, setShowCheckoutTransition] = useState(false)
+  const pendingCheckoutUrl = useRef<string | null>(null)
 
   const [isActive, setIsActive] = useState(false)
 
@@ -2272,7 +2275,8 @@ export default function BookingPage() {
       // success is settled ONLY by the payment_intent.succeeded webhook, and the
       // confirmation page polls the by-session endpoint until it lands.
       if (result?.payment?.clientSecret) {
-        navigate(`/booking/checkout?draft=${encodeURIComponent(result.payment.draftId)}`)
+        pendingCheckoutUrl.current = `/booking/checkout?draft=${encodeURIComponent(result.payment.draftId)}`
+        setShowCheckoutTransition(true)
         return
       }
 
@@ -2294,6 +2298,13 @@ export default function BookingPage() {
       setIsBooking(false)
     }
   }, [createBooking, contact, editableTour, tour, showPickupLocation, zonesDrawn, isBooking, isActive, pollBooking, user, payment.paymentTiming, appliedPromo, promoCode, hasMultipleOptions, selectedOptionId])
+
+  const handleCheckoutTransitionDone = useCallback(() => {
+    if (pendingCheckoutUrl.current) {
+      navigate(pendingCheckoutUrl.current)
+      pendingCheckoutUrl.current = null
+    }
+  }, [navigate])
 
   const handleApplyPromo = useCallback(async () => {
     const code = promoCode.trim().toUpperCase()
@@ -2556,6 +2567,16 @@ export default function BookingPage() {
           <SignInPromptModal
             onSignIn={handleSignInPrompt}
             onClose={() => setShowSignInPrompt(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showCheckoutTransition && (
+          <BookingTransition
+            onDone={handleCheckoutTransitionDone}
+            animationSrc="/animations/vintage-car.lottie"
+            caption="Redirecting to checkout"
           />
         )}
       </AnimatePresence>
