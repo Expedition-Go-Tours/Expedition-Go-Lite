@@ -3,7 +3,7 @@
  * indicator, pagination and the input bar. Used by the support widget and
  * the dashboard chat page; reuses the .support-chat-* styles.
  */
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ArrowDown, Check, CheckCheck, ImagePlus, Send, Trash2 } from 'lucide-react'
@@ -91,7 +91,6 @@ export default function ChatThread({
   const [sendingAttachment, setSendingAttachment] = useState(false)
   const [pendingAttachment, setPendingAttachment] = useState<{ url: string; type: string } | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const fileRef = useRef<HTMLInputElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -118,14 +117,23 @@ export default function ChatThread({
     setShowScrollFab(distFromBottom > 300)
   }
 
+  // Scroll the message list only — never the page. `scrollIntoView` on an
+  // element would also scroll ancestor containers (including the document),
+  // which on the dashboard makes the whole chat card jump when a thread opens.
+  const scrollMessagesToBottom = useCallback(() => {
+    const el = scrollContainerRef.current
+    if (!el) return
+    el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
+  }, [])
+
   useEffect(() => {
     if (stickToBottomRef.current) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+      scrollMessagesToBottom()
     }
-  }, [messages.length, isTyping])
+  }, [messages.length, isTyping, scrollMessagesToBottom])
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    scrollMessagesToBottom()
     stickToBottomRef.current = true
     setShowScrollFab(false)
   }
@@ -297,8 +305,6 @@ export default function ChatThread({
             </motion.div>
           )}
         </AnimatePresence>
-
-        <div ref={messagesEndRef} />
 
         {/* Scroll-to-bottom FAB */}
         <AnimatePresence>
