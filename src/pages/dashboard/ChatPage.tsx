@@ -15,6 +15,14 @@ import { useAuthUser } from "@/hooks/useAuthUser";
 import ChatThread from "@/chat/ChatThread";
 import { uploadChatImage } from "@/chat/chatApi";
 
+/* Support-thread conversation types. The fixed "Admin Support" entry at the
+   top of the list is their single entry point — support threads are never
+   rendered as regular rows below it, so opening one never leaves a duplicate
+   row underneath. */
+function isSupportConversation(conversation: { type?: string }): boolean {
+  return conversation.type === "USER_SUPPORT" || conversation.type === "EXPEDITION_CUSTOMER";
+}
+
 /* ── Smart relative date labels ────────────────────────────────── */
 function smartDate(iso: string): string {
   const d = new Date(iso);
@@ -69,7 +77,10 @@ export default function ChatPage() {
     [chat.conversations, chat.activeConversationId],
   );
   const other = activeConversation ? otherParticipant(activeConversation, myUserId) : undefined;
-  const activeName = other?.name || activeConversation?.title || t("supportChat.expeditionSupport");
+  const isSupportActive = activeConversation ? isSupportConversation(activeConversation) : false;
+  const activeName = isSupportActive
+    ? t("supportChat.adminSupport")
+    : other?.name || activeConversation?.title || t("supportChat.expeditionSupport");
   const activePhoto = other?.photoURL ?? null;
   const activeMessages = chat.activeConversationId ? (chat.messages[chat.activeConversationId] ?? []) : [];
   const otherLastReadAt = other
@@ -109,7 +120,7 @@ export default function ChatPage() {
 
   /* ── Filtered + searched conversations ─────────────────────────── */
   const filteredConversations = useMemo(() => {
-    let list = chat.conversations;
+    let list = chat.conversations.filter((c) => !isSupportConversation(c));
     if (filter === "unread") {
       list = list.filter((c) => (c.unreadCount ?? 0) > 0);
     }
@@ -126,6 +137,11 @@ export default function ChatPage() {
   }, [chat.conversations, filter, searchQuery, myUserId]);
 
   const totalUnread = chat.conversations.reduce((sum, c) => sum + (c.unreadCount ?? 0), 0);
+  const supportUnread = chat.conversations.reduce(
+    (sum, c) => sum + (isSupportConversation(c) ? (c.unreadCount ?? 0) : 0),
+    0,
+  );
+  const hasSupplierConversations = chat.conversations.some((c) => !isSupportConversation(c));
 
   return (
     <div className="dash-chat-shell">
@@ -186,19 +202,24 @@ export default function ChatPage() {
 
         {/* Conversation list */}
         <div className="dash-chat-conv-list">
-          {/* Support button */}
-          <button className="dash-chat-support-btn" onClick={goSupportChat}>
+          {/* Admin Support button */}
+          <button className="dash-chat-support-btn" onClick={goSupportChat} aria-label={t("supportChat.adminSupport")}>
             <div className="dash-chat-conv-avatar">
               <Headphones size={17} />
             </div>
             <div className="dash-chat-conv-info">
-              <p className="dash-chat-conv-name">{t("supportChat.expeditionSupport")}</p>
+              <p className="dash-chat-conv-name">{t("supportChat.adminSupport")}</p>
               <p className="dash-chat-conv-preview">{t("supportChat.chatWithSupportSub")}</p>
             </div>
+            {supportUnread > 0 && (
+              <div className="dash-chat-conv-meta">
+                <span className="dash-chat-conv-unread">{Math.min(supportUnread, 99)}</span>
+              </div>
+            )}
           </button>
 
           {/* Empty state — no conversations */}
-          {filteredConversations.length === 0 && chat.conversations.length === 0 && (
+          {filteredConversations.length === 0 && !hasSupplierConversations && (
             <div className="dash-chat-empty" style={{ padding: "32px 16px" }}>
               <MessageCircle size={28} className="text-[var(--bv-faint)]" />
               <p className="dash-chat-empty-title">{t("supportChat.noConversations")}</p>
@@ -207,7 +228,7 @@ export default function ChatPage() {
           )}
 
           {/* Empty state — no search results */}
-          {filteredConversations.length === 0 && chat.conversations.length > 0 && searchQuery && (
+          {filteredConversations.length === 0 && hasSupplierConversations && searchQuery && (
             <div className="dash-chat-empty" style={{ padding: "32px 16px" }}>
               <Search size={24} className="text-[var(--bv-faint)]" />
               <p className="dash-chat-empty-title">{t("supportChat.noResults", "No results")}</p>
@@ -218,7 +239,7 @@ export default function ChatPage() {
           )}
 
           {/* Empty state — no unread */}
-          {filteredConversations.length === 0 && chat.conversations.length > 0 && filter === "unread" && !searchQuery && (
+          {filteredConversations.length === 0 && hasSupplierConversations && filter === "unread" && !searchQuery && (
             <div className="dash-chat-empty" style={{ padding: "32px 16px" }}>
               <MessageCircle size={24} className="text-[var(--bv-faint)]" />
               <p className="dash-chat-empty-title">{t("supportChat.allRead", "All caught up")}</p>
@@ -284,7 +305,7 @@ export default function ChatPage() {
                 <ChevronLeft size={18} />
               </button>
               <div className="dash-chat-thread-avatar">
-                {activePhoto ? (
+                {!isSupportActive && activePhoto ? (
                   <img src={activePhoto} alt="" />
                 ) : (
                   <Headphones size={17} />

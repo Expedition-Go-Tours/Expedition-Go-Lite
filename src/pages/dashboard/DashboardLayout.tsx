@@ -255,6 +255,33 @@ function TopBar() {
                 </button>
               );
             })}
+            {(() => {
+              const chatActive = isActive("/dashboard/chat");
+              return (
+                <button
+                  className={`dash-topbar-tab${chatActive ? " active" : ""}`}
+                  onClick={() => navigate("/dashboard/chat")}
+                  aria-current={chatActive ? "page" : undefined}
+                >
+                  <span className="dash-topbar-icon-wrap">
+                    <MessageCircle size={16} strokeWidth={chatActive ? 2.2 : 1.7} />
+                    {unreadCount > 0 && (
+                      <span className="dash-topbar-badge">
+                        {unreadCount > 99 ? "99+" : unreadCount}
+                      </span>
+                    )}
+                  </span>
+                  <span>Chat</span>
+                  {chatActive && (
+                    <motion.span
+                      layoutId="topbar-active"
+                      className="dash-topbar-underline"
+                      transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                    />
+                  )}
+                </button>
+              );
+            })()}
           </nav>
 
           {/* Spacer */}
@@ -270,22 +297,6 @@ function TopBar() {
             >
               <Bell size={18} strokeWidth={1.7} />
               {/* Unread badge could go here if we track notification unread */}
-            </button>
-
-            {/* Chat (desktop) */}
-            <button
-              className="dash-topbar-icon-btn hidden lg:flex"
-              onClick={() => navigate("/dashboard/chat")}
-              aria-label="Chat"
-            >
-              <span className="dash-topbar-icon-wrap">
-                <MessageCircle size={18} strokeWidth={1.7} />
-                {unreadCount > 0 && (
-                  <span className="dash-topbar-badge">
-                    {unreadCount > 99 ? "99+" : unreadCount}
-                  </span>
-                )}
-              </span>
             </button>
 
             {/* Profile trigger */}
