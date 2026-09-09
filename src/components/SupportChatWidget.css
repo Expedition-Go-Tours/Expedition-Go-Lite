@@ -1407,7 +1407,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+  overflow: visible; /* let the status dot sit fully outside the circle */
   font-size: 15px;
   font-weight: 600;
   position: relative;
@@ -1417,13 +1417,14 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  border-radius: 50%;
 }
 
-/* Online status dot on avatar */
+/* Online status dot on avatar — fully outside the circle edge */
 .dash-chat-conv-avatar .dash-chat-status-dot {
   position: absolute;
-  bottom: 0;
-  right: 0;
+  bottom: -4px;
+  right: -4px;
   width: 12px;
   height: 12px;
   border-radius: 50%;
