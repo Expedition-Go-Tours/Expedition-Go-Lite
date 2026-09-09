@@ -38,7 +38,7 @@ export default function ReviewsPage() {
     return (
       <div className="flex flex-col items-center justify-center py-20 px-6 text-center bg-white rounded-2xl border border-[var(--bv-border)] shadow-sm">
         <div className="w-full max-w-md mb-5">
-          <Suspense fallback={<div className="w-full aspect-video rounded-2xl bg-[var(--bv-accent-soft)] animate-pulse" />}>
+          <Suspense fallback={<div className="w-full aspect-[4/3]" aria-hidden="true" />}>
             <DotLottieReact
               src="/animations/reviews-empty.lottie"
               loop
