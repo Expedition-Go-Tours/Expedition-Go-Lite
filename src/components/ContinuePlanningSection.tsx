@@ -11,6 +11,7 @@ import { useSellOutContext } from '../context/SellOutContext'
 import { getCategoryMeta } from './categoryMeta'
 import i18n from '../i18n/config'
 import './ContinuePlanningSection.css'
+import './skeleton.css'
 import OptimizedImage from '@/components/shared/OptimizedImage'
 import { bestOfferDiscountAmount, type SpecialOfferData } from '../hooks/useExpeditionTours'
 
@@ -242,6 +243,83 @@ function ContinuePlanningCard({ item, likelyToSellOut }: { item: ContinuePlannin
     </div>
   )
 }
+
+/** One carousel slide: shows a skeleton shaped exactly like the real card
+ *  (vertical TourCard on mobile, horizontal cp-card on desktop/tablet) until
+ *  that card's image has loaded, so cards never pop in over a blank box. */
+function ContinuePlanningSlide({
+  item,
+  likelyToSellOut,
+  isMobile,
+}: {
+  item: ContinuePlanningItem
+  likelyToSellOut?: boolean
+  isMobile: boolean
+}) {
+  const [imageReady, setImageReady] = useState(() => !item.imageUrl)
+
+  useEffect(() => {
+    if (!item.imageUrl) return
+    let cancelled = false
+    const img = new Image()
+    const done = () => {
+      if (!cancelled) setImageReady(true)
+    }
+    img.onload = done
+    img.onerror = done
+    img.src = item.imageUrl
+    const timeout = window.setTimeout(done, 4000)
+    return () => {
+      cancelled = true
+      window.clearTimeout(timeout)
+      img.onload = null
+      img.onerror = null
+    }
+  }, [item.imageUrl])
+
+  if (!imageReady) {
+    return isMobile ? (
+      <div className="continue-skeleton continue-skeleton-mobile" aria-hidden="true">
+        <span className="continue-skeleton-media">
+          <span className="skeleton-shimmer" />
+        </span>
+        <span className="continue-skeleton-mobile-body">
+          <span className="skeleton-line continue-skeleton-loc" />
+          <span className="skeleton-line continue-skeleton-title" />
+          <span className="skeleton-line continue-skeleton-title-short" />
+          <span className="continue-skeleton-row">
+            <span className="skeleton-line continue-skeleton-price" />
+            <span className="skeleton-line continue-skeleton-rating" />
+          </span>
+        </span>
+      </div>
+    ) : (
+      <div className="continue-skeleton continue-skeleton-card" aria-hidden="true">
+        <span className="continue-skeleton-media">
+          <span className="skeleton-shimmer" />
+        </span>
+        <span className="continue-skeleton-card-body">
+          <span className="skeleton-line continue-skeleton-card-line-title" />
+          <span className="skeleton-line continue-skeleton-card-line-short" />
+          <span className="skeleton-line continue-skeleton-card-line-facts" />
+          <span className="continue-skeleton-card-row">
+            <span className="skeleton-line continue-skeleton-card-line-rating" />
+          </span>
+        </span>
+        <span className="continue-skeleton-card-price">
+          <span className="skeleton-line continue-skeleton-card-line-price" />
+        </span>
+      </div>
+    )
+  }
+
+  return isMobile ? (
+    <TourCard {...toTourCardProps(item, likelyToSellOut ?? false)} imageClean hideFeatures hideOfferBadge />
+  ) : (
+    <ContinuePlanningCard item={item} likelyToSellOut={likelyToSellOut} />
+  )
+}
+
 export default function ContinuePlanningSection() {
   const { t } = useTranslation()
   const { continuePlanning } = useContinuePlanning()
@@ -314,11 +392,11 @@ export default function ContinuePlanningSection() {
             <div className="continue-planning-carousel" ref={scrollRef}>
               {continuePlanning.map((item) => (
                 <div key={item.id} className="continue-planning-card-wrap">
-                  {isMobile ? (
-                    <TourCard {...toTourCardProps(item, isLikelyToSellOut({ id: item.id, title: item.title }))} imageClean hideFeatures hideOfferBadge />
-                  ) : (
-                    <ContinuePlanningCard item={item} likelyToSellOut={isLikelyToSellOut({ id: item.id, title: item.title })} />
-                  )}
+                  <ContinuePlanningSlide
+                    item={item}
+                    likelyToSellOut={isLikelyToSellOut({ id: item.id, title: item.title })}
+                    isMobile={isMobile}
+                  />
                 </div>
               ))}
             </div>
