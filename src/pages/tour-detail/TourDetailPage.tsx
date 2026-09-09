@@ -360,10 +360,20 @@ export default function TourDetailPage({ onOpenAuth }: TourDetailPageProps = {})
       id: r.id,
       name: r.author,
       tag: t('reviews.traveler'),
-      date: new Date(r.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+      date: new Date(r.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
       rating: r.rating,
       text: r.content,
       title: r.title,
+      avatar: r.avatar,
+      bookingId: r.bookingId,
+      photos: r.photos,
+      supplierResponse: r.supplierResponse,
+      supplierResponseAt: r.supplierResponseAt,
+      valueForMoneyRating: r.valueForMoneyRating,
+      guideRating: r.guideRating,
+      meetingRating: r.meetingRating,
+      travelMonth: r.travelMonth,
+      companions: r.companions,
     }))
   }, [reviews, t])
 
@@ -373,6 +383,18 @@ export default function TourDetailPage({ onOpenAuth }: TourDetailPageProps = {})
       return true
     })
   }, [allReviewCards, reviewStarFilter])
+
+  // "With photos" quick filter (GetYourGuide pattern). Filters the star-filtered
+  // set so the two chips compose; only surfaces when some loaded review has photos.
+  const [reviewPhotosOnly, setReviewPhotosOnly] = useState(false)
+  const photoReviewCount = useMemo(
+    () => filteredReviewCards.filter((r) => (r.photos?.length ?? 0) > 0).length,
+    [filteredReviewCards],
+  )
+  const visibleReviewCards = useMemo(() => {
+    if (!reviewPhotosOnly) return filteredReviewCards
+    return filteredReviewCards.filter((r) => (r.photos?.length ?? 0) > 0)
+  }, [filteredReviewCards, reviewPhotosOnly])
 
   const reviewBreakdown = useMemo(() => {
     const labels = [
@@ -999,13 +1021,17 @@ export default function TourDetailPage({ onOpenAuth }: TourDetailPageProps = {})
                         rating={selectedTourRating}
                         reviewCount={selectedTourReviews}
                         reviewBreakdown={reviewBreakdown}
-                        reviews={filteredReviewCards}
+                        reviews={visibleReviewCards}
                         hasMore={hasMoreReviews}
                         loadingMore={loadingMoreReviews}
                         onLoadMore={loadMoreReviews}
                         onWriteReview={handleWriteReview}
                         starFilter={reviewStarFilter}
                         onStarFilterChange={setReviewStarFilter}
+                        supplierName={supplierData?.name || ''}
+                        photosOnly={reviewPhotosOnly}
+                        photoCount={photoReviewCount}
+                        onPhotosOnlyChange={setReviewPhotosOnly}
                       />
                     </div>
                   )}
