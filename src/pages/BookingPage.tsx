@@ -59,6 +59,14 @@ import { reverseGeocode } from '../lib/locations'
 // flight). The full booking tour shape lives in lib/bookingTour.
 const FALLBACK_TOUR: BookingTour = DEFAULT_BOOKING_TOUR
 
+// Reserve-now-pay-later floor: the backend (payLaterLeadTime, default 48h) only
+// lets a customer reserve now/pay later when the activity is at least this far
+// out, so the pay-later sweep always has its 24h charge window. Mirrored here
+// (client heuristic) so the UI disables the option instead of dead-ending on a
+// server 400. The server remains authoritative regardless.
+const PAY_LATER_MIN_HOURS = 48
+const PAY_LATER_WINDOW_MS = PAY_LATER_MIN_HOURS * 60 * 60 * 1000
+
 // Time label for the date/time summary rows: time-slot tours show the chosen
 // slot; opening-hours tours show the selected day's opening hours, falling back
 // to the weekly range so the supplier's choice is never hidden behind a fake
@@ -1151,11 +1159,29 @@ function PaymentDetailsStep({
   const [creating, setCreating] = useState(false)
   const { formatPrice } = useCurrency()
 
-  const buttonLabel = data.paymentTiming === 'later' ? 'Reserve Now' : 'Pay Now'
+  // Client-side pay-later availability heuristic (the server enforces the same
+  // 48h floor authoritatively). Captured lazily via state so no impure
+  // Date.now() call happens during render; remounts when the step activates.
+  const [nowMs] = useState(() => Date.now())
+  const payLaterAvailable = useMemo(() => {
+    const iso = tour.selectedDate || tour.dateISO || ''
+    if (!iso) return true // no concrete date yet — let the server decide
+    const [y, mo, d] = iso.split('-').map(Number)
+    if (!y || !mo || !d) return true
+    const activityDayStart = Date.UTC(y, mo - 1, d)
+    return activityDayStart - nowMs >= PAY_LATER_WINDOW_MS
+  }, [tour.selectedDate, tour.dateISO, nowMs])
+
+  // When the chosen date is inside the pay-later window the option is disabled
+  // and the booking quietly falls back to Pay now (no dead-end 400 for the
+  // customer who previously had "later" selected).
+  const timing: 'now' | 'later' = !payLaterAvailable ? 'now' : (data.paymentTiming === 'later' ? 'later' : 'now')
+
+  const buttonLabel = timing === 'later' ? 'Reserve Now' : 'Pay Now'
 
   const paymentSummary = (
     <div className="space-y-2 text-sm text-slate-600">
-      <p><span className="font-semibold text-slate-800">When to pay:</span> {data.paymentTiming === 'now' ? `Pay now — ${formatPrice(tour.price)}` : 'Reserve now, pay later'}</p>
+      <p><span className="font-semibold text-slate-800">When to pay:</span> {timing === 'now' ? `Pay now — ${formatPrice(tour.price)}` : 'Reserve now, pay later'}</p>
     </div>
   )
 
@@ -1189,14 +1215,14 @@ function PaymentDetailsStep({
               <p className="mb-3 text-sm font-semibold text-slate-800">Choose when to pay</p>
               <div className="space-y-2">
                 <label className={`flex cursor-pointer items-center gap-3 rounded-xl border p-4 transition-all ${
-                  data.paymentTiming === 'now'
+                  timing === 'now'
                     ? 'border-emerald-300 bg-emerald-50/30 shadow-sm'
                     : 'border-slate-200/60 bg-white hover:border-slate-300'
                 }`}>
                   <div className={`grid size-5 shrink-0 place-items-center rounded-full border-2 transition ${
-                    data.paymentTiming === 'now' ? 'border-emerald-500' : 'border-slate-300'
+                    timing === 'now' ? 'border-emerald-500' : 'border-slate-300'
                   }`}>
-                    {data.paymentTiming === 'now' && (
+                    {timing === 'now' && (
                       <motion.div
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
@@ -1206,18 +1232,20 @@ function PaymentDetailsStep({
                   </div>
                   <span className="min-w-0 flex-1 text-sm font-semibold text-slate-900">Pay now</span>
                   <span className="shrink-0 text-sm font-bold text-slate-900">{formatPrice(tour.price)}</span>
-                  <input type="radio" name="paymentTiming" className="sr-only" checked={data.paymentTiming === 'now'} onChange={() => onChange('paymentTiming', 'now')} />
+                  <input type="radio" name="paymentTiming" className="sr-only" checked={timing === 'now'} onChange={() => onChange('paymentTiming', 'now')} />
                 </label>
 
                 <label className={`flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-all sm:items-center ${
-                  data.paymentTiming === 'later'
+                  timing === 'later'
                     ? 'border-emerald-300 bg-emerald-50/30 shadow-sm'
-                    : 'border-slate-200/60 bg-white hover:border-slate-300'
+                    : payLaterAvailable
+                      ? 'border-slate-200/60 bg-white hover:border-slate-300'
+                      : 'cursor-not-allowed border-slate-100 bg-slate-50 opacity-70'
                 }`}>
                   <div className={`mt-0.5 grid size-5 shrink-0 place-items-center rounded-full border-2 transition sm:mt-0 ${
-                    data.paymentTiming === 'later' ? 'border-emerald-500' : 'border-slate-300'
+                    timing === 'later' ? 'border-emerald-500' : 'border-slate-300'
                   }`}>
-                    {data.paymentTiming === 'later' && (
+                    {timing === 'later' && (
                       <motion.div
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
@@ -1226,14 +1254,26 @@ function PaymentDetailsStep({
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <span className="text-sm font-semibold text-slate-900">Reserve now, pay later</span>
+                    <span className={`text-sm font-semibold ${payLaterAvailable ? 'text-slate-900' : 'text-slate-400'}`}>Reserve now, pay later</span>
                     <p className="text-xs text-slate-400">Book your spot and pay nothing today</p>
+                    {!payLaterAvailable && (
+                      <p className="mt-1.5 text-xs font-medium text-amber-600">
+                        Available for dates at least {PAY_LATER_MIN_HOURS} hours away — so we can charge your card before the activity.
+                      </p>
+                    )}
                   </div>
                   <div className="shrink-0 text-right">
                     <span className="text-sm font-bold text-slate-900">$0.00</span>
                     <p className="text-[10px] text-slate-400">now</p>
                   </div>
-                  <input type="radio" name="paymentTiming" className="sr-only" checked={data.paymentTiming === 'later'} onChange={() => onChange('paymentTiming', 'later')} />
+                  <input
+                    type="radio"
+                    name="paymentTiming"
+                    className="sr-only"
+                    disabled={!payLaterAvailable}
+                    checked={timing === 'later'}
+                    onChange={() => onChange('paymentTiming', 'later')}
+                  />
                 </label>
               </div>
             </div>
@@ -1246,7 +1286,7 @@ function PaymentDetailsStep({
               </div>
             </div>
 
-            {data.paymentTiming === 'now' ? (
+            {timing === 'now' ? (
               <div className="flex items-center justify-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50/50 px-4 py-3 text-sm text-emerald-700">
                 <ShieldCheck className="size-4 shrink-0" />
                 <span>Secure payment powered by Stripe — you'll finish on the next step.</span>
@@ -1264,7 +1304,7 @@ function PaymentDetailsStep({
 
             <motion.button
               onClick={async () => {
-                if (data.paymentTiming === 'later') {
+                if (timing === 'later') {
                   if (!cardHandle) {
                     toast.error('Please enter your card details to continue.')
                     return
