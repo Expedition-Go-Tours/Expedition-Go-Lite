@@ -651,6 +651,7 @@ function PickupSelectModalContent({
                     aria-selected={index === searchHighlight}
                     onClick={() => selectSearchResult(r)}
                     onMouseEnter={() => setSearchHighlight(index)}
+                    onMouseDown={(e) => e.preventDefault()}
                     className={`cursor-pointer px-4 py-2.5 text-sm ${
                       index === searchHighlight ? 'bg-emerald-50 text-emerald-900' : 'text-slate-700 hover:bg-slate-50'
                     }`}
@@ -674,6 +675,7 @@ function PickupSelectModalContent({
                   aria-selected={searchHighlight === results.length}
                   onClick={() => commitSearchManual(searchQuery)}
                   onMouseEnter={() => setSearchHighlight(results.length)}
+                  onMouseDown={(e) => e.preventDefault()}
                   className={`cursor-pointer border-t border-slate-100 px-4 py-3 text-sm ${
                     searchHighlight === results.length ? 'bg-emerald-50 text-emerald-900' : 'text-slate-700 hover:bg-slate-50'
                   }`}
