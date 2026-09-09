@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
 import { ArrowLeft, ChevronDown, Loader2, Lock, ShieldCheck } from 'lucide-react'
@@ -189,14 +189,51 @@ export default function CheckoutPage() {
     return (
       <div className="co-page">
         <div className="co-body co-skeleton">
+          {/* LEFT — branded panel skeleton */}
           <div className="co-left">
-            <div className="co-skel co-skel-head" />
-            <div className="co-skel co-skel-summary" />
-            <div className="co-skel co-skel-line" />
-            <div className="co-skel co-skel-line" />
+            <div className="co-left-inner">
+              <div className="co-skel co-skel-logo" />
+              <div className="co-skel-eyebrow-wrap">
+                <div className="co-skel co-skel-eyebrow" />
+              </div>
+              <div className="co-skel co-skel-title" />
+              <div className="co-skel co-skel-price" />
+
+              <div className="co-skel-card-wrap">
+                <div className="co-skel co-skel-card-img" />
+                <div className="co-skel-card-text">
+                  <div className="co-skel co-skel-card-line co-skel-card-line-title" />
+                  <div className="co-skel co-skel-card-line" />
+                  <div className="co-skel co-skel-card-line co-skel-card-line-short" />
+                </div>
+              </div>
+
+              <div className="co-skel co-skel-divider" />
+              <div className="co-skel-card-row">
+                <div className="co-skel co-skel-row-label" />
+                <div className="co-skel co-skel-row-value" />
+              </div>
+              <div className="co-skel-card-row">
+                <div className="co-skel co-skel-row-label" />
+                <div className="co-skel co-skel-row-value" />
+              </div>
+              <div className="co-skel co-skel-divider" />
+              <div className="co-skel-card-row">
+                <div className="co-skel co-skel-row-label co-skel-row-total" />
+                <div className="co-skel co-skel-row-value co-skel-row-total" />
+              </div>
+            </div>
           </div>
+
+          {/* RIGHT — payment pane skeleton */}
           <div className="co-right">
-            <div className="co-skel co-skel-card" />
+            <div className="co-skel-right-inner">
+              <div className="co-skel co-skel-label" />
+              <div className="co-skel co-skel-input" />
+              <div className="co-skel co-skel-label co-skel-label-wide" />
+              <div className="co-skel co-skel-card-area" />
+              <div className="co-skel co-skel-btn" />
+            </div>
           </div>
         </div>
       </div>

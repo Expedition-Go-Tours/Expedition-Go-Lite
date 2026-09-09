@@ -1,4 +1,4 @@
-﻿/* ============================================================
+/* ============================================================
    Branded checkout (Stripe Payment Element embedded in OUR page).
    Desktop: two edge-to-edge 100dvh columns (Stripe-hosted geometry).
    Mobile: payment pane only + collapsed order summary (Stripe-like).
@@ -7,12 +7,12 @@
   min-height: 100vh;
   background: #fff;
 }
-/* â”€â”€ Phone base: single flowing column (payment only). MUST come before the
-   split-screen media query so the >=720px grid rule wins the cascade. â”€â”€ */
+/* ── Phone base: single flowing column (payment only). MUST come before the
+   split-screen media query so the >=720px grid rule wins the cascade. ── */
 .co-body {
   display: block;
 }
-/* â”€â”€ Split-screen columns that touch (Stripe geometry) â€” >= 720px â”€â”€ */
+/* ── Split-screen columns that touch (Stripe geometry) — >= 720px ── */
 @media (min-width: 720px) {
   .co-page {
     height: 100vh;
@@ -27,7 +27,7 @@
     height: 100dvh;
   }
 }
-/* â”€â”€ LEFT â€” brand panel (desktop only) â”€â”€ */
+/* ── LEFT — brand panel (desktop only) ── */
 .co-left {
   display: flex;
   flex-direction: column;
@@ -196,7 +196,7 @@
   flex-shrink: 0;
   margin-top: 1px;
 }
-/* â”€â”€ RIGHT â€” payment column (pure white) â”€â”€ */
+/* ── RIGHT — payment column (pure white) ── */
 .co-right {
   min-height: 0;
   overflow-y: auto;
@@ -313,7 +313,7 @@
   font-weight: 600;
   text-decoration: underline;
 }
-/* â”€â”€ Mobile collapsed order summary (Stripe-like, square) â”€â”€ */
+/* ── Mobile collapsed order summary (Stripe-like, square) ── */
 .co-mobile-top,
 .co-mobile-summary {
   display: none;
@@ -416,7 +416,7 @@
     padding: 20px 16px 40px;
   }
 }
-/* â”€â”€ States (full page) â”€â”€ */
+/* ── States (full page) ── */
 .co-state {
   display: flex;
   flex-direction: column;
@@ -497,33 +497,147 @@
   color: #667085;
   line-height: 1.6;
 }
-/* Skeleton */
+/* Skeleton � desktop two-pane shimmer */
 .co-skeleton .co-skel {
-  background: linear-gradient(90deg, #eef1f4 25%, #f7f9fb 50%, #eef1f4 75%);
+  background: linear-gradient(90deg, rgba(255,255,255,0.12) 25%, rgba(255,255,255,0.24) 50%, rgba(255,255,255,0.12) 75%);
   background-size: 200% 100%;
   animation: co-shimmer 1.4s ease infinite;
-  border-radius: 12px;
+  border-radius: 8px;
+}
+.co-skeleton .co-right .co-skel {
+  background: linear-gradient(90deg, #eef1f4 25%, #f7f9fb 50%, #eef1f4 75%);
+  background-size: 200% 100%;
 }
 @keyframes co-shimmer {
   to { background-position: -200% 0; }
 }
-.co-skel-head {
-  height: 36px;
-  width: 200px;
+.co-left-inner {
+  max-width: 560px;
+  margin: 0 auto;
+  width: 100%;
+}
+.co-skel-logo {
+  width: 140px;
+  height: 40px;
   margin-bottom: 32px;
+  border-radius: 6px;
 }
-.co-skel-summary {
-  height: 220px;
+.co-skel-eyebrow-wrap {
+  margin-bottom: 8px;
 }
-.co-skel-line {
+.co-skel-eyebrow {
+  width: 130px;
+  height: 10px;
+  border-radius: 4px;
+}
+.co-skel-title {
+  width: 240px;
+  height: 24px;
+  margin-bottom: 18px;
+  border-radius: 6px;
+}
+.co-skel-price {
+  width: 160px;
+  height: 38px;
+  margin-bottom: 32px;
+  border-radius: 8px;
+}
+.co-skel-card-wrap {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+.co-skel-card-img {
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+.co-skel-card-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.co-skel-card-line {
+  height: 12px;
+  border-radius: 4px;
+}
+.co-skel-card-line-title {
+  width: 75%;
   height: 14px;
-  margin-top: 12px;
 }
-.co-skel-card {
-  height: 380px;
+.co-skel-card-line-short {
+  width: 50%;
+}
+.co-skel-divider {
+  height: 1px;
+  border-radius: 0;
+  margin-bottom: 14px;
+  background: rgba(255, 255, 255, 0.12) !important;
+  animation: none !important;
+}
+.co-skel-card-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.co-skel-row-label {
+  width: 80px;
+  height: 12px;
+  border-radius: 4px;
+}
+.co-skel-row-value {
+  width: 60px;
+  height: 12px;
+  border-radius: 4px;
+}
+.co-skel-row-total {
+  height: 16px;
+}
+.co-skel-right-inner {
+  padding: 40px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.co-skel-label {
+  width: 110px;
+  height: 13px;
+  border-radius: 4px;
+}
+.co-skel-label-wide {
+  width: 160px;
+}
+.co-skel-input {
+  width: 100%;
+  height: 44px;
+  border-radius: 10px;
+}
+.co-skel-card-area {
+  width: 100%;
+  height: 160px;
+  border-radius: 12px;
+}
+.co-skel-btn {
+  width: 100%;
+  height: 48px;
+  border-radius: 999px;
+  margin-top: 8px;
+  background: linear-gradient(90deg, #166534 25%, #22c55e 50%, #166534 75%) !important;
+  background-size: 200% 100% !important;
 }
 @media (max-width: 719px) {
-  .co-skeleton .co-skel-card {
-    margin-top: 24px;
+  .co-skeleton .co-left {
+    display: none;
+  }
+  .co-skel-right-inner {
+    padding: 24px 20px;
   }
 }
