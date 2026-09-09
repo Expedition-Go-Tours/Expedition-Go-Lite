@@ -20,6 +20,7 @@ import { ContinuePlanningProvider } from './context/ContinuePlanningContext'
 import { SellOutProvider } from './context/SellOutContext'
 import { ChatProvider } from './chat/ChatContext'
 import SupportChatWidget from './components/SupportChatWidget'
+import GoogleOneTapPrompt from './components/GoogleOneTapPrompt'
 import { subscribeToAuthState, handleGoogleCallback, getAuthReturnTo, clearAuthReturnTo } from './lib/auth'
 import { AuthProvider } from './context/AuthContext'
 import { startSessionWatchdog, stopSessionWatchdog } from './auth/sessionManager'
@@ -103,6 +104,7 @@ function HomePage() {
 
   return (
     <SellOutProvider tours={homepage?.sellOut ?? []}>
+      <GoogleOneTapPrompt />
       <Hero />
       <ContinuePlanningSection />
       <MoodSection preloaded={homepage?.mood} isLoading={isLoading} />
