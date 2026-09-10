@@ -1,8 +1,7 @@
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Mail, Phone, Clock, MessagesSquare, LifeBuoy, MapPin } from 'lucide-react'
+import { Mail, Phone, Clock, LifeBuoy, MapPin } from 'lucide-react'
 import Footer from '../components/Footer'
-import { openSupportChat } from '../lib/support'
 import heroImg from '../assets/images/painting.webp'
 import './SupportPages.css'
 
@@ -145,10 +144,6 @@ export default function ContactUsPage() {
             <Mail size={16} />
             {t('support.emailUs')}
           </a>
-          <button type="button" className="support-btn support-btn-secondary support-btn-secondary--filled" onClick={openSupportChat}>
-            <MessagesSquare size={16} />
-            {t('support.chatWithUs')}
-          </button>
         </div>
 
         <div className="support-card" style={{ marginTop: 32 }}>

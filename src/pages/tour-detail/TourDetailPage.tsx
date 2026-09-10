@@ -90,11 +90,7 @@ function TourDetailSkeleton() {
   )
 }
 
-interface TourDetailPageProps {
-  onOpenAuth?: (mode: 'signin' | 'signup') => void
-}
-
-export default function TourDetailPage({ onOpenAuth }: TourDetailPageProps = {}) {
+export default function TourDetailPage() {
   const { t } = useTranslation()
   const tourDetailTabs = useMemo(() => [
     { key: 'overview', label: t('tourDetail.tabOverview') },
@@ -949,7 +945,6 @@ export default function TourDetailPage({ onOpenAuth }: TourDetailPageProps = {})
                   }}
                   availabilityLoading={availabilityLoading}
                   onMonthChange={handleAvailabilityMonthChange}
-                  onOpenAuth={onOpenAuth}
                   onSelectedDateChange={setWidgetSelectedDate}
                 />
               )}

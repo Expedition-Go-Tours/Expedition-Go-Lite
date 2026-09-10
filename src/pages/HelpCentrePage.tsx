@@ -1,9 +1,8 @@
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { Mail, MessagesSquare, HelpCircle, FileText, UserRound, MapPin } from 'lucide-react'
+import { Mail, HelpCircle, FileText, UserRound, MapPin } from 'lucide-react'
 import Footer from '../components/Footer'
-import { openSupportChat } from '../lib/support'
 import heroImg from '../assets/images/QuadBiking.webp'
 import './SupportPages.css'
 
@@ -127,10 +126,6 @@ export default function HelpCentrePage() {
             <Mail size={16} />
             {t('support.emailUs')}
           </a>
-          <button type="button" className="support-btn support-btn-secondary support-btn-secondary--filled" onClick={openSupportChat}>
-            <MessagesSquare size={16} />
-            {t('support.chatWithUs')}
-          </button>
         </div>
       </div>
 

@@ -18,8 +18,6 @@ import MountOnView from './components/MountOnView'
 import { WishlistProvider } from './context/WishlistContext'
 import { ContinuePlanningProvider } from './context/ContinuePlanningContext'
 import { SellOutProvider } from './context/SellOutContext'
-import { ChatProvider } from './chat/ChatContext'
-import SupportChatWidget from './components/SupportChatWidget'
 import GoogleOneTapPrompt from './components/GoogleOneTapPrompt'
 import { subscribeToAuthState, handleGoogleCallback, getAuthReturnTo, clearAuthReturnTo } from './lib/auth'
 import { AuthProvider } from './context/AuthContext'
@@ -29,7 +27,7 @@ import { useHomepage } from './hooks/useHomepageSections'
 
 // Route-level code splitting
 const AuthForm = lazy(() => import('./pages/AuthForm'))
-const DashboardLayout = lazy(() => import('./pages/dashboard/DashboardLayout'))
+const DashboardApp = lazy(() => import('./pages/dashboard/DashboardApp'))
 const TourDetailPage = lazy(() => import('./pages/tour-detail/TourDetailPage'))
 const AllToursPage = lazy(() => import('./pages/AllToursPage'))
 const SearchResultsPage = lazy(() => import('./pages/SearchResultsPage'))
@@ -180,9 +178,6 @@ function AppContent() {
   }, [])
 
   const isBookingConfirmation = location.pathname.startsWith('/booking/confirmation')
-  // The booking page (/booking and /:tourId/booking) is a focused step — the
-  // floating support chat widget is suppressed on both desktop and mobile.
-  const isBookingPage = location.pathname === '/booking' || location.pathname.endsWith('/booking')
   // The confirmation receipt is a normal page (keeps the navbar + footer). The
   // checkout + pickup steps stay focused (no chrome) to reduce distraction.
   const hideNav =
@@ -204,7 +199,6 @@ function AppContent() {
     <>
       <Toaster position="top-center" duration={2500} closeButton />
       {!hideNav && <Navbar onOpenAuth={handleOpenAuth} />}
-      {location.pathname !== '/' && !location.pathname.startsWith('/tour') && !location.pathname.startsWith('/login') && !location.pathname.startsWith('/booking/checkout') && !isBookingPage && !(currentPage === 'signin' || currentPage === 'signup') && <SupportChatWidget onOpenAuth={handleOpenAuth} />}
       {/* Route shell: keyed so each navigation mounts a fresh subtree, but NOT
           animated to opacity 0 — an interrupted fade used to leave the new
           page permanently invisible (blank white until a manual refresh). */}
@@ -214,9 +208,9 @@ function AppContent() {
         <RouteErrorBoundary>
         <Suspense fallback={<div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div className="spinner" /></div>}>
         <Routes>
-          <Route path="/dashboard/*" element={<DashboardLayout />} />
+          <Route path="/dashboard/*" element={<DashboardApp />} />
           <Route path="/tour/:tourId" element={
-            <TourDetailPage onOpenAuth={handleOpenAuth} />
+            <TourDetailPage />
           } />
           <Route path="/tours" element={
             <AllToursPage />
@@ -330,9 +324,7 @@ function App() {
       <WishlistProvider>
         <AuthProvider>
           <ContinuePlanningProvider>
-            <ChatProvider>
-              <AppContent />
-            </ChatProvider>
+            <AppContent />
           </ContinuePlanningProvider>
         </AuthProvider>
       </WishlistProvider>

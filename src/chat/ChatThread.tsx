@@ -1,7 +1,7 @@
 /**
  * Reusable chat thread: message bubbles (with status ticks), typing
- * indicator, pagination and the input bar. Used by the support widget and
- * the dashboard chat page; reuses the .support-chat-* styles.
+ * indicator, pagination and the input bar. Used by the dashboard chat page;
+ * owns the shared .support-chat-* / .dash-chat-* stylesheet.
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -9,6 +9,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { ArrowDown, Check, CheckCheck, ImagePlus, Send, Trash2 } from 'lucide-react'
 import ConfirmDialog from '../components/ui/ConfirmDialog'
 import type { ChatMessage, MessageStatus } from './types'
+import './ChatThread.css'
 
 interface ChatThreadProps {
   messages: ChatMessage[]

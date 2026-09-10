@@ -31,8 +31,6 @@ interface BookingWidgetProps {
   /** Reports the traveller's selected date up to the page (e.g. so the
       quick-facts cancellation badge can show the concrete cutoff date). */
   onSelectedDateChange?: (date: Date | null) => void
-  /** Opens the app's auth modal when a signed-out visitor starts a chat. */
-  onOpenAuth?: (mode: 'signin' | 'signup') => void
 }
 
 interface PricingResult {

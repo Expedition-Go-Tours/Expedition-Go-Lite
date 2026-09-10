@@ -6,7 +6,7 @@ import { motion, AnimatePresence, useAnimate } from 'framer-motion'
 import { toast } from 'sonner'
 import {
   Check, ArrowLeft, MapPin, CalendarDays, CalendarCheck, Users, Info, X,
-  Phone, MessageSquare, ShieldCheck, Star, Clock, Globe, Loader2,
+  Phone, ShieldCheck, Star, Clock, Globe, Loader2,
   Car, CreditCard, Ticket, ExternalLink, Layers,
 } from 'lucide-react'
 import logoSrc from '../assets/expo_trans.png'
@@ -1690,9 +1690,6 @@ function BookingSidebar({
           <a href="tel:+18337642166" className="inline-flex items-center gap-1.5 font-medium text-slate-500 hover:text-emerald-600 transition-colors">
             <Phone className="size-4" /> +1 833 764 2166
           </a>
-          <button type="button" className="inline-flex items-center gap-1.5 font-medium text-slate-500 hover:text-emerald-600 transition-colors">
-            <MessageSquare className="size-4" /> Chat now
-          </button>
         </div>
       </motion.div>
     </motion.div>
