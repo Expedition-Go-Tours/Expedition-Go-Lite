@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, lazy, Suspense } from 'react'
 import { useSearchParams, useLocation, Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Search, Ticket, AlertTriangle, ArrowRight, CheckCircle2, Wallet } from 'lucide-react'
+import { Search, Ticket, AlertTriangle, ArrowRight, CheckCircle2, Wallet, RotateCcw } from 'lucide-react'
 import {
   useMyExpeditionBookings,
   useMyBookingsCount,
@@ -346,8 +346,13 @@ export default function BookingHistory() {
                 </button>
                 <button type="button" className="bk-banner-stat" onClick={() => setBucket('cancelled')}>
                   <Ticket size={18} className="bk-banner-stat-icon" />
-                  <span className="bk-banner-stat-value">{bannerStats.cancelled + bannerStats.refund}</span>
-                  <span className="bk-banner-stat-label">Cancelled &amp; Refunded</span>
+                  <span className="bk-banner-stat-value">{bannerStats.cancelled}</span>
+                  <span className="bk-banner-stat-label">Cancelled</span>
+                </button>
+                <button type="button" className="bk-banner-stat" onClick={() => setBucket('refund')}>
+                  <RotateCcw size={18} className="bk-banner-stat-icon" />
+                  <span className="bk-banner-stat-value">{bannerStats.refund}</span>
+                  <span className="bk-banner-stat-label">Refunded</span>
                 </button>
                 <button type="button" className="bk-banner-stat" onClick={() => setBucket('past')}>
                   <CheckCircle2 size={18} className="bk-banner-stat-icon" />
