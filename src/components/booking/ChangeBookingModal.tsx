@@ -7,6 +7,8 @@ import { useTourAvailability, useCalculateCheckout } from '../../hooks/useExpedi
 import { useTravelerSelection } from '../../hooks/useTravelerSelection'
 import type { DayTimeSlot } from '../../lib/tourAvailability'
 import { openingHoursForDay, resolveDayStatus } from '../../lib/tourAvailability'
+import { cancellationStatus } from '../../lib/cancellationLabel'
+import BookingDeadlineTimer from '../../pages/tour-detail/BookingDeadlineTimer'
 import { categoryKey, categoryPayloadKey } from '../../lib/travelerBuckets'
 import '../../pages/tour-detail/BookingWidget.css'
 
@@ -23,6 +25,8 @@ interface ChangeBookingTour {
   groupSizePricing?: { from: number; to: number; price: number }[]
   minParticipants?: number | null
   maxParticipants?: number | null
+  /** Cancellation policy label (from the booking's tour) for the date-aware badge. */
+  cancellation?: string
 }
 
 interface ChangeBookingModalProps {
@@ -81,6 +85,8 @@ export default function ChangeBookingModal({ tour, isOpen, onClose, onReserve, i
   })
   const [showCalendar, setShowCalendar] = useState(false)
   const [selectedTime, setSelectedTime] = useState<string | null>(initialTime || null)
+  // Wall-clock captured on mount for cut-off urgency + cancellation-window checks.
+  const [nowMs] = useState(() => Date.now())
 
   // Authoritative price for the selected date + traveller mix — the same
   // checkout calculation the tour detail page uses. Debounced so rapid
@@ -205,6 +211,22 @@ export default function ChangeBookingModal({ tour, isOpen, onClose, onReserve, i
     return availabilityCalendar.find((d) => d.date === selectedDate)
   }, [availabilityCalendar, selectedDate])
 
+  // Time slots for a given date key come from the availability calendar; when
+  // the backend returns none, fall back to the supplier's configured slots.
+  // Exposed as a helper so the date picker can look up the NEXT date's slots
+  // before the state commits (smart time carry-over).
+  const slotsForDateKey = (dateKey: string): DayTimeSlot[] => {
+    const info = availabilityCalendar?.find((d) => d.date === dateKey)
+    if (info?.timeSlots?.length) return info.timeSlots
+    if (tour.scheduleType === 'fixedTimeSlot' && Array.isArray(tour.timeSlots) && tour.timeSlots.length > 0) {
+      return tour.timeSlots
+        .slice()
+        .sort((a, b) => a.startTime.localeCompare(b.startTime))
+        .map((s) => ({ time: s.startTime, capacity: 0, booked: 0, remaining: null }))
+    }
+    return []
+  }
+
   // Time slots for the selected date come from the availability calendar; when
   // the backend returns none (some tours only carry the schedule's static
   // slots), fall back to the supplier's configured time slots so the traveller
@@ -219,6 +241,32 @@ export default function ChangeBookingModal({ tour, isOpen, onClose, onReserve, i
     }
     return []
   }, [selectedDayInfo, tour.scheduleType, tour.timeSlots])
+
+  // Date-aware cancellation status (Viator's rule): inside the policy window →
+  // "Non-refundable". Shown in the modal's policy card.
+  const cancellation = cancellationStatus(
+    tour.cancellation || '',
+    selectedDate,
+    selectedTime,
+    nowMs,
+  )
+
+  // Booking deadline for the "X hours left to book" countdown: soonest upcoming
+  // cutoff for the selected date (earliest non-closed slot, or whole-day).
+  const bookingDeadlineIso = (() => {
+    const candidates: number[] = []
+    for (const slot of selectedDaySlots) {
+      if (slot.closed || !slot.closesAt) continue
+      const t = new Date(slot.closesAt).getTime()
+      if (Number.isFinite(t) && t > nowMs) candidates.push(t)
+    }
+    if (candidates.length === 0 && selectedDayInfo?.closesAt && selectedDayInfo.closedCutoff !== true) {
+      const t = new Date(selectedDayInfo.closesAt).getTime()
+      if (Number.isFinite(t) && t > nowMs) candidates.push(t)
+    }
+    if (candidates.length === 0) return null
+    return new Date(Math.min(...candidates)).toISOString()
+  })()
 
   // Opening-hours tours have no fixed slots, so surface the supplier's Step-14
   // opening hours for the chosen day in the calendar footer instead.
@@ -283,10 +331,12 @@ export default function ChangeBookingModal({ tour, isOpen, onClose, onReserve, i
         <div className="change-booking-body flex-1 overflow-y-auto px-6 py-5 space-y-5">
           <div className="space-y-3 rounded-xl bg-slate-50/70 p-4">
             <div className="flex items-start gap-2.5 text-xs text-slate-600">
-              <ShieldCheck className="mt-0.5 size-4 shrink-0 text-[#179237]" />
+              <ShieldCheck className={`mt-0.5 size-4 shrink-0 ${cancellation && !cancellation.refundable ? 'text-rose-500' : 'text-[#179237]'}`} />
               <span>
                 <span className="font-semibold text-slate-800 underline underline-offset-2 cursor-pointer">Cancellation policy</span>
-                &bull; Free cancellation up to 24 hours before the tour
+                &bull; {cancellation?.refundable === false
+                  ? <span className="font-semibold text-rose-600">Non-refundable{cancellation.sublabel ? ` — ${cancellation.sublabel}` : ''}</span>
+                  : (cancellation?.label || 'Free cancellation')}
               </span>
             </div>
             <div className="flex items-start gap-2.5 text-xs text-slate-600">
@@ -338,8 +388,23 @@ export default function ChangeBookingModal({ tour, isOpen, onClose, onReserve, i
                     isOpen={showCalendar}
                     onClose={() => setShowCalendar(false)}
                     onDateSelect={(date) => {
-                      setSelectedDate(toDateKey(date))
-                      setSelectedTime(null)
+                      const key = toDateKey(date)
+                      setSelectedDate(key)
+                      // Smart time carry-over (Viator-style): keep the chosen
+                      // time if it is still open on the new date, else
+                      // auto-select the first open slot — never force a re-pick.
+                      if (selectedTime) {
+                        const nextSlots = slotsForDateKey(key)
+                        const isOpen = (s: DayTimeSlot) => !s.closed && (s.remaining == null || s.remaining > 0)
+                        const kept = nextSlots.find((s) => s.time === selectedTime && isOpen(s))
+                        if (kept) {
+                          setShowCalendar(false)
+                        } else {
+                          const firstOpen = nextSlots.find(isOpen)
+                          setSelectedTime(firstOpen ? firstOpen.time : null)
+                          if (firstOpen) setShowCalendar(false)
+                        }
+                      }
                     }}
                     selectedDate={selectedDate ? new Date(`${selectedDate}T00:00:00`) : null}
                     getAvailability={(date) => {
@@ -541,6 +606,11 @@ export default function ChangeBookingModal({ tour, isOpen, onClose, onReserve, i
 
         {/* Footer */}
         <div className="border-t border-slate-100 px-6 py-4">
+          {bookingDeadlineIso && (
+            <div className="mb-3">
+              <BookingDeadlineTimer closesAt={bookingDeadlineIso} />
+            </div>
+          )}
           <button
             disabled={reserveBlocked}
             onClick={() => {

@@ -49,7 +49,7 @@ import {
   formatTime12h,
   type TourScheduleInfo,
 } from '../lib/tourAvailability'
-import { freeCancellationDateLabel } from '../lib/cancellationLabel'
+import { cancellationStatus } from '../lib/cancellationLabel'
 import { requestLocation } from '../lib/analytics'
 import { reverseGeocode } from '../lib/locations'
 
@@ -1208,6 +1208,15 @@ function PaymentDetailsStep({
   // customer who previously had "later" selected).
   const timing: 'now' | 'later' = !payLaterAvailable ? 'now' : (data.paymentTiming === 'later' ? 'later' : 'now')
 
+  // Date-aware cancellation status — a selected date inside the policy window
+  // is non-refundable (Viator's rule), matching the tour widget's badge.
+  const cancellation = cancellationStatus(
+    tour.cancellation || '',
+    tour.selectedDate || tour.dateISO || '',
+    tour.selectedTime ?? null,
+    nowMs,
+  )
+
   const buttonLabel = timing === 'later' ? 'Reserve Now' : 'Pay Now'
 
   const paymentSummary = (
@@ -1312,8 +1321,12 @@ function PaymentDetailsStep({
             <div className="rounded-xl border border-slate-200/40 bg-slate-50/30 p-6 text-center">
               <p className="text-2xl font-bold text-slate-900 tracking-tight">{formatPrice(tour.price)}</p>
               <div className="mt-2 flex items-center justify-center gap-1.5 text-xs text-slate-500">
-                <ShieldCheck className="size-3.5 text-emerald-600" />
-                {freeCancellationDateLabel(tour.cancellation || '', tour.selectedDate || tour.dateISO || '')}
+                <ShieldCheck className={`size-3.5 ${cancellation && !cancellation.refundable ? 'text-rose-500' : 'text-emerald-600'}`} />
+                <span className={cancellation && !cancellation.refundable ? 'font-semibold text-rose-600' : ''}>
+                  {cancellation?.refundable === false
+                    ? `Non-refundable${cancellation.sublabel ? ` — ${cancellation.sublabel}` : ''}`
+                    : (cancellation?.label || 'Free cancellation')}
+                </span>
               </div>
             </div>
 
@@ -1418,6 +1431,16 @@ function BookingTourCard({ tour, onChangeClick }: { tour: typeof FALLBACK_TOUR; 
     return Array.from({ length: 5 }, (_, i) => i < full)
   }, [tour.rating])
 
+  // Date-aware cancellation badge — non-refundable once the selected date is
+  // inside the policy's free-cancellation window (Viator's rule).
+  const [nowMs] = useState(() => Date.now())
+  const cancellation = cancellationStatus(
+    tour.cancellation || '',
+    tour.selectedDate || tour.dateISO || '',
+    tour.selectedTime ?? null,
+    nowMs,
+  )
+
   return (
     <div className="overflow-hidden rounded-[1.75rem] border border-slate-200/40 bg-white shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)]">
       <div className="flex gap-4 p-5">
@@ -1520,11 +1543,15 @@ function BookingTourCard({ tour, onChangeClick }: { tour: typeof FALLBACK_TOUR; 
 
       <div className="border-t border-slate-100/60 px-5 py-3 space-y-3">
         <div className="flex items-start gap-2">
-          <ShieldCheck className="mt-0.5 size-4 shrink-0 text-emerald-600" />
+          <ShieldCheck className={`mt-0.5 size-4 shrink-0 ${cancellation && !cancellation.refundable ? 'text-rose-500' : 'text-emerald-600'}`} />
           <p className="text-xs leading-relaxed text-slate-500">
             <span className="font-semibold text-slate-700">Cancellation policy</span>
             {' • '}
-            <span>{freeCancellationDateLabel(tour.cancellation || '', tour.selectedDate || tour.dateISO || '')}</span>
+            <span className={cancellation && !cancellation.refundable ? 'font-semibold text-rose-600' : ''}>
+              {cancellation?.refundable === false
+                ? `Non-refundable${cancellation.sublabel ? ` — ${cancellation.sublabel}` : ''}`
+                : (cancellation?.label || 'Free cancellation')}
+            </span>
           </p>
         </div>
         <div className="flex items-start gap-2">

@@ -12,7 +12,7 @@ import { toast } from 'sonner'
 import { useCurrency } from '../../contexts/CurrencyContext'
 import type { DayAvailability, DayAvailabilityInfo, DayTimeSlot } from '../../lib/tourAvailability'
 import { openingHoursForDay, isSupplierOperatingDay, resolveDayStatus } from '../../lib/tourAvailability'
-import { freeCancellationDateLabel } from '../../lib/cancellationLabel'
+import { cancellationStatus } from '../../lib/cancellationLabel'
 import { categoryKey } from '../../lib/travelerBuckets'
 import { useTravelerSelection } from '../../hooks/useTravelerSelection'
 import { headlineUnitPrice, cardParityUnitPrice } from '../../lib/startingPrice'
@@ -69,6 +69,9 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
   const [showCalendar, setShowCalendar] = useState(false)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [selectedTime, setSelectedTime] = useState<string | null>(null)
+  // Wall-clock captured on mount for the cut-off urgency + cancellation-window
+  // checks (read lazily so no impure call happens during render).
+  const [nowMs] = useState(() => Date.now())
   // Headline latch: the "From $X" price matches the tour card until the user
   // touches the traveler picker; the first +/- tap flips it to the live
   // headcount-aware unit price (and it stays live from then on).
@@ -472,13 +475,16 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
     ? selectedDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
     : t('tourDetail.selectDate')
 
-  // Same date-specific cancellation label the Quick facts section shows
-  // (e.g. "Free Cancellation before Aug 22nd (local time)") — surfaced under
-  // the Book now button so the traveller sees the exact cutoff at purchase.
-  const cancellationNote = freeCancellationDateLabel(
+  // Date-aware cancellation status: a selected date inside the policy's
+  // free-cancellation window (or a non-refundable policy) reads
+  // "Non-refundable" — Viator's rule. Surfaced under the Book now button.
+  const cancellation = cancellationStatus(
     tour.cancellationPolicy || t('tourDetail.cancellationDefault'),
     selectedDate ? selectedDate.toISOString().slice(0, 10) : '',
+    selectedTime,
+    nowMs,
   )
+  const cancellationNote = cancellation?.label || ''
   // Once a slot is picked (or opening hours shown) inside the calendar, surface
   // the chosen time on the date field so it stays visible after the panel closes.
   const selectedTimeLabel = selectedTime
@@ -486,12 +492,14 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
     : (openingHoursLabel ? `${t('booking.openingHours', 'Opening hours')}: ${openingHoursLabel}` : '')
 
   const selectedDayInfo = getSelectedDayInfo(selectedDate)
-  // Time slots for the selected date come from the availability calendar; when
-  // the backend returns none (some tours only carry the schedule's static
-  // slots), fall back to the supplier's configured time slots so the traveller
-  // can still see and pick the actual start times.
-  const selectedDaySlots: DayTimeSlot[] = (() => {
-    if (selectedDayInfo?.timeSlots?.length) return selectedDayInfo.timeSlots
+  // Time slots for a given date come from the availability calendar; when the
+  // backend returns none (some tours only carry the schedule's static slots),
+  // fall back to the supplier's configured time slots so the traveller can
+  // still see and pick the actual start times. Exposed as a helper so the date
+  // picker can look up the NEXT date's slots before the state commits.
+  const slotsForDate = (date: Date | null): DayTimeSlot[] => {
+    const info = getSelectedDayInfo(date)
+    if (info?.timeSlots?.length) return info.timeSlots
     if (tour.scheduleType === 'fixedTimeSlot' && Array.isArray(tour.timeSlots) && tour.timeSlots.length > 0) {
       return tour.timeSlots
         .slice()
@@ -499,6 +507,27 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
         .map((s) => ({ time: s.startTime, capacity: 0, booked: 0, remaining: null }))
     }
     return []
+  }
+  const selectedDaySlots: DayTimeSlot[] = slotsForDate(selectedDate)
+
+  // Booking deadline for the "X hours left to book" countdown: the earliest
+  // upcoming cutoff for the selected date — the soonest non-closed slot's
+  // closesAt (fixed-slot / per-slot cut-off tours), or the whole-day closesAt
+  // for flexible/operating-hours tours. Null when nothing is pending.
+  const bookingDeadlineIso = (() => {
+    if (!selectedDate) return null
+    const candidates: number[] = []
+    for (const slot of selectedDaySlots) {
+      if (slot.closed || !slot.closesAt) continue
+      const t = new Date(slot.closesAt).getTime()
+      if (Number.isFinite(t) && t > nowMs) candidates.push(t)
+    }
+    if (candidates.length === 0 && selectedDayInfo?.closesAt && selectedDayInfo.closedCutoff !== true) {
+      const t = new Date(selectedDayInfo.closesAt).getTime()
+      if (Number.isFinite(t) && t > nowMs) candidates.push(t)
+    }
+    if (candidates.length === 0) return null
+    return new Date(Math.min(...candidates)).toISOString()
   })()
 
   // Warn when the chosen traveler count exceeds what's left on the selected day.
@@ -723,7 +752,24 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
                     onDateSelect={(date) => {
                       setSelectedDate(date)
                       onSelectedDateChange?.(date)
-                      setSelectedTime(null)
+                      // Smart time carry-over (Viator-style): when the traveller
+                      // changes the date after picking a time, keep that time if
+                      // it is still an open slot on the new date, otherwise
+                      // auto-select the first open slot — never make them re-pick
+                      // a time just because the date changed. On a first pick
+                      // (no prior time) the slot list is left for them to choose.
+                      if (selectedTime) {
+                        const nextSlots = slotsForDate(date)
+                        const isOpen = (s: DayTimeSlot) => !s.closed && (s.remaining == null || s.remaining > 0)
+                        const kept = nextSlots.find((s) => s.time === selectedTime && isOpen(s))
+                        if (kept) {
+                          setShowCalendar(false)
+                        } else {
+                          const firstOpen = nextSlots.find(isOpen)
+                          setSelectedTime(firstOpen ? firstOpen.time : null)
+                          if (firstOpen) setShowCalendar(false)
+                        }
+                      }
                       // If the chosen date's weekday falls outside any
                       // specific-weekday offer, note it as informational —
                       // the date is still fully bookable at the standard
@@ -854,9 +900,10 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
           </div>
 
           {/* Booking deadline countdown — shows hours left when the supplier
-              has set a near-term cutoff for the selected date. */}
-          {selectedDate && selectedDayInfo?.closesAt && (
-            <BookingDeadlineTimer closesAt={selectedDayInfo.closesAt} />
+              has set a near-term cutoff for the selected date. Uses the soonest
+              slot deadline on fixed-slot tours, else the whole-day deadline. */}
+          {selectedDate && bookingDeadlineIso && (
+            <BookingDeadlineTimer closesAt={bookingDeadlineIso} />
           )}
 
           {/* Guest selector */}
@@ -1146,9 +1193,10 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
           </Button>
 
           {/* Date-specific cancellation cutoff — matches the Quick facts
-              label, shown right after Book now. */}
+              label, shown right after Book now. Turns red ("Non-refundable")
+              once the selected date is inside the cancellation window. */}
           {cancellationNote && (
-            <p className="booking-cancel-note">
+            <p className={`booking-cancel-note${cancellation && !cancellation.refundable ? ' booking-cancel-note--none' : ''}`}>
               <ShieldCheck size={14} />
               {cancellationNote}
             </p>
