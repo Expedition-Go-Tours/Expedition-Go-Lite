@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import {
   CalendarCheck, Clock, UserCheck, Bus, Gauge,
   Globe, Utensils, CupSoda, PawPrint, Accessibility, User,
-  Wifi, Users, BedDouble, Heart, Upload,
+  Wifi, Users, BedDouble, Heart, Upload, Zap,
 } from 'lucide-react'
 import Footer from '../../components/Footer'
 import { useContinuePlanning, toContinuePlanningItem } from '../../context/ContinuePlanningContext'
@@ -602,7 +602,26 @@ export default function TourDetailPage() {
         ),
       },
 
-      // 6. Private experience — sourced from productContent.isPrivateActivity.
+      // 6. Instant confirmation — Step 12 Options (bookingAndTickets.
+      // instantConfirmation). Defaults to instant; an explicit false means the
+      // operator reviews and confirms the booking manually.
+      {
+        icon: Zap,
+        title: t('tourDetail.instantConfirmation'),
+        desc: null,
+        renderValue: () => (
+          <>
+            <p className="tour-quick-fact-title">
+              {tour?.instantConfirmation === false
+                ? t('tourDetail.manualConfirmation')
+                : t('tourDetail.instantConfirmation')}
+            </p>
+            {yesNoBadge(tour?.instantConfirmation !== false, t('tourDetail.yesLabel'), t('tourDetail.noLabel'))}
+          </>
+        ),
+      },
+
+      // 7. Private experience — sourced from productContent.isPrivateActivity.
       {
         icon: isPrivateExperience ? Users : UserCheck,
         title: isPrivateExperience ? t('tourDetail.privateExperience') : t('tourDetail.groupExperience'),
@@ -615,7 +634,7 @@ export default function TourDetailPage() {
         ),
       },
 
-      // 7. Skip the line — always shown, red "No" when not offered.
+      // 8. Skip the line — always shown, red "No" when not offered.
       {
         icon: UserCheck,
         title: t('tourDetail.skipTheLineTitle'),

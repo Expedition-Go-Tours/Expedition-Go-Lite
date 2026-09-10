@@ -1028,3 +1028,15 @@
 .booking-cancel-note--none {
   color: #b42318;
 }
+
+/* Instant-confirmation trust cue shown above the Book now button */
+.booking-instant-confirm {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #166534;
+}

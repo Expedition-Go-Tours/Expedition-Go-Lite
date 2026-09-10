@@ -795,6 +795,18 @@ function extractWifiIncluded(rawTour: any): boolean {
 }
 
 /**
+ * Instant confirmation (Step 12 Options). `bookingAndTickets.instantConfirmation`
+ * defaults to true when unset, so only an explicit `false` marks the tour as
+ * manual-confirmation.
+ */
+function extractInstantConfirmation(rawTour: any): boolean {
+  const bt = parseJsonMaybe(rawTour?.bookingAndTickets)
+  const pc = parseProductContent(rawTour)
+  const raw = bt?.instantConfirmation ?? pc?.instantConfirmation
+  return raw !== false
+}
+
+/**
  * Whether the tour is a private (not shared/group) experience. Sourced from
  * the Options step of TravioAfrica-Supplier's product builder, where "Is this
  * a private activity?" is set per option (productContent.options[].isPrivate).
@@ -1500,6 +1512,12 @@ export interface TourDetailData extends Omit<TourDetail, 'guide' | 'contact' | '
    */
   wifiIncluded?: boolean
   /**
+   * Whether the booking is confirmed instantly (Step 12 Options,
+   * bookingAndTickets.instantConfirmation). Defaults to true; an explicit
+   * false means the operator reviews and confirms manually.
+   */
+  instantConfirmation?: boolean
+  /**
    * Whether the supplier offers overnight accommodation. Sourced from
    * categorization.accommodationIncluded (Step 02 of the product builder).
    */
@@ -1625,6 +1643,7 @@ function buildTourDetailFromRawTour(rawTour: any): TourDetailData {
     guideMaterials: extractGuideMaterials(rawTour),
     petFriendly: extractPetFriendly(rawTour),
     wifiIncluded: extractWifiIncluded(rawTour),
+    instantConfirmation: extractInstantConfirmation(rawTour),
     isPrivateActivity: extractIsPrivateActivity(rawTour),
     accommodationIncluded: extractAccommodationIncluded(rawTour),
     pricingModel: extractPricingModel(rawTour),
@@ -1920,6 +1939,7 @@ export function useExpeditionTour(slug: string | undefined) {
         guideMaterials: tour.guideMaterials || undefined,
         petFriendly: !!tour.petFriendly,
         wifiIncluded: !!tour.wifiIncluded,
+        instantConfirmation: tour.instantConfirmation !== false,
         isPrivateActivity: !!tour.isPrivateActivity,
         accommodationIncluded: !!tour.accommodationIncluded,
         pricingModel,
