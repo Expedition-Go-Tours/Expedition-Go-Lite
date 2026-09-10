@@ -211,6 +211,22 @@ export default function ChangeBookingModal({ tour, isOpen, onClose, onReserve, i
     return availabilityCalendar.find((d) => d.date === selectedDate)
   }, [availabilityCalendar, selectedDate])
 
+  // Time slots for a given date key come from the availability calendar; when
+  // the backend returns none, fall back to the supplier's configured slots.
+  // Exposed as a helper so the date picker can look up the NEXT date's slots
+  // before the state commits (smart time carry-over).
+  const slotsForDateKey = (dateKey: string): DayTimeSlot[] => {
+    const info = availabilityCalendar?.find((d) => d.date === dateKey)
+    if (info?.timeSlots?.length) return info.timeSlots
+    if (tour.scheduleType === 'fixedTimeSlot' && Array.isArray(tour.timeSlots) && tour.timeSlots.length > 0) {
+      return tour.timeSlots
+        .slice()
+        .sort((a, b) => a.startTime.localeCompare(b.startTime))
+        .map((s) => ({ time: s.startTime, capacity: 0, booked: 0, remaining: null }))
+    }
+    return []
+  }
+
   // Time slots for the selected date come from the availability calendar; when
   // the backend returns none (some tours only carry the schedule's static
   // slots), fall back to the supplier's configured time slots so the traveller
@@ -372,8 +388,23 @@ export default function ChangeBookingModal({ tour, isOpen, onClose, onReserve, i
                     isOpen={showCalendar}
                     onClose={() => setShowCalendar(false)}
                     onDateSelect={(date) => {
-                      setSelectedDate(toDateKey(date))
-                      setSelectedTime(null)
+                      const key = toDateKey(date)
+                      setSelectedDate(key)
+                      // Smart time carry-over (Viator-style): keep the chosen
+                      // time if it is still open on the new date, else
+                      // auto-select the first open slot — never force a re-pick.
+                      if (selectedTime) {
+                        const nextSlots = slotsForDateKey(key)
+                        const isOpen = (s: DayTimeSlot) => !s.closed && (s.remaining == null || s.remaining > 0)
+                        const kept = nextSlots.find((s) => s.time === selectedTime && isOpen(s))
+                        if (kept) {
+                          setShowCalendar(false)
+                        } else {
+                          const firstOpen = nextSlots.find(isOpen)
+                          setSelectedTime(firstOpen ? firstOpen.time : null)
+                          if (firstOpen) setShowCalendar(false)
+                        }
+                      }
                     }}
                     selectedDate={selectedDate ? new Date(`${selectedDate}T00:00:00`) : null}
                     getAvailability={(date) => {

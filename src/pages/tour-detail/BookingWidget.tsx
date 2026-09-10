@@ -492,12 +492,14 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
     : (openingHoursLabel ? `${t('booking.openingHours', 'Opening hours')}: ${openingHoursLabel}` : '')
 
   const selectedDayInfo = getSelectedDayInfo(selectedDate)
-  // Time slots for the selected date come from the availability calendar; when
-  // the backend returns none (some tours only carry the schedule's static
-  // slots), fall back to the supplier's configured time slots so the traveller
-  // can still see and pick the actual start times.
-  const selectedDaySlots: DayTimeSlot[] = (() => {
-    if (selectedDayInfo?.timeSlots?.length) return selectedDayInfo.timeSlots
+  // Time slots for a given date come from the availability calendar; when the
+  // backend returns none (some tours only carry the schedule's static slots),
+  // fall back to the supplier's configured time slots so the traveller can
+  // still see and pick the actual start times. Exposed as a helper so the date
+  // picker can look up the NEXT date's slots before the state commits.
+  const slotsForDate = (date: Date | null): DayTimeSlot[] => {
+    const info = getSelectedDayInfo(date)
+    if (info?.timeSlots?.length) return info.timeSlots
     if (tour.scheduleType === 'fixedTimeSlot' && Array.isArray(tour.timeSlots) && tour.timeSlots.length > 0) {
       return tour.timeSlots
         .slice()
@@ -505,7 +507,8 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
         .map((s) => ({ time: s.startTime, capacity: 0, booked: 0, remaining: null }))
     }
     return []
-  })()
+  }
+  const selectedDaySlots: DayTimeSlot[] = slotsForDate(selectedDate)
 
   // Booking deadline for the "X hours left to book" countdown: the earliest
   // upcoming cutoff for the selected date — the soonest non-closed slot's
@@ -749,7 +752,24 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
                     onDateSelect={(date) => {
                       setSelectedDate(date)
                       onSelectedDateChange?.(date)
-                      setSelectedTime(null)
+                      // Smart time carry-over (Viator-style): when the traveller
+                      // changes the date after picking a time, keep that time if
+                      // it is still an open slot on the new date, otherwise
+                      // auto-select the first open slot — never make them re-pick
+                      // a time just because the date changed. On a first pick
+                      // (no prior time) the slot list is left for them to choose.
+                      if (selectedTime) {
+                        const nextSlots = slotsForDate(date)
+                        const isOpen = (s: DayTimeSlot) => !s.closed && (s.remaining == null || s.remaining > 0)
+                        const kept = nextSlots.find((s) => s.time === selectedTime && isOpen(s))
+                        if (kept) {
+                          setShowCalendar(false)
+                        } else {
+                          const firstOpen = nextSlots.find(isOpen)
+                          setSelectedTime(firstOpen ? firstOpen.time : null)
+                          if (firstOpen) setShowCalendar(false)
+                        }
+                      }
                       // If the chosen date's weekday falls outside any
                       // specific-weekday offer, note it as informational —
                       // the date is still fully bookable at the standard
