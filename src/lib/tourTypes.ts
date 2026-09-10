@@ -111,6 +111,8 @@ export interface TourDetail {
   /** Sellable options; >1 ⇒ the booking panel shows a GYG-style option picker. */
   options?: TourOption[]
   defaultOptionId?: string | null
+  /** Instant confirmation (Step 12 Options); false ⇒ the operator confirms manually. */
+  instantConfirmation?: boolean
 }
 
 export interface ItineraryDay {
