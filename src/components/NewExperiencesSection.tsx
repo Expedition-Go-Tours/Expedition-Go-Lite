@@ -21,10 +21,7 @@ export default function NewExperiencesSection({ isLoading }: Props) {
   const { data: liveTours } = useNewExperiences(30)
 
   const items = liveTours?.length
-    ? liveTours.map(t => {
-        const card = mapToTourCard(t)
-        return { ...card, photos: card.image ? [card.image] : card.photos }
-      })
+    ? liveTours.map(t => mapToTourCard(t))
     : null
 
   const updateArrows = useCallback(() => {

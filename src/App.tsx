@@ -9,7 +9,7 @@ import ContinuePlanningSection from './components/ContinuePlanningSection'
 import MoodSection from './components/MoodSection'
 import RecommendSection from './components/RecommendSection'
 import PopularLocations from './components/PopularLocations'
-import CustomReviewsSection from './components/CustomReviewsSection'
+import ExternalReviewsSection from './components/ExternalReviewsSection'
 import PartnersSection from './components/PartnersSection'
 import WhyBookSection from './components/WhyBookSection'
 
@@ -113,7 +113,7 @@ function HomePage() {
       <MountOnView><Suspense fallback={sectionFallback}><LastMinuteDealsSection preloaded={homepage?.offers} isLoading={isLoading} /></Suspense></MountOnView>
       <MountOnView><Suspense fallback={sectionFallback}><NewExperiencesSection isLoading={isLoading} /></Suspense></MountOnView>
       <MountOnView><Suspense fallback={sectionFallback}><TopAttractionsNearbySection preloaded={homepage?.attractions} /></Suspense></MountOnView>
-      <MountOnView><CustomReviewsSection /></MountOnView>
+      <MountOnView><ExternalReviewsSection /></MountOnView>
       <MountOnView><PartnersSection /></MountOnView>
       <MountOnView><WhyBookSection /></MountOnView>
       <Footer />

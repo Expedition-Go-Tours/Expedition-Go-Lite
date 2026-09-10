@@ -2574,9 +2574,9 @@ export default function BookingPage() {
                 />
               </div>
 
-              <aside className="md:sticky md:top-28 md:self-start">
+              <aside className="md:self-start">
                 <div className="space-y-4">
-                  <div className="hidden md:block">
+                  <div className="hidden md:block md:sticky md:top-28 md:z-10">
                     <HoldTimer onExpire={handleExpire} lastActivityAt={lastActivityAt} isExpired={isExpired} />
                   </div>
                   <div className="hidden md:block">
