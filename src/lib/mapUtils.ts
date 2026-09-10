@@ -79,6 +79,7 @@ export interface MapPoint {
 export interface PickupMapSource {
   meetingMode?: 'meeting_point' | 'pickup' | 'none'
   meetingPoint?: string
+  meetingPointAddress?: string
   meetingPointLat?: number | null
   meetingPointLng?: number | null
   pickupAreas?: { name?: string; address?: string; lat?: number | null; lng?: number | null }[]
@@ -100,7 +101,7 @@ export function buildTourPoints(tour: PickupMapSource): MapPoint[] {
   const pts: MapPoint[] = []
 
   // Infer the effective meeting mode when the backend doesn't set it.
-  const hasMeetingData = !!(tour.meetingPoint || tour.meetingPointLat != null)
+  const hasMeetingData = !!(tour.meetingPoint || tour.meetingPointAddress || tour.meetingPointLat != null)
   const hasPickupData =
     (tour.pickupAreas?.length ?? 0) > 0 || (tour.pickupLocations?.length ?? 0) > 0
   const effectiveMode = tour.meetingMode

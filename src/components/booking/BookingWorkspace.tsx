@@ -526,18 +526,23 @@ export default function BookingWorkspace({ id, onClose }: { id?: string; onClose
   const pickupLocation = String(
     pickup?.place || pickup?.areaName || pickup?.locationName || pickupAddress?.name || pickupAddress?.address || ''
   ).trim()
-  const pickupDeferred = !!(
-    pickup && (pickup.pickupLater || pickup.skipValidation || pickup.status === 'deferred')
-  )
-  const pickupTime = pickup?.time ? String(pickup.time) : null
-  const pickupInstructionsText =
-    typeof pickup?.instructions === 'string' ? pickup.instructions.trim() : ''
   // Customer-facing location: the exact pickup point when one is stored; the
   // supplier zone label is operator context only and is never shown to customers.
   // For area-type pickups the address may only live in travelers.location
   // (the checkout payload), so fall back to it when pickup.address is empty.
   const travelerLocation = typeof travelers.location === 'string' ? travelers.location.trim() : ''
   const pickupAddressText = String(pickupAddress?.name || pickupAddress?.address || travelerLocation || '').trim()
+  const hasStoredPickupLocation = !!(pickupLocation || pickupAddressText)
+  // A stored out-of-zone choice is persisted as deferred (skipValidation) with
+  // the address kept — show the address, not the "not yet assigned" state.
+  const pickupFlagged = !!(
+    pickup && (pickup.pickupLater || pickup.skipValidation || pickup.status === 'deferred')
+  )
+  const pickupDeferred = pickupFlagged && !hasStoredPickupLocation
+  const pickupOutOfZone = pickupFlagged && hasStoredPickupLocation
+  const pickupTime = pickup?.time ? String(pickup.time) : null
+  const pickupInstructionsText =
+    typeof pickup?.instructions === 'string' ? pickup.instructions.trim() : ''
   const pickupPrimary = pickupAddressText || pickupLocation
   const pickupKicker = pickupAddressText
     ? 'Pickup point'
@@ -968,7 +973,7 @@ export default function BookingWorkspace({ id, onClose }: { id?: string; onClose
             <section className="ws-card">
               <h2 className="ws-card-title">Where to go</h2>
               {bookingIsPickup ? (
-                pickupDeferred || !pickupLocation ? (
+                pickupDeferred || !pickupPrimary ? (
                   <div className="ws-amber">
                     <p className="ws-amber-title">
                       {pickupDeferred ? 'Pickup location not yet assigned' : 'Pickup details pending'}
@@ -997,6 +1002,12 @@ export default function BookingWorkspace({ id, onClose }: { id?: string; onClose
                       </p>
                       <p className="ws-loc-title">{pickupPrimary}</p>
                     </div>
+                    {pickupOutOfZone && (
+                      <p className="mt-2 flex items-start gap-1.5 rounded-lg border border-amber-200/70 bg-amber-50/60 px-3 py-2 text-xs font-medium leading-relaxed text-amber-800">
+                        <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-amber-500" />
+                        This pickup location is outside the pickup zone. Please confirm a pickup location within the zone before your tour date.
+                      </p>
+                    )}
                     {activeStatus && (
                       <button
                         type="button"

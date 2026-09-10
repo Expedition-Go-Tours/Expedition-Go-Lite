@@ -43,14 +43,18 @@ const fmtDate = (value?: string): string => {
 
 function seedContactFromPickup(pickup: unknown): ContactPickup {
   const p = (pickup && typeof pickup === 'object' ? pickup : {}) as Record<string, unknown>
-  if (p.pickupLater || p.skipValidation) {
-    return { ...DEFAULT_CONTACT, pickupLater: true }
-  }
   const addr =
     p.address && typeof p.address === 'object'
       ? (p.address as Record<string, unknown>)
       : {}
   const addrName = String(addr.name || addr.address || '')
+  const hasStoredPlace = !!(p.place || p.locationName || p.areaName || addrName)
+  // Genuine "choose later" (no stored place) resets to deferred. An out-of-zone
+  // choice is also flagged deferred but keeps its address — seed it so
+  // re-opening the editor shows the traveller's chosen location.
+  if ((p.pickupLater || p.skipValidation) && !hasStoredPlace) {
+    return { ...DEFAULT_CONTACT, pickupLater: true }
+  }
   const lat =
     typeof p.lat === 'number' && Number.isFinite(p.lat)
       ? Number(p.lat)
@@ -123,10 +127,14 @@ export default function BookingPickupPage() {
     [showPickupLocation, contact.pickupLater, contact.location, contact.pickupLat, contact.pickupLng, pickupAreas],
   )
   const noPickupConfig = showPickupLocation && pickupAreas.length === 0 && pickupLocations.length === 0
+  // Single designated pickup point: nothing to choose (the section shows it
+  // read-only and auto-fills it), so the form is always valid.
+  const isSinglePoint = pickupLocations.length === 1 && pickupAreas.length === 0
   const pickupLocationValid = useMemo(
     () =>
       !showPickupLocation ||
       noPickupConfig ||
+      isSinglePoint ||
       isPickupLocationSatisfied({
         pickupLater: contact.pickupLater,
         pickedArea: contact.pickupArea,
@@ -135,7 +143,7 @@ export default function BookingPickupPage() {
         zonesDrawn,
         hasLocationOnlyAreas: hasPointAreas,
       }),
-    [showPickupLocation, noPickupConfig, contact.pickupLater, contact.pickupArea, contact.location, pickupZoneStatusValue, zonesDrawn, hasPointAreas],
+    [showPickupLocation, noPickupConfig, isSinglePoint, contact.pickupLater, contact.pickupArea, contact.location, pickupZoneStatusValue, zonesDrawn, hasPointAreas],
   )
 
   const { points: resolvedPoints, mapTour, loading: resolvingPoints } = useResolvedTourPoints(pickupTour as ResolveTourSource)
@@ -152,11 +160,18 @@ export default function BookingPickupPage() {
 
   const buildSelection = (): Record<string, unknown> | null => {
     if (contact.pickupLater) return { skipValidation: true }
+    // Explicit exclusion (no-pickup) zones are still rejected by the server
+    // even with skipValidation, so they cannot be saved.
+    if (pickupZoneStatusValue === 'excluded') return null
     const hasPickupAddress =
       contact.pickupLat != null && contact.pickupLng != null && contact.location.trim().length > 0
+    // An out-of-zone address is allowed with skipValidation; the address is
+    // still stored so the supplier sees the traveller's chosen location.
+    const pickupOutOfZone = pickupZoneStatusValue === 'outside'
     if (showPickupLocation && (contact.pickupArea || hasPickupAddress)) {
       return {
-        mode: zonesDrawn ? 'area' : (pickupTour.pickupType as 'area' | 'address') || 'area',
+        mode: zonesDrawn || hasPointAreas ? 'area' : (pickupTour.pickupType as 'area' | 'address') || 'area',
+        ...(pickupOutOfZone ? { skipValidation: true } : {}),
         ...(!hasPickupAddress && contact.pickupArea ? { areaName: contact.pickupArea } : {}),
         ...(hasPickupAddress
           ? { address: { name: contact.location.trim(), address: contact.location.trim(), lat: contact.pickupLat, lng: contact.pickupLng } }

@@ -559,7 +559,7 @@ export default function BookingConfirmationPage() {
                         (b.pickup as { skipValidation?: boolean })?.skipValidation ||
                         b.pickup?.status === 'deferred'
                       const hasPlace = !!(b.pickup?.areaName || b.pickup?.locationName || b.pickup?.address?.name || b.pickup?.address?.address)
-                      if (deferred || !hasPlace) {
+                      if (!hasPlace) {
                         return (
                           <>
                             <span className="confirmation-grid-label">{t('confirmation.meetingPointLabel')}</span>
@@ -586,6 +586,11 @@ export default function BookingConfirmationPage() {
                           </span>
                           {b.pickup?.time && <span className="confirmation-grid-sub">{t('confirmation.pickupTime', { time: b.pickup.time })}</span>}
                           {b.pickup?.instructions && <span className="confirmation-grid-sub">{b.pickup.instructions}</span>}
+                          {deferred && (
+                            <span className="confirmation-grid-sub text-amber-700">
+                              This pickup location is outside the pickup zone — please confirm a location within the zone before your tour date.
+                            </span>
+                          )}
                           <button
                             onClick={() => navigate(`/booking/${b.id}/pickup`)}
                             className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 underline underline-offset-2"

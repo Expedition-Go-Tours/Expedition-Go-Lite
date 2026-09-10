@@ -180,6 +180,9 @@ function AppContent() {
   }, [])
 
   const isBookingConfirmation = location.pathname.startsWith('/booking/confirmation')
+  // The booking page (/booking and /:tourId/booking) is a focused step — the
+  // floating support chat widget is suppressed on both desktop and mobile.
+  const isBookingPage = location.pathname === '/booking' || location.pathname.endsWith('/booking')
   // The confirmation receipt is a normal page (keeps the navbar + footer). The
   // checkout + pickup steps stay focused (no chrome) to reduce distraction.
   const hideNav =
@@ -201,7 +204,7 @@ function AppContent() {
     <>
       <Toaster position="top-center" duration={2500} closeButton />
       {!hideNav && <Navbar onOpenAuth={handleOpenAuth} />}
-      {location.pathname !== '/' && !location.pathname.startsWith('/tour') && !location.pathname.startsWith('/login') && !location.pathname.startsWith('/booking/checkout') && !(currentPage === 'signin' || currentPage === 'signup') && <SupportChatWidget onOpenAuth={handleOpenAuth} />}
+      {location.pathname !== '/' && !location.pathname.startsWith('/tour') && !location.pathname.startsWith('/login') && !location.pathname.startsWith('/booking/checkout') && !isBookingPage && !(currentPage === 'signin' || currentPage === 'signup') && <SupportChatWidget onOpenAuth={handleOpenAuth} />}
       {/* Route shell: keyed so each navigation mounts a fresh subtree, but NOT
           animated to opacity 0 — an interrupted fade used to leave the new
           page permanently invisible (blank white until a manual refresh). */}

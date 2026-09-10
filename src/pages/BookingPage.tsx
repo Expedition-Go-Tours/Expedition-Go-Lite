@@ -704,6 +704,7 @@ function ActivityDetailsStep({
   contact, onContactChange, showPickupLocation, locationValid,
   isCapturingLocation,
   options, optionValue, onOptionChange, optionQuoting, optionError,
+  staticInfo = false,
 }: {
   tour: typeof FALLBACK_TOUR
   onNext: () => void
@@ -723,6 +724,9 @@ function ActivityDetailsStep({
   onOptionChange?: (optionId: string) => void
   optionQuoting?: boolean
   optionError?: string
+  /** Meeting-point tours whose step 1 is skipped: render the meeting details
+      as a static, non-editable block (no step header, badge, Next or Edit). */
+  staticInfo?: boolean
 }) {
   const isActive = step === 1
   const isCompleted = step > 1
@@ -953,6 +957,32 @@ function ActivityDetailsStep({
       </div>
     )
   })()
+
+  // Meeting-point tours whose step 1 is skipped: show the meeting details as a
+  // static, non-editable block (no step header, badge, Next or Edit).
+  if (staticInfo) {
+    return (
+      <div className="rounded-[1.75rem] border border-slate-200/40 bg-white p-7 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] sm:p-9">
+        <h2 className="text-lg font-bold text-slate-900 tracking-tight">Meeting point</h2>
+        <div className="mt-4 space-y-5">
+          {meetingSummaryCard}
+          {showZoneMap && (
+            <div className="space-y-1">
+              {resolvingPoints && (
+                <p className="flex items-center gap-1.5 px-1 text-[11px] font-medium text-slate-400">
+                  <Loader2 className="size-3 animate-spin" />
+                  Locating pickup points…
+                </p>
+              )}
+              {locationMap}
+              {travelTimeChip}
+            </div>
+          )}
+          {pickupPhoto}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <>
@@ -1783,9 +1813,20 @@ export default function BookingPage() {
 
   const user = useAuthUser()
 
-  const [step, setStep] = useState(() =>
-    canRestore && typeof draft?.step === 'number' && draft.step >= 1 && draft.step <= 3 ? draft.step : 1,
-  )
+  // Meeting-point tours with a single sellable option have no meaningful first
+  // step — the meeting info is static and nothing there is editable — so the
+  // booking skips straight to Lead Traveler Details. Multi-option tours keep
+  // step 1 because the "Choose your option" picker lives there.
+  const skipMeetingStep =
+    tour.meetingMode === 'meeting_point' &&
+    (Array.isArray(tour.options) ? (tour.options as TourOption[]).filter((o) => !o.isPrivate).length : 0) <= 1
+
+  const [step, setStep] = useState(() => {
+    const restored =
+      canRestore && typeof draft?.step === 'number' && draft.step >= 1 && draft.step <= 3 ? draft.step : 1
+    // A restored draft parked on the skipped step resumes on Lead Traveler.
+    return skipMeetingStep ? Math.max(restored, 2) : restored
+  })
   const [attempted, setAttempted] = useState<Record<number, boolean>>({})
   // Prefill with a promo code validated on the tour detail page (the widget
   // passes it through router state); it is re-validated against the backend.
@@ -1855,6 +1896,13 @@ export default function BookingPage() {
     setEditableTour(buildEditableTour(stub))
   }
 
+  // The real tour can arrive after the initial render (by-URL refetch). If it
+  // turns out to be a skipped-step meeting-point tour while we're still on
+  // step 1, advance to Lead Traveler Details (render-time adjust pattern).
+  if (skipMeetingStep && step === 1) {
+    setStep(2)
+  }
+
   // Bring a restored later step into view (mount-only; no state changes).
   useEffect(() => {
     if (canRestore && step > 1) {
@@ -1915,10 +1963,15 @@ export default function BookingPage() {
     [showPickupLocation, contact.pickupLater, contact.location, contact.pickupLat, contact.pickupLng, tour.pickupAreas],
   )
   const noPickupConfig = showPickupLocation && (tour.pickupAreas || []).length === 0 && (tour.pickupLocations || []).length === 0
+  // Single designated pickup point (address mode, one location): there is
+  // nothing to choose — the section shows it read-only and auto-fills it — so
+  // the step is always valid even before its coordinates resolve.
+  const isSinglePoint = (tour.pickupLocations || []).length === 1 && (tour.pickupAreas || []).length === 0
   const pickupLocationValid = useMemo(
     () =>
       !showPickupLocation ||
       noPickupConfig ||
+      isSinglePoint ||
       isPickupLocationSatisfied({
         pickupLater: contact.pickupLater,
         pickedArea: contact.pickupArea,
@@ -1927,7 +1980,7 @@ export default function BookingPage() {
         zonesDrawn,
         hasLocationOnlyAreas: hasPointAreas,
       }),
-    [showPickupLocation, noPickupConfig, contact.pickupLater, contact.pickupArea, contact.location, pickupZoneStatusValue, zonesDrawn, hasPointAreas],
+    [showPickupLocation, noPickupConfig, isSinglePoint, contact.pickupLater, contact.pickupArea, contact.location, pickupZoneStatusValue, zonesDrawn, hasPointAreas],
   )
 
   const contactValid = useMemo(() => ({
@@ -2080,16 +2133,19 @@ export default function BookingPage() {
   const goToStep = (target: number) => {
     if (target < 1 || target > 3) return
 
-    if (target > step) {
+    // Meeting-point tours with no editable step 1 never navigate back to it.
+    const resolvedTarget = skipMeetingStep ? Math.max(target, 2) : target
+
+    if (resolvedTarget > step) {
       // Step 1 (Pickup) must be valid before going to Step 2 (Contact)
-      if (target >= 2 && !locationValid) {
+      if (resolvedTarget >= 2 && !locationValid) {
         setAttempted((p) => ({ ...p, 1: true }))
         setStep(1)
         scrollToStep(1)
         return
       }
       // Step 2 (Contact) must be valid before going to Step 3 (Payment)
-      if (target >= 3 && !contactValid.all) {
+      if (resolvedTarget >= 3 && !contactValid.all) {
         setAttempted((p) => ({ ...p, 2: true }))
         setStep(2)
         scrollToStep(2)
@@ -2097,8 +2153,8 @@ export default function BookingPage() {
       }
     }
 
-    setStep(target)
-    if (target !== step) scrollToStep(target)
+    setStep(resolvedTarget)
+    if (resolvedTarget !== step) scrollToStep(resolvedTarget)
   }
 
   const contactHasError = !contactValid.all && attempted[2] === true
@@ -2219,13 +2275,18 @@ export default function BookingPage() {
       // autocomplete-resolved address + coordinates (coords stay out of the
       // legacy travelers payload on purpose).
       const hasPickupAddress = contact.pickupLat != null && contact.pickupLng != null && contact.location.trim().length > 0
+      // An out-of-zone address is allowed: skip server geofencing so the
+      // booking succeeds, while the stored address still reaches the supplier
+      // (the traveller was cautioned to pick an in-zone location).
+      const pickupOutOfZone = pickupZoneStatusValue === 'outside'
       const pickupSelection = contact.pickupLater
         ? { skipValidation: true }
         : showPickupLocation && (contact.pickupArea || hasPickupAddress)
           ? {
-              // Drawn geoshapes mean the server validates against zone
-              // polygons (area mode) — never the location-list mode.
-              mode: zonesDrawn ? 'area' : tour.pickupType || 'area',
+              // Any pickup areas (drawn geoshapes or location-only) mean the
+              // server validates in area mode — never the location-list mode.
+              mode: zonesDrawn || hasPointAreas ? 'area' : tour.pickupType || 'area',
+              ...(pickupOutOfZone ? { skipValidation: true } : {}),
               ...(!hasPickupAddress && contact.pickupArea ? { areaName: contact.pickupArea } : {}),
               ...(hasPickupAddress
                 ? { address: { name: contact.location.trim(), address: contact.location.trim(), lat: contact.pickupLat, lng: contact.pickupLng } }
@@ -2297,7 +2358,7 @@ export default function BookingPage() {
     } finally {
       setIsBooking(false)
     }
-  }, [createBooking, contact, editableTour, tour, showPickupLocation, zonesDrawn, isBooking, isActive, pollBooking, user, payment.paymentTiming, appliedPromo, promoCode, hasMultipleOptions, selectedOptionId])
+  }, [createBooking, contact, editableTour, tour, showPickupLocation, zonesDrawn, hasPointAreas, pickupZoneStatusValue, isBooking, isActive, pollBooking, user, payment.paymentTiming, appliedPromo, promoCode, hasMultipleOptions, selectedOptionId])
 
   const handleCheckoutTransitionDone = useCallback(() => {
     if (pendingCheckoutUrl.current) {
@@ -2464,6 +2525,7 @@ export default function BookingPage() {
                   onOptionChange={handleOptionChange}
                   optionQuoting={optionQuoting}
                   optionError={optionError}
+                  staticInfo={skipMeetingStep}
                 />
                 <ContactDetailsStep
                   tour={activeTour}
