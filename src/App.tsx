@@ -252,6 +252,7 @@ function AppContent() {
           page permanently invisible (blank white until a manual refresh). */}
       <div
         key={location.pathname.startsWith('/dashboard') ? '/dashboard' : location.pathname}
+        style={{ isolation: 'isolate' }}
       >
         <RouteErrorBoundary>
         <Suspense fallback={<div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div className="spinner" /></div>}>
