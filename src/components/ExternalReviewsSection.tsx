@@ -2,6 +2,7 @@ import { useRef, useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import SectionHeading from './SectionHeading'
 import ExternalReviewCard from './ExternalReviewCard'
+import StarRating from './StarRating'
 import { useExternalReviews, useExternalReviewStats } from '../hooks/useExternalReviews'
 import './ExternalReviewsSection.css'
 
@@ -101,6 +102,7 @@ export default function ExternalReviewsSection() {
         <div className="ext-reviews-viewport">
           <SectionHeading
             title={t('sections.whatTravellersAreSaying')}
+            viewAllLink="/reviews"
             onScrollLeft={() => scroll('left')}
             onScrollRight={() => scroll('right')}
             disableLeft={!canScrollLeft}
@@ -113,14 +115,13 @@ export default function ExternalReviewsSection() {
               <div className="ext-reviews-stats__rating">
                 <span className="ext-reviews-stats__number">{stats.averageRating}</span>
                 <div className="ext-reviews-stats__stars">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <span
-                      key={i}
-                      className={`ext-reviews-stats__star${i < Math.round(stats.averageRating!) ? ' ext-reviews-stats__star--filled' : ''}`}
-                    >
-                      ★
-                    </span>
-                  ))}
+                  <StarRating
+                    value={stats.averageRating ?? 0}
+                    size={16}
+                    gap={1}
+                    filledColor="#16a34a"
+                    emptyColor="#e5e7eb"
+                  />
                 </div>
               </div>
               <span className="ext-reviews-stats__divider" />
@@ -154,6 +155,15 @@ export default function ExternalReviewsSection() {
                     <text x="32" y="58" textAnchor="middle" fill="#fff" fontFamily="Arial Black, sans-serif" fontWeight="900" fontSize="13" letterSpacing="-0.5">GUIDE</text>
                   </svg>
                   GetYourGuide
+                </span>
+                <span className="ext-reviews-stats__platform ext-reviews-stats__platform--google">
+                  <svg className="ext-reviews-stats__platform-icon" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="64" height="64" rx="12" fill="#fff" stroke="#e5e7eb" strokeWidth="1" />
+                    <path d="M32 16c4.2 0 7.6 1.4 10.4 4.1l-4.3 4.3c-1.6-1.6-3.5-2.4-6.1-2.4-5.2 0-9.4 4.3-9.4 9.5s4.2 9.5 9.4 9.5c4.5 0 7.5-2.6 8.3-6.3H32v-5.6h14.8c.2.9.3 1.9.3 3.1 0 8.2-5.5 14.1-15.1 14.1C22.6 46.3 16 39.7 16 31.4S22.6 16.5 32 16.5z" fill="#4285F4"/>
+                    <path d="M32 16c4.2 0 7.6 1.4 10.4 4.1l-4.3 4.3c-1.6-1.6-3.5-2.4-6.1-2.4" fill="#EA4335"/>
+                    <path d="M16.9 31.4c0-2.8.8-5.4 2.1-7.6l-5.1-4C11.3 23.2 10 27.1 10 31.4s1.3 8.2 3.9 11.6l5.1-4c-1.3-2.2-2.1-4.8-2.1-7.6z" fill="#FBBC05"/>
+                  </svg>
+                  Google
                 </span>
               </div>
             </div>

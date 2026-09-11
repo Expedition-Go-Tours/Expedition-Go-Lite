@@ -243,15 +243,6 @@
   margin-top: 10px;
 }
 
-.overview-traveller-stars .star-filled {
-  color: #179237;
-  fill: currentColor;
-}
-
-.overview-traveller-stars .star-empty {
-  color: #e2e8f0;
-}
-
 .overview-traveller-text {
   margin-top: 10px;
   font-size: 14px;

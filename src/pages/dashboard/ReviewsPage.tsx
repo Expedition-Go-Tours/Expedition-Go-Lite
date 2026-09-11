@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import StarRating from "@/components/StarRating";
 import { useMyReviews } from "../../hooks/useExpeditionReviews";
 import OptimizedImage from "@/components/shared/OptimizedImage";
 
@@ -85,16 +86,13 @@ export default function ReviewsPage() {
                     {review.tourTitle}
                   </h3>
                   <div className="flex items-center gap-1 mt-1">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <svg
-                        key={star}
-                        className={`w-4 h-4 ${star <= review.rating ? 'text-[var(--bv-accent)] fill-[var(--bv-accent)]' : 'text-gray-200'}`}
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
-                      >
-                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                      </svg>
-                    ))}
+                    <StarRating
+                      value={review.rating}
+                      size={16}
+                      gap={2}
+                      filledColor="var(--bv-accent)"
+                      emptyColor="#e5e7eb"
+                    />
                     <span className="text-sm text-[var(--bv-muted)] ml-1">
                       {review.rating}/5
                     </span>

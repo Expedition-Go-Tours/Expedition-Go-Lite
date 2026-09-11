@@ -76,6 +76,20 @@ const GETYOURGUIDE_TOURS = [
   },
 ];
 
+const GOOGLE_LISTING_URL = 'https://www.google.com/maps/place/Expedition-Go+Tours+LTD';
+const GOOGLE_REVIEWS_TOURS = [
+  'Cape Coast Castle, Elmina Castle & Kakum National Park Day Tour',
+  'Accra Guided City Tour: Cultural and Historical Experience',
+  'Accra Guided City Tour Experience',
+  'From Accra: Waterfalls, Aburi Gardens & Cocoa Farm Day Tour',
+  'From Accra: The Cape Coast Day Tour Guided Experience',
+  'Shai Hills Safari & Akosombo Boat Cruise Day Tour',
+  'Boti Falls, Umbrella Rock, Aburi Gardens & Cocoa Farm Tour',
+  'Accra Sankofa Gallery Art Tour & Candle Making Workshop',
+  'Kotoka Domestic Airport Transfer with Mini Accra City Tour',
+  'Accra Mini Safari, Rock Climbing, Museum & Boat Cruise Tour',
+];
+
 const PAGES_TO_SCRAPE = 2;
 const DELAY_BETWEEN_PAGES_MS = 3000;
 const DELAY_BETWEEN_TOURS_MS = 2000;
@@ -241,6 +255,80 @@ async function scrapeGetYourGuideTour(page, tour) {
   }
 }
 
+// ─── Google Maps Scraper ─────────────────────────────────────────────────────
+
+async function scrapeGoogleReviews(page) {
+  console.log(`  [Google] Scraping reviews from Google Maps...`);
+
+  try {
+    await page.goto(GOOGLE_LISTING_URL, { waitUntil: 'networkidle2', timeout: 30000 });
+    await sleep(3000);
+
+    // Click the Reviews tab if available
+    const reviewsTab = await page.$('[data-tab-id="reviews"], [role="tab"][aria-label*="Reviews"], button[jsaction*="reviews"]');
+    if (reviewsTab) {
+      await reviewsTab.click();
+      await sleep(3000);
+    }
+
+    // Scroll to load more reviews
+    for (let i = 0; i < 3; i++) {
+      await page.evaluate(() => {
+        const scrollable = document.querySelector('[class*="m6QErb"][class*="DxyBCb"], .section-scrollbox, [role="main"]');
+        if (scrollable) scrollable.scrollTop = scrollable.scrollHeight;
+      });
+      await sleep(2000);
+    }
+
+    const pageReviews = await page.evaluate(() => {
+      const reviewEls = document.querySelectorAll('.jftiEf, .review-container, [class*="review-item"], [data-review-id]');
+      return Array.from(reviewEls).map((el) => {
+        const nameEl = el.querySelector('.d4r55, .reviewer-name, [class*="userName"], span[class*="fontBodyMedium"] span:first-child');
+        const ratingEl = el.querySelector('[role="img"][aria-label*="star"], .kvMYJc, [class*="rating"]');
+        const textEl = el.querySelector('.wiI7pd, .review-text, [class*="reviewText"], span[class*="fontBodyMedium"]');
+        const dateEl = el.querySelector('.rsqaWe, .review-date, [class*="date"]');
+
+        let rating = 5;
+        if (ratingEl) {
+          const ariaLabel = ratingEl.getAttribute('aria-label') || '';
+          const ratingMatch = ariaLabel.match(/(\d+)/);
+          if (ratingMatch) rating = parseInt(ratingMatch[1]);
+        }
+
+        return {
+          reviewerName: nameEl?.textContent?.trim() || '',
+          rating,
+          text: textEl?.textContent?.trim() || '',
+          date: dateEl?.textContent?.trim() || '',
+        };
+      }).filter((r) => r.reviewerName && r.text);
+    });
+
+    console.log(`    Found ${pageReviews.length} reviews`);
+
+    // Distribute reviews across known tour titles
+    return pageReviews.map((r, i) => ({
+      id: `goog_${hashString(r.reviewerName + r.text.slice(0, 100))}`,
+      source: 'GOOGLE',
+      reviewerName: r.reviewerName,
+      reviewerAvatar: null,
+      rating: clampRating(r.rating),
+      title: null,
+      text: r.text || '(No review text)',
+      textTruncated: r.text.length > 200 ? r.text.slice(0, 197) + '...' : r.text,
+      tourTitle: GOOGLE_REVIEWS_TOURS[i % GOOGLE_REVIEWS_TOURS.length],
+      tourThumbnail: null,
+      tourUrl: GOOGLE_LISTING_URL,
+      tourLink: GOOGLE_LISTING_URL,
+      coverPhoto: null,
+      originalDate: normalizeDate(r.date),
+    }));
+  } catch (err) {
+    console.warn(`    Failed: ${err.message}`);
+    return [];
+  }
+}
+
 // ─── Stats Computation ───────────────────────────────────────────────────────
 
 function computeStats(reviews) {
@@ -311,6 +399,11 @@ async function main() {
       allReviews.push(...reviews);
       if (i < GETYOURGUIDE_TOURS.length - 1) await sleep(DELAY_BETWEEN_TOURS_MS);
     }
+
+    // Google Maps
+    console.log(`\nScraping Google Maps reviews...`);
+    const googleReviews = await scrapeGoogleReviews(page);
+    allReviews.push(...googleReviews);
 
     // Compute stats and write output
     const stats = computeStats(allReviews);

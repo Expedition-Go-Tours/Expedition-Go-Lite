@@ -2,9 +2,10 @@ import { useState, useRef, useCallback, useEffect, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import {
-  Star, Check, ChevronLeft, ChevronRight,
+  Check, ChevronLeft, ChevronRight,
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import StarRating from '../../components/StarRating'
 import './OverviewSection.css'
 
 interface OverviewSectionProps {
@@ -164,13 +165,13 @@ export default function OverviewSection({
                       </div>
                     </div>
                     <div className="overview-traveller-stars">
-                      {[...Array(5)].map((_, i) => (
-                        <Star
-                          key={i}
-                          size={14}
-                          className={i < review.rating ? 'star-filled' : 'star-empty'}
-                        />
-                      ))}
+                      <StarRating
+                        value={review.rating}
+                        size={14}
+                        gap={2}
+                        filledColor="#179237"
+                        emptyColor="#e2e8f0"
+                      />
                     </div>
                     <p className="overview-traveller-text">{review.text}</p>
                     <button

@@ -6,11 +6,12 @@ import { motion, AnimatePresence, useAnimate } from 'framer-motion'
 import { toast } from 'sonner'
 import {
   Check, ArrowLeft, MapPin, CalendarDays, CalendarCheck, Users, Info, X,
-  Phone, ShieldCheck, Star, Clock, Globe, Loader2,
+  Phone, ShieldCheck, Clock, Globe, Loader2,
   Car, CreditCard, Ticket, ExternalLink, Layers,
 } from 'lucide-react'
 import logoSrc from '../assets/expo_trans.png'
 import Footer from '../components/Footer'
+import StarRating from '../components/StarRating'
 import StepBadge from '../components/booking/StepBadge'
 import { FieldLabel, TextInput, SelectInput } from '../components/booking/FormFields'
 import ChangeBookingModal from '../components/booking/ChangeBookingModal'
@@ -1426,10 +1427,6 @@ function PaymentDetailsStep({
 function BookingTourCard({ tour, onChangeClick }: { tour: typeof FALLBACK_TOUR; onChangeClick: () => void }) {
   const { t } = useTranslation()
   const { formatPrice } = useCurrency()
-  const stars = useMemo(() => {
-    const full = Math.floor(tour.rating)
-    return Array.from({ length: 5 }, (_, i) => i < full)
-  }, [tour.rating])
 
   // Date-aware cancellation badge — non-refundable once the selected date is
   // inside the policy's free-cancellation window (Viator's rule).
@@ -1450,9 +1447,13 @@ function BookingTourCard({ tour, onChangeClick }: { tour: typeof FALLBACK_TOUR; 
           <div className="mt-2 flex items-center gap-1">
             <span className="text-sm font-bold text-slate-900">{tour.rating}</span>
             <div className="flex items-center gap-0.5">
-              {stars.map((filled, i) => (
-                <Star key={i} className={`size-3 ${filled ? 'fill-emerald-500 text-emerald-500' : 'text-slate-200'}`} />
-              ))}
+              <StarRating
+                value={tour.rating}
+                size={12}
+                gap={2}
+                filledColor="#10b981"
+                emptyColor="#e2e8f0"
+              />
             </div>
             <span className="text-xs text-slate-400">({tour.reviews})</span>
           </div>

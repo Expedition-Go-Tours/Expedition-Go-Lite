@@ -33,6 +33,7 @@ const AllToursPage = lazy(() => import('./pages/AllToursPage'))
 const SearchResultsPage = lazy(() => import('./pages/SearchResultsPage'))
 const AllStoriesPage = lazy(() => import('./pages/AllStoriesPage'))
 const StoryDetailPage = lazy(() => import('./pages/StoryDetailPage'))
+const AllReviewsPage = lazy(() => import('./pages/AllReviewsPage'))
 const ReviewExperiencePage = lazy(() => import('./pages/ReviewExperiencePage'))
 const SupplierPage = lazy(() => import('./pages/SupplierPage'))
 const SupplierRegisterPage = lazy(() => import('./pages/supplier/SupplierRegisterPage'))
@@ -281,6 +282,7 @@ function AppContent() {
           } />
           <Route path="/stories" element={<AllStoriesPage />} />
           <Route path="/stories/:slug" element={<StoryDetailPage />} />
+          <Route path="/reviews" element={<AllReviewsPage />} />
           <Route path="/blog" element={<BlogPage onOpenAuth={handleOpenAuth} />} />
           <Route path="/*" element={
             <AnimatePresence mode="wait">

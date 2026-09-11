@@ -1,6 +1,9 @@
-import { useState } from 'react'
+import { useState, useRef, useLayoutEffect } from 'react'
+import { Link } from 'react-router-dom'
 import type { ExternalReview } from '../hooks/useExternalReviews'
+import { useReviewTourLink } from '../hooks/useReviewTourLink'
 import SourceBadge from './SourceBadge'
+import StarRating from './StarRating'
 import './SourceBadge.css'
 import './ExternalReviewCard.css'
 
@@ -10,6 +13,19 @@ interface ExternalReviewCardProps {
 
 export default function ExternalReviewCard({ review }: ExternalReviewCardProps) {
   const [showModal, setShowModal] = useState(false)
+  const textRef = useRef<HTMLParagraphElement>(null)
+  const [isTruncated, setIsTruncated] = useState(false)
+  const tourLink = useReviewTourLink(review.tourTitle)
+
+  useLayoutEffect(() => {
+    const el = textRef.current
+    if (!el) return
+    const check = () => setIsTruncated(el.scrollHeight > el.clientHeight + 1)
+    check()
+    const observer = new ResizeObserver(check)
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [review.text])
 
   const formattedDate = review.originalDate
     ? new Date(review.originalDate).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })
@@ -20,25 +36,30 @@ export default function ExternalReviewCard({ review }: ExternalReviewCardProps) 
       <div className="ext-review-card">
         <div className="ext-review-card__body">
           {/* Tour title */}
-          <a
-            href={review.tourUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="ext-review-card__tour-title"
-          >
-            {review.tourTitle}
-          </a>
+          {review.source === 'GOOGLE' ? (
+            <span className="ext-review-card__tour-title">
+              {review.tourTitle}
+            </span>
+          ) : (
+            <a
+              href={review.tourUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ext-review-card__tour-title"
+            >
+              {review.tourTitle}
+            </a>
+          )}
 
           {/* Star rating */}
           <div className="ext-review-card__stars">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <span
-                key={i}
-                className={`ext-review-card__star ${i < review.rating ? 'ext-review-card__star--filled' : ''}`}
-              >
-                ★
-              </span>
-            ))}
+            <StarRating
+              value={review.rating}
+              size={20}
+              gap={1}
+              filledColor="#16a34a"
+              emptyColor="#e5e7eb"
+            />
           </div>
 
           {/* Reviewer info */}
@@ -62,27 +83,26 @@ export default function ExternalReviewCard({ review }: ExternalReviewCardProps) 
           )}
 
           {/* Review text — full, with Read more modal */}
-          <p className="ext-review-card__text">
+          <p ref={textRef} className="ext-review-card__text">
             {review.text}
           </p>
-          <button
-            onClick={() => setShowModal(true)}
-            className="ext-review-card__read-more"
-          >
-            Read more
-          </button>
+          {isTruncated && (
+            <button
+              onClick={() => setShowModal(true)}
+              className="ext-review-card__read-more"
+            >
+              Read more
+            </button>
+          )}
 
           {/* Footer: source badge + check availability */}
           <div className="ext-review-card__footer">
-            <SourceBadge source={review.source} />
-            <a
-              href={review.tourUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="ext-review-card__cta"
-            >
-              Check Availability
-            </a>
+            <SourceBadge source={review.source} url={review.source !== 'GOOGLE' ? review.tourUrl : undefined} />
+            {review.source !== 'GOOGLE' && (
+              <Link to={tourLink} className="ext-review-card__cta">
+                Check Availability
+              </Link>
+            )}
           </div>
         </div>
       </div>
@@ -99,23 +119,28 @@ export default function ExternalReviewCard({ review }: ExternalReviewCardProps) 
             </button>
 
             <div className="ext-review-modal__header">
-              <a
-                href={review.tourUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="ext-review-modal__tour-title"
-              >
-                {review.tourTitle}
-              </a>
+              {review.source === 'GOOGLE' ? (
+                <span className="ext-review-modal__tour-title">
+                  {review.tourTitle}
+                </span>
+              ) : (
+                <a
+                  href={review.tourUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="ext-review-modal__tour-title"
+                >
+                  {review.tourTitle}
+                </a>
+              )}
               <div className="ext-review-modal__stars">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <span
-                    key={i}
-                    className={`ext-review-card__star ${i < review.rating ? 'ext-review-card__star--filled' : ''}`}
-                  >
-                    ★
-                  </span>
-                ))}
+                <StarRating
+                  value={review.rating}
+                  size={20}
+                  gap={1}
+                  filledColor="#16a34a"
+                  emptyColor="#e5e7eb"
+                />
               </div>
               <div className="ext-review-modal__reviewer">
                 {review.reviewerAvatar ? (
@@ -139,15 +164,12 @@ export default function ExternalReviewCard({ review }: ExternalReviewCardProps) 
             <p className="ext-review-modal__text">{review.text}</p>
 
             <div className="ext-review-modal__footer">
-              <SourceBadge source={review.source} />
-              <a
-                href={review.tourUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="ext-review-card__cta"
-              >
-                Check Availability
-              </a>
+              <SourceBadge source={review.source} url={review.source !== 'GOOGLE' ? review.tourUrl : undefined} />
+              {review.source !== 'GOOGLE' && (
+                <Link to={tourLink} className="ext-review-card__cta">
+                  Check Availability
+                </Link>
+              )}
             </div>
           </div>
         </div>

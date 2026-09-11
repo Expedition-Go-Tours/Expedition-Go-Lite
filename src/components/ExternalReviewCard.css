@@ -7,6 +7,7 @@
   border: 1px solid rgba(0, 0, 0, 0.06);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   height: 100%;
+  min-width: 0;
   min-height: 320px;
 }
 
@@ -47,21 +48,12 @@
   margin-bottom: 2px;
 }
 
-.ext-review-card__star {
-  font-size: 20px;
-  color: #e5e7eb;
-  line-height: 1;
-}
-
-.ext-review-card__star--filled {
-  color: #16a34a;
-}
-
 /* Reviewer info */
 .ext-review-card__reviewer {
   display: flex;
   align-items: center;
   gap: 5px;
+  min-width: 0;
   font-family: 'Raleway', sans-serif;
   font-size: 12px;
   color: #6b7280;
@@ -87,6 +79,10 @@
 .ext-review-card__reviewer-name {
   font-weight: 600;
   color: #374151;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .ext-review-card__date {
@@ -140,6 +136,17 @@
   justify-content: space-between;
   gap: 8px;
   padding-top: 8px;
+  min-width: 0;
+}
+
+.ext-source-badge {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.ext-source-badge__text {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .ext-review-card__cta {
@@ -153,6 +160,7 @@
   padding: 5px 12px;
   text-decoration: none;
   white-space: nowrap;
+  flex-shrink: 0;
   transition: background 0.2s;
 }
 
@@ -265,6 +273,7 @@
   gap: 8px;
   padding-top: 16px;
   border-top: 1px solid #f3f4f6;
+  min-width: 0;
 }
 
 /* Responsive */
@@ -280,7 +289,7 @@
 
 @media (max-width: 768px) {
   .ext-review-card {
-    min-height: 310px;
+    min-height: auto;
   }
 
   .ext-review-card__body {
@@ -289,6 +298,12 @@
 
   .ext-review-card__tour-title {
     font-size: 14px;
+  }
+
+  .ext-review-card__footer,
+  .ext-review-modal__footer {
+    flex-wrap: wrap;
+    row-gap: 6px;
   }
 
   .ext-review-modal {

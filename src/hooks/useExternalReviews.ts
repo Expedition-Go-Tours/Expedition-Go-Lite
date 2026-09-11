@@ -3,7 +3,7 @@ import data from '../data/externalReviews.json'
 
 export interface ExternalReview {
   id: string
-  source: 'TRIPADVISOR' | 'GETYOURGUIDE'
+  source: 'TRIPADVISOR' | 'GETYOURGUIDE' | 'GOOGLE'
   reviewerName: string
   reviewerAvatar: string | null
   rating: number
@@ -47,6 +47,14 @@ export function useExternalReviews(limit = 100) {
       const mixed = shuffle(data.reviews as ExternalReview[])
       return Promise.resolve(mixed.slice(0, limit))
     },
+    staleTime: Infinity,
+  })
+}
+
+export function useAllExternalReviews() {
+  return useQuery({
+    queryKey: ['external-reviews-all'],
+    queryFn: () => Promise.resolve(data.reviews as ExternalReview[]),
     staleTime: Infinity,
   })
 }

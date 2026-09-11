@@ -97,11 +97,6 @@
   margin-top: 8px;
 }
 
-.reviews-star-filled {
-  color: #16a34a;
-  fill: currentColor;
-}
-
 .reviews-rating-label {
   margin-top: 8px;
   font-size: 13px;
@@ -253,15 +248,6 @@
   display: flex;
   align-items: center;
   gap: 2px;
-}
-
-.review-star-filled-sm {
-  color: #16a34a;
-  fill: currentColor;
-}
-
-.review-star-empty-sm {
-  color: #e2e8f0;
 }
 
 /* Author header (avatar + name/meta) */

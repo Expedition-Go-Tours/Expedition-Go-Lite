@@ -364,7 +364,7 @@ export default function AllToursPage() {
               ) : (
                 <p className="all-tours-count">
                   {totalCount === 1
-                    ? t('allTours.tourFound')
+                    ? t('allTours.tourFound', { count: totalCount })
                     : t('allTours.toursFound', { count: totalCount })}
                 </p>
               )}
