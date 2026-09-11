@@ -12,14 +12,16 @@ const GAP = 16
 interface Props {
   preloaded?: HomepageTour[]
   isLoading?: boolean
+  title?: string
+  location?: string
 }
 
-export default function TopRatedSection({ preloaded, isLoading }: Props) {
+export default function TopRatedSection({ preloaded, isLoading, title, location }: Props) {
   const { t } = useTranslation()
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
-  const { data: liveData } = useTopRated(12)
+  const { data: liveData } = useTopRated(12, !preloaded)
   const items = (preloaded ?? liveData)?.length
     ? (preloaded ?? liveData)!.map(mapToTourCard)
     : null
@@ -60,8 +62,8 @@ export default function TopRatedSection({ preloaded, isLoading }: Props) {
       <div className="toprated-container">
         <div className="toprated-viewport">
           <SectionHeading
-            title={t('sections.topRatedTitle')}
-            viewAllLink="/tours?section=Top Rated"
+            title={title || t('sections.topRatedTitle')}
+            viewAllLink={location ? `/tours?near=${encodeURIComponent(location)}&section=Top Rated` : "/tours?section=Top Rated"}
             onScrollLeft={() => scroll('left')}
             onScrollRight={() => scroll('right')}
             disableLeft={!canScrollLeft}

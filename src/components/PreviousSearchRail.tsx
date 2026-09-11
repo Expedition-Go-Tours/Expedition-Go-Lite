@@ -1,30 +1,31 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
-import { useTranslation } from 'react-i18next'
 import SectionHeading from './SectionHeading'
 import TourCard from './TourCard'
 import TourCardSkeleton from './TourCardSkeleton'
-import { useNewExperiences, mapToTourCard } from '../hooks/useHomepageSections'
-import './NewExperiencesSection.css'
+import { useCityRecommended, mapToTourCard } from '../hooks/useHomepageSections'
+import './PreviousSearchRail.css'
 
 const CARD_WIDTH = 295
 const GAP = 16
 
 interface Props {
-  isLoading?: boolean
-  title?: string
-  location?: string
+  location: string
+  title: string
+  note: string
 }
 
-export default function NewExperiencesSection({ isLoading, title, location }: Props) {
-  const { t } = useTranslation()
+/**
+ * A single search-history rail: a city the traveller searched earlier, shown
+ * as a horizontal tour carousel so they can pick up where they left off.
+ * Renders nothing once loaded if the city has no tours (never an empty rail).
+ */
+export default function PreviousSearchRail({ location, title, note }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
-  const { data: liveTours } = useNewExperiences(30)
+  const { data: tours, isLoading } = useCityRecommended(location, 12)
 
-  const items = liveTours?.length
-    ? liveTours.map(t => mapToTourCard(t))
-    : null
+  const items = tours?.length ? tours.map(mapToTourCard) : null
 
   const updateArrows = useCallback(() => {
     const el = scrollRef.current
@@ -52,43 +53,39 @@ export default function NewExperiencesSection({ isLoading, title, location }: Pr
     updateArrows()
     const onScroll = () => updateArrows()
     el.addEventListener('scroll', onScroll, { passive: true })
-    // Re-evaluate when the tour data arrives — the carousel starts empty (so
-    // both arrows compute as muted), then grows once the newest tours load.
-    // Without this the right arrow would stay muted forever, even though the
-    // carousel is scrollable.
-    const ro = new ResizeObserver(() => updateArrows())
-    ro.observe(el)
-    return () => {
-      el.removeEventListener('scroll', onScroll)
-      ro.disconnect()
-    }
-  }, [updateArrows])
+    return () => el.removeEventListener('scroll', onScroll)
+  }, [updateArrows, items])
 
   return (
-    <section className="newexp-section">
-      <div className="newexp-container">
-        <div className="newexp-viewport">
+    <section className="history-rail">
+      <div className="history-rail-container">
+        <div className="history-rail-viewport">
           <SectionHeading
-            title={title || t('sections.newExperiences')}
-            viewAllLink={location ? `/tours?near=${encodeURIComponent(location)}&section=New Experiences` : "/tours?section=New Experiences"}
+            title={title}
+            subtitle={note}
+            viewAllLink={`/tours?location=${encodeURIComponent(location)}`}
             onScrollLeft={() => scroll('left')}
             onScrollRight={() => scroll('right')}
             disableLeft={!canScrollLeft}
             disableRight={!canScrollRight}
           />
-          <div className="newexp-clip">
-            <div className="newexp-carousel" ref={scrollRef}>
+          <div className="history-rail-clip">
+            <div className="history-rail-carousel" ref={scrollRef}>
               {isLoading && !items
-                ? Array.from({ length: 6 }).map((_, i) => (
-                    <div key={`skeleton-${i}`} className="newexp-card-wrap">
+                ? Array.from({ length: 5 }).map((_, i) => (
+                    <div key={`skeleton-${i}`} className="history-rail-card-wrap">
                       <TourCardSkeleton />
                     </div>
                   ))
-                : items?.map((tour, i) => (
-                    <div key={`${tour.id ?? tour.title}-${i}`} className="newexp-card-wrap">
-                      <TourCard {...tour} isNew hideSourceBadge hideFeatures imageClean />
-                    </div>
-                  ))
+                : items
+                  ? items.map((tour, i) => (
+                      <div key={`${tour.title}-${i}`} className="history-rail-card-wrap">
+                        <TourCard {...tour} imageClean hideFeatures />
+                      </div>
+                    ))
+                  : (
+                    <p className="history-rail-empty">No experiences in {location} yet.</p>
+                  )
               }
             </div>
           </div>

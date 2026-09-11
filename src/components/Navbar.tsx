@@ -13,6 +13,8 @@ import { readBookingsSeen, writeBookingsSeen } from '../lib/bookingsBadge'
 import { useSupplierStatus } from '../hooks/useSupplierStatus'
 import { useMyBookingsCount } from '../hooks/useExpeditionBookings'
 import { useWishlist } from '../context/WishlistContext'
+import { useLocationSearch } from '../context/LocationSearchContext'
+import { useContinuePlanning } from '../context/ContinuePlanningContext'
 import { useSearchAutocomplete, type SearchSuggestion } from '../hooks/useSearchAutocomplete'
 import { useRecentSearches } from '../hooks/useRecentSearches'
 import LanguageCurrencyModal from './LanguageCurrencyModal'
@@ -95,6 +97,8 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
   const navInputRef = useRef<HTMLInputElement>(null)
   const { suggestions: navSuggestions, isSearching: navIsSearching } = useSearchAutocomplete(navSearchValue)
   const { recentSearches, addSearch, removeSearch, clearAll } = useRecentSearches()
+  const { hasActiveSearch, currentLocation, setLocation, resetLocation } = useLocationSearch()
+  const { clearContinuePlanning } = useContinuePlanning()
   const { isApproved } = useSupplierStatus()
   // Counter of the user's confirmed bookings shown on the "Bookings" menu item.
   const { data: bookingsCount = 0 } = useMyBookingsCount('CONFIRMED,PENDING', !!user)
@@ -142,26 +146,40 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
 
   const navigateToSuggestion = useCallback((suggestion: SearchSuggestion) => {
     if (suggestion.type === 'tour' && suggestion.slug) {
-      addSearch({ slug: suggestion.slug, title: suggestion.title, type: 'tour' })
+      addSearch({ slug: suggestion.slug, title: suggestion.title, type: 'tour', image: suggestion.image, city: suggestion.city })
     }
     setShowNavDropdown(false)
     setNavSearchValue('')
     setNavHighlightedIndex(-1)
-    if (suggestion.type === 'tour' && suggestion.slug) {
+    // Blur so the dropdown fully closes — a just-added recent search would
+    // otherwise keep it open because navIsFocused stays true.
+    setNavIsFocused(false)
+    navInputRef.current?.blur()
+    if (suggestion.type === 'destination') {
+      addSearch({ slug: suggestion.title, title: suggestion.title, type: 'destination' })
+      setLocation(suggestion.title)
+      navigate(`/tours?location=${encodeURIComponent(suggestion.title)}`)
+    } else if (suggestion.type === 'tour' && suggestion.slug) {
+      // Selecting a tour from the search bar personalizes the homepage to its city.
+      if (suggestion.city) setLocation(suggestion.city)
       navigate(`/tour/${suggestion.slug}`)
     }
-  }, [navigate, addSearch])
+  }, [navigate, addSearch, setLocation])
 
-  const navigateToRecent = useCallback((item: { slug: string; title: string; type: 'destination' | 'tour' }) => {
+  const navigateToRecent = useCallback((item: { slug: string; title: string; type: 'destination' | 'tour'; city?: string }) => {
     setShowNavDropdown(false)
     setNavSearchValue('')
     setNavHighlightedIndex(-1)
     setNavIsFocused(false)
     navInputRef.current?.blur()
-    if (item.type === 'tour' && item.slug) {
+    if (item.type === 'destination') {
+      setLocation(item.title)
+      navigate(`/tours?location=${encodeURIComponent(item.title)}`)
+    } else if (item.type === 'tour' && item.slug) {
+      if (item.city) setLocation(item.city)
       navigate(`/tour/${item.slug}`)
     }
-  }, [navigate])
+  }, [navigate, setLocation])
 
   const navigateToSearchPage = useCallback(() => {
     setShowNavDropdown(false)
@@ -619,6 +637,21 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
                       {link.label}
                     </a>
                   ))}
+
+                  {hasActiveSearch && (
+                    <div className="nav-dropdown-item" onClick={() => {
+                      resetLocation()
+                      clearContinuePlanning()
+                      setDropdownOpen(false)
+                      navigate('/')
+                    }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                        <path d="M3 3v5h5" />
+                      </svg>
+                      {t('nav.resetToDefault', { defaultValue: 'Reset to default' })}
+                    </div>
+                  )}
 
                   {user && (
                     signingOut ? (

@@ -13,14 +13,16 @@ const GAP = 16
 interface Props {
   preloaded?: HomepageTour[]
   isLoading?: boolean
+  title?: string
+  location?: string
 }
 
-export default function RecommendSection({ preloaded, isLoading }: Props) {
+export default function RecommendSection({ preloaded, isLoading, title, location }: Props) {
   const { t } = useTranslation()
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
-  const { data: personalizedTours } = useRecommended(12)
+  const { data: personalizedTours } = useRecommended(12, !preloaded)
   const { data: liveTours } = useRecommendedTours(12)
   const { data: offerTours } = useExpeditionOffers(12)
 
@@ -94,8 +96,8 @@ export default function RecommendSection({ preloaded, isLoading }: Props) {
       <div className="recommend-container">
         <div className="carousel-viewport">
           <SectionHeading
-            title={t('sections.recommendedTitle')}
-            viewAllLink="/tours?section=Recommended"
+            title={title || t('sections.recommendedTitle')}
+            viewAllLink={location ? `/tours?near=${encodeURIComponent(location)}&section=Recommended` : "/tours?section=Recommended"}
             onScrollLeft={() => scroll('left')}
             onScrollRight={() => scroll('right')}
             disableLeft={!canScrollLeft}
@@ -111,7 +113,7 @@ export default function RecommendSection({ preloaded, isLoading }: Props) {
                   ))
                 : items?.map((tour, i) => (
                     <div key={`${tour.title}-${i}`} className="carousel-card-wrap">
-                      <TourCard {...tour} imageClean hideFeatures />
+                      <TourCard {...tour} imageClean hideFeatures priority={i === 0} />
                     </div>
                   ))
               }

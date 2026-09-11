@@ -500,7 +500,7 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
     if (info?.timeSlots?.length) return info.timeSlots
     if (tour.scheduleType === 'fixedTimeSlot' && Array.isArray(tour.timeSlots) && tour.timeSlots.length > 0) {
       return tour.timeSlots
-        .slice()
+        .filter((s): s is { startTime: string; endTime?: string } => !!s?.startTime)
         .sort((a, b) => a.startTime.localeCompare(b.startTime))
         .map((s) => ({ time: s.startTime, capacity: 0, booked: 0, remaining: null }))
     }

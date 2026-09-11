@@ -133,8 +133,9 @@ export interface HomepageData {
 /**
  * Single request that fetches all homepage sections.
  * Returns pre-computed data from Redis (0 DB queries) when available.
+ * Pass `enabled: false` to skip the request (e.g. when city search is active).
  */
-export function useHomepage() {
+export function useHomepage({ enabled = true } = {}) {
   return useQuery({
     queryKey: ['homepage', 'all'],
     queryFn: async () => {
@@ -160,6 +161,7 @@ export function useHomepage() {
       }
     },
     staleTime: 5 * 60 * 1000,
+    enabled,
   })
 }
 
@@ -223,7 +225,7 @@ export async function mergeOffersIntoTours<T extends { id: string }>(tours: T[])
 /**
  * Likely to Sell Out â€” tours with booking momentum in last 14 days.
  */
-export function useLikelySellOut(limit = 12) {
+export function useLikelySellOut(limit = 12, enabled = true) {
   return useQuery({
     queryKey: ['homepage', 'sell-out', limit],
     queryFn: async () => {
@@ -232,13 +234,14 @@ export function useLikelySellOut(limit = 12) {
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
     select: (data) => data.tours,
+    enabled,
   })
 }
 
 /**
  * Top Rated â€” Bayesian-smoothed quality scores.
  */
-export function useTopRated(limit = 12) {
+export function useTopRated(limit = 12, enabled = true) {
   return useQuery({
     queryKey: ['homepage', 'top-rated', limit],
     queryFn: async () => {
@@ -247,13 +250,14 @@ export function useTopRated(limit = 12) {
     },
     staleTime: 5 * 60 * 1000,
     select: (data) => data.tours,
+    enabled,
   })
 }
 
 /**
  * Trending Now â€” view/booking/wishlist velocity (7d vs prior 7d).
  */
-export function useTrending(limit = 12) {
+export function useTrending(limit = 12, enabled = true) {
   return useQuery({
     queryKey: ['homepage', 'trending', limit],
     queryFn: async () => {
@@ -262,13 +266,14 @@ export function useTrending(limit = 12) {
     },
     staleTime: 5 * 60 * 1000,
     select: (data) => data.tours,
+    enabled,
   })
 }
 
 /**
  * Recommended for You â€” personalized by behavior + location + quality.
  */
-export function useRecommended(limit = 12) {
+export function useRecommended(limit = 12, enabled = true) {
   const location = getStoredLocation()
   const params = new URLSearchParams({ limit: String(limit) })
   if (location) {
@@ -284,13 +289,14 @@ export function useRecommended(limit = 12) {
     },
     staleTime: 5 * 60 * 1000,
     select: (data) => data.tours,
+    enabled,
   })
 }
 
 /**
  * New Experiences â€” tours created in last 30 days.
  */
-export function useNewExperiences(limit = 10) {
+export function useNewExperiences(limit = 10, enabled = true) {
   return useQuery({
     queryKey: ['homepage', 'new', limit],
     queryFn: async () => {
@@ -299,6 +305,7 @@ export function useNewExperiences(limit = 10) {
     },
     staleTime: 10 * 60 * 1000, // 10 minutes
     select: (data) => data.tours,
+    enabled,
   })
 }
 
@@ -306,7 +313,7 @@ export function useNewExperiences(limit = 10) {
  * Attractions â€” grouped by attraction name from tour data.
  * Uses location for proximity sorting when available.
  */
-export function useAttractions(limit = 12) {
+export function useAttractions(limit = 12, enabled = true) {
   const location = getStoredLocation()
   const params = new URLSearchParams({ limit: String(limit) })
   if (location) {
@@ -319,6 +326,7 @@ export function useAttractions(limit = 12) {
     queryFn: () => fetchHomepageSection<{ attractions: HomepageAttraction[] }>(`/attractions?${params}`),
     staleTime: 5 * 60 * 1000,
     select: (data) => data.attractions,
+    enabled,
   })
 }
 
@@ -344,11 +352,12 @@ export function useAttractionTours(attractionName: string | null, limit = 12) {
 /**
  * Mood Keywords â€” dynamic keywords for "What do you want to do?"
  */
-export function useMoodKeywords(limit = 8) {
+export function useMoodKeywords(limit = 8, enabled = true) {
   return useQuery({
     queryKey: ['homepage', 'mood', limit],
     queryFn: () => fetchHomepageSection<{ keywords: MoodKeyword[] }>(`/mood?limit=${limit}`),
     staleTime: 5 * 60 * 1000,
+    enabled,
     select: (data) => data.keywords
       .filter(k => k.keyword && typeof k.keyword === 'string' && k.keyword.trim().length > 0)
       .map(k => ({
@@ -363,12 +372,13 @@ export function useMoodKeywords(limit = 8) {
 /**
  * Popular Destinations â€” cities with most tours/bookings.
  */
-export function usePopularDestinations(limit = 10) {
+export function usePopularDestinations(limit = 10, enabled = true) {
   return useQuery({
     queryKey: ['homepage', 'destinations', limit],
     queryFn: () => fetchHomepageSection<{ destinations: PopularDestination[] }>(`/destinations?limit=${limit}`),
     staleTime: 60 * 60 * 1000, // 1 hour
     select: (data) => data.destinations,
+    enabled,
   })
 }
 
@@ -405,7 +415,7 @@ export interface HomepageOfferTour extends HomepageTour {
  * Tours with active special offers â€” single efficient query (no N+1).
  * Powers the "Special Offers" / "Last Minute Deals" homepage section.
  */
-export function useHomepageOffers(limit = 12) {
+export function useHomepageOffers(limit = 12, enabled = true) {
   return useQuery({
     queryKey: ['homepage', 'offers', limit],
     queryFn: async () => {
@@ -414,6 +424,7 @@ export function useHomepageOffers(limit = 12) {
     },
     staleTime: 5 * 60 * 1000,
     select: (data) => data.tours,
+    enabled,
   })
 }
 
@@ -459,4 +470,60 @@ export function mapToTourCard(t: HomepageTour): TourCardData {
     accommodationIncluded: t.accommodationIncluded || undefined,
     likelyToSellOut: t.likelyToSellOut,
   }
+}
+
+// ─── City-Scoped Homepage ──────────────────────────────────────────
+
+/**
+ * City-scoped homepage — fetches all sections filtered by city.
+ * Returns the same shape as useHomepage() but with city-filtered data.
+ * Only fetches when city is provided.
+ */
+export function useHomepageByCity(city: string | null) {
+  return useQuery({
+    queryKey: ['homepage', 'city', city],
+    queryFn: async () => {
+      const params = new URLSearchParams()
+      if (city) params.set('city', city)
+      const data = await fetchHomepageSection<HomepageData & { city?: string }>(`?${params}`)
+
+      const byId = new Map<string, SpecialOfferData[]>()
+      for (const offerTour of data.offers ?? []) {
+        if (offerTour.specialOffers?.length) byId.set(offerTour.id, offerTour.specialOffers)
+      }
+
+      return {
+        ...data,
+        recommended: applyOffersById(await enrichTourBadgeFields(data.recommended), byId),
+        topRated: applyOffersById(await enrichTourBadgeFields(data.topRated), byId),
+        sellOut: applyOffersById(await enrichTourBadgeFields(data.sellOut), byId),
+        trending: applyOffersById(await enrichTourBadgeFields(data.trending), byId),
+        new: applyOffersById(await enrichTourBadgeFields(data.new), byId),
+        offers: await enrichTourBadgeFields(data.offers),
+        city: data.city || city,
+      }
+    },
+    enabled: !!city,
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
+/**
+ * City-scoped "recommended" slice — a lightweight single-section fetch used by
+ * the homepage search-history rails ("Continue your search in X" / "Previously
+ * searched in Y"). Only fetches when a city is provided. The backend cache key
+ * is anonymous + per-city, so the result is shared across users.
+ */
+export function useCityRecommended(city: string | null, limit = 12) {
+  return useQuery({
+    queryKey: ['homepage', 'city-recommended', city, limit],
+    queryFn: async () => {
+      const params = new URLSearchParams({ limit: String(limit) })
+      if (city) params.set('city', city)
+      const data = await fetchHomepageSection<{ tours: HomepageTour[] }>(`/recommended?${params}`)
+      return enrichTourBadgeFields(data.tours)
+    },
+    enabled: !!city,
+    staleTime: 5 * 60 * 1000,
+  })
 }

@@ -7,6 +7,7 @@ import { fetchWithAuth } from '../lib/api'
 import { mapRawTourToListing, type TourCardData } from '../hooks/useExpeditionTours'
 import { mergeOffersIntoTours } from '../hooks/useHomepageSections'
 import TourCard from '../components/TourCard'
+import Footer from '../components/Footer'
 import './SearchResultsPage.css'
 
 async function fetchSearchResults(query: string): Promise<TourCardData[]> {
@@ -49,7 +50,7 @@ export default function SearchResultsPage() {
         </h1>
         {tours.length > 0 && (
           <span className="search-results-count">
-            {tours.length} {t('search.toursFound', { defaultValue: 'tours found' })}
+            {tours.length} {tours.length === 1 ? 'tour' : 'tours'} {t('search.toursFound', { defaultValue: 'found' })}
           </span>
         )}
       </div>
@@ -95,6 +96,7 @@ export default function SearchResultsPage() {
           </div>
         )}
       </div>
+      <Footer />
     </div>
   )
 }

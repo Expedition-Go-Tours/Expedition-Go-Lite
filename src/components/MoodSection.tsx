@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { transformImage } from '@/lib/image'
 import { useMoodKeywords, type MoodKeyword } from '../hooks/useHomepageSections'
 import { trackMoodClick } from '../lib/analytics'
+import { useLocationSearch } from '../context/LocationSearchContext'
 import './MoodSection.css'
 
 const CARD_WIDTH = 295
@@ -43,15 +44,19 @@ function getKeywordFallbackImage(keyword: string): string {
 interface Props {
   preloaded?: MoodKeyword[]
   isLoading?: boolean
+  /** Overrides the default "What do you want to do?" heading — used on the
+   *  personalized homepage as "Based on your search in {city}". */
+  title?: string
 }
 
-export default function MoodSection({ preloaded, isLoading }: Props) {
+export default function MoodSection({ preloaded, isLoading, title }: Props) {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const { currentLocation, hasActiveSearch } = useLocationSearch()
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
-  const { data: liveKeywords } = useMoodKeywords(8)
+  const { data: liveKeywords } = useMoodKeywords(8, !preloaded)
 
   const items = (preloaded ?? liveKeywords)?.length
     ? (preloaded ?? liveKeywords)!.map((k: MoodKeyword) => ({
@@ -99,7 +104,7 @@ export default function MoodSection({ preloaded, isLoading }: Props) {
       <div className="mood-container">
         <div className="mood-viewport">
           <div className="mood-header">
-            <h2 className="mood-title">{t('mood.title')}</h2>
+            <h2 className="mood-title">{title || t('mood.title')}</h2>
             <div className="mood-arrows">
               <button className={`mood-arrow${!canScrollLeft ? ' muted' : ''}`} onClick={() => scroll('left')} aria-label={t('common.scrollLeft')} disabled={!canScrollLeft}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -130,7 +135,12 @@ export default function MoodSection({ preloaded, isLoading }: Props) {
                       className="mood-card"
                       onClick={() => {
                         trackMoodClick(cat.keyword, i)
-                        navigate(`/tours?mood=${encodeURIComponent(cat.keyword)}`)
+                        // Carry the searched city so the listing can order
+                        // results "closest to {city} first".
+                        const near = hasActiveSearch && currentLocation
+                          ? `&near=${encodeURIComponent(currentLocation)}`
+                          : ''
+                        navigate(`/tours?mood=${encodeURIComponent(cat.keyword)}${near}`)
                       }}
                     >
                       <img

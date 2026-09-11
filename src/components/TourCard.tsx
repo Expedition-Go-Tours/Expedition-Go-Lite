@@ -47,9 +47,11 @@ interface TourCardProps extends Tour {
   /** On mobile, render the offer / likely-to-sell-out badges in the card body
       after the facts list instead of over the photo. */
   bodyOfferBadgesOnMobile?: boolean
+  /** Mark the card's first image as the LCP (eager + fetchpriority=high). */
+  priority?: boolean
 }
 
-export default function TourCard({ id, title, duration, features, price, rating, reviews, location, image, photos, discount, difficulty, cancellationPolicy, pickupIncluded, accommodationIncluded, meetingMode, category, languages, source, externalUrl, slug, isNew, hideSourceBadge, hideFeatures, imageClean, priceValue, specialOffers, likelyToSellOut, hideOfferBadge, compactDurationOnMobile, bodyOfferBadgesOnMobile }: TourCardProps) {
+export default function TourCard({ id, title, duration, features, price, rating, reviews, location, image, photos, discount, difficulty, cancellationPolicy, pickupIncluded, accommodationIncluded, meetingMode, category, languages, source, externalUrl, slug, isNew, hideSourceBadge, hideFeatures, imageClean, priceValue, specialOffers, likelyToSellOut, hideOfferBadge, compactDurationOnMobile, bodyOfferBadgesOnMobile, priority }: TourCardProps) {
   const { t } = useTranslation()
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist()
   const { isLikelyToSellOut } = useSellOutContext()
@@ -242,7 +244,7 @@ export default function TourCard({ id, title, duration, features, price, rating,
             return (
               <div key={`${src}-${i}`} className={`tour-card-slide${isActive ? ' tour-card-slide-active' : ''}`}>
                 {shouldLoad ? (
-                  <OptimizedImage src={src} alt={title} width={600} height={400} fit="crop" loading={isActive ? 'eager' : 'lazy'} />
+                  <OptimizedImage src={src} alt={title} width={600} height={400} fit="crop" loading={isActive ? 'eager' : 'lazy'} priority={priority && i === 0} />
                 ) : null}
               </div>
             )
@@ -368,11 +370,17 @@ export default function TourCard({ id, title, duration, features, price, rating,
         {!hideFeatures && <div className="tour-card-features">{features}</div>}
         <div className="tour-card-bottom">
           <div className="tour-card-rating">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="#39AD6C" stroke="#39AD6C" strokeWidth="1">
-              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-            </svg>
-            <span className="tour-card-rating-value">{rating}</span>
-            <span className="tour-card-rating-reviews">({reviews})</span>
+            {rating && rating !== '0' ? (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="#39AD6C" stroke="#39AD6C" strokeWidth="1">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+              </svg>
+            ) : (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="1.5">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+              </svg>
+            )}
+            <span className="tour-card-rating-value">{rating || '0'}</span>
+            {reviews > 0 && <span className="tour-card-rating-reviews">({reviews})</span>}
           </div>
           {price && (
             <div className="tour-card-price">
