@@ -1030,6 +1030,8 @@
     "next": "Next",
     "pageOf": "Page {{page}} of {{total}}",
     "sortPopular": "Most Popular",
+    "sortClosest": "Closest",
+    "nearLocation": "{{title}} near {{location}}",
     "sortPriceLow": "Price: Low - High",
     "sortPriceHigh": "Price: High - Low",
     "filterType": "Type",

@@ -45,9 +45,27 @@ function sectionSortKey(sectionParam: string): 'rating' | 'popular' | 'recommend
   return 'recommended'
 }
 
-type SortKey = 'recommended' | 'rating' | 'popular' | 'price-low' | 'price-high'
+type SortKey = 'recommended' | 'rating' | 'popular' | 'price-low' | 'price-high' | 'near'
 
-function applySort(tours: TourCardData[], sortKey: SortKey): TourCardData[] {
+/**
+ * Proximity tier for the "Closest" sort: 0 = in the searched city, 1 = nearby
+ * (<= 50 km), 2 = everything else with coordinates, 3 = no coordinates (last).
+ * Quality breaks ties within a tier, so the best tours in each location band
+ * lead — a mediocre tour 1 km away never outranks a 5-star 40 km away.
+ */
+function nearTier(tour: TourCardData, city: string): number {
+  if (city) {
+    const loc = tour.location.toLowerCase()
+    const c = city.toLowerCase()
+    if (loc === c || loc.startsWith(`${c},`)) return 0
+  }
+  const d = tour.distanceKm
+  if (d == null) return 3
+  if (d <= 50) return 1
+  return 2
+}
+
+function applySort(tours: TourCardData[], sortKey: SortKey, nearCity = ''): TourCardData[] {
   const arr = [...tours]
   switch (sortKey) {
     case 'rating':
@@ -58,6 +76,13 @@ function applySort(tours: TourCardData[], sortKey: SortKey): TourCardData[] {
       return arr.sort((a, b) => (a.priceValue ?? Infinity) - (b.priceValue ?? Infinity))
     case 'price-high':
       return arr.sort((a, b) => (b.priceValue ?? -Infinity) - (a.priceValue ?? -Infinity))
+    case 'near':
+      return arr.sort((a, b) => {
+        const ta = nearTier(a, nearCity)
+        const tb = nearTier(b, nearCity)
+        if (ta !== tb) return ta - tb
+        return (b.ratingValue ?? 0) - (a.ratingValue ?? 0)
+      })
     default:
       // recommended — keep the backend's curated catalog order
       return arr
@@ -72,6 +97,7 @@ export default function AllToursPage() {
   const locationParam = searchParams.get('location') || ''
   const categoryParam = searchParams.get('category') || ''
   const moodParam = searchParams.get('mood') || ''
+  const nearParam = searchParams.get('near') || ''
   const attractionParam = searchParams.get('attraction') || ''
 
   const [tourTypes, setTourTypes] = useState<string[]>([])
@@ -86,7 +112,13 @@ export default function AllToursPage() {
 
   const sortByVal = (sortBy[0] || 'recommended') as SortKey
   const effectiveSortKey: SortKey =
-    sortByVal === 'recommended' && sectionParam ? sectionSortKey(sectionParam) : sortByVal
+    sortByVal === 'near'
+      ? 'near'
+      : sortByVal === 'recommended' && nearParam
+        ? 'near'
+        : sortByVal === 'recommended' && sectionParam
+          ? sectionSortKey(sectionParam)
+          : sortByVal
 
   const TOUR_TYPE_OPTIONS = useMemo(() => [
     { value: 'day', label: t('allTours.typeDay') },
@@ -121,13 +153,14 @@ export default function AllToursPage() {
 
   const sortOptions = useMemo(() => [
     { value: 'recommended', label: t('allTours.sortPopular') },
+    { value: 'near', label: t('allTours.sortClosest', { defaultValue: 'Closest' }) },
     { value: 'rating', label: t('allTours.sortPriceLow') },
     { value: 'popular', label: t('allTours.sortPriceHigh') },
     { value: 'price-low', label: t('allTours.sortPriceLow') },
     { value: 'price-high', label: t('allTours.sortPriceHigh') },
   ] as const, [t])
 
-  const { data: allTours, isLoading, isError, error } = useAllExpeditionTours(moodParam ? { mood: moodParam } : undefined)
+  const { data: allTours, isLoading, isError, error } = useAllExpeditionTours({ mood: moodParam, near: nearParam })
   const { data: filterOptionData } = useTourFilterOptions()
 
   // Single lightweight call to get section tour IDs (reads pre-computed Redis cache)
@@ -248,8 +281,8 @@ export default function AllToursPage() {
       list = list.filter(tour => attractionTourIds.has(tour.id))
     }
 
-    return applySort(list, effectiveSortKey)
-  }, [allTours, tourTypes, durationFilter, priceFilter, ratingFilter, categories, destinations, effectiveSortKey, sectionTourIds, attractionTourIds, DURATION_BUCKETS, PRICE_RANGES])
+    return applySort(list, effectiveSortKey, nearParam)
+  }, [allTours, tourTypes, durationFilter, priceFilter, ratingFilter, categories, destinations, effectiveSortKey, nearParam, sectionTourIds, attractionTourIds, DURATION_BUCKETS, PRICE_RANGES])
 
   const totalCount = filteredTours.length
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
@@ -298,13 +331,18 @@ export default function AllToursPage() {
     if (filterOptions.categories.some(c => c.value === value)) { handleMulti(setCategories)(value); return }
   }
 
-  const pageTitle = attractionParam
+  const baseTitle = attractionParam
     ? attractionParam
     : moodParam
     ? moodParam
     : locationParam
     ? t('sections.toursIn', { location: locationParam })
     : SECTION_TITLES[sectionParam] || t('allTours.pageTitle')
+
+  // When arriving "near {city}", surface it in the heading.
+  const pageTitle = nearParam
+    ? t('allTours.nearLocation', { title: baseTitle, location: nearParam, defaultValue: '{{title}} near {{location}}' })
+    : baseTitle
 
   const handleMulti = (setter: React.Dispatch<React.SetStateAction<string[]>>) =>
     (value: string) => setter(prev => prev.includes(value) ? prev.filter(v => v !== value) : [...prev, value])
