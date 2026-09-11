@@ -144,11 +144,10 @@
 .tour-card-meta {
   display: flex;
   align-items: center;
+  align-content: flex-start;
   flex-wrap: wrap;
   gap: 6px;
   font-family: 'Raleway', sans-serif;
-  overflow: hidden;
-  max-height: 60px;
 }
 
 /* Industry-standard pill badges (GetYourGuide/Viator style): compact,
