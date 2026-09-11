@@ -1,30 +1,31 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
-import { useTranslation } from 'react-i18next'
 import SectionHeading from './SectionHeading'
 import TourCard from './TourCard'
 import TourCardSkeleton from './TourCardSkeleton'
-import { useTopRated, mapToTourCard, type HomepageTour } from '../hooks/useHomepageSections'
-import './TopRatedSection.css'
+import { useCityRecommended, mapToTourCard } from '../hooks/useHomepageSections'
+import './PreviousSearchRail.css'
 
 const CARD_WIDTH = 295
 const GAP = 16
 
 interface Props {
-  preloaded?: HomepageTour[]
-  isLoading?: boolean
-  title?: string
-  location?: string
+  location: string
+  title: string
+  note: string
 }
 
-export default function TopRatedSection({ preloaded, isLoading, title, location }: Props) {
-  const { t } = useTranslation()
+/**
+ * A single search-history rail: a city the traveller searched earlier, shown
+ * as a horizontal tour carousel so they can pick up where they left off.
+ * Renders nothing once loaded if the city has no tours (never an empty rail).
+ */
+export default function PreviousSearchRail({ location, title, note }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
-  const { data: liveData } = useTopRated(12)
-  const items = (preloaded ?? liveData)?.length
-    ? (preloaded ?? liveData)!.map(mapToTourCard)
-    : null
+  const { data: tours, isLoading } = useCityRecommended(location, 12)
+
+  const items = tours?.length ? tours.map(mapToTourCard) : null
 
   const updateArrows = useCallback(() => {
     const el = scrollRef.current
@@ -53,32 +54,33 @@ export default function TopRatedSection({ preloaded, isLoading, title, location 
     const onScroll = () => updateArrows()
     el.addEventListener('scroll', onScroll, { passive: true })
     return () => el.removeEventListener('scroll', onScroll)
-  }, [updateArrows])
+  }, [updateArrows, items])
 
-  if (!items && !isLoading) return null
+  if (!isLoading && !items) return null
 
   return (
-    <section className="toprated-section">
-      <div className="toprated-container">
-        <div className="toprated-viewport">
+    <section className="history-rail">
+      <div className="history-rail-container">
+        <div className="history-rail-viewport">
           <SectionHeading
-            title={title || t('sections.topRatedTitle')}
-            viewAllLink={location ? `/tours?location=${encodeURIComponent(location)}&section=Top Rated` : "/tours?section=Top Rated"}
+            title={title}
+            subtitle={note}
+            viewAllLink={`/tours?location=${encodeURIComponent(location)}`}
             onScrollLeft={() => scroll('left')}
             onScrollRight={() => scroll('right')}
             disableLeft={!canScrollLeft}
             disableRight={!canScrollRight}
           />
-          <div className="toprated-clip">
-            <div className="toprated-carousel" ref={scrollRef}>
+          <div className="history-rail-clip">
+            <div className="history-rail-carousel" ref={scrollRef}>
               {isLoading && !items
-                ? Array.from({ length: 6 }).map((_, i) => (
-                    <div key={`skeleton-${i}`} className="toprated-card-wrap">
+                ? Array.from({ length: 5 }).map((_, i) => (
+                    <div key={`skeleton-${i}`} className="history-rail-card-wrap">
                       <TourCardSkeleton />
                     </div>
                   ))
                 : items?.map((tour, i) => (
-                    <div key={`${tour.title}-${i}`} className="toprated-card-wrap">
+                    <div key={`${tour.title}-${i}`} className="history-rail-card-wrap">
                       <TourCard {...tour} imageClean hideFeatures />
                     </div>
                   ))

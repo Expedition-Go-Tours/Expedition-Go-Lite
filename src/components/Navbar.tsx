@@ -13,6 +13,7 @@ import { readBookingsSeen, writeBookingsSeen } from '../lib/bookingsBadge'
 import { useSupplierStatus } from '../hooks/useSupplierStatus'
 import { useMyBookingsCount } from '../hooks/useExpeditionBookings'
 import { useWishlist } from '../context/WishlistContext'
+import { useLocationSearch } from '../context/LocationSearchContext'
 import { useSearchAutocomplete, type SearchSuggestion } from '../hooks/useSearchAutocomplete'
 import { useRecentSearches } from '../hooks/useRecentSearches'
 import LanguageCurrencyModal from './LanguageCurrencyModal'
@@ -95,6 +96,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
   const navInputRef = useRef<HTMLInputElement>(null)
   const { suggestions: navSuggestions, isSearching: navIsSearching } = useSearchAutocomplete(navSearchValue)
   const { recentSearches, addSearch, removeSearch, clearAll } = useRecentSearches()
+  const { hasActiveSearch, currentLocation, resetLocation } = useLocationSearch()
   const { isApproved } = useSupplierStatus()
   // Counter of the user's confirmed bookings shown on the "Bookings" menu item.
   const { data: bookingsCount = 0 } = useMyBookingsCount('CONFIRMED,PENDING', !!user)
@@ -619,6 +621,20 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
                       {link.label}
                     </a>
                   ))}
+
+                  {hasActiveSearch && (
+                    <div className="nav-dropdown-item" onClick={() => {
+                      resetLocation()
+                      setDropdownOpen(false)
+                      navigate('/')
+                    }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                        <path d="M3 3v5h5" />
+                      </svg>
+                      {t('nav.resetToDefault', { defaultValue: 'Reset to default' })}
+                    </div>
+                  )}
 
                   {user && (
                     signingOut ? (

@@ -133,8 +133,9 @@ export interface HomepageData {
 /**
  * Single request that fetches all homepage sections.
  * Returns pre-computed data from Redis (0 DB queries) when available.
+ * Pass `enabled: false` to skip the request (e.g. when city search is active).
  */
-export function useHomepage() {
+export function useHomepage({ enabled = true } = {}) {
   return useQuery({
     queryKey: ['homepage', 'all'],
     queryFn: async () => {
@@ -160,6 +161,7 @@ export function useHomepage() {
       }
     },
     staleTime: 5 * 60 * 1000,
+    enabled,
   })
 }
 
@@ -459,4 +461,62 @@ export function mapToTourCard(t: HomepageTour): TourCardData {
     accommodationIncluded: t.accommodationIncluded || undefined,
     likelyToSellOut: t.likelyToSellOut,
   }
+}
+
+// ─── City-Scoped Homepage ──────────────────────────────────────────
+
+/**
+ * City-scoped homepage — fetches all sections filtered by city.
+ * Returns the same shape as useHomepage() but with city-filtered data.
+ * Only fetches when city is provided.
+ */
+export function useHomepageByCity(city: string | null) {
+  return useQuery({
+    queryKey: ['homepage', 'city', city],
+    queryFn: async () => {
+      const params = new URLSearchParams()
+      if (city) params.set('city', city)
+      const data = await fetchHomepageSection<HomepageData & { city?: string }>(`?${params}`)
+
+      const byId = new Map<string, SpecialOfferData[]>()
+      for (const offerTour of data.offers ?? []) {
+        if (offerTour.specialOffers?.length) byId.set(offerTour.id, offerTour.specialOffers)
+      }
+
+      return {
+        ...data,
+        recommended: applyOffersById(await enrichTourBadgeFields(data.recommended), byId),
+        topRated: applyOffersById(await enrichTourBadgeFields(data.topRated), byId),
+        sellOut: applyOffersById(await enrichTourBadgeFields(data.sellOut), byId),
+        trending: applyOffersById(await enrichTourBadgeFields(data.trending), byId),
+        new: applyOffersById(await enrichTourBadgeFields(data.new), byId),
+        offers: await enrichTourBadgeFields(data.offers),
+        city: data.city || city,
+      }
+    },
+    enabled: !!city,
+    staleTime: 5 * 60 * 1000,
+    // Keep previous city data visible while new city loads — no skeleton flash
+    placeholderData: (prev) => prev,
+  })
+}
+
+/**
+ * City-scoped "recommended" slice — a lightweight single-section fetch used by
+ * the homepage search-history rails ("Continue your search in X" / "Previously
+ * searched in Y"). Only fetches when a city is provided. The backend cache key
+ * is anonymous + per-city, so the result is shared across users.
+ */
+export function useCityRecommended(city: string | null, limit = 12) {
+  return useQuery({
+    queryKey: ['homepage', 'city-recommended', city, limit],
+    queryFn: async () => {
+      const params = new URLSearchParams({ limit: String(limit) })
+      if (city) params.set('city', city)
+      const data = await fetchHomepageSection<{ tours: HomepageTour[] }>(`/recommended?${params}`)
+      return enrichTourBadgeFields(data.tours)
+    },
+    enabled: !!city,
+    staleTime: 5 * 60 * 1000,
+  })
 }
