@@ -145,9 +145,10 @@ export default function AllToursPage() {
   const sortByVal = (sortBy[0] || 'recommended') as SortKey
   // A `place` param is only place-scoped once it resolves to a real place;
   // otherwise it's treated as a plain text search (so a non-place query still
-  // returns relevance results instead of the whole catalogue).
-  const { data: resolvedPlace } = usePlaceResolve(placeParam)
-  const placeValue = resolvedPlace?.name || ''
+  // returns relevance results instead of the whole catalogue). The listing
+  // fetch is gated until the resolve settles so there's no text→place flicker.
+  const { data: resolvedPlace, isFetching: isResolvingPlace } = usePlaceResolve(placeParam, 'expedition')
+  const placeValue = resolvedPlace?.displayName || resolvedPlace?.name || ''
   const isPlaceQuery = !!placeValue
   const effectiveSortKey: SortKey =
     sortByVal === 'near'
@@ -205,6 +206,7 @@ export default function AllToursPage() {
     near: nearParam,
     place: placeValue,
     search: !isPlaceQuery && placeParam ? placeParam : '',
+    enabled: !isResolvingPlace,
   })
   const { data: filterOptionData } = useTourFilterOptions()
 
@@ -379,7 +381,7 @@ export default function AllToursPage() {
   const baseTitle = attractionParam
     ? attractionParam
     : placeParam
-    ? t('sections.toursIn', { location: placeParam })
+    ? t('sections.toursIn', { location: placeValue || placeParam })
     : moodParam
     ? moodParam
     : locationParam
