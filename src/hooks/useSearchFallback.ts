@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { fetchWithAuth } from '../lib/api'
-import { mapRawTourToListing, type TourCardData } from './useExpeditionTours'
+import { enrichTourBadgeFields, mapRawTourToListing, type TourCardData } from './useExpeditionTours'
 import { mergeOffersIntoTours } from './useHomepageSections'
 
 export interface NearbyLocation {
@@ -33,7 +33,8 @@ async function fetchSearchFallback(q: string): Promise<SearchFallback> {
   if (!res.ok) return { ...EMPTY, query: q }
   const payload = await res.json().catch(() => ({}))
   const data = payload.data ?? {}
-  const map = (arr: any[]) => mergeOffersIntoTours((arr ?? []).map(mapRawTourToListing))
+  const map = async (arr: any[]) =>
+    mergeOffersIntoTours(await enrichTourBadgeFields((arr ?? []).map(mapRawTourToListing)))
   return {
     query: q,
     resolvedLocation: data.resolvedLocation ?? null,

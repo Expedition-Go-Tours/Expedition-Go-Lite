@@ -565,7 +565,7 @@ a.supplier-contact-value:hover {
 @media (min-width: 600px) {
   .supplier-tours-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 16px;
     overflow-x: visible;
     scroll-snap-type: none;
@@ -575,20 +575,21 @@ a.supplier-contact-value:hover {
 
   .supplier-tours-grid > * {
     flex: none;
+    min-width: 0;
     scroll-snap-align: none;
   }
 }
 
 @media (min-width: 900px) {
   .supplier-tours-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 16px;
   }
 }
 
 @media (min-width: 1200px) {
   .supplier-tours-grid {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 16px;
   }
 }
