@@ -5,6 +5,8 @@ import { ChevronLeft, ChevronRight, X, Star, ArrowLeft } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import TourCard from '../components/TourCard'
 import TourCardSkeleton from '../components/TourCardSkeleton'
+import NoToursEmptyState from '../components/NoToursEmptyState'
+import { useLocationSearch } from '../context/LocationSearchContext'
 
 import { useAllExpeditionTours, useTourFilterOptions, type TourCardData } from '../hooks/useExpeditionTours'
 import { useSectionTourIds, useHomepageOffers, useAttractionTours, useLikelySellOut, type HomepageOfferTour } from '../hooks/useHomepageSections'
@@ -93,6 +95,7 @@ export default function AllToursPage() {
   const { t } = useTranslation()
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
+  const { currentLocation } = useLocationSearch()
   const sectionParam = searchParams.get('section') || ''
   const locationParam = searchParams.get('location') || ''
   const categoryParam = searchParams.get('category') || ''
@@ -552,15 +555,12 @@ export default function AllToursPage() {
         )}
 
         {!isLoading && !isError && displayTours.length === 0 && (
-          <div className="all-tours-empty">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-            <h3>{t('allTours.noMatch')}</h3>
-            <p>{t('allTours.noMatchDesc')}</p>
-            <button className="all-tours-clear-btn" onClick={clearAll}>{t('allTours.clearAll')}</button>
-          </div>
+          <NoToursEmptyState
+            location={nearParam || locationParam || currentLocation || ''}
+            onBrowseAll={() => navigate('/tours')}
+            onSecondary={clearAll}
+            secondaryLabel={t('allTours.clearAll')}
+          />
         )}
 
         {(hasNextPage || hasPrevPage) && (
