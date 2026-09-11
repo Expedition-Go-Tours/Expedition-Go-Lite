@@ -15,7 +15,6 @@ import WhyBookSection from './components/WhyBookSection'
 import LocationSearchSkeleton from './components/LocationSearchSkeleton'
 import HomeSectionSkeleton from './components/HomeSectionSkeleton'
 import HistorySections from './components/HistorySections'
-import CustomReviewsSection from './components/CustomReviewsSection'
 import PreviousSearchSections from './components/PreviousSearchSections'
 
 import Footer from './components/Footer'
@@ -159,7 +158,6 @@ function HomePage() {
       <Suspense fallback={<HomeSectionSkeleton />}><NewExperiencesSection isLoading={loading} title={locationTitle?.('New Experiences')} location={locationFilter} /></Suspense>
       <Suspense fallback={<HomeSectionSkeleton />}><TopAttractionsNearbySection preloaded={data?.attractions} title={locationTitle?.('Top Attractions Nearby')} location={locationFilter} /></Suspense>
       <MountOnView><ExternalReviewsSection /></MountOnView>
-      <MountOnView><CustomReviewsSection location={locationFilter} /></MountOnView>
       <MountOnView><PreviousSearchSections /></MountOnView>
       {/* Trust block only on the generic homepage (matches the prototype) */}
       {!hasActiveSearch && <MountOnView><PartnersSection /></MountOnView>}
