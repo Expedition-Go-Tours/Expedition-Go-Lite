@@ -158,7 +158,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
     if (suggestion.type === 'destination') {
       addSearch({ slug: suggestion.title, title: suggestion.title, type: 'destination' })
       setLocation(suggestion.title)
-      navigate(`/tours?location=${encodeURIComponent(suggestion.title)}`)
+      if (location.pathname !== '/') navigate('/')
     } else if (suggestion.type === 'tour' && suggestion.slug) {
       // Selecting a tour from the search bar personalizes the homepage to its city.
       if (suggestion.city) setLocation(suggestion.city)
@@ -174,7 +174,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
     navInputRef.current?.blur()
     if (item.type === 'destination') {
       setLocation(item.title)
-      navigate(`/tours?location=${encodeURIComponent(item.title)}`)
+      if (location.pathname !== '/') navigate('/')
     } else if (item.type === 'tour' && item.slug) {
       if (item.city) setLocation(item.city)
       navigate(`/tour/${item.slug}`)
@@ -186,8 +186,9 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
     setNavHighlightedIndex(-1)
     const q = navSearchValue.trim()
     if (!q) return
-    navigate(`/search?q=${encodeURIComponent(q)}`)
-  }, [navSearchValue, navigate])
+    setLocation(q)
+    if (location.pathname !== '/') navigate('/')
+  }, [navSearchValue, navigate, setLocation, location.pathname])
 
   // Navbar "List an Experience" CTA (desktop): always lands on the
   // Partnerships page, whose "Get started" cards route into the partner /
