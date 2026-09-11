@@ -7,6 +7,7 @@ import TourCard from '../components/TourCard'
 import TourCardSkeleton from '../components/TourCardSkeleton'
 import NoToursEmptyState from '../components/NoToursEmptyState'
 import { useLocationSearch } from '../context/LocationSearchContext'
+import { usePlaceResolve } from '../hooks/usePlaceResolve'
 
 import { useAllExpeditionTours, useTourFilterOptions, type TourCardData } from '../hooks/useExpeditionTours'
 import { useSectionTourIds, useHomepageOffers, useAttractionTours, useLikelySellOut, type HomepageOfferTour } from '../hooks/useHomepageSections'
@@ -142,10 +143,16 @@ export default function AllToursPage() {
   const [drawerOpen, setDrawerOpen] = useState(false)
 
   const sortByVal = (sortBy[0] || 'recommended') as SortKey
+  // A `place` param is only place-scoped once it resolves to a real place;
+  // otherwise it's treated as a plain text search (so a non-place query still
+  // returns relevance results instead of the whole catalogue).
+  const { data: resolvedPlace } = usePlaceResolve(placeParam)
+  const placeValue = resolvedPlace?.name || ''
+  const isPlaceQuery = !!placeValue
   const effectiveSortKey: SortKey =
     sortByVal === 'near'
       ? 'near'
-      : sortByVal === 'recommended' && placeParam
+      : sortByVal === 'recommended' && isPlaceQuery
         ? 'place'
         : sortByVal === 'recommended' && nearParam
           ? 'near'
@@ -193,7 +200,12 @@ export default function AllToursPage() {
     { value: 'price-high', label: t('allTours.sortPriceHigh') },
   ] as const, [t])
 
-  const { data: allTours, isLoading, isError, error } = useAllExpeditionTours({ mood: moodParam, near: nearParam, place: placeParam })
+  const { data: allTours, isLoading, isError, error } = useAllExpeditionTours({
+    mood: moodParam,
+    near: nearParam,
+    place: placeValue,
+    search: !isPlaceQuery && placeParam ? placeParam : '',
+  })
   const { data: filterOptionData } = useTourFilterOptions()
 
   // Single lightweight call to get section tour IDs (reads pre-computed Redis cache)
