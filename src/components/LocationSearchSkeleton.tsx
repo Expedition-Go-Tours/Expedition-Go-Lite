@@ -24,8 +24,8 @@ export default function LocationSearchSkeleton({ location }: Props) {
         {[0, 1, 2, 3, 4].map((s) => (
           <div key={s} className="location-skeleton-section">
             <div className="location-skeleton-section-inner">
-              <div className="location-skeleton-heading" />
               <div className="location-skeleton-viewport">
+                <div className="location-skeleton-heading" />
                 <div className="location-skeleton-cards">
                   {[0, 1, 2, 3, 4].map((c) => (
                     <div key={c} className="location-skeleton-card">
