@@ -368,11 +368,17 @@ export default function TourCard({ id, title, duration, features, price, rating,
         {!hideFeatures && <div className="tour-card-features">{features}</div>}
         <div className="tour-card-bottom">
           <div className="tour-card-rating">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="#39AD6C" stroke="#39AD6C" strokeWidth="1">
-              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-            </svg>
-            <span className="tour-card-rating-value">{rating}</span>
-            <span className="tour-card-rating-reviews">({reviews})</span>
+            {rating && rating !== '0' ? (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="#39AD6C" stroke="#39AD6C" strokeWidth="1">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+              </svg>
+            ) : (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="1.5">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+              </svg>
+            )}
+            <span className="tour-card-rating-value">{rating || '—'}</span>
+            {reviews > 0 && <span className="tour-card-rating-reviews">({reviews})</span>}
           </div>
           {price && (
             <div className="tour-card-price">

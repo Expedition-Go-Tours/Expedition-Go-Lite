@@ -79,11 +79,11 @@
 }
 
 .tour-card-arrow-prev {
-  left: 6px;
+  left: 8px;
 }
 
 .tour-card-arrow-next {
-  right: 6px;
+  right: 8px;
 }
 
 .tour-card-image:hover .tour-card-arrow,
@@ -147,6 +147,8 @@
   flex-wrap: wrap;
   gap: 6px;
   font-family: 'Raleway', sans-serif;
+  overflow: hidden;
+  max-height: 60px;
 }
 
 /* Industry-standard pill badges (GetYourGuide/Viator style): compact,

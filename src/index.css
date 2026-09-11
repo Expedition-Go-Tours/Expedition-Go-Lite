@@ -371,6 +371,7 @@ body {
 img.optimized-img {
   opacity: 1;
   transition: opacity 0.2s ease-out;
+  object-fit: cover;
 }
 img.optimized-img.optimized-img-loading {
   opacity: 0;
