@@ -103,7 +103,7 @@ export default function TourDetailPage() {
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist()
   const { addToContinuePlanning } = useContinuePlanning()
 
-  const { data: tour, isLoading, isError } = useExpeditionTour(tourId)
+  const { data: tour, isLoading, isError, isFetching } = useExpeditionTour(tourId)
   const { data: reviewsData } = useExpeditionTourReviews(tourId, 1, 10, tour?.id)
   const { data: reviewableBookingId } = useReviewableBookingForTour(tourId)
   const { data: similarTours } = useSimilarTours(tourId)
@@ -861,7 +861,7 @@ export default function TourDetailPage() {
     toast.success(t('reviews.thankYou'))
   }
 
-  if (isLoading) {
+  if (isLoading || (isFetching && !tour)) {
     return <TourDetailSkeleton />
   }
 

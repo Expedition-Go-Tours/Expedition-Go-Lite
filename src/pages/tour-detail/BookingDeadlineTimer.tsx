@@ -64,6 +64,9 @@ export default function BookingDeadlineTimer({ closesAt }: BookingDeadlineTimerP
         <p className="booking-deadline-sub">
           {t('booking.deadlineSubtext', 'The tour operator will stop accepting bookings for your date soon.')}
         </p>
+        <p className="booking-deadline-sub">
+          {t('booking.refundWindowEndingSoon', 'The refund window for this tour will be ending soon.')}
+        </p>
       </div>
     </div>
   )

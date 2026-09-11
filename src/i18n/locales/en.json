@@ -89,6 +89,7 @@
     "bookingsCloseAt": "Bookings close {{time}}",
     "hoursLeftToBook": "{{hours}} hours left to book",
     "deadlineSubtext": "The tour operator will stop accepting bookings for your date soon.",
+    "refundWindowEndingSoon": "The refund window for this tour will be ending soon.",
     "selectOption": "Choose your option",
     "optionFrom": "from",
     "optionPrivate": "Private",

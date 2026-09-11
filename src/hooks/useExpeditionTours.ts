@@ -1716,27 +1716,36 @@ export function useExpeditionTour(slug: string | undefined) {
     // (e.g. an admin just approved a supplier's update), so refetch on focus.
     refetchOnWindowFocus: true,
     queryFn: async () => {
-      // Try the curated (homepage) endpoint first — it's cached and includes
-      // a few pre-computed fields. If the tour hasn't been curated (e.g. it
-      // was just created by a supplier), fall back to the public /tours/:id
-      // endpoint so it's still viewable when found via search.
+      // Try the curated (homepage) endpoint — it's cached and includes a few
+      // pre-computed fields — while fetching the raw public record in parallel.
+      // If the tour hasn't been curated (e.g. it was just created by a supplier,
+      // or found via search) we build from the raw record. Running both at once
+      // means the first paint waits on one round trip instead of two sequential
+      // ones; the raw record is reused below for enrichment when it matches.
+      const rawBySlugPromise = fetchRawTourBySlugOrId(slug!, true)
+
       let payload: any
+      let curatedError: unknown = null
       try {
         payload = await expeditionFetchRaw(`/expedition/tours/${encodeURIComponent(slug!)}`, true)
       } catch (e: any) {
-        const rawTour = await fetchRawTourBySlugOrId(slug!, true)
-        if (rawTour) {
-          return buildTourDetailFromRawTour(rawTour)
-        }
-        throw e
+        curatedError = e
       }
+
+      const rawBySlug = await rawBySlugPromise
+      if (!payload) {
+        if (rawBySlug) {
+          return buildTourDetailFromRawTour(rawBySlug)
+        }
+        throw curatedError ?? new Error('Tour not found')
+      }
+
       const wrapper = payload.data?.tour ?? {}
       const tour = wrapper.tour ?? {}
 
       if (!tour.id) {
-        const rawTour = await fetchRawTourBySlugOrId(slug!, true)
-        if (rawTour) {
-          return buildTourDetailFromRawTour(rawTour)
+        if (rawBySlug) {
+          return buildTourDetailFromRawTour(rawBySlug)
         }
       }
 
@@ -1761,17 +1770,23 @@ export function useExpeditionTour(slug: string | undefined) {
       let rawSchedule: AvailabilityScheduleInfo | null = null
       let rawSpecialOffers: SpecialOfferData[] | undefined
 
-      // Fetch raw tour data to get excluded and other missing fields
+      // Enrich from raw tour data to get excluded and other missing fields.
+      // Reuse the raw record fetched in parallel when it matches this tour;
+      // otherwise fetch it by id (bypassing HTTP caching so pricing/tier edits
+      // a supplier just saved are reflected immediately on the detail page).
       if (tour.id) {
         try {
-          // Bypass HTTP caching so pricing/tier edits a supplier just
-          // saved are reflected immediately on the tour detail page.
-          const rawRes = await fetchWithAuth(`/tours/${tour.id}`, {
-            cache: 'no-store',
-          })
-          if (rawRes.ok) {
-            const rawPayload = await rawRes.json()
-            const rawTour = rawPayload.data?.tour ?? rawPayload.tour ?? rawPayload
+          let rawTour = rawBySlug?.id === tour.id ? rawBySlug : null
+          if (!rawTour) {
+            const rawRes = await fetchWithAuth(`/tours/${tour.id}`, {
+              cache: 'no-store',
+            })
+            if (rawRes.ok) {
+              const rawPayload = await rawRes.json()
+              rawTour = rawPayload.data?.tour ?? rawPayload.tour ?? rawPayload
+            }
+          }
+          if (rawTour) {
             rawMeetingInfo = extractMeetingInfo(rawTour)
             rawSchedule = extractAvailabilitySchedule(rawTour)
             rawSpecialOffers = mapSpecialOffers(rawTour)

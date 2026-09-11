@@ -1,6 +1,9 @@
 .hero {
   position: relative;
   min-height: 33vh;
+  /* Reserve space for the fixed navbar (64px) so the headline/tagline can
+     never slide under it and appear cut off. */
+  padding-top: 64px;
   background: linear-gradient(180deg, rgba(23, 146, 55, 0.08) 0%, rgba(23, 146, 55, 0.03) 40%, #ffffff 100%);
 }
 
@@ -57,11 +60,6 @@
   .hero,
   .hero-content {
     min-height: 35vh;
-  }
-
-  /* A little extra breathing room above the headline on small screens. */
-  .hero-content {
-    padding-top: 36px;
   }
 
   .hero-headline {
