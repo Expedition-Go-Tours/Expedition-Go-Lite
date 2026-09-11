@@ -31,7 +31,7 @@ export default function SearchBar() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
-  const { setLocation, hasActiveSearch } = useLocationSearch()
+  const { setLocation } = useLocationSearch()
   const isHomepage = location.pathname === '/'
   const [inputValue, setInputValue] = useState('')
   const [showDropdown, setShowDropdown] = useState(false)

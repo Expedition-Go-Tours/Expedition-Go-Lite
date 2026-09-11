@@ -97,7 +97,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
   const navInputRef = useRef<HTMLInputElement>(null)
   const { suggestions: navSuggestions, isSearching: navIsSearching } = useSearchAutocomplete(navSearchValue)
   const { recentSearches, addSearch, removeSearch, clearAll } = useRecentSearches()
-  const { hasActiveSearch, currentLocation, setLocation, resetLocation } = useLocationSearch()
+  const { hasActiveSearch, setLocation, resetLocation } = useLocationSearch()
   const { clearContinuePlanning } = useContinuePlanning()
   const { isApproved } = useSupplierStatus()
   // Counter of the user's confirmed bookings shown on the "Bookings" menu item.
