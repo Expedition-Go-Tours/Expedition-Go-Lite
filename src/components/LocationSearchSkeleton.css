@@ -66,16 +66,16 @@
 }
 
 .location-skeleton-card {
-  flex: 0 0 280px;
-  border-radius: 12px;
+  flex: 0 0 295px;
+  border-radius: 8px;
   background: #fff;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   overflow: hidden;
 }
 
 .location-skeleton-card-img {
   width: 100%;
-  height: 160px;
+  height: 205px;
   background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
   background-size: 800px 100%;
   animation: skeletonShimmer 1.6s ease-in-out infinite;
@@ -101,6 +101,6 @@
 .location-skeleton-line--medium { width: 60%; }
 
 @media (max-width: 768px) {
-  .location-skeleton-card { flex: 0 0 240px; }
-  .location-skeleton-card-img { height: 130px; }
+  .location-skeleton-card { flex: 0 0 280px; }
+  .location-skeleton-card-img { height: 180px; }
 }
