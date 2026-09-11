@@ -88,7 +88,7 @@ export default function TopAttractionsNearbySection({ preloaded, title, location
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
-  const { data: attractionsData, isLoading } = useAttractions(12)
+  const { data: attractionsData, isLoading } = useAttractions(12, !preloaded)
   const locationRequestedRef = useRef(false)
 
   const attractions = (preloaded ?? attractionsData) ?? []
@@ -96,19 +96,36 @@ export default function TopAttractionsNearbySection({ preloaded, title, location
   // Request geolocation permission once to store location for the hook.
   // Backend now handles proximity sorting — this just ensures the stored
   // location is available for subsequent API calls. (Ref guard — no re-render
-  // needed for a one-time request.)
+  // needed for a one-time request.) Deferred past the first paint/network
+  // burst so the prompt + proximity fetch don't compete with the initial load.
   useEffect(() => {
     if (locationRequestedRef.current) return
     if (!navigator.geolocation) return
 
-    locationRequestedRef.current = true
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        storeLocation(position.coords.latitude, position.coords.longitude)
-      },
-      () => { /* permission denied — hook will use global popularity sort */ },
-      { enableHighAccuracy: false, timeout: 5000, maximumAge: 300000 },
-    )
+    const request = () => {
+      if (locationRequestedRef.current) return
+      locationRequestedRef.current = true
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          storeLocation(position.coords.latitude, position.coords.longitude)
+        },
+        () => { /* permission denied — hook will use global popularity sort */ },
+        { enableHighAccuracy: false, timeout: 5000, maximumAge: 300000 },
+      )
+    }
+
+    const w = window as unknown as {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number
+      cancelIdleCallback?: (id: number) => void
+    }
+    const id = w.requestIdleCallback
+      ? w.requestIdleCallback(request, { timeout: 4000 })
+      : window.setTimeout(request, 2500)
+
+    return () => {
+      if (w.requestIdleCallback && w.cancelIdleCallback) w.cancelIdleCallback(id)
+      else window.clearTimeout(id)
+    }
   }, [])
 
   const updateArrows = useCallback(() => {

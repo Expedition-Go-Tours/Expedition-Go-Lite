@@ -14,6 +14,7 @@ import { useSupplierStatus } from '../hooks/useSupplierStatus'
 import { useMyBookingsCount } from '../hooks/useExpeditionBookings'
 import { useWishlist } from '../context/WishlistContext'
 import { useLocationSearch } from '../context/LocationSearchContext'
+import { useContinuePlanning } from '../context/ContinuePlanningContext'
 import { useSearchAutocomplete, type SearchSuggestion } from '../hooks/useSearchAutocomplete'
 import { useRecentSearches } from '../hooks/useRecentSearches'
 import LanguageCurrencyModal from './LanguageCurrencyModal'
@@ -97,6 +98,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
   const { suggestions: navSuggestions, isSearching: navIsSearching } = useSearchAutocomplete(navSearchValue)
   const { recentSearches, addSearch, removeSearch, clearAll } = useRecentSearches()
   const { hasActiveSearch, currentLocation, setLocation, resetLocation } = useLocationSearch()
+  const { clearContinuePlanning } = useContinuePlanning()
   const { isApproved } = useSupplierStatus()
   // Counter of the user's confirmed bookings shown on the "Bookings" menu item.
   const { data: bookingsCount = 0 } = useMyBookingsCount('CONFIRMED,PENDING', !!user)
@@ -639,6 +641,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
                   {hasActiveSearch && (
                     <div className="nav-dropdown-item" onClick={() => {
                       resetLocation()
+                      clearContinuePlanning()
                       setDropdownOpen(false)
                       navigate('/')
                     }}>

@@ -47,9 +47,11 @@ interface TourCardProps extends Tour {
   /** On mobile, render the offer / likely-to-sell-out badges in the card body
       after the facts list instead of over the photo. */
   bodyOfferBadgesOnMobile?: boolean
+  /** Mark the card's first image as the LCP (eager + fetchpriority=high). */
+  priority?: boolean
 }
 
-export default function TourCard({ id, title, duration, features, price, rating, reviews, location, image, photos, discount, difficulty, cancellationPolicy, pickupIncluded, accommodationIncluded, meetingMode, category, languages, source, externalUrl, slug, isNew, hideSourceBadge, hideFeatures, imageClean, priceValue, specialOffers, likelyToSellOut, hideOfferBadge, compactDurationOnMobile, bodyOfferBadgesOnMobile }: TourCardProps) {
+export default function TourCard({ id, title, duration, features, price, rating, reviews, location, image, photos, discount, difficulty, cancellationPolicy, pickupIncluded, accommodationIncluded, meetingMode, category, languages, source, externalUrl, slug, isNew, hideSourceBadge, hideFeatures, imageClean, priceValue, specialOffers, likelyToSellOut, hideOfferBadge, compactDurationOnMobile, bodyOfferBadgesOnMobile, priority }: TourCardProps) {
   const { t } = useTranslation()
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist()
   const { isLikelyToSellOut } = useSellOutContext()
@@ -242,7 +244,7 @@ export default function TourCard({ id, title, duration, features, price, rating,
             return (
               <div key={`${src}-${i}`} className={`tour-card-slide${isActive ? ' tour-card-slide-active' : ''}`}>
                 {shouldLoad ? (
-                  <OptimizedImage src={src} alt={title} width={600} height={400} fit="crop" loading={isActive ? 'eager' : 'lazy'} />
+                  <OptimizedImage src={src} alt={title} width={600} height={400} fit="crop" loading={isActive ? 'eager' : 'lazy'} priority={priority && i === 0} />
                 ) : null}
               </div>
             )
