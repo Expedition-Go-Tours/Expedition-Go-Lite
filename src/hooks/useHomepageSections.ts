@@ -118,12 +118,22 @@ export interface HomepageAttraction {
 
 // â”€â”€â”€ Unified Homepage Data â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
+export interface HomepageBackfill {
+  label: string
+  tours: HomepageTour[]
+}
+
 export interface HomepageData {
   sellOut: HomepageTour[]
+  sellOutBackfill?: HomepageBackfill | null
   topRated: HomepageTour[]
+  topRatedBackfill?: HomepageBackfill | null
   trending: HomepageTour[]
+  trendingBackfill?: HomepageBackfill | null
   recommended: HomepageTour[]
+  recommendedBackfill?: HomepageBackfill | null
   new: HomepageTour[]
+  newExperiencesBackfill?: HomepageBackfill | null
   attractions: HomepageAttraction[]
   mood: MoodKeyword[]
   destinations: PopularDestination[]

@@ -153,13 +153,14 @@ function HomePage() {
         isLoading={loading}
         title={locationTitle?.('Recommended')}
         location={locationFilter}
+        backfill={data?.recommendedBackfill}
       />
       {/* PopularLocations: hidden when personalized per spec */}
       {!hasActiveSearch && <PopularLocations preloaded={data?.destinations} />}
-      <Suspense fallback={<HomeSectionSkeleton />}><TopRatedSection preloaded={data?.topRated} isLoading={loading} title={locationTitle?.('Top Rated')} location={locationFilter} /></Suspense>
-      <Suspense fallback={<HomeSectionSkeleton />}><SellOutSection preloaded={data?.sellOut} isLoading={loading} title={locationTitle?.('Likely To Sell Out')} location={locationFilter} /></Suspense>
+      <Suspense fallback={<HomeSectionSkeleton />}><TopRatedSection preloaded={data?.topRated} isLoading={loading} title={locationTitle?.('Top Rated')} location={locationFilter} backfill={data?.topRatedBackfill} /></Suspense>
+      <Suspense fallback={<HomeSectionSkeleton />}><SellOutSection preloaded={data?.sellOut} isLoading={loading} title={locationTitle?.('Likely To Sell Out')} location={locationFilter} backfill={data?.sellOutBackfill} /></Suspense>
       <Suspense fallback={<HomeSectionSkeleton />}><LastMinuteDealsSection preloaded={data?.offers} isLoading={loading} title={locationTitle?.('Special Offers')} location={locationFilter} /></Suspense>
-      <Suspense fallback={<HomeSectionSkeleton />}><NewExperiencesSection isLoading={loading} title={locationTitle?.('New Experiences')} location={locationFilter} /></Suspense>
+      <Suspense fallback={<HomeSectionSkeleton />}><NewExperiencesSection isLoading={loading} title={locationTitle?.('New Experiences')} location={locationFilter} backfill={data?.newExperiencesBackfill} /></Suspense>
       <Suspense fallback={<HomeSectionSkeleton />}><TopAttractionsNearbySection preloaded={data?.attractions} title={locationTitle?.('Top Attractions Nearby')} location={locationFilter} /></Suspense>
       <MountOnView><ExternalReviewsSection /></MountOnView>
       <MountOnView><PreviousSearchSections /></MountOnView>

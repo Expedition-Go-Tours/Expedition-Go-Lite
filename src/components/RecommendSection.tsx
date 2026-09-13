@@ -4,7 +4,7 @@ import SectionHeading from './SectionHeading'
 import TourCard from './TourCard'
 import TourCardSkeleton from './TourCardSkeleton'
 import { useRecommendedTours, useExpeditionOffers, type TourCardData } from '../hooks/useExpeditionTours'
-import { useRecommended, mapToTourCard, type HomepageTour } from '../hooks/useHomepageSections'
+import { useRecommended, mapToTourCard, type HomepageTour, type HomepageBackfill } from '../hooks/useHomepageSections'
 import './RecommendSection.css'
 
 const CARD_WIDTH = 295
@@ -15,9 +15,10 @@ interface Props {
   isLoading?: boolean
   title?: string
   location?: string
+  backfill?: HomepageBackfill | null
 }
 
-export default function RecommendSection({ preloaded, isLoading, title, location }: Props) {
+export default function RecommendSection({ preloaded, isLoading, title, location, backfill }: Props) {
   const { t } = useTranslation()
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
@@ -35,17 +36,24 @@ export default function RecommendSection({ preloaded, isLoading, title, location
         ? liveTours
         : null
 
+  // Backfill tours (from nearby regions when local has few)
+  const backfillTours = useMemo(() => {
+    if (!backfill?.tours?.length) return []
+    return backfill.tours.map(mapToTourCard)
+  }, [backfill])
+
   // Offer tours replace their plain card when present, appended otherwise.
   const items = useMemo(() => {
     if (!baseTours) return null
-    if (!offerTours || offerTours.length === 0) return baseTours
+    const all = backfillTours.length > 0 ? [...baseTours, ...backfillTours] : baseTours
+    if (!offerTours || offerTours.length === 0) return all
     const keyOf = (t: { slug?: string; title: string }) => t.slug || t.title
     const offerByKey = new Map<string, TourCardData>()
     for (const tour of offerTours) offerByKey.set(keyOf(tour), tour)
 
     const seen = new Set<string>()
-    const merged: Array<typeof baseTours[number]> = []
-    for (const tour of baseTours) {
+    const merged: Array<typeof all[number]> = []
+    for (const tour of all) {
       const key = keyOf(tour)
       seen.add(key)
       const offer = offerByKey.get(key)
@@ -58,7 +66,7 @@ export default function RecommendSection({ preloaded, isLoading, title, location
       merged.push(tour)
     }
     return merged
-  }, [baseTours, offerTours])
+  }, [baseTours, offerTours, backfillTours])
 
   const updateArrows = useCallback(() => {
     const el = scrollRef.current
@@ -91,6 +99,8 @@ export default function RecommendSection({ preloaded, isLoading, title, location
 
   if (!items && !isLoading) return null
 
+  const localCount = baseTours?.length ?? 0
+
   return (
     <section className="recommend-section">
       <div className="recommend-container">
@@ -112,8 +122,13 @@ export default function RecommendSection({ preloaded, isLoading, title, location
                     </div>
                   ))
                 : items?.map((tour, i) => (
-                    <div key={`${tour.title}-${i}`} className="carousel-card-wrap">
-                      <TourCard {...tour} imageClean hideFeatures priority={i === 0} />
+                    <div key={`${tour.title}-${i}`}>
+                      {backfill?.label && i === localCount && (
+                        <div className="section-backfill-divider">{backfill.label}</div>
+                      )}
+                      <div className="carousel-card-wrap">
+                        <TourCard {...tour} imageClean hideFeatures priority={i === 0} />
+                      </div>
                     </div>
                   ))
               }

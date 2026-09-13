@@ -1,9 +1,9 @@
-import { useRef, useState, useEffect, useCallback } from 'react'
+import { useRef, useState, useEffect, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import SectionHeading from './SectionHeading'
 import TourCard from './TourCard'
 import TourCardSkeleton from './TourCardSkeleton'
-import { useNewExperiences, mapToTourCard } from '../hooks/useHomepageSections'
+import { useNewExperiences, mapToTourCard, type HomepageBackfill } from '../hooks/useHomepageSections'
 import './NewExperiencesSection.css'
 
 const CARD_WIDTH = 295
@@ -13,18 +13,31 @@ interface Props {
   isLoading?: boolean
   title?: string
   location?: string
+  backfill?: HomepageBackfill | null
 }
 
-export default function NewExperiencesSection({ isLoading, title, location }: Props) {
+export default function NewExperiencesSection({ isLoading, title, location, backfill }: Props) {
   const { t } = useTranslation()
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
   const { data: liveTours } = useNewExperiences(30)
 
-  const items = liveTours?.length
+  const localItems = liveTours?.length
     ? liveTours.map(t => mapToTourCard(t))
     : null
+
+  const backfillTours = useMemo(() => {
+    if (!backfill?.tours?.length) return []
+    return backfill.tours.map(t => mapToTourCard(t))
+  }, [backfill])
+
+  const items = useMemo(() => {
+    if (!localItems) return null
+    return backfillTours.length > 0 ? [...localItems, ...backfillTours] : localItems
+  }, [localItems, backfillTours])
+
+  const localCount = localItems?.length ?? 0
 
   const updateArrows = useCallback(() => {
     const el = scrollRef.current
@@ -85,8 +98,13 @@ export default function NewExperiencesSection({ isLoading, title, location }: Pr
                     </div>
                   ))
                 : items?.map((tour, i) => (
-                    <div key={`${tour.id ?? tour.title}-${i}`} className="newexp-card-wrap">
-                      <TourCard {...tour} isNew hideSourceBadge hideFeatures imageClean />
+                    <div key={`${tour.id ?? tour.title}-${i}`}>
+                      {backfill?.label && i === localCount && (
+                        <div className="section-backfill-divider">{backfill.label}</div>
+                      )}
+                      <div className="newexp-card-wrap">
+                        <TourCard {...tour} isNew hideSourceBadge hideFeatures imageClean />
+                      </div>
                     </div>
                   ))
               }
