@@ -249,11 +249,19 @@ export default function AllToursPage() {
   }, [sectionTourIdList])
 
   // Fetch tours for a specific attraction (when ?attraction= is set)
-  const { data: attractionToursData } = useAttractionTours(attractionParam, 50)
+  const { data: attractionToursData, isLoading: isLoadingAttractionTours } = useAttractionTours(attractionParam, 50)
   const attractionTourIds = useMemo(() => {
     if (!attractionParam || !attractionToursData?.length) return null
     return new Set(attractionToursData.map(t => t.id))
   }, [attractionParam, attractionToursData])
+
+  // True when an attraction search returned zero linked tours — the page should
+  // show the "not quite there yet" empty state for the attraction, then fall
+  // back to region-level tours below.
+  const hasZeroAttractionTours = !!attractionParam
+    && !isLoadingAttractionTours
+    && attractionToursData !== undefined
+    && attractionToursData.length === 0
 
   // Seed the destination filter from a /tours?location=... link (once per value).
   const seededLocationRef = useRef<string | null>(null)
@@ -379,7 +387,9 @@ export default function AllToursPage() {
   }
 
   const baseTitle = attractionParam
-    ? attractionParam
+    ? hasZeroAttractionTours
+      ? t('sections.toursIn', { location: placeValue || placeParam || attractionParam })
+      : attractionParam
     : placeParam
     ? t('sections.toursIn', { location: placeValue || placeParam })
     : moodParam
@@ -539,7 +549,18 @@ export default function AllToursPage() {
           </div>
         </div>
 
-        {isLoading && (
+        {/* Attraction with zero linked tours: show the empty-state hero above
+            the region fallback grid so users understand why tours are generic. */}
+        {!isLoading && !isError && hasZeroAttractionTours && (
+          <NoToursEmptyState
+            location={placeValue || placeParam}
+            attraction={attractionParam}
+            region={placeValue || placeParam}
+            onBrowseAll={() => navigate('/tours')}
+          />
+        )}
+
+        {(isLoading || (isResolvingPlace && displayTours.length === 0)) && (
           <div className="all-tours-grid">
             {Array.from({ length: PAGE_SIZE }).map((_, i) => (
               <TourCardSkeleton key={i} />
@@ -600,12 +621,10 @@ export default function AllToursPage() {
           </div>
         )}
 
-        {!isLoading && !isError && displayTours.length === 0 && (
+        {!isLoading && !isError && !isResolvingPlace && !hasZeroAttractionTours && displayTours.length === 0 && (
           <NoToursEmptyState
             location={placeParam || nearParam || locationParam || currentLocation || ''}
             onBrowseAll={() => navigate('/tours')}
-            onSecondary={clearAll}
-            secondaryLabel={t('allTours.clearAll')}
           />
         )}
 

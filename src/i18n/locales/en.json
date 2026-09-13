@@ -264,13 +264,20 @@
     "toursAndExperiences": "Tours & Experiences",
     "placesToSee": "Places to see",
     "thingsToDo": "Things to do",
-    "resultsIn": "Experiences in {{location}}"
+    "resultsIn": "Experiences in {{location}}",
+    "resultsFor": "Results for",
+    "toursFound": "found",
+    "title": "Search Tours",
+    "toursVisiting": "Tours visiting {{attraction}}",
+    "bestMatches": "Best matches"
   },
   "empty": {
     "title": "We're not quite there yet",
-    "body": "Our team is working hard to bring {{location}} to Expedition-Go Tours. In the meantime, explore handpicked experiences and nearby destinations we think you’ll love.",
+    "body": "We don't have experiences for {{location}} just yet — but there's plenty to discover. Check out these nearby destinations and handpicked tours we think you'll love.",
     "thisPlace": "this destination",
     "browseAll": "Browse all experiences",
+    "browseAttraction": "Browse experiences in {{attraction}}",
+    "browseRegion": "Browse experiences in {{region}}",
     "exploreNearby": "Explore nearby",
     "clearFilters": "Clear filters",
     "nearbyTitle": "Close by",

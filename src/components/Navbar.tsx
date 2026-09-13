@@ -15,12 +15,12 @@ import { useMyBookingsCount } from '../hooks/useExpeditionBookings'
 import { useWishlist } from '../context/WishlistContext'
 import { useLocationSearch } from '../context/LocationSearchContext'
 import { useContinuePlanning } from '../context/ContinuePlanningContext'
+import { useSearchInput } from '../context/SearchInputContext'
 import { useSearchAutocomplete, type SearchSuggestion } from '../hooks/useSearchAutocomplete'
 import { useRecentSearches } from '../hooks/useRecentSearches'
 import LanguageCurrencyModal from './LanguageCurrencyModal'
 import MobileSubDrawer, { type SubDrawerTab } from './MobileSubDrawer'
 import './Navbar.css'
-import OptimizedImage from '@/components/shared/OptimizedImage'
 
 const navDropdownVariants: Variants = {
   hidden: { opacity: 0, y: -6, scale: 0.985 },
@@ -89,7 +89,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
   const { t } = useTranslation()
   const { currency } = useCurrency()
   const { wishlistCount } = useWishlist()
-  const [navSearchValue, setNavSearchValue] = useState('')
+  const { searchValue: navSearchValue, setSearchValue: setNavSearchValue } = useSearchInput()
   const [showNavDropdown, setShowNavDropdown] = useState(false)
   const [navHighlightedIndex, setNavHighlightedIndex] = useState(-1)
   const [navIsFocused, setNavIsFocused] = useState(false)
@@ -145,23 +145,29 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
   }, [])
 
   const navigateToSuggestion = useCallback((suggestion: SearchSuggestion) => {
-    if (suggestion.type === 'tour' && suggestion.slug) {
-      addSearch({ slug: suggestion.slug, title: suggestion.title, type: 'tour', image: suggestion.image, city: suggestion.city })
+    if (suggestion.kind === 'tour' && suggestion.slug) {
+      addSearch({ slug: suggestion.slug, title: suggestion.name, type: 'tour', image: suggestion.image, city: suggestion.city })
     }
     setShowNavDropdown(false)
     setNavSearchValue('')
     setNavHighlightedIndex(-1)
-    // Blur so the dropdown fully closes — a just-added recent search would
-    // otherwise keep it open because navIsFocused stays true.
     setNavIsFocused(false)
     navInputRef.current?.blur()
-    if (suggestion.type === 'destination') {
-      addSearch({ slug: suggestion.title, title: suggestion.title, type: 'destination' })
-      setLocation(suggestion.title)
+    if (suggestion.kind === 'place') {
+      addSearch({ slug: suggestion.name, title: suggestion.name, type: 'destination' })
+      if (suggestion.region) setLocation(suggestion.region)
       if (location.pathname !== '/') navigate('/')
-    } else if (suggestion.type === 'tour' && suggestion.slug) {
-      // Selecting a tour from the search bar personalizes the homepage to its city.
-      if (suggestion.city) setLocation(suggestion.city)
+    } else if (suggestion.kind === 'attraction') {
+      addSearch({ slug: suggestion.name, title: suggestion.name, type: 'destination' })
+      if (suggestion.region) setLocation(suggestion.region)
+      navigate(`/tours?attraction=${encodeURIComponent(suggestion.name)}&place=${encodeURIComponent(suggestion.region || '')}`)
+    } else if (suggestion.kind === 'region') {
+      addSearch({ slug: suggestion.name, title: suggestion.name, type: 'destination' })
+      const rawRegion = suggestion.region || suggestion.name.replace(/\s*Region$/i, '')
+      setLocation(rawRegion)
+      navigate(`/tours?place=${encodeURIComponent(suggestion.name)}`)
+    } else if (suggestion.kind === 'tour' && suggestion.slug) {
+      if (suggestion.region) setLocation(suggestion.region)
       navigate(`/tour/${suggestion.slug}`)
     }
   }, [navigate, addSearch, setLocation])
@@ -173,22 +179,35 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
     setNavIsFocused(false)
     navInputRef.current?.blur()
     if (item.type === 'destination') {
-      setLocation(item.title)
       if (location.pathname !== '/') navigate('/')
     } else if (item.type === 'tour' && item.slug) {
-      if (item.city) setLocation(item.city)
       navigate(`/tour/${item.slug}`)
     }
-  }, [navigate, setLocation])
+  }, [navigate])
 
   const navigateToSearchPage = useCallback(() => {
     setShowNavDropdown(false)
     setNavHighlightedIndex(-1)
     const q = navSearchValue.trim()
     if (!q) return
-    setLocation(q)
-    if (location.pathname !== '/') navigate('/')
-  }, [navSearchValue, navigate, setLocation, location.pathname])
+    if (navSuggestions.length > 0) {
+      const top = navSuggestions[0]
+      if (top.region) setLocation(top.region)
+      if (top.kind === 'attraction') {
+        navigate(`/tours?attraction=${encodeURIComponent(top.name)}&place=${encodeURIComponent(top.region || '')}`)
+      } else if (top.kind === 'place') {
+        navigate(`/tours?place=${encodeURIComponent(top.name)}`)
+      } else if (top.kind === 'region') {
+        navigate(`/tours?place=${encodeURIComponent(top.name)}`)
+      } else if (top.kind === 'tour' && top.slug) {
+        navigate(`/tour/${top.slug}`)
+      } else {
+        if (location.pathname !== '/') navigate('/')
+      }
+    } else {
+      if (location.pathname !== '/') navigate('/')
+    }
+  }, [navSearchValue, navigate, setLocation, navSuggestions, location.pathname])
 
   // Navbar "List an Experience" CTA (desktop): always lands on the
   // Partnerships page, whose "Get started" cards route into the partner /
@@ -329,11 +348,14 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
     if (navSuggestions.length > 0 && navSearchValue.trim().length >= 2) {
       window.setTimeout(() => setShowNavDropdown(true), 0)
       window.setTimeout(() => setNavHighlightedIndex(-1), 0)
+    } else if (!navIsSearching && navSearchValue.trim().length >= 2) {
+      window.setTimeout(() => setShowNavDropdown(true), 0)
+      window.setTimeout(() => setNavHighlightedIndex(-1), 0)
     } else {
       window.setTimeout(() => setShowNavDropdown(false), 0)
       window.setTimeout(() => setNavHighlightedIndex(-1), 0)
     }
-  }, [navSuggestions, navSearchValue])
+  }, [navSuggestions, navSearchValue, navIsSearching])
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -354,7 +376,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
   ]
 
   const navDropdownOpen =
-    (navIsFocused && recentSearches.length > 0) ||
+    (navIsFocused && !navSearchValue.trim() && recentSearches.length > 0) ||
     (showNavDropdown && navSuggestions.length > 0) ||
     (navIsSearching && navIsFocused)
 
@@ -440,7 +462,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
                   </div>
                 ) : (
                   <>
-                    {navIsFocused && recentSearches.length > 0 && (
+                    {navIsFocused && !navSearchValue.trim() && recentSearches.length > 0 && (
                 <>
                   <div className="search-dropdown-section">{t('search.recentSearches')}</div>
                   {recentSearches.map((item) => (
@@ -481,10 +503,12 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
               )}
               {showNavDropdown && navSuggestions.length > 0 && (
                 <>
+                  <div className="search-smart-header">
+                    <strong>Best matches</strong>
+                    <span>Matching &ldquo;{navSearchValue.trim()}&rdquo;</span>
+                  </div>
                   {navSuggestions.map((suggestion, idx) => {
                     const isHighlighted = idx === navHighlightedIndex
-                    const showDestHeader = suggestion.type === 'destination' && (idx === 0 || navSuggestions[idx - 1]?.type !== 'destination')
-                    const showTourHeader = suggestion.type === 'tour' && (idx === 0 || navSuggestions[idx - 1]?.type !== 'tour')
 
                     return (
                       <motion.div
@@ -493,45 +517,31 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.18, ease: 'easeOut', delay: Math.min(idx * 0.03, 0.45) }}
                       >
-                        {showDestHeader && (
-                          <div className="search-dropdown-section">{t('common.destinations')}</div>
-                        )}
-                        {showTourHeader && (
-                          <div className="search-dropdown-section">{t('search.toursAndExperiences')}</div>
-                        )}
                         <div
-                          className={`search-suggestion${isHighlighted ? ' highlighted' : ''}`}
+                          className={`search-suggestion suggestion--${suggestion.kind}${isHighlighted ? ' highlighted' : ''}`}
                           onMouseDown={(e) => {
                             e.preventDefault()
                             navigateToSuggestion(suggestion)
                           }}
                           onMouseEnter={() => setNavHighlightedIndex(idx)}
                         >
-                          {suggestion.type === 'destination' ? (
-                            <>
-                              <div className="search-suggestion-icon">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                                  <circle cx="12" cy="10" r="3" />
-                                </svg>
-                              </div>
-                              <div className="search-suggestion-text">
-                                <span className="search-suggestion-title">{suggestion.title}</span>
-                                <span className="search-suggestion-sub">{suggestion.subtitle}</span>
-                              </div>
-                            </>
+                          {suggestion.kind === 'tour' && suggestion.image ? (
+                            <div className="search-suggestion-thumb">
+                              <img src={suggestion.image} alt="" loading="lazy" />
+                            </div>
                           ) : (
-                            <>
-                              <div className="search-suggestion-img">
-                                <OptimizedImage src={suggestion.image} alt="" width={100} />
-                              </div>
-                              <div className="search-suggestion-text">
-                                <span className="search-suggestion-title">{suggestion.title}</span>
-                                <span className="search-suggestion-sub">{suggestion.subtitle}</span>
-                              </div>
-                              <span className="search-suggestion-price">{suggestion.price}</span>
-                            </>
+                            <div className="search-suggestion-icon-wrap">
+                              <span className="search-suggestion-icon">{suggestion.icon}</span>
+                            </div>
                           )}
+                          <div className="search-suggestion-text">
+                            <span className="search-suggestion-title">{suggestion.name}</span>
+                            <span className="search-suggestion-sub">{suggestion.subtitle}</span>
+                            {suggestion.meta && (
+                              <span className="search-suggestion-meta">{suggestion.meta}</span>
+                            )}
+                          </div>
+                          <span className="search-suggestion-badge">{suggestion.badge}</span>
                         </div>
                       </motion.div>
                     )

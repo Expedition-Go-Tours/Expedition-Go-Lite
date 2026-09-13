@@ -13,11 +13,12 @@ import './NoToursEmptyState.css'
 interface Props {
   /** The searched destination, when known (drives the copy + suggestions). */
   location?: string
+  /** If the search was for an attraction, this provides the attraction name. */
+  attraction?: string
+  /** If the search was for a region, this provides the region name. */
+  region?: string
   /** Primary CTA. Defaults to navigating to the full catalogue. */
   onBrowseAll?: () => void
-  /** Optional secondary CTA (e.g. "clear filters" on the tours page). */
-  onSecondary?: () => void
-  secondaryLabel?: string
 }
 
 interface RailProps {
@@ -83,27 +84,39 @@ function NoToursRail({ title, items, viewAllLink, hideOfferBadge, priorityFirst 
   )
 }
 
-export default function NoToursEmptyState({ location = '', onBrowseAll, onSecondary, secondaryLabel }: Props) {
+export default function NoToursEmptyState({ location = '', attraction, region, onBrowseAll }: Props) {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { data, isLoading } = useSearchFallback(location)
+  const { data, isLoading } = useSearchFallback(location, attraction, region)
 
   const nearby = data?.nearbyLocations ?? []
   const recommended = data?.recommended ?? []
   const alsoLike = data?.youMayAlsoLike ?? []
+  const resolvedAttraction = data?.attraction || attraction
+  const resolvedRegion = data?.region || region
   const { data: offerTours } = useHomepageOffers(12)
   const offers = (offerTours ?? []).map(mapToTourCard)
   const place = location || t('empty.thisPlace', { defaultValue: 'this destination' })
+
+  // Honest copy: we don't have tours for this place yet
   const bodyCopy = t('empty.body', {
     location: place,
     defaultValue:
-      'Our team is working hard to bring {{location}} to Expedition-Go Tours. In the meantime, explore handpicked experiences and nearby destinations we think you’ll love.',
+      'We\'re not quite there yet — but we\'re working on it. We don\'t have experiences for {{location}} just yet, but there\'s plenty to discover.',
   })
-  // Split the copy after the first sentence so the status line and the
-  // call-to-action render as two tidy lines instead of one run-on paragraph.
-  const splitAt = bodyCopy.indexOf('. ')
-  const bodyLead = splitAt >= 0 ? bodyCopy.slice(0, splitAt + 1) : bodyCopy
-  const bodyTail = splitAt >= 0 ? bodyCopy.slice(splitAt + 2) : ''
+
+  // Scoped CTA text
+  const scopedCta = resolvedAttraction
+    ? t('empty.browseAttraction', {
+        attraction: resolvedAttraction,
+        defaultValue: 'Browse experiences in {{attraction}}',
+      })
+    : resolvedRegion
+    ? t('empty.browseRegion', {
+        region: resolvedRegion,
+        defaultValue: 'Browse experiences in {{region}}',
+      })
+    : t('empty.browseAll', { defaultValue: 'Browse all experiences' })
 
   return (
     <div className="no-tours">
@@ -111,8 +124,7 @@ export default function NoToursEmptyState({ location = '', onBrowseAll, onSecond
         <NoToursAnimation />
         <h2 className="no-tours-title">{t('empty.title', { defaultValue: "We're not quite there yet" })}</h2>
         <p className="no-tours-sub">
-          <span className="no-tours-sub-line">{bodyLead}</span>
-          {bodyTail && <span className="no-tours-sub-line">{bodyTail}</span>}
+          <span className="no-tours-sub-line">{bodyCopy}</span>
         </p>
         <div className="no-tours-actions">
           <button
@@ -120,13 +132,8 @@ export default function NoToursEmptyState({ location = '', onBrowseAll, onSecond
             className="no-tours-btn no-tours-btn--primary"
             onClick={onBrowseAll ?? (() => navigate('/tours'))}
           >
-            {t('empty.browseAll', { defaultValue: 'Browse all experiences' })}
+            {scopedCta}
           </button>
-          {onSecondary && (
-            <button type="button" className="no-tours-btn no-tours-btn--ghost" onClick={onSecondary}>
-              {secondaryLabel ?? t('empty.clearFilters', { defaultValue: 'Clear filters' })}
-            </button>
-          )}
         </div>
       </div>
 

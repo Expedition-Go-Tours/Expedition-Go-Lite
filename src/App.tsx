@@ -23,6 +23,7 @@ import { WishlistProvider } from './context/WishlistContext'
 import { ContinuePlanningProvider } from './context/ContinuePlanningContext'
 import { SellOutProvider } from './context/SellOutContext'
 import { LocationSearchProvider, useLocationSearch } from './context/LocationSearchContext'
+import { SearchInputProvider } from './context/SearchInputContext'
 import GoogleOneTapPrompt from './components/GoogleOneTapPrompt'
 import { subscribeToAuthState, handleGoogleCallback, getAuthReturnTo, clearAuthReturnTo } from './lib/auth'
 import { AuthProvider } from './context/AuthContext'
@@ -110,9 +111,12 @@ function HomePage() {
 
   // Memoize the title formatter to avoid re-renders in section components
   // (must be above any conditional returns — Rules of Hooks)
+  // Prototype behaviour: display region with "Region" suffix (e.g. "Central Region")
   const locationTitle = useMemo(() => {
     if (!hasActiveSearch || !currentLocation) return undefined
-    return (section: string) => `${section} in ${currentLocation}`
+    // If it already ends with "Region", use as-is; otherwise append " Region"
+    const displayRegion = /region$/i.test(currentLocation) ? currentLocation : `${currentLocation} Region`
+    return (section: string) => `${section} in ${displayRegion}`
   }, [hasActiveSearch, currentLocation])
   const locationFilter = hasActiveSearch ? currentLocation ?? undefined : undefined
 
@@ -373,7 +377,9 @@ function App() {
         <AuthProvider>
           <ContinuePlanningProvider>
             <LocationSearchProvider>
-              <AppContent />
+              <SearchInputProvider>
+                <AppContent />
+              </SearchInputProvider>
             </LocationSearchProvider>
           </ContinuePlanningProvider>
         </AuthProvider>

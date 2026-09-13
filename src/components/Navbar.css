@@ -236,6 +236,10 @@ body:has(.story-detail) .navbar-compact-search {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
   z-index: 1000;
   padding: 6px 0;
+  max-height: 420px;
+  overflow: hidden auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 /* Recent Searches in Navbar */
