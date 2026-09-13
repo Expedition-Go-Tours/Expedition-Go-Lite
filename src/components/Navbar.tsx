@@ -192,22 +192,30 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
     if (!q) return
     if (navSuggestions.length > 0) {
       const top = navSuggestions[0]
-      if (top.region) setLocation(top.region)
-      if (top.kind === 'attraction') {
-        navigate(`/tours?attraction=${encodeURIComponent(top.name)}&place=${encodeURIComponent(top.region || '')}`)
-      } else if (top.kind === 'place') {
-        navigate(`/tours?place=${encodeURIComponent(top.name)}`)
-      } else if (top.kind === 'region') {
+      // Find a place/region that actually matches the query (not a random substring match)
+      const matchingPlace = navSuggestions.find(s =>
+        (s.kind === 'place' || s.kind === 'region') &&
+        s.name.toLowerCase().includes(q.toLowerCase())
+      )
+      if (matchingPlace) {
+        if (matchingPlace.region) setLocation(matchingPlace.region)
+        navigate(`/tours?place=${encodeURIComponent(matchingPlace.name)}`)
+      } else if (top.kind === 'place' || top.kind === 'region') {
+        if (top.region) setLocation(top.region)
         navigate(`/tours?place=${encodeURIComponent(top.name)}`)
       } else if (top.kind === 'tour' && top.slug) {
+        if (top.region) setLocation(top.region)
         navigate(`/tour/${top.slug}`)
       } else {
-        if (location.pathname !== '/') navigate('/')
+        // Attraction or no match — use the raw query as the place name
+        const regionName = top.region || ''
+        if (regionName) setLocation(regionName)
+        navigate(`/tours?place=${encodeURIComponent(q)}`)
       }
     } else {
-      if (location.pathname !== '/') navigate('/')
+      navigate(`/tours?place=${encodeURIComponent(q)}`)
     }
-  }, [navSearchValue, navigate, setLocation, navSuggestions, location.pathname])
+  }, [navSearchValue, navigate, setLocation, navSuggestions])
 
   // Navbar "List an Experience" CTA (desktop): always lands on the
   // Partnerships page, whose "Get started" cards route into the partner /

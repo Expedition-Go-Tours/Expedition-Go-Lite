@@ -122,17 +122,27 @@ export default function SearchBar() {
     trackSearch(q)
     // Use the top suggestion to route to the correct page type
     if (suggestions.length > 0) {
+      // Prefer place/region over attraction for Enter — user likely wants the destination, not a single site
       const top = suggestions[0]
-      if (top.region) setLocation(top.region)
-      if (top.kind === 'attraction') {
-        navigate(`/tours?attraction=${encodeURIComponent(top.name)}&place=${encodeURIComponent(top.region || '')}`)
-      } else if (top.kind === 'place') {
-        navigate(`/tours?place=${encodeURIComponent(top.name)}`)
-      } else if (top.kind === 'region') {
+      // Find a place/region that actually matches the query (not a random substring match)
+      const matchingPlace = suggestions.find(s =>
+        (s.kind === 'place' || s.kind === 'region') &&
+        s.name.toLowerCase().includes(q.toLowerCase())
+      )
+      if (matchingPlace) {
+        if (matchingPlace.region) setLocation(matchingPlace.region)
+        navigate(`/tours?place=${encodeURIComponent(matchingPlace.name)}`)
+      } else if (top.kind === 'place' || top.kind === 'region') {
+        if (top.region) setLocation(top.region)
         navigate(`/tours?place=${encodeURIComponent(top.name)}`)
       } else if (top.kind === 'tour' && top.slug) {
+        if (top.region) setLocation(top.region)
         navigate(`/tour/${top.slug}`)
       } else {
+        // Attraction or no match — use the raw query as the place name
+        // The backend place-resolve will handle city→region→geocoder fallback
+        const regionName = top.region || ''
+        if (regionName) setLocation(regionName)
         navigate(`/tours?place=${encodeURIComponent(q)}`)
       }
     } else {
