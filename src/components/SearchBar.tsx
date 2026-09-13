@@ -127,7 +127,8 @@ export default function SearchBar() {
       // Find a place/region that actually matches the query (not a random substring match)
       const matchingPlace = suggestions.find(s =>
         (s.kind === 'place' || s.kind === 'region') &&
-        s.name.toLowerCase().includes(q.toLowerCase())
+        (s.name.toLowerCase().startsWith(q.toLowerCase()) ||
+         q.toLowerCase().startsWith(s.name.toLowerCase()))
       )
       if (matchingPlace) {
         if (matchingPlace.region) setLocation(matchingPlace.region)
