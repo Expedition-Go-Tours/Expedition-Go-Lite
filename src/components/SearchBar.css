@@ -7,6 +7,7 @@
 
 .hero-search-form {
   position: relative;
+  z-index: 105;
 }
 
 .hero-search-bar {
