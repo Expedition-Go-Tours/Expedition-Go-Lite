@@ -38,8 +38,6 @@ export default function SellOutSection({ preloaded, isLoading, title, location, 
     return backfillTours.length > 0 ? [...localItems, ...backfillTours] : localItems
   }, [localItems, backfillTours])
 
-  const localCount = localItems?.length ?? 0
-
   const updateArrows = useCallback(() => {
     const el = scrollRef.current
     if (!el) return
@@ -83,6 +81,9 @@ export default function SellOutSection({ preloaded, isLoading, title, location, 
             disableLeft={!canScrollLeft}
             disableRight={!canScrollRight}
           />
+          {backfill?.label && (
+            <div className="section-backfill-divider">{backfill.label}</div>
+          )}
           <div className="sellout-clip">
             <div className="sellout-carousel" ref={scrollRef}>
               {isLoading && !items
@@ -92,13 +93,8 @@ export default function SellOutSection({ preloaded, isLoading, title, location, 
                     </div>
                   ))
                 : items?.map((tour, i) => (
-                    <div key={`${tour.title}-${i}`}>
-                      {backfill?.label && i === localCount && (
-                        <div className="section-backfill-divider">{backfill.label}</div>
-                      )}
-                      <div className="sellout-card-wrap">
-                        <TourCard {...tour} imageClean hideFeatures />
-                      </div>
+                    <div key={`${tour.title}-${i}`} className="sellout-card-wrap">
+                      <TourCard {...tour} imageClean hideFeatures />
                     </div>
                   ))
               }

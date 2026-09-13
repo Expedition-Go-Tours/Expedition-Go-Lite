@@ -99,8 +99,6 @@ export default function RecommendSection({ preloaded, isLoading, title, location
 
   if (!items && !isLoading) return null
 
-  const localCount = baseTours?.length ?? 0
-
   return (
     <section className="recommend-section">
       <div className="recommend-container">
@@ -113,6 +111,9 @@ export default function RecommendSection({ preloaded, isLoading, title, location
             disableLeft={!canScrollLeft}
             disableRight={!canScrollRight}
           />
+          {backfill?.label && (
+            <div className="section-backfill-divider">{backfill.label}</div>
+          )}
           <div className="carousel-clip">
             <div className="recommend-carousel" ref={scrollRef}>
               {isLoading && !items
@@ -122,13 +123,8 @@ export default function RecommendSection({ preloaded, isLoading, title, location
                     </div>
                   ))
                 : items?.map((tour, i) => (
-                    <div key={`${tour.title}-${i}`}>
-                      {backfill?.label && i === localCount && (
-                        <div className="section-backfill-divider">{backfill.label}</div>
-                      )}
-                      <div className="carousel-card-wrap">
-                        <TourCard {...tour} imageClean hideFeatures priority={i === 0} />
-                      </div>
+                    <div key={`${tour.title}-${i}`} className="carousel-card-wrap">
+                      <TourCard {...tour} imageClean hideFeatures priority={i === 0} />
                     </div>
                   ))
               }

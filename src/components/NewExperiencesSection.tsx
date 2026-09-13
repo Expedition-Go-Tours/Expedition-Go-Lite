@@ -37,8 +37,6 @@ export default function NewExperiencesSection({ isLoading, title, location, back
     return backfillTours.length > 0 ? [...localItems, ...backfillTours] : localItems
   }, [localItems, backfillTours])
 
-  const localCount = localItems?.length ?? 0
-
   const updateArrows = useCallback(() => {
     const el = scrollRef.current
     if (!el) return
@@ -89,6 +87,9 @@ export default function NewExperiencesSection({ isLoading, title, location, back
             disableLeft={!canScrollLeft}
             disableRight={!canScrollRight}
           />
+          {backfill?.label && (
+            <div className="section-backfill-divider">{backfill.label}</div>
+          )}
           <div className="newexp-clip">
             <div className="newexp-carousel" ref={scrollRef}>
               {isLoading && !items
@@ -98,13 +99,8 @@ export default function NewExperiencesSection({ isLoading, title, location, back
                     </div>
                   ))
                 : items?.map((tour, i) => (
-                    <div key={`${tour.id ?? tour.title}-${i}`}>
-                      {backfill?.label && i === localCount && (
-                        <div className="section-backfill-divider">{backfill.label}</div>
-                      )}
-                      <div className="newexp-card-wrap">
-                        <TourCard {...tour} isNew hideSourceBadge hideFeatures imageClean />
-                      </div>
+                    <div key={`${tour.id ?? tour.title}-${i}`} className="newexp-card-wrap">
+                      <TourCard {...tour} isNew hideSourceBadge hideFeatures imageClean />
                     </div>
                   ))
               }
