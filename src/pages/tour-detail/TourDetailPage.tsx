@@ -19,6 +19,7 @@ import { mapSupplierProfile } from '../../lib/supplierProfile'
 import type { Tour } from '../../components/data'
 import type { DayAvailability, DayAvailabilityInfo } from '../../lib/tourAvailability'
 
+import SEO, { buildProductSchema, buildBreadcrumbSchema } from '../../components/SEO'
 import TourImageGallery from './TourImageGallery'
 import TourHeader from './TourHeader'
 import TourQuickFacts from './TourQuickFacts'
@@ -170,9 +171,6 @@ export default function TourDetailPage() {
   }, [tour?.images])
 
   useEffect(() => {
-    if (tour) {
-      document.title = `${tour.title} | Expedition-Go Tours`
-    }
     if (tour) {
       addToContinuePlanning(toContinuePlanningItem({
         title: tour.title,
@@ -877,6 +875,35 @@ export default function TourDetailPage() {
   return (
     <TourDetailErrorBoundary>
     <>
+      <SEO
+        title={`${tour.title} in ${tour.location?.split(',')[0] || 'Ghana'}`}
+        description={`${tour.title} - ${tour.duration} ${tour.category || 'experience'} in ${tour.location || 'Ghana'}. Book from $${tour.price}. ${tour.rating ? `Rated ${tour.rating}/5` : ''} Free cancellation, instant confirmation.`}
+        keywords={`${tour.title}, ${tour.location} tours, ${tour.category || 'tours'} in ${tour.location?.split(',')[0] || 'Ghana'}, Ghana tours, book ${tour.title}`}
+        image={mergedImages[0] || undefined}
+        type="product"
+        price={{ amount: String(tour.price), currency: 'USD' }}
+        rating={tour.rating && tour.reviewCount ? { value: tour.rating, count: tour.reviewCount } : undefined}
+        jsonLd={[
+          buildProductSchema({
+            title: tour.title,
+            description: tour.description || tour.title,
+            image: mergedImages[0] || '',
+            price: tour.price,
+            currency: 'USD',
+            ratingValue: tour.rating,
+            reviewCount: tour.reviewCount,
+            slug: slug,
+            city: tour.location?.split(',')[0],
+            region: tour.location?.split(',')[1]?.trim(),
+          }),
+          buildBreadcrumbSchema([
+            { name: 'Home', url: 'https://expeditiongotours.com/' },
+            { name: tour.location?.split(',')[1]?.trim() || 'Ghana', url: 'https://expeditiongotours.com/tours' },
+            { name: tour.location?.split(',')[0] || 'Tours', url: `https://expeditiongotours.com/tours?place=${encodeURIComponent(tour.location?.split(',')[0] || '')}` },
+            { name: tour.title, url: `https://expeditiongotours.com/tour/${slug}` },
+          ]),
+        ]}
+      />
       <StickyNavHeader show={showStickyTitle} title={selectedTourTitle} onWriteReview={handleWriteReview} />
       <div className="tour-detail-page">
         <div className="tour-detail-container">

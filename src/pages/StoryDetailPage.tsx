@@ -5,6 +5,7 @@ import { ArrowLeft, Calendar, Clock, Share2, ChevronRight, Sparkles } from 'luci
 import { travelStories, storySlug } from '../components/data'
 import type { TravelStory } from '../components/data'
 import Footer from '../components/Footer'
+import SEO, { buildArticleSchema, buildBreadcrumbSchema } from '../components/SEO'
 import './StoryDetailPage.css'
 import OptimizedImage from '@/components/shared/OptimizedImage'
 
@@ -136,6 +137,29 @@ function StoryDetailPage() {
 
   return (
     <div className="story-detail">
+      <SEO
+        title={story.title}
+        description={`${story.title} - ${content.category} travel story from Ghana. ${story.location ? `Explore ${story.location} and discover` : 'Discover'} authentic experiences, local insights, and travel tips for your Ghana adventure.`}
+        keywords={`${story.title}, Ghana travel story, ${story.location || ''} Ghana, ${content.category.toLowerCase()} Ghana, Ghana travel guide, things to do in Ghana, ${story.location || ''} experiences`}
+        image={story.image}
+        type="article"
+        publishedTime={story.date}
+        jsonLd={[
+          buildArticleSchema({
+            title: story.title,
+            description: `${story.title} - ${content.category} travel story from Ghana.`,
+            image: story.image,
+            url: `https://expeditiongotours.com/stories/${storySlug(story.title)}`,
+            publishedTime: story.date || new Date().toISOString(),
+            author: 'Expedition-Go Tours',
+          }),
+          buildBreadcrumbSchema([
+            { name: 'Home', url: 'https://expeditiongotours.com/' },
+            { name: 'Stories', url: 'https://expeditiongotours.com/stories' },
+            { name: story.title, url: `https://expeditiongotours.com/stories/${storySlug(story.title)}` },
+          ]),
+        ]}
+      />
       {/* Reading progress bar */}
       <motion.div className="story-progress" style={{ scaleX: progress }} />
 

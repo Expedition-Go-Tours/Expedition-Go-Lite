@@ -9,6 +9,7 @@ import NoToursEmptyState from '../components/NoToursEmptyState'
 import { useLocationSearch } from '../context/LocationSearchContext'
 import { usePlaceResolve } from '../hooks/usePlaceResolve'
 
+import SEO, { buildItemListSchema, buildBreadcrumbSchema } from '../components/SEO'
 import { useAllExpeditionTours, useTourFilterOptions, type TourCardData } from '../hooks/useExpeditionTours'
 import { useSectionTourIds, useHomepageOffers, useAttractionTours, useLikelySellOut, type HomepageOfferTour } from '../hooks/useHomepageSections'
 import './AllToursPage.css'
@@ -463,8 +464,43 @@ export default function AllToursPage() {
     else navigate('/')
   }, [navigate])
 
+  const seoTitle = fallbackRegion
+    ? `Tours in ${fallbackRegion}`
+    : placeParam
+    ? `Tours in ${placeParam} | Ghana Tours & Experiences`
+    : 'Ghana Tours & Experiences | Book Authentic African Adventures'
+
+  const seoDescription = placeParam
+    ? `Discover ${totalCount || 'the best'} tours and experiences in ${placeParam}, Ghana. Book cultural tours, food tours, wildlife safaris, and adventure activities. Free cancellation, best prices guaranteed.`
+    : 'Explore authentic Ghana tours and experiences. Book cultural tours, wildlife safaris, food tours, and adventure activities across Accra, Cape Coast, Volta Region, and more. Free cancellation.'
+
+  const seoKeywords = placeParam
+    ? `${placeParam} tours, things to do in ${placeParam}, ${placeParam} Ghana, ${placeParam} activities, ${placeParam} experiences, Ghana tours, book tours in ${placeParam}`
+    : 'Ghana tours, things to do in Ghana, Ghana experiences, Accra tours, Cape Coast tours, Ghana safari, Ghana food tour, Ghana cultural tour, West Africa tours'
+
   return (
     <div className="all-tours-page">
+      <SEO
+        title={seoTitle}
+        description={seoDescription}
+        keywords={seoKeywords}
+        jsonLd={[
+          buildBreadcrumbSchema([
+            { name: 'Home', url: 'https://expeditiongotours.com/' },
+            ...(placeParam
+              ? [{ name: placeParam, url: `https://expeditiongotours.com/tours?place=${encodeURIComponent(placeParam)}` }]
+              : []),
+            { name: 'Tours', url: 'https://expeditiongotours.com/tours' },
+          ]),
+          ...(paginatedTours.length > 0 ? [buildItemListSchema(
+            paginatedTours.slice(0, 20).map(t => ({
+              name: t.title,
+              url: `https://expeditiongotours.com/tour/${t.slug}`,
+              image: t.coverPhoto || undefined,
+            }))
+          )] : []),
+        ]}
+      />
       <div className="all-tours-container">
         <div className="all-tours-header">
           <div className="all-tours-header-left">

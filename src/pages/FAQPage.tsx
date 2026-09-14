@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronDown } from 'lucide-react'
 import Footer from '../components/Footer'
+import SEO, { buildFAQSchema, buildBreadcrumbSchema } from '../components/SEO'
 import LiquidSurface from '@/components/lightswind/liquid-surface'
 import './SupportPages.css'
 
@@ -82,12 +83,22 @@ export default function FAQPage() {
     },
   ]
 
-  useEffect(() => {
-    document.title = `${t('footer.faq')} | Expedition-Go Tours`
-  }, [t])
+  const allFaqs = FAQ_CATEGORIES.flatMap(c => c.items)
 
   return (
     <div className="support-page faq-page">
+      <SEO
+        title="Frequently Asked Questions"
+        description="Find answers to common questions about booking Ghana tours, cancellation policies, pickup details, payment methods, and more. Get help with your Ghana travel experience."
+        keywords="Ghana tours FAQ, booking questions, cancellation policy, Ghana travel help, tour booking FAQ, Ghana experiences questions, Expedition-Go Tours FAQ"
+        jsonLd={[
+          buildFAQSchema(allFaqs.map(f => ({ question: f.q, answer: f.a }))),
+          buildBreadcrumbSchema([
+            { name: 'Home', url: 'https://expeditiongotours.com/' },
+            { name: 'FAQ', url: 'https://expeditiongotours.com/faq' },
+          ]),
+        ]}
+      />
       <div className="support-hero faq-hero">
         <LiquidSurface
           scheme={1}

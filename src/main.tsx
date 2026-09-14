@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { QueryClientProvider } from '@tanstack/react-query'
+import { HelmetProvider } from 'react-helmet-async'
 import './index.css'
 import 'flag-icons/css/flag-icons.min.css'
 import './i18n/config'
@@ -28,10 +29,12 @@ if (typeof window !== 'undefined' && typeof sessionStorage !== 'undefined') {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <CurrencyProvider>
-        <App />
-      </CurrencyProvider>
-    </QueryClientProvider>
+    <HelmetProvider>
+      <QueryClientProvider client={queryClient}>
+        <CurrencyProvider>
+          <App />
+        </CurrencyProvider>
+      </QueryClientProvider>
+    </HelmetProvider>
   </StrictMode>,
 )

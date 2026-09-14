@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { motion, AnimatePresence, type Variants } from 'framer-motion'
 import { X, Compass, Users, ShieldCheck, BadgeDollarSign, Headset, ArrowRight } from 'lucide-react'
 import Footer from '../components/Footer'
+import SEO, { buildBreadcrumbSchema } from '../components/SEO'
 import heroImg1 from '../assets/Image01.webp'
 import heroImg2 from '../assets/Image02.webp'
 import heroImg3 from '../assets/Image03.webp'
@@ -190,12 +191,17 @@ export default function AboutUsPage() {
     }
   }, [focusedImg, closeFocused])
 
-  useEffect(() => {
-    document.title = `${t('footer.aboutUs')} | Expedition-Go Tours`
-  }, [t])
-
   return (
     <div className="about-page">
+      <SEO
+        title="About Us"
+        description="Learn about Expedition-Go Tours — Ghana's premier tour platform. We connect travelers with authentic local experiences, cultural tours, wildlife safaris, and adventure activities across Ghana. Meet our team and mission."
+        keywords="Expedition-Go Tours, about us, Ghana tour company, Ghana travel platform, local tours Ghana, authentic experiences Ghana, Ghana tourism company"
+        jsonLd={buildBreadcrumbSchema([
+          { name: 'Home', url: 'https://expeditiongotours.com/' },
+          { name: 'About Us', url: 'https://expeditiongotours.com/about-us' },
+        ])}
+      />
 
       {/* ===== Hero with Moving Images ===== */}
       <div className="about-hero">
