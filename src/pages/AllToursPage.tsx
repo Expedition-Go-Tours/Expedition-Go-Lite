@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useCallback, useEffect, type ReactNode } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronLeft, ChevronRight, X, Star, ArrowLeft } from 'lucide-react'
+import { ChevronLeft, ChevronRight, X, Star, ArrowLeft, MapPin } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import TourCard from '../components/TourCard'
 import TourCardSkeleton from '../components/TourCardSkeleton'
@@ -454,20 +454,20 @@ export default function AllToursPage() {
     if (hasPrevPage) setPage(p => Math.max(1, p - 1))
   }
 
+  // Real back navigation when the user arrived from within the app; otherwise
+  // (direct link / new tab, where there is no in-app history) go to the
+  // homepage so the button is never a dead end.
+  const handleBack = useCallback(() => {
+    const idx = typeof window !== 'undefined' ? (window.history.state?.idx ?? 0) : 0
+    if (idx > 0) navigate(-1)
+    else navigate('/')
+  }, [navigate])
+
   return (
     <div className="all-tours-page">
       <div className="all-tours-container">
         <div className="all-tours-header">
           <div className="all-tours-header-left">
-            {(sectionParam || moodParam || attractionParam || locationParam || categoryParam) && (
-              <button
-                onClick={() => navigate('/')}
-                className="all-tours-back-btn"
-                aria-label="Back to homepage"
-              >
-                <ArrowLeft size={20} />
-              </button>
-            )}
             <div>
               <h1 className="all-tours-title">{pageTitle}</h1>
               {isLoading ? (
@@ -479,6 +479,15 @@ export default function AllToursPage() {
                     : t('allTours.toursFound', { count: totalCount })}
                 </p>
               )}
+              <button
+                type="button"
+                className="all-tours-back-inline"
+                onClick={handleBack}
+                aria-label={t('allTours.back', { defaultValue: 'Go back' })}
+              >
+                <ArrowLeft size={16} aria-hidden="true" />
+                <span>{t('allTours.back', { defaultValue: 'Back' })}</span>
+              </button>
             </div>
           </div>
           {activeFilterCount > 0 && (
@@ -487,12 +496,15 @@ export default function AllToursPage() {
         </div>
 
         {!isLoading && !isError && fallbackRegion && (
-          <div className="all-tours-region-fallback" role="status">
-            {t('allTours.regionFallbackNotice', {
-              location: allToursData?.placeScope?.requested || placeParam,
-              region: fallbackRegion,
-              defaultValue: "We don't have tours in {{location}} yet — here are experiences across {{region}}.",
-            })}
+          <div className="all-tours-region-fallback" role="status" aria-live="polite">
+            <MapPin size={16} className="all-tours-region-fallback-icon" aria-hidden="true" />
+            <span>
+              {t('allTours.regionFallbackNotice', {
+                location: allToursData?.placeScope?.requested || placeParam,
+                region: fallbackRegion,
+                defaultValue: "We don't have tours in {{location}} yet, but here are experiences across {{region}}.",
+              })}
+            </span>
           </div>
         )}
 
