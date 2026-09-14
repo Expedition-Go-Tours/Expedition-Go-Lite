@@ -492,11 +492,11 @@ export default function AllToursPage() {
               : []),
             { name: 'Tours', url: 'https://expeditiongotours.com/tours' },
           ]),
-          ...(paginatedTours.length > 0 ? [buildItemListSchema(
-            paginatedTours.slice(0, 20).map(t => ({
+          ...(filteredTours.length > 0 ? [buildItemListSchema(
+            filteredTours.slice(0, 20).map((t: TourCardData) => ({
               name: t.title,
               url: `https://expeditiongotours.com/tour/${t.slug}`,
-              image: t.coverPhoto || undefined,
+              image: t.image || undefined,
             }))
           )] : []),
         ]}

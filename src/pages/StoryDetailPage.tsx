@@ -139,8 +139,8 @@ function StoryDetailPage() {
     <div className="story-detail">
       <SEO
         title={story.title}
-        description={`${story.title} - ${content.category} travel story from Ghana. ${story.location ? `Explore ${story.location} and discover` : 'Discover'} authentic experiences, local insights, and travel tips for your Ghana adventure.`}
-        keywords={`${story.title}, Ghana travel story, ${story.location || ''} Ghana, ${content.category.toLowerCase()} Ghana, Ghana travel guide, things to do in Ghana, ${story.location || ''} experiences`}
+        description={`${story.title} - ${content.category} travel story from Ghana. Discover authentic experiences, local insights, and travel tips for your Ghana adventure.`}
+        keywords={`${story.title}, Ghana travel story, ${content.category.toLowerCase()} Ghana, Ghana travel guide, things to do in Ghana, Ghana experiences`}
         image={story.image}
         type="article"
         publishedTime={story.date}

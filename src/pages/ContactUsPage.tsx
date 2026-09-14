@@ -1,4 +1,3 @@
-import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Mail, Phone, Clock, LifeBuoy, MapPin } from 'lucide-react'
 import Footer from '../components/Footer'

@@ -39,7 +39,7 @@ export default function SEO({
   canonical,
   robots = 'index, follow',
   price,
-  rating,
+  rating: _rating,
   publishedTime,
   modifiedTime,
   author,
@@ -92,10 +92,10 @@ export default function SEO({
       {author && <meta property="article:author" content={author} />}
 
       {/* Hreflang */}
-      <link rel="alternate" hreflang="x-default" href={canonicalUrl} />
-      <link rel="alternate" hreflang="en" href={canonicalUrl} />
+      <link rel="alternate" hrefLang="x-default" href={canonicalUrl} />
+      <link rel="alternate" hrefLang="en" href={canonicalUrl} />
       {alternateLocales?.map(({ lang, href }) => (
-        <link key={lang} rel="alternate" hreflang={lang} href={href} />
+        <link key={lang} rel="alternate" hrefLang={lang} href={href} />
       ))}
 
       {/* JSON-LD Structured Data */}
