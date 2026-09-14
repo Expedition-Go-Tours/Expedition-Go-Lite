@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion, type Variants } from 'framer-motion'
 import { toast } from 'sonner'
-import { Clock, X, Globe, Megaphone, ChevronRight, LogIn, LogOut, DollarSign, Bell } from 'lucide-react'
+import { Globe, Megaphone, ChevronRight, LogIn, LogOut, DollarSign, Bell } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import i18n from '../i18n/config'
 import { useCurrency } from '../contexts/CurrencyContext'
@@ -473,39 +473,39 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
                   <>
                     {navIsFocused && !navSearchValue.trim() && recentSearches.length > 0 && (
                 <>
-                  <div className="search-dropdown-section">{t('search.recentSearches')}</div>
-                  {recentSearches.map((item) => (
-                    <div
-                      key={item.slug}
-                      className="search-recent-item"
-                      onMouseDown={(e) => {
-                        e.preventDefault()
-                        navigateToRecent(item)
-                      }}
-                    >
-                      <div className="search-suggestion-icon">
-                        <Clock size={16} />
-                      </div>
-                      <div className="search-suggestion-text">
-                        <span className="search-suggestion-title">{item.title}</span>
-                          <span className="search-suggestion-sub">{item.type === 'destination' ? t('search.destination') : t('search.tour')}</span>
-                      </div>
-                      <button
-                        type="button"
-                        className="search-recent-remove"
+                  <div className="search-recent-panel">
+                    <div className="search-recent-heading">{t('search.recentSearches')}</div>
+                    {recentSearches.map((item) => (
+                      <div
+                        key={item.slug}
+                        className="search-recent-item"
                         onMouseDown={(e) => {
                           e.preventDefault()
-                          e.stopPropagation()
-                          removeSearch(item.slug)
+                          navigateToRecent(item)
                         }}
-                        aria-label={t('search.removeRecent')}
                       >
-                        <X size={14} />
-                      </button>
+                        <div className="search-recent-clock">◷</div>
+                        <div className="search-recent-text">
+                          <span className="search-recent-title">{item.title}</span>
+                          <span className="search-recent-sub">{item.type === 'destination' ? t('search.destination') : t('search.tour')}</span>
+                        </div>
+                        <button
+                          type="button"
+                          className="search-recent-remove"
+                          onMouseDown={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            removeSearch(item.slug)
+                          }}
+                          aria-label={t('search.removeRecent')}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                    <div className="search-recent-clear" onMouseDown={(e) => { e.preventDefault(); clearAll() }}>
+                      {t('search.clearRecent')}
                     </div>
-                  ))}
-                  <div className="search-recent-clear" onMouseDown={(e) => { e.preventDefault(); clearAll() }}>
-                    {t('search.clearRecent')}
                   </div>
                   {showNavDropdown && navSuggestions.length > 0 && <div className="search-recent-divider" />}
                 </>
