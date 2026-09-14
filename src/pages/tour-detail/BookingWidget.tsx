@@ -7,7 +7,7 @@ import { buildBookingTour } from '../../lib/bookingTour'
 import { Button } from '../../components/ui/button'
 import { CalendarPicker } from '../../components/ui/apple-calendar-picker'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Users, Minus, Plus, Clock as ClockIcon, BadgePercent, ShieldCheck, Zap, ChevronDown } from 'lucide-react'
+import { Users, Minus, Plus, Clock as ClockIcon, BadgePercent, Info, Zap, ChevronDown } from 'lucide-react'
 import { toast } from 'sonner'
 import { useCurrency } from '../../contexts/CurrencyContext'
 import type { DayAvailability, DayAvailabilityInfo, DayTimeSlot } from '../../lib/tourAvailability'
@@ -1233,8 +1233,11 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
               once the selected date is inside the cancellation window. */}
           {cancellationNote && (
             <p className={`booking-cancel-note${cancellation && !cancellation.refundable ? ' booking-cancel-note--none' : ''}`}>
-              <ShieldCheck size={14} />
-              {cancellationNote}
+              <Info size={14} />
+              <span>
+                <strong>{cancellationNote}</strong>
+                {cancellation?.sublabel && <> — {cancellation.sublabel}</>}
+              </span>
             </p>
           )}
         </div>
