@@ -81,9 +81,6 @@ export default function TopRatedSection({ preloaded, isLoading, title, location,
             disableLeft={!canScrollLeft}
             disableRight={!canScrollRight}
           />
-          {backfill?.label && (
-            <div className="section-backfill-divider">{backfill.label}</div>
-          )}
           <div className="toprated-clip">
             <div className="toprated-carousel" ref={scrollRef}>
               {isLoading && !items

@@ -111,9 +111,6 @@ export default function RecommendSection({ preloaded, isLoading, title, location
             disableLeft={!canScrollLeft}
             disableRight={!canScrollRight}
           />
-          {backfill?.label && (
-            <div className="section-backfill-divider">{backfill.label}</div>
-          )}
           <div className="carousel-clip">
             <div className="recommend-carousel" ref={scrollRef}>
               {isLoading && !items
