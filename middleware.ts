@@ -68,7 +68,9 @@ export function middleware(request: NextRequest) {
 
   // Let static files pass through untouched (sitemap.xml, robots.txt, images, etc.)
   if (isStaticFile(pathname)) {
-    return NextResponse.next()
+    const response = NextResponse.next()
+    response.headers.set('X-Static-File', 'true')
+    return response
   }
 
   // Only proxy GET requests from bots on non-skipped paths
