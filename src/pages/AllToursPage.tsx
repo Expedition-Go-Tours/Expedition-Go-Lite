@@ -198,7 +198,10 @@ export default function AllToursPage() {
   const { data: allToursData, isLoading, isError, error } = useAllExpeditionTours({
     mood: moodParam,
     near: nearParam,
-    place: placeValue,
+    // Send the user's RAW query (the backend re-resolves it), not the composed
+    // displayName: "Elmina Castle, Central" doesn't round-trip, but "elmina"
+    // resolves to the same place. Only when the query resolved to a real place.
+    place: isPlaceQuery ? placeParam : '',
     search: !isPlaceQuery && placeParam ? placeParam : '',
     enabled: !isResolvingPlace,
   })
