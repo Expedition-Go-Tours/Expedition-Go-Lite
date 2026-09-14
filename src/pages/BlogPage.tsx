@@ -7,6 +7,7 @@ import { travelStories, storySlug } from '../components/data'
 import type { TravelStory } from '../components/data'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
+import SEO, { buildBreadcrumbSchema } from '../components/SEO'
 import OptimizedImage from '@/components/shared/OptimizedImage'
 import './BlogPage.css'
 
@@ -91,10 +92,6 @@ export default function BlogPage({ onOpenAuth }: BlogPageProps) {
     { key: 'Heritage', label: t('blog.categoryHeritage') },
   ]
 
-  useEffect(() => {
-    document.title = t('blog.pageTitle')
-  }, [t])
-
   const filteredStories = travelStories.filter((story) => {
     const matchesSearch = story.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       story.excerpt.toLowerCase().includes(searchQuery.toLowerCase())
@@ -106,6 +103,15 @@ export default function BlogPage({ onOpenAuth }: BlogPageProps) {
 
   return (
     <div className="blog-page">
+      <SEO
+        title="Travel Stories & Blog"
+        description="Read inspiring travel stories from Ghana. Discover hidden gems, local culture, food experiences, wildlife adventures, and travel tips for your Ghana vacation."
+        keywords="Ghana travel blog, Ghana travel stories, Ghana travel guide, things to do in Ghana, Ghana experiences, Ghana food, Ghana culture, Ghana wildlife, West Africa travel"
+        jsonLd={buildBreadcrumbSchema([
+          { name: 'Home', url: 'https://expeditiongotours.com/' },
+          { name: 'Blog', url: 'https://expeditiongotours.com/blog' },
+        ])}
+      />
       <Navbar onOpenAuth={onOpenAuth} />
 
       <section className="blog-hero">

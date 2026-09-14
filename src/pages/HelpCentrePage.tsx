@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { Mail, HelpCircle, FileText, UserRound, MapPin } from 'lucide-react'
 import Footer from '../components/Footer'
+import SEO, { buildBreadcrumbSchema } from '../components/SEO'
 import heroImg from '../assets/images/QuadBiking.webp'
 import './SupportPages.css'
 
@@ -17,12 +18,17 @@ export default function HelpCentrePage() {
     { label: t('help.hours3Label'), value: t('help.hours3Value'), closed: true },
   ]
 
-  useEffect(() => {
-    document.title = `${t('footer.helpCentre')} | Expedition-Go Tours`
-  }, [t])
-
   return (
     <div className="support-page">
+      <SEO
+        title="Help Centre"
+        description="Get help with your Ghana tour booking. Find answers about payments, cancellations, pickup, refunds, and more. Contact our support team for assistance."
+        keywords="Ghana tours help, booking support, customer service, tour booking help, cancellation help, payment help"
+        jsonLd={buildBreadcrumbSchema([
+          { name: 'Home', url: 'https://expeditiongotours.com/' },
+          { name: 'Help Centre', url: 'https://expeditiongotours.com/help-centre' },
+        ])}
+      />
       <div className="support-hero">
         <div className="support-hero-bg">
           <img src={heroImg} alt="" aria-hidden="true" />

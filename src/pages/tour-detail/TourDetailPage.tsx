@@ -20,6 +20,7 @@ import type { Tour } from '../../components/data'
 import type { DayAvailability, DayAvailabilityInfo } from '../../lib/tourAvailability'
 
 import SEO, { buildProductSchema, buildBreadcrumbSchema } from '../../components/SEO'
+import Breadcrumb from './Breadcrumb'
 import TourImageGallery from './TourImageGallery'
 import TourHeader from './TourHeader'
 import TourQuickFacts from './TourQuickFacts'
@@ -904,6 +905,7 @@ export default function TourDetailPage() {
           ]),
         ]}
       />
+      <Breadcrumb tour={tour} />
       <StickyNavHeader show={showStickyTitle} title={selectedTourTitle} onWriteReview={handleWriteReview} />
       <div className="tour-detail-page">
         <div className="tour-detail-container">

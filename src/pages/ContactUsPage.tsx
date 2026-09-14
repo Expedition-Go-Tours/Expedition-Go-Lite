@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Mail, Phone, Clock, LifeBuoy, MapPin } from 'lucide-react'
 import Footer from '../components/Footer'
+import SEO, { buildBreadcrumbSchema } from '../components/SEO'
 import heroImg from '../assets/images/painting.webp'
 import './SupportPages.css'
 
@@ -17,12 +18,17 @@ export default function ContactUsPage() {
     { label: t('contact.hours3Label'), value: t('contact.hours3Value'), closed: true },
   ]
 
-  useEffect(() => {
-    document.title = `${t('footer.contactUs')} | Expedition-Go Tours`
-  }, [t])
-
   return (
     <div className="support-page">
+      <SEO
+        title="Contact Us"
+        description="Get in touch with Expedition-Go Tours. Contact us for booking inquiries, partnerships, supplier registration, and customer support. We're here to help with your Ghana travel experience."
+        keywords="contact Expedition-Go Tours, Ghana tours support, booking help, customer service, partnership inquiries"
+        jsonLd={buildBreadcrumbSchema([
+          { name: 'Home', url: 'https://expeditiongotours.com/' },
+          { name: 'Contact Us', url: 'https://expeditiongotours.com/contact-us' },
+        ])}
+      />
       <div className="support-hero">
         <div className="support-hero-bg">
           <img src={heroImg} alt="" aria-hidden="true" />
