@@ -62,6 +62,10 @@ function popularityValue(tour: TourCardData): number {
  * far-away popular tour never overtakes one that belongs to the place.
  */
 function placeTier(tour: TourCardData): number {
+  // Backend-provided fine relevance: 0-3 in-place (based there / title /
+  // attractions-tags / description), 4 nearby. Falls back to the coarse
+  // placeMatch + distance pair for endpoints that don't compute placeRank.
+  if (tour.placeRank != null) return tour.placeRank
   if (tour.placeMatch) return 0
   if (tour.distanceKm != null && tour.distanceKm <= 50) return 1
   return 2

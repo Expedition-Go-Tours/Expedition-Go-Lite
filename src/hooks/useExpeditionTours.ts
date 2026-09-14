@@ -154,6 +154,8 @@ interface ExpeditionTourRecord {
     distanceKm?: number | null
     /** True when the tour belongs to the searched place (based there / visits it). */
     placeMatch?: boolean
+    /** Place-sort relevance tier (0-3 in-place, 4 nearby); null when unscoped. */
+    placeRank?: number | null
     categorization?: any
     productContent?: any
     bookingAndTickets?: any
@@ -215,6 +217,8 @@ export interface TourCardData {
     distanceKm?: number | null
     /** True when the tour belongs to the searched place (based there / visits it). */
     placeMatch?: boolean
+    /** Place-sort relevance tier (0-3 in-place, 4 nearby); null when unscoped. */
+    placeRank?: number | null
   }
 function extractDurationFromTour(tour: any): number | null {
   try {
@@ -1144,6 +1148,7 @@ function mapToListing(tour: ExpeditionTourRecord['tour']): TourCardData {
     longitude: tour.longitude ?? null,
     distanceKm: tour.distanceKm ?? null,
     placeMatch: tour.placeMatch === true,
+    placeRank: tour.placeRank ?? null,
   }
 }
 
@@ -2042,6 +2047,7 @@ export function mapRawTourToListing(t: any): TourCardData {
     meetingMode: extractMeetingInfo(t).meetingMode,
     accommodationIncluded: extractAccommodationIncluded(t),
     placeMatch: t.placeMatch === true,
+    placeRank: t.placeRank ?? null,
   }
 }
 
