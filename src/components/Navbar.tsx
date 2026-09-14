@@ -178,6 +178,12 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
     setNavHighlightedIndex(-1)
     const q = navSearchValue.trim()
     if (!q) return
+    // Clear + blur before navigating: the dropdown-open effect re-opens whenever
+    // a non-empty value still has suggestions, so without this the dropdown
+    // stays rendered after the route change.
+    setNavSearchValue('')
+    setNavIsFocused(false)
+    navInputRef.current?.blur()
     if (navSuggestions.length > 0) {
       const top = navSuggestions[0]
       // Find a place/region that actually matches the query (not a random substring match)

@@ -112,6 +112,9 @@ body.hero--search-sticky .hero-search-wrap {
   overflow: hidden auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
+  /* The hero section is text-align:center and this dropdown is NOT portaled,
+     so suggestion rows would otherwise inherit centering. */
+  text-align: left;
 }
 
 .search-dropdown::-webkit-scrollbar {
@@ -241,7 +244,9 @@ body.hero--search-sticky .hero-search-wrap {
   min-width: 0;
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 2px;
+  text-align: left;
 }
 
 .search-suggestion-title {
@@ -252,6 +257,8 @@ body.hero--search-sticky .hero-search-wrap {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  width: 100%;
+  text-align: left;
 }
 
 .search-suggestion-sub {
@@ -262,6 +269,8 @@ body.hero--search-sticky .hero-search-wrap {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  width: 100%;
+  text-align: left;
 }
 
 .search-suggestion-meta {
@@ -272,6 +281,8 @@ body.hero--search-sticky .hero-search-wrap {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  width: 100%;
+  text-align: left;
 }
 
 .search-suggestion-badge {
