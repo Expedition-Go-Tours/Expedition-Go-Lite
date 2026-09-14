@@ -10,6 +10,7 @@ import { openingHoursForDay, resolveDayStatus } from '../../lib/tourAvailability
 import { cancellationStatus } from '../../lib/cancellationLabel'
 import BookingDeadlineTimer from '../../pages/tour-detail/BookingDeadlineTimer'
 import { categoryKey, categoryPayloadKey } from '../../lib/travelerBuckets'
+import { useQueryClient } from '@tanstack/react-query'
 import '../../pages/tour-detail/BookingWidget.css'
 
 interface ChangeBookingTour {
@@ -68,6 +69,9 @@ const formatCutoffTime = (iso?: string | null): string => {
 const toDateKey = (date: Date): string =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 
+/** Transient transport failures — the backend never supplied a message. */
+const NETWORK_ERROR_RE = /failed to fetch|networkerror|load failed|network request failed/i
+
 const currencySymbol = (currency?: string): string => {
   if (currency === 'GHS') return 'GH₵'
   if (currency === 'EUR') return '€'
@@ -77,6 +81,7 @@ const currencySymbol = (currency?: string): string => {
 
 export default function ChangeBookingModal({ tour, isOpen, onClose, onReserve, initialTravelers, initialDate, initialTime, travelersCount, optionId }: ChangeBookingModalProps) {
   const { t } = useTranslation()
+  const queryClient = useQueryClient()
   const [selectedDate, setSelectedDate] = useState(() => {
     if (initialDate) return initialDate
     const d = new Date()
@@ -160,18 +165,36 @@ export default function ChangeBookingModal({ tour, isOpen, onClose, onReserve, i
             setPriceNote(null)
           }
         })
-        .catch(() => {
+        .catch((err: unknown) => {
           if (cancelled) return
-          setDateUnavailable(false)
-          setPricing(null)
-          setPriceNote('Showing an estimate — the final price is confirmed at checkout.')
+          // A server rejection (e.g. "Tour is not available on this date") is
+          // authoritative — mark the date unavailable instead of showing a
+          // misleading estimate, and refetch availability so the calendar
+          // grays the date out.
+          const serverMessage =
+            err instanceof Error && err.message && !NETWORK_ERROR_RE.test(err.message) ? err.message : null
+          if (serverMessage) {
+            setDateUnavailable(true)
+            setPricing(null)
+            setPriceNote(null)
+            queryClient.invalidateQueries({
+              predicate: (q) =>
+                q.queryKey[0] === 'expedition' &&
+                q.queryKey[1] === 'tours' &&
+                q.queryKey[3] === 'availability',
+            })
+          } else {
+            setDateUnavailable(false)
+            setPricing(null)
+            setPriceNote('Showing an estimate — the final price is confirmed at checkout.')
+          }
         })
     }, 500)
     return () => {
       cancelled = true
       clearTimeout(timer)
     }
-  }, [isOpen, tour.id, selectedDate, travelersPayload, calculateCheckout, optionId])
+  }, [isOpen, tour.id, selectedDate, travelersPayload, calculateCheckout, optionId, queryClient])
 
   const [viewMonth, setViewMonth] = useState(() => {
     const now = new Date()

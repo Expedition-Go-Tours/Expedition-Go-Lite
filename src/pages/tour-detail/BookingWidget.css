@@ -206,7 +206,7 @@
 .booking-form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 
 .booking-field {
@@ -307,6 +307,7 @@
   top: calc(100% + 4px);
   left: 0;
   right: 0;
+  min-width: 300px;
   background: #fff;
   border: 1px solid #e2e8f0;
   border-radius: 10px;
@@ -1039,4 +1040,110 @@
   font-size: 13px;
   font-weight: 600;
   color: #166534;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Viator-style inline Date + Traveler picker bar
+   ═══════════════════════════════════════════════════════════════ */
+
+.booking-inline-picker {
+  display: flex;
+  align-items: stretch;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  background: #fff;
+  position: relative;
+  overflow: visible;
+}
+
+/* Layout wrapper — contains button + dropdown, has the ref for click-outside */
+.booking-inline-section {
+  flex: 1;
+  min-width: 0;
+  overflow: visible;
+}
+
+/* The actual clickable button inside the section */
+.booking-inline-trigger {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  padding: 12px 40px 12px 14px;
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: var(--font-body);
+  text-align: left;
+  color: inherit;
+  transition: background 0.15s;
+  position: relative;
+}
+
+.booking-inline-trigger:hover {
+  background: #f8fafc;
+}
+
+.booking-inline-trigger:focus-visible {
+  outline: 2px solid #166534;
+  outline-offset: -2px;
+  border-radius: 10px;
+}
+
+.booking-inline-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.3;
+}
+
+.booking-inline-value {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #0f172a;
+  min-height: 20px;
+  line-height: 1.3;
+}
+
+.booking-inline-date .booking-inline-value {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+}
+
+.booking-inline-date-text {
+  font-size: 15px;
+  font-weight: 500;
+  color: #0f172a;
+}
+
+.booking-inline-traveler .booking-inline-value {
+  flex-direction: row;
+}
+
+.booking-inline-icon {
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.booking-inline-chevron {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  transform: translateY(-50%);
+  color: #64748b;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+.booking-inline-divider {
+  width: 1px;
+  background: #e2e8f0;
+  align-self: stretch;
+  margin: 10px 0;
+  flex-shrink: 0;
 }
