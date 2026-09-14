@@ -154,16 +154,6 @@ export default function AllToursPage() {
   const { data: resolvedPlace, isFetching: isResolvingPlace } = usePlaceResolve(placeParam, 'expedition')
   const placeValue = resolvedPlace?.displayName || resolvedPlace?.name || ''
   const isPlaceQuery = !!placeValue
-  const effectiveSortKey: SortKey =
-    sortByVal === 'near'
-      ? 'near'
-      : sortByVal === 'recommended' && isPlaceQuery
-        ? 'place'
-        : sortByVal === 'recommended' && nearParam
-          ? 'near'
-          : sortByVal === 'recommended' && sectionParam
-            ? sectionSortKey(sectionParam)
-            : sortByVal
 
   const TOUR_TYPE_OPTIONS = useMemo(() => [
     { value: 'day', label: t('allTours.typeDay') },
@@ -205,13 +195,28 @@ export default function AllToursPage() {
     { value: 'price-high', label: t('allTours.sortPriceHigh') },
   ] as const, [t])
 
-  const { data: allTours, isLoading, isError, error } = useAllExpeditionTours({
+  const { data: allToursData, isLoading, isError, error } = useAllExpeditionTours({
     mood: moodParam,
     near: nearParam,
     place: placeValue,
     search: !isPlaceQuery && placeParam ? placeParam : '',
     enabled: !isResolvingPlace,
   })
+  const allTours = allToursData?.tours
+  // When the backend widened the search to the place's region (the place itself
+  // has no tours), the result is region-level, not place-level — rank by
+  // popularity instead of place relevance and label it honestly.
+  const fallbackRegion = allToursData?.placeScope?.fallbackRegion ?? null
+  const effectiveSortKey: SortKey =
+    sortByVal === 'near'
+      ? 'near'
+      : sortByVal === 'recommended' && isPlaceQuery && !fallbackRegion
+        ? 'place'
+        : sortByVal === 'recommended' && nearParam
+          ? 'near'
+          : sortByVal === 'recommended' && sectionParam
+            ? sectionSortKey(sectionParam)
+            : sortByVal
   const { data: filterOptionData } = useTourFilterOptions()
 
   // Single lightweight call to get section tour IDs (reads pre-computed Redis cache)
@@ -395,7 +400,9 @@ export default function AllToursPage() {
       ? t('sections.toursIn', { location: placeValue || placeParam || attractionParam })
       : attractionParam
     : placeParam
-    ? t('sections.toursIn', { location: placeValue || placeParam })
+    ? fallbackRegion
+      ? t('sections.toursInRegion', { region: fallbackRegion })
+      : t('sections.toursIn', { location: placeValue || placeParam })
     : moodParam
     ? moodParam
     : locationParam
@@ -475,6 +482,16 @@ export default function AllToursPage() {
             <button className="all-tours-clear" onClick={clearAll}>{t('allTours.clearFilters')}</button>
           )}
         </div>
+
+        {!isLoading && !isError && fallbackRegion && (
+          <div className="all-tours-region-fallback" role="status">
+            {t('allTours.regionFallbackNotice', {
+              location: allToursData?.placeScope?.requested || placeParam,
+              region: fallbackRegion,
+              defaultValue: "We don't have tours in {{location}} yet — here are experiences across {{region}}.",
+            })}
+          </div>
+        )}
 
         <div className="filter-bar-sticky">
           <div className="filter-bar">

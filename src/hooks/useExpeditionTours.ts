@@ -1326,6 +1326,13 @@ export function useExpeditionTours(filters: ExpeditionToursFilters = {}) {
 const MAX_CATALOG_PAGES = 10
 const CATALOG_PAGE_SIZE = 50
 
+export interface PlaceScope {
+  /** What the user searched (resolved place name). */
+  requested: string
+  /** Set when the place had no tours and the listing widened to its region. */
+  fallbackRegion: string | null
+}
+
 export function useAllExpeditionTours(opts?: { mood?: string; near?: string; place?: string; search?: string; enabled?: boolean }) {
   const mood = opts?.mood || ''
   const near = opts?.near || ''
@@ -1336,7 +1343,7 @@ export function useAllExpeditionTours(opts?: { mood?: string; near?: string; pla
     queryKey: ['expedition', 'tours', 'all', mood, near, place, search],
     staleTime: 5 * 60_000,
     enabled,
-    queryFn: async (): Promise<TourCardData[]> => {
+    queryFn: async (): Promise<{ tours: TourCardData[]; placeScope: PlaceScope | null }> => {
       const records: ExpeditionTourRecord[] = []
       const moodParam = mood ? `&mood=${encodeURIComponent(mood)}` : ''
       const nearParam = near ? `&near=${encodeURIComponent(near)}` : ''
@@ -1344,10 +1351,11 @@ export function useAllExpeditionTours(opts?: { mood?: string; near?: string; pla
       const searchParam = search ? `&search=${encodeURIComponent(search)}` : ''
       const extra = `${moodParam}${nearParam}${placeParam}${searchParam}`
 
-      // Fetch first page to get totalPages
+      // Fetch first page to get totalPages (and the place-scope metadata)
       const first = await expeditionFetchRaw(`/expedition/tours?page=1&limit=${CATALOG_PAGE_SIZE}${extra}`)
       const firstBatch: ExpeditionTourRecord[] = first.data?.tours ?? first.tours ?? []
       records.push(...firstBatch)
+      const placeScope: PlaceScope | null = first.data?.placeScope ?? null
       const totalPages = Math.min(first.pagination?.totalPages ?? 1, MAX_CATALOG_PAGES)
 
       // Fetch remaining pages in parallel
@@ -1365,7 +1373,7 @@ export function useAllExpeditionTours(opts?: { mood?: string; near?: string; pla
 
       await enrichExpeditionRecords(records)
 
-      return records.map((r) => mapToListing(r.tour))
+      return { tours: records.map((r) => mapToListing(r.tour)), placeScope }
     },
   })
 }
