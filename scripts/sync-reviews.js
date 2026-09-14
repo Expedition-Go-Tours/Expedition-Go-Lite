@@ -93,6 +93,9 @@ const GOOGLE_REVIEWS_TOURS = [
 const PAGES_TO_SCRAPE = 2;
 const DELAY_BETWEEN_PAGES_MS = 3000;
 const DELAY_BETWEEN_TOURS_MS = 2000;
+// A healthy run yields 100+ reviews; below this the scrape is treated as
+// failed (bot wall / DOM change) and must never overwrite the committed file.
+const MIN_EXPECTED_REVIEWS = 50;
 const OUTPUT_PATH = path.join(__dirname, '..', 'src', 'data', 'externalReviews.json');
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -304,10 +307,13 @@ async function scrapeGoogleReviews(page) {
       }).filter((r) => r.reviewerName && r.text);
     });
 
-    console.log(`    Found ${pageReviews.length} reviews`);
+    // Only publish Google reviews above 3 stars — 3★ and below are excluded
+    // from the storefront (and from the committed stats).
+    const visibleReviews = pageReviews.filter((r) => clampRating(r.rating) > 3);
+    console.log(`    Found ${pageReviews.length} reviews (${visibleReviews.length} kept, >3 stars)`);
 
     // Distribute reviews across known tour titles
-    return pageReviews.map((r, i) => ({
+    return visibleReviews.map((r, i) => ({
       id: `goog_${hashString(r.reviewerName + r.text.slice(0, 100))}`,
       source: 'GOOGLE',
       reviewerName: r.reviewerName,
@@ -368,7 +374,7 @@ async function main() {
 
   console.log('Launching browser...');
   const browser = await puppeteer.launch({
-    headless: 'new',
+    headless: true,
     args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-blink-features=AutomationControlled', '--disable-dev-shm-usage'],
   });
 
@@ -404,6 +410,15 @@ async function main() {
     console.log(`\nScraping Google Maps reviews...`);
     const googleReviews = await scrapeGoogleReviews(page);
     allReviews.push(...googleReviews);
+
+    // Never overwrite the committed reviews with an empty/partial scrape: a
+    // bot-blocked or DOM-changed run must fail loudly instead of wiping the
+    // storefront's social proof.
+    if (allReviews.length < MIN_EXPECTED_REVIEWS) {
+      throw new Error(
+        `Only ${allReviews.length} reviews scraped (minimum ${MIN_EXPECTED_REVIEWS}) — refusing to overwrite ${OUTPUT_PATH}`
+      );
+    }
 
     // Compute stats and write output
     const stats = computeStats(allReviews);

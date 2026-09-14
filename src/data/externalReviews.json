@@ -1855,42 +1855,6 @@
       "platformReviewCount": null
     },
     {
-      "id": "goog-5",
-      "source": "GOOGLE",
-      "reviewerName": "Magg Tk",
-      "reviewerAvatar": null,
-      "rating": 3,
-      "title": null,
-      "text": "The tour was ok. The car was clean and the driver polite. The WiFi was not working. The food was not included, the french guide was not there as requested on the reservation.",
-      "textTruncated": "The tour was ok. The car was clean and the driver polite. The WiFi was not working. The food was not included, the french guide was not there as requested on the reservation.",
-      "tourTitle": "Expedition-Go Tours LTD",
-      "tourThumbnail": null,
-      "tourUrl": "https://www.google.com/maps/place/Expedition-Go+Tours+LTD",
-      "tourLink": "https://www.google.com/maps/place/Expedition-Go+Tours+LTD",
-      "coverPhoto": null,
-      "originalDate": "2025-05-15T00:00:00.000Z",
-      "platformRating": null,
-      "platformReviewCount": null
-    },
-    {
-      "id": "goog-6",
-      "source": "GOOGLE",
-      "reviewerName": "Laura Mack",
-      "reviewerAvatar": null,
-      "rating": 2,
-      "title": null,
-      "text": "Cannot recommend this company - they canceled my tour just hours before it was supposed to start and only after I had to reach out several times to confirm what time I would be picked up.",
-      "textTruncated": "Cannot recommend this company - they canceled my tour just hours before it was supposed to start and only after I had to reach out several times to confirm what time I would be picked up.",
-      "tourTitle": "Expedition-Go Tours LTD",
-      "tourThumbnail": null,
-      "tourUrl": "https://www.google.com/maps/place/Expedition-Go+Tours+LTD",
-      "tourLink": "https://www.google.com/maps/place/Expedition-Go+Tours+LTD",
-      "coverPhoto": null,
-      "originalDate": "2025-03-15T00:00:00.000Z",
-      "platformRating": null,
-      "platformReviewCount": null
-    },
-    {
       "id": "goog-7",
       "source": "GOOGLE",
       "reviewerName": "Char J",
@@ -2485,24 +2449,6 @@
       "platformReviewCount": null
     },
     {
-      "id": "goog-40",
-      "source": "GOOGLE",
-      "reviewerName": "Trecia G",
-      "reviewerAvatar": null,
-      "rating": 2,
-      "title": null,
-      "text": "Paid to go on a tour in Aburi. The night before I was called at 10pm. They said the tour guide had an emergency so they were looking for another guide. It got to 11pm and I had to contact them.",
-      "textTruncated": "Paid to go on a tour in Aburi. The night before I was called at 10pm. They said the tour guide had an emergency so they were looking for another guide. It got to 11pm and I had to contact them.",
-      "tourTitle": "Expedition-Go Tours LTD",
-      "tourThumbnail": null,
-      "tourUrl": "https://www.google.com/maps/place/Expedition-Go+Tours+LTD",
-      "tourLink": "https://www.google.com/maps/place/Expedition-Go+Tours+LTD",
-      "coverPhoto": null,
-      "originalDate": "2025-02-15T00:00:00.000Z",
-      "platformRating": null,
-      "platformReviewCount": null
-    },
-    {
       "id": "goog-41",
       "source": "GOOGLE",
       "reviewerName": "Agbenowosi Enoch",
@@ -2630,8 +2576,8 @@
     }
   ],
   "stats": {
-    "totalReviews": 146,
-    "averageRating": 4.9,
+    "totalReviews": 143,
+    "averageRating": 5,
     "platforms": [
       {
         "source": "TRIPADVISOR",
@@ -2645,8 +2591,8 @@
       },
       {
         "source": "GOOGLE",
-        "reviewCount": 47,
-        "averageRating": 4.8
+        "reviewCount": 44,
+        "averageRating": 5
       }
     ]
   }

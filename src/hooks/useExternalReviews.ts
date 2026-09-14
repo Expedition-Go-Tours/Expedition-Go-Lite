@@ -40,11 +40,24 @@ function shuffle<T>(arr: T[]): T[] {
   return a
 }
 
+/**
+ * Google reviews at 3 stars or below are never shown (social-proof policy).
+ * Enforced here in addition to the scraper (`scripts/sync-reviews.js`) so a
+ * stale or hand-regenerated JSON can never surface them.
+ */
+const MIN_GOOGLE_RATING = 4
+
+function visibleReviews(): ExternalReview[] {
+  return (data.reviews as ExternalReview[]).filter(
+    (r) => r.source !== 'GOOGLE' || r.rating >= MIN_GOOGLE_RATING,
+  )
+}
+
 export function useExternalReviews(limit = 100) {
   return useQuery({
     queryKey: ['external-reviews', limit],
     queryFn: () => {
-      const mixed = shuffle(data.reviews as ExternalReview[])
+      const mixed = shuffle(visibleReviews())
       return Promise.resolve(mixed.slice(0, limit))
     },
     staleTime: Infinity,
@@ -54,7 +67,7 @@ export function useExternalReviews(limit = 100) {
 export function useAllExternalReviews() {
   return useQuery({
     queryKey: ['external-reviews-all'],
-    queryFn: () => Promise.resolve(data.reviews as ExternalReview[]),
+    queryFn: () => Promise.resolve(visibleReviews()),
     staleTime: Infinity,
   })
 }

@@ -4,6 +4,11 @@ on:
     - cron: '0 6 * * *'   # Daily at 6 AM UTC
   workflow_dispatch:        # Manual trigger button in GitHub UI
 
+# The job pushes the refreshed reviews file back to main; the default
+# GITHUB_TOKEN is read-only on new repos, so request write explicitly.
+permissions:
+  contents: write
+
 jobs:
   sync-reviews:
     runs-on: ubuntu-latest
@@ -12,10 +17,14 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # Puppeteer 25 requires Node >= 22.12 (ESM-only, engines.node).
+          # Node 20 crashed the sync script instantly at require() time.
+          node-version: 24
 
       - name: Install Puppeteer
-        run: npm install puppeteer
+        # Pin the version: an unpinned install drifts to newer majors whose
+        # Node engine requirement can silently outpace the runner.
+        run: npm install --no-save puppeteer@25.11.0
 
       - name: Run sync script
         run: node scripts/sync-reviews.js
