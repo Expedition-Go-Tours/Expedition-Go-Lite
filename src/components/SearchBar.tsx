@@ -7,6 +7,7 @@ import { useRecentSearches } from '../hooks/useRecentSearches'
 import { useLocationSearch } from '../context/LocationSearchContext'
 import { useSearchInput } from '../context/SearchInputContext'
 import { trackSearch } from '../lib/analytics'
+import SearchSuggestionIcon from './shared/SearchSuggestionIcon'
 import './SearchBar.css'
 
 const dropdownVariants: Variants = {
@@ -419,7 +420,9 @@ export default function SearchBar() {
                                   </div>
                                 ) : (
                                   <div className="search-suggestion-icon-wrap">
-                                    <span className="search-suggestion-icon">{suggestion.icon}</span>
+                                    <span className="search-suggestion-icon">
+                                      <SearchSuggestionIcon kind={suggestion.kind} />
+                                    </span>
                                   </div>
                                 )}
                                 <div className="search-suggestion-text">

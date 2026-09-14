@@ -203,6 +203,23 @@ body.hero--search-sticky .hero-search-wrap {
 .search-suggestion-icon {
   font-size: 18px;
   line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Per-kind icon colours (SVG icons rendered by SearchSuggestionIcon). */
+.suggestion--place .search-suggestion-icon {
+  color: #179237;
+}
+.suggestion--attraction .search-suggestion-icon {
+  color: #ea580c;
+}
+.suggestion--region .search-suggestion-icon {
+  color: #2563eb;
+}
+.suggestion--tour .search-suggestion-icon {
+  color: #179237;
 }
 
 .search-suggestion-thumb {
