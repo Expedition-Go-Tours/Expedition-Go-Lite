@@ -66,7 +66,7 @@ export function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl
   const userAgent = request.headers.get('user-agent') || ''
 
-  // Let static files pass through untouched (sitemap.xml, robots.txt, etc.)
+  // Let static files pass through untouched (sitemap.xml, robots.txt, images, etc.)
   if (isStaticFile(pathname)) {
     return NextResponse.next()
   }
@@ -86,6 +86,13 @@ export function middleware(request: NextRequest) {
     const response = NextResponse.rewrite(prerenderUrl)
     response.headers.set('X-Prerender-Bot', 'true')
     return response
+  }
+
+  // SPA routing: rewrite non-file requests to index.html so React Router handles them
+  if (request.method === 'GET' && !pathname.includes('.')) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/index.html'
+    return NextResponse.rewrite(url)
   }
 
   return NextResponse.next()
