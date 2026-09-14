@@ -81,9 +81,6 @@ export default function SellOutSection({ preloaded, isLoading, title, location, 
             disableLeft={!canScrollLeft}
             disableRight={!canScrollRight}
           />
-          {backfill?.label && (
-            <div className="section-backfill-divider">{backfill.label}</div>
-          )}
           <div className="sellout-clip">
             <div className="sellout-carousel" ref={scrollRef}>
               {isLoading && !items

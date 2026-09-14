@@ -87,9 +87,6 @@ export default function NewExperiencesSection({ isLoading, title, location, back
             disableLeft={!canScrollLeft}
             disableRight={!canScrollRight}
           />
-          {backfill?.label && (
-            <div className="section-backfill-divider">{backfill.label}</div>
-          )}
           <div className="newexp-clip">
             <div className="newexp-carousel" ref={scrollRef}>
               {isLoading && !items

@@ -137,12 +137,11 @@ export default function SearchBar() {
       } else if (top.kind === 'place' || top.kind === 'region') {
         if (top.region) setLocation(top.region)
         navigate(`/tours?place=${encodeURIComponent(top.name)}`)
-      } else if (top.kind === 'tour' && top.slug) {
-        if (top.region) setLocation(top.region)
-        navigate(`/tour/${top.slug}`)
       } else {
-        // Attraction or no match — use the raw query as the place name
-        // The backend place-resolve will handle city→region→geocoder fallback
+        // Tour / attraction / no match — land on the All Tours page for the
+        // query (a tour keyword becomes a text search there; a place becomes
+        // place-scoped). Selecting a tour from the dropdown still opens the
+        // tour page — this is only the Enter / Search-button path.
         const regionName = top.region || ''
         if (regionName) setLocation(regionName)
         navigate(`/tours?place=${encodeURIComponent(q)}`)

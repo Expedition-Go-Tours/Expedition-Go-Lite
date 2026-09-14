@@ -192,11 +192,10 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
       } else if (top.kind === 'place' || top.kind === 'region') {
         if (top.region) setLocation(top.region)
         navigate(`/tours?place=${encodeURIComponent(top.name)}`)
-      } else if (top.kind === 'tour' && top.slug) {
-        if (top.region) setLocation(top.region)
-        navigate(`/tour/${top.slug}`)
       } else {
-        // Attraction or no match — use the raw query as the place name
+        // Tour / attraction / no match — land on the All Tours page for the
+        // query (a tour keyword becomes a text search there). Selecting a tour
+        // from the dropdown still opens the tour page; this is the submit path.
         const regionName = top.region || ''
         if (regionName) setLocation(regionName)
         navigate(`/tours?place=${encodeURIComponent(q)}`)
