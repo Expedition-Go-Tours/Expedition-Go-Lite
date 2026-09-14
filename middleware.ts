@@ -45,6 +45,9 @@ const SKIP_PATHS = [
   '/supplier/list-experience',
 ]
 
+// Static file extensions that should pass through untouched
+const STATIC_EXTS = ['.xml', '.txt', '.json', '.png', '.jpg', '.jpeg', '.svg', '.gif', '.webp', '.ico', '.css', '.js', '.woff', '.woff2', '.ttf', '.eot']
+
 function isBot(userAgent: string): boolean {
   if (!userAgent) return false
   const ua = userAgent.toLowerCase()
@@ -55,9 +58,18 @@ function shouldSkipPath(pathname: string): boolean {
   return SKIP_PATHS.some((p) => pathname.startsWith(p))
 }
 
+function isStaticFile(pathname: string): boolean {
+  return STATIC_EXTS.some((ext) => pathname.endsWith(ext))
+}
+
 export function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl
   const userAgent = request.headers.get('user-agent') || ''
+
+  // Let static files pass through untouched (sitemap.xml, robots.txt, etc.)
+  if (isStaticFile(pathname)) {
+    return NextResponse.next()
+  }
 
   // Only proxy GET requests from bots on non-skipped paths
   if (
@@ -86,8 +98,7 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * - public folder files (robots.txt, sitemap.xml, etc.)
      */
-    '/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|.*\\.png$|.*\\.jpg$|.*\\.svg$|.*\\.css$|.*\\.js$).*)',
+    '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 }
