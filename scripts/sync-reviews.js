@@ -338,9 +338,21 @@ async function scrapeGoogleReviews(page) {
 // ─── Stats Computation ───────────────────────────────────────────────────────
 
 function computeStats(reviews) {
-  const totalReviews = reviews.length;
-  const averageRating = totalReviews > 0
-    ? Math.round((reviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews) * 10) / 10
+  // Use the actual platform-level review counts (from platformReviewCount on
+  // each scraped entry) instead of just counting scraped entries.  This gives
+  // the real total reviews across TripAdvisor, GetYourGuide, etc.
+  const platformMaxes = {};
+  for (const r of reviews) {
+    if (r.platformReviewCount != null) {
+      const cur = platformMaxes[r.source] || 0;
+      platformMaxes[r.source] = Math.max(cur, r.platformReviewCount);
+    }
+  }
+  const totalReviews = Object.values(platformMaxes).reduce((s, v) => s + v, 0)
+    || reviews.length;
+
+  const averageRating = reviews.length > 0
+    ? Math.round((reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length) * 10) / 10
     : 0;
 
   const platforms = {};
@@ -355,7 +367,7 @@ function computeStats(reviews) {
     averageRating,
     platforms: Object.entries(platforms).map(([source, { count, sum }]) => ({
       source,
-      reviewCount: count,
+      reviewCount: platformMaxes[source] || count,
       averageRating: Math.round((sum / count) * 10) / 10,
     })),
   };
