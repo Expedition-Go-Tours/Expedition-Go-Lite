@@ -20,14 +20,12 @@
   flex: 1;
 }
 
-/* Tour title — underlined link */
+/* Tour title — plain text, not a link */
 .ext-review-card__tour-title {
   font-family: 'Raleway', sans-serif;
   font-weight: 800;
   font-size: 15px;
   color: #111827;
-  text-decoration: underline;
-  text-underline-offset: 2px;
   line-height: 1.4;
   margin: 0;
   display: -webkit-box;
@@ -35,10 +33,6 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
   overflow-wrap: anywhere;
-}
-
-.ext-review-card__tour-title:hover {
-  color: var(--primary);
 }
 
 /* Star rating */
@@ -223,15 +217,9 @@
   font-weight: 800;
   font-size: 16px;
   color: #111827;
-  text-decoration: underline;
-  text-underline-offset: 2px;
   line-height: 1.4;
   display: block;
   margin-bottom: 8px;
-}
-
-.ext-review-modal__tour-title:hover {
-  color: var(--primary);
 }
 
 .ext-review-modal__stars {

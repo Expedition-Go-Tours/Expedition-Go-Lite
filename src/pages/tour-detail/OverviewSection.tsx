@@ -6,6 +6,8 @@ import {
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import StarRating from '../../components/StarRating'
+import SourceBadge from '../../components/SourceBadge'
+import '../../components/SourceBadge.css'
 import './OverviewSection.css'
 
 interface OverviewSectionProps {
@@ -19,6 +21,10 @@ interface OverviewSectionProps {
     rating: number
     text: string
     country?: string
+    /** Present on external (TripAdvisor / GetYourGuide / Google) reviews. */
+    source?: 'TRIPADVISOR' | 'GETYOURGUIDE' | 'GOOGLE'
+    /** Platform listing URL for the source badge (external reviews only). */
+    externalUrl?: string
   }[]
   onTabChange: (tab: string) => void
   onReviewReadMore: (review: any) => void
@@ -157,10 +163,19 @@ export default function OverviewSection({
                         <p className="overview-traveller-name">{review.name}</p>
                         <div className="overview-traveller-meta">
                           <span>{review.date}</span>
-                          <span className="overview-traveller-verified">
-                            <Check size={10} strokeWidth={3} />
-                            {t('tourDetail.verifiedBooking')}
-                          </span>
+                          {review.source ? (
+                            <span className="overview-traveller-source">
+                              <SourceBadge
+                                source={review.source}
+                                url={review.source === 'GOOGLE' ? undefined : review.externalUrl}
+                              />
+                            </span>
+                          ) : (
+                            <span className="overview-traveller-verified">
+                              <Check size={10} strokeWidth={3} />
+                              {t('tourDetail.verifiedBooking')}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>

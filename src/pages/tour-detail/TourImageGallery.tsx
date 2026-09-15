@@ -80,6 +80,7 @@ export default function TourImageGallery({
                 onError={handleImageError}
                 className="tour-gallery-main-slide"
                 width={1200}
+                priority={idx === 0}
               />
             ))}
           </div>

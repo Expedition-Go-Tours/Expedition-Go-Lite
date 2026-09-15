@@ -391,37 +391,40 @@ async function scrapeGoogleReviews(page) {
 
 // ─── Stats Computation ───────────────────────────────────────────────────────
 
+// Sources whose scraped reviews make up the headline stats. Google rows are
+// business-level (their "tour" is the Maps listing), so they are listed in the
+// UI but excluded from the headline count/average.
+const COUNTED_SOURCES = ['TRIPADVISOR', 'GETYOURGUIDE'];
+
 function computeStats(reviews) {
-  // Use the actual platform-level review counts (from platformReviewCount on
-  // each scraped entry) instead of just counting scraped entries.  This gives
-  // the real total reviews across TripAdvisor, GetYourGuide, etc.
-  const platformMaxes = {};
-  for (const r of reviews) {
-    if (r.platformReviewCount != null) {
-      const cur = platformMaxes[r.source] || 0;
-      platformMaxes[r.source] = Math.max(cur, r.platformReviewCount);
-    }
-  }
-  const totalReviews = Object.values(platformMaxes).reduce((s, v) => s + v, 0)
-    || reviews.length;
-
-  const averageRating = reviews.length > 0
-    ? Math.round((reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length) * 10) / 10
-    : 0;
-
+  // Count the reviews actually scraped. The platform-wide totals on the
+  // listing headers (platformReviewCount) cover every product on the platform
+  // and previously inflated the storefront stat (911 + 293 for 99 rows).
+  let totalReviews = 0;
+  let countedSum = 0;
   const platforms = {};
+
   for (const r of reviews) {
     if (!platforms[r.source]) platforms[r.source] = { count: 0, sum: 0 };
     platforms[r.source].count++;
     platforms[r.source].sum += r.rating;
+
+    if (COUNTED_SOURCES.includes(r.source)) {
+      totalReviews++;
+      countedSum += r.rating;
+    }
   }
+
+  const averageRating = totalReviews > 0
+    ? Math.round((countedSum / totalReviews) * 10) / 10
+    : 0;
 
   return {
     totalReviews,
     averageRating,
     platforms: Object.entries(platforms).map(([source, { count, sum }]) => ({
       source,
-      reviewCount: platformMaxes[source] || count,
+      reviewCount: count,
       averageRating: Math.round((sum / count) * 10) / 10,
     })),
   };

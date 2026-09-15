@@ -228,7 +228,7 @@ export default function AllReviewsPage() {
             </div>
             <span className="all-reviews-stats__divider" />
             <span className="all-reviews-stats__text">
-              From <strong>{stats.totalReviews}+</strong> reviews across
+              From <strong>{stats.totalReviews}</strong> reviews across
             </span>
             <div className="all-reviews-stats__platforms">
               <span className="all-reviews-stats__platform all-reviews-stats__platform--ta">

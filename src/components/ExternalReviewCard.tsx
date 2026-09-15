@@ -35,21 +35,11 @@ export default function ExternalReviewCard({ review }: ExternalReviewCardProps) 
     <>
       <div className="ext-review-card">
         <div className="ext-review-card__body">
-          {/* Tour title */}
-          {review.source === 'GOOGLE' ? (
-            <span className="ext-review-card__tour-title">
-              {review.tourTitle}
-            </span>
-          ) : (
-            <a
-              href={review.tourUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="ext-review-card__tour-title"
-            >
-              {review.tourTitle}
-            </a>
-          )}
+          {/* Tour title — non-interactive; only the source badge and the
+              availability CTA may navigate away from this card. */}
+          <span className="ext-review-card__tour-title">
+            {review.tourTitle}
+          </span>
 
           {/* Star rating */}
           <div className="ext-review-card__stars">
@@ -119,20 +109,9 @@ export default function ExternalReviewCard({ review }: ExternalReviewCardProps) 
             </button>
 
             <div className="ext-review-modal__header">
-              {review.source === 'GOOGLE' ? (
-                <span className="ext-review-modal__tour-title">
-                  {review.tourTitle}
-                </span>
-              ) : (
-                <a
-                  href={review.tourUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="ext-review-modal__tour-title"
-                >
-                  {review.tourTitle}
-                </a>
-              )}
+              <span className="ext-review-modal__tour-title">
+                {review.tourTitle}
+              </span>
               <div className="ext-review-modal__stars">
                 <StarRating
                   value={review.rating}

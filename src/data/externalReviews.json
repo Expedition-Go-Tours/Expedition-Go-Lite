@@ -2576,17 +2576,17 @@
     }
   ],
   "stats": {
-    "totalReviews": 1204,
-    "averageRating": 5,
+    "totalReviews": 99,
+    "averageRating": 4.9,
     "platforms": [
       {
         "source": "TRIPADVISOR",
-        "reviewCount": 911,
+        "reviewCount": 49,
         "averageRating": 5
       },
       {
         "source": "GETYOURGUIDE",
-        "reviewCount": 293,
+        "reviewCount": 50,
         "averageRating": 4.9
       },
       {

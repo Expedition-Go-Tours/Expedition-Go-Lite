@@ -13,6 +13,7 @@ import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
 import { useExpeditionTour, useSimilarTours } from '../../hooks/useExpeditionTours'
 import { useExpeditionTourReviews, useCreateReview } from '../../hooks/useExpeditionReviews'
+import { useTourExternalReviews } from '../../hooks/useExternalReviews'
 import { useTourAvailability, useReviewableBookingForTour } from '../../hooks/useExpeditionBookings'
 import { freeCancellationDateLabel } from '../../lib/cancellationLabel'
 import { mapSupplierProfile } from '../../lib/supplierProfile'
@@ -107,6 +108,12 @@ export default function TourDetailPage() {
 
   const { data: tour, isLoading, isError, isFetching } = useExpeditionTour(tourId)
   const { data: reviewsData } = useExpeditionTourReviews(tourId, 1, 10, tour?.id)
+  // Platform reviews (TripAdvisor / GetYourGuide / Google) whose scraped tour
+  // title maps to this product via matchTourForTitle — shown alongside the
+  // in-app reviews with the same card layouts.
+  const { reviews: externalMatchedReviews } = useTourExternalReviews(
+    tour ? { title: tour.title, location: tour.location } : null,
+  )
   const { data: reviewableBookingId } = useReviewableBookingForTour(tourId)
   const { data: similarTours } = useSimilarTours(tourId)
 
@@ -372,12 +379,40 @@ export default function TourDetailPage() {
     }))
   }, [reviews, t])
 
+  // External reviews projected into the same card shape as in-app ones so the
+  // "What Travellers are Saying" list and the Overview carousel render them
+  // with the internal card layout (plus a source badge).
+  const externalReviewCards = useMemo(() => {
+    return externalMatchedReviews.map((r) => ({
+      id: r.id,
+      name: r.reviewerName,
+      date: r.originalDate
+        ? new Date(r.originalDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+        : '',
+      rating: r.rating,
+      text: r.text,
+      title: r.title || '',
+      avatar: r.reviewerAvatar || undefined,
+      bookingId: undefined as string | undefined,
+      photos: undefined as string[] | undefined,
+      supplierResponse: null,
+      supplierResponseAt: null,
+      valueForMoneyRating: null,
+      guideRating: null,
+      meetingRating: null,
+      travelMonth: null,
+      companions: undefined as string[] | undefined,
+      source: r.source,
+      externalUrl: r.tourUrl,
+    }))
+  }, [externalMatchedReviews])
+
   const filteredReviewCards = useMemo(() => {
-    return allReviewCards.filter((r) => {
+    return [...allReviewCards, ...externalReviewCards].filter((r) => {
       if (reviewStarFilter !== null && r.rating !== reviewStarFilter) return false
       return true
     })
-  }, [allReviewCards, reviewStarFilter])
+  }, [allReviewCards, externalReviewCards, reviewStarFilter])
 
   // "With photos" quick filter (GetYourGuide pattern). Filters the star-filtered
   // set so the two chips compose; only surfaces when some loaded review has photos.
@@ -1038,7 +1073,10 @@ export default function TourDetailPage() {
                           descriptionSteps={descriptionSteps}
                           descriptionLong={(tour?.description?.length || 0) > 300}
                           highlights={highlights}
-                          reviews={allReviewCards.map(r => ({ id: r.id, name: r.name, date: r.date, rating: r.rating, text: r.text, country: '' }))}
+                          reviews={[
+                            ...allReviewCards.map(r => ({ id: r.id, name: r.name, date: r.date, rating: r.rating, text: r.text, country: '' })),
+                            ...externalReviewCards.map(r => ({ id: r.id, name: r.name, date: r.date, rating: r.rating, text: r.text, country: '', source: r.source, externalUrl: r.externalUrl })),
+                          ]}
                           onTabChange={handleTabChange}
                           onReviewReadMore={setReviewDetail}
                         />

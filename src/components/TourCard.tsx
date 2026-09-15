@@ -13,6 +13,18 @@ import OptimizedImage from '@/components/shared/OptimizedImage'
 import type { SpecialOfferData } from '../hooks/useExpeditionTours'
 import { bestOfferDiscountAmount, hasActiveOffer } from '../hooks/useExpeditionTours'
 
+// Tour cards open the detail page in a new tab (`window.open`). Warming the
+// lazy route chunk here puts its hashed JS/CSS in the browser HTTP cache
+// (`/assets/*` is immutable per vercel.json), so the new tab doesn't discover
+// and download the route after boot — it reads it from disk cache. Runs once
+// per session, at idle or on first hover/focus/touch.
+let tourRouteWarmed = false
+function warmTourRouteChunk() {
+  if (tourRouteWarmed) return
+  tourRouteWarmed = true
+  void import('../pages/tour-detail/TourDetailPage')
+}
+
 function shortDuration(d: string): string {
   return d
     .replace(/(\d+(?:\.\d+)?)\s*hours?/gi, '$1h')
@@ -65,6 +77,20 @@ export default function TourCard({ id, title, duration, features, price, rating,
     const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
     mq.addEventListener('change', handler)
     return () => mq.removeEventListener('change', handler)
+  }, [])
+
+  // Idle warm so touch users (no hover) also get a cached route chunk.
+  useEffect(() => {
+    const w = window as Window & {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout?: number }) => number
+      cancelIdleCallback?: (id: number) => void
+    }
+    if (typeof w.requestIdleCallback === 'function') {
+      const id = w.requestIdleCallback(warmTourRouteChunk, { timeout: 3000 })
+      return () => w.cancelIdleCallback?.(id)
+    }
+    const id = setTimeout(warmTourRouteChunk, 1500)
+    return () => clearTimeout(id)
   }, [])
   const moveBadgesToBody = bodyOfferBadgesOnMobile && isMobile
 
@@ -201,7 +227,16 @@ export default function TourCard({ id, title, duration, features, price, rating,
   const showOfferBadge = hasActiveOffer(specialOffers)
 
   return (
-    <div className={`tour-card${imageClean ? ' tour-card-clean' : ''}`} onClick={handleCardClick} onKeyDown={handleKeyDown} role="link" tabIndex={0}>
+    <div
+      className={`tour-card${imageClean ? ' tour-card-clean' : ''}`}
+      onClick={handleCardClick}
+      onKeyDown={handleKeyDown}
+      onMouseEnter={warmTourRouteChunk}
+      onFocus={warmTourRouteChunk}
+      onTouchStart={warmTourRouteChunk}
+      role="link"
+      tabIndex={0}
+    >
       <div className={`tour-card-image${isCarousel ? ' tour-card-has-carousel' : ''}`}>
         {!moveBadgesToBody && showSellOutTag && !(showOfferBadge && !hideOfferBadge) && (
           <span className="tour-card-sellout-tag">

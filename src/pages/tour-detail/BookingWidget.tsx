@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, lazy, Suspense } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import type { TourDetailData, SpecialOfferData } from '../../hooks/useExpeditionTours'
@@ -17,12 +17,15 @@ import { categoryKey } from '../../lib/travelerBuckets'
 import { useTravelerSelection } from '../../hooks/useTravelerSelection'
 import { headlineUnitPrice, cardParityUnitPrice } from '../../lib/startingPrice'
 import BookingDeadlineTimer from './BookingDeadlineTimer'
-import BookingTransition from '../../components/BookingTransition'
 import { preloadMapEngine } from '../../lib/mapWarmup'
 import { fetchWithAuth } from '../../lib/api'
 import { buildPromoValidationPayload, isValidPromoCodeFormat, normalizePromoCode, PROMO_CODE_MIN_LENGTH } from '../../lib/promo'
 import { useQueryClient } from '@tanstack/react-query'
 import './BookingWidget.css'
+
+// Loaded only when the booking transition actually plays (after Book Now) —
+// its dotlottie dependency is ~65 KB and has no business in the route chunk.
+const BookingTransition = lazy(() => import('../../components/BookingTransition'))
 
 interface BookingWidgetProps {
   tour: TourDetailData
@@ -1288,7 +1291,9 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
 
       <AnimatePresence>
         {showTransition && (
-          <BookingTransition onDone={handleTransitionDone} />
+          <Suspense fallback={null}>
+            <BookingTransition onDone={handleTransitionDone} />
+          </Suspense>
         )}
       </AnimatePresence>
     </div>

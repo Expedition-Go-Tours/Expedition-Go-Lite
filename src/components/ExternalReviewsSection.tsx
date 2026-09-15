@@ -126,7 +126,7 @@ export default function ExternalReviewsSection() {
               </div>
               <span className="ext-reviews-stats__divider" />
               <span className="ext-reviews-stats__text">
-                From <strong>{stats.totalReviews}+</strong> reviews across
+                From <strong>{stats.totalReviews}</strong> reviews across
               </span>
               <div className="ext-reviews-stats__platforms">
                 <span className="ext-reviews-stats__platform ext-reviews-stats__platform--ta">

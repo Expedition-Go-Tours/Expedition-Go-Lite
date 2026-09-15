@@ -100,8 +100,15 @@ export function useExpeditionTourReviews(
   tourId?: string | undefined
 ) {
   return useQuery({
-    queryKey: ['expedition', 'tours', slug, 'reviews', page, tourId],
+    // tourId is intentionally NOT part of the key: it loads after the tour
+    // query resolves, and keying on it fired a second identical request for
+    // the same URL on every detail-page mount. The fallback below already
+    // accepts the slug when no id is available yet.
+    queryKey: ['expedition', 'tours', slug, 'reviews', page],
     enabled: !!slug,
+    // The queryFn walks curated -> public fallback; a 404 for an uncurated
+    // tour should not be re-run up to 3× by the global retry: 2 default.
+    retry: 1,
     queryFn: async () => {
       try {
         const payload = await expeditionFetchRaw(
