@@ -167,11 +167,16 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
     setNavIsFocused(false)
     navInputRef.current?.blur()
     if (item.type === 'destination') {
-      if (location.pathname !== '/') navigate('/')
+      // Land on the place-scoped All Tours page — NOT the homepage — so clicking
+      // a recent search behaves exactly like searching it (the hero does the
+      // same). Navigating to '/' threw the user out of the listing they were on.
+      if (item.city) setLocation(item.city)
+      navigate(`/tours?place=${encodeURIComponent(item.title)}`)
     } else if (item.type === 'tour' && item.slug) {
+      if (item.city) setLocation(item.city)
       navigate(`/tour/${item.slug}`)
     }
-  }, [navigate])
+  }, [navigate, setLocation])
 
   const navigateToSearchPage = useCallback(() => {
     setShowNavDropdown(false)
