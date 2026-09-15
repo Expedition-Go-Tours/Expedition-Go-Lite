@@ -127,7 +127,7 @@ export default function AllToursPage() {
   const { t } = useTranslation()
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
-  const { currentLocation } = useLocationSearch()
+  const { currentLocation, setLocation } = useLocationSearch()
   const sectionParam = searchParams.get('section') || ''
   const locationParam = searchParams.get('location') || ''
   const categoryParam = searchParams.get('category') || ''
@@ -208,6 +208,13 @@ export default function AllToursPage() {
   // popularity instead of place relevance and label it honestly.
   const fallbackRegion = allToursData?.placeScope?.fallbackRegion ?? null
   const placeValue = allToursData?.placeScope?.displayName || allToursData?.placeScope?.requested || placeParam
+  // The region the place sits in (sent for both modes). Viewing a place-scoped
+  // listing personalizes the homepage, so this is applied no matter which route
+  // brought the user here — suggestion click, recent search, shared link, Back.
+  const scopeRegion = allToursData?.placeScope?.region || fallbackRegion
+  useEffect(() => {
+    if (scopeRegion) setLocation(scopeRegion)
+  }, [scopeRegion, setLocation])
   // Only a true in-place scope gets place ranking; region fallback and text
   // searches sort by popularity. Computed in the component body (not inside the
   // memo) so the memo's dependency list stays compiler-friendly.

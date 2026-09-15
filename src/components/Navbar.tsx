@@ -17,7 +17,7 @@ import { useLocationSearch } from '../context/LocationSearchContext'
 import { useContinuePlanning } from '../context/ContinuePlanningContext'
 import { useSearchInput } from '../context/SearchInputContext'
 import { useSearchAutocomplete, type SearchSuggestion } from '../hooks/useSearchAutocomplete'
-import { useRecentSearches } from '../hooks/useRecentSearches'
+import { useRecentSearches, type RecentSearch } from '../hooks/useRecentSearches'
 import BookingsIcon from './shared/BookingsIcon'
 import SearchSuggestionIcon from './shared/SearchSuggestionIcon'
 import LanguageCurrencyModal from './LanguageCurrencyModal'
@@ -142,41 +142,44 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
     setNavIsFocused(false)
     navInputRef.current?.blur()
     if (suggestion.kind === 'place') {
-      addSearch({ slug: suggestion.name, title: suggestion.name, type: 'destination' })
+      addSearch({ slug: suggestion.name, title: suggestion.name, type: 'destination', region: suggestion.region })
       if (suggestion.region) setLocation(suggestion.region)
       // Land on the place-scoped All Tours page wherever we are. This used to
       // send anyone who was not already on '/' back to the homepage instead of
       // searching, so picking a destination from the navbar did nothing.
       navigate(`/tours?place=${encodeURIComponent(suggestion.name)}`)
     } else if (suggestion.kind === 'attraction') {
-      addSearch({ slug: suggestion.name, title: suggestion.name, type: 'destination' })
+      addSearch({ slug: suggestion.name, title: suggestion.name, type: 'destination', region: suggestion.region })
       if (suggestion.region) setLocation(suggestion.region)
       navigate(`/tours?attraction=${encodeURIComponent(suggestion.name)}&place=${encodeURIComponent(suggestion.region || '')}`)
     } else if (suggestion.kind === 'region') {
-      addSearch({ slug: suggestion.name, title: suggestion.name, type: 'destination' })
+      addSearch({ slug: suggestion.name, title: suggestion.name, type: 'destination', region: suggestion.region })
       const rawRegion = suggestion.region || suggestion.name.replace(/\s*Region$/i, '')
       setLocation(rawRegion)
       navigate(`/tours?place=${encodeURIComponent(suggestion.name)}`)
     } else if (suggestion.kind === 'tour' && suggestion.slug) {
+      addSearch({ slug: suggestion.slug, title: suggestion.name, type: 'tour', image: suggestion.image, city: suggestion.city, region: suggestion.region })
       if (suggestion.region) setLocation(suggestion.region)
       navigate(`/tour/${suggestion.slug}`)
     }
   }, [navigate, addSearch, setLocation])
 
-  const navigateToRecent = useCallback((item: { slug: string; title: string; type: 'destination' | 'tour'; city?: string }) => {
+  const navigateToRecent = useCallback((item: RecentSearch) => {
     setShowNavDropdown(false)
     setNavSearchValue('')
     setNavHighlightedIndex(-1)
     setNavIsFocused(false)
     navInputRef.current?.blur()
+    // Personalize the homepage exactly like the live suggestion does. Entries
+    // carry the region; ones saved before that only have the tour's city.
+    const region = item.region || item.city
+    if (region) setLocation(region)
     if (item.type === 'destination') {
       // Land on the place-scoped All Tours page — NOT the homepage — so clicking
       // a recent search behaves exactly like searching it (the hero does the
       // same). Navigating to '/' threw the user out of the listing they were on.
-      if (item.city) setLocation(item.city)
       navigate(`/tours?place=${encodeURIComponent(item.title)}`)
     } else if (item.type === 'tour' && item.slug) {
-      if (item.city) setLocation(item.city)
       navigate(`/tour/${item.slug}`)
     }
   }, [navigate, setLocation])

@@ -3,7 +3,7 @@ import { AnimatePresence, MotionConfig, motion, type Variants } from 'framer-mot
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useSearchAutocomplete, type SearchSuggestion } from '../hooks/useSearchAutocomplete'
-import { useRecentSearches } from '../hooks/useRecentSearches'
+import { useRecentSearches, type RecentSearch } from '../hooks/useRecentSearches'
 import { useLocationSearch } from '../context/LocationSearchContext'
 import { useSearchInput } from '../context/SearchInputContext'
 import { trackSearch } from '../lib/analytics'
@@ -59,7 +59,7 @@ export default function SearchBar() {
 
     // Tour: go to product page, set region for homepage personalization
     if (suggestion.kind === 'tour' && suggestion.slug) {
-      addSearch({ slug: suggestion.slug, title: suggestion.name, type: 'tour', image: suggestion.image, city: suggestion.city })
+      addSearch({ slug: suggestion.slug, title: suggestion.name, type: 'tour', image: suggestion.image, city: suggestion.city, region: suggestion.region })
       if (suggestion.region) setLocation(suggestion.region)
       navigate(`/tour/${suggestion.slug}`)
       return
@@ -67,7 +67,7 @@ export default function SearchBar() {
 
     // Attraction: go to search results with attraction param, set region
     if (suggestion.kind === 'attraction') {
-      addSearch({ slug: suggestion.name, title: suggestion.name, type: 'destination' })
+      addSearch({ slug: suggestion.name, title: suggestion.name, type: 'destination', region: suggestion.region })
       if (suggestion.region) setLocation(suggestion.region)
       setIsPersonalizing(true)
       navigate(`/tours?attraction=${encodeURIComponent(suggestion.name)}&place=${encodeURIComponent(suggestion.region || '')}`)
@@ -76,7 +76,7 @@ export default function SearchBar() {
 
     // Place: go to place-scoped listing, set region for homepage personalization
     if (suggestion.kind === 'place') {
-      addSearch({ slug: suggestion.name, title: suggestion.name, type: 'destination' })
+      addSearch({ slug: suggestion.name, title: suggestion.name, type: 'destination', region: suggestion.region })
       if (suggestion.region) setLocation(suggestion.region)
       setIsPersonalizing(true)
       navigate(`/tours?place=${encodeURIComponent(suggestion.name)}`)
@@ -85,7 +85,7 @@ export default function SearchBar() {
 
     // Region: go to region listing, set region for homepage personalization
     if (suggestion.kind === 'region') {
-      addSearch({ slug: suggestion.name, title: suggestion.name, type: 'destination' })
+      addSearch({ slug: suggestion.name, title: suggestion.name, type: 'destination', region: suggestion.region })
       // suggestion.name is e.g. "Ashanti Region" — store raw region for API matching
       const rawRegion = suggestion.region || suggestion.name.replace(/\s*Region$/i, '')
       setLocation(rawRegion)
@@ -100,17 +100,20 @@ export default function SearchBar() {
     navigate(`/tours?place=${encodeURIComponent(suggestion.name)}`)
   }, [navigate, addSearch, setLocation, setInputValue])
 
-  const navigateToRecent = useCallback((item: { slug: string; title: string; type: 'destination' | 'tour'; image?: string; city?: string }) => {
+  const navigateToRecent = useCallback((item: RecentSearch) => {
     setShowDropdown(false)
     setInputValue('')
     setHighlightedIndex(-1)
     setIsFocused(false)
     inputRef.current?.blur()
+    // Personalize the homepage exactly like the live suggestion does. Entries
+    // carry the region; ones saved before that only have the tour's city.
+    const region = item.region || item.city
+    if (region) setLocation(region)
     if (item.type === 'destination') {
       setIsPersonalizing(true)
       navigate(`/tours?place=${encodeURIComponent(item.title)}`)
     } else if (item.type === 'tour' && item.slug) {
-      if (item.city) setLocation(item.city)
       navigate(`/tour/${item.slug}`)
     }
   }, [navigate, setLocation, setInputValue])

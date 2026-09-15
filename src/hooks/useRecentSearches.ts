@@ -5,8 +5,12 @@ export interface RecentSearch {
   title: string
   type: 'destination' | 'tour'
   image?: string
-  /** Canonical city (tour searches) so re-selecting a recent tour personalizes
-   *  the homepage the same way the live suggestion does. */
+  /**
+   * Region of the searched thing (city/town/attraction/tour), so re-selecting a
+   * recent entry personalizes the homepage exactly like the live suggestion did.
+   */
+  region?: string
+  /** Legacy: canonical city, kept so entries already in localStorage still work. */
   city?: string
 }
 

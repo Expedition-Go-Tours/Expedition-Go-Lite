@@ -1340,6 +1340,12 @@ export interface PlaceScope {
   mode?: 'place' | 'region-fallback' | 'text'
   /** Set when the place had no tours and the listing widened to its region. */
   fallbackRegion: string | null
+  /**
+   * The region the place actually sits in, sent for BOTH modes. The listing uses
+   * it to personalize the homepage, so viewing a place-scoped listing filters
+   * the homepage to that region however the user got there.
+   */
+  region?: string | null
 }
 
 export function useAllExpeditionTours(opts?: { mood?: string; near?: string; place?: string; search?: string; q?: string; enabled?: boolean }) {
