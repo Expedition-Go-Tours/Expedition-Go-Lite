@@ -2523,7 +2523,7 @@ export default function BookingPage() {
             initial="hidden"
             animate="visible"
           >
-            <div className="sticky top-0 z-10 mb-6 bg-[#f9fafb] pt-4 md:hidden">
+            <div className="mb-6 bg-[#f9fafb] pt-4 md:hidden">
               <HoldTimer onExpire={handleExpire} lastActivityAt={lastActivityAt} isExpired={isExpired} />
             </div>
 

@@ -18,6 +18,7 @@ import { useTravelerSelection } from '../../hooks/useTravelerSelection'
 import { headlineUnitPrice, cardParityUnitPrice } from '../../lib/startingPrice'
 import BookingDeadlineTimer from './BookingDeadlineTimer'
 import BookingTransition from '../../components/BookingTransition'
+import { preloadMapEngine } from '../../lib/mapWarmup'
 import { fetchWithAuth } from '../../lib/api'
 import { buildPromoValidationPayload, isValidPromoCodeFormat, normalizePromoCode, PROMO_CODE_MIN_LENGTH } from '../../lib/promo'
 import { useQueryClient } from '@tanstack/react-query'
@@ -71,6 +72,44 @@ const toDateKey = (date: Date): string =>
 
 /** Transient transport failures — the backend never supplied a message. */
 const NETWORK_ERROR_RE = /failed to fetch|networkerror|load failed|network request failed/i
+
+/**
+ * Camera for the offscreen booking-map warm-up (map convention [lng, lat]):
+ * the supplier's meeting point, else the first located pickup area, else the
+ * centroid of the first drawn zone. Undefined lets mapWarmup use Accra.
+ */
+function bookingMapCenter(tour: TourDetailData): [number, number] | undefined {
+  const { meetingPointLat: lat, meetingPointLng: lng } = tour
+  if (typeof lat === 'number' && typeof lng === 'number' && Number.isFinite(lat) && Number.isFinite(lng)) {
+    return [lng, lat]
+  }
+  for (const area of tour.pickupAreas ?? []) {
+    if (area && typeof area.lat === 'number' && typeof area.lng === 'number' && Number.isFinite(area.lat) && Number.isFinite(area.lng)) {
+      return [area.lng, area.lat]
+    }
+  }
+  const polygon = tour.pickupAreas?.find((a) => Array.isArray(a?.polygon) && a.polygon.length > 0)?.polygon
+  if (polygon?.length) {
+    const sum = polygon.reduce<[number, number]>((acc, [a, b]) => [acc[0] + a, acc[1] + b], [0, 0])
+    return [sum[1] / polygon.length, sum[0] / polygon.length]
+  }
+  return undefined
+}
+
+/**
+ * Starts warming the checkout before the user lands on it: the booking route
+ * chunk (which pulls the map chunks) downloads during the button spinner and
+ * travel transition, while `preloadMapEngine` warms the tile style/worker and
+ * an offscreen map so the pickup map paints almost immediately on arrival.
+ * Fire-and-forget on purpose — nothing here may delay or block navigation.
+ */
+function preloadCheckoutMap(tour: TourDetailData): void {
+  void import('../BookingPage').catch(() => {
+    /* best-effort: the route still loads normally on navigation */
+  })
+  const center = bookingMapCenter(tour)
+  void preloadMapEngine({ center, zoom: center ? 12 : 11 })
+}
 
 export default function BookingWidget({ tour, getAvailability: propGetAvailability, getDayInfo, availabilityLoading, onMonthChange, onSelectedDateChange }: BookingWidgetProps) {
   const { t } = useTranslation()
@@ -340,6 +379,10 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
     })
 
     const dateISO = toDateKey(selectedDate)
+
+    // Booking is valid and about to start: preload the checkout route + map
+    // stack during the spinner/transition below.
+    preloadCheckoutMap(tour)
 
     // Only hand the server-confirmed total to the booking page while it
     // matches the current selection; otherwise the live estimate is sent.
