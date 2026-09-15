@@ -95,6 +95,37 @@
   }
 }
 
+/* Shimmer placeholder shown in place of the title while the search scope is
+   still resolving, so neither the searched place nor its fallback region is
+   flashed before we know which one applies. Reuses the global search-shimmer. */
+.all-tours-title-skeleton {
+  width: 280px;
+  max-width: 70%;
+  height: 32px;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: search-shimmer 1.4s ease-in-out infinite;
+}
+
+@media (max-width: 1024px) {
+  .all-tours-title-skeleton {
+    height: 28px;
+  }
+}
+
+@media (max-width: 768px) {
+  .all-tours-title-skeleton {
+    height: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .all-tours-title-skeleton {
+    height: 22px;
+  }
+}
+
 .all-tours-count {
   font-size: 15px;
   color: #6b7280;

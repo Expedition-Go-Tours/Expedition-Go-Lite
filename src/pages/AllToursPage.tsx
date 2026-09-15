@@ -152,9 +152,15 @@ export default function AllToursPage() {
   // otherwise it's treated as a plain text search (so a non-place query still
   // returns relevance results instead of the whole catalogue). The listing
   // fetch is gated until the resolve settles so there's no text→place flicker.
-  const { data: resolvedPlace, isFetching: isResolvingPlace } = usePlaceResolve(placeParam, 'expedition')
+  const { data: resolvedPlace, isFetching: isResolvingPlace, isPending: isPlacePending } = usePlaceResolve(placeParam, 'expedition')
   const placeValue = resolvedPlace?.displayName || resolvedPlace?.name || ''
   const isPlaceQuery = !!placeValue
+  // The listing query is disabled while the place resolves (see `enabled` below),
+  // and a disabled react-query query reports `isLoading === false` — so without
+  // this the header would briefly show "0 tours in {place}" before the region
+  // fallback arrives. `isPlaceBusy` also covers the frame before the resolve
+  // fetch starts (isPending with no data yet).
+  const isPlaceBusy = !!placeParam && (isResolvingPlace || (isPlacePending && !resolvedPlace))
 
   const TOUR_TYPE_OPTIONS = useMemo(() => [
     { value: 'day', label: t('allTours.typeDay') },
@@ -204,7 +210,7 @@ export default function AllToursPage() {
     // resolves to the same place. Only when the query resolved to a real place.
     place: isPlaceQuery ? placeParam : '',
     search: !isPlaceQuery && placeParam ? placeParam : '',
-    enabled: !isResolvingPlace,
+    enabled: !isPlaceBusy,
   })
   const allTours = allToursData?.tours
   // When the backend widened the search to the place's region (the place itself
@@ -275,6 +281,16 @@ export default function AllToursPage() {
     && !isLoadingAttractionTours
     && attractionToursData !== undefined
     && attractionToursData.length === 0
+
+  // Single "we don't know the result set yet" flag. Covers three windows that
+  // react-query's `isLoading` alone misses:
+  //   1. the place-resolution window, during which the listing query is disabled
+  //      (a disabled query reports isLoading === false) — this is what used to
+  //      flash "0 tours in {place}" before the region fallback arrived;
+  //   2. the frame before the resolve fetch starts (isPending, no data yet);
+  //   3. the attraction-tours fetch, before which the grid would show the
+  //      unfiltered place list instead of the attraction's tours.
+  const isBusy = isLoading || isPlaceBusy || (!!attractionParam && isLoadingAttractionTours)
 
   // Seed the destination filter from a /tours?location=... link (once per value).
   const seededLocationRef = useRef<string | null>(null)
@@ -505,8 +521,12 @@ export default function AllToursPage() {
         <div className="all-tours-header">
           <div className="all-tours-header-left">
             <div>
-              <h1 className="all-tours-title">{pageTitle}</h1>
-              {isLoading ? (
+              {isBusy ? (
+                <div className="all-tours-title-skeleton" aria-hidden="true" />
+              ) : (
+                <h1 className="all-tours-title">{pageTitle}</h1>
+              )}
+              {isBusy ? (
                 <p className="all-tours-count">{t('allTours.loading')}</p>
               ) : (
                 <p className="all-tours-count">
@@ -531,7 +551,7 @@ export default function AllToursPage() {
           )}
         </div>
 
-        {!isLoading && !isError && fallbackRegion && (
+        {!isBusy && !isError && fallbackRegion && (
           <div className="all-tours-region-fallback" role="status" aria-live="polite">
             <MapPin size={16} className="all-tours-region-fallback-icon" aria-hidden="true" />
             <span>
@@ -623,7 +643,7 @@ export default function AllToursPage() {
 
         {/* Attraction with zero linked tours: show the empty-state hero above
             the region fallback grid so users understand why tours are generic. */}
-        {!isLoading && !isError && hasZeroAttractionTours && (
+        {!isBusy && !isError && hasZeroAttractionTours && (
           <NoToursEmptyState
             location={placeValue || placeParam}
             attraction={attractionParam}
@@ -632,7 +652,7 @@ export default function AllToursPage() {
           />
         )}
 
-        {(isLoading || (isResolvingPlace && displayTours.length === 0)) && (
+        {isBusy && displayTours.length === 0 && (
           <div className="all-tours-grid">
             {Array.from({ length: PAGE_SIZE }).map((_, i) => (
               <TourCardSkeleton key={i} />
@@ -647,7 +667,7 @@ export default function AllToursPage() {
           </div>
         )}
 
-        {!isLoading && !isError && (
+        {!isBusy && !isError && (
           <div className="all-tours-grid">
             <AnimatePresence mode="popLayout">
               {displayTours.map((tour) => (
@@ -693,14 +713,14 @@ export default function AllToursPage() {
           </div>
         )}
 
-        {!isLoading && !isError && !isResolvingPlace && !hasZeroAttractionTours && displayTours.length === 0 && (
+        {!isBusy && !isError && !hasZeroAttractionTours && displayTours.length === 0 && (
           <NoToursEmptyState
             location={placeParam || nearParam || locationParam || currentLocation || ''}
             onBrowseAll={() => navigate('/tours')}
           />
         )}
 
-        {(hasNextPage || hasPrevPage) && (
+        {!isBusy && (hasNextPage || hasPrevPage) && (
           <div className="all-tours-load-more">
             <div className="pagination-controls">
               <button
