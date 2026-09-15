@@ -98,7 +98,7 @@ export default function SearchBar() {
     addSearch({ slug: suggestion.name, title: suggestion.name, type: 'destination' })
     setIsPersonalizing(true)
     navigate(`/tours?place=${encodeURIComponent(suggestion.name)}`)
-  }, [navigate, addSearch, setLocation])
+  }, [navigate, addSearch, setLocation, setInputValue])
 
   const navigateToRecent = useCallback((item: { slug: string; title: string; type: 'destination' | 'tour'; image?: string; city?: string }) => {
     setShowDropdown(false)
@@ -113,7 +113,7 @@ export default function SearchBar() {
       if (item.city) setLocation(item.city)
       navigate(`/tour/${item.slug}`)
     }
-  }, [navigate, setLocation])
+  }, [navigate, setLocation, setInputValue])
 
   const navigateToSearchPage = useCallback(() => {
     setShowDropdown(false)
@@ -177,12 +177,6 @@ export default function SearchBar() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  useEffect(() => {
-    if (isPersonalizing && !isSearching) {
-      setIsPersonalizing(false)
-    }
-  }, [isPersonalizing, isSearching])
-
   const dropdownOpen =
     (isFocused && recentSearches.length > 0) ||
     (showDropdown && (suggestions.length > 0 || inputValue.trim().length >= 2)) ||
@@ -203,6 +197,10 @@ export default function SearchBar() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value)
+    // Typing starts a fresh interaction, so drop the "handing off to the results
+    // page" flag. This used to be reset from an effect watching isSearching,
+    // which set state synchronously during an effect and cascaded a render.
+    if (isPersonalizing) setIsPersonalizing(false)
   }
 
   const handleItemMouseDown = useCallback((e: React.MouseEvent) => {
