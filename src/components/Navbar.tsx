@@ -144,7 +144,10 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
     if (suggestion.kind === 'place') {
       addSearch({ slug: suggestion.name, title: suggestion.name, type: 'destination' })
       if (suggestion.region) setLocation(suggestion.region)
-      if (location.pathname !== '/') navigate('/')
+      // Land on the place-scoped All Tours page wherever we are. This used to
+      // send anyone who was not already on '/' back to the homepage instead of
+      // searching, so picking a destination from the navbar did nothing.
+      navigate(`/tours?place=${encodeURIComponent(suggestion.name)}`)
     } else if (suggestion.kind === 'attraction') {
       addSearch({ slug: suggestion.name, title: suggestion.name, type: 'destination' })
       if (suggestion.region) setLocation(suggestion.region)
