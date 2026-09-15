@@ -637,17 +637,15 @@ export default function AllToursPage() {
           </div>
         </div>
 
-        {/* Attraction with zero linked tours: show the empty-state hero above
-            the region fallback grid so users understand why tours are generic. */}
-        {!isBusy && !isError && hasZeroAttractionTours && (
+        {/* Attraction with zero linked tours. If the region fallback produced
+            tours, just show those under the normal heading — an empty-state hero
+            there reads as "this region has nothing" while listing its tours. */}
+        {!isBusy && !isError && hasZeroAttractionTours && displayTours.length === 0 && (
           <NoToursEmptyState
             location={placeValue || placeParam}
             attraction={attractionParam}
             region={placeValue || placeParam}
-            onBrowseAll={() => {
-              const target = placeValue || placeParam
-              navigate(target ? `/tours?place=${encodeURIComponent(target)}` : '/tours')
-            }}
+            onBrowseAll={() => navigate('/tours')}
           />
         )}
 

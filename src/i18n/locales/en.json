@@ -274,8 +274,7 @@
   "empty": {
     "title": "We're not quite there yet",
     "body": "We don't have experiences for {{location}} just yet — but there's plenty to discover. Check out these nearby destinations and handpicked tours we think you'll love.",
-    "bodyAttraction": "We don't have experiences for {{attraction}} just yet — but there are plenty across {{region}}. Here are some we think you'll love.",
-    "bodyAttractionNoRegion": "We don't have experiences for {{attraction}} just yet — but there's plenty to discover nearby.",
+    "bodyAttraction": "We don't have experiences for {{attraction}} just yet — but there's plenty to discover.",
     "thisPlace": "this destination",
     "browseAll": "Browse all experiences",
     "browseAttraction": "Browse experiences in {{attraction}}",
