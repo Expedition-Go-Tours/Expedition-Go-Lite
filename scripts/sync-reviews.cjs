@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
- * sync-reviews.js — Standalone scraper for TripAdvisor + GetYourGuide reviews.
+ * sync-reviews.cjs — Standalone scraper for TripAdvisor + GetYourGuide reviews.
  *
  * Usage:
  *   npm install puppeteer   # one-time
- *   node scripts/sync-reviews.js
+ *   node scripts/sync-reviews.cjs
  *
  * Writes src/data/externalReviews.json consumed by the frontend.
  */
@@ -90,12 +90,12 @@ const GOOGLE_REVIEWS_TOURS = [
   'Accra Mini Safari, Rock Climbing, Museum & Boat Cruise Tour',
 ];
 
-const PAGES_TO_SCRAPE = 2;
-const DELAY_BETWEEN_PAGES_MS = 3000;
-const DELAY_BETWEEN_TOURS_MS = 2000;
-// A healthy run yields 100+ reviews; below this the scrape is treated as
+const PAGES_TO_SCRAPE = 100;
+const DELAY_BETWEEN_PAGES_MS = 4000;
+const DELAY_BETWEEN_TOURS_MS = 3000;
+// A healthy deep run yields 500+ reviews; below this the scrape is treated as
 // failed (bot wall / DOM change) and must never overwrite the committed file.
-const MIN_EXPECTED_REVIEWS = 50;
+const MIN_EXPECTED_REVIEWS = 500;
 const OUTPUT_PATH = path.join(__dirname, '..', 'src', 'data', 'externalReviews.json');
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -125,6 +125,7 @@ function normalizeDate(dateStr) {
 
 async function scrapeTripAdvisorTour(page, tour, pagesToScrape) {
   const reviews = [];
+  let platformReviewCount = null;
 
   for (let pageNum = 1; pageNum <= pagesToScrape; pageNum++) {
     const pageUrl = pageNum === 1
@@ -139,6 +140,16 @@ async function scrapeTripAdvisorTour(page, tour, pagesToScrape) {
         '[data-automation="reviewCard"], .review-container, .biGQs._P.pZUbB.KxBGd',
         { timeout: 10000 }
       ).catch(() => {});
+
+      // Extract total review count from the page (first page only)
+      if (pageNum === 1 && platformReviewCount === null) {
+        platformReviewCount = await page.evaluate(() => {
+          // Look for text like "911 reviews" in the review header area
+          const allText = document.body.innerText || '';
+          const match = allText.match(/([\d,]+)\s+reviews/i);
+          return match ? parseInt(match[1].replace(/,/g, '')) : null;
+        }).catch(() => null);
+      }
 
       const pageReviews = await page.evaluate(() => {
         const cards = document.querySelectorAll(
@@ -172,6 +183,12 @@ async function scrapeTripAdvisorTour(page, tour, pagesToScrape) {
         }).filter((r) => r.reviewerName || r.text);
       });
 
+      // Stop early if the page yielded no reviews (past the last page)
+      if (pageReviews.length === 0 && pageNum > 1) {
+        console.log(`    No more reviews — stopping pagination for this tour`);
+        break;
+      }
+
       reviews.push(...pageReviews);
       console.log(`    Found ${pageReviews.length} reviews`);
     } catch (err) {
@@ -196,66 +213,94 @@ async function scrapeTripAdvisorTour(page, tour, pagesToScrape) {
     tourLink: tour.url,
     coverPhoto: null,
     originalDate: normalizeDate(r.date),
+    platformReviewCount,
   }));
 }
 
 // ─── GetYourGuide Scraper ────────────────────────────────────────────────────
 
-async function scrapeGetYourGuideTour(page, tour) {
-  console.log(`  [GYG] ${tour.title}`);
+async function scrapeGetYourGuideTour(page, tour, pagesToScrape) {
+  const reviews = [];
+  let platformReviewCount = null;
 
-  try {
-    await page.goto(tour.url, { waitUntil: 'networkidle2', timeout: 30000 });
-    await page.waitForSelector('[data-activity-review-card], .review-card, .review', { timeout: 10000 }).catch(() => {});
+  for (let pageNum = 1; pageNum <= pagesToScrape; pageNum++) {
+    const pageUrl = pageNum === 1
+      ? tour.url
+      : `${tour.url}?page=${pageNum}`;
 
-    const pageReviews = await page.evaluate(() => {
-      const cards = document.querySelectorAll('[data-activity-review-card], .review-card, .review');
-      return Array.from(cards).map((card) => {
-        const nameEl = card.querySelector('.reviewer-name, .user-profile-name, [class*="userName"]');
-        const titleEl = card.querySelector('.review-title, h3, [class*="reviewTitle"]');
-        const textEl = card.querySelector('.review-text, .review-body, [class*="reviewText"]');
-        const ratingEl = card.querySelector('[class*="rating"], [data-rating]');
-        const dateEl = card.querySelector('.review-date, time, [class*="date"]');
-        const avatarEl = card.querySelector('img[class*="avatar"], img[class*="profile"]');
+    console.log(`  [GYG] Page ${pageNum}/${pagesToScrape}: ${tour.title}`);
 
-        const ratingAttr = ratingEl?.getAttribute('data-rating') || ratingEl?.className || '';
-        const ratingMatch = ratingAttr.match(/(\d+)/);
-        const rating = ratingMatch ? parseInt(ratingMatch[1]) : 5;
+    try {
+      await page.goto(pageUrl, { waitUntil: 'networkidle2', timeout: 30000 });
+      await page.waitForSelector('[data-activity-review-card], .review-card, .review', { timeout: 10000 }).catch(() => {});
 
-        return {
-          externalId: null,
-          reviewerName: nameEl?.textContent?.trim() || 'Anonymous',
-          reviewerAvatar: avatarEl?.getAttribute('src') || null,
-          rating,
-          title: titleEl?.textContent?.trim() || '',
-          text: textEl?.textContent?.trim() || '',
-          date: dateEl?.getAttribute('datetime') || dateEl?.textContent?.trim() || '',
-        };
-      }).filter((r) => r.reviewerName !== 'Anonymous' || r.text);
-    });
+      // Extract total review count from the page (first page only)
+      if (pageNum === 1 && platformReviewCount === null) {
+        platformReviewCount = await page.evaluate(() => {
+          const allText = document.body.innerText || '';
+          const match = allText.match(/([\d,]+)\s+reviews/i);
+          return match ? parseInt(match[1].replace(/,/g, '')) : null;
+        }).catch(() => null);
+      }
 
-    console.log(`    Found ${pageReviews.length} reviews`);
+      const pageReviews = await page.evaluate(() => {
+        const cards = document.querySelectorAll('[data-activity-review-card], .review-card, .review');
+        return Array.from(cards).map((card) => {
+          const nameEl = card.querySelector('.reviewer-name, .user-profile-name, [class*="userName"]');
+          const titleEl = card.querySelector('.review-title, h3, [class*="reviewTitle"]');
+          const textEl = card.querySelector('.review-text, .review-body, [class*="reviewText"]');
+          const ratingEl = card.querySelector('[class*="rating"], [data-rating]');
+          const dateEl = card.querySelector('.review-date, time, [class*="date"]');
+          const avatarEl = card.querySelector('img[class*="avatar"], img[class*="profile"]');
 
-    return pageReviews.map((r) => ({
-      id: r.externalId || `gyg_${hashString(r.reviewerName + r.title + r.text.slice(0, 100))}`,
-      source: 'GETYOURGUIDE',
-      reviewerName: r.reviewerName,
-      reviewerAvatar: r.reviewerAvatar,
-      rating: clampRating(r.rating),
-      title: r.title || null,
-      text: r.text || '(No review text)',
-      textTruncated: r.text.length > 200 ? r.text.slice(0, 197) + '...' : r.text,
-      tourTitle: tour.title,
-      tourThumbnail: null,
-      tourUrl: tour.url,
-      tourLink: tour.url,
-      coverPhoto: null,
-      originalDate: normalizeDate(r.date),
-    }));
-  } catch (err) {
-    console.warn(`    Failed: ${err.message}`);
-    return [];
+          const ratingAttr = ratingEl?.getAttribute('data-rating') || ratingEl?.className || '';
+          const ratingMatch = ratingAttr.match(/(\d+)/);
+          const rating = ratingMatch ? parseInt(ratingMatch[1]) : 5;
+
+          return {
+            externalId: null,
+            reviewerName: nameEl?.textContent?.trim() || 'Anonymous',
+            reviewerAvatar: avatarEl?.getAttribute('src') || null,
+            rating,
+            title: titleEl?.textContent?.trim() || '',
+            text: textEl?.textContent?.trim() || '',
+            date: dateEl?.getAttribute('datetime') || dateEl?.textContent?.trim() || '',
+          };
+        }).filter((r) => r.reviewerName !== 'Anonymous' || r.text);
+      });
+
+      // Stop early if the page yielded no reviews (past the last page)
+      if (pageReviews.length === 0 && pageNum > 1) {
+        console.log(`    No more reviews — stopping pagination for this tour`);
+        break;
+      }
+
+      reviews.push(...pageReviews);
+      console.log(`    Found ${pageReviews.length} reviews`);
+    } catch (err) {
+      console.warn(`    Failed: ${err.message}`);
+    }
+
+    if (pageNum < pagesToScrape) await sleep(DELAY_BETWEEN_PAGES_MS);
   }
+
+  return reviews.map((r) => ({
+    id: r.externalId || `gyg_${hashString(r.reviewerName + r.title + r.text.slice(0, 100))}`,
+    source: 'GETYOURGUIDE',
+    reviewerName: r.reviewerName,
+    reviewerAvatar: r.reviewerAvatar,
+    rating: clampRating(r.rating),
+    title: r.title || null,
+    text: r.text || '(No review text)',
+    textTruncated: r.text.length > 200 ? r.text.slice(0, 197) + '...' : r.text,
+    tourTitle: tour.title,
+    tourThumbnail: null,
+    tourUrl: tour.url,
+    tourLink: tour.url,
+    coverPhoto: null,
+    originalDate: normalizeDate(r.date),
+    platformReviewCount,
+  }));
 }
 
 // ─── Google Maps Scraper ─────────────────────────────────────────────────────
@@ -274,8 +319,16 @@ async function scrapeGoogleReviews(page) {
       await sleep(3000);
     }
 
-    // Scroll to load more reviews
-    for (let i = 0; i < 3; i++) {
+    // Extract total review count from the Maps listing
+    const platformReviewCount = await page.evaluate(() => {
+      const allText = document.body.innerText || '';
+      // Google Maps shows "X reviews" near the rating
+      const match = allText.match(/([\d,]+)\s+reviews/i);
+      return match ? parseInt(match[1].replace(/,/g, '')) : null;
+    }).catch(() => null);
+
+    // Scroll to load more reviews (10 rounds for deeper scrape)
+    for (let i = 0; i < 10; i++) {
       await page.evaluate(() => {
         const scrollable = document.querySelector('[class*="m6QErb"][class*="DxyBCb"], .section-scrollbox, [role="main"]');
         if (scrollable) scrollable.scrollTop = scrollable.scrollHeight;
@@ -328,6 +381,7 @@ async function scrapeGoogleReviews(page) {
       tourLink: GOOGLE_LISTING_URL,
       coverPhoto: null,
       originalDate: normalizeDate(r.date),
+      platformReviewCount,
     }));
   } catch (err) {
     console.warn(`    Failed: ${err.message}`);
@@ -378,7 +432,9 @@ function computeStats(reviews) {
 async function main() {
   let puppeteer;
   try {
-    puppeteer = require('puppeteer');
+    // Puppeteer 25 is ESM-only; dynamic import works from this CommonJS file.
+    const mod = await import('puppeteer');
+    puppeteer = mod.default ?? mod;
   } catch {
     console.error('puppeteer not installed. Run: npm install puppeteer');
     process.exit(1);
@@ -413,7 +469,7 @@ async function main() {
     console.log(`\nScraping ${GETYOURGUIDE_TOURS.length} GetYourGuide tours...`);
     for (let i = 0; i < GETYOURGUIDE_TOURS.length; i++) {
       const tour = GETYOURGUIDE_TOURS[i];
-      const reviews = await scrapeGetYourGuideTour(page, tour);
+      const reviews = await scrapeGetYourGuideTour(page, tour, PAGES_TO_SCRAPE);
       allReviews.push(...reviews);
       if (i < GETYOURGUIDE_TOURS.length - 1) await sleep(DELAY_BETWEEN_TOURS_MS);
     }

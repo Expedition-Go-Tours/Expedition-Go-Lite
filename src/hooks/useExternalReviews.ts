@@ -42,7 +42,7 @@ function shuffle<T>(arr: T[]): T[] {
 
 /**
  * Google reviews at 3 stars or below are never shown (social-proof policy).
- * Enforced here in addition to the scraper (`scripts/sync-reviews.js`) so a
+ * Enforced here in addition to the scraper (`scripts/sync-reviews.cjs`) so a
  * stale or hand-regenerated JSON can never surface them.
  */
 const MIN_GOOGLE_RATING = 4
