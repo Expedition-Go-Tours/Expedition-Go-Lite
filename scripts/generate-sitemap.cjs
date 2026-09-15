@@ -120,11 +120,13 @@ async function main() {
 
     const places = new Set();
 
-    for (const tour of tours) {
-      const slug = tour.slug || tour.id;
+    for (const listing of tours) {
+      // API response is nested: tours[].tour.slug (listing -> tour)
+      const tour = listing.tour || listing;
+      const slug = tour.slug || listing.slug || listing.id;
       if (!slug) continue;
 
-      const lastmod = tour.updatedAt || tour.createdAt;
+      const lastmod = tour.updatedAt || listing.updatedAt || tour.createdAt || listing.createdAt;
       const dateStr = lastmod ? new Date(lastmod).toISOString().split('T')[0] : undefined;
 
       urls.push(urlEntry(`${SITE_URL}/tour/${encodeURIComponent(slug)}`, {
@@ -134,8 +136,10 @@ async function main() {
       }));
 
       // Collect unique places for destination pages
-      if (tour.city) places.add(tour.city);
-      if (tour.region) places.add(tour.region);
+      const city = tour.city || listing.city;
+      const region = tour.region || listing.region;
+      if (city) places.add(city);
+      if (region) places.add(region);
     }
 
     // Destination pages
