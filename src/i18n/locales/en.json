@@ -204,7 +204,7 @@
   },
   "hero": {
     "destination": "Destination",
-    "destinationPlaceholder": "Where do you want to go?",
+    "destinationPlaceholder": "Search cities, towns, attractions or regions",
     "currentSearch": "Current search: {{location}}",
     "search": "Search",
     "subtitle": "Discover amazing tours and activities.",
