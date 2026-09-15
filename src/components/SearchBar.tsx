@@ -260,11 +260,12 @@ export default function SearchBar() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (highlightedIndex >= 0 && highlightedIndex < suggestions.length) {
-      navigateToSuggestion(suggestions[highlightedIndex])
-    } else {
-      navigateToSearchPage()
-    }
+    // The Search button ALWAYS runs the search — it must never open a suggestion.
+    // It used to fall through to the highlighted row, and because the hover
+    // handler fed the same index the arrow keys use, a mouse crossing the
+    // dropdown made the button open whichever tour it passed over. Suggestions
+    // now open only on an explicit click (or via Tab).
+    navigateToSearchPage()
   }
 
   const hasQuery = inputValue.trim().length >= 2
@@ -411,7 +412,6 @@ export default function SearchBar() {
                                   handleItemMouseDown(e)
                                   navigateToSuggestion(suggestion)
                                 }}
-                                onMouseEnter={() => setHighlightedIndex(idx)}
                               >
                                 {suggestion.kind === 'tour' && suggestion.image ? (
                                   <div className="search-suggestion-thumb">

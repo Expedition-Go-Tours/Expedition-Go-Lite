@@ -179,6 +179,13 @@ body.hero--search-sticky .hero-search-wrap {
   background: #f0fdf4;
 }
 
+/* Hover feedback is CSS-only: the JS hover handler that used to set the
+   keyboard "highlighted" index made the Search button open whatever row the
+   cursor crossed. */
+.search-suggestion:hover {
+  background: #f0fdf4;
+}
+
 .search-suggestion-icon-wrap {
   flex-shrink: 0;
   width: 36px;

@@ -399,11 +399,10 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
         <div className={`navbar-compact-search${navIsSearching ? ' searching' : ''}`} ref={navSearchRef}>
           <form className={`navbar-search-form${navIsFocused ? ' focused' : ''}`} onSubmit={(e) => {
             e.preventDefault()
-            if (navHighlightedIndex >= 0 && navHighlightedIndex < navSuggestions.length) {
-              navigateToSuggestion(navSuggestions[navHighlightedIndex])
-            } else {
-              navigateToSearchPage()
-            }
+            // Always run the search — never open the highlighted suggestion.
+            // See SearchBar.handleSubmit: a hover used to set the same index the
+            // arrow keys use, so the button opened whatever the mouse crossed.
+            navigateToSearchPage()
           }}>
             <div className="navbar-search-inner">
               {navIsSearching ? (
@@ -525,7 +524,6 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
                             e.preventDefault()
                             navigateToSuggestion(suggestion)
                           }}
-                          onMouseEnter={() => setNavHighlightedIndex(idx)}
                         >
                           {suggestion.kind === 'tour' && suggestion.image ? (
                             <div className="search-suggestion-thumb">
