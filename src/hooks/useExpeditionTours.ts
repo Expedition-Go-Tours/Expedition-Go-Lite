@@ -1329,18 +1329,28 @@ const CATALOG_PAGE_SIZE = 50
 export interface PlaceScope {
   /** What the user searched (resolved place name). */
   requested: string
+  /** Canonical display name for the scope (e.g. "Dome", "Central Region"). */
+  displayName?: string
+  /**
+   * Which mode the server resolved the query to:
+   *  - `place`           — the query is a place and it has its own tours
+   *  - `region-fallback` — the query is a place with no tours; widened to its region
+   *  - `text`            — the query isn't a place; results are a text search
+   */
+  mode?: 'place' | 'region-fallback' | 'text'
   /** Set when the place had no tours and the listing widened to its region. */
   fallbackRegion: string | null
 }
 
-export function useAllExpeditionTours(opts?: { mood?: string; near?: string; place?: string; search?: string; enabled?: boolean }) {
+export function useAllExpeditionTours(opts?: { mood?: string; near?: string; place?: string; search?: string; q?: string; enabled?: boolean }) {
   const mood = opts?.mood || ''
   const near = opts?.near || ''
   const place = opts?.place || ''
   const search = opts?.search || ''
+  const q = opts?.q || ''
   const enabled = opts?.enabled !== false
   return useQuery({
-    queryKey: ['expedition', 'tours', 'all', mood, near, place, search],
+    queryKey: ['expedition', 'tours', 'all', mood, near, place, search, q],
     staleTime: 5 * 60_000,
     enabled,
     queryFn: async (): Promise<{ tours: TourCardData[]; placeScope: PlaceScope | null }> => {
@@ -1349,7 +1359,9 @@ export function useAllExpeditionTours(opts?: { mood?: string; near?: string; pla
       const nearParam = near ? `&near=${encodeURIComponent(near)}` : ''
       const placeParam = place ? `&place=${encodeURIComponent(place)}` : ''
       const searchParam = search ? `&search=${encodeURIComponent(search)}` : ''
-      const extra = `${moodParam}${nearParam}${placeParam}${searchParam}`
+      // Unified query: the server resolves it and decides place vs text scope.
+      const qParam = q ? `&q=${encodeURIComponent(q)}` : ''
+      const extra = `${moodParam}${nearParam}${placeParam}${searchParam}${qParam}`
 
       // Fetch first page to get totalPages (and the place-scope metadata)
       const first = await expeditionFetchRaw(`/expedition/tours?page=1&limit=${CATALOG_PAGE_SIZE}${extra}`)

@@ -7,7 +7,6 @@ import TourCard from '../components/TourCard'
 import TourCardSkeleton from '../components/TourCardSkeleton'
 import NoToursEmptyState from '../components/NoToursEmptyState'
 import { useLocationSearch } from '../context/LocationSearchContext'
-import { usePlaceResolve } from '../hooks/usePlaceResolve'
 
 import SEO, { buildItemListSchema, buildBreadcrumbSchema } from '../components/SEO'
 import { useAllExpeditionTours, useTourFilterOptions, type TourCardData } from '../hooks/useExpeditionTours'
@@ -148,19 +147,6 @@ export default function AllToursPage() {
   const [drawerOpen, setDrawerOpen] = useState(false)
 
   const sortByVal = (sortBy[0] || 'recommended') as SortKey
-  // A `place` param is only place-scoped once it resolves to a real place;
-  // otherwise it's treated as a plain text search (so a non-place query still
-  // returns relevance results instead of the whole catalogue). The listing
-  // fetch is gated until the resolve settles so there's no text→place flicker.
-  const { data: resolvedPlace, isFetching: isResolvingPlace, isPending: isPlacePending } = usePlaceResolve(placeParam, 'expedition')
-  const placeValue = resolvedPlace?.displayName || resolvedPlace?.name || ''
-  const isPlaceQuery = !!placeValue
-  // The listing query is disabled while the place resolves (see `enabled` below),
-  // and a disabled react-query query reports `isLoading === false` — so without
-  // this the header would briefly show "0 tours in {place}" before the region
-  // fallback arrives. `isPlaceBusy` also covers the frame before the resolve
-  // fetch starts (isPending with no data yet).
-  const isPlaceBusy = !!placeParam && (isResolvingPlace || (isPlacePending && !resolvedPlace))
 
   const TOUR_TYPE_OPTIONS = useMemo(() => [
     { value: 'day', label: t('allTours.typeDay') },
@@ -202,21 +188,30 @@ export default function AllToursPage() {
     { value: 'price-high', label: t('allTours.sortPriceHigh') },
   ] as const, [t])
 
-  const { data: allToursData, isLoading, isError, error } = useAllExpeditionTours({
+  // Unified listing query: the client sends the RAW query and the SERVER decides
+  // whether it's a place (scope to it, with region fallback) or a plain text
+  // search. One request — no resolve→listing waterfall, so there is no window in
+  // which the page can render a placeholder scope.
+  const { data: allToursData, isPending, isError, error } = useAllExpeditionTours({
     mood: moodParam,
     near: nearParam,
-    // Send the user's RAW query (the backend re-resolves it), not the composed
-    // displayName: "Elmina Castle, Central" doesn't round-trip, but "elmina"
-    // resolves to the same place. Only when the query resolved to a real place.
-    place: isPlaceQuery ? placeParam : '',
-    search: !isPlaceQuery && placeParam ? placeParam : '',
-    enabled: !isPlaceBusy,
+    q: placeParam,
   })
   const allTours = allToursData?.tours
+  // Read scope fields straight off the hook result rather than via an
+  // intermediate object binding — a local object reference is treated as
+  // mutable by React Compiler, which then can't preserve this component's
+  // manual memoization.
+  //
   // When the backend widened the search to the place's region (the place itself
   // has no tours), the result is region-level, not place-level — rank by
   // popularity instead of place relevance and label it honestly.
   const fallbackRegion = allToursData?.placeScope?.fallbackRegion ?? null
+  const placeValue = allToursData?.placeScope?.displayName || allToursData?.placeScope?.requested || placeParam
+  // Only a true in-place scope gets place ranking; region fallback and text
+  // searches sort by popularity. Computed in the component body (not inside the
+  // memo) so the memo's dependency list stays compiler-friendly.
+  const isPlaceQuery = allToursData?.placeScope?.mode === 'place'
   const effectiveSortKey: SortKey =
     sortByVal === 'near'
       ? 'near'
@@ -282,15 +277,13 @@ export default function AllToursPage() {
     && attractionToursData !== undefined
     && attractionToursData.length === 0
 
-  // Single "we don't know the result set yet" flag. Covers three windows that
-  // react-query's `isLoading` alone misses:
-  //   1. the place-resolution window, during which the listing query is disabled
-  //      (a disabled query reports isLoading === false) — this is what used to
-  //      flash "0 tours in {place}" before the region fallback arrived;
-  //   2. the frame before the resolve fetch starts (isPending, no data yet);
-  //   3. the attraction-tours fetch, before which the grid would show the
-  //      unfiltered place list instead of the attraction's tours.
-  const isBusy = isLoading || isPlaceBusy || (!!attractionParam && isLoadingAttractionTours)
+  // Single "we don't know the result set yet" flag. `isPending` is react-query's
+  // "no data for the current query key yet", which covers the first frame (before
+  // the fetch starts) as well as the request itself — so the header can never
+  // render a count or scope before the server has told us what it resolved to.
+  // The attraction-tours fetch is included because the grid would otherwise show
+  // the unfiltered place list before the attraction filter is known.
+  const isBusy = isPending || (!!attractionParam && isLoadingAttractionTours)
 
   // Seed the destination filter from a /tours?location=... link (once per value).
   const seededLocationRef = useRef<string | null>(null)
@@ -315,68 +308,71 @@ export default function AllToursPage() {
     window.setTimeout(() => setPage(1), 0)
   }, [tourTypes, destinations, categories, durationFilter, priceFilter, ratingFilter, sortBy])
 
-  const filteredTours = useMemo(() => {
-    let list = allTours || []
+  // React Compiler is enabled in this build and memoizes this automatically.
+  // A manual useMemo it cannot preserve makes it skip the ENTIRE component
+  // (react-hooks/preserve-manual-memoization), and its own analysis handles
+  // deps a dep-array cannot express (e.g. `sortBy[0]` or hook-derived values).
+  const filteredTours = (() => {
+  let list = allTours || []
 
-    if (tourTypes.length > 0) {
-      list = list.filter((tour) => {
-        const isMultiDay = (tour.durationMinutes ?? 0) >= 1440
-        return tourTypes.includes(isMultiDay ? 'multi-day' : 'day')
+  if (tourTypes.length > 0) {
+    list = list.filter((tour) => {
+      const isMultiDay = (tour.durationMinutes ?? 0) >= 1440
+      return tourTypes.includes(isMultiDay ? 'multi-day' : 'day')
+    })
+  }
+  if (durationFilter.length > 0) {
+    list = list.filter((tour) => {
+      const mins = tour.durationMinutes
+      if (mins == null || mins <= 0) return false
+      return durationFilter.some(value => DURATION_BUCKETS.find(b => b.value === value)?.match(mins))
+    })
+  }
+  if (priceFilter.length > 0) {
+    list = list.filter((tour) => {
+      const price = tour.priceValue
+      if (price == null) return false
+      return priceFilter.some(value => PRICE_RANGES.find(r => r.value === value)?.match(price))
+    })
+  }
+  if (ratingFilter.length > 0) {
+    const minRating = Math.min(...ratingFilter.map(Number))
+    list = list.filter((tour) => (tour.ratingValue ?? 0) >= minRating)
+  }
+  if (categories.length > 0) {
+    list = list.filter((tour) => categories.some(c => c.toLowerCase() === tour.category?.toLowerCase()))
+  }
+  if (destinations.length > 0) {
+    list = list.filter((tour) => {
+      const locLower = tour.location.toLowerCase()
+      return destinations.some((d) => {
+        const dl = d.toLowerCase()
+        return locLower === dl || locLower.startsWith(`${dl},`) || locLower.includes(`, ${dl}`)
       })
-    }
-    if (durationFilter.length > 0) {
-      list = list.filter((tour) => {
-        const mins = tour.durationMinutes
-        if (mins == null || mins <= 0) return false
-        return durationFilter.some(value => DURATION_BUCKETS.find(b => b.value === value)?.match(mins))
-      })
-    }
-    if (priceFilter.length > 0) {
-      list = list.filter((tour) => {
-        const price = tour.priceValue
-        if (price == null) return false
-        return priceFilter.some(value => PRICE_RANGES.find(r => r.value === value)?.match(price))
-      })
-    }
-    if (ratingFilter.length > 0) {
-      const minRating = Math.min(...ratingFilter.map(Number))
-      list = list.filter((tour) => (tour.ratingValue ?? 0) >= minRating)
-    }
-    if (categories.length > 0) {
-      list = list.filter((tour) => categories.some(c => c.toLowerCase() === tour.category?.toLowerCase()))
-    }
-    if (destinations.length > 0) {
-      list = list.filter((tour) => {
-        const locLower = tour.location.toLowerCase()
-        return destinations.some((d) => {
-          const dl = d.toLowerCase()
-          return locLower === dl || locLower.startsWith(`${dl},`) || locLower.includes(`, ${dl}`)
-        })
-      })
-    }
+    })
+  }
 
-    // Filter by section algorithm (tours curated by the homepage backend)
-    if (sectionTourIds) {
-      list = list.filter(tour => sectionTourIds.has(tour.id))
-    }
+  // Filter by section algorithm (tours curated by the homepage backend)
+  if (sectionTourIds) {
+    list = list.filter(tour => sectionTourIds.has(tour.id))
+  }
 
-    // Filter by attraction (tours that visit a specific attraction)
-    if (attractionTourIds) {
-      list = list.filter(tour => attractionTourIds.has(tour.id))
-    }
+  // Filter by attraction (tours that visit a specific attraction)
+  if (attractionTourIds) {
+    list = list.filter(tour => attractionTourIds.has(tour.id))
+  }
 
-    return applySort(list, effectiveSortKey, nearParam)
-  }, [allTours, tourTypes, durationFilter, priceFilter, ratingFilter, categories, destinations, effectiveSortKey, nearParam, sectionTourIds, attractionTourIds, DURATION_BUCKETS, PRICE_RANGES])
+  return applySort(list, effectiveSortKey, nearParam)
+  })()
 
   const totalCount = filteredTours.length
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE))
   const hasNextPage = page < totalPages
   const hasPrevPage = page > 1
 
-  const displayTours = useMemo(
-    () => filteredTours.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
-    [filteredTours, page],
-  )
+  // Cheap slice — no manual memo (React Compiler memoizes it, and a manual one
+  // it can't preserve makes it skip the whole component).
+  const displayTours = filteredTours.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   const filterOptions = useMemo(() => {
     const optionDestinations = [...(filterOptionData?.destinations || [])]
