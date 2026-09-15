@@ -98,23 +98,41 @@ export default function NoToursEmptyState({ location = '', attraction, region, o
   const offers = (offerTours ?? []).map(mapToTourCard)
   const place = location || t('empty.thisPlace', { defaultValue: 'this destination' })
 
-  // Honest copy: we don't have tours for this place yet
-  const bodyCopy = t('empty.body', {
-    location: place,
-    defaultValue:
-      'We\'re not quite there yet — but we\'re working on it. We don\'t have experiences for {{location}} just yet, but there\'s plenty to discover.',
-  })
-
-  // Scoped CTA text
-  const scopedCta = resolvedAttraction
-    ? t('empty.browseAttraction', {
-        attraction: resolvedAttraction,
-        defaultValue: 'Browse experiences in {{attraction}}',
+  // Honest copy that names what was ACTUALLY searched. For an attraction the
+  // `location` prop is the surrounding REGION, so saying "we don't have
+  // experiences for Ashanti Region" while listing three of them contradicts
+  // itself — name the attraction and point at the region instead.
+  const bodyCopy = resolvedAttraction
+    ? resolvedRegion
+      ? t('empty.bodyAttraction', {
+          attraction: resolvedAttraction,
+          region: resolvedRegion,
+          defaultValue:
+            "We don't have experiences for {{attraction}} just yet — but there are plenty across {{region}}.",
+        })
+      : t('empty.bodyAttractionNoRegion', {
+          attraction: resolvedAttraction,
+          defaultValue:
+            "We don't have experiences for {{attraction}} just yet — but there's plenty to discover nearby.",
+        })
+    : t('empty.body', {
+        location: place,
+        defaultValue:
+          'We\'re not quite there yet — but we\'re working on it. We don\'t have experiences for {{location}} just yet, but there\'s plenty to discover.',
       })
-    : resolvedRegion
+
+  // Scoped CTA text. Prefer the REGION — that is what the listings below
+  // actually cover, so "Browse experiences in Ashanti Region" matches what the
+  // user is about to see (naming a single attraction was misleading).
+  const scopedCta = resolvedRegion
     ? t('empty.browseRegion', {
         region: resolvedRegion,
         defaultValue: 'Browse experiences in {{region}}',
+      })
+    : resolvedAttraction
+    ? t('empty.browseAttraction', {
+        attraction: resolvedAttraction,
+        defaultValue: 'Browse experiences in {{attraction}}',
       })
     : t('empty.browseAll', { defaultValue: 'Browse all experiences' })
 

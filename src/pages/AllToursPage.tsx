@@ -644,7 +644,10 @@ export default function AllToursPage() {
             location={placeValue || placeParam}
             attraction={attractionParam}
             region={placeValue || placeParam}
-            onBrowseAll={() => navigate('/tours')}
+            onBrowseAll={() => {
+              const target = placeValue || placeParam
+              navigate(target ? `/tours?place=${encodeURIComponent(target)}` : '/tours')
+            }}
           />
         )}
 
