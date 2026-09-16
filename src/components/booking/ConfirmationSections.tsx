@@ -48,7 +48,7 @@ export default function ConfirmationSections({
         <TourCarouselSection
           title="Deals for you"
           titleRight={
-            cancellationDeadline && cancellationDeadline.getTime() > Date.now()
+            cancellationDeadline
               ? <CountdownTimer deadline={cancellationDeadline} />
               : null
           }

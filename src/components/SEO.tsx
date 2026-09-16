@@ -18,7 +18,6 @@ interface SEOProps {
   robots?: string
   /** Product-specific */
   price?: { amount: string; currency: string }
-  rating?: { value: number; count: number }
   /** Article-specific */
   publishedTime?: string
   modifiedTime?: string
@@ -39,7 +38,6 @@ export default function SEO({
   canonical,
   robots = 'index, follow',
   price,
-  rating: _rating,
   publishedTime,
   modifiedTime,
   author,

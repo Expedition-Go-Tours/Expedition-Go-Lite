@@ -152,7 +152,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // ── Register with session manager ──────────────────────────────────
   useEffect(() => {
-    const unsub = onSessionInvalidated((_reason) => {
+    const unsub = onSessionInvalidated(() => {
       setIsSessionExpired(true)
       if (isProtectedPage(window.location.pathname)) {
         setShowAuthModal(true)

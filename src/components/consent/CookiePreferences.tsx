@@ -174,6 +174,7 @@ function PreferencesPanel({ consent, onClose, onSave, onAcceptAll, onRejectNonEs
                     <thead>
                       <tr>
                         <th>{t('cookies.inventory.name', { defaultValue: 'Name' })}</th>
+                        <th>{t('cookies.inventory.type', { defaultValue: 'Type' })}</th>
                         <th>{t('cookies.inventory.provider', { defaultValue: 'Provider' })}</th>
                         <th>{t('cookies.inventory.purpose', { defaultValue: 'Purpose' })}</th>
                         <th>{t('cookies.inventory.duration', { defaultValue: 'Duration' })}</th>
@@ -183,6 +184,9 @@ function PreferencesPanel({ consent, onClose, onSave, onAcceptAll, onRejectNonEs
                       {entries.map((entry) => (
                         <tr key={`${category}-${entry.name}`}>
                           <td>{entry.name}</td>
+                          <td className="cookie-table__type">
+                            {t(`cookies.inventory.types.${entry.kind}`, { defaultValue: entry.kind })}
+                          </td>
                           <td>{entry.provider}</td>
                           <td>
                             {t(`cookies.inventory.purposes.${entry.purposeKey}`, {

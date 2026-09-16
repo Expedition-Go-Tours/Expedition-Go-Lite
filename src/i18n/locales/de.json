@@ -1067,9 +1067,15 @@
     },
     "inventory": {
       "name": "Name",
+      "type": "Typ",
       "provider": "Anbieter",
       "purpose": "Zweck",
       "duration": "Dauer",
+      "types": {
+        "cookie": "Cookie",
+        "storage": "Speicher",
+        "network": "Anfrage"
+      },
       "purposes": {
         "consentRecord": "Speichert Ihre Cookie-Auswahl",
         "sessionSecurity": "Hält Ihr Konto und Ihre Anbietersitzung sicher",
@@ -1082,6 +1088,8 @@
         "languageChoice": "Merkt sich die von Ihnen gewählte Sprache",
         "currencyChoice": "Merkt sich die von Ihnen gewählte Währung",
         "currencyRates": "Speichert Wechselkurse zwischen, damit Preise sofort angezeigt werden",
+        "stripeFraud": "Erkennt und verhindert Zahlungsbetrug",
+        "stripeSession": "Hält die Zahlungssitzung beim Bezahlvorgang sicher",
         "locationHistory": "Merkt sich die von Ihnen gesuchten Reiseziele",
         "recentSearches": "Zeigt Ihre letzten Suchen im Suchfeld",
         "wishlist": "Speichert die von Ihnen vorgemerkten Erlebnisse",
@@ -1093,12 +1101,14 @@
       },
       "durations": {
         "session": "Sitzung",
+        "minutes30": "30 Minuten",
         "hour1": "1 Stunde",
         "hours12": "12 Stunden",
         "hours24": "24 Stunden",
         "day1": "1 Tag",
         "days7": "7 Tage",
         "days180": "180 Tage",
+        "days365": "1 Jahr",
         "persistent": "Bis Sie sie löschen",
         "untilSignOut": "Bis Sie sich abmelden",
         "untilBookingCompletes": "Bis die Buchung abgeschlossen ist",

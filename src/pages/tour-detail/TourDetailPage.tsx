@@ -918,7 +918,6 @@ export default function TourDetailPage() {
         image={mergedImages[0] || undefined}
         type="product"
         price={{ amount: String(tour.price), currency: 'USD' }}
-        rating={tour.rating && tour.reviewCount ? { value: tour.rating, count: tour.reviewCount } : undefined}
         jsonLd={[
           buildProductSchema({
             title: tour.title,
