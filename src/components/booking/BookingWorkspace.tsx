@@ -25,6 +25,7 @@ import { extractMeetingInfo, formatDuration, type TourCardData } from '../../hoo
 import { useRecommendedTours, type RecommendedTour } from '../../hooks/useRecommendedTours'
 import { formatItineraryDuration, type ItineraryDay } from '../../lib/tourTypes'
 import { currencySymbol } from '../../lib/currencySymbol'
+import CancelBookingModal from './CancelBookingModal'
 import {
   bookingStatusMeta,
   evaluateCancellationPolicy,
@@ -466,6 +467,7 @@ export default function BookingWorkspace({ id, onClose }: { id?: string; onClose
   const navigate = useNavigate()
   const [copied, setCopied] = useState(false)
   const [cancelError, setCancelError] = useState<string | null>(null)
+  const [cancelModalOpen, setCancelModalOpen] = useState(false)
 
   const detailQuery = useExpeditionBookingDetail(id)
   const detail = detailQuery.data as Record<string, any> | undefined
@@ -647,18 +649,13 @@ export default function BookingWorkspace({ id, onClose }: { id?: string; onClose
   const handleCancel = () => {
     if (!detail?.id) return
     setCancelError(null)
-    const refundLine = !isPaid
-      ? 'This reservation has not been charged — no payment will be taken.'
-      : cancellation.refundPct <= 0
-        ? 'This booking is non-refundable, so no refund will be issued.'
-        : cancellation.refundPct >= 100
-          ? 'Free cancellation — you will receive a full refund.'
-          : `A ${cancellation.refundPct}% partial refund will be issued per the cancellation policy.`
-    const confirmed = window.confirm(`Cancel this booking?\n\n${refundLine}`)
-    if (!confirmed) return
+    setCancelModalOpen(true)
+  }
 
+  const handleCancelConfirm = (reason: string) => {
+    if (!detail?.id) return
     cancelBooking.mutate(
-      { id: detail.id, reason: 'Customer requested cancellation' },
+      { id: detail.id, reason },
       {
         onSuccess: closeDetail,
         onError: (err: Error) => setCancelError(err.message),
@@ -1206,6 +1203,21 @@ export default function BookingWorkspace({ id, onClose }: { id?: string; onClose
           location={tour?.city || tour?.country || ''}
         />
       )}
+
+      {/* Cancel booking confirmation modal */}
+      <CancelBookingModal
+        isOpen={cancelModalOpen}
+        onClose={() => { if (!cancelBooking.isPending) setCancelModalOpen(false) }}
+        onConfirm={handleCancelConfirm}
+        isPending={cancelBooking.isPending}
+        error={cancelError}
+        refundPct={cancellation.refundPct}
+        isPaid={isPaid}
+        bookingNumber={detail?.bookingNumber}
+        tourTitle={tour?.title}
+        refundAmount={isPaid && cancellation.refundPct > 0 ? gross * cancellation.refundPct / 100 : undefined}
+        currency={currency}
+      />
     </div>
   )
 }

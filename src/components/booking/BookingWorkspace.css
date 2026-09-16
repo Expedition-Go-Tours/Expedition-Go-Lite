@@ -1495,3 +1495,198 @@
 .ws-review-invite .ws-action-btn {
   width: 100%;
 }
+
+/* ============================================================
+   CANCEL BOOKING MODAL
+   Professional multi-step confirmation flow.
+   ============================================================ */
+
+.cb-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.cb-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(9, 30, 24, 0.55);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+.cb-card {
+  position: relative;
+  width: 100%;
+  max-width: 460px;
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 28px 64px -16px rgba(0, 0, 0, 0.22), 0 8px 20px -8px rgba(0, 0, 0, 0.1);
+  padding: 32px 28px 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0;
+  animation: cb-enter 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes cb-enter {
+  from { opacity: 0; transform: translateY(12px) scale(0.97); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Close */
+.cb-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 50%;
+  background: #f3f5f4;
+  color: #6b7a74;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.cb-close:hover { background: #e6ece9; color: #3f4f49; }
+
+/* Icon circles */
+.cb-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  margin-bottom: 18px;
+  flex-shrink: 0;
+}
+
+.cb-icon-amber {
+  background: #fff7ed;
+  color: #d97706;
+}
+.cb-icon-green {
+  background: #ecfdf3;
+  color: #059669;
+}
+.cb-icon-rose {
+  background: #fef3f2;
+  color: #dc2626;
+}
+
+/* Typography */
+.cb-title {
+  margin: 0 0 8px;
+  font-family: var(--font-heading);
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--bv-forest, #065f46);
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+.cb-body {
+  margin: 0 0 20px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--bv-text, #344054);
+  max-width: 380px;
+}
+.cb-body strong { color: var(--bv-ink, #101828); }
+
+.cb-note {
+  margin: -12px 0 20px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--bv-muted, #667085);
+  padding: 10px 14px;
+  background: var(--bv-surface-2, #f9fafb);
+  border-radius: 10px;
+  max-width: 360px;
+}
+
+/* Refund badge */
+.cb-refund-badge {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 14px 20px;
+  background: var(--bv-success-bg, #ecfdf3);
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  min-width: 180px;
+}
+
+.cb-refund-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--bv-success-text, #067647);
+}
+
+.cb-refund-value {
+  font-family: var(--font-heading);
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--bv-accent-strong, #15803d);
+  letter-spacing: -0.02em;
+}
+
+/* Error */
+.cb-error {
+  margin: 0 0 14px;
+  padding: 10px 14px;
+  background: var(--bv-danger-bg, #fef3f2);
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--bv-danger-text, #b42318);
+  max-width: 360px;
+  width: 100%;
+}
+
+/* Actions */
+.cb-actions {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.cb-btn {
+  flex: 1;
+  min-height: 44px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.cb-btn-danger-solid {
+  background: #dc2626;
+  border-color: #dc2626;
+  color: #fff;
+}
+.cb-btn-danger-solid:hover:not(:disabled) {
+  background: #b91c1c;
+  border-color: #b91c1c;
+}
+
+/* Spinner */
+.cb-spin {
+  animation: cb-spin 0.7s linear infinite;
+}
+@keyframes cb-spin {
+  to { transform: rotate(360deg); }
+}
