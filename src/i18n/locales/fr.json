@@ -166,6 +166,7 @@
     "refundPolicy": "Politique de Remboursement",
     "careers": "Carrières",
     "cookiesPolicy": "Politique de Cookies",
+    "cookieSettings": "Paramètres des cookies",
     "listYourTours": "Publiez Vos Circuits",
     "foundation": "Expedition-Go Foundation",
     "supplierDashboard": "Tableau de Bord Fournisseur",
@@ -1035,5 +1036,81 @@
     "sectionSpecial": "Offres Spéciales",
     "sectionAttractions": "Top des Attractions à Proximité",
     "sectionNew": "Nouvelles Expériences"
+  },
+  "cookies": {
+    "banner": {
+      "title": "Votre vie privée, votre choix",
+      "text": "Nous utilisons des cookies strictement nécessaires au bon fonctionnement sécurisé de ce site. Avec votre consentement, nous utilisons aussi des cookies facultatifs pour mémoriser vos préférences et comprendre comment le site est utilisé. Vous pouvez modifier votre choix à tout moment.",
+      "policyLink": "Politique de Cookies",
+      "acceptAll": "Tout accepter",
+      "rejectNonEssential": "Refuser les non essentiels",
+      "managePreferences": "Gérer les préférences"
+    },
+    "preferences": {
+      "title": "Préférences de cookies",
+      "intro": "Choisissez les cookies facultatifs que nous pouvons utiliser. Les cookies strictement nécessaires sont toujours actifs, car le site ne peut pas fonctionner sans eux. Vous pouvez modifier ce choix à tout moment via « Paramètres des cookies » en bas de page.",
+      "alwaysOn": "Toujours actifs",
+      "save": "Enregistrer les préférences",
+      "noneInUse": "Aucun cookie de cette catégorie n'est actuellement utilisé."
+    },
+    "categories": {
+      "necessary": {
+        "title": "Strictement nécessaires",
+        "description": "Indispensables à la sécurité, à la connexion, aux réservations, aux paiements et à la mémorisation de vos choix en matière de cookies. Ils ne peuvent pas être désactivés."
+      },
+      "functional": {
+        "title": "Fonctionnels et personnalisation",
+        "description": "Mémorisent des choix facultatifs tels que votre liste d'envies, vos recherches récentes et votre localisation approximative pour que les fonctionnalités se comportent comme vous l'attendez."
+      },
+      "analytics": {
+        "title": "Analytiques et performance",
+        "description": "Nous aident à comprendre quelles pages, recherches et expériences sont utiles afin de les améliorer."
+      },
+      "marketing": {
+        "title": "Publicité et marketing",
+        "description": "Servent à mesurer et cibler la publicité. Aucun n'est actuellement utilisé."
+      }
+    },
+    "inventory": {
+      "name": "Nom",
+      "provider": "Fournisseur",
+      "purpose": "Finalité",
+      "duration": "Durée",
+      "purposes": {
+        "consentRecord": "Enregistre vos choix en matière de cookies",
+        "sessionSecurity": "Sécurise votre compte et votre session fournisseur",
+        "sessionRenewal": "Renouvelle votre session sans vous demander de vous reconnecter",
+        "signedInAccount": "Mémorise le compte avec lequel vous êtes connecté",
+        "authReturnTo": "Vous ramène à la page où vous étiez après la connexion",
+        "bookingDraft": "Conserve une réservation en cours pour ne rien perdre en cas d'actualisation",
+        "updateReload": "Évite une page cassée juste après une mise à jour du site",
+        "bookingsSeen": "Mémorise les réservations que vous avez déjà consultées",
+        "languageChoice": "Mémorise la langue que vous avez choisie",
+        "currencyChoice": "Mémorise la devise que vous avez choisie",
+        "currencyRates": "Met en cache les taux de change pour afficher les prix instantanément",
+        "locationHistory": "Mémorise les destinations que vous avez recherchées",
+        "recentSearches": "Affiche vos recherches récentes dans le champ de recherche",
+        "wishlist": "Enregistre les expériences que vous mettez de côté",
+        "continuePlanning": "Alimente la ligne « continuer à planifier » avec les expériences consultées",
+        "approximateLocation": "Mémorise votre localisation approximative pour les résultats à proximité",
+        "onetapDismissal": "Mémorise que vous avez fermé l'invite de connexion Google",
+        "maps": "Affiche les cartes des points de prise en charge et des lieux de rendez-vous",
+        "analyticsEvents": "Mesure les pages vues, les recherches et les clics pour améliorer le site"
+      },
+      "durations": {
+        "session": "Session",
+        "hour1": "1 heure",
+        "hours12": "12 heures",
+        "hours24": "24 heures",
+        "day1": "1 jour",
+        "days7": "7 jours",
+        "days180": "180 jours",
+        "persistent": "Jusqu'à suppression",
+        "untilSignOut": "Jusqu'à la déconnexion",
+        "untilBookingCompletes": "Jusqu'à la fin de la réservation",
+        "entries2": "2 entrées",
+        "entries5": "5 entrées"
+      }
+    }
   }
 }

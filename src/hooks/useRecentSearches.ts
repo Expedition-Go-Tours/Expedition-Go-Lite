@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
+import { readGated, writeGated } from '../lib/consentGatedStorage'
 
 export interface RecentSearch {
   slug: string
@@ -19,7 +20,7 @@ const MAX_ITEMS = 5
 
 function load(): RecentSearch[] {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = readGated(STORAGE_KEY)
     if (!raw) return []
     return JSON.parse(raw) as RecentSearch[]
   } catch {
@@ -29,7 +30,7 @@ function load(): RecentSearch[] {
 
 function save(items: RecentSearch[]) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
+    writeGated(STORAGE_KEY, JSON.stringify(items))
   } catch { /* quota exceeded etc */ }
 }
 

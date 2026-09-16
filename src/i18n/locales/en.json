@@ -175,6 +175,7 @@
     "refundPolicy": "Refund Policy",
     "careers": "Careers",
     "cookiesPolicy": "Cookies Policy",
+    "cookieSettings": "Cookie Settings",
     "listYourTours": "List Your Tours",
     "foundation": "Expedition-Go Foundation",
     "supplierDashboard": "Supplier Dashboard",
@@ -1087,5 +1088,81 @@
     "sectionSpecial": "Special Offers",
     "sectionAttractions": "Top Attractions Nearby",
     "sectionNew": "New Experiences"
+  },
+  "cookies": {
+    "banner": {
+      "title": "Your privacy, your choice",
+      "text": "We use strictly necessary cookies to run this site securely. With your consent we also use optional cookies to remember your preferences and understand how the site is used. You can change your choice at any time.",
+      "policyLink": "Cookie Policy",
+      "acceptAll": "Accept all",
+      "rejectNonEssential": "Reject non-essential",
+      "managePreferences": "Manage preferences"
+    },
+    "preferences": {
+      "title": "Cookie preferences",
+      "intro": "Choose which optional cookies we may use. Strictly necessary cookies are always on because the site cannot work without them. You can change this at any time from “Cookie Settings” in the footer.",
+      "alwaysOn": "Always on",
+      "save": "Save preferences",
+      "noneInUse": "No cookies in this category are currently in use."
+    },
+    "categories": {
+      "necessary": {
+        "title": "Strictly necessary",
+        "description": "Required for security, sign-in, bookings, payments and remembering your cookie choices. These cannot be switched off."
+      },
+      "functional": {
+        "title": "Functional and personalisation",
+        "description": "Remember optional choices such as your wishlist, recent searches and approximate location so features work the way you expect."
+      },
+      "analytics": {
+        "title": "Analytics and performance",
+        "description": "Help us understand which pages, searches and experiences are useful so we can improve them."
+      },
+      "marketing": {
+        "title": "Advertising and marketing",
+        "description": "Used to measure and target advertising. None are currently in use."
+      }
+    },
+    "inventory": {
+      "name": "Name",
+      "provider": "Provider",
+      "purpose": "Purpose",
+      "duration": "Duration",
+      "purposes": {
+        "consentRecord": "Records your cookie choices",
+        "sessionSecurity": "Keeps your account and supplier session secure",
+        "sessionRenewal": "Renews your session without asking you to sign in again",
+        "signedInAccount": "Remembers the account you are signed in with",
+        "authReturnTo": "Returns you to the page you were on after signing in",
+        "bookingDraft": "Keeps a booking in progress so nothing is lost if you refresh",
+        "updateReload": "Prevents a broken page immediately after a site update",
+        "bookingsSeen": "Remembers which bookings you have already seen",
+        "languageChoice": "Remembers the language you chose",
+        "currencyChoice": "Remembers the currency you chose",
+        "currencyRates": "Caches exchange rates so prices display instantly",
+        "locationHistory": "Remembers the destinations you have searched",
+        "recentSearches": "Shows your recent searches in the search box",
+        "wishlist": "Saves the experiences you shortlist",
+        "continuePlanning": "Powers the “continue planning” row of experiences you viewed",
+        "approximateLocation": "Remembers your approximate location for nearby results",
+        "onetapDismissal": "Remembers that you dismissed the Google sign-in prompt",
+        "maps": "Displays maps for pick-up points and meeting locations",
+        "analyticsEvents": "Measures pages viewed, searches and clicks so we can improve the site"
+      },
+      "durations": {
+        "session": "Session",
+        "hour1": "1 hour",
+        "hours12": "12 hours",
+        "hours24": "24 hours",
+        "day1": "1 day",
+        "days7": "7 days",
+        "days180": "180 days",
+        "persistent": "Until you clear it",
+        "untilSignOut": "Until you sign out",
+        "untilBookingCompletes": "Until the booking is completed",
+        "entries2": "2 entries",
+        "entries5": "5 entries"
+      }
+    }
   }
 }

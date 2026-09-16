@@ -166,6 +166,7 @@
     "refundPolicy": "Rückerstattungsrichtlinie",
     "careers": "Karriere",
     "cookiesPolicy": "Cookie-Richtlinie",
+    "cookieSettings": "Cookie-Einstellungen",
     "listYourTours": "Touren Anbieden",
     "foundation": "Expedition-Go Foundation",
     "supplierDashboard": "Anbieter-Dashboard",
@@ -1029,5 +1030,81 @@
     "sectionSpecial": "Sonderangebote",
     "sectionAttractions": "Top-Attraktionen in der Nähe",
     "sectionNew": "Neue Erlebnisse"
+  },
+  "cookies": {
+    "banner": {
+      "title": "Ihre Privatsphäre, Ihre Wahl",
+      "text": "Wir verwenden unbedingt erforderliche Cookies, damit diese Website sicher funktioniert. Mit Ihrer Einwilligung nutzen wir außerdem optionale Cookies, um Ihre Einstellungen zu speichern und zu verstehen, wie die Website genutzt wird. Sie können Ihre Wahl jederzeit ändern.",
+      "policyLink": "Cookie-Richtlinie",
+      "acceptAll": "Alle akzeptieren",
+      "rejectNonEssential": "Nicht notwendige ablehnen",
+      "managePreferences": "Einstellungen verwalten"
+    },
+    "preferences": {
+      "title": "Cookie-Einstellungen",
+      "intro": "Wählen Sie, welche optionalen Cookies wir verwenden dürfen. Unbedingt erforderliche Cookies sind immer aktiv, da die Website ohne sie nicht funktioniert. Sie können dies jederzeit über „Cookie-Einstellungen“ in der Fußzeile ändern.",
+      "alwaysOn": "Immer aktiv",
+      "save": "Einstellungen speichern",
+      "noneInUse": "In dieser Kategorie werden derzeit keine Cookies verwendet."
+    },
+    "categories": {
+      "necessary": {
+        "title": "Unbedingt erforderlich",
+        "description": "Erforderlich für Sicherheit, Anmeldung, Buchungen, Zahlungen und das Speichern Ihrer Cookie-Auswahl. Sie können nicht deaktiviert werden."
+      },
+      "functional": {
+        "title": "Funktional und Personalisierung",
+        "description": "Speichern optionale Auswahlen wie Ihre Merkliste, Ihre letzten Suchen und Ihren ungefähren Standort, damit Funktionen wie erwartet arbeiten."
+      },
+      "analytics": {
+        "title": "Analyse und Leistung",
+        "description": "Helfen uns zu verstehen, welche Seiten, Suchen und Erlebnisse nützlich sind, damit wir sie verbessern können."
+      },
+      "marketing": {
+        "title": "Werbung und Marketing",
+        "description": "Dienen der Messung und Ausrichtung von Werbung. Derzeit ist keine im Einsatz."
+      }
+    },
+    "inventory": {
+      "name": "Name",
+      "provider": "Anbieter",
+      "purpose": "Zweck",
+      "duration": "Dauer",
+      "purposes": {
+        "consentRecord": "Speichert Ihre Cookie-Auswahl",
+        "sessionSecurity": "Hält Ihr Konto und Ihre Anbietersitzung sicher",
+        "sessionRenewal": "Erneuert Ihre Sitzung, ohne eine erneute Anmeldung zu verlangen",
+        "signedInAccount": "Merkt sich das Konto, mit dem Sie angemeldet sind",
+        "authReturnTo": "Bringt Sie nach der Anmeldung zurück zu der Seite, auf der Sie waren",
+        "bookingDraft": "Hält eine laufende Buchung fest, damit beim Neuladen nichts verloren geht",
+        "updateReload": "Verhindert eine defekte Seite direkt nach einem Website-Update",
+        "bookingsSeen": "Merkt sich, welche Buchungen Sie bereits gesehen haben",
+        "languageChoice": "Merkt sich die von Ihnen gewählte Sprache",
+        "currencyChoice": "Merkt sich die von Ihnen gewählte Währung",
+        "currencyRates": "Speichert Wechselkurse zwischen, damit Preise sofort angezeigt werden",
+        "locationHistory": "Merkt sich die von Ihnen gesuchten Reiseziele",
+        "recentSearches": "Zeigt Ihre letzten Suchen im Suchfeld",
+        "wishlist": "Speichert die von Ihnen vorgemerkten Erlebnisse",
+        "continuePlanning": "Speist die Zeile „Planung fortsetzen“ mit den von Ihnen angesehenen Erlebnissen",
+        "approximateLocation": "Merkt sich Ihren ungefähren Standort für Ergebnisse in der Nähe",
+        "onetapDismissal": "Merkt sich, dass Sie den Google-Anmeldehinweis geschlossen haben",
+        "maps": "Zeigt Karten für Abholpunkte und Treffpunkte",
+        "analyticsEvents": "Misst Seitenaufrufe, Suchen und Klicks, um die Website zu verbessern"
+      },
+      "durations": {
+        "session": "Sitzung",
+        "hour1": "1 Stunde",
+        "hours12": "12 Stunden",
+        "hours24": "24 Stunden",
+        "day1": "1 Tag",
+        "days7": "7 Tage",
+        "days180": "180 Tage",
+        "persistent": "Bis Sie sie löschen",
+        "untilSignOut": "Bis Sie sich abmelden",
+        "untilBookingCompletes": "Bis die Buchung abgeschlossen ist",
+        "entries2": "2 Einträge",
+        "entries5": "5 Einträge"
+      }
+    }
   }
 }

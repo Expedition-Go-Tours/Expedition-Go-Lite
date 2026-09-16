@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronDown } from 'lucide-react'
 import { useCurrency, availableCurrencies } from '../contexts/CurrencyContext'
+import { useCookieConsent } from '../context/CookieConsentContext'
 import LanguageCurrencyModal from './LanguageCurrencyModal'
 import './Footer.css'
 import visaSrc from '../assets/icons/visa.svg'
@@ -95,6 +96,7 @@ function FooterAccordion({ title, children, defaultOpen = false, collapsible = t
 export default function Footer() {
   const { t, i18n: activeI18n } = useTranslation()
   const { currency } = useCurrency()
+  const { openPreferences } = useCookieConsent()
   const langCode = (activeI18n.resolvedLanguage ?? activeI18n.language ?? 'en')
     .substring(0, 2)
     .toLowerCase()
@@ -249,6 +251,16 @@ export default function Footer() {
             <a href="/refund-policy" target="_blank" rel="noopener noreferrer" className="footer-bottom-link">{t('footer.refundPolicy')}</a>
             <span className="footer-bottom-divider" aria-hidden="true" />
             <a href="/cookies-policy" target="_blank" rel="noopener noreferrer" className="footer-bottom-link">{t('footer.cookiesPolicy')}</a>
+            <span className="footer-bottom-divider" aria-hidden="true" />
+            {/* Reopens the consent panel. The Cookie Policy commits to this
+                being available from the footer at any time. */}
+            <button
+              type="button"
+              className="footer-bottom-link footer-bottom-button"
+              onClick={openPreferences}
+            >
+              {t('footer.cookieSettings')}
+            </button>
           </div>
         </div>
       </div>

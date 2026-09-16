@@ -4,6 +4,7 @@ import type { Tour, MultiDayTour } from '../components/data'
 import { getStoredAuthUser, getAuthUserId, subscribeToAuthState } from '../lib/auth'
 import { fetchWithAuth } from '../lib/api'
 import { mapRawTourToListing } from '../hooks/useExpeditionTours'
+import { readGated, writeGated } from '../lib/consentGatedStorage'
 
 export interface WishlistItem {
   id: string
@@ -70,7 +71,7 @@ const PENDING_KEY = 'expedition_go_wishlist_pending'
 
 function loadLocalWishlist(): WishlistItem[] {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY)
+    const stored = readGated(STORAGE_KEY)
     return stored ? JSON.parse(stored) : []
   } catch {
     return []
@@ -79,7 +80,7 @@ function loadLocalWishlist(): WishlistItem[] {
 
 function saveLocalWishlist(items: WishlistItem[]) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
+    writeGated(STORAGE_KEY, JSON.stringify(items))
   } catch {
     /* ignore (private browsing / storage full) */
   }
@@ -94,7 +95,7 @@ interface PendingOp {
 
 function loadPendingOps(): PendingOp[] {
   try {
-    const stored = localStorage.getItem(PENDING_KEY)
+    const stored = readGated(PENDING_KEY)
     return stored ? JSON.parse(stored) : []
   } catch {
     return []
@@ -103,7 +104,7 @@ function loadPendingOps(): PendingOp[] {
 
 function savePendingOps(ops: PendingOp[]) {
   try {
-    localStorage.setItem(PENDING_KEY, JSON.stringify(ops))
+    writeGated(PENDING_KEY, JSON.stringify(ops))
   } catch {
     /* ignore (private browsing / storage full) */
   }

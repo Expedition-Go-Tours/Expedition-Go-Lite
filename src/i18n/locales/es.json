@@ -166,6 +166,7 @@
     "refundPolicy": "Política de Reembolso",
     "careers": "Carreras",
     "cookiesPolicy": "Política de Cookies",
+    "cookieSettings": "Configuración de cookies",
     "listYourTours": "Publica Tus Tours",
     "foundation": "Expedition-Go Foundation",
     "supplierDashboard": "Panel de Proveedor",
@@ -1029,5 +1030,81 @@
     "sectionSpecial": "Ofertas Especiales",
     "sectionAttractions": "Atracciones Cercanas",
     "sectionNew": "Nuevas Experiencias"
+  },
+  "cookies": {
+    "banner": {
+      "title": "Tu privacidad, tu elección",
+      "text": "Utilizamos cookies estrictamente necesarias para que este sitio funcione de forma segura. Con tu consentimiento también usamos cookies opcionales para recordar tus preferencias y entender cómo se utiliza el sitio. Puedes cambiar tu elección en cualquier momento.",
+      "policyLink": "Política de Cookies",
+      "acceptAll": "Aceptar todas",
+      "rejectNonEssential": "Rechazar las no esenciales",
+      "managePreferences": "Gestionar preferencias"
+    },
+    "preferences": {
+      "title": "Preferencias de cookies",
+      "intro": "Elige qué cookies opcionales podemos usar. Las estrictamente necesarias están siempre activas porque el sitio no puede funcionar sin ellas. Puedes cambiarlo en cualquier momento desde «Configuración de cookies» en el pie de página.",
+      "alwaysOn": "Siempre activas",
+      "save": "Guardar preferencias",
+      "noneInUse": "Actualmente no se utiliza ninguna cookie en esta categoría."
+    },
+    "categories": {
+      "necessary": {
+        "title": "Estrictamente necesarias",
+        "description": "Necesarias para la seguridad, el inicio de sesión, las reservas, los pagos y para recordar tus elecciones de cookies. No se pueden desactivar."
+      },
+      "functional": {
+        "title": "Funcionales y de personalización",
+        "description": "Recuerdan opciones como tu lista de deseos, tus búsquedas recientes y tu ubicación aproximada para que las funciones se comporten como esperas."
+      },
+      "analytics": {
+        "title": "Analíticas y de rendimiento",
+        "description": "Nos ayudan a entender qué páginas, búsquedas y experiencias resultan útiles para poder mejorarlas."
+      },
+      "marketing": {
+        "title": "Publicidad y marketing",
+        "description": "Se utilizan para medir y dirigir publicidad. Actualmente no hay ninguna en uso."
+      }
+    },
+    "inventory": {
+      "name": "Nombre",
+      "provider": "Proveedor",
+      "purpose": "Finalidad",
+      "duration": "Duración",
+      "purposes": {
+        "consentRecord": "Registra tus elecciones de cookies",
+        "sessionSecurity": "Mantiene segura tu cuenta y tu sesión de proveedor",
+        "sessionRenewal": "Renueva tu sesión sin pedirte que inicies sesión de nuevo",
+        "signedInAccount": "Recuerda la cuenta con la que has iniciado sesión",
+        "authReturnTo": "Te devuelve a la página en la que estabas tras iniciar sesión",
+        "bookingDraft": "Mantiene una reserva en curso para que no se pierda si recargas",
+        "updateReload": "Evita que la página se rompa justo después de una actualización del sitio",
+        "bookingsSeen": "Recuerda qué reservas ya has visto",
+        "languageChoice": "Recuerda el idioma que elegiste",
+        "currencyChoice": "Recuerda la moneda que elegiste",
+        "currencyRates": "Guarda en caché los tipos de cambio para mostrar los precios al instante",
+        "locationHistory": "Recuerda los destinos que has buscado",
+        "recentSearches": "Muestra tus búsquedas recientes en el buscador",
+        "wishlist": "Guarda las experiencias que marcas como favoritas",
+        "continuePlanning": "Alimenta la fila «seguir planificando» con las experiencias que has visto",
+        "approximateLocation": "Recuerda tu ubicación aproximada para mostrar resultados cercanos",
+        "onetapDismissal": "Recuerda que descartaste el aviso de inicio de sesión de Google",
+        "maps": "Muestra mapas de los puntos de recogida y lugares de encuentro",
+        "analyticsEvents": "Mide las páginas vistas, búsquedas y clics para mejorar el sitio"
+      },
+      "durations": {
+        "session": "Sesión",
+        "hour1": "1 hora",
+        "hours12": "12 horas",
+        "hours24": "24 horas",
+        "day1": "1 día",
+        "days7": "7 días",
+        "days180": "180 días",
+        "persistent": "Hasta que la borres",
+        "untilSignOut": "Hasta que cierres sesión",
+        "untilBookingCompletes": "Hasta que se complete la reserva",
+        "entries2": "2 entradas",
+        "entries5": "5 entradas"
+      }
+    }
   }
 }

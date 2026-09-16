@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react'
 import type { Tour, MultiDayTour } from '../components/data'
 import type { SpecialOfferData } from '../hooks/useExpeditionTours'
+import { readGated, writeGated, removeGated } from '../lib/consentGatedStorage'
 
 export interface ContinuePlanningItem {
   id: string
@@ -85,7 +86,7 @@ const MAX_ITEMS = 12
 
 function loadStorage(): ContinuePlanningItem[] {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY)
+    const stored = readGated(STORAGE_KEY)
     return stored ? JSON.parse(stored) : []
   } catch {
     return []
@@ -98,7 +99,7 @@ export function ContinuePlanningProvider({ children }: { children: ReactNode }) 
 
   useEffect(() => {
     itemsRef.current = items
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(items))
+    writeGated(STORAGE_KEY, JSON.stringify(items))
   }, [items])
 
   const addToContinuePlanning = useCallback((item: ContinuePlanningItem) => {
@@ -114,7 +115,7 @@ export function ContinuePlanningProvider({ children }: { children: ReactNode }) 
 
   const clearContinuePlanning = useCallback(() => {
     setItems([])
-    localStorage.removeItem(STORAGE_KEY)
+    removeGated(STORAGE_KEY)
   }, [])
 
   const isInContinuePlanning = useCallback((id: string) => {

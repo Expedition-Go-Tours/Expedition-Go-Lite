@@ -166,6 +166,7 @@
     "refundPolicy": "Terugbetalingsbeleid",
     "careers": "Carrières",
     "cookiesPolicy": "Cookiebeleid",
+    "cookieSettings": "Cookie-instellingen",
     "listYourTours": "Tours Aanbieden",
     "foundation": "Expedition-Go Foundation",
     "supplierDashboard": "Leveranciersdashboard",
@@ -1029,5 +1030,81 @@
     "sectionSpecial": "Speciale Aanbiedingen",
     "sectionAttractions": "Top Attracties in de Buurt",
     "sectionNew": "Nieuwe Ervaringen"
+  },
+  "cookies": {
+    "banner": {
+      "title": "Uw privacy, uw keuze",
+      "text": "Wij gebruiken strikt noodzakelijke cookies om deze site veilig te laten werken. Met uw toestemming gebruiken we ook optionele cookies om uw voorkeuren te onthouden en te begrijpen hoe de site wordt gebruikt. U kunt uw keuze op elk moment wijzigen.",
+      "policyLink": "Cookiebeleid",
+      "acceptAll": "Alles accepteren",
+      "rejectNonEssential": "Niet-essentiële weigeren",
+      "managePreferences": "Voorkeuren beheren"
+    },
+    "preferences": {
+      "title": "Cookievoorkeuren",
+      "intro": "Kies welke optionele cookies wij mogen gebruiken. Strikt noodzakelijke cookies staan altijd aan, omdat de site zonder deze niet werkt. U kunt dit op elk moment wijzigen via 'Cookie-instellingen' in de footer.",
+      "alwaysOn": "Altijd aan",
+      "save": "Voorkeuren opslaan",
+      "noneInUse": "Er worden momenteel geen cookies in deze categorie gebruikt."
+    },
+    "categories": {
+      "necessary": {
+        "title": "Strikt noodzakelijk",
+        "description": "Nodig voor beveiliging, inloggen, boekingen, betalingen en het onthouden van uw cookiekeuzes. Deze kunnen niet worden uitgeschakeld."
+      },
+      "functional": {
+        "title": "Functioneel en personalisatie",
+        "description": "Onthouden optionele keuzes zoals uw verlanglijst, recente zoekopdrachten en uw globale locatie, zodat functies werken zoals u verwacht."
+      },
+      "analytics": {
+        "title": "Analyse en prestaties",
+        "description": "Helpen ons begrijpen welke pagina's, zoekopdrachten en ervaringen nuttig zijn, zodat we ze kunnen verbeteren."
+      },
+      "marketing": {
+        "title": "Advertenties en marketing",
+        "description": "Worden gebruikt om advertenties te meten en te richten. Er is momenteel geen in gebruik."
+      }
+    },
+    "inventory": {
+      "name": "Naam",
+      "provider": "Aanbieder",
+      "purpose": "Doel",
+      "duration": "Duur",
+      "purposes": {
+        "consentRecord": "Legt uw cookiekeuzes vast",
+        "sessionSecurity": "Houdt uw account en leverancierssessie veilig",
+        "sessionRenewal": "Vernieuwt uw sessie zonder opnieuw inloggen",
+        "signedInAccount": "Onthoudt het account waarmee u bent ingelogd",
+        "authReturnTo": "Brengt u na het inloggen terug naar de pagina waar u was",
+        "bookingDraft": "Houdt een boeking in behandeling vast, zodat er niets verloren gaat bij vernieuwen",
+        "updateReload": "Voorkomt een kapotte pagina direct na een site-update",
+        "bookingsSeen": "Onthoudt welke boekingen u al hebt gezien",
+        "languageChoice": "Onthoudt de taal die u hebt gekozen",
+        "currencyChoice": "Onthoudt de valuta die u hebt gekozen",
+        "currencyRates": "Slaat wisselkoersen op, zodat prijzen direct worden weergegeven",
+        "locationHistory": "Onthoudt de bestemmingen die u hebt gezocht",
+        "recentSearches": "Toont uw recente zoekopdrachten in het zoekveld",
+        "wishlist": "Bewaart de ervaringen die u op uw verlanglijst zet",
+        "continuePlanning": "Vult de rij 'verder plannen' met ervaringen die u hebt bekeken",
+        "approximateLocation": "Onthoudt uw globale locatie voor resultaten in de buurt",
+        "onetapDismissal": "Onthoudt dat u de Google-inlogprompt hebt gesloten",
+        "maps": "Toont kaarten voor ophaalpunten en ontmoetingslocaties",
+        "analyticsEvents": "Meet bekeken pagina's, zoekopdrachten en kliks om de site te verbeteren"
+      },
+      "durations": {
+        "session": "Sessie",
+        "hour1": "1 uur",
+        "hours12": "12 uur",
+        "hours24": "24 uur",
+        "day1": "1 dag",
+        "days7": "7 dagen",
+        "days180": "180 dagen",
+        "persistent": "Tot u deze wist",
+        "untilSignOut": "Tot u uitlogt",
+        "untilBookingCompletes": "Tot de boeking is afgerond",
+        "entries2": "2 items",
+        "entries5": "5 items"
+      }
+    }
   }
 }

@@ -25,6 +25,9 @@ import { ContinuePlanningProvider } from './context/ContinuePlanningContext'
 import { SellOutProvider } from './context/SellOutContext'
 import { LocationSearchProvider, useLocationSearch } from './context/LocationSearchContext'
 import { SearchInputProvider } from './context/SearchInputContext'
+import { CookieConsentProvider } from './context/CookieConsentContext'
+import CookieBanner from './components/consent/CookieBanner'
+import CookiePreferences from './components/consent/CookiePreferences'
 import GoogleOneTapPrompt from './components/GoogleOneTapPrompt'
 import { subscribeToAuthState, handleGoogleCallback, getAuthReturnTo, clearAuthReturnTo } from './lib/auth'
 import { AuthProvider } from './context/AuthContext'
@@ -387,17 +390,23 @@ function AppContent() {
 function App() {
   return (
     <BrowserRouter>
-      <WishlistProvider>
-        <AuthProvider>
-          <ContinuePlanningProvider>
-            <LocationSearchProvider>
-              <SearchInputProvider>
-                <AppContent />
-              </SearchInputProvider>
-            </LocationSearchProvider>
-          </ContinuePlanningProvider>
-        </AuthProvider>
-      </WishlistProvider>
+      <CookieConsentProvider>
+        <WishlistProvider>
+          <AuthProvider>
+            <ContinuePlanningProvider>
+              <LocationSearchProvider>
+                <SearchInputProvider>
+                  <AppContent />
+                  {/* Consent UI lives outside the route tree so a choice can be
+                      made (or revisited) on any page, including the dashboard. */}
+                  <CookieBanner />
+                  <CookiePreferences />
+                </SearchInputProvider>
+              </LocationSearchProvider>
+            </ContinuePlanningProvider>
+          </AuthProvider>
+        </WishlistProvider>
+      </CookieConsentProvider>
     </BrowserRouter>
   )
 }
