@@ -22,7 +22,7 @@ interface TravelerRecord {
   infants?: number
   phoneNumber?: string
   location?: string
-  details?: { name?: string; age?: number | null; ageGroup?: string; specialRequests?: string }[]
+  details?: { name?: string; ageGroup?: string; specialRequests?: string }[]
   [key: string]: unknown
 }
 
@@ -531,7 +531,6 @@ export default function BookingConfirmationPage() {
               {travelers.details.map((d, i) => (
                 <li key={i}>
                   {d.name || `${t('confirmation.traveler')} ${i + 1}`}
-                  {d.age != null ? ` (${d.age})` : ''}
                   {d.ageGroup ? ` — ${d.ageGroup}` : ''}
                 </li>
               ))}

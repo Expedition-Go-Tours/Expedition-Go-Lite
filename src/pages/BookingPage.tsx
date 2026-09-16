@@ -2287,7 +2287,7 @@ export default function BookingPage() {
       }
       const fullName = `${contact.firstName} ${contact.lastName}`.trim()
       const detailsName = fullName || undefined
-      const details = detailsName ? [{ name: detailsName, age: 30, ageGroup: 'adult' }] : []
+      const details = detailsName ? [{ name: detailsName, ageGroup: 'adult' }] : []
 
       // Authoritative per-category map (adults/children/infants + any supplier
       // categories like seniors/students) so every category is priced at its

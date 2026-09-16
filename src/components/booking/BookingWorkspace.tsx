@@ -43,7 +43,6 @@ import './BookingWorkspace.css'
 
 interface TravelerRow {
   name?: string
-  age?: number | string
   ageGroup?: string
   specialRequests?: string
 }
@@ -911,7 +910,7 @@ export default function BookingWorkspace({ id, onClose }: { id?: string; onClose
                       {travelers.details
                         .map(
                           (t, i) =>
-                            `${t.name || `Traveler ${i + 1}`}${t.age != null ? ` (${t.age})` : ''}${t.ageGroup ? ` · ${t.ageGroup}` : ''}`
+                            `${t.name || `Traveler ${i + 1}`}${t.ageGroup ? ` · ${t.ageGroup}` : ''}`
                         )
                         .join(', ')}
                     </span>

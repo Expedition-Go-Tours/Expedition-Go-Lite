@@ -209,7 +209,7 @@ interface ConfirmBookingInput {
   tourId: string
   travelDate: string
   selectedTime?: string | null
-  travelers: Record<string, number | string | boolean | { name: string; age: number; ageGroup: string; specialRequests?: string }[] | undefined>
+  travelers: Record<string, number | string | boolean | { name: string; ageGroup: string; specialRequests?: string }[] | undefined>
   /** Multi-option tours: the sellable option being booked. */
   optionId?: string
   /** Required for reserve-now-pay-later (card captured for auto-charge). Pay-now with the
