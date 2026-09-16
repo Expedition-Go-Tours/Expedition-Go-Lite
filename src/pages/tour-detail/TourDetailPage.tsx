@@ -376,6 +376,8 @@ export default function TourDetailPage() {
       meetingRating: r.meetingRating,
       travelMonth: r.travelMonth,
       companions: r.companions,
+      source: r.source === 'external' ? (r.platform || 'external').toUpperCase() as 'GOOGLE' | 'VIATOR' | 'GETYOURGUIDE' | undefined : undefined,
+      platform: r.platform,
     }))
   }, [reviews, t])
 
