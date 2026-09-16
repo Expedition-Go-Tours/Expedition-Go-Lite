@@ -569,6 +569,11 @@ body.hero--search-sticky .hero-search-wrap {
     margin: 0 auto;
   }
 
+  .hero-search-input {
+    font-size: 14px;
+    text-overflow: ellipsis;
+  }
+
   .hero-search-submit {
     height: 38px;
     padding: 0 16px;
@@ -592,6 +597,28 @@ body.hero--search-sticky .hero-search-wrap {
   }
 
   .search-suggestion-sub {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 400px) {
+  .hero-search-input {
+    font-size: 13px;
+  }
+
+  .hero-search-input-wrap {
+    padding: 10px 6px 10px 12px;
+    gap: 8px;
+  }
+
+  .hero-search-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .hero-search-submit {
+    height: 34px;
+    padding: 0 12px;
     font-size: 12px;
   }
 }
