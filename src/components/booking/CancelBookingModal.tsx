@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { X, AlertTriangle, ShieldCheck, XCircle, ArrowLeft, Loader2 } from 'lucide-react'
 
 const currencySymbol = (currency?: string): string => {
@@ -79,7 +80,7 @@ export default function CancelBookingModal({
 
   if (!isOpen) return null
 
-  return (
+  return createPortal(
     <div className="cb-modal" role="dialog" aria-modal="true" aria-label="Cancel booking">
       <div className="cb-overlay" onClick={isPending ? undefined : onClose} />
       <div className="cb-card">
@@ -204,6 +205,7 @@ export default function CancelBookingModal({
           </>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
