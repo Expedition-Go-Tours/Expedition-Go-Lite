@@ -26,8 +26,8 @@ interface Review {
   companions?: string[]
   supplierResponse?: string | null
   supplierResponseAt?: string | null
-  /** Present on external (Google / Viator / GetYourGuide) reviews. */
-  source?: 'GOOGLE' | 'VIATOR' | 'GETYOURGUIDE' | string
+  /** Present on external (TripAdvisor / GetYourGuide / Google) reviews. */
+  source?: 'TRIPADVISOR' | 'GETYOURGUIDE' | 'GOOGLE'
   /** Platform listing URL for the source badge (external reviews only). */
   externalUrl?: string
 }

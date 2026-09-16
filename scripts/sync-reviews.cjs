@@ -500,69 +500,9 @@ async function main() {
 
     console.log(`\nDone! Wrote ${allReviews.length} reviews to ${OUTPUT_PATH}`);
     console.log(`Stats: ${stats.averageRating}★ from ${stats.totalReviews} reviews`);
-
-    // Push the freshly scraped reviews into the TravioAfrica backend so supplier
-    // dashboards and the API-served storefront see them. This runs from GitHub
-    // Actions because the production server's datacenter IP is blocked by
-    // TripAdvisor/GetYourGuide. No-op when the secret is not configured.
-    await pushToBackend(allReviews);
   } finally {
     await browser.close();
   }
-}
-
-// ─── Backend ingestion ───────────────────────────────────────────────────────
-
-async function pushToBackend(reviews) {
-  const apiBase = process.env.REVIEW_API_BASE;
-  const scraperKey = process.env.REVIEW_SCRAPER_KEY;
-
-  if (!apiBase || !scraperKey) {
-    console.log('\n[backend] REVIEW_API_BASE / REVIEW_SCRAPER_KEY not set — skipping backend push');
-    return;
-  }
-
-  const payload = reviews.map((r) => ({
-    url: r.tourUrl,
-    source: r.source,
-    reviewerName: r.reviewerName,
-    reviewerAvatar: r.reviewerAvatar,
-    rating: r.rating,
-    title: r.title,
-    text: r.text,
-    date: r.originalDate,
-    externalId: r.id,
-  }));
-
-  // Send in chunks to stay well under the 10mb body limit
-  const CHUNK = 200;
-  let imported = 0;
-  let unmatched = 0;
-
-  for (let i = 0; i < payload.length; i += CHUNK) {
-    const chunk = payload.slice(i, i + CHUNK);
-    try {
-      const res = await fetch(`${apiBase.replace(/\/$/, '')}/api/external-reviews/ingest`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-scraper-key': scraperKey,
-        },
-        body: JSON.stringify({ reviews: chunk }),
-      });
-      const body = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        console.warn(`[backend] chunk ${i / CHUNK + 1} failed (${res.status}): ${body.message || 'unknown'}`);
-      } else {
-        imported += body.data?.imported || 0;
-        unmatched += body.data?.unmatched || 0;
-      }
-    } catch (err) {
-      console.warn(`[backend] chunk ${i / CHUNK + 1} error: ${err.message}`);
-    }
-  }
-
-  console.log(`[backend] pushed ${payload.length} reviews — ${imported} imported, ${unmatched} unmatched to a tour`);
 }
 
 main().catch((err) => {
