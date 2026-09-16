@@ -1512,7 +1512,7 @@
 }
 
 .cb-overlay {
-  position: absolute;
+  position: fixed;
   inset: 0;
   background: rgba(9, 30, 24, 0.55);
   backdrop-filter: blur(3px);
