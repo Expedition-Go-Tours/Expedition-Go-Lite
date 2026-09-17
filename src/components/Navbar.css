@@ -36,16 +36,16 @@
 .navbar--tour-detail,
 .tour-detail-page ~ .navbar,
 body:has(.tour-detail-page) .navbar,
-body:has(.all-tours-page) .navbar,
+.page-all-tours .navbar,
 body:has(.supplier-page) .navbar,
 body:has(.supplier-landing-page) .navbar,
 body:has(.review-page) .navbar,
 body:has(.all-stories-page) .navbar,
 body:has(.story-detail) .navbar,
-body:has(.support-page) .navbar,
-body:has(.about-page) .navbar,
-body:has(.foundation-page) .navbar,
-body:has(.search-results-page) .navbar {
+.page-support .navbar,
+.page-about .navbar,
+.page-foundation .navbar,
+.page-search .navbar {
   box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
 }
 
@@ -134,7 +134,7 @@ body.hero--search-sticky .navbar-compact-search {
 /* Always show search bar on tour detail, all tours, supplier, review, stories, and story-detail pages */
 .navbar--tour-detail .navbar-compact-search,
 body:has(.tour-detail-page) .navbar-compact-search,
-body:has(.all-tours-page) .navbar-compact-search,
+.page-all-tours .navbar-compact-search,
 body:has(.supplier-page) .navbar-compact-search,
 body:has(.review-page) .navbar-compact-search,
 body:has(.all-stories-page) .navbar-compact-search,
@@ -1189,7 +1189,7 @@ body:has(.story-detail) .navbar-compact-search {
   }
 
   body.hero--search-sticky .nav-icons,
-  body:has(.all-tours-page) .nav-icons {
+  .page-all-tours .nav-icons {
     display: none;
   }
 
@@ -1201,7 +1201,7 @@ body:has(.story-detail) .navbar-compact-search {
   }
 
   body.hero--search-sticky .navbar,
-  body:has(.all-tours-page) .navbar {
+  .page-all-tours .navbar {
     box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
     padding: 0 8px;
   }
@@ -1501,13 +1501,13 @@ body:has(.story-detail) .navbar-compact-search {
    center the navbar content on the support container's inner content edges
    (max-width 1280px + 24px gutters) so the logo (left) and profile icon
    (right) line up with the page grid instead of the homepage column. */
-body:has(.support-page) .navbar {
+.page-support .navbar {
   padding-left: max(24px, calc((100vw - 1280px) / 2 + 24px));
   padding-right: max(24px, calc((100vw - 1280px) / 2 + 24px));
 }
 
 @media (max-width: 768px) {
-  body:has(.support-page) .navbar {
+  .page-support .navbar {
     padding-left: 16px;
     padding-right: 16px;
   }
@@ -1518,8 +1518,8 @@ body:has(.support-page) .navbar {
    max-width 1400px with 40px gutters. Desktop+ aligns the navbar items on that
    column's inner content edges, matching the support-page fix. */
 @media (min-width: 1025px) {
-  body:has(.all-tours-page) .navbar,
-  body:has(.search-results-page) .navbar {
+  .page-all-tours .navbar,
+  .page-search .navbar {
     padding-left: max(40px, calc((100vw - 1400px) / 2 + 40px));
     padding-right: max(40px, calc((100vw - 1400px) / 2 + 40px));
   }
@@ -1527,7 +1527,7 @@ body:has(.support-page) .navbar {
 
 /* Search page keeps 40px gutters down to 601px; align the navbar there too. */
 @media (min-width: 601px) and (max-width: 1024px) {
-  body:has(.search-results-page) .navbar {
+  .page-search .navbar {
     padding-left: 40px;
     padding-right: 40px;
   }
@@ -1536,8 +1536,46 @@ body:has(.support-page) .navbar {
 /* Booking confirmation: content column is max-width 1280px with 32px gutters.
    Align the navbar items on its inner content edges on desktop only. */
 @media (min-width: 1025px) {
-  body:has(.confirmation-page) .navbar {
+  .page-confirmation .navbar {
     padding-left: max(32px, calc((100vw - 1280px) / 2 + 32px));
     padding-right: max(32px, calc((100vw - 1280px) / 2 + 32px));
+  }
+}
+
+/* Footer-linked pages: align the navbar (logo + icons) with each page's
+   content grid on desktop. Grouped by container max-width + gutter. */
+
+/* 1140px container + 32px gutters: Hotels, Travel Agents, Transport, Blog */
+@media (min-width: 1025px) {
+  .page-hotel .navbar,
+  .page-travel-agents .navbar,
+  .page-transport-providers .navbar,
+  .page-blog .navbar {
+    padding-left: max(32px, calc((100vw - 1140px) / 2 + 32px));
+    padding-right: max(32px, calc((100vw - 1140px) / 2 + 32px));
+  }
+}
+
+/* 1200px container + 32px gutters: Foundation */
+@media (min-width: 1025px) {
+  .page-foundation .navbar {
+    padding-left: max(32px, calc((100vw - 1200px) / 2 + 32px));
+    padding-right: max(32px, calc((100vw - 1200px) / 2 + 32px));
+  }
+}
+
+/* 1100px container + 24px gutters: About Us */
+@media (min-width: 1025px) {
+  .page-about .navbar {
+    padding-left: max(24px, calc((100vw - 1100px) / 2 + 24px));
+    padding-right: max(24px, calc((100vw - 1100px) / 2 + 24px));
+  }
+}
+
+/* 1000px container + 0px gutters: Content Creators */
+@media (min-width: 1025px) {
+  .page-content-creators .navbar {
+    padding-left: max(0px, calc((100vw - 1000px) / 2));
+    padding-right: max(0px, calc((100vw - 1000px) / 2));
   }
 }

@@ -1,4 +1,3 @@
-import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
@@ -9,6 +8,7 @@ import {
 import heroBg from '../assets/images/painting.webp'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
+import SEO, { buildBreadcrumbSchema } from '../components/SEO'
 import { useAuthUser } from '../hooks/useAuthUser'
 import { setAuthReturnTo } from '../lib/auth'
 import './HotelsProviderPage.css'
@@ -76,10 +76,6 @@ export default function HotelsProviderPage({ onOpenAuth }: HotelsProviderPagePro
     { value: '30M+', label: t('hotels.stat3Label') },
   ]
 
-  useEffect(() => {
-    document.title = `${t('footer.asAccommodationProvider', 'Hotels & Accommodations')} | Expedition-Go Tours`
-  }, [t])
-
   const handleSignUp = () => {
     if (!user) {
       setAuthReturnTo('/partners/hotels/apply')
@@ -91,6 +87,15 @@ export default function HotelsProviderPage({ onOpenAuth }: HotelsProviderPagePro
 
   return (
     <div className="hotel-page">
+      <SEO
+        title="List Your Hotel on Expedition-Go Tours - Ghana Accommodation Partners"
+        description="Partner with Expedition-Go Tours to list your hotel or accommodation. Reach thousands of travelers booking Ghana tours and experiences. Easy integration, competitive commissions."
+        keywords="list hotel Ghana, accommodation partner Ghana, hotel partnership Expedition-Go Tours, Ghana hotel listing, hotel affiliate program"
+        jsonLd={buildBreadcrumbSchema([
+          { name: 'Home', url: 'https://expeditiongotours.com/' },
+          { name: 'Hotels & Stays', url: 'https://expeditiongotours.com/hotels' },
+        ])}
+      />
       <Navbar onOpenAuth={onOpenAuth} />
 
       {/* Hero — full-width image background */}

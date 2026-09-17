@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
@@ -9,6 +9,7 @@ import {
 import heroBg from '../assets/images/IMG_3538.webp'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
+import SEO, { buildBreadcrumbSchema } from '../components/SEO'
 import { useAuthUser } from '../hooks/useAuthUser'
 import { setAuthReturnTo } from '../lib/auth'
 import './TransportProviderPage.css'
@@ -23,10 +24,6 @@ export default function TransportProviderPage({ onOpenAuth }: TransportProviderP
   const user = useAuthUser()
   const carouselRef = useRef<HTMLDivElement>(null)
   const [activeStep, setActiveStep] = useState(0)
-
-  useEffect(() => {
-    document.title = `${t('transport.pageTitle', 'Transport Providers | Expedition-Go Tours')} | Expedition-Go Tours`
-  }, [t])
 
   const INTEGRATION_STEPS = [
     {
@@ -108,6 +105,15 @@ export default function TransportProviderPage({ onOpenAuth }: TransportProviderP
 
   return (
     <div className="transport-page">
+      <SEO
+        title="Transport Provider Program - Expedition-Go Tours Ghana"
+        description="Join Expedition-Go Tours as a transport provider. List your fleet, connect with tour operators, and earn competitive rates transporting travelers across Ghana."
+        keywords="transport provider Ghana, Expedition-Go Tours transport, list vehicles Ghana, transport partner program, tour transport Ghana"
+        jsonLd={buildBreadcrumbSchema([
+          { name: 'Home', url: 'https://expeditiongotours.com/' },
+          { name: 'Transport Partners', url: 'https://expeditiongotours.com/transport-providers' },
+        ])}
+      />
       <Navbar onOpenAuth={onOpenAuth} />
 
       {/* Hero — full-width image background */}

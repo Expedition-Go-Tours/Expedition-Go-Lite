@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, lazy, Suspense } from 'react'
+import { useState, useEffect, useLayoutEffect, useMemo, lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation, useParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Toaster } from 'sonner'
@@ -238,6 +238,49 @@ function AppContent() {
     window.scrollTo(0, 0)
     trackPageView(location.pathname + location.search)
   }, [location.pathname, location.search])
+
+  // Set a body class based on the current route so the navbar CSS
+  // (body:has(.page-*)) can align padding before lazy components load.
+  // useLayoutEffect (not useEffect) ensures the class is set before the
+  // browser paints — no visible flash of the wrong padding.
+  useLayoutEffect(() => {
+    const path = location.pathname
+    const classMap: [string, string][] = [
+      ['/hotels', 'page-hotel'],
+      ['/travel-agents', 'page-travel-agents'],
+      ['/transport-providers', 'page-transport-providers'],
+      ['/foundation', 'page-foundation'],
+      ['/blog', 'page-blog'],
+      ['/about-us', 'page-about'],
+      ['/content-creators', 'page-content-creators'],
+      ['/help-centre', 'page-support'],
+      ['/contact-us', 'page-support'],
+      ['/faq', 'page-support'],
+      ['/careers', 'page-support'],
+      ['/partnerships', 'page-support'],
+      ['/supplier-terms', 'page-support'],
+      ['/terms-and-conditions', 'page-support'],
+      ['/privacy-policy', 'page-support'],
+      ['/refund-policy', 'page-support'],
+      ['/cookies-policy', 'page-support'],
+      ['/tours', 'page-all-tours'],
+      ['/search', 'page-search'],
+      ['/booking/confirmation', 'page-confirmation'],
+    ]
+    const match = classMap.find(([prefix]) => path.startsWith(prefix))
+    const cls = match?.[1] ?? ''
+
+    document.body.className = document.body.className
+      .replace(/page-\S+/g, '')
+      .trim()
+    if (cls) document.body.classList.add(cls)
+
+    return () => {
+      document.body.className = document.body.className
+        .replace(/page-\S+/g, '')
+        .trim()
+    }
+  }, [location.pathname])
 
   // Request location once on mount for personalized recommendations
   useEffect(() => {

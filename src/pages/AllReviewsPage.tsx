@@ -58,8 +58,6 @@ interface ExternalReview {
   tourLink: string
   coverPhoto: string | null
   originalDate: string | null
-  platformRating: number | null
-  platformReviewCount: number | null
 }
 
 function FilterSection({

@@ -1,19 +1,25 @@
-import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import Footer from '../components/Footer'
+import SEO, { buildBreadcrumbSchema } from '../components/SEO'
 import './SupportPages.css'
 
 export default function RefundPolicyPage() {
   const { t } = useTranslation()
 
-  useEffect(() => {
-    document.title = `${t('footer.refundPolicy')} | Expedition-Go Tours`
-  }, [t])
-
   return (
     <div className="support-page">
+      <SEO
+        title="Refund & Cancellation Policy - Expedition-Go Tours Ghana"
+        description="Learn about Expedition-Go Tours refund and cancellation policy. Find out how to cancel your Ghana tour booking and what refunds you're eligible for."
+        keywords="Expedition-Go Tours refund, cancellation policy Ghana, tour cancellation, booking refund Ghana"
+        robots="noindex, follow"
+        jsonLd={buildBreadcrumbSchema([
+          { name: 'Home', url: 'https://expeditiongotours.com/' },
+          { name: 'Refund Policy', url: 'https://expeditiongotours.com/refund-policy' },
+        ])}
+      />
       <div className="support-hero">
         <div className="support-hero-content">
           <h1 className="support-title">{t('footer.refundPolicy')}</h1>

@@ -12,6 +12,7 @@ import ReviewTourCard from '../pages/tour-detail/ReviewTourCard'
 import { CalendarPicker } from '../components/ui/apple-calendar-picker'
 import { useCreateReview, useUpdateReview } from '../hooks/useExpeditionReviews'
 import { useExpeditionTour } from '../hooks/useExpeditionTours'
+import { useCombinedTourStats } from '../hooks/useExternalReviews'
 import './ReviewExperiencePage.css'
 
 const REVIEW_DRAFT_PREFIX = 'eg_review_draft:'
@@ -146,6 +147,13 @@ export default function ReviewExperiencePage() {
   }, [fetchedRaw, stateTour, tourSlugParam, urlTourId])
 
   const tourCardImages = [tour.image, ...(Array.isArray(tour.images) ? tour.images : [])].filter(Boolean)
+
+  // Sidebar card stats include the scraped TripAdvisor/GetYourGuide reviews
+  // matched to this product, matching the tour detail page.
+  const combinedTourStats = useCombinedTourStats(
+    tour ? { title: tour.title, location: tour.location, rating: tour.rating, reviewCount: tour.reviews } : null,
+  )
+  const displayTourRating = combinedTourStats.reviewCount > 0 ? combinedTourStats.rating : tour.rating
 
   const [overallRating, setOverallRating] = useState(0)
   const [subRatings, setSubRatings] = useState({ valueForMoney: 0, guide: 0, meeting: 0 })
@@ -307,7 +315,7 @@ export default function ReviewExperiencePage() {
                 <div className="review-sidebar-content">
                   <ReviewTourCard
                     images={tourCardImages}
-                    rating={tour.rating}
+                    rating={displayTourRating}
                     title={tour.title}
                     supplierName={tour.supplierName}
                     supplierLogo={tour.supplierLogo}

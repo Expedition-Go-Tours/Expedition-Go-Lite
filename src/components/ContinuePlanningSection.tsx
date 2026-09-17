@@ -14,6 +14,7 @@ import './ContinuePlanningSection.css'
 import './skeleton.css'
 import OptimizedImage from '@/components/shared/OptimizedImage'
 import { bestOfferDiscountAmount, type SpecialOfferData } from '../hooks/useExpeditionTours'
+import { useCombinedTourStats } from '../hooks/useExternalReviews'
 
 const CARD_WIDTH = 560
 const GAP = 24
@@ -73,6 +74,16 @@ function ContinuePlanningCard({ item, likelyToSellOut }: { item: ContinuePlannin
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist()
   const inWishlist = isInWishlist(item.id)
   const hasOffer = hasActiveOffer(item.specialOffers)
+  // Display stats include matched scraped reviews; the stored item keeps the
+  // raw in-app stats so re-rendering through TourCard never double-counts.
+  const combinedStats = useCombinedTourStats({
+    title: item.title,
+    location: item.location,
+    rating: item.rating,
+    reviewCount: item.reviewCount,
+  })
+  const displayRating = combinedStats.reviewCount > 0 ? combinedStats.rating.toFixed(1) : String(item.rating)
+  const displayReviewCount = combinedStats.reviewCount > 0 ? combinedStats.reviewCount : item.reviewCount
 
   const openTour = () => {
     const slug = item.slug || item.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
@@ -222,8 +233,8 @@ function ContinuePlanningCard({ item, likelyToSellOut }: { item: ContinuePlannin
 
         <div className="cp-card-rating">
           <Star size={17} className="cp-card-star" fill="currentColor" stroke="currentColor" strokeWidth={1} />
-          <span className="cp-card-rating-value">{item.rating}</span>
-          {item.reviewCount > 0 && <span className="cp-card-rating-count">({item.reviewCount})</span>}
+          <span className="cp-card-rating-value">{displayRating}</span>
+          {displayReviewCount > 0 && <span className="cp-card-rating-count">({displayReviewCount})</span>}
         </div>
       </div>
 

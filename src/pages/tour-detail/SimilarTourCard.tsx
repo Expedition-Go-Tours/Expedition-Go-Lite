@@ -8,6 +8,7 @@ import FormattedPrice from '../../components/FormattedPrice'
 import { getCategoryMeta } from '../../components/categoryMeta'
 import './SimilarTourCard.css'
 import OptimizedImage from '@/components/shared/OptimizedImage'
+import { useCombinedTourStats } from '../../hooks/useExternalReviews'
 
 interface SimilarTourCardProps extends Tour {
   discount?: string
@@ -36,6 +37,10 @@ export default function SimilarTourCard({
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist()
   const item = toWishlistItem({ id, title, duration, features, price, rating: String(rating), reviews, location, image, source, externalUrl } as Tour)
   const inWishlist = isInWishlist(item.id)
+  // Include matched scraped reviews in the displayed stats (wishlist stays raw).
+  const combinedStats = useCombinedTourStats({ title, location, rating, reviewCount: reviews })
+  const displayRating = combinedStats.reviewCount > 0 ? combinedStats.rating.toFixed(1) : String(rating)
+  const displayReviewCount = combinedStats.reviewCount > 0 ? combinedStats.reviewCount : reviews
 
   const categoryMeta = getCategoryMeta(category)
   // "Guide" appended for the same reason as TourCard: makes clear this is
@@ -143,8 +148,8 @@ export default function SimilarTourCard({
         <div className="similar-tour-footer">
           <div className="similar-tour-rating">
             <Star size={14} fill="#179237" stroke="#179237" strokeWidth={1} />
-            <span className="similar-tour-rating-value">{rating}</span>
-            <span className="similar-tour-rating-count">({reviews})</span>
+            <span className="similar-tour-rating-value">{displayRating}</span>
+            <span className="similar-tour-rating-count">({displayReviewCount})</span>
           </div>
 
           <div className="similar-tour-price">

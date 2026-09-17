@@ -244,3 +244,20 @@
     max-width: 82vw;
   }
 }
+
+/* Desktop only: let the empty-state sections span the page's content column
+   (max-width 1400px + 40px gutters) so section headings, chips and card rails
+   line up with the navbar logo (left) and the right-hand nav items (right). */
+@media (min-width: 1025px) {
+  .no-tours {
+    max-width: none;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .no-tours-chips,
+  .no-tours-rail {
+    padding-left: 0;
+    padding-right: 0;
+  }
+}

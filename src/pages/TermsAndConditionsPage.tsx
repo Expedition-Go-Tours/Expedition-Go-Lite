@@ -1,17 +1,23 @@
-import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import Footer from '../components/Footer'
+import SEO, { buildBreadcrumbSchema } from '../components/SEO'
 import './SupportPages.css'
 
 export default function TermsAndConditionsPage() {
   const { t } = useTranslation()
 
-  useEffect(() => {
-    document.title = `${t('footer.termsConditions')} | Expedition-Go Tours`
-  }, [t])
-
   return (
     <div className="support-page">
+      <SEO
+        title="Terms & Conditions - Expedition-Go Tours Ghana"
+        description="Read the terms and conditions for using Expedition-Go Tours booking platform. Understand your rights and responsibilities when booking tours and experiences in Ghana."
+        keywords="Expedition-Go Tours terms, booking terms Ghana, travel conditions, tour booking terms"
+        robots="noindex, follow"
+        jsonLd={buildBreadcrumbSchema([
+          { name: 'Home', url: 'https://expeditiongotours.com/' },
+          { name: 'Terms & Conditions', url: 'https://expeditiongotours.com/terms-and-conditions' },
+        ])}
+      />
       <div className="support-hero">
         <div className="support-hero-content">
           <h1 className="support-title">{t('footer.termsConditions')}</h1>

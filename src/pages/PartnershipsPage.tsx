@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { Mail, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react'
 import Footer from '../components/Footer'
+import SEO, { buildBreadcrumbSchema } from '../components/SEO'
 import partners1 from '../assets/partners/partners1.avif'
 import partners2 from '../assets/partners/partners2.avif'
 import partners3 from '../assets/partners/partners3.avif'
@@ -75,10 +76,6 @@ export default function PartnershipsPage() {
     }, 3000)
   }
 
-  useEffect(() => {
-    document.title = `${t('footer.partnerships')} | Expedition-Go Tours`
-  }, [t])
-
   // Hero carousel auto-advance
   useEffect(() => {
     timerRef.current = setInterval(() => {
@@ -126,6 +123,15 @@ export default function PartnershipsPage() {
 
   return (
     <div className="support-page partnerships-page">
+      <SEO
+        title="Partner With Expedition-Go Tours - Tourism Partnerships in Ghana"
+        description="Become a partner with Expedition-Go Tours. Join Ghana's leading tourism platform as a tour operator, hotel, travel agent, content creator, or transport provider."
+        keywords="Expedition-Go Tours partnership, Ghana tourism partnership, tour operator partnership Ghana, travel partner Ghana, become a supplier Ghana"
+        jsonLd={buildBreadcrumbSchema([
+          { name: 'Home', url: 'https://expeditiongotours.com/' },
+          { name: 'Partnerships', url: 'https://expeditiongotours.com/partnerships' },
+        ])}
+      />
 
       {/* Hero Section with Image Carousel */}
       <div className="support-hero">

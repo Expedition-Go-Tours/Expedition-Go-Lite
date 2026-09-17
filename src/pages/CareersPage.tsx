@@ -1,7 +1,7 @@
-import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Route, Map, Headset, Megaphone, Mail, ArrowRight } from 'lucide-react'
 import Footer from '../components/Footer'
+import SEO, { buildBreadcrumbSchema } from '../components/SEO'
 import './SupportPages.css'
 
 const CAREERS_EMAIL = 'careers@expedition-go.com'
@@ -32,12 +32,17 @@ export default function CareersPage() {
     },
   ]
 
-  useEffect(() => {
-    document.title = `${t('footer.careers')} | Expedition-Go Tours`
-  }, [t])
-
   return (
     <div className="support-page">
+      <SEO
+        title="Careers at Expedition-Go Tours - Join Our Ghana Travel Team"
+        description="Join Expedition-Go Tours and help shape the future of Ghana tourism. Explore career opportunities in operations, marketing, technology, and customer support."
+        keywords="Expedition-Go Tours careers, Ghana tourism jobs, travel industry careers, work in Ghana, Expedition-Go Tours hiring"
+        jsonLd={buildBreadcrumbSchema([
+          { name: 'Home', url: 'https://expeditiongotours.com/' },
+          { name: 'Careers', url: 'https://expeditiongotours.com/careers' },
+        ])}
+      />
       <div className="support-hero">
         <div className="support-hero-content">
           <h1 className="support-title">{t('footer.careers')}</h1>

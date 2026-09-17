@@ -1,19 +1,24 @@
-import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { Rocket, ArrowRight } from 'lucide-react'
 import Footer from '../components/Footer'
+import SEO, { buildBreadcrumbSchema } from '../components/SEO'
 import './SupportPages.css'
 
 export default function SupplierTermsPage() {
   const { t } = useTranslation()
 
-  useEffect(() => {
-    document.title = `${t('footer.supplierTerms')} | Expedition-Go Tours`
-  }, [t])
-
   return (
     <div className="support-page">
+      <SEO
+        title="Supplier Terms & Conditions - Expedition-Go Tours Ghana"
+        description="Read the terms and conditions for suppliers and tour operators partnering with Expedition-Go Tours. Understand payment terms, cancellation policies, and partnership requirements."
+        keywords="Expedition-Go Tours supplier terms, tour operator terms Ghana, supplier agreement, partnership terms"
+        jsonLd={buildBreadcrumbSchema([
+          { name: 'Home', url: 'https://expeditiongotours.com/' },
+          { name: 'Supplier Terms', url: 'https://expeditiongotours.com/supplier-terms' },
+        ])}
+      />
       <div className="support-hero">
         <div className="support-hero-content">
           <h1 className="support-title">{t('supplierTerms.pageTitle')}</h1>

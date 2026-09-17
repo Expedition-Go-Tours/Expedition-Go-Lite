@@ -119,6 +119,12 @@ describe('matchTourForTitle', () => {
     expect(matchedTitle('Accra Sankofa Gallery Art Tour & Candle Making Workshop')).toBeNull()
   })
 
+  it('never matches unrelated parks through the shared "National Park" suffix', () => {
+    expect(matchedTitle('Cape Coast Castle, Elmina Castle & Kakum National Park Day Tour', [
+      { title: 'The Mole National Park Tour', location: 'Northern Region, Ghana' },
+    ])).toBeNull()
+  })
+
   it('returns null for business-level titles and empty input', () => {
     expect(matchedTitle('Expedition-Go Tours LTD')).toBeNull()
     expect(matchTourForTitle('', TOURS)).toBeNull()

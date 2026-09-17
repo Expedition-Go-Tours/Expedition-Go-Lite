@@ -4,6 +4,7 @@ import { motion, type Variants } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import { Users, User, Heart, Folder, Handshake, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react'
 import Footer from '../components/Footer'
+import SEO, { buildBreadcrumbSchema } from '../components/SEO'
 import help1 from '../assets/foundation/help1.avif'
 import help2 from '../assets/foundation/help2.avif'
 import help3 from '../assets/foundation/help3.avif'
@@ -34,10 +35,6 @@ export default function FoundationPage() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const areasRef = useRef<HTMLDivElement>(null)
   const galleryRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    document.title = t('foundation.pageTitle')
-  }, [t])
 
   const CORE_AREAS = [
     { Icon: Users, title: t('foundation.area1Title'), subtitle: t('foundation.area1Subtitle'), description: t('foundation.area1Desc') },
@@ -92,6 +89,15 @@ export default function FoundationPage() {
 
   return (
     <div className="foundation-page">
+      <SEO
+        title="Expedition-Go Foundation - Community Impact Through Travel"
+        description="The Expedition-Go Foundation supports communities across Ghana through education, healthcare, environmental conservation, and sustainable tourism initiatives."
+        keywords="Expedition-Go Foundation, Ghana community support, sustainable tourism Ghana, travel foundation Ghana, community impact Ghana"
+        jsonLd={buildBreadcrumbSchema([
+          { name: 'Home', url: 'https://expeditiongotours.com/' },
+          { name: 'Foundation', url: 'https://expeditiongotours.com/foundation' },
+        ])}
+      />
       <section className="foundation-hero">
         <div className="foundation-hero-carousel">
           {HERO_IMAGES.map((img, index) => (

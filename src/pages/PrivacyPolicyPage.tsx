@@ -1,18 +1,24 @@
-import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import Footer from '../components/Footer'
+import SEO, { buildBreadcrumbSchema } from '../components/SEO'
 import './SupportPages.css'
 
 export default function PrivacyPolicyPage() {
   const { t } = useTranslation()
 
-  useEffect(() => {
-    document.title = `${t('footer.privacyPolicy')} | Expedition-Go Tours`
-  }, [t])
-
   return (
     <div className="support-page">
+      <SEO
+        title="Privacy Policy - Expedition-Go Tours Ghana"
+        description="Expedition-Go Tours respects your privacy. Learn how we collect, use, and protect your personal data when you book tours and experiences through our platform."
+        keywords="Expedition-Go Tours privacy, data protection Ghana, travel privacy policy, personal data policy"
+        robots="noindex, follow"
+        jsonLd={buildBreadcrumbSchema([
+          { name: 'Home', url: 'https://expeditiongotours.com/' },
+          { name: 'Privacy Policy', url: 'https://expeditiongotours.com/privacy-policy' },
+        ])}
+      />
       <div className="support-hero">
         <div className="support-hero-content">
           <h1 className="support-title">{t('footer.privacyPolicy')}</h1>

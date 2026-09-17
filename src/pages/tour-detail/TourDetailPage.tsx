@@ -13,7 +13,15 @@ import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
 import { useExpeditionTour, useSimilarTours } from '../../hooks/useExpeditionTours'
 import { useExpeditionTourReviews, useCreateReview } from '../../hooks/useExpeditionReviews'
-import { useTourExternalReviews } from '../../hooks/useExternalReviews'
+import {
+  useTourExternalReviews,
+  useTourExternalProducts,
+  combineReviewStats,
+  aggregateProducts,
+  combinedExternalDistribution,
+  scaleDistribution,
+  COUNTED_SOURCES,
+} from '../../hooks/useExternalReviews'
 import { useTourAvailability, useReviewableBookingForTour } from '../../hooks/useExpeditionBookings'
 import { freeCancellationDateLabel } from '../../lib/cancellationLabel'
 import { mapSupplierProfile } from '../../lib/supplierProfile'
@@ -46,6 +54,9 @@ import ReviewsSection from './ReviewsSection'
 import SupplierSection from './SupplierSection'
 
 import './TourDetailPage.css'
+
+/** Reviews rendered per "Load more" step (local + matched scraped cards). */
+const REVIEW_PAGE_SIZE = 10
 
 /** Skeleton placeholder shown while the tour loads: header, image gallery and booking widget. */
 function TourDetailSkeleton() {
@@ -113,6 +124,22 @@ export default function TourDetailPage() {
   // in-app reviews with the same card layouts.
   const { reviews: externalMatchedReviews } = useTourExternalReviews(
     tour ? { title: tour.title, location: tour.location } : null,
+  )
+  // Official product totals (e.g. TripAdvisor "4.9 (595 reviews)") for the
+  // matched scraped listings — used for the headline rating/count.
+  const { products: externalMatchedProducts } = useTourExternalProducts(
+    tour ? { title: tour.title, location: tour.location } : null,
+  )
+  // Headline review stats = in-app reviews + the matched scraped TripAdvisor /
+  // GetYourGuide product totals (falling back to counted rows when a product
+  // header was not captured), so the numbers agree with the cards shown below.
+  const combinedTourStats = useMemo(
+    () => combineReviewStats(
+      { rating: tour?.rating, reviewCount: tour?.reviewCount },
+      externalMatchedReviews,
+      aggregateProducts(externalMatchedProducts),
+    ),
+    [tour?.rating, tour?.reviewCount, externalMatchedReviews, externalMatchedProducts],
   )
   const { data: reviewableBookingId } = useReviewableBookingForTour(tourId)
   const { data: similarTours } = useSimilarTours(tourId)
@@ -238,8 +265,9 @@ export default function TourDetailPage() {
   const [isWriteReviewOpen, setIsWriteReviewOpen] = useState(false)
   const [reviewStarFilter, setReviewStarFilter] = useState<number | null>(null)
   const [supplierInfoOpen, setSupplierInfoOpen] = useState(true)
-  const [hasMoreReviews, setHasMoreReviews] = useState(false)
-  const [loadingMoreReviews, setLoadingMoreReviews] = useState(false)
+  // Review list pagination: render one page at a time so a product with
+  // hundreds of matched scraped reviews never mounts them all at once.
+  const [reviewVisibleCount, setReviewVisibleCount] = useState(REVIEW_PAGE_SIZE)
   const [isMobile, setIsMobile] = useState(false)
   const [widgetSelectedDate, setWidgetSelectedDate] = useState<Date | null>(null)
 
@@ -260,8 +288,13 @@ export default function TourDetailPage() {
 
   const isExternal = tour?.bookingFlow === 'EXTERNAL'
   const selectedTourTitle = tour?.title || ''
-  const selectedTourRating = tour?.rating || 0
-  const selectedTourReviews = tour?.reviewCount || 0
+  // Local (in-app) stats, kept separate so wishlist/continue-planning storage
+  // stays canonical — cards re-combine on display, so storing combined values
+  // here would double-count the scraped reviews.
+  const localTourRating = tour?.rating || 0
+  const localTourReviews = tour?.reviewCount || 0
+  const selectedTourRating = combinedTourStats.rating
+  const selectedTourReviews = combinedTourStats.reviewCount
   const slug = tourId || tour?.slug || ''
 
   const wishlistItemId = tour?.id || selectedTourTitle
@@ -280,8 +313,8 @@ export default function TourDetailPage() {
         price: tour?.price || 0,
         duration: tour?.duration || '',
         imageUrl: mergedImages[0] || '',
-        rating: selectedTourRating,
-        reviewCount: selectedTourReviews,
+        rating: localTourRating,
+        reviewCount: localTourReviews,
         addedDate: new Date().toISOString(),
         source: isExternal ? 'travio-africa' : 'expedition-go',
         externalUrl: tour?.externalUrl || undefined,
@@ -314,8 +347,8 @@ export default function TourDetailPage() {
         tour: {
           title: selectedTourTitle,
           slug,
-          rating: selectedTourRating,
-          reviews: selectedTourReviews,
+          rating: localTourRating,
+          reviews: localTourReviews,
           duration: tour?.duration || '',
           price: tour?.price || 0,
           image: mergedImages[0],
@@ -349,12 +382,8 @@ export default function TourDetailPage() {
 
   const handleReviewsTab = () => handleTabChange('reviews')
 
-  const loadMoreReviews = async () => {
-    setLoadingMoreReviews(true)
-    setTimeout(() => {
-      setHasMoreReviews(false)
-      setLoadingMoreReviews(false)
-    }, 800)
+  const loadMoreReviews = () => {
+    setReviewVisibleCount((count) => count + REVIEW_PAGE_SIZE)
   }
 
   const allReviewCards = useMemo(() => {
@@ -421,10 +450,22 @@ export default function TourDetailPage() {
     () => filteredReviewCards.filter((r) => (r.photos?.length ?? 0) > 0).length,
     [filteredReviewCards],
   )
-  const visibleReviewCards = useMemo(() => {
+  const photoFilteredReviewCards = useMemo(() => {
     if (!reviewPhotosOnly) return filteredReviewCards
     return filteredReviewCards.filter((r) => (r.photos?.length ?? 0) > 0)
   }, [filteredReviewCards, reviewPhotosOnly])
+
+  // Reset back to the first page whenever a filter changes (render-phase state
+  // adjustment — the linter-approved way to sync state to a derived change).
+  const reviewFilterKey = `${reviewStarFilter}|${reviewPhotosOnly}`
+  const [prevReviewFilterKey, setPrevReviewFilterKey] = useState(reviewFilterKey)
+  if (reviewFilterKey !== prevReviewFilterKey) {
+    setPrevReviewFilterKey(reviewFilterKey)
+    setReviewVisibleCount(REVIEW_PAGE_SIZE)
+  }
+
+  const visibleReviewCards = photoFilteredReviewCards.slice(0, reviewVisibleCount)
+  const hasMoreReviews = photoFilteredReviewCards.length > reviewVisibleCount
 
   const reviewBreakdown = useMemo(() => {
     const labels = [
@@ -434,15 +475,43 @@ export default function TourDetailPage() {
       { label: t('reviews.starsCount', { count: 2 }), stars: 2 },
       { label: t('reviews.starsCount', { count: 1 }), stars: 1 },
     ]
+    // In-app reviews: only the first page is loaded, so scale the loaded star
+    // counts to the tour's real total — otherwise the bars under-count the
+    // local part of the headline.
+    const localWeights: Record<number, number> = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
+    allReviewCards.forEach((r) => { if (localWeights[r.rating] !== undefined) localWeights[r.rating]++ })
+    const localDistribution = localTourReviews > 0 &&
+      Object.values(localWeights).some(Boolean) &&
+      localTourReviews !== allReviewCards.length
+      ? scaleDistribution(localWeights, localTourReviews)
+      : localWeights
+
+    // Scraped products contribute official totals (their distribution when the
+    // platform exposes one, otherwise their sampled rows scaled to the total),
+    // so the bars always reconcile with the headline count.
     const counts: Record<number, number> = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
-    allReviewCards.forEach((r) => { if (counts[r.rating] !== undefined) counts[r.rating]++ })
-    const total = allReviewCards.length || 1
+    const officialDistribution = combinedExternalDistribution(
+      externalMatchedProducts,
+      externalMatchedReviews,
+    )
+    if (officialDistribution) {
+      for (const star of [5, 4, 3, 2, 1]) {
+        counts[star] = localDistribution[star] + (officialDistribution[star] ?? 0)
+      }
+    } else {
+      for (const star of [5, 4, 3, 2, 1]) counts[star] = localDistribution[star]
+      externalReviewCards
+        .filter((r) => r.source && COUNTED_SOURCES.includes(r.source))
+        .forEach((r) => { if (counts[r.rating] !== undefined) counts[r.rating]++ })
+    }
+
+    const total = Object.values(counts).reduce((a, b) => a + b, 0) || 1
     return labels.map((item) => ({
       ...item,
       count: counts[item.stars],
       percentage: Math.round((counts[item.stars] / total) * 100),
     }))
-  }, [allReviewCards])
+  }, [allReviewCards, externalReviewCards, externalMatchedProducts, externalMatchedReviews, localTourReviews, t])
 
   const difficultyColorMap = useMemo<Record<string, string>>(() => ({
     'Easy': '#22c55e',
@@ -1076,7 +1145,7 @@ export default function TourDetailPage() {
                           reviews={[
                             ...allReviewCards.map(r => ({ id: r.id, name: r.name, date: r.date, rating: r.rating, text: r.text, country: '' })),
                             ...externalReviewCards.map(r => ({ id: r.id, name: r.name, date: r.date, rating: r.rating, text: r.text, country: '', source: r.source, externalUrl: r.externalUrl })),
-                          ]}
+                          ].slice(0, 12)}
                           onTabChange={handleTabChange}
                           onReviewReadMore={setReviewDetail}
                         />
@@ -1104,7 +1173,7 @@ export default function TourDetailPage() {
                         reviewBreakdown={reviewBreakdown}
                         reviews={visibleReviewCards}
                         hasMore={hasMoreReviews}
-                        loadingMore={loadingMoreReviews}
+                        loadingMore={false}
                         onLoadMore={loadMoreReviews}
                         onWriteReview={handleWriteReview}
                         starFilter={reviewStarFilter}

@@ -1,138 +1,114 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronDown } from 'lucide-react'
+import { LifeBuoy, Mail, MessageCircle } from 'lucide-react'
 import Footer from '../components/Footer'
 import SEO, { buildFAQSchema, buildBreadcrumbSchema } from '../components/SEO'
-import LiquidSurface from '@/components/lightswind/liquid-surface'
+import SupportSearch from '../components/support/SupportSearch'
+import FaqAccordion from '../components/support/FaqAccordion'
+import { getAllFaqs, getFaqCategories } from '../lib/faq'
+import { SUPPORT_EMAIL, WHATSAPP_URL } from '../lib/support'
 import './SupportPages.css'
+import './SupportHub.css'
 
-interface FaqEntry {
-  q: string
-  a: string
-}
-
-function FaqItem({ item, isOpen, onToggle }: { item: FaqEntry; isOpen: boolean; onToggle: () => void }) {
-  return (
-    <div className={`faq-item${isOpen ? ' open' : ''}`}>
-      <button type="button" className="faq-question" onClick={onToggle} aria-expanded={isOpen}>
-        <span>{item.q}</span>
-        <ChevronDown size={18} className="faq-chevron" />
-      </button>
-      <AnimatePresence initial={false}>
-        {isOpen && (
-          <motion.div
-            className="faq-answer"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.25, ease: 'easeInOut' }}
-          >
-            <p>{item.a}</p>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  )
+/** "#faq-booking-1" → "booking-1" (only for FAQ item anchors). */
+function hashToFaqId(hash: string): string | null {
+  const id = hash.replace(/^#/, '')
+  return id.startsWith('faq-') ? id.slice(4) : null
 }
 
 export default function FAQPage() {
   const { t } = useTranslation()
-  const [openKey, setOpenKey] = useState<string | null>(null)
+  const location = useLocation()
+  const categories = useMemo(() => getFaqCategories(t), [t])
+  const allFaqs = useMemo(() => getAllFaqs(t), [t])
 
-  const FAQ_CATEGORIES: { heading: string; items: FaqEntry[] }[] = [
-    {
-      heading: t('faq.catBooking'),
-      items: [
-        { q: t('faq.q1'), a: t('faq.a1') },
-        { q: t('faq.q2'), a: t('faq.a2') },
-        { q: t('faq.q3'), a: t('faq.a3') },
-        { q: t('faq.q4'), a: t('faq.a4') },
-      ],
-    },
-    {
-      heading: t('faq.catCancellation'),
-      items: [
-        { q: t('faq.q5'), a: t('faq.a5') },
-        { q: t('faq.q6'), a: t('faq.a6') },
-        { q: t('faq.q7'), a: t('faq.a7') },
-        { q: t('faq.q8'), a: t('faq.a8') },
-      ],
-    },
-    {
-      heading: t('faq.catPickup'),
-      items: [
-        { q: t('faq.q9'), a: t('faq.a9') },
-        { q: t('faq.q10'), a: t('faq.a10') },
-        { q: t('faq.q11'), a: t('faq.a11') },
-      ],
-    },
-    {
-      heading: t('faq.catOffers'),
-      items: [
-        { q: t('faq.q12'), a: t('faq.a12') },
-        { q: t('faq.q13'), a: t('faq.a13') },
-      ],
-    },
-    {
-      heading: t('faq.catHelp'),
-      items: [
-        { q: t('faq.q14'), a: t('faq.a14') },
-        { q: t('faq.q15'), a: t('faq.a15') },
-      ],
-    },
-  ]
+  const [openId, setOpenId] = useState<string | null>(() => hashToFaqId(window.location.hash))
+  const [lastHash, setLastHash] = useState(location.hash)
+  if (location.hash !== lastHash) {
+    setLastHash(location.hash)
+    const target = hashToFaqId(location.hash)
+    if (target) setOpenId(target)
+  }
 
-  const allFaqs = FAQ_CATEGORIES.flatMap(c => c.items)
+  // Scroll to the linked item/category once the accordion has expanded.
+  useEffect(() => {
+    const rawId = location.hash.replace(/^#/, '')
+    if (!rawId) return
+    const timer = window.setTimeout(() => {
+      document.getElementById(rawId)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 90)
+    return () => window.clearTimeout(timer)
+  }, [location.hash, openId])
 
   return (
-    <div className="support-page faq-page">
+    <div className="support-page sh-hub">
       <SEO
-        title="Frequently Asked Questions"
+        title="Ghana Tours FAQ - Booking, Cancellation & Travel Questions"
         description="Find answers to common questions about booking Ghana tours, cancellation policies, pickup details, payment methods, and more. Get help with your Ghana travel experience."
         keywords="Ghana tours FAQ, booking questions, cancellation policy, Ghana travel help, tour booking FAQ, Ghana experiences questions, Expedition-Go Tours FAQ"
         jsonLd={[
-          buildFAQSchema(allFaqs.map(f => ({ question: f.q, answer: f.a }))),
+          buildFAQSchema(allFaqs.map((faq) => ({ question: faq.q, answer: faq.a }))),
           buildBreadcrumbSchema([
             { name: 'Home', url: 'https://expeditiongotours.com/' },
             { name: 'FAQ', url: 'https://expeditiongotours.com/faq' },
           ]),
         ]}
       />
-      <div className="support-hero faq-hero">
-        <LiquidSurface
-          scheme={1}
-          speed={1.2}
-          theme="light"
-        />
-        <div className="support-hero-content">
-          <h1 className="support-title">{t('footer.faq')}</h1>
-          <p className="support-subtitle">{t('support.faqSubtitle')}</p>
+
+      <div className="sh-hero">
+        <div className="sh-hero-inner">
+          <p className="sh-eyebrow">{t('supportHub.eyebrow')}</p>
+          <h1 className="sh-title">{t('supportHub.faqTitle')}</h1>
+          <p className="sh-sub">{t('support.faqSubtitle')}</p>
+          <SupportSearch />
         </div>
       </div>
 
-      <div className="support-container faq-container">
-        <div className="faq-sections">
-          {FAQ_CATEGORIES.map((category, catIdx) => (
-            <section key={category.heading}>
-              <h2 className="faq-category-title">{category.heading}</h2>
-              <div className="faq-list">
-                {category.items.map((item, itemIdx) => {
-                  const key = `${catIdx}-${itemIdx}`
-                  const isOpen = openKey === key
-                  return (
-                    <FaqItem
-                      key={key}
-                      item={item}
-                      isOpen={isOpen}
-                      onToggle={() => setOpenKey(isOpen ? null : key)}
-                    />
-                  )
-                })}
-              </div>
-            </section>
+      <nav className="sh-faq-nav" aria-label={t('faq.categoriesAria')}>
+        <div className="sh-faq-nav-inner">
+          {categories.map((category) => (
+            <a key={category.id} href={`#cat-${category.id}`} className="sh-faq-pill">
+              {category.heading}
+            </a>
           ))}
         </div>
+      </nav>
+
+      <div className="support-container sh-main">
+        {categories.map((category) => (
+          <section
+            key={category.id}
+            id={`cat-${category.id}`}
+            className="sh-block"
+            style={{ scrollMarginTop: 132 }}
+            aria-labelledby={`cat-${category.id}-title`}
+          >
+            <h2 className="sh-block-title" id={`cat-${category.id}-title`}>{category.heading}</h2>
+            <FaqAccordion items={category.items} openId={openId} onToggle={setOpenId} />
+          </section>
+        ))}
+
+        <section className="sh-cta" aria-labelledby="sh-faq-cta-title">
+          <div>
+            <h2 className="sh-cta-title" id="sh-faq-cta-title">{t('support.stillNeedHelp')}</h2>
+            <p className="sh-cta-text">{t('faq.needHelpText')}</p>
+          </div>
+          <div className="sh-cta-actions">
+            <a href={`mailto:${SUPPORT_EMAIL}`} className="sh-btn sh-btn--ghost">
+              <Mail size={16} aria-hidden="true" />
+              {t('support.emailUs')}
+            </a>
+            <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="sh-btn sh-btn--ghost">
+              <MessageCircle size={16} aria-hidden="true" />
+              {t('contact.whatsappLabel')}
+            </a>
+            <a href="/contact-us" className="sh-btn sh-btn--primary">
+              <LifeBuoy size={16} aria-hidden="true" />
+              {t('footer.contactUs')}
+            </a>
+          </div>
+        </section>
       </div>
 
       <Footer />

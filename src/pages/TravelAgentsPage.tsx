@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -9,6 +9,7 @@ import {
 import heroImg from '../assets/partners/partners9.avif'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
+import SEO, { buildBreadcrumbSchema } from '../components/SEO'
 import { useAuthUser } from '../hooks/useAuthUser'
 import { setAuthReturnTo } from '../lib/auth'
 import './TravelAgentsPage.css'
@@ -22,10 +23,6 @@ export default function TravelAgentsPage({ onOpenAuth }: TravelAgentsPageProps) 
   const navigate = useNavigate()
   const user = useAuthUser()
   const [openFaq, setOpenFaq] = useState<number | null>(null)
-
-  useEffect(() => {
-    document.title = `${t('travelAgents.pageTitle', 'Travel Agents | Expedition-Go Tours')} | Expedition-Go Tours`
-  }, [t])
 
   const STATS = [
     { value: '200k+', label: 'Activities worldwide' },
@@ -120,6 +117,15 @@ export default function TravelAgentsPage({ onOpenAuth }: TravelAgentsPageProps) 
 
   return (
     <div className="ta-page">
+      <SEO
+        title="Travel Agent Partnerships - Expedition-Go Tours Ghana"
+        description="Partner with Expedition-Go Tours as a travel agent. Access 200,000+ curated experiences worldwide, earn competitive commissions, and grow your travel business."
+        keywords="travel agent partnership Ghana, Expedition-Go Tours travel agent, travel agent affiliate program, book tours for clients Ghana, travel agent commission"
+        jsonLd={buildBreadcrumbSchema([
+          { name: 'Home', url: 'https://expeditiongotours.com/' },
+          { name: 'Travel Agents', url: 'https://expeditiongotours.com/travel-agents' },
+        ])}
+      />
       <Navbar onOpenAuth={onOpenAuth} />
 
       {/* Hero */}

@@ -1,18 +1,24 @@
-import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import Footer from '../components/Footer'
+import SEO, { buildBreadcrumbSchema } from '../components/SEO'
 import './SupportPages.css'
 
 export default function CookiesPolicyPage() {
   const { t } = useTranslation()
 
-  useEffect(() => {
-    document.title = `${t('footer.cookiesPolicy')} | Expedition-Go Tours`
-  }, [t])
-
   return (
     <div className="support-page">
+      <SEO
+        title="Cookies Policy - Expedition-Go Tours Ghana"
+        description="Learn how Expedition-Go Tours uses cookies on our booking platform. Manage your cookie preferences and understand what data we collect."
+        keywords="Expedition-Go Tours cookies, cookie policy, website cookies, tracking cookies Ghana"
+        robots="noindex, follow"
+        jsonLd={buildBreadcrumbSchema([
+          { name: 'Home', url: 'https://expeditiongotours.com/' },
+          { name: 'Cookies Policy', url: 'https://expeditiongotours.com/cookies-policy' },
+        ])}
+      />
       <div className="support-hero">
         <div className="support-hero-content">
           <h1 className="support-title">{t('footer.cookiesPolicy')}</h1>

@@ -83,6 +83,9 @@ const TITLE_STOP_WORDS = new Set([
  */
 const GENERIC_LOCATION_TOKENS = new Set([
   'accra', 'ghana', 'greater', 'region', 'eastern', 'western', 'northern', 'central',
+  // "National Park" is a suffix shared by unrelated parks (Mole vs Kakum), so
+  // it must never be the evidence that attaches a review to a tour.
+  'national', 'park',
 ])
 
 /**

@@ -194,7 +194,7 @@ export default function AboutUsPage() {
   return (
     <div className="about-page">
       <SEO
-        title="About Us"
+        title="About Expedition-Go Tours - Ghana's Leading Tour Platform"
         description="Learn about Expedition-Go Tours — Ghana's premier tour platform. We connect travelers with authentic local experiences, cultural tours, wildlife safaris, and adventure activities across Ghana. Meet our team and mission."
         keywords="Expedition-Go Tours, about us, Ghana tour company, Ghana travel platform, local tours Ghana, authentic experiences Ghana, Ghana tourism company"
         jsonLd={buildBreadcrumbSchema([

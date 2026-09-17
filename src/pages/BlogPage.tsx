@@ -104,7 +104,7 @@ export default function BlogPage({ onOpenAuth }: BlogPageProps) {
   return (
     <div className="blog-page">
       <SEO
-        title="Travel Stories & Blog"
+        title="Ghana Travel Blog - Stories, Guides & Tips"
         description="Read inspiring travel stories from Ghana. Discover hidden gems, local culture, food experiences, wildlife adventures, and travel tips for your Ghana vacation."
         keywords="Ghana travel blog, Ghana travel stories, Ghana travel guide, things to do in Ghana, Ghana experiences, Ghana food, Ghana culture, Ghana wildlife, West Africa travel"
         jsonLd={buildBreadcrumbSchema([

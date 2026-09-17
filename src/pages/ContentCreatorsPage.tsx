@@ -1,4 +1,3 @@
-import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
@@ -12,6 +11,7 @@ import content6 from '../assets/content-creators/content6.avif'
 import content7 from '../assets/content-creators/content7.avif'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
+import SEO, { buildBreadcrumbSchema } from '../components/SEO'
 import { useAuthUser } from '../hooks/useAuthUser'
 import { setAuthReturnTo } from '../lib/auth'
 import './ContentCreatorsPage.css'
@@ -59,10 +59,6 @@ export default function ContentCreatorsPage({ onOpenAuth }: ContentCreatorsPageP
     t('contentCreators.step3'),
   ]
 
-  useEffect(() => {
-    document.title = `${t('footer.asContentCreator')} | Expedition-Go Tours`
-  }, [t])
-
   const handleSignUp = () => {
     if (!user) {
       setAuthReturnTo('/partners/content-creators/apply')
@@ -72,6 +68,15 @@ export default function ContentCreatorsPage({ onOpenAuth }: ContentCreatorsPageP
 
   return (
     <div className="content-creator-page">
+      <SEO
+        title="Become a Content Creator - Expedition-Go Tours Ghana"
+        description="Join Expedition-Go Tours as a content creator. Earn commissions by sharing Ghana travel experiences with your audience. Sign up for free and start monetizing your content."
+        keywords="Expedition-Go Tours content creator, Ghana travel influencer, earn money travel content, affiliate program Ghana, content creator partnership"
+        jsonLd={buildBreadcrumbSchema([
+          { name: 'Home', url: 'https://expeditiongotours.com/' },
+          { name: 'Content Creators', url: 'https://expeditiongotours.com/content-creators' },
+        ])}
+      />
       <Navbar onOpenAuth={onOpenAuth} />
 
       {/* Section 1: Hero */}
