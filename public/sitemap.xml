@@ -16,7 +16,22 @@
 <url>
   <loc>https://expeditiongotours.com/about-us</loc>
   <changefreq>monthly</changefreq>
-  <priority>0.5</priority>
+  <priority>0.6</priority>
+</url>
+<url>
+  <loc>https://expeditiongotours.com/stories</loc>
+  <changefreq>weekly</changefreq>
+  <priority>0.6</priority>
+</url>
+<url>
+  <loc>https://expeditiongotours.com/reviews</loc>
+  <changefreq>weekly</changefreq>
+  <priority>0.6</priority>
+</url>
+<url>
+  <loc>https://expeditiongotours.com/blog</loc>
+  <changefreq>weekly</changefreq>
+  <priority>0.6</priority>
 </url>
 <url>
   <loc>https://expeditiongotours.com/faq</loc>
@@ -34,27 +49,42 @@
   <priority>0.4</priority>
 </url>
 <url>
-  <loc>https://expeditiongotours.com/stories</loc>
-  <changefreq>weekly</changefreq>
-  <priority>0.6</priority>
-</url>
-<url>
-  <loc>https://expeditiongotours.com/reviews</loc>
-  <changefreq>weekly</changefreq>
+  <loc>https://expeditiongotours.com/transport</loc>
+  <changefreq>monthly</changefreq>
   <priority>0.5</priority>
 </url>
 <url>
-  <loc>https://expeditiongotours.com/blog</loc>
-  <changefreq>weekly</changefreq>
-  <priority>0.6</priority>
+  <loc>https://expeditiongotours.com/transport-providers</loc>
+  <changefreq>monthly</changefreq>
+  <priority>0.3</priority>
 </url>
 <url>
-  <loc>https://expeditiongotours.com/careers</loc>
+  <loc>https://expeditiongotours.com/hotels</loc>
+  <changefreq>monthly</changefreq>
+  <priority>0.3</priority>
+</url>
+<url>
+  <loc>https://expeditiongotours.com/travel-agents</loc>
+  <changefreq>monthly</changefreq>
+  <priority>0.3</priority>
+</url>
+<url>
+  <loc>https://expeditiongotours.com/content-creators</loc>
   <changefreq>monthly</changefreq>
   <priority>0.3</priority>
 </url>
 <url>
   <loc>https://expeditiongotours.com/partnerships</loc>
+  <changefreq>monthly</changefreq>
+  <priority>0.3</priority>
+</url>
+<url>
+  <loc>https://expeditiongotours.com/foundation</loc>
+  <changefreq>monthly</changefreq>
+  <priority>0.3</priority>
+</url>
+<url>
+  <loc>https://expeditiongotours.com/careers</loc>
   <changefreq>monthly</changefreq>
   <priority>0.3</priority>
 </url>
@@ -79,139 +109,165 @@
   <priority>0.2</priority>
 </url>
 <url>
-  <loc>https://expeditiongotours.com/foundation</loc>
-  <changefreq>monthly</changefreq>
-  <priority>0.3</priority>
-</url>
-<url>
-  <loc>https://expeditiongotours.com/transport</loc>
-  <changefreq>monthly</changefreq>
-  <priority>0.4</priority>
-</url>
-<url>
-  <loc>https://expeditiongotours.com/tour/from-accra-the-nature-escape-adventure</loc>
-  <changefreq>weekly</changefreq>
-  <priority>0.8</priority>
+  <loc>https://expeditiongotours.com/supplier-terms</loc>
+  <changefreq>yearly</changefreq>
+  <priority>0.2</priority>
 </url>
 <url>
   <loc>https://expeditiongotours.com/tour/cape-coast-castle-elmina-castle-kakum-national-park-tour</loc>
+  <lastmod>2026-08-25</lastmod>
   <changefreq>weekly</changefreq>
   <priority>0.8</priority>
 </url>
 <url>
   <loc>https://expeditiongotours.com/tour/the-ghanaian-cultural-and-heritage-tour</loc>
-  <changefreq>weekly</changefreq>
-  <priority>0.8</priority>
-</url>
-<url>
-  <loc>https://expeditiongotours.com/tour/the-mole-national-park-tour</loc>
-  <changefreq>weekly</changefreq>
-  <priority>0.8</priority>
-</url>
-<url>
-  <loc>https://expeditiongotours.com/tour/the-kumasi-cultural-and-heritage-day-tour</loc>
-  <changefreq>weekly</changefreq>
-  <priority>0.8</priority>
-</url>
-<url>
-  <loc>https://expeditiongotours.com/tour/accra-traditional-african-dance-and-drumming-show</loc>
-  <changefreq>weekly</changefreq>
-  <priority>0.8</priority>
-</url>
-<url>
-  <loc>https://expeditiongotours.com/tour/transport-form-accra-to-cape-coast</loc>
-  <changefreq>weekly</changefreq>
-  <priority>0.8</priority>
-</url>
-<url>
-  <loc>https://expeditiongotours.com/tour/waterfalls-massage-with-aburi-gardens-cocoa-farm-activity</loc>
-  <changefreq>weekly</changefreq>
-  <priority>0.8</priority>
-</url>
-<url>
-  <loc>https://expeditiongotours.com/tour/accra-food-tasting-tour</loc>
-  <changefreq>weekly</changefreq>
-  <priority>0.8</priority>
-</url>
-<url>
-  <loc>https://expeditiongotours.com/tour/accra-culture-walk-fantasy-coffins-art-gallery-beaches</loc>
-  <changefreq>weekly</changefreq>
-  <priority>0.8</priority>
-</url>
-<url>
-  <loc>https://expeditiongotours.com/tour/accra-sankofa-art-gallery-tour-candle-making-workshop</loc>
+  <lastmod>2026-08-25</lastmod>
   <changefreq>weekly</changefreq>
   <priority>0.8</priority>
 </url>
 <url>
   <loc>https://expeditiongotours.com/tour/accra-night-live-experience</loc>
+  <lastmod>2026-08-25</lastmod>
   <changefreq>weekly</changefreq>
   <priority>0.8</priority>
 </url>
 <url>
-  <loc>https://expeditiongotours.com/tour/the-despite-automobile-museum</loc>
+  <loc>https://expeditiongotours.com/tour/the-kumasi-cultural-and-heritage-day-tour</loc>
+  <lastmod>2026-08-25</lastmod>
   <changefreq>weekly</changefreq>
   <priority>0.8</priority>
 </url>
 <url>
-  <loc>https://expeditiongotours.com/tour/the-ghana-naming-ceremony-tour</loc>
+  <loc>https://expeditiongotours.com/tour/the-north-safari</loc>
+  <lastmod>2026-09-16</lastmod>
   <changefreq>weekly</changefreq>
   <priority>0.8</priority>
 </url>
 <url>
-  <loc>https://expeditiongotours.com/tour/ada-day-tour-with-amazing-experience</loc>
+  <loc>https://expeditiongotours.com/tour/accra-culture-walk-fantasy-coffins-art-gallery-beaches</loc>
+  <lastmod>2026-08-26</lastmod>
   <changefreq>weekly</changefreq>
   <priority>0.8</priority>
 </url>
 <url>
-  <loc>https://expeditiongotours.com/tour/kotoka-international-airport-acc-lounge-entry</loc>
+  <loc>https://expeditiongotours.com/tour/accra-sankofa-art-gallery-tour-candle-making-workshop</loc>
+  <lastmod>2026-08-25</lastmod>
   <changefreq>weekly</changefreq>
   <priority>0.8</priority>
 </url>
 <url>
-  <loc>https://expeditiongotours.com/tour/accra-guided-city-tour-cultural-and-historical-experience</loc>
+  <loc>https://expeditiongotours.com/tour/accra-traditional-african-dance-and-drumming-show</loc>
+  <lastmod>2026-08-26</lastmod>
   <changefreq>weekly</changefreq>
   <priority>0.8</priority>
 </url>
 <url>
-  <loc>https://expeditiongotours.com/tour/the-shia-hills-safari-quad-bike-tour</loc>
+  <loc>https://expeditiongotours.com/tour/transport-form-accra-to-cape-coast</loc>
+  <lastmod>2026-08-26</lastmod>
   <changefreq>weekly</changefreq>
   <priority>0.8</priority>
 </url>
 <url>
-  <loc>https://expeditiongotours.com/tour/safari-valley-aburi-safari-valley-eco-resort-day-tour</loc>
+  <loc>https://expeditiongotours.com/tour/the-mole-national-park-tour</loc>
+  <lastmod>2026-08-26</lastmod>
   <changefreq>weekly</changefreq>
   <priority>0.8</priority>
 </url>
 <url>
-  <loc>https://expeditiongotours.com/tour/private-accra-international-airport-pickup-dropoff</loc>
+  <loc>https://expeditiongotours.com/tour/world-heritage-fortresses-and-nzulezo</loc>
+  <lastmod>2026-09-16</lastmod>
   <changefreq>weekly</changefreq>
   <priority>0.8</priority>
 </url>
 <url>
   <loc>https://expeditiongotours.com/tour/accra-2-day-trip-to-aqua-safari-resort-and-treasure-island</loc>
+  <lastmod>2026-08-26</lastmod>
   <changefreq>weekly</changefreq>
   <priority>0.8</priority>
 </url>
 <url>
-  <loc>https://expeditiongotours.com/tour/the-cape-coast-day-tour-with-assin-manso-slave-river-bath</loc>
+  <loc>https://expeditiongotours.com/tour/private-accra-international-airport-pickup-dropoff</loc>
+  <lastmod>2026-08-25</lastmod>
+  <changefreq>weekly</changefreq>
+  <priority>0.8</priority>
+</url>
+<url>
+  <loc>https://expeditiongotours.com/tour/accra-food-tasting-tour</loc>
+  <lastmod>2026-08-26</lastmod>
   <changefreq>weekly</changefreq>
   <priority>0.8</priority>
 </url>
 <url>
   <loc>https://expeditiongotours.com/tour/accra-flying-dress-experience</loc>
+  <lastmod>2026-08-26</lastmod>
+  <changefreq>weekly</changefreq>
+  <priority>0.8</priority>
+</url>
+<url>
+  <loc>https://expeditiongotours.com/tour/the-cape-coast-day-tour-with-assin-manso-slave-river-bath</loc>
+  <lastmod>2026-08-25</lastmod>
+  <changefreq>weekly</changefreq>
+  <priority>0.8</priority>
+</url>
+<url>
+  <loc>https://expeditiongotours.com/tour/accra-guided-city-tour-cultural-and-historical-experience</loc>
+  <lastmod>2026-08-25</lastmod>
+  <changefreq>weekly</changefreq>
+  <priority>0.8</priority>
+</url>
+<url>
+  <loc>https://expeditiongotours.com/tour/the-despite-automobile-museum</loc>
+  <lastmod>2026-08-26</lastmod>
+  <changefreq>weekly</changefreq>
+  <priority>0.8</priority>
+</url>
+<url>
+  <loc>https://expeditiongotours.com/tour/the-ghana-naming-ceremony-tour</loc>
+  <lastmod>2026-08-25</lastmod>
+  <changefreq>weekly</changefreq>
+  <priority>0.8</priority>
+</url>
+<url>
+  <loc>https://expeditiongotours.com/tour/waterfalls-massage-with-aburi-gardens-cocoa-farm-activity</loc>
+  <lastmod>2026-08-25</lastmod>
+  <changefreq>weekly</changefreq>
+  <priority>0.8</priority>
+</url>
+<url>
+  <loc>https://expeditiongotours.com/tour/ada-day-tour-with-amazing-experience</loc>
+  <lastmod>2026-09-10</lastmod>
+  <changefreq>weekly</changefreq>
+  <priority>0.8</priority>
+</url>
+<url>
+  <loc>https://expeditiongotours.com/tour/kotoka-international-airport-acc-lounge-entry</loc>
+  <lastmod>2026-08-26</lastmod>
+  <changefreq>weekly</changefreq>
+  <priority>0.8</priority>
+</url>
+<url>
+  <loc>https://expeditiongotours.com/tour/the-shia-hills-safari-quad-bike-tour</loc>
+  <lastmod>2026-08-25</lastmod>
+  <changefreq>weekly</changefreq>
+  <priority>0.8</priority>
+</url>
+<url>
+  <loc>https://expeditiongotours.com/tour/safari-valley-aburi-safari-valley-eco-resort-day-tour</loc>
+  <lastmod>2026-08-26</lastmod>
+  <changefreq>weekly</changefreq>
+  <priority>0.8</priority>
+</url>
+<url>
+  <loc>https://expeditiongotours.com/tour/from-accra-the-nature-escape-adventure</loc>
+  <lastmod>2026-08-25</lastmod>
   <changefreq>weekly</changefreq>
   <priority>0.8</priority>
 </url>
 <url>
   <loc>https://expeditiongotours.com/tour/from-accra-waterfalls-aburi-gardens-cocoa-farm-tour</loc>
+  <lastmod>2026-08-25</lastmod>
   <changefreq>weekly</changefreq>
   <priority>0.8</priority>
-</url>
-<url>
-  <loc>https://expeditiongotours.com/tours?place=Dedenya</loc>
-  <changefreq>weekly</changefreq>
-  <priority>0.7</priority>
 </url>
 <url>
   <loc>https://expeditiongotours.com/tours?place=Cape%20Coast</loc>
@@ -224,7 +280,7 @@
   <priority>0.7</priority>
 </url>
 <url>
-  <loc>https://expeditiongotours.com/tours?place=Kintampo%20South%20District</loc>
+  <loc>https://expeditiongotours.com/tours?place=Accra</loc>
   <changefreq>weekly</changefreq>
   <priority>0.7</priority>
 </url>
@@ -234,7 +290,27 @@
   <priority>0.7</priority>
 </url>
 <url>
-  <loc>https://expeditiongotours.com/tours?place=Accra</loc>
+  <loc>https://expeditiongotours.com/tours?place=Mole%20Village</loc>
+  <changefreq>weekly</changefreq>
+  <priority>0.7</priority>
+</url>
+<url>
+  <loc>https://expeditiongotours.com/tours?place=Kintampo%20South%20District</loc>
+  <changefreq>weekly</changefreq>
+  <priority>0.7</priority>
+</url>
+<url>
+  <loc>https://expeditiongotours.com/tours?place=Nzulezo</loc>
+  <changefreq>weekly</changefreq>
+  <priority>0.7</priority>
+</url>
+<url>
+  <loc>https://expeditiongotours.com/tours?place=Ada%20Foah</loc>
+  <changefreq>weekly</changefreq>
+  <priority>0.7</priority>
+</url>
+<url>
+  <loc>https://expeditiongotours.com/tours?place=Nyankumasi%20Ahenkro</loc>
   <changefreq>weekly</changefreq>
   <priority>0.7</priority>
 </url>
@@ -249,17 +325,12 @@
   <priority>0.7</priority>
 </url>
 <url>
+  <loc>https://expeditiongotours.com/tours?place=Dedenya</loc>
+  <changefreq>weekly</changefreq>
+  <priority>0.7</priority>
+</url>
+<url>
   <loc>https://expeditiongotours.com/tours?place=Adukrom</loc>
-  <changefreq>weekly</changefreq>
-  <priority>0.7</priority>
-</url>
-<url>
-  <loc>https://expeditiongotours.com/tours?place=Ada%20Foah</loc>
-  <changefreq>weekly</changefreq>
-  <priority>0.7</priority>
-</url>
-<url>
-  <loc>https://expeditiongotours.com/tours?place=Nyankumasi%20Ahenkro</loc>
   <changefreq>weekly</changefreq>
   <priority>0.7</priority>
 </url>
