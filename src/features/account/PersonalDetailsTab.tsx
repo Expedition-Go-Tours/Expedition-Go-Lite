@@ -213,7 +213,7 @@ export default function PersonalDetailsTab() {
 
         <div className="account-section__body">
           {/* Avatar */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginBottom: 24 }}>
+          <div className="account-profile-head">
             <div className="account-avatar-wrap" onClick={() => fileRef.current?.click()}>
               <img
                 src={avatarSrc}
@@ -461,7 +461,7 @@ export default function PersonalDetailsTab() {
           <Trash2 size={16} className="text-red-500" />
           <h3>Delete Account</h3>
         </div>
-        <div className="account-section__body" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div className="account-section__body account-danger-row">
           <p style={{ fontSize: 13, color: 'var(--bv-muted, #667085)', margin: 0 }}>
             Permanently delete your account and all associated data. This action cannot be undone.
           </p>
