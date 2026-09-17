@@ -158,6 +158,36 @@ ${urls.join('\n')}
   fs.mkdirSync(path.dirname(OUTPUT), { recursive: true });
   fs.writeFileSync(OUTPUT, xml, 'utf8');
   console.log(`Sitemap written: ${urls.length} URLs (${tourCount} tours, ${places.size} destinations, ${STATIC_PAGES.length} static) — ${(Buffer.byteLength(xml) / 1024).toFixed(1)} KB`);
+
+  // robots.txt — generated so the Sitemap directive always uses the canonical
+  // host (a hardcoded file drifts whenever the host changes).
+  const robots = `User-agent: *
+Allow: /
+Disallow: /dashboard/
+Disallow: /booking/
+Disallow: /auth/
+Disallow: /login
+Disallow: /api/
+Disallow: /payment-methods
+Disallow: /supplier/register
+Disallow: /supplier/list-experience
+
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: facebookexternalhit
+Allow: /
+
+Sitemap: ${SITE_URL}/sitemap.xml
+`;
+  fs.writeFileSync(path.resolve(__dirname, '../public/robots.txt'), robots, 'utf8');
+  console.log(`robots.txt written (Sitemap: ${SITE_URL}/sitemap.xml)`);
 }
 
 main().catch((err) => {
