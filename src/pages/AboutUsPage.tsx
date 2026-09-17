@@ -198,8 +198,8 @@ export default function AboutUsPage() {
         description="Learn about Expedition-Go Tours — Ghana's premier tour platform. We connect travelers with authentic local experiences, cultural tours, wildlife safaris, and adventure activities across Ghana. Meet our team and mission."
         keywords="Expedition-Go Tours, about us, Ghana tour company, Ghana travel platform, local tours Ghana, authentic experiences Ghana, Ghana tourism company"
         jsonLd={buildBreadcrumbSchema([
-          { name: 'Home', url: 'https://expeditiongotours.com/' },
-          { name: 'About Us', url: 'https://expeditiongotours.com/about-us' },
+          { name: 'Home', url: 'https://www.expeditiongotours.com/' },
+          { name: 'About Us', url: 'https://www.expeditiongotours.com/about-us' },
         ])}
       />
 

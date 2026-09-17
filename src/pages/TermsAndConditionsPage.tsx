@@ -57,7 +57,7 @@ export default function TermsAndConditionsPage() {
           </p>
           <p>Contact details:</p>
           <ul>
-            <li>Website: <strong>https://expeditiongotours.com</strong></li>
+            <li>Website: <strong>https://www.expeditiongotours.com</strong></li>
             <li>Email: <strong>info@expeditiongotours.com</strong></li>
             <li>Telephone/WhatsApp: <strong>+233 59 140 9761</strong></li>
             <li>Trading address: <strong>Nmai Dzorn Adjiringano Road, Accra, Ghana</strong></li>
@@ -531,7 +531,7 @@ export default function TermsAndConditionsPage() {
             <br />
             TIN: <strong>C0062656392</strong>
             <br />
-            Website: <a href="https://expeditiongotours.com" target="_blank" rel="noopener noreferrer">https://expeditiongotours.com</a>
+            Website: <a href="https://www.expeditiongotours.com" target="_blank" rel="noopener noreferrer">https://www.expeditiongotours.com</a>
             <br />
             Email: <a href="mailto:info@expeditiongotours.com">info@expeditiongotours.com</a>
             <br />

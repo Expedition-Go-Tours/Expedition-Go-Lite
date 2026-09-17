@@ -54,7 +54,7 @@ export default function PrivacyPolicyPage() {
             <br />
             Trading address: <strong>Nmai Dzorn Adjiringano Road, Accra, Ghana</strong>
             <br />
-            Website: <a href="https://expeditiongotours.com" target="_blank" rel="noopener noreferrer">https://expeditiongotours.com</a>
+            Website: <a href="https://www.expeditiongotours.com" target="_blank" rel="noopener noreferrer">https://www.expeditiongotours.com</a>
             <br />
             Email: <a href="mailto:info@expeditiongotours.com">info@expeditiongotours.com</a>
             <br />

@@ -108,8 +108,8 @@ export default function BlogPage({ onOpenAuth }: BlogPageProps) {
         description="Read inspiring travel stories from Ghana. Discover hidden gems, local culture, food experiences, wildlife adventures, and travel tips for your Ghana vacation."
         keywords="Ghana travel blog, Ghana travel stories, Ghana travel guide, things to do in Ghana, Ghana experiences, Ghana food, Ghana culture, Ghana wildlife, West Africa travel"
         jsonLd={buildBreadcrumbSchema([
-          { name: 'Home', url: 'https://expeditiongotours.com/' },
-          { name: 'Blog', url: 'https://expeditiongotours.com/blog' },
+          { name: 'Home', url: 'https://www.expeditiongotours.com/' },
+          { name: 'Blog', url: 'https://www.expeditiongotours.com/blog' },
         ])}
       />
       <Navbar onOpenAuth={onOpenAuth} />

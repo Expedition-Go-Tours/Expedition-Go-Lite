@@ -932,10 +932,10 @@ export default function TourDetailPage() {
             region: tour.location?.split(',')[1]?.trim(),
           }),
           buildBreadcrumbSchema([
-            { name: 'Home', url: 'https://expeditiongotours.com/' },
-            { name: tour.location?.split(',')[1]?.trim() || 'Ghana', url: 'https://expeditiongotours.com/tours' },
-            { name: tour.location?.split(',')[0] || 'Tours', url: `https://expeditiongotours.com/tours?place=${encodeURIComponent(tour.location?.split(',')[0] || '')}` },
-            { name: tour.title, url: `https://expeditiongotours.com/tour/${slug}` },
+            { name: 'Home', url: 'https://www.expeditiongotours.com/' },
+            { name: tour.location?.split(',')[1]?.trim() || 'Ghana', url: 'https://www.expeditiongotours.com/tours' },
+            { name: tour.location?.split(',')[0] || 'Tours', url: `https://www.expeditiongotours.com/tours?place=${encodeURIComponent(tour.location?.split(',')[0] || '')}` },
+            { name: tour.title, url: `https://www.expeditiongotours.com/tour/${slug}` },
           ]),
         ]}
       />

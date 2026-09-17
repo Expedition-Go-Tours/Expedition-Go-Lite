@@ -149,14 +149,14 @@ function StoryDetailPage() {
             title: story.title,
             description: `${story.title} - ${content.category} travel story from Ghana.`,
             image: story.image,
-            url: `https://expeditiongotours.com/stories/${storySlug(story.title)}`,
+            url: `https://www.expeditiongotours.com/stories/${storySlug(story.title)}`,
             publishedTime: story.date || new Date().toISOString(),
             author: 'Expedition-Go Tours',
           }),
           buildBreadcrumbSchema([
-            { name: 'Home', url: 'https://expeditiongotours.com/' },
-            { name: 'Stories', url: 'https://expeditiongotours.com/stories' },
-            { name: story.title, url: `https://expeditiongotours.com/stories/${storySlug(story.title)}` },
+            { name: 'Home', url: 'https://www.expeditiongotours.com/' },
+            { name: 'Stories', url: 'https://www.expeditiongotours.com/stories' },
+            { name: story.title, url: `https://www.expeditiongotours.com/stories/${storySlug(story.title)}` },
           ]),
         ]}
       />

@@ -161,8 +161,8 @@ export default function SupplierPage() {
         description={`Book tours with ${profileName} on Expedition-Go Tours. ${totalTours > 0 ? `${totalTours} experiences available.` : ''} ${ratingDisplay ? `Rated ${ratingDisplay}/5.` : ''} Authentic Ghana tours and experiences.`}
         keywords={`${profileName}, Ghana tour operator, Ghana tours, ${profileName} tours, Ghana experiences`}
         jsonLd={buildBreadcrumbSchema([
-          { name: 'Home', url: 'https://expeditiongotours.com/' },
-          { name: profileName, url: `https://expeditiongotours.com/supplier/${encodeURIComponent(decodedName || '')}` },
+          { name: 'Home', url: 'https://www.expeditiongotours.com/' },
+          { name: profileName, url: `https://www.expeditiongotours.com/supplier/${encodeURIComponent(decodedName || '')}` },
         ])}
       />
       <div className="supplier-page-nav-offset" aria-hidden />
