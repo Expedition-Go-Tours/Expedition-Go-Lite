@@ -23,7 +23,7 @@ import "./DashboardLayout.css";
 
 // Dashboard sub-pages are code-split so visiting one tab (e.g. Wishlist) only
 // downloads that page's chunk instead of every dashboard page up front.
-const SettingsPage = lazy(() => import("./SettingsPage"));
+const SettingsPage = lazy(() => import("./AccountSettingsPage"));
 const BookingHistory = lazy(() => import("../BookingHistory"));
 const Wishlist = lazy(() => import("../Wishlist"));
 const ReviewsPage = lazy(() => import("./ReviewsPage"));
@@ -164,6 +164,19 @@ function ProfileDropdown({
           >
             <Home size={16} strokeWidth={1.7} />
             <span>Back to Homepage</span>
+          </button>
+
+          {/* Account Settings */}
+          <button
+            role="menuitem"
+            className="dash-profile-item"
+            onClick={() => {
+              onClose();
+              navigate("/dashboard/settings");
+            }}
+          >
+            <Settings size={16} strokeWidth={1.7} />
+            <span>Account Settings</span>
           </button>
 
           {/* Sign out */}
