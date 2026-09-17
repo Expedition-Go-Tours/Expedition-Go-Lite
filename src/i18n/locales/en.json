@@ -1183,9 +1183,15 @@
     },
     "inventory": {
       "name": "Name",
+      "type": "Type",
       "provider": "Provider",
       "purpose": "Purpose",
       "duration": "Duration",
+      "types": {
+        "cookie": "Cookie",
+        "storage": "Storage",
+        "network": "Request"
+      },
       "purposes": {
         "consentRecord": "Records your cookie choices",
         "sessionSecurity": "Keeps your account and supplier session secure",
@@ -1198,6 +1204,8 @@
         "languageChoice": "Remembers the language you chose",
         "currencyChoice": "Remembers the currency you chose",
         "currencyRates": "Caches exchange rates so prices display instantly",
+        "stripeFraud": "Detects and prevents payment fraud",
+        "stripeSession": "Keeps the payment session secure during checkout",
         "locationHistory": "Remembers the destinations you have searched",
         "recentSearches": "Shows your recent searches in the search box",
         "wishlist": "Saves the experiences you shortlist",
@@ -1209,12 +1217,14 @@
       },
       "durations": {
         "session": "Session",
+        "minutes30": "30 minutes",
         "hour1": "1 hour",
         "hours12": "12 hours",
         "hours24": "24 hours",
         "day1": "1 day",
         "days7": "7 days",
         "days180": "180 days",
+        "days365": "1 year",
         "persistent": "Until you clear it",
         "untilSignOut": "Until you sign out",
         "untilBookingCompletes": "Until the booking is completed",

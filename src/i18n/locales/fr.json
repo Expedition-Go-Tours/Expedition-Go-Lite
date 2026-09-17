@@ -1131,9 +1131,15 @@
     },
     "inventory": {
       "name": "Nom",
+      "type": "Type",
       "provider": "Fournisseur",
       "purpose": "Finalité",
       "duration": "Durée",
+      "types": {
+        "cookie": "Cookie",
+        "storage": "Stockage",
+        "network": "Requête"
+      },
       "purposes": {
         "consentRecord": "Enregistre vos choix en matière de cookies",
         "sessionSecurity": "Sécurise votre compte et votre session fournisseur",
@@ -1146,6 +1152,8 @@
         "languageChoice": "Mémorise la langue que vous avez choisie",
         "currencyChoice": "Mémorise la devise que vous avez choisie",
         "currencyRates": "Met en cache les taux de change pour afficher les prix instantanément",
+        "stripeFraud": "Détecte et prévient la fraude au paiement",
+        "stripeSession": "Sécurise la session de paiement pendant le règlement",
         "locationHistory": "Mémorise les destinations que vous avez recherchées",
         "recentSearches": "Affiche vos recherches récentes dans le champ de recherche",
         "wishlist": "Enregistre les expériences que vous mettez de côté",
@@ -1157,15 +1165,17 @@
       },
       "durations": {
         "session": "Session",
+        "minutes30": "30 minutes",
         "hour1": "1 heure",
         "hours12": "12 heures",
         "hours24": "24 heures",
         "day1": "1 jour",
         "days7": "7 jours",
         "days180": "180 jours",
+        "days365": "1 an",
         "persistent": "Jusqu'à suppression",
         "untilSignOut": "Jusqu'à la déconnexion",
-        "untilBookingCompletes": "Jusqu'à la fin de la réservation",
+        "untilBookingCompletes": "Jusqu'à la finalisation de la réservation",
         "entries2": "2 entrées",
         "entries5": "5 entrées"
       }

@@ -311,6 +311,13 @@
   word-break: break-all;
 }
 
+/* What it actually is — cookie, storage key or network request. Kept quiet so
+   it reads as a qualifier on the name rather than a competing column. */
+.cookie-table__type {
+  color: var(--bv-faint);
+  white-space: nowrap;
+}
+
 .cookie-table th:last-child,
 .cookie-table td:last-child {
   padding-right: 0;
@@ -375,12 +382,12 @@
 
   .cookie-category__head { gap: 14px; }
 
-  /* Provider and duration are the least critical columns on a phone; the name
-     and purpose carry the meaning, so drop the rest rather than scroll. */
-  .cookie-table th:nth-child(2),
-  .cookie-table td:nth-child(2),
-  .cookie-table th:nth-child(4),
-  .cookie-table td:nth-child(4) {
+  /* Provider and duration are the least critical columns on a phone; name,
+     type and purpose carry the meaning, so drop the rest rather than scroll. */
+  .cookie-table th:nth-child(3),
+  .cookie-table td:nth-child(3),
+  .cookie-table th:nth-child(5),
+  .cookie-table td:nth-child(5) {
     display: none;
   }
 }

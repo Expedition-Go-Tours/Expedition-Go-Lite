@@ -6,6 +6,15 @@ interface BookingDeadlineTimerProps {
   closesAt?: string | null
 }
 
+function computeHoursLeft(closesAt: string | null): number | null {
+  if (!closesAt) return null
+  const deadline = new Date(closesAt)
+  if (Number.isNaN(deadline.getTime())) return null
+  const diff = deadline.getTime() - Date.now()
+  if (diff <= 0) return 0
+  return Math.ceil(diff / (1000 * 60 * 60))
+}
+
 /**
  * Banner shown in the booking widget after a date is selected, displaying how
  * many hours remain before the supplier stops accepting bookings for that
@@ -14,32 +23,20 @@ interface BookingDeadlineTimerProps {
  */
 export default function BookingDeadlineTimer({ closesAt }: BookingDeadlineTimerProps) {
   const { t } = useTranslation()
-  const [hoursLeft, setHoursLeft] = useState<number | null>(null)
+  const [hoursLeft, setHoursLeft] = useState<number | null>(() => computeHoursLeft(closesAt ?? null))
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
-    if (!closesAt) {
-      setHoursLeft(null)
-      return
-    }
-
-    const deadline = new Date(closesAt)
-    if (Number.isNaN(deadline.getTime())) {
-      setHoursLeft(null)
-      return
-    }
+    if (intervalRef.current) clearInterval(intervalRef.current)
 
     const tick = () => {
-      const diff = deadline.getTime() - Date.now()
-      if (diff <= 0) {
-        setHoursLeft(0)
+      const updated = computeHoursLeft(closesAt ?? null)
+      setHoursLeft(updated)
+      if (updated == null || updated <= 0) {
         if (intervalRef.current) clearInterval(intervalRef.current)
-        return
       }
-      setHoursLeft(Math.ceil(diff / (1000 * 60 * 60)))
     }
 
-    tick()
     intervalRef.current = setInterval(tick, 60_000)
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current)

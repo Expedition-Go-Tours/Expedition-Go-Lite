@@ -1255,6 +1255,27 @@ body:has(.story-detail) .navbar-compact-search {
     max-height: 40vh;
     overflow-y: auto;
   }
+
+  .navbar-search-input {
+    font-size: 14px;
+    text-overflow: ellipsis;
+  }
+
+  .navbar-search-input::placeholder {
+    text-overflow: ellipsis;
+  }
+}
+
+@media (max-width: 400px) {
+  .navbar-search-input {
+    font-size: 13px;
+  }
+
+  .navbar-search-btn {
+    height: 34px;
+    padding: 0 12px;
+    font-size: 12px;
+  }
 }
 
 /* ── Mobile sub-drawer (Language / Currency / Updates) ──

@@ -1125,9 +1125,15 @@
     },
     "inventory": {
       "name": "Naam",
+      "type": "Type",
       "provider": "Aanbieder",
       "purpose": "Doel",
       "duration": "Duur",
+      "types": {
+        "cookie": "Cookie",
+        "storage": "Opslag",
+        "network": "Verzoek"
+      },
       "purposes": {
         "consentRecord": "Legt uw cookiekeuzes vast",
         "sessionSecurity": "Houdt uw account en leverancierssessie veilig",
@@ -1140,6 +1146,8 @@
         "languageChoice": "Onthoudt de taal die u hebt gekozen",
         "currencyChoice": "Onthoudt de valuta die u hebt gekozen",
         "currencyRates": "Slaat wisselkoersen op, zodat prijzen direct worden weergegeven",
+        "stripeFraud": "Detecteert en voorkomt fraude bij betalingen",
+        "stripeSession": "Houdt de betaalsessie veilig tijdens het afrekenen",
         "locationHistory": "Onthoudt de bestemmingen die u hebt gezocht",
         "recentSearches": "Toont uw recente zoekopdrachten in het zoekveld",
         "wishlist": "Bewaart de ervaringen die u op uw verlanglijst zet",
@@ -1151,12 +1159,14 @@
       },
       "durations": {
         "session": "Sessie",
+        "minutes30": "30 minuten",
         "hour1": "1 uur",
         "hours12": "12 uur",
         "hours24": "24 uur",
         "day1": "1 dag",
         "days7": "7 dagen",
         "days180": "180 dagen",
+        "days365": "1 jaar",
         "persistent": "Tot u deze wist",
         "untilSignOut": "Tot u uitlogt",
         "untilBookingCompletes": "Tot de boeking is afgerond",

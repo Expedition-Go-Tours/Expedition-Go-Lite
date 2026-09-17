@@ -107,8 +107,8 @@ export default function ContactUsPage() {
         description="Get in touch with Expedition-Go Tours. Contact us for booking inquiries, partnerships, supplier registration, and customer support. We're here to help with your Ghana travel experience."
         keywords="contact Expedition-Go Tours, Ghana tours support, booking help, customer service, partnership inquiries"
         jsonLd={buildBreadcrumbSchema([
-          { name: 'Home', url: 'https://expeditiongotours.com/' },
-          { name: 'Contact Us', url: 'https://expeditiongotours.com/contact-us' },
+          { name: 'Home', url: 'https://www.expeditiongotours.com/' },
+          { name: 'Contact Us', url: 'https://www.expeditiongotours.com/contact-us' },
         ])}
       />
 

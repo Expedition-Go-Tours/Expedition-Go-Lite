@@ -28,6 +28,11 @@ export interface CookieEntry {
   category: ConsentCategory
   /** i18n key under `cookies.inventory.durations`. */
   durationKey: string
+  /**
+   * What it actually is, surfaced as a "Type" column so the table never implies
+   * we store something we only request: a first-party cookie, a storage key, or
+   * a third-party network request (maps, our own analytics batch).
+   */
   kind: CookieKind
 }
 
@@ -129,6 +134,25 @@ export const COOKIE_INVENTORY: readonly CookieEntry[] = [
     durationKey: 'hours12',
     kind: 'storage',
   },
+  // Stripe.js sets these itself, first-party on our domain, but only when the
+  // card step loads (`lib/stripe.ts` is called from CardField / CheckoutElements,
+  // never at boot). Strictly necessary for the payment the customer is making.
+  {
+    name: '__stripe_mid',
+    provider: 'Stripe',
+    purposeKey: 'stripeFraud',
+    category: 'necessary',
+    durationKey: 'days365',
+    kind: 'cookie',
+  },
+  {
+    name: '__stripe_sid',
+    provider: 'Stripe',
+    purposeKey: 'stripeSession',
+    category: 'necessary',
+    durationKey: 'minutes30',
+    kind: 'cookie',
+  },
 
   // ── Functional and personalisation ────────────────────────────────────
   // Optional convenience features — see CookiesPolicyPage §3.2.
@@ -190,8 +214,10 @@ export const COOKIE_INVENTORY: readonly CookieEntry[] = [
   },
 
   // ── Analytics and performance ─────────────────────────────────────────
-  // First-party only today: events are batched to our own API. No third-party
-  // analytics vendor is configured — see CookiesPolicyPage §3.3.
+  // First-party only today: events are batched to our own API and nothing is
+  // stored on the device, so this is a network request rather than a cookie —
+  // which is what the Type column shows. No third-party analytics vendor is
+  // configured — see CookiesPolicyPage §3.3.
   {
     name: 'Analytics events',
     provider: US,

@@ -21,4 +21,4 @@ Allow: /
 User-agent: facebookexternalhit
 Allow: /
 
-Sitemap: https://expeditiongotours.com/sitemap.xml
+Sitemap: https://www.expeditiongotours.com/sitemap.xml

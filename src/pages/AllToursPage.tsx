@@ -505,16 +505,16 @@ export default function AllToursPage() {
         keywords={seoKeywords}
         jsonLd={[
           buildBreadcrumbSchema([
-            { name: 'Home', url: 'https://expeditiongotours.com/' },
+            { name: 'Home', url: 'https://www.expeditiongotours.com/' },
             ...(placeParam
-              ? [{ name: placeParam, url: `https://expeditiongotours.com/tours?place=${encodeURIComponent(placeParam)}` }]
+              ? [{ name: placeParam, url: `https://www.expeditiongotours.com/tours?place=${encodeURIComponent(placeParam)}` }]
               : []),
-            { name: 'Tours', url: 'https://expeditiongotours.com/tours' },
+            { name: 'Tours', url: 'https://www.expeditiongotours.com/tours' },
           ]),
           ...(filteredTours.length > 0 ? [buildItemListSchema(
             filteredTours.slice(0, 20).map((t: TourCardData) => ({
               name: t.title,
-              url: `https://expeditiongotours.com/tour/${t.slug}`,
+              url: `https://www.expeditiongotours.com/tour/${t.slug}`,
               image: t.image || undefined,
             }))
           )] : []),
