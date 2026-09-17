@@ -31,15 +31,32 @@ const NotificationsPage = lazy(() => import("./NotificationsPage"));
 const ChatPage = lazy(() => import("./ChatPage"));
 const BookingModifyPage = lazy(() => import("../BookingModifyPage"));
 
-// Navigation items split: top-bar visible items vs dropdown overflow
-const topBarItems = [
+// Shared leading tabs (identical on desktop and mobile)
+type DashTab = {
+  label: string;
+  path: string;
+  icon: typeof CalendarDays;
+  /** Marks the tab that renders the chat unread badge. */
+  badge?: string;
+};
+
+const baseTabs: DashTab[] = [
   { label: "Bookings", path: "/dashboard/bookings", icon: CalendarDays },
   { label: "Wishlist", path: "/dashboard/wishlist", icon: Heart },
   { label: "Reviews", path: "/dashboard/reviews", icon: Star },
 ];
 
-const allNavItems = [
-  ...topBarItems,
+// Desktop top bar: Bookings · Wishlist · Reviews · Chat · Notifications
+// `badge` marks the item that shows the chat unread count.
+const topBarItems: DashTab[] = [
+  ...baseTabs,
+  { label: "Chat", path: "/dashboard/chat", icon: MessageCircle, badge: "chat" },
+  { label: "Notifications", path: "/dashboard/notifications", icon: Bell },
+];
+
+// Mobile bottom bar (unchanged): Bookings · Wishlist · Reviews · Updates · Chat · Settings
+const allNavItems: DashTab[] = [
+  ...baseTabs,
   { label: "Updates", path: "/dashboard/notifications", icon: Bell },
   { label: "Chat", path: "/dashboard/chat", icon: MessageCircle },
   { label: "Settings", path: "/dashboard/settings", icon: Settings },
@@ -236,6 +253,7 @@ function TopBar() {
           <nav className="dash-topbar-nav hidden lg:flex" aria-label="Dashboard navigation">
             {topBarItems.map((item) => {
               const active = isActive(item.path);
+              const badge = item.badge === "chat" ? unreadCount : 0;
               return (
                 <button
                   key={item.path}
@@ -243,7 +261,16 @@ function TopBar() {
                   onClick={() => navigate(item.path)}
                   aria-current={active ? "page" : undefined}
                 >
-                  <item.icon size={16} strokeWidth={active ? 2.2 : 1.7} />
+                  {badge > 0 ? (
+                    <span className="dash-topbar-icon-wrap">
+                      <item.icon size={16} strokeWidth={active ? 2.2 : 1.7} />
+                      <span className="dash-topbar-badge">
+                        {badge > 99 ? "99+" : badge}
+                      </span>
+                    </span>
+                  ) : (
+                    <item.icon size={16} strokeWidth={active ? 2.2 : 1.7} />
+                  )}
                   <span>{item.label}</span>
                   {active && (
                     <motion.span
@@ -255,33 +282,6 @@ function TopBar() {
                 </button>
               );
             })}
-            {(() => {
-              const chatActive = isActive("/dashboard/chat");
-              return (
-                <button
-                  className={`dash-topbar-tab${chatActive ? " active" : ""}`}
-                  onClick={() => navigate("/dashboard/chat")}
-                  aria-current={chatActive ? "page" : undefined}
-                >
-                  <span className="dash-topbar-icon-wrap">
-                    <MessageCircle size={16} strokeWidth={chatActive ? 2.2 : 1.7} />
-                    {unreadCount > 0 && (
-                      <span className="dash-topbar-badge">
-                        {unreadCount > 99 ? "99+" : unreadCount}
-                      </span>
-                    )}
-                  </span>
-                  <span>Chat</span>
-                  {chatActive && (
-                    <motion.span
-                      layoutId="topbar-active"
-                      className="dash-topbar-underline"
-                      transition={{ type: "spring", stiffness: 500, damping: 35 }}
-                    />
-                  )}
-                </button>
-              );
-            })()}
           </nav>
 
           {/* Spacer */}
@@ -289,16 +289,6 @@ function TopBar() {
 
           {/* Right: Utilities */}
           <div className="dash-topbar-utilities">
-            {/* Updates bell (desktop) */}
-            <button
-              className="dash-topbar-icon-btn hidden lg:flex"
-              onClick={() => navigate("/dashboard/notifications")}
-              aria-label="Updates"
-            >
-              <Bell size={18} strokeWidth={1.7} />
-              {/* Unread badge could go here if we track notification unread */}
-            </button>
-
             {/* Profile trigger */}
             <div ref={dropdownRef} className="relative">
               <button
