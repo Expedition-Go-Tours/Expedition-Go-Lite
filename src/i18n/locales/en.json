@@ -738,7 +738,7 @@
     "hoursNote": "All times GMT."
   },
   "company": {
-    "aboutUsSubtitle": "Discover who we are and what drives Expedition-Go.",
+    "aboutUsSubtitle": "Discover who we are and what drives Expedition-Go Tours.",
     "careersSubtitle": "Join our team and help travellers experience the world.",
     "partnershipsSubtitle": "Grow your business with Expedition-Go partnerships.",
     "contentCreatorsSubtitle": "Turn your travel content into income.",
@@ -819,7 +819,7 @@
     "categoryHeritage": "Heritage"
   },
   "about": {
-    "pageTitle": "About Us | Expedition-Go Tours",
+    "pageTitle": "About Us",
     "heroLabel": "About Us",
     "heroTitle": "Travel. Discover. Connect.",
     "storyLabel": "Our Story",
@@ -829,6 +829,16 @@
     "calloutHeading": "We connect travellers with hand-picked experiences across Ghana, from cultural tours to adventure activities.",
     "calloutBody": "Our mission is to make discovering those moments effortless — whether you're a first-time visitor or a seasoned traveller looking for something new.",
     "categoriesLabel": "Featured categories",
+    "categoryTour": "Tours & experiences",
+    "categoryActivity": "Adventure activities",
+    "categoryTransport": "Transport & transfers",
+    "categoryAkosombo": "Akosombo & the Volta",
+    "badgeTitle": "Vetted & curated",
+    "badgeText": "Quality, safety and authenticity checked before every experience goes live.",
+    "imageStory1": "Traditional drumming and attire",
+    "imageStory2": "Moments worth sharing",
+    "imageStory3": "Local guides on the road",
+    "imageStory4": "Scenic drives through Ghana",
     "valuesLabel": "What we stand for",
     "valuesTitle": "Our values",
     "value1Title": "Hand-picked experiences",
@@ -844,7 +854,12 @@
     "ctaTitle": "Ready to explore?",
     "ctaBrowse": "Browse tours",
     "ctaContact": "Contact us",
-    "goToSlide": "Go to slide {{number}}"
+    "goToSlide": "Go to slide {{number}}",
+    "imageGallery": "Image gallery",
+    "imageCounter": "Image {{current}} of {{total}}",
+    "closeImage": "Close image",
+    "previousImage": "Previous image",
+    "nextImage": "Next image"
   },
   "careers": {
     "pageTitle": "Careers | Expedition-Go Tours",
@@ -865,7 +880,12 @@
     "dept4Text": "Tell the Expedition-Go Tours story and help us reach travellers around the world."
   },
   "partnerships": {
-    "pageTitle": "Partnerships | Expedition-Go Tours",
+    "pageTitle": "Partnerships",
+    "eyebrow": "Work with Expedition-Go",
+    "galleryLabel": "Moments with our partners",
+    "talkText": "Tell us about your business and the partnership you're interested in — our team will get back to you.",
+    "pauseSlideshow": "Pause slideshow",
+    "playSlideshow": "Play slideshow",
     "whyTitle": "Why partner with us",
     "whyText": "We believe great partnerships make travel better. By working together, we can offer travellers more choice, more quality, and more value.",
     "whoTitle": "Who we work with",

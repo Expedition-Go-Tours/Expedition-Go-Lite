@@ -1,9 +1,23 @@
-import { useEffect, useState, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { Mail, ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react'
+import { useReducedMotion } from 'framer-motion'
+import {
+  ArrowRight,
+  Camera,
+  Car,
+  ChevronLeft,
+  ChevronRight,
+  Compass,
+  Hotel,
+  Mail,
+  Users,
+} from 'lucide-react'
 import Footer from '../components/Footer'
-import SEO, { buildBreadcrumbSchema } from '../components/SEO'
+import SEO, { buildBreadcrumbSchema, buildOrganizationSchema } from '../components/SEO'
+import BackToHelpCentre from '../components/support/BackToHelpCentre'
+import { SUPPORT_EMAIL } from '../lib/support'
+
 import partners1 from '../assets/partners/partners1.avif'
 import partners2 from '../assets/partners/partners2.avif'
 import partners3 from '../assets/partners/partners3.avif'
@@ -16,58 +30,111 @@ import partners9 from '../assets/partners/partners9.avif'
 import tnt1 from '../assets/tnt1.avif'
 import tnt2 from '../assets/tnt2.avif'
 import tnt3 from '../assets/tnt3.avif'
+
 import './SupportPages.css'
+import './PartnershipsPage.css'
 
-const PARTNERS_EMAIL = 'partners@expedition-go.com'
+const HERO_IMAGES = [
+  { src: partners3, width: 841, height: 516 },
+  { src: partners1, width: 645, height: 624 },
+  { src: partners4, width: 785, height: 624 },
+]
 
-const HERO_IMAGES = [partners1, partners3, partners4]
+/**
+ * Partner-program banners (baked-in headline text) live in the scrolling
+ * gallery where their wording reads as intended; the card covers below use
+ * clean photography instead.
+ */
+const MARQUEE_IMAGES = [
+  { src: partners1, width: 645, height: 624 },
+  { src: partners3, width: 841, height: 516 },
+  { src: partners4, width: 785, height: 624 },
+  { src: partners5, width: 841, height: 576 },
+  { src: partners7, width: 814, height: 624 },
+  { src: partners8, width: 841, height: 581 },
+  { src: tnt1, width: 329, height: 271 },
+  { src: tnt2, width: 409, height: 253 },
+  { src: tnt3, width: 515, height: 281 },
+  { src: partners2, width: 841, height: 546 },
+  { src: partners6, width: 841, height: 568 },
+  { src: partners9, width: 841, height: 614 },
+]
 
-const MARQUEE_IMAGES = [partners1, partners2, partners3, partners4, partners5, partners6, partners7, partners8, partners9, tnt1, tnt2]
+const HERO_INTERVAL_MS = 5000
+
+/**
+ * Static partner-type layout. Copy is resolved per-locale in the component
+ * (t(`partnerships.${key}Title`) / `...Text`).
+ * `focus` tunes the 16:10 card crop away from signage baked into the source
+ * photos; alternatives if a crop misbehaves: type2 → partners4,
+ * type3 → partners1, type5 → partners4.
+ */
+const PARTNER_LAYOUT = [
+  {
+    key: 'type1',
+    to: '/partners/tour-operators/apply',
+    image: partners2,
+    width: 841,
+    height: 546,
+    focus: 'center',
+    Icon: Compass,
+  },
+  {
+    key: 'type2',
+    to: '/hotels',
+    image: partners7,
+    width: 814,
+    height: 624,
+    focus: '50% 72%',
+    Icon: Hotel,
+  },
+  {
+    key: 'type3',
+    to: '/travel-agents',
+    image: partners9,
+    width: 841,
+    height: 614,
+    focus: '50% 42%',
+    Icon: Users,
+  },
+  {
+    key: 'type4',
+    to: '/content-creators',
+    image: partners6,
+    width: 841,
+    height: 568,
+    focus: 'center',
+    Icon: Camera,
+  },
+  {
+    key: 'type5',
+    to: '/transport-providers',
+    image: partners8,
+    width: 841,
+    height: 581,
+    focus: '50% 80%',
+    Icon: Car,
+  },
+]
 
 export default function PartnershipsPage() {
   const { t } = useTranslation()
+  const reduceMotion = useReducedMotion()
   const [currentSlide, setCurrentSlide] = useState(0)
   const [partnerSlide, setPartnerSlide] = useState(0)
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const [heroHeld, setHeroHeld] = useState(false)
   const partnerRef = useRef<HTMLDivElement>(null)
   const marqueeRef = useRef<HTMLDivElement>(null)
   const marqueeResumeRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const PARTNER_TYPES = [
-    {
-      title: t('partnerships.type1Title'),
-      text: t('partnerships.type1Text'),
-      to: '/partners/tour-operators/apply',
-      image: partners2,
-    },
-    {
-      title: t('partnerships.type2Title'),
-      text: t('partnerships.type2Text'),
-      to: '/hotels',
-      image: partners7,
-    },
-    {
-      title: t('partnerships.type3Title'),
-      text: t('partnerships.type3Text'),
-      to: '/travel-agents',
-      image: partners9,
-    },
-    {
-      title: t('partnerships.type4Title'),
-      text: t('partnerships.type4Text'),
-      to: '/content-creators',
-      image: partners6,
-    },
-    {
-      title: t('partnerships.type5Title'),
-      text: t('partnerships.type5Text'),
-      to: '',
-      image: tnt3,
-    },
-  ]
+  const partnerTypes = PARTNER_LAYOUT.map((partner) => ({
+    ...partner,
+    title: t(`partnerships.${partner.key}Title`),
+    text: t(`partnerships.${partner.key}Text`),
+  }))
 
   const handleMarqueeTap = () => {
-    const track = marqueeRef.current?.querySelector('.partner-marquee-track')
+    const track = marqueeRef.current?.querySelector('.pp-marquee-track')
     if (!track) return
     track.classList.add('paused')
     if (marqueeResumeRef.current) clearTimeout(marqueeResumeRef.current)
@@ -76,183 +143,285 @@ export default function PartnershipsPage() {
     }, 3000)
   }
 
-  // Hero carousel auto-advance
+  // Hero auto-advance. The timeout is re-armed on every slide change, so a
+  // manual pick gets a full dwell; it is suspended while hovered/focused and
+  // disabled entirely for reduced motion.
+  const heroPlaying = !reduceMotion && !heroHeld
   useEffect(() => {
-    timerRef.current = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % HERO_IMAGES.length)
-    }, 5000)
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current)
-    }
+    if (!heroPlaying) return
+    const next = (currentSlide + 1) % HERO_IMAGES.length
+    const id = window.setTimeout(() => setCurrentSlide(next), HERO_INTERVAL_MS)
+    return () => window.clearTimeout(id)
+  }, [heroPlaying, currentSlide])
+
+  useEffect(
+    () => () => {
+      if (marqueeResumeRef.current) clearTimeout(marqueeResumeRef.current)
+    },
+    [],
+  )
+
+  const goToSlide = useCallback((index: number) => {
+    setCurrentSlide(((index % HERO_IMAGES.length) + HERO_IMAGES.length) % HERO_IMAGES.length)
   }, [])
 
-  const goToSlide = (index: number) => {
-    if (timerRef.current) clearInterval(timerRef.current)
-    setCurrentSlide(index)
-    timerRef.current = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % HERO_IMAGES.length)
-    }, 5000)
-  }
-
-  const prevSlide = () => {
-    goToSlide((currentSlide - 1 + HERO_IMAGES.length) % HERO_IMAGES.length)
-  }
-
-  const nextSlide = () => {
-    goToSlide((currentSlide + 1) % HERO_IMAGES.length)
-  }
-
-  const scrollToPartner = (index: number) => {
+  const scrollToPartner = useCallback((index: number) => {
     if (!partnerRef.current) return
-    const cards = partnerRef.current.querySelectorAll('.partner-card')
-    if (cards[index]) {
-      cards[index].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' })
-      setPartnerSlide(index)
+    const cards = partnerRef.current.querySelectorAll('.pp-card')
+    const target = Math.max(0, Math.min(index, PARTNER_LAYOUT.length - 1))
+    cards[target]?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+    setPartnerSlide(target)
+  }, [])
+
+  const handlePartnerScroll = () => {
+    const rail = partnerRef.current
+    if (!rail) return
+    const first = rail.querySelector('.pp-card')
+    if (!first) return
+    const gap = Number.parseFloat(window.getComputedStyle(rail).columnGap || '0') || 0
+    const step = first.clientWidth + gap
+    if (step > 0) {
+      const index = Math.round(rail.scrollLeft / step)
+      setPartnerSlide(Math.max(0, Math.min(index, PARTNER_LAYOUT.length - 1)))
     }
   }
 
-  const handlePartnerScroll = () => {
-    if (!partnerRef.current) return
-    const scrollLeft = partnerRef.current.scrollLeft
-    const cardWidth = partnerRef.current.querySelector('.partner-card')?.clientWidth || 0
-    if (cardWidth > 0) {
-      const index = Math.round(scrollLeft / (cardWidth + 16))
-      setPartnerSlide(Math.min(index, PARTNER_TYPES.length - 1))
+  const onHeroKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'ArrowLeft') {
+      event.preventDefault()
+      goToSlide(currentSlide - 1)
+    } else if (event.key === 'ArrowRight') {
+      event.preventDefault()
+      goToSlide(currentSlide + 1)
+    }
+  }
+
+  const onCardsKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'ArrowLeft') {
+      event.preventDefault()
+      scrollToPartner(partnerSlide - 1)
+    } else if (event.key === 'ArrowRight') {
+      event.preventDefault()
+      scrollToPartner(partnerSlide + 1)
     }
   }
 
   return (
     <div className="support-page partnerships-page">
       <SEO
-        title="Partner With Expedition-Go Tours - Tourism Partnerships in Ghana"
+        title={t('partnerships.pageTitle')}
         description="Become a partner with Expedition-Go Tours. Join Ghana's leading tourism platform as a tour operator, hotel, travel agent, content creator, or transport provider."
         keywords="Expedition-Go Tours partnership, Ghana tourism partnership, tour operator partnership Ghana, travel partner Ghana, become a supplier Ghana"
-        jsonLd={buildBreadcrumbSchema([
-          { name: 'Home', url: 'https://expeditiongotours.com/' },
-          { name: 'Partnerships', url: 'https://expeditiongotours.com/partnerships' },
-        ])}
+        jsonLd={[
+          buildBreadcrumbSchema([
+            { name: 'Home', url: 'https://www.expeditiongotours.com/' },
+            { name: 'Partnerships', url: 'https://www.expeditiongotours.com/partnerships' },
+          ]),
+          buildOrganizationSchema(),
+        ]}
       />
 
-      {/* Hero Section with Image Carousel */}
-      <div className="support-hero">
-        <div className="support-hero-carousel">
+      {/* ===== Hero — lightened carousel behind a frosted glass panel ===== */}
+      <section
+        className="pp-hero"
+        role="region"
+        aria-roledescription="carousel"
+        aria-label={t('footer.partnerships')}
+        onKeyDown={onHeroKeyDown}
+        onMouseEnter={() => setHeroHeld(true)}
+        onMouseLeave={() => setHeroHeld(false)}
+        onFocusCapture={() => setHeroHeld(true)}
+        onBlurCapture={() => setHeroHeld(false)}
+      >
+        <div className="pp-hero-bg" aria-hidden="true">
           {HERO_IMAGES.map((img, index) => (
-            <div
-              key={index}
-              className={`support-hero-slide ${index === currentSlide ? 'active' : ''}`}
-            >
-              <img src={img} alt="" aria-hidden="true" />
-            </div>
-          ))}
-        </div>
-        <button
-          className="support-hero-nav support-hero-nav--prev"
-          onClick={prevSlide}
-          aria-label={t('partnerships.prevImage')}
-        >
-          <ChevronLeft size={28} />
-        </button>
-        <button
-          className="support-hero-nav support-hero-nav--next"
-          onClick={nextSlide}
-          aria-label={t('partnerships.nextImage')}
-        >
-          <ChevronRight size={28} />
-        </button>
-        <div className="support-hero-dots">
-          {HERO_IMAGES.map((_, index) => (
-            <button
-              key={index}
-              className={`support-hero-dot ${index === currentSlide ? 'active' : ''}`}
-              onClick={() => goToSlide(index)}
-              aria-label={t('partnerships.goToSlide')}
+            <img
+              key={img.src}
+              src={img.src}
+              alt=""
+              width={img.width}
+              height={img.height}
+              className={index === currentSlide ? 'active' : ''}
+              loading={index === 0 ? 'eager' : 'lazy'}
+              fetchPriority={index === 0 ? 'high' : undefined}
+              decoding="async"
             />
           ))}
-        </div>
-        <div className="support-hero-content">
-          <h1 className="support-title">{t('footer.partnerships')}</h1>
-          <p className="support-subtitle">{t('company.partnershipsSubtitle')}</p>
-        </div>
-      </div>
-
-      <div className="support-container">
-        <div className="support-article">
-          <h2>{t('partnerships.whyTitle')}</h2>
-          <p>{t('partnerships.whyText')}</p>
+          <div className="pp-hero-veil" />
         </div>
 
-        {/* Auto-scrolling Partners Marquee */}
-        <div className="partner-marquee" ref={marqueeRef} onClick={handleMarqueeTap}>
-          <div className="partner-marquee-track">
-            {[...MARQUEE_IMAGES, ...MARQUEE_IMAGES].map((img, index) => (
-              <div key={index} className="partner-marquee-item">
-                <img src={img} alt="" aria-hidden="true" />
-              </div>
-            ))}
+        <span className="pp-hero-orb pp-hero-orb--a" aria-hidden="true" />
+        <span className="pp-hero-orb pp-hero-orb--b" aria-hidden="true" />
+
+        <div className="pp-hero-panel pp-glass">
+          <BackToHelpCentre requireOrigin className="pp-hero-back" />
+          <p className="pp-eyebrow">{t('partnerships.eyebrow')}</p>
+          <h1 className="pp-hero-title">{t('footer.partnerships')}</h1>
+          <p className="pp-hero-sub">{t('company.partnershipsSubtitle')}</p>
+          <div className="pp-hero-actions">
+            <a href={`mailto:${SUPPORT_EMAIL}`} className="pp-btn pp-btn--primary">
+              <Mail size={16} aria-hidden="true" />
+              {t('partnerships.partnerBtn')}
+            </a>
+            <Link to="/contact-us" className="pp-btn pp-btn--outline">
+              {t('partnerships.contactBtn')}
+            </Link>
           </div>
         </div>
 
-        <h2 className="support-section-title">{t('partnerships.whoTitle')}</h2>
-        <div
-          className="partner-carousel"
-          ref={partnerRef}
-          onScroll={handlePartnerScroll}
-        >
-          {PARTNER_TYPES.map((partner) => (
-            <div key={partner.title} className="partner-card">
-              <div className="partner-card-image">
-                <img src={partner.image} alt={partner.title} />
-              </div>
-              <div className="partner-card-content">
-                <h3 className="partner-card-title">{partner.title}</h3>
-                <p className="partner-card-text">{partner.text}</p>
-                {partner.to ? (
-                  <Link
-                    to={partner.to}
-                    className="partner-card-btn"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {t('partnerships.getStarted')}
-                    <ArrowRight size={14} />
-                  </Link>
-                ) : (
-                  <button
-                    type="button"
-                    className="partner-card-btn"
-                    disabled
-                    title={t('partnerships.comingSoon')}
-                  >
-                    {t('partnerships.getStarted')}
-                    <ArrowRight size={14} />
-                  </button>
-                )}
+        <div className="pp-hero-bar">
+          <button
+            type="button"
+            className="pp-hero-control"
+            onClick={() => goToSlide(currentSlide - 1)}
+            aria-label={t('partnerships.prevImage')}
+          >
+            <ChevronLeft size={20} aria-hidden="true" />
+          </button>
+
+          <div className="pp-dots">
+            {HERO_IMAGES.map((img, index) => (
+              <button
+                key={img.src}
+                type="button"
+                className="pp-dot"
+                onClick={() => goToSlide(index)}
+                aria-label={t('partnerships.goToSlide', { number: index + 1 })}
+                aria-current={index === currentSlide ? 'true' : undefined}
+              >
+                <span className="pp-dot-mark" aria-hidden="true" />
+              </button>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            className="pp-hero-control"
+            onClick={() => goToSlide(currentSlide + 1)}
+            aria-label={t('partnerships.nextImage')}
+          >
+            <ChevronRight size={20} aria-hidden="true" />
+          </button>
+        </div>
+      </section>
+
+      <div className="pp-container">
+        {/* ===== Why partner with us ===== */}
+        <section className="pp-intro pp-glass" aria-labelledby="pp-intro-title">
+          <h2 className="pp-intro-title" id="pp-intro-title">{t('partnerships.whyTitle')}</h2>
+          <p className="pp-intro-text">{t('partnerships.whyText')}</p>
+        </section>
+
+        {/* ===== Partner moments gallery ===== */}
+        <section className="pp-gallery" aria-labelledby="pp-gallery-title">
+          <h2 className="pp-section-title" id="pp-gallery-title">{t('partnerships.galleryLabel')}</h2>
+          <div className="pp-gallery-band">
+            <div
+              className="pp-marquee"
+              ref={marqueeRef}
+              onClick={handleMarqueeTap}
+              aria-hidden="true"
+            >
+              <div className="pp-marquee-track">
+                {[...MARQUEE_IMAGES, ...MARQUEE_IMAGES].map((img, index) => (
+                  <div key={index} className="pp-marquee-item">
+                    <img
+                      src={img.src}
+                      alt=""
+                      width={img.width}
+                      height={img.height}
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  </div>
+                ))}
               </div>
             </div>
-          ))}
-        </div>
+          </div>
+        </section>
 
-        <div className="partner-dots">
-          {PARTNER_TYPES.map((_, index) => (
-            <button
-              key={index}
-              className={`partner-dot ${index === partnerSlide ? 'active' : ''}`}
-              onClick={() => scrollToPartner(index)}
-              aria-label={t('partnerships.goToSlide')}
-            />
-          ))}
-        </div>
+        {/* ===== Who we work with ===== */}
+        <section className="pp-who" aria-labelledby="pp-who-title">
+          <h2 className="pp-section-title" id="pp-who-title">{t('partnerships.whoTitle')}</h2>
+          <div
+            className="pp-cards"
+            ref={partnerRef}
+            onScroll={handlePartnerScroll}
+            onKeyDown={onCardsKeyDown}
+            role="group"
+            aria-roledescription="carousel"
+            aria-label={t('partnerships.whoTitle')}
+          >
+            {partnerTypes.map((partner) => {
+              const Icon = partner.Icon
+              return (
+                <article key={partner.title} className="pp-card pp-glass">
+                  <div className="pp-card-media">
+                    <img
+                      src={partner.image}
+                      alt=""
+                      aria-hidden="true"
+                      width={partner.width}
+                      height={partner.height}
+                      style={{ objectPosition: partner.focus }}
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  </div>
+                  <div className="pp-card-body">
+                    <span className="pp-card-icon" aria-hidden="true">
+                      <Icon size={20} />
+                    </span>
+                    <h3 className="pp-card-title">{partner.title}</h3>
+                    <p className="pp-card-text">{partner.text}</p>
+                    <Link to={partner.to} className="pp-card-btn">
+                      {t('partnerships.getStarted')}
+                      <ArrowRight size={14} aria-hidden="true" />
+                    </Link>
+                  </div>
+                </article>
+              )
+            })}
+          </div>
 
-        <h2 className="support-section-title">{t('partnerships.letsTalk')}</h2>
-        <div className="support-actions">
-          <a href={`mailto:${PARTNERS_EMAIL}`} className="support-btn support-btn-primary">
-            <Mail size={16} />
-            {t('partnerships.partnerBtn')}
-          </a>
-          <Link to="/contact-us" className="support-btn support-btn-secondary">
-            {t('partnerships.contactBtn')}
-          </Link>
-        </div>
+          <div className="pp-dots">
+            {partnerTypes.map((partner, index) => (
+              <button
+                key={partner.title}
+                type="button"
+                className="pp-dot"
+                onClick={() => scrollToPartner(index)}
+                aria-label={t('partnerships.goToSlide', { number: index + 1 })}
+                aria-current={index === partnerSlide ? 'true' : undefined}
+              >
+                <span className="pp-dot-mark" aria-hidden="true" />
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {/* ===== Let's talk ===== */}
+        <section className="pp-cta" aria-labelledby="pp-cta-title">
+          <span className="pp-cta-orb pp-cta-orb--a" aria-hidden="true" />
+          <span className="pp-cta-orb pp-cta-orb--b" aria-hidden="true" />
+          <div className="pp-cta-content">
+            <h2 className="pp-cta-title" id="pp-cta-title">{t('partnerships.letsTalk')}</h2>
+            <p className="pp-cta-text">{t('partnerships.talkText')}</p>
+            <a href={`mailto:${SUPPORT_EMAIL}`} className="pp-cta-mail">
+              <Mail size={15} aria-hidden="true" />
+              {SUPPORT_EMAIL}
+            </a>
+            <div className="pp-cta-actions">
+              <a href={`mailto:${SUPPORT_EMAIL}`} className="pp-btn pp-btn--primary">
+                {t('partnerships.partnerBtn')}
+                <ArrowRight size={16} aria-hidden="true" />
+              </a>
+              <Link to="/contact-us" className="pp-btn pp-btn--outline">
+                {t('partnerships.contactBtn')}
+              </Link>
+            </div>
+          </div>
+        </section>
       </div>
 
       <Footer />

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { Clock, ClipboardCopy, Mail, MapPin, MessageCircle, Phone } from 'lucide-react'
+import { Clock, ClipboardCopy, Headset, Mail, MapPin, MessageCircle, Phone } from 'lucide-react'
 import Footer from '../components/Footer'
 import SEO, { buildBreadcrumbSchema } from '../components/SEO'
 import {
@@ -112,10 +112,10 @@ export default function ContactUsPage() {
         ])}
       />
 
-      <div className="sh-hero">
+      <header className="sh-hero">
         <div className="sh-hero-inner">
           <p className="sh-eyebrow">{t('supportHub.eyebrow')}</p>
-          <h1 className="sh-title">{t('supportHub.contactTitle')}</h1>
+          <h1 className="sh-title" id="contact-hero-title">{t('supportHub.contactTitle')}</h1>
           <p className="sh-sub">{t('support.contactUsSubtitle')}</p>
           <div className="sh-quick">
             <a href={`mailto:${SUPPORT_EMAIL}`} className="sh-quick-chip">
@@ -131,12 +131,12 @@ export default function ContactUsPage() {
             </Link>
           </div>
         </div>
-      </div>
+      </header>
 
       <div className="support-container sh-main">
         <section className="sh-block" aria-label={t('supportHub.channelsTitle')}>
           <div className="sh-channels">
-            <a href={`mailto:${SUPPORT_EMAIL}`} className="sh-channel">
+            <a href={`mailto:${SUPPORT_EMAIL}`} className="sh-channel sh-channel--email">
               <span className="sh-channel-head">
                 <span className="sh-channel-label">
                   <Mail size={14} aria-hidden="true" />
@@ -147,7 +147,7 @@ export default function ContactUsPage() {
               <span className="sh-channel-note">{t('contact.emailNote')}</span>
             </a>
 
-            <a href={`tel:${SUPPORT_PHONE_DIGITS}`} className="sh-channel">
+            <a href={`tel:${SUPPORT_PHONE_DIGITS}`} className="sh-channel sh-channel--phone">
               <span className="sh-channel-head">
                 <span className="sh-channel-label">
                   <Phone size={14} aria-hidden="true" />
@@ -158,24 +158,24 @@ export default function ContactUsPage() {
               <span className="sh-channel-note">{t('contact.phoneNote')}</span>
             </a>
 
-            <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="sh-channel">
+            <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="sh-channel sh-channel--whatsapp">
               <span className="sh-channel-head">
                 <span className="sh-channel-label">
                   <MessageCircle size={14} aria-hidden="true" />
                   {t('contact.whatsappLabel')}
                 </span>
-                <span className="sh-channel-badge">{t('contact.fastest')}</span>
               </span>
               <span className="sh-channel-value">{SUPPORT_PHONE}</span>
               <span className="sh-channel-note">{t('contact.whatsappNote')}</span>
             </a>
 
-            <button type="button" className="sh-channel" onClick={openChat}>
+            <button type="button" className="sh-channel sh-channel--chat" onClick={openChat}>
               <span className="sh-channel-head">
                 <span className="sh-channel-label">
-                  <MessageCircle size={14} aria-hidden="true" />
+                  <Headset size={14} aria-hidden="true" />
                   {t('support.chatWithUs')}
                 </span>
+                <span className="sh-channel-badge">{t('contact.fastest')}</span>
               </span>
               <span className="sh-channel-value">{t('contact.chatValue')}</span>
               <span className="sh-channel-note">{t('contact.chatNote')}</span>

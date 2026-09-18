@@ -6,10 +6,12 @@ import { getAllFaqs } from '../../lib/faq'
 
 interface SupportSearchProps {
   className?: string
+  /** Router state forwarded on result selection (e.g. the Help Centre origin). */
+  linkState?: unknown
 }
 
 /** Search over every FAQ answer; selecting a result deep-links into /faq. */
-export default function SupportSearch({ className }: SupportSearchProps) {
+export default function SupportSearch({ className, linkState }: SupportSearchProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
@@ -45,7 +47,7 @@ export default function SupportSearch({ className }: SupportSearchProps) {
     setOpen(false)
     setHighlighted(-1)
     inputRef.current?.blur()
-    navigate(`/faq#faq-${id}`)
+    navigate(`/faq#faq-${id}`, linkState ? { state: linkState } : undefined)
   }
 
   const submit = () => {

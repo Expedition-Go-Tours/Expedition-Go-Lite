@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { LifeBuoy, Mail, MessageCircle } from 'lucide-react'
 import Footer from '../components/Footer'
 import SEO, { buildFAQSchema, buildBreadcrumbSchema } from '../components/SEO'
+import BackToHelpCentre from '../components/support/BackToHelpCentre'
 import SupportSearch from '../components/support/SupportSearch'
 import FaqAccordion from '../components/support/FaqAccordion'
 import { getAllFaqs, getFaqCategories } from '../lib/faq'
@@ -56,32 +57,37 @@ export default function FAQPage() {
         ]}
       />
 
-      <div className="sh-hero">
+      <header className="sh-hero">
         <div className="sh-hero-inner">
           <p className="sh-eyebrow">{t('supportHub.eyebrow')}</p>
-          <h1 className="sh-title">{t('supportHub.faqTitle')}</h1>
+          <h1 className="sh-title" id="faq-hero-title">{t('supportHub.faqTitle')}</h1>
           <p className="sh-sub">{t('support.faqSubtitle')}</p>
           <SupportSearch />
         </div>
-      </div>
+      </header>
 
       <nav className="sh-faq-nav" aria-label={t('faq.categoriesAria')}>
         <div className="sh-faq-nav-inner">
-          {categories.map((category) => (
-            <a key={category.id} href={`#cat-${category.id}`} className="sh-faq-pill">
-              {category.heading}
-            </a>
-          ))}
+          <BackToHelpCentre className="sh-faq-back" iconOnly />
+          <div className="sh-faq-nav-rail">
+            <div className="sh-faq-nav-pills">
+              {categories.map((category) => (
+                <a key={category.id} href={`#cat-${category.id}`} className="sh-faq-pill">
+                  {category.heading}
+                </a>
+              ))}
+            </div>
+          </div>
         </div>
       </nav>
 
-      <div className="support-container sh-main">
+      <div className="support-container sh-main sh-main--faq">
         {categories.map((category) => (
           <section
             key={category.id}
             id={`cat-${category.id}`}
             className="sh-block"
-            style={{ scrollMarginTop: 132 }}
+            style={{ scrollMarginTop: 184 }}
             aria-labelledby={`cat-${category.id}-title`}
           >
             <h2 className="sh-block-title" id={`cat-${category.id}-title`}>{category.heading}</h2>

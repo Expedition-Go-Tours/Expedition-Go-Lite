@@ -1,8 +1,7 @@
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
 import Footer from '../components/Footer'
 import SEO, { buildBreadcrumbSchema } from '../components/SEO'
+import BackToHelpCentre from '../components/support/BackToHelpCentre'
 import './SupportPages.css'
 
 export default function RefundPolicyPage() {
@@ -414,11 +413,10 @@ export default function RefundPolicyPage() {
           </p>
 
           <p className="support-meta">
-            {t('support.updatedDate')}: August 2026 ·{' '}
-            <Link to="/help-centre" style={{ color: '#179237', fontWeight: 600 }}>
-              <ArrowLeft size={12} style={{ display: 'inline', verticalAlign: -1 }} />{' '}
-              {t('support.backToHelp')}
-            </Link>
+            {t('support.updatedDate')}: August 2026
+          </p>
+          <p className="support-meta">
+            <BackToHelpCentre />
           </p>
         </div>
       </div>

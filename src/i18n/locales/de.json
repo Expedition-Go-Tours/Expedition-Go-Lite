@@ -765,7 +765,7 @@
     "categoryHeritage": "Kulturerbe"
   },
   "about": {
-    "pageTitle": "Über Uns | Expedition-Go Tours",
+    "pageTitle": "Über uns",
     "heroLabel": "Über Uns",
     "heroTitle": "Reisen. Entdecken. Verbinden.",
     "storyLabel": "Unsere Geschichte",
@@ -775,6 +775,16 @@
     "calloutHeading": "Wir verbinden Reisende mit handverlesenen Erlebnissen in ganz Ghana, von kulturellen Touren bis hin zu Abenteueraktivitäten.",
     "calloutBody": "Unsere Mission ist es, diese Momente mühelos entdeckbar zu machen — ob Sie ein erstmaliger Besucher sind oder ein erfahrener Reisender, der nach etwas Neuem sucht.",
     "categoriesLabel": "Hervorgehobene Kategorien",
+    "categoryTour": "Touren & Erlebnisse",
+    "categoryActivity": "Abenteueraktivitäten",
+    "categoryTransport": "Transport & Transfers",
+    "categoryAkosombo": "Akosombo & der Volta",
+    "badgeTitle": "Geprüft & kuratiert",
+    "badgeText": "Qualität, Sicherheit und Authentizität werden geprüft, bevor ein Erlebnis live geht.",
+    "imageStory1": "Traditionelle Trommeln und Trachten",
+    "imageStory2": "Momente zum Teilen",
+    "imageStory3": "Lokale Guides unterwegs",
+    "imageStory4": "Panoramafahrten durch Ghana",
     "valuesLabel": "Wofür wir stehen",
     "valuesTitle": "Unsere Werte",
     "value1Title": "Handverlesene Erlebnisse",
@@ -790,7 +800,12 @@
     "ctaTitle": "Bereit zu erkunden?",
     "ctaBrowse": "Touren durchsuchen",
     "ctaContact": "Kontaktieren Sie uns",
-    "goToSlide": "Zu Folie {{number}} wechseln"
+    "goToSlide": "Zu Folie {{number}} wechseln",
+    "imageGallery": "Bildergalerie",
+    "imageCounter": "Bild {{current}} von {{total}}",
+    "closeImage": "Bild schließen",
+    "previousImage": "Vorheriges Bild",
+    "nextImage": "Nächstes Bild"
   },
   "careers": {
     "pageTitle": "Karriere | Expedition-Go Tours",
@@ -811,7 +826,12 @@
     "dept4Text": "Erzählen Sie die Expedition-Go Tours Geschichte und helfen Sie uns, Reisende auf der ganzen Welt zu erreichen."
   },
   "partnerships": {
-    "pageTitle": "Partnerschaften | Expedition-Go Tours",
+    "pageTitle": "Partnerschaften",
+    "eyebrow": "Mit Expedition-Go zusammenarbeiten",
+    "galleryLabel": "Momente mit unseren Partnern",
+    "talkText": "Erzählen Sie uns von Ihrem Unternehmen und der Partnerschaft, die Sie interessiert — unser Team meldet sich bei Ihnen.",
+    "pauseSlideshow": "Diashow pausieren",
+    "playSlideshow": "Diashow abspielen",
     "whyTitle": "Warum mit uns partner?",
     "whyText": "Wir glauben, dass großartige Partnerschaften das Reisen verbessern. Durch die Zusammenarbeit können wir Reisenden mehr Auswahl, mehr Qualität und mehr Wert bieten.",
     "whoTitle": "Mit wem wir zusammenarbeiten",

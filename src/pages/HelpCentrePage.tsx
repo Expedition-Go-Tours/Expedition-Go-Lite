@@ -5,18 +5,21 @@ import {
   ArrowRight,
   BookOpen,
   CalendarX2,
-  Check,
   Clock,
+  Compass,
   Handshake,
+  Headset,
   Info,
   Mail,
   MapPin,
   MessageCircle,
   Phone,
+  ShieldCheck,
   Tag,
 } from 'lucide-react'
 import Footer from '../components/Footer'
 import SEO, { buildBreadcrumbSchema } from '../components/SEO'
+import { HELP_CENTRE_STATE } from '../components/support/BackToHelpCentre'
 import SupportSearch from '../components/support/SupportSearch'
 import FaqAccordion from '../components/support/FaqAccordion'
 import { getFaqCategories, getPopularFaqs } from '../lib/faq'
@@ -53,7 +56,12 @@ export default function HelpCentrePage() {
     { id: 'about', Icon: Info, title: t('supportHub.topicAboutTitle'), desc: t('supportHub.topicAboutDesc'), to: '/about-us' },
   ]
 
-  const TRUST_ITEMS = ['supportHub.trust1', 'supportHub.trust2', 'supportHub.trust3', 'supportHub.trust4']
+  const TRUST_ITEMS = [
+    { key: 'supportHub.trust1', Icon: Compass },
+    { key: 'supportHub.trust2', Icon: ShieldCheck },
+    { key: 'supportHub.trust3', Icon: MapPin },
+    { key: 'supportHub.trust4', Icon: Headset },
+  ]
 
   const openChat = () => {
     if (user) {
@@ -76,21 +84,26 @@ export default function HelpCentrePage() {
         ])}
       />
 
-      <div className="sh-hero">
+      <header className="sh-hero">
         <div className="sh-hero-inner">
           <p className="sh-eyebrow">{t('supportHub.eyebrow')}</p>
-          <h1 className="sh-title">{t('supportHub.helpTitle')}</h1>
+          <h1 className="sh-title" id="help-hero-title">{t('supportHub.helpTitle')}</h1>
           <p className="sh-sub">{t('support.helpCentreSubtitle')}</p>
-          <SupportSearch />
+          <SupportSearch linkState={HELP_CENTRE_STATE} />
           <div className="sh-quick">
             {quickChips.map((category) => (
-              <Link key={category.id} to={`/faq#cat-${category.id}`} className="sh-quick-chip">
+              <Link
+                key={category.id}
+                to={`/faq#cat-${category.id}`}
+                state={HELP_CENTRE_STATE}
+                className="sh-quick-chip"
+              >
                 {category.heading}
               </Link>
             ))}
           </div>
         </div>
-      </div>
+      </header>
 
       <div className="support-container sh-main">
         <section className="sh-about" aria-labelledby="sh-about-title">
@@ -99,10 +112,12 @@ export default function HelpCentrePage() {
             <p className="sh-about-text">{t('supportHub.whatWeDoText')}</p>
           </div>
           <ul className="sh-trust">
-            {TRUST_ITEMS.map((key) => (
+            {TRUST_ITEMS.map(({ key, Icon }) => (
               <li key={key} className="sh-trust-item">
-                <Check size={16} aria-hidden="true" />
-                {t(key)}
+                <span className="sh-trust-item-icon">
+                  <Icon size={15} aria-hidden="true" />
+                </span>
+                <span>{t(key)}</span>
               </li>
             ))}
           </ul>
@@ -114,7 +129,7 @@ export default function HelpCentrePage() {
           </div>
           <div className="sh-topics">
             {TOPICS.map(({ id, Icon, title, desc, to }) => (
-              <Link key={id} to={to} className="sh-topic">
+              <Link key={id} to={to} state={HELP_CENTRE_STATE} className="sh-topic">
                 <span className="sh-topic-icon">
                   <Icon size={20} aria-hidden="true" />
                 </span>
@@ -132,7 +147,7 @@ export default function HelpCentrePage() {
         <section className="sh-block" aria-labelledby="sh-popular-title">
           <div className="sh-block-head">
             <h2 className="sh-block-title" id="sh-popular-title">{t('supportHub.popularTitle')}</h2>
-            <Link to="/faq" className="sh-block-link">
+            <Link to="/faq" state={HELP_CENTRE_STATE} className="sh-block-link">
               {t('supportHub.seeAllFaqs')}
               <ArrowRight size={15} aria-hidden="true" />
             </Link>
@@ -162,7 +177,7 @@ export default function HelpCentrePage() {
             </div>
 
             <div className="sh-channels">
-              <a href={`mailto:${SUPPORT_EMAIL}`} className="sh-channel">
+              <a href={`mailto:${SUPPORT_EMAIL}`} className="sh-channel sh-channel--email">
                 <span className="sh-channel-head">
                   <span className="sh-channel-label">
                     <Mail size={14} aria-hidden="true" />
@@ -173,7 +188,7 @@ export default function HelpCentrePage() {
                 <span className="sh-channel-note">{t('contact.emailNote')}</span>
               </a>
 
-              <a href={`tel:${SUPPORT_PHONE_DIGITS}`} className="sh-channel">
+              <a href={`tel:${SUPPORT_PHONE_DIGITS}`} className="sh-channel sh-channel--phone">
                 <span className="sh-channel-head">
                   <span className="sh-channel-label">
                     <Phone size={14} aria-hidden="true" />
@@ -184,7 +199,7 @@ export default function HelpCentrePage() {
                 <span className="sh-channel-note">{t('contact.phoneNote')}</span>
               </a>
 
-              <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="sh-channel">
+              <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="sh-channel sh-channel--whatsapp">
                 <span className="sh-channel-head">
                   <span className="sh-channel-label">
                     <MessageCircle size={14} aria-hidden="true" />
@@ -195,10 +210,10 @@ export default function HelpCentrePage() {
                 <span className="sh-channel-note">{t('contact.whatsappNote')}</span>
               </a>
 
-              <button type="button" className="sh-channel" onClick={openChat}>
+              <button type="button" className="sh-channel sh-channel--chat" onClick={openChat}>
                 <span className="sh-channel-head">
                   <span className="sh-channel-label">
-                    <MessageCircle size={14} aria-hidden="true" />
+                    <Headset size={14} aria-hidden="true" />
                     {t('support.chatWithUs')}
                   </span>
                   <span className="sh-channel-badge">{t('contact.fastest')}</span>
