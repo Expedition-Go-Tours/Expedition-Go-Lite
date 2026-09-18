@@ -305,31 +305,33 @@
 .card-row {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 16px 18px;
+  gap: 18px;
+  min-height: 76px;
+  padding: 20px 22px;
   border: 1px solid var(--bv-border, #e5e7eb);
-  border-radius: 14px;
+  border-radius: 16px;
   background: #fff;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
 }
 .card-row:hover {
   border-color: var(--bv-border-strong, #d0d5dd);
-  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.06);
+  box-shadow: 0 2px 8px rgba(16, 24, 40, 0.08);
+  transform: translateY(-1px);
 }
 .card-brand-logo {
-  width: 44px;
-  height: 30px;
+  width: 56px;
+  height: 36px;
   object-fit: contain;
-  border-radius: 6px;
+  border-radius: 8px;
   background: #f3f4f6;
-  padding: 3px;
+  padding: 4px;
   flex-shrink: 0;
 }
 .card-brand-text {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.02em;
   color: var(--bv-muted, #667085);
@@ -339,23 +341,27 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 .card-details {
   display: flex;
   align-items: baseline;
-  gap: 12px;
+  gap: 10px;
   min-width: 0;
 }
 .card-last4 {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 17px;
+  font-weight: 700;
   color: var(--bv-ink, #101828);
   font-family: 'GT Esti Pro Display', 'Raleway', monospace;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.04em;
+}
+.card-sep {
+  color: var(--bv-border-strong, #d8dce3);
+  font-size: 14px;
 }
 .card-exp {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--bv-muted, #667085);
 }
 .card-badges {
@@ -367,17 +373,17 @@
 .card-badge {
   display: inline-flex;
   align-items: center;
-  height: 22px;
-  padding: 0 8px;
-  border-radius: 6px;
-  font-size: 11px;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 8px;
+  font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
 .card-badge--default {
-  background: #ecfdf5;
-  color: #047857;
+  background: #d1fae5;
+  color: #065f46;
 }
 .card-badge--expired {
   background: #fef2f2;
@@ -399,7 +405,12 @@
   border-radius: 8px;
   cursor: pointer;
   color: var(--bv-muted, #667085);
-  transition: background 0.15s;
+  opacity: 0.5;
+  transition: background 0.15s, opacity 0.15s;
+}
+.card-row:hover .card-menu-btn,
+.card-menu-btn:hover {
+  opacity: 1;
 }
 .card-menu-btn:hover {
   background: var(--bv-surface-2, #f2f4f7);
@@ -574,20 +585,24 @@
 
   /* Saved-card row: logo + details on the left, menu pinned top-right */
   .card-row {
-    padding: 14px;
-    gap: 12px;
+    min-height: 68px;
+    padding: 16px;
+    gap: 14px;
     align-items: flex-start;
   }
   .card-brand-logo {
-    width: 38px;
-    height: 26px;
+    width: 44px;
+    height: 30px;
   }
   .card-details {
     flex-wrap: wrap;
     gap: 2px 10px;
   }
+  .card-sep {
+    display: none;
+  }
   .card-last4 {
-    font-size: 14.5px;
+    font-size: 16px;
   }
 
   /* Modals: tighter padding so content isn't cramped */

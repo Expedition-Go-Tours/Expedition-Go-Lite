@@ -228,6 +228,7 @@ export default function SavedCardsTab() {
                 <div className="card-info">
                   <div className="card-details">
                     <span className="card-last4">•••• {card.last4}</span>
+                    <span className="card-sep" aria-hidden="true">·</span>
                     <span className="card-exp">Expires {formatExp(card.expMonth, card.expYear)}</span>
                   </div>
                   {(card.isDefault || card.expired) && (
