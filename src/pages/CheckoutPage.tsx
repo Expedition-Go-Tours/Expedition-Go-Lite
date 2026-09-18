@@ -364,6 +364,7 @@ export default function CheckoutPage() {
               <span className="co-label">Card / payment method</span>
               <CheckoutElements
                 clientSecret={clientSecret}
+                customerSessionClientSecret={draft.customerSessionClientSecret || undefined}
                 returnUrl={returnUrl}
                 email={draft.leadTraveler.email || undefined}
                 onReady={onElementsReady}

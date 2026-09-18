@@ -5,10 +5,15 @@ import type { StripeElementsOptionsClientSecret } from '@stripe/stripe-js'
  * mirror the storefront design tokens (bookingTheme.css / index.css) so the
  * Stripe iframe feels native to the checkout page instead of like a demo.
  */
-export function checkoutElementsOptions(clientSecret: string): StripeElementsOptionsClientSecret {
+export function checkoutElementsOptions(
+  clientSecret: string,
+  customerSessionClientSecret?: string,
+): StripeElementsOptionsClientSecret {
   const origin = typeof window !== 'undefined' ? window.location.origin : ''
   return {
     clientSecret,
+    // Required for the Payment Element to list the customer's saved cards.
+    ...(customerSessionClientSecret ? { customerSessionClientSecret } : {}),
     appearance: {
       theme: 'stripe',
       labels: 'floating',

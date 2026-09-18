@@ -288,6 +288,7 @@ export interface CheckoutDraftSummary {
   pricing: { subtotal: number; total: number; discount: number; fees: number; taxes: number }
   paymentIntentId: string | null
   clientSecret: string | null
+  customerSessionClientSecret: string | null
 }
 
 export function useCreateBooking() {

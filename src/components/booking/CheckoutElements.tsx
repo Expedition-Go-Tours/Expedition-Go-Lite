@@ -12,6 +12,7 @@ export interface CheckoutElementsHandle {
 
 interface CheckoutElementsProps {
   clientSecret: string
+  customerSessionClientSecret?: string
   returnUrl: string
   email?: string
   onReady: (handle: CheckoutElementsHandle) => void
@@ -22,6 +23,7 @@ const UNAVAILABLE = 'Secure payment is unavailable right now — please try agai
 
 export default function CheckoutElements({
   clientSecret,
+  customerSessionClientSecret,
   returnUrl,
   email,
   onReady,
@@ -51,7 +53,7 @@ export default function CheckoutElements({
         }
         stripeRef.current = stripe
 
-        const elements = stripe.elements(checkoutElementsOptions(clientSecret))
+        const elements = stripe.elements(checkoutElementsOptions(clientSecret, customerSessionClientSecret))
         if (cancelled) return
         elementsRef.current = elements
 
@@ -114,7 +116,7 @@ export default function CheckoutElements({
       stripeRef.current = null
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clientSecret, email])
+  }, [clientSecret, customerSessionClientSecret, email])
 
   return (
     <div>
