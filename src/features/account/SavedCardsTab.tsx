@@ -8,16 +8,38 @@ import {
   type SavedCard,
 } from './api'
 import AddCardModal, { type CardInfo } from './AddCardModal'
+import visaLogo from '@/assets/icons/visa.svg'
+import mastercardLogo from '@/assets/icons/mastercard.svg'
+import amexLogo from '@/assets/icons/card-brands/amex.svg'
+import discoverLogo from '@/assets/icons/discover.png'
 
 const BRAND_LOGOS: Record<string, string> = {
-  visa: 'https://js.stripe.com/v3/fingerprinted/img/visa-729c05c240c49c4cb5bfdd6ab1b2b124.svg',
-  mastercard: 'https://js.stripe.com/v3/fingerprinted/img/mastercard-4d8844094130711885b5e41b28098f9a.svg',
-  amex: 'https://js.stripe.com/v3/fingerprinted/img/amex-a49b82f46c5cd6a96a6e418a6ca1717c.svg',
-  discover: 'https://js.stripe.com/v3/fingerprinted/img/discover-ac83cd09f1ee73a1f3456f6f4a2b1e1a.svg',
+  visa: visaLogo,
+  mastercard: mastercardLogo,
+  amex: amexLogo,
+  discover: discoverLogo,
 }
 
-function brandLogo(brand: string): string {
-  return BRAND_LOGOS[brand.toLowerCase()] || ''
+function BrandLogo({ brand }: { brand: string }) {
+  const [failed, setFailed] = useState(false)
+  const src = BRAND_LOGOS[brand.toLowerCase()]
+
+  if (!src || failed) {
+    return (
+      <div className="card-brand-logo card-brand-text">
+        {brand.slice(0, 4).toUpperCase()}
+      </div>
+    )
+  }
+
+  return (
+    <img
+      src={src}
+      alt={brand}
+      className="card-brand-logo"
+      onError={() => setFailed(true)}
+    />
+  )
 }
 
 function formatExp(m: number | null, y: number | null): string {
@@ -200,13 +222,7 @@ export default function SavedCardsTab() {
             {cards.map((card) => (
               <div key={card.id} className="card-row">
                 {/* Brand logo */}
-                {brandLogo(card.brand) ? (
-                  <img src={brandLogo(card.brand)} alt={card.brand} className="card-brand-logo" />
-                ) : (
-                  <div className="card-brand-logo" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700, color: 'var(--bv-muted)' }}>
-                    {card.brand.slice(0, 4).toUpperCase()}
-                  </div>
-                )}
+                <BrandLogo brand={card.brand} />
 
                 {/* Info */}
                 <div className="card-info">

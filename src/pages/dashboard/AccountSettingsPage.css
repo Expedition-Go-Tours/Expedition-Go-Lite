@@ -325,6 +325,15 @@
   padding: 3px;
   flex-shrink: 0;
 }
+.card-brand-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--bv-muted, #667085);
+}
 .card-info {
   flex: 1;
   min-width: 0;
