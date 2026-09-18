@@ -559,6 +559,44 @@ function computeStats(reviews) {
 
 // ─── Main ────────────────────────────────────────────────────────────────────
 
+/**
+ * Push the official per-product totals to the backend so homepage ranking can
+ * count external reviews alongside in-app ones.
+ *
+ * Best-effort: a backend hiccup must never stop the storefront dataset from
+ * being written and committed (the display reads the JSON), but it is logged
+ * loudly so the failure is visible in the Action run.
+ */
+async function pushToBackend(products) {
+  const url = process.env.EXTERNAL_REVIEWS_SYNC_URL
+  const token = process.env.EXTERNAL_REVIEWS_SYNC_TOKEN
+  if (!url || !token) {
+    console.log('Backend sync skipped (EXTERNAL_REVIEWS_SYNC_URL / EXTERNAL_REVIEWS_SYNC_TOKEN not set)')
+    return
+  }
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ products }),
+    })
+    const body = await res.json().catch(() => ({}))
+    if (!res.ok) throw new Error(body?.message || `HTTP ${res.status}`)
+
+    const data = body?.data || {}
+    console.log(`Backend sync OK: matched=${data.matched} tours=${data.tours} unmatched=${(data.unmatched || []).length}`)
+    for (const item of data.unmatched || []) {
+      console.log(`  unmatched [${item.source}] ${item.title} (${item.reason})`)
+    }
+  } catch (err) {
+    console.warn(`Backend sync FAILED (dataset still written): ${err.message}`)
+  }
+}
+
 async function main() {
   let puppeteer
   try {
@@ -672,6 +710,10 @@ async function main() {
       console.log(`  ${p.source}: ${p.tourTitle} → ${p.rating ?? '?'}★ (${p.reviewCount ?? '?'} official)`)
     }
     console.log(`Stats: ${stats.averageRating}★ from ${stats.totalReviews} reviews`)
+
+    // Feed the backend's homepage ranking with the same official totals the
+    // storefront displays, so ranking and display never disagree.
+    await pushToBackend(products)
   } finally {
     await browser.close()
   }
