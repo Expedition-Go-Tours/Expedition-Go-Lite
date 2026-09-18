@@ -145,6 +145,15 @@ export function getStoredAuthUser(): AuthUser | null {
   return user
 }
 
+/** Merge a partial update into the locally stored user and notify listeners. */
+export function updateStoredAuthUser(patch: Partial<AuthUser>): void {
+  const auth = getStoredAuth()
+  if (!auth.user) return
+  const updated = { ...auth.user, ...patch }
+  storeAuth({ ...auth, user: updated })
+  notifyAuthStateChange(updated)
+}
+
 export async function getAuthToken(): Promise<string | null> {
   const { accessToken } = getStoredAuth()
   return accessToken || null

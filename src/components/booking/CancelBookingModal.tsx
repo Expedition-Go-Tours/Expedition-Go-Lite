@@ -171,10 +171,10 @@ export default function CancelBookingModal({
             <div className="cb-icon cb-icon-rose">
               <XCircle size={24} />
             </div>
-            <h2 className="cb-title">Free cancellation period has passed</h2>
+            <h2 className="cb-title">Cancellation not eligible for refund</h2>
             <p className="cb-body">
-              The free cancellation period for this tour has passed. If you cancel
-              this booking, you will not receive a refund.
+              This tour's cancellation date does not qualify for a refund. If you cancel
+              this booking, you will not receive a refund. Confirm to proceed or cancel to go back.
             </p>
             {!isPaid && (
               <p className="cb-note">

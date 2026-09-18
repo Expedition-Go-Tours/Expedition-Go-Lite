@@ -618,7 +618,7 @@ export default function BookingWorkspace({ id, onClose }: { id?: string; onClose
       ),
     [tour, detail]
   )
-  const showCancel = activeStatus && !!detail && cancellation.allowed
+  const showCancel = activeStatus && !!detail
   const policyNote = (() => {
     if (!detail) return ''
     if (cancellation.type === 'all_sales_final' || cancellation.refundPct === 0) {
@@ -1211,11 +1211,11 @@ export default function BookingWorkspace({ id, onClose }: { id?: string; onClose
         onConfirm={handleCancelConfirm}
         isPending={cancelBooking.isPending}
         error={cancelError}
-        refundPct={cancellation.refundPct}
+        refundPct={cancellation.allowed ? cancellation.refundPct : 0}
         isPaid={isPaid}
         bookingNumber={detail?.bookingNumber}
         tourTitle={tour?.title}
-        refundAmount={isPaid && cancellation.refundPct > 0 ? gross * cancellation.refundPct / 100 : undefined}
+        refundAmount={cancellation.allowed && cancellation.refundPct > 0 && isPaid ? gross * cancellation.refundPct / 100 : undefined}
         currency={currency}
       />
     </div>
