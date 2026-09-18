@@ -42,6 +42,21 @@ export function isValidPhoneInput(countryCode: string, nationalNumber: string): 
 }
 
 /**
+ * Human-readable form of a stored E.164 number (e.g. "+233 24 123 4567").
+ * Falls back to the raw value when it can't be parsed.
+ */
+export function formatPhoneDisplay(value: string): string {
+  const raw = (value ?? '').trim()
+  if (!raw) return ''
+  try {
+    const parsed = parsePhoneNumber(raw)
+    return parsed?.isValid() ? parsed.formatInternational() : raw
+  } catch {
+    return raw
+  }
+}
+
+/**
  * Split an E.164 number (e.g. "+233241234567") back into a country calling
  * code ("+233") and national number ("241234567") for the two-part phone
  * input. Returns null when the value can't be parsed.

@@ -282,7 +282,7 @@ export interface CheckoutDraftSummary {
   travelDate: string
   selectedTime: string | null
   party: { adults: number; children: number; infants: number; total: number }
-  leadTraveler: { name: string | null; email: string | null }
+  leadTraveler: { name: string | null; email: string | null; phone: string | null }
   promoCode: string | null
   currency: string
   pricing: { subtotal: number; total: number; discount: number; fees: number; taxes: number }

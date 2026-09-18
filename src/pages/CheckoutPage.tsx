@@ -9,6 +9,7 @@ import { currencySymbol } from '../lib/currencySymbol'
 import OptimizedImage from '@/components/shared/OptimizedImage'
 import logoSrc from '../assets/expo_trans.png'
 import { formatHeadingDate, partyLabel } from '../lib/bookingUi'
+import { formatPhoneDisplay } from '../lib/phone'
 import { formatDuration } from '../hooks/useExpeditionTours'
 import './CheckoutPage.css'
 
@@ -359,6 +360,19 @@ export default function CheckoutPage() {
                 value={draft.leadTraveler.email || ''}
               />
             </div>
+
+            {draft.leadTraveler.phone && (
+              <div className="co-field">
+                <label className="co-label" htmlFor="co-phone">Contact phone</label>
+                <input
+                  id="co-phone"
+                  className="co-input"
+                  type="tel"
+                  readOnly
+                  value={formatPhoneDisplay(draft.leadTraveler.phone)}
+                />
+              </div>
+            )}
 
             <div className="co-element-wrap">
               <span className="co-label">Card / payment method</span>
