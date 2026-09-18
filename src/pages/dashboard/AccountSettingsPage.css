@@ -300,45 +300,60 @@
 .card-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 .card-row {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 14px 18px;
+  gap: 16px;
+  padding: 16px 18px;
   border: 1px solid var(--bv-border, #e5e7eb);
-  border-radius: 12px;
+  border-radius: 14px;
   background: #fff;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 .card-row:hover {
   border-color: var(--bv-border-strong, #d0d5dd);
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.06);
 }
 .card-brand-logo {
-  width: 36px;
-  height: 24px;
+  width: 44px;
+  height: 30px;
   object-fit: contain;
-  border-radius: 4px;
+  border-radius: 6px;
   background: #f3f4f6;
-  padding: 2px;
+  padding: 3px;
+  flex-shrink: 0;
 }
 .card-info {
   flex: 1;
   min-width: 0;
   display: flex;
-  align-items: center;
-  gap: 10px;
+  flex-direction: column;
+  gap: 6px;
+}
+.card-details {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  min-width: 0;
 }
 .card-last4 {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--bv-ink, #101828);
   font-family: 'GT Esti Pro Display', 'Raleway', monospace;
+  letter-spacing: 0.02em;
 }
 .card-exp {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--bv-muted, #667085);
+}
+.card-badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 .card-badge {
   display: inline-flex;
@@ -548,18 +563,22 @@
     align-items: flex-start;
   }
 
-  /* Saved-card row: let the info + badges wrap instead of squeezing */
+  /* Saved-card row: logo + details on the left, menu pinned top-right */
   .card-row {
-    padding: 12px 14px;
+    padding: 14px;
     gap: 12px;
-  }
-  .card-info {
-    flex-wrap: wrap;
-    gap: 4px 10px;
+    align-items: flex-start;
   }
   .card-brand-logo {
-    width: 32px;
-    height: 22px;
+    width: 38px;
+    height: 26px;
+  }
+  .card-details {
+    flex-wrap: wrap;
+    gap: 2px 10px;
+  }
+  .card-last4 {
+    font-size: 14.5px;
   }
 
   /* Modals: tighter padding so content isn't cramped */
