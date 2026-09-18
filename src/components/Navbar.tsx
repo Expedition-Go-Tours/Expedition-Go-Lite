@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion, type Variants } from 'framer-motion'
 import { toast } from 'sonner'
-import { Globe, Megaphone, ChevronRight, LogIn, LogOut, DollarSign, Bell } from 'lucide-react'
+import { Globe, Megaphone, ChevronRight, LogIn, LogOut, DollarSign, Bell, Settings } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import i18n from '../i18n/config'
 import { useCurrency } from '../contexts/CurrencyContext'
@@ -788,6 +788,13 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
                   <span className="nav-mobile-user-name">{user.name}</span>
                   <span className="nav-mobile-user-email">{user.email}</span>
                 </div>
+                <button
+                  className="nav-mobile-user-settings"
+                  onClick={() => { setMobileMenuOpen(false); navigate('/dashboard/settings') }}
+                  aria-label="Account Settings"
+                >
+                  <Settings size={18} />
+                </button>
               </div>
             ) : (
               <div className="nav-mobile-login" onClick={() => { setMobileMenuOpen(false); onOpenAuth?.('signup') }}>
