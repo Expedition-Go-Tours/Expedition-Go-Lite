@@ -115,7 +115,13 @@ export default function AddCardModal({ onClose, onAdded }: AddCardModalProps) {
     try {
       const { error, setupIntent } = await stripeRef.current.confirmSetup({
         elements: elementsRef.current,
-        confirmParams: { return_url: window.location.href },
+        confirmParams: {
+          return_url: window.location.href,
+          // Required for the card to be offered again in the Payment Element
+          // ("Saved payment methods"). Without this Stripe stores the card
+          // with allow_redisplay: 'unspecified' and hides it at checkout.
+          payment_method_data: { allow_redisplay: 'always' },
+        },
         redirect: 'if_required',
       })
 

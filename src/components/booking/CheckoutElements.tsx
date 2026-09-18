@@ -80,9 +80,13 @@ export default function CheckoutElements({
                 elements: currentElements,
                 confirmParams: {
                   return_url: returnUrl,
-                  ...(email
-                    ? { payment_method_data: { billing_details: { email } } }
-                    : {}),
+                  payment_method_data: {
+                    // Save new cards in a redisplayable state so they appear as
+                    // a saved option on the next checkout (Stripe's default,
+                    // 'unspecified', hides them from the Payment Element).
+                    allow_redisplay: 'always',
+                    ...(email ? { billing_details: { email } } : {}),
+                  },
                 },
               })
               // Stripe only returns when confirmation failed (success navigates away).
