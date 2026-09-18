@@ -41,6 +41,26 @@ export function isValidPhoneInput(countryCode: string, nationalNumber: string): 
   return buildE164Phone(countryCode, nationalNumber) !== null
 }
 
+/**
+ * Split an E.164 number (e.g. "+233241234567") back into a country calling
+ * code ("+233") and national number ("241234567") for the two-part phone
+ * input. Returns null when the value can't be parsed.
+ */
+export function splitE164Phone(value: string): { countryCode: string; nationalNumber: string } | null {
+  const raw = (value ?? '').trim()
+  if (!raw) return null
+  try {
+    const parsed = parsePhoneNumber(raw)
+    if (!parsed?.countryCallingCode) return null
+    return {
+      countryCode: `+${parsed.countryCallingCode}`,
+      nationalNumber: parsed.nationalNumber,
+    }
+  } catch {
+    return null
+  }
+}
+
 /* ─── Country calling-code options (from libphonenumber-js metadata) ─── */
 
 export const DEFAULT_COUNTRY_CODE = '+233'

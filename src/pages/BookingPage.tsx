@@ -25,7 +25,8 @@ import { setAuthReturnTo } from '../lib/auth'
 import type { CardElementHandle } from '../components/booking/CardField'
 import { fetchWithAuth } from '../lib/api'
 import { useCreateBooking, useCalculateCheckout } from '../hooks/useExpeditionBookings'
-import { buildE164Phone, isValidPhoneInput, COUNTRY_CODES } from '../lib/phone'
+import { buildE164Phone, isValidPhoneInput, splitE164Phone, COUNTRY_CODES } from '../lib/phone'
+import { getAccount } from '../features/account/api'
 import type { TourOption } from '../lib/tourTypes'
 import { hasLocationOnlyAreas, isPickupLocationSatisfied, pickupZoneStatus, distanceMeters, type PickupAreaShape } from '../lib/pickupZone'
 import LocationMap from '../components/booking/LocationMap'
@@ -1869,8 +1870,34 @@ export default function BookingPage() {
     // email, but only while the field is still empty — a draft email the user
     // typed (or a deliberate clearing) is never overwritten.
     if (!restored.email.trim() && user?.email) restored.email = user.email
+    // Same rule for the name: split the profile's full name into first/last.
+    if (!restored.firstName.trim() && !restored.lastName.trim() && user?.name) {
+      const parts = user.name.trim().split(/\s+/)
+      restored.firstName = parts[0] || ''
+      restored.lastName = parts.slice(1).join(' ') || ''
+    }
     return restored
   })
+
+  // Signed-in traveller: prefill the phone from the saved profile once, only
+  // while the field is still empty (a restored draft or typed value wins).
+  useEffect(() => {
+    if (!user?.id) return
+    let cancelled = false
+    getAccount()
+      .then((profile) => {
+        if (cancelled || !profile.phone) return
+        const split = splitE164Phone(profile.phone)
+        if (!split) return
+        setContact((prev) => (
+          prev.phone.trim()
+            ? prev
+            : { ...prev, countryCode: split.countryCode, phone: split.nationalNumber }
+        ))
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [user?.id])
 
   const [isChangeModalOpen, setIsChangeModalOpen] = useState(false)
   const [editableTour, setEditableTour] = useState<EditableTourState>(() => {

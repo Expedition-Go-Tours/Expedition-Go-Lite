@@ -3,6 +3,8 @@ import { User, MapPin, Lock, Camera, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuthUser } from '../../hooks/useAuthUser'
 import { getStoredAuthUser, updateStoredAuthUser } from '../../lib/auth'
+import { SelectInput, TextInput } from '../../components/booking/FormFields'
+import { COUNTRY_CODES, DEFAULT_COUNTRY_CODE, buildE164Phone, splitE164Phone } from '../../lib/phone'
 import {
   getAccount,
   updateAccount,
@@ -37,6 +39,7 @@ export default function PersonalDetailsTab() {
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
+  const [countryCode, setCountryCode] = useState(DEFAULT_COUNTRY_CODE)
   const [phone, setPhone] = useState('')
   const [dobDay, setDobDay] = useState('')
   const [dobMonth, setDobMonth] = useState('')
@@ -67,7 +70,13 @@ export default function PersonalDetailsTab() {
         setFirstName(first)
         setLastName(last)
         setEmail(p.email || '')
-        setPhone(p.phone || '')
+        const split = splitE164Phone(p.phone || '')
+        if (split) {
+          setCountryCode(split.countryCode)
+          setPhone(split.nationalNumber)
+        } else {
+          setPhone(p.phone || '')
+        }
         setAddress(p.address || '')
         setCity(p.city || '')
         setState(p.state || '')
@@ -115,9 +124,21 @@ export default function PersonalDetailsTab() {
       return
     }
 
+    // Combine the two-part phone input into a canonical E.164 value. Block the
+    // save on an unparseable number instead of silently dropping it.
+    let phoneValue: string | null = null
+    if (phone.trim()) {
+      const e164 = buildE164Phone(countryCode, phone)
+      if (!e164) {
+        toast.error('Enter a valid phone number for the selected country')
+        return
+      }
+      phoneValue = e164
+    }
+
     setSaving(true)
     try {
-      const data: Record<string, unknown> = { name, phone }
+      const data: Record<string, unknown> = { name, phone: phoneValue }
 
       // DOB
       if (dobDay && dobMonth && dobYear) {
@@ -279,12 +300,19 @@ export default function PersonalDetailsTab() {
           <div className="account-form-row account-form-row--single">
             <div className="account-field">
               <label htmlFor="acc-phone">Mobile phone</label>
-              <input
-                id="acc-phone"
-                value={phone}
-                onChange={(e) => { setPhone(e.target.value); markDirty() }}
-                placeholder="+1 234 567 8900"
-              />
+              <div className="account-phone-grid grid gap-3 sm:grid-cols-[1.2fr_2fr]">
+                <SelectInput
+                  value={countryCode}
+                  onChange={(e) => { setCountryCode(e.target.value); markDirty() }}
+                  options={COUNTRY_CODES}
+                />
+                <TextInput
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => { setPhone(e.target.value.replace(/\D/g, '')); markDirty() }}
+                  placeholder="e.g. 024 123 4567"
+                />
+              </div>
             </div>
           </div>
 

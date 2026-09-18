@@ -195,6 +195,26 @@
   cursor: default;
 }
 
+/* Phone control mirrors the checkout two-part input (country code + number) */
+.account-phone-grid input,
+.account-phone-grid select {
+  height: auto;
+  padding: 12px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 14px;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+.account-phone-grid select {
+  padding-right: 40px;
+}
+.account-phone-grid input:focus,
+.account-phone-grid select:focus {
+  outline: none;
+  border-color: #179237;
+  box-shadow: 0 0 0 2px rgba(23, 146, 55, 0.15);
+}
+
 /* ── DOB selects ────────────────────────────────────────────────────── */
 .dob-selects {
   display: grid;
