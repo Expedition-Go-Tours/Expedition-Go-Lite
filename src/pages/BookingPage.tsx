@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { motion, AnimatePresence, useAnimate } from 'framer-motion'
 import { toast } from 'sonner'
@@ -18,6 +18,8 @@ import ChangeBookingModal from '../components/booking/ChangeBookingModal'
 import ExpiredHoldModal from '../components/booking/ExpiredHoldModal'
 import SignInPromptModal from '../components/booking/SignInPromptModal'
 import CardField from '../components/booking/CardField'
+import SavedCardPicker, { NEW_CARD } from '../components/booking/SavedCardPicker'
+import { getPaymentMethods } from '../features/account/api'
 import OptionSelector from '../components/booking/OptionSelector'
 import BookingTransition from '../components/BookingTransition'
 import { useAuthUser } from '../hooks/useAuthUser'
@@ -1190,6 +1192,21 @@ function PaymentDetailsStep({
   const isCompleted = step > 3
   const [cardHandle, setCardHandle] = useState<CardElementHandle | null>(null)
   const [creating, setCreating] = useState(false)
+  const [selectedCardId, setSelectedCardId] = useState('')
+  const user = useAuthUser()
+  const authenticated = Boolean(user?.email)
+  // Saved cards for the reserve-now-pay-later step. Signed-out customers (and
+  // failures) simply get an empty list and the plain card field.
+  const savedCardsQuery = useQuery({
+    queryKey: ['booking', 'saved-cards'],
+    queryFn: getPaymentMethods,
+    enabled: authenticated,
+    staleTime: 60_000,
+  })
+  const savedCards = (savedCardsQuery.data ?? []).filter((c) => !c.expired)
+  const savedCardsReady = !authenticated || savedCardsQuery.isFetched
+  // Derived default: first saved card unless the customer picked one explicitly.
+  const effectiveCardId = selectedCardId || savedCards[0]?.id || NEW_CARD
   const { formatPrice } = useCurrency()
 
   // Client-side pay-later availability heuristic (the server enforces the same
@@ -1337,8 +1354,17 @@ function PaymentDetailsStep({
                 <ShieldCheck className="size-4 shrink-0" />
                 <span>Secure payment powered by Stripe — you'll finish on the next step.</span>
               </div>
+            ) : !savedCardsReady ? (
+              <div className="h-[52px] animate-pulse rounded-xl border border-slate-200/60 bg-slate-50/40" />
             ) : (
-              <CardField onReady={setCardHandle} />
+              <div className="space-y-3">
+                <SavedCardPicker
+                  cards={savedCards}
+                  value={effectiveCardId}
+                  onChange={setSelectedCardId}
+                />
+                {effectiveCardId === NEW_CARD && <CardField onReady={setCardHandle} />}
+              </div>
             )}
 
             <p className="text-xs leading-relaxed text-slate-400">
@@ -1351,6 +1377,17 @@ function PaymentDetailsStep({
             <motion.button
               onClick={async () => {
                 if (timing === 'later') {
+                  // A saved card needs no Card Element — send its payment method
+                  // id straight through. Only the "new card" path collects one.
+                  if (effectiveCardId && effectiveCardId !== NEW_CARD) {
+                    setCreating(true)
+                    try {
+                      onBook(effectiveCardId, 'later')
+                    } finally {
+                      setCreating(false)
+                    }
+                    return
+                  }
                   if (!cardHandle) {
                     toast.error('Please enter your card details to continue.')
                     return
