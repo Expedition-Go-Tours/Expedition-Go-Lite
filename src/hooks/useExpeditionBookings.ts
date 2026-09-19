@@ -397,6 +397,7 @@ interface RawBookingListRecord {
     coverPhoto: string | null
     photos: string[]
     city?: string | null
+    destinationCity?: string | null
     country?: string | null
     durationMinutes?: number | null
   }

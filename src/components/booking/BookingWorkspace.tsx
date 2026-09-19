@@ -1,5 +1,5 @@
 import { useMemo, useState, useRef, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import {
   ArrowLeft,
@@ -455,9 +455,9 @@ function RecommendedExperiences({ tourId, location }: { tourId: string; location
         )}
       </div>
       {location && (
-        <a href={`/tours?city=${encodeURIComponent(location)}`} className="ws-recommended-link">
+        <Link to={`/tours?place=${encodeURIComponent(location)}`} className="ws-recommended-link">
           Find more things to do in {location} &rsaquo;
-        </a>
+        </Link>
       )}
     </section>
   )
@@ -1200,7 +1200,7 @@ export default function BookingWorkspace({ id, onClose }: { id?: string; onClose
       {detail?.tourId && (
         <RecommendedExperiences
           tourId={detail.tourId}
-          location={tour?.city || tour?.country || ''}
+          location={tour?.destinationCity || tour?.city || tour?.country || ''}
         />
       )}
 
