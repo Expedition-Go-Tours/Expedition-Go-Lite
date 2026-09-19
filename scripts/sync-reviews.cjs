@@ -113,6 +113,13 @@ const DELAY_BETWEEN_TOURS_MS = 3000
 // REVIEWS_HEADLESS=0 (a browser window opens while the scrape runs).
 const HEADLESS = process.env.REVIEWS_HEADLESS !== '0'
 
+// Optional proxy. TripAdvisor returns 403 to datacenter IPs — GitHub runners and
+// cloud servers alike — so a residential proxy is the only reliable way to keep
+// its reviews. GetYourGuide works without one.
+const PROXY_SERVER = process.env.REVIEWS_PROXY_SERVER || ''
+const PROXY_USERNAME = process.env.REVIEWS_PROXY_USERNAME || ''
+const PROXY_PASSWORD = process.env.REVIEWS_PROXY_PASSWORD || ''
+
 // Optional scoping for validation runs: REVIEWS_ONLY=ta|gyg|google runs just
 // that source. Pair with REVIEWS_OUTPUT=<path> + REVIEWS_MIN_EXPECTED=1 so a
 // partial run never touches the committed dataset.
@@ -635,14 +642,19 @@ async function main() {
     process.exit(1)
   }
 
-  console.log(`Launching browser... (${HEADLESS ? 'headless' : 'headed'})`)
+  console.log(`Launching browser... (${HEADLESS ? 'headless' : 'headed'}${PROXY_SERVER ? ', via proxy' : ''})`)
+  const launchArgs = ['--no-sandbox', '--disable-setuid-sandbox', '--disable-blink-features=AutomationControlled', '--disable-dev-shm-usage']
+  if (PROXY_SERVER) launchArgs.push(`--proxy-server=${PROXY_SERVER}`)
   const browser = await puppeteer.launch({
     headless: HEADLESS,
-    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-blink-features=AutomationControlled', '--disable-dev-shm-usage'],
+    args: launchArgs,
   })
 
   try {
     const page = await browser.newPage()
+    if (PROXY_SERVER && PROXY_USERNAME && PROXY_PASSWORD) {
+      await page.authenticate({ username: PROXY_USERNAME, password: PROXY_PASSWORD })
+    }
     await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
     await page.setViewport({ width: 1920, height: 1080 })
     await page.evaluateOnNewDocument(() => {

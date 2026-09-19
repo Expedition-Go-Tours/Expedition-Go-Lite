@@ -41,6 +41,11 @@ jobs:
           # counts external reviews. The token lives in repo secrets.
           EXTERNAL_REVIEWS_SYNC_URL: https://apiv1.travioafrica.com/api/admin/external-reviews/sync
           EXTERNAL_REVIEWS_SYNC_TOKEN: ${{ secrets.EXTERNAL_REVIEWS_SYNC_TOKEN }}
+          # Optional residential proxy: TripAdvisor 403s datacenter IPs, so its
+          # reviews only come back through a proxy. Blank = no proxy.
+          REVIEWS_PROXY_SERVER: ${{ secrets.REVIEWS_PROXY_SERVER }}
+          REVIEWS_PROXY_USERNAME: ${{ secrets.REVIEWS_PROXY_USERNAME }}
+          REVIEWS_PROXY_PASSWORD: ${{ secrets.REVIEWS_PROXY_PASSWORD }}
         run: node scripts/sync-reviews.cjs
 
       - name: Commit updated reviews
