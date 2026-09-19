@@ -956,6 +956,27 @@ body:has(.story-detail) .navbar-compact-search {
   text-overflow: ellipsis;
 }
 
+.nav-mobile-user-settings {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: #888;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+}
+
+.nav-mobile-user-settings:hover {
+  background: #e8e8e8;
+  color: #333;
+}
+
 .nav-mobile-signout {
   display: flex;
   align-items: center;

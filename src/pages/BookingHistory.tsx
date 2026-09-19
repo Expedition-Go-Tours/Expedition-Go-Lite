@@ -15,6 +15,7 @@ import TravelEmptyAnimation from '../components/booking/TravelEmptyAnimation'
 const BookingWorkspace = lazy(() => import('../components/booking/BookingWorkspace'))
 import { formatHeadingDate, toDateKey, isSameCalendarDay } from '../lib/bookingUi'
 import { writeBookingsSeen } from '../lib/bookingsBadge'
+import { currencySymbol } from '../lib/currencySymbol'
 import '../components/booking/bookingTheme.css'
 import './BookingHistory.css'
 
@@ -30,6 +31,13 @@ const BUCKETS: { value: Bucket; label: string }[] = [
 ]
 
 type Booking = ExpeditionBookingSummary
+
+function formatSpent(amount: number, currency: string): string {
+  const symbol = currencySymbol(currency)
+  const rounded = Math.round((amount || 0) * 100) / 100
+  if (rounded >= 1000) return `${symbol}${(rounded / 1000).toFixed(1)}k`
+  return `${symbol}${rounded.toFixed(2)}`
+}
 
 const ACTIVE_STATUSES = ['PENDING', 'CONFIRMED']
 
@@ -165,14 +173,18 @@ export default function BookingHistory() {
   const bannerStats = useMemo(() => {
     const c: Record<Bucket, number> = { upcoming: 0, confirmed: 0, reserved: 0, cancelled: 0, refund: 0, past: 0 }
     let totalSpent = 0
+    let spentCurrency: string | null = null
     for (const b of bookings) {
       for (const tab of Object.keys(c) as Bucket[]) {
         if (belongsToTab(b, tab)) c[tab] += 1
       }
       // Only count money actually paid (not reserved/refunded/cancelled).
-      if (b.paymentStatus === 'SUCCEEDED' && !hasRefundLifecycle(b)) totalSpent += b.total ?? 0
+      if (b.paymentStatus === 'SUCCEEDED' && !hasRefundLifecycle(b)) {
+        totalSpent += b.total ?? 0
+        if (!spentCurrency) spentCurrency = b.currency
+      }
     }
-    return { total: bookings.length, ...c, totalSpent }
+    return { total: bookings.length, ...c, totalSpent, spentCurrency }
   }, [bookings])
 
   // Next upcoming trip for the greeting
@@ -362,9 +374,7 @@ export default function BookingHistory() {
                 <div className="bk-banner-stat">
                   <Wallet size={18} className="bk-banner-stat-icon" />
                   <span className="bk-banner-stat-value">
-                    {bannerStats.totalSpent >= 1000
-                      ? `$${(bannerStats.totalSpent / 1000).toFixed(1)}k`
-                      : `$${bannerStats.totalSpent}`}
+                    {formatSpent(bannerStats.totalSpent, bannerStats.spentCurrency ?? 'USD')}
                   </span>
                   <span className="bk-banner-stat-label">Spent</span>
                 </div>

@@ -434,7 +434,7 @@ function mapBookingSummary(b: RawBookingListRecord): ExpeditionBookingSummary {
       const total = details && details.length > 0 ? details.length : adults + children + infants
       return { adults, children, infants, total }
     })(),
-    total: Number(b.grossAmount),
+    total: Math.round((Number(b.grossAmount) || 0) * 100) / 100,
     currency: b.currency,
     createdAt: b.createdAt,
     refundState: b.refundState ?? null,
