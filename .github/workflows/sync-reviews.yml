@@ -9,6 +9,11 @@ on:
 permissions:
   contents: write
 
+# Never let a manual run and the nightly cron overlap on the same dataset.
+concurrency:
+  group: sync-reviews
+  cancel-in-progress: false
+
 jobs:
   sync-reviews:
     runs-on: ubuntu-latest
@@ -42,9 +47,25 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add src/data/externalReviews.json
+          # The script writes public/data/... — src/data/ holds only mocks, so
+          # the old path staged nothing and every run was a no-op.
+          git add public/data/externalReviews.json public/data/externalReviewStats.json
           git diff --staged --quiet || git commit -m "chore: sync external reviews [skip ci]"
           # Land on top of anything merged since checkout instead of failing
           # with a non-fast-forward rejection.
           git pull --rebase
           git push
+
+      - name: Notify on failure
+        # A blocked scrape is expected sometimes; a *silent* one is not.
+        if: failure()
+        env:
+          DISCORD_SYNC_WEBHOOK: ${{ secrets.DISCORD_SYNC_WEBHOOK }}
+        run: |
+          if [ -z "$DISCORD_SYNC_WEBHOOK" ]; then
+            echo "DISCORD_SYNC_WEBHOOK not set — skipping notification"
+            exit 0
+          fi
+          curl -sS -X POST "$DISCORD_SYNC_WEBHOOK" \
+            -H 'Content-Type: application/json' \
+            -d "{\"content\":\"⚠️ External reviews sync failed — ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}"

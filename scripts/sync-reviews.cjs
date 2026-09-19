@@ -149,28 +149,56 @@ function normalizeDate(dateStr) {
   return isNaN(d.getTime()) ? null : d.toISOString()
 }
 
-/**
- * Keep the previous dataset's Google rows when a Maps scrape yields nothing
- * (Maps frequently blocks/needs WebGL). Google rows are business-level and
- * never counted in tour stats, but they still power the storefront's Google
- * cards — losing them silently would be a regression.
- */
-function loadPreviousGoogleReviews() {
+/** Previous dataset (reviews + products), or empty when there is none yet. */
+function loadPreviousDataset() {
   try {
-    if (!fs.existsSync(OUTPUT_PATH)) return []
+    if (!fs.existsSync(OUTPUT_PATH)) return { reviews: [], products: [] }
     const previous = JSON.parse(fs.readFileSync(OUTPUT_PATH, 'utf8'))
-    const rows = Array.isArray(previous.reviews) ? previous.reviews : []
-    return rows
-      .filter((row) => row && row.source === 'GOOGLE')
-      .map((row) => ({
-        ...row,
-        productId: row.productId ?? null,
-        productRating: row.productRating ?? null,
-        productReviewCount: row.productReviewCount ?? null,
-      }))
+    return {
+      reviews: Array.isArray(previous.reviews) ? previous.reviews : [],
+      products: Array.isArray(previous.products) ? previous.products : [],
+    }
   } catch {
-    return []
+    return { reviews: [], products: [] }
   }
+}
+
+/**
+ * Keep a source's previous rows when this run produced none for it. A bot wall
+ * or DOM change blocks one platform at a time, so losing that platform's
+ * reviews silently would be a regression — the same idea previously applied to
+ * Google only, now applied to every source.
+ */
+function keepPreviousForEmptySources(newRows, previousRows) {
+  const bySource = (rows) =>
+    rows.reduce((acc, row) => {
+      const source = row?.source || 'UNKNOWN'
+      if (!acc[source]) acc[source] = []
+      acc[source].push(row)
+      return acc
+    }, {})
+
+  const previous = bySource(previousRows)
+  const fresh = bySource(newRows)
+  const out = [...newRows]
+
+  for (const [source, rows] of Object.entries(previous)) {
+    if (!fresh[source] || fresh[source].length === 0) {
+      console.log(`    ${source}: scrape yielded 0 — keeping ${rows.length} rows from the previous dataset`)
+      out.push(...rows)
+    }
+  }
+  return out
+}
+
+/** Keep previous per-product totals for products this run did not re-scrape. */
+function mergeProducts(newProducts, previousProducts) {
+  const seen = new Set(newProducts.map((p) => `${p.source}:${p.id}`))
+  const out = [...newProducts]
+  for (const p of previousProducts) {
+    if (!seen.has(`${p.source}:${p.id}`)) out.push(p)
+  }
+  return out
 }
 
 /** Read the product header (rating / official review count / distribution). */
@@ -671,25 +699,32 @@ async function main() {
     // Google Maps
     if (runGoogle) {
       console.log(`\nScraping Google Maps reviews...`)
-      let googleReviews = await scrapeGoogleReviews(page)
-      if (googleReviews.length === 0) {
-        const kept = loadPreviousGoogleReviews()
-        if (kept.length > 0) {
-          console.log(`    Google scrape returned 0 — keeping ${kept.length} Google rows from the previous dataset`)
-          googleReviews = kept
-        }
-      }
+      const googleReviews = await scrapeGoogleReviews(page)
       allReviews.push(...googleReviews)
     }
 
-    const deduped = dedupeReviews(excludeOneStarReviews(allReviews))
+    // Merge with the previous dataset so a blocked source keeps its rows.
+    const previous = loadPreviousDataset()
+    const mergedReviews = keepPreviousForEmptySources(allReviews, previous.reviews)
+    const mergedProducts = mergeProducts(products, previous.products)
 
-    // Never overwrite the committed reviews with an empty/partial scrape: a
-    // bot-blocked or DOM-changed run must fail loudly instead of wiping the
-    // storefront's social proof.
-    if (deduped.length < MIN_EXPECTED_REVIEWS) {
+    // Push the official per-product totals FIRST: homepage ranking must keep
+    // counting external reviews even when a blocked deep scrape means the
+    // storefront file below is never overwritten.
+    await pushToBackend(mergedProducts)
+
+    const deduped = dedupeReviews(excludeOneStarReviews(mergedReviews))
+
+    // Never shrink the committed dataset by more than ~10%: a bot-blocked or
+    // DOM-changed run must fail loudly instead of wiping the storefront's
+    // social proof. With no previous dataset, fall back to the absolute floor.
+    const previousCount = previous.reviews.length
+    const floor = previousCount > 0
+      ? Math.max(1, Math.floor(previousCount * 0.9))
+      : MIN_EXPECTED_REVIEWS
+    if (deduped.length < floor) {
       throw new Error(
-        `Only ${deduped.length} reviews scraped (minimum ${MIN_EXPECTED_REVIEWS}) — refusing to overwrite ${OUTPUT_PATH}`
+        `Only ${deduped.length} reviews after merge (floor ${floor}, previous ${previousCount}) — refusing to overwrite ${OUTPUT_PATH}`
       )
     }
 
@@ -697,7 +732,7 @@ async function main() {
     const output = {
       generatedAt: new Date().toISOString(),
       stats,
-      products,
+      products: mergedProducts,
       reviews: deduped,
     }
 
@@ -706,20 +741,25 @@ async function main() {
 
     console.log(`\nDone! Wrote ${deduped.length} reviews to ${OUTPUT_PATH}`)
     console.log('Per-product totals:')
-    for (const p of products) {
+    for (const p of mergedProducts) {
       console.log(`  ${p.source}: ${p.tourTitle} → ${p.rating ?? '?'}★ (${p.reviewCount ?? '?'} official)`)
     }
     console.log(`Stats: ${stats.averageRating}★ from ${stats.totalReviews} reviews`)
-
-    // Feed the backend's homepage ranking with the same official totals the
-    // storefront displays, so ranking and display never disagree.
-    await pushToBackend(products)
   } finally {
     await browser.close()
   }
 }
 
-main().catch((err) => {
-  console.error('Fatal error:', err)
-  process.exit(1)
-})
+if (require.main === module) {
+  main().catch((err) => {
+    console.error('Fatal error:', err)
+    process.exit(1)
+  })
+}
+
+module.exports = {
+  loadPreviousDataset,
+  keepPreviousForEmptySources,
+  mergeProducts,
+  computeStats,
+}
