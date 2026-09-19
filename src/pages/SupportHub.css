@@ -1,53 +1,47 @@
 /* ============================================================
    Support hub — Help Centre, Contact Us, FAQ.
-   "Safari Clay" design system: warm sand canvas, puffy clay
-   cards with dual-layer shadows + inner highlights, emerald
-   accents and terracotta highlights. Scoped under .sh-* so the
-   shared support shell (policy pages, partnerships, careers)
-   is untouched.
+   Clean white claymorphic design: pure white canvas, opaque
+   puffy cards with neutral-gray shadows, inner highlights,
+   emerald accents. Scoped under .sh-* so the shared support
+   shell (policy pages, partnerships, careers) is untouched.
    ============================================================ */
 
 .support-page.sh-hub {
-  /* Clay palette */
-  --sh-ink: #2a211a;
-  --sh-muted: #6e6153;
-  --sh-faint: #9a8d7e;
-  --sh-accent: #0f6b45;
-  --sh-accent-strong: #0a4a33;
+  --sh-ink: #1a1a2e;
+  --sh-muted: #5a5a7a;
+  --sh-faint: #9a9ab0;
+  --sh-accent: #16a34a;
+  --sh-accent-strong: #15803d;
+  --sh-accent-glow: rgba(22, 163, 74, 0.15);
+  --sh-accent-glow-strong: rgba(22, 163, 74, 0.25);
   --sh-mint: #e2f2e6;
   --sh-mint-deep: #bfe3ca;
   --sh-terracotta: #b95f36;
   --sh-terracotta-soft: #f8e3d2;
   --sh-amber: #c69b2e;
 
-  /* Clay surfaces / canvas */
+  /* Futuristic surfaces */
   --sh-clay: #ffffff;
-  --sh-clay-2: #ffffff;
-  --sh-sand: #ffffff;
-  --sh-sand-deep: #ffffff;
-  --sh-clay-border: rgba(124, 92, 55, 0.16);
-  --sh-clay-border-strong: rgba(124, 92, 55, 0.28);
+  --sh-clay-border: rgba(22, 163, 74, 0.12);
+  --sh-clay-border-strong: rgba(22, 163, 74, 0.25);
 
-  /* Elevation */
-  --sh-radius: 22px;
-  --sh-radius-lg: 28px;
-  --sh-radius-sm: 16px;
-  --sh-ring: rgba(15, 107, 69, 0.32);
-  --sh-shadow-sm: 0 2px 3px rgba(96, 70, 40, 0.05), 0 10px 22px -14px rgba(96, 70, 40, 0.18);
-  --sh-shadow-md: 0 8px 16px -8px rgba(96, 70, 40, 0.16), 0 24px 48px -20px rgba(96, 70, 40, 0.26);
-  --sh-shadow-lg: 0 14px 28px -12px rgba(96, 70, 40, 0.2), 0 40px 80px -32px rgba(96, 70, 40, 0.32);
-  --sh-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.9);
-  --sh-highlight-soft: inset 0 1px 0 rgba(255, 255, 255, 0.55);
-  --sh-dent: inset 0 2px 3px rgba(96, 70, 40, 0.09), inset 0 14px 28px -18px rgba(96, 70, 40, 0.16);
-  --sh-press: inset 0 3px 10px rgba(96, 70, 40, 0.16), inset 0 1px 2px rgba(96, 70, 40, 0.07), 0 1px 0 rgba(255, 255, 255, 0.8);
+  /* Elevation — green glow shadows instead of dark shadows */
+  --sh-radius: 16px;
+  --sh-radius-lg: 20px;
+  --sh-radius-sm: 12px;
+  --sh-ring: rgba(22, 163, 74, 0.35);
+  --sh-shadow-sm: 0 2px 8px rgba(22, 163, 74, 0.06), 0 0 0 1px rgba(22, 163, 74, 0.04);
+  --sh-shadow-md: 0 4px 16px rgba(22, 163, 74, 0.08), 0 0 0 1px rgba(22, 163, 74, 0.06);
+  --sh-shadow-lg: 0 8px 32px rgba(22, 163, 74, 0.1), 0 0 0 1px rgba(22, 163, 74, 0.08);
+  --sh-highlight: inset 0 1px 0 rgba(255, 255, 255, 1);
+  --sh-highlight-soft: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  --sh-dent: inset 0 2px 8px rgba(22, 163, 74, 0.04);
+  --sh-press: inset 0 2px 6px rgba(22, 163, 74, 0.12), 0 0 0 1px rgba(22, 163, 74, 0.1);
 
-  background:
-    radial-gradient(1100px 480px at 85% -10%, rgba(191, 227, 202, 0.34), transparent 60%),
-    radial-gradient(900px 420px at 0% 15%, rgba(248, 227, 210, 0.4), transparent 55%),
-    linear-gradient(180deg, var(--sh-sand) 0%, #ffffff 360px, var(--sh-sand) 100%);
+  background: #ffffff;
 }
 
-/* Shared clay card recipe */
+/* Shared futuristic card recipe */
 .sh-topic,
 .sh-channel,
 .sh-faq-item,
@@ -57,8 +51,9 @@
 .sh-copy-btn,
 .sh-trust-item {
   border: 1px solid var(--sh-clay-border);
-  background: linear-gradient(180deg, var(--sh-clay) 0%, #ffffff 100%);
-  box-shadow: var(--sh-shadow-sm), var(--sh-highlight);
+  background: var(--sh-clay);
+  box-shadow: var(--sh-shadow-sm);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
 }
 
 /* ---------- Hero ---------- */
@@ -69,11 +64,11 @@
   padding: 96px 24px 92px;
   text-align: center;
   color: var(--sh-ink);
-  background-color: var(--sh-sand);
+  background-color: #ffffff;
   background-image:
-    radial-gradient(58% 70% at 12% 14%, rgba(191, 227, 202, 0.55), transparent 62%),
-    radial-gradient(52% 64% at 88% 4%, rgba(248, 227, 210, 0.6), transparent 60%),
-    radial-gradient(42% 56% at 50% 112%, rgba(231, 214, 178, 0.4), transparent 62%);
+    radial-gradient(58% 70% at 12% 14%, rgba(22, 163, 74, 0.04), transparent 62%),
+    radial-gradient(52% 64% at 88% 4%, rgba(22, 163, 74, 0.03), transparent 60%),
+    radial-gradient(42% 56% at 50% 112%, rgba(22, 163, 74, 0.02), transparent 62%);
 }
 
 .sh-hero::before,
@@ -86,21 +81,21 @@
 }
 
 .sh-hero::before {
-  width: 360px;
-  height: 360px;
-  top: -130px;
-  left: -130px;
-  background: radial-gradient(circle at 38% 34%, rgba(191, 227, 202, 0.7), rgba(191, 227, 202, 0) 70%);
-  animation: sh-float 18s ease-in-out infinite;
+  width: 400px;
+  height: 400px;
+  top: -150px;
+  left: -150px;
+  background: radial-gradient(circle, rgba(22, 163, 74, 0.06), transparent 70%);
+  animation: sh-float 20s ease-in-out infinite;
 }
 
 .sh-hero::after {
-  width: 320px;
-  height: 320px;
-  bottom: -150px;
-  right: -110px;
-  background: radial-gradient(circle at 60% 40%, rgba(248, 227, 210, 0.6), rgba(248, 227, 210, 0) 70%);
-  animation: sh-float 24s ease-in-out infinite reverse;
+  width: 350px;
+  height: 350px;
+  bottom: -180px;
+  right: -120px;
+  background: radial-gradient(circle, rgba(22, 163, 74, 0.05), transparent 70%);
+  animation: sh-float 26s ease-in-out infinite reverse;
 }
 
 @keyframes sh-float {
@@ -172,8 +167,8 @@
   padding: 9px 17px;
   border-radius: 999px;
   border: 1px solid var(--sh-clay-border);
-  background: linear-gradient(180deg, var(--sh-clay), #ffffff);
-  box-shadow: var(--sh-shadow-sm), var(--sh-highlight);
+  background: var(--sh-clay);
+  box-shadow: var(--sh-shadow-sm);
   color: var(--sh-accent-strong);
   font-family: var(--font-body);
   font-size: 13.5px;
@@ -185,7 +180,7 @@
 .sh-quick-chip:hover {
   transform: translateY(-2px);
   border-color: var(--sh-clay-border-strong);
-  box-shadow: var(--sh-shadow-md), var(--sh-highlight);
+  box-shadow: var(--sh-shadow-md);
 }
 
 .sh-quick-chip:active {
@@ -213,15 +208,15 @@
   gap: 10px;
   padding: 7px 7px 7px 19px;
   border-radius: 999px;
-  background: linear-gradient(180deg, #ffffff, var(--sh-clay));
+  background: var(--sh-clay);
   border: 1px solid var(--sh-clay-border);
-  box-shadow: var(--sh-shadow-md), var(--sh-highlight);
+  box-shadow: var(--sh-shadow-md);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .sh-search-form:focus-within {
-  border-color: rgba(15, 107, 69, 0.45);
-  box-shadow: var(--sh-shadow-lg), var(--sh-highlight), 0 0 0 4px var(--sh-ring);
+  border-color: rgba(22, 163, 74, 0.4);
+  box-shadow: var(--sh-shadow-lg), 0 0 0 4px var(--sh-ring);
 }
 
 .sh-search-icon {
@@ -255,8 +250,8 @@
   padding: 0 24px;
   border: 0;
   border-radius: 999px;
-  background: linear-gradient(180deg, #14804e, #0c5c3a);
-  box-shadow: var(--sh-highlight-soft), 0 10px 20px -10px rgba(15, 107, 69, 0.7);
+  background: #16a34a;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 10px 20px -10px rgba(15, 107, 69, 0.7);
   color: #fff;
   font-family: var(--font-body);
   font-size: 14px;
@@ -268,7 +263,7 @@
 .sh-search-btn:hover {
   transform: translateY(-1px);
   filter: brightness(1.05);
-  box-shadow: var(--sh-highlight-soft), 0 14px 26px -10px rgba(15, 107, 69, 0.8);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 14px 26px -10px rgba(15, 107, 69, 0.8);
 }
 
 .sh-search-btn:active {
@@ -288,10 +283,10 @@
   right: 0;
   z-index: 60;
   overflow: hidden;
-  border-radius: 18px;
+  border-radius: 16px;
   background: var(--sh-clay);
   border: 1px solid var(--sh-clay-border);
-  box-shadow: var(--sh-shadow-lg), var(--sh-highlight);
+  box-shadow: var(--sh-shadow-lg);
   text-align: left;
 }
 
@@ -302,7 +297,7 @@
   width: 100%;
   padding: 13px 19px;
   border: 0;
-  border-bottom: 1px solid rgba(124, 92, 55, 0.1);
+  border-bottom: 1px solid rgba(22, 163, 74, 0.08);
   background: transparent;
   cursor: pointer;
   text-align: left;
@@ -416,8 +411,8 @@
   padding: 26px 28px;
   border: 1px solid var(--sh-clay-border);
   border-radius: var(--sh-radius-lg);
-  background: linear-gradient(180deg, #fcfbf7 0%, var(--sh-sand-deep) 100%);
-  box-shadow: var(--sh-dent), 0 1px 0 rgba(255, 255, 255, 0.9);
+  background: var(--sh-clay);
+  box-shadow: var(--sh-dent);
 }
 
 .sh-about-title {
@@ -453,23 +448,21 @@
   align-items: center;
   gap: 9px;
   padding: 9px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  border-radius: 15px;
-  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(22, 163, 74, 0.08);
+  border-radius: 12px;
+  background: var(--sh-clay);
   font-family: var(--font-body);
   font-size: 13.5px;
-  /* The inherited root line-height (26px) made these compact cards look
-     heavily padded; a tight leading removes that dead space. */
   line-height: 1.35;
   font-weight: 600;
   color: var(--sh-ink);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .sh-trust-item:hover {
   transform: translateY(-1px);
-  background: rgba(255, 255, 255, 0.8);
-  box-shadow: var(--sh-shadow-md), var(--sh-highlight);
+  border-color: var(--sh-clay-border-strong);
+  box-shadow: var(--sh-shadow-md);
 }
 
 .sh-trust-item-icon {
@@ -506,7 +499,7 @@
 .sh-topic:hover {
   transform: translateY(-4px);
   border-color: var(--sh-clay-border-strong);
-  box-shadow: var(--sh-shadow-md), var(--sh-highlight);
+  box-shadow: var(--sh-shadow-md);
 }
 
 .sh-topic:active {
@@ -525,15 +518,15 @@
   width: 48px;
   height: 48px;
   border-radius: 16px;
-  background: linear-gradient(160deg, #14804e 0%, #0a4a33 100%);
-  box-shadow: var(--sh-highlight-soft), 0 8px 16px -8px rgba(10, 74, 51, 0.75);
+  background: linear-gradient(160deg, #16a34a 0%, #15803d 100%);
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.25);
   color: #fff;
   transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 
 .sh-topic:hover .sh-topic-icon {
   transform: translateY(-2px) rotate(-3deg);
-  box-shadow: var(--sh-highlight-soft), 0 12px 22px -10px rgba(10, 74, 51, 0.85);
+  box-shadow: 0 6px 16px rgba(22, 163, 74, 0.35);
 }
 
 .sh-topic-title {
@@ -596,8 +589,8 @@
 }
 
 .sh-faq-item.open {
-  border-color: rgba(15, 107, 69, 0.35);
-  background: linear-gradient(180deg, var(--sh-clay) 0%, #f0f6ee 100%);
+  border-color: rgba(22, 163, 74, 0.35);
+  background: linear-gradient(180deg, var(--sh-clay) 0%, rgba(226, 242, 230, 0.3) 100%);
   box-shadow: var(--sh-dent);
 }
 
@@ -702,16 +695,19 @@
 
 .sh-hours li::after {
   content: '';
+  order: 1;
   flex: 1 1 auto;
   min-width: 12px;
-  border-bottom: 2px dotted rgba(124, 92, 55, 0.28);
+  border-bottom: 2px dotted rgba(255, 255, 255, 0.5);
 }
 
 .sh-hours li > span:first-child {
+  order: 0;
   flex-shrink: 0;
 }
 
 .sh-hours li > span:last-child {
+  order: 2;
   flex-shrink: 0;
 }
 
@@ -749,7 +745,7 @@
 .sh-channel:hover {
   transform: translateY(-3px);
   border-color: var(--sh-clay-border-strong);
-  box-shadow: var(--sh-shadow-md), var(--sh-highlight);
+  box-shadow: var(--sh-shadow-md);
 }
 
 .sh-channel:active {
@@ -788,7 +784,7 @@
   border-radius: 9px;
   color: var(--sh-accent);
   background: var(--sh-mint);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  box-shadow: 0 2px 6px rgba(22, 163, 74, 0.15);
 }
 
 .sh-channel--email .sh-channel-label svg {
@@ -851,7 +847,7 @@
 }
 
 .sh-map-card:hover {
-  box-shadow: var(--sh-shadow-md), var(--sh-highlight);
+  box-shadow: var(--sh-shadow-md);
 }
 
 .sh-map {
@@ -870,11 +866,56 @@
   box-shadow: inset 0 2px 8px rgba(96, 70, 40, 0.12);
 }
 
+/* Placeholder shown while the Google Maps embed waits for the viewport. */
+.sh-map-skeleton {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0) 25%, rgba(255, 255, 255, 0.55) 50%, rgba(255, 255, 255, 0) 75%),
+    var(--sh-mint);
+  background-size: 200% 100%;
+  animation: sh-map-shimmer 1.6s ease-in-out infinite;
+}
+
+.sh-map-skeleton-pin {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  color: var(--sh-accent);
+  background: var(--sh-clay);
+  box-shadow: var(--sh-shadow-sm);
+}
+
+@keyframes sh-map-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
 .sh-map iframe {
   display: block;
   width: 100%;
   height: 100%;
   border: 0;
+  animation: sh-map-in 0.45s ease-out both;
+}
+
+@keyframes sh-map-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .sh-map-info {
@@ -890,10 +931,10 @@
   height: 60px;
   object-fit: contain;
   margin-bottom: 6px;
-  border-radius: 16px;
+  border-radius: 12px;
   background: var(--sh-clay);
   padding: 6px;
-  box-shadow: var(--sh-shadow-sm), var(--sh-highlight);
+  box-shadow: var(--sh-shadow-sm);
   border: 1px solid var(--sh-clay-border);
 }
 
@@ -953,27 +994,26 @@
 }
 
 .sh-btn--primary {
-  background: linear-gradient(180deg, #14804e, #0c5c3a);
-  color: #fff;
-  box-shadow: var(--sh-highlight-soft), 0 12px 24px -10px rgba(15, 107, 69, 0.55);
+  background: #16a34a;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 12px 24px -10px rgba(15, 107, 69, 0.55);
 }
 
 .sh-btn--primary:hover {
   transform: translateY(-1px);
-  box-shadow: var(--sh-highlight-soft), 0 18px 32px -12px rgba(15, 107, 69, 0.62);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 18px 32px -12px rgba(15, 107, 69, 0.62);
 }
 
 .sh-btn--ghost {
   border: 1px solid var(--sh-clay-border);
-  background: linear-gradient(180deg, var(--sh-clay), #ffffff);
-  box-shadow: var(--sh-shadow-sm), var(--sh-highlight);
+  background: var(--sh-clay);
+  box-shadow: var(--sh-shadow-sm);
   color: var(--sh-accent-strong);
 }
 
 .sh-btn--ghost:hover {
   transform: translateY(-1px);
   border-color: var(--sh-clay-border-strong);
-  box-shadow: var(--sh-shadow-md), var(--sh-highlight);
+  box-shadow: var(--sh-shadow-md);
 }
 
 .sh-btn:focus-visible {
@@ -1039,7 +1079,7 @@
 
 .sh-copy-btn:hover {
   border-color: var(--sh-clay-border-strong);
-  box-shadow: var(--sh-shadow-md), var(--sh-highlight);
+  box-shadow: var(--sh-shadow-md);
 }
 
 .sh-copy-btn:focus-visible {
@@ -1077,9 +1117,9 @@
   width: 100%;
   padding: 11px 14px;
   border: 1px solid var(--sh-clay-border);
-  border-radius: 14px;
-  background: #fffdfb;
-  box-shadow: inset 0 1px 3px rgba(96, 70, 40, 0.09);
+  border-radius: 10px;
+  background: var(--sh-clay);
+  box-shadow: none;
   font-family: var(--font-body);
   font-size: 14.5px;
   color: var(--sh-ink);
@@ -1091,7 +1131,7 @@
 .sh-textarea:focus {
   outline: none;
   border-color: var(--sh-accent);
-  box-shadow: inset 0 1px 3px rgba(96, 70, 40, 0.06), 0 0 0 3px var(--sh-ring);
+  box-shadow: 0 0 0 3px var(--sh-ring);
 }
 
 .sh-input,
@@ -1145,9 +1185,9 @@
   top: 64px;
   z-index: 40;
   border-bottom: 1px solid var(--sh-clay-border);
-  background: rgba(255, 255, 255, 0.86);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 
 .sh-faq-nav-inner {
@@ -1195,8 +1235,8 @@
   padding: 10px 17px;
   border: 1px solid var(--sh-clay-border);
   border-radius: 999px;
-  background: linear-gradient(180deg, var(--sh-clay), #ffffff);
-  box-shadow: var(--sh-shadow-sm), var(--sh-highlight);
+  background: var(--sh-clay);
+  box-shadow: var(--sh-shadow-sm);
   color: var(--sh-ink);
   font-family: var(--font-body);
   font-size: 13.5px;
@@ -1208,7 +1248,7 @@
 .sh-faq-pill:hover {
   transform: translateY(-2px);
   border-color: var(--sh-clay-border-strong);
-  box-shadow: var(--sh-shadow-md), var(--sh-highlight);
+  box-shadow: var(--sh-shadow-md);
   color: var(--sh-accent-strong);
 }
 
@@ -1229,12 +1269,12 @@
   margin-top: 56px;
   padding: 34px 36px;
   border-radius: var(--sh-radius-lg);
-  background-color: #0a462f;
+  background-color: #16a34a;
   background-image:
     radial-gradient(90% 170% at 88% 0%, rgba(191, 227, 202, 0.3), transparent 55%),
     radial-gradient(60% 100% at 4% 100%, rgba(185, 95, 54, 0.28), transparent 60%),
-    linear-gradient(160deg, #0a462f 0%, #0f6b45 100%);
-  box-shadow: var(--sh-highlight-soft), var(--sh-shadow-lg);
+    linear-gradient(160deg, #16a34a 0%, #15803d 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 14px 40px rgba(0, 0, 0, 0.15);
   color: #fff;
 }
 
@@ -1266,14 +1306,16 @@
 .sh-cta .sh-btn--ghost {
   border-color: rgba(255, 255, 255, 0.35);
   background: rgba(255, 255, 255, 0.12);
-  box-shadow: var(--sh-highlight-soft);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
   color: #fff;
 }
 
 .sh-cta .sh-btn--ghost:hover {
   background: rgba(255, 255, 255, 0.2);
   border-color: rgba(255, 255, 255, 0.55);
-  box-shadow: var(--sh-highlight-soft), 0 18px 32px -14px rgba(4, 28, 18, 0.6);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 18px 32px -14px rgba(4, 28, 18, 0.6);
 }
 
 /* ---------- Responsive ---------- */
@@ -1394,6 +1436,11 @@
 @media (prefers-reduced-motion: reduce) {
   .sh-hero::before,
   .sh-hero::after {
+    animation: none;
+  }
+
+  .sh-map iframe,
+  .sh-map-skeleton {
     animation: none;
   }
 

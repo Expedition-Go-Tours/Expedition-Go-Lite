@@ -28,6 +28,8 @@ export default function MultiDayCard({ id, title, days, accommodation, highlight
 
   const tourSlug = getTourSlug(title)
 
+  // New tab, like every other tour card — the browser list/scroll position
+  // on the current page is preserved.
   const handleCardClick = () => {
     window.open(`/tour/${tourSlug}`, '_blank', 'noopener')
   }

@@ -750,6 +750,7 @@
   justify-content: center;
   gap: 8px;
   font-family: var(--font-body);
+  -webkit-tap-highlight-color: transparent;
 }
 
 .booking-submit-btn:disabled {
@@ -761,6 +762,13 @@
   background: #14532d;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(22, 101, 52, 0.25);
+}
+
+/* Touch feedback — hover styles never fire on phones. */
+.booking-submit-btn:active:not(:disabled) {
+  background: #14532d;
+  transform: scale(0.985);
+  box-shadow: 0 1px 4px rgba(22, 101, 52, 0.2);
 }
 
 .booking-btn-loader {

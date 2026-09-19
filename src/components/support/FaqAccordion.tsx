@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { ChevronDown } from 'lucide-react'
 import type { FaqItemData } from '../../lib/faq'
+import { revealViewport, stagger, staggerItemFade } from './motion'
 
 interface FaqItemProps {
   item: FaqItemData
@@ -10,7 +11,11 @@ interface FaqItemProps {
 
 export function FaqItem({ item, isOpen, onToggle }: FaqItemProps) {
   return (
-    <div className={`sh-faq-item${isOpen ? ' open' : ''}`} id={`faq-${item.id}`}>
+    <motion.div
+      className={`sh-faq-item${isOpen ? ' open' : ''}`}
+      id={`faq-${item.id}`}
+      variants={staggerItemFade}
+    >
       <button
         type="button"
         className="sh-faq-q"
@@ -29,13 +34,16 @@ export function FaqItem({ item, isOpen, onToggle }: FaqItemProps) {
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.22, ease: 'easeInOut' }}
+            transition={{
+              height: { type: 'spring', stiffness: 420, damping: 38 },
+              opacity: { duration: 0.2, ease: 'easeOut' },
+            }}
           >
             <p>{item.a}</p>
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </motion.div>
   )
 }
 
@@ -48,7 +56,13 @@ interface FaqAccordionProps {
 /** Single-open accordion with stable deep-link anchors (`faq-<id>`). */
 export default function FaqAccordion({ items, openId, onToggle }: FaqAccordionProps) {
   return (
-    <div className="sh-faq-list">
+    <motion.div
+      className="sh-faq-list"
+      initial="hidden"
+      whileInView="visible"
+      viewport={revealViewport}
+      variants={stagger}
+    >
       {items.map((item) => (
         <FaqItem
           key={item.id}
@@ -57,6 +71,6 @@ export default function FaqAccordion({ items, openId, onToggle }: FaqAccordionPr
           onToggle={() => onToggle(openId === item.id ? null : item.id)}
         />
       ))}
-    </div>
+    </motion.div>
   )
 }

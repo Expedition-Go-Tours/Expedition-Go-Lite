@@ -300,14 +300,12 @@ body {
   100% { background-position: -200% 0; }
 }
 
-/* Soft breathing glow around the search pill while a search is in flight */
-@keyframes search-glow-pulse {
-  0%, 100% {
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15), 0 0 0 0 rgba(23, 146, 55, 0);
-  }
-  50% {
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15), 0 0 0 5px rgba(23, 146, 55, 0.12);
-  }
+/* Soft breathing glow around the search pill while a search is in flight.
+   Only opacity animates (composited); the ring itself is a static box-shadow
+   on a pseudo-element so mobile never repaints the pill every frame. */
+@keyframes search-glow-fade {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
 }
 
 /* Hide the scrollbar while keeping scrolling (pickup locations list,
@@ -355,8 +353,8 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .search-skeleton-icon,
   .search-skeleton-line,
-  .hero-search-wrap.searching .hero-search-bar,
-  .navbar-compact-search.searching .navbar-search-form,
+  .hero-search-wrap.searching .hero-search-bar::after,
+  .navbar-compact-search.searching .navbar-search-form::after,
   .pin-glow {
     animation: none;
   }
@@ -407,4 +405,27 @@ input[type="radio"].pickup-radio:checked:focus {
 
 /* (Backfill divider removed — backfill tours now flow into the carousel with
    no "More experiences near …" label.) */
+
+/* Global reduced-motion kill switch: one rule that neutralises every
+   decorative animation/transition (component-level blocks elsewhere still
+   provide static fallbacks). Keeps mobile accessibility cheap and reliable. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Below-fold homepage sections: the browser skips style/layout/paint for
+   off-screen children entirely. `auto` intrinsic size reuses the real
+   rendered height once a section has been seen, so the scrollbar stays
+   stable. */
+.home-deferred > * {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 600px;
+}
 

@@ -135,12 +135,9 @@ export function useTourAvailability(
     queryKey: ['expedition', 'tours', slug, 'availability', startDate, endDate, optionId || 'default'],
     enabled: !!slug && !!startDate && !!endDate,
     // Availability is the most time-sensitive piece of the booking widget —
-    // suppliers edit it live. The global queryClient default (staleTime: 5min)
-    // would let the calendar show a stale status for up to five minutes, or
-    // indefinitely while the page stays open. Always treat it as stale and
-    // refetch on every mount and on window focus, same as useExpeditionTour.
-    staleTime: 0,
-    refetchOnMount: 'always',
+    // suppliers edit it live. A 30 s window keeps it effectively live while
+    // avoiding a refetch on every remount of the widget (mobile back/forward).
+    staleTime: 30_000,
     refetchOnWindowFocus: true,
     // Keep the previous window's counts visible while a new month (or a
     // background refetch) resolves, so the calendar never blanks the numbers.
@@ -480,12 +477,10 @@ export function useMyBookingsCount(status: string = 'CONFIRMED,PENDING', enabled
       const total = data?.pagination?.totalCount ?? payload?.pagination?.totalCount ?? 0
       return typeof total === 'number' ? total : Number(total) || 0
     },
-    // Badge freshness: poll while the navbar is visible so a new booking
-    // surfaces within ~60s, pause when the tab is hidden (no wasted work),
-    // and refresh immediately when the user returns to the tab. Push events
-    // (socket 'notification') invalidate this query for near-instant updates;
-    // this interval is the self-healing fallback for missed pushes.
-    refetchInterval: enabled ? 60_000 : false,
+    // Badge freshness: socket pushes invalidate this query for near-instant
+    // updates, so the interval is only a self-healing fallback. 5 minutes
+    // keeps mobile radios quiet; window focus still refreshes immediately.
+    refetchInterval: enabled ? 300_000 : false,
     refetchIntervalInBackground: false,
     refetchOnWindowFocus: true,
   })

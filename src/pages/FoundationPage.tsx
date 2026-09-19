@@ -209,7 +209,7 @@ export default function FoundationPage() {
         <SEO
           title={t('foundation.pageTitle')}
           description="The Expedition-Go Tours Foundation supports communities across Ghana through education, healthcare, environmental conservation, and sustainable tourism initiatives."
-          keywords="Expedition-Go Foundation, Ghana community support, sustainable tourism Ghana, travel foundation Ghana, community impact Ghana"
+          keywords="Expedition-Go Tours Foundation, Ghana community support, sustainable tourism Ghana, travel foundation Ghana, community impact Ghana"
           jsonLd={[
             buildBreadcrumbSchema([
               { name: 'Home', url: 'https://www.expeditiongotours.com/' },

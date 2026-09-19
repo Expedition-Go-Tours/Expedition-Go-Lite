@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useRef, useCallback, type ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, useRef, useCallback, useMemo, type ReactNode } from 'react'
 import { toast } from 'sonner'
 import type { Tour, MultiDayTour } from '../components/data'
 import { getStoredAuthUser, getAuthUserId, subscribeToAuthState } from '../lib/auth'
@@ -312,7 +312,7 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
 
     window.addEventListener('focus', tryFlush)
     window.addEventListener('online', tryFlush)
-    const interval = setInterval(tryFlush, 30_000)
+    const interval = setInterval(tryFlush, 120_000)
 
     return () => {
       window.removeEventListener('focus', tryFlush)
@@ -360,10 +360,25 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  const isInWishlist = (id: string) => wishlist.some((i) => i.id === id)
+  // Set-based membership + stable callbacks: every TourCard subscribes, and
+  // the previous array scan made a single heart tap O(n) per card.
+  const wishlistIds = useMemo(() => new Set(wishlist.map((i) => i.id)), [wishlist])
+  const isInWishlist = useCallback((id: string) => wishlistIds.has(id), [wishlistIds])
+
+  const value = useMemo(
+    () => ({
+      wishlist,
+      addToWishlist,
+      removeFromWishlist,
+      isInWishlist,
+      wishlistCount: wishlist.length,
+      isSyncing,
+    }),
+    [wishlist, addToWishlist, removeFromWishlist, isInWishlist, isSyncing],
+  )
 
   return (
-    <WishlistContext.Provider value={{ wishlist, addToWishlist, removeFromWishlist, isInWishlist, wishlistCount: wishlist.length, isSyncing }}>
+    <WishlistContext.Provider value={value}>
       {children}
     </WishlistContext.Provider>
   )

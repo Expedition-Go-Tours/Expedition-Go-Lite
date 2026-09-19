@@ -94,7 +94,20 @@ body.hero--search-sticky .hero-search-wrap {
 }
 
 .hero-search-wrap.searching .hero-search-bar {
-  animation: search-glow-pulse 1.6s ease-in-out infinite;
+  position: relative;
+}
+
+/* Pseudo-element ring pulses opacity (composited) instead of animating the
+   pill's box-shadow (paint-bound). Keyframes live in index.css. */
+.hero-search-wrap.searching .hero-search-bar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: 0 0 0 5px rgba(23, 146, 55, 0.12);
+  opacity: 0;
+  pointer-events: none;
+  animation: search-glow-fade 1.6s ease-in-out infinite;
 }
 
 /* ===== Dropdown ===== */
@@ -511,11 +524,6 @@ body.hero--search-sticky .hero-search-wrap {
 @keyframes skeleton-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
-}
-
-@keyframes search-glow-pulse {
-  0%, 100% { box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(23, 146, 55, 0.1); }
-  50% { box-shadow: 0 4px 24px rgba(23, 146, 55, 0.15), 0 0 0 4px rgba(23, 146, 55, 0.08); }
 }
 
 /* ===== Desktop ===== */

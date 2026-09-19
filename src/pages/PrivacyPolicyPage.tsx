@@ -96,7 +96,7 @@ export default function PrivacyPolicyPage() {
             <li>Travio Africa.</li>
           </ul>
           <p>
-            References to <strong>&ldquo;Expedition-Go&rdquo;</strong>, <strong>&ldquo;we&rdquo;</strong>,{' '}
+            References to <strong>&ldquo;Expedition-Go Tours&rdquo;</strong>, <strong>&ldquo;we&rdquo;</strong>,{' '}
             <strong>&ldquo;us&rdquo;</strong> or <strong>&ldquo;our&rdquo;</strong> in this policy include
             services operated under all three trading names.
           </p>
@@ -341,7 +341,7 @@ export default function PrivacyPolicyPage() {
             processing that was lawful before withdrawal.
           </p>
 
-          <h2>8. Information used across Expedition-Go, Travio Ghana and Travio Africa</h2>
+          <h2>8. Information used across Expedition-Go Tours, Travio Ghana and Travio Africa</h2>
           <p>
             When you use any of our branded services, you agree that relevant information may be
             accessed and used within Expedition-Go Tours Ltd across the Expedition-Go Tours,
@@ -368,7 +368,7 @@ export default function PrivacyPolicyPage() {
 
           <h2>9. Independent suppliers</h2>
           <p>
-            Some experiences are delivered directly by Expedition-Go. Others are delivered by
+            Some experiences are delivered directly by Expedition-Go Tours. Others are delivered by
             independent tour operators, guides, attractions, transport providers or other
             suppliers.
           </p>
@@ -499,7 +499,7 @@ export default function PrivacyPolicyPage() {
 
           <h2>16. International transfers</h2>
           <p>
-            Expedition-Go operates from Ghana and serves travellers and suppliers internationally,
+            Expedition-Go Tours operates from Ghana and serves travellers and suppliers internationally,
             including in the United Kingdom. Information may therefore be accessed or processed
             in Ghana, the UK or other countries where our suppliers and service providers operate.
           </p>

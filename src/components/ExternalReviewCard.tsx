@@ -55,7 +55,7 @@ export default function ExternalReviewCard({ review }: ExternalReviewCardProps) 
           {/* Reviewer info */}
           <div className="ext-review-card__reviewer">
             {review.reviewerAvatar ? (
-              <img src={review.reviewerAvatar} alt="" className="ext-review-card__avatar" />
+              <img src={review.reviewerAvatar} alt="" className="ext-review-card__avatar" loading="lazy" decoding="async" width={32} height={32} />
             ) : (
               <div className="ext-review-card__avatar ext-review-card__avatar--initials">
                 {review.reviewerName.charAt(0)}
@@ -123,7 +123,7 @@ export default function ExternalReviewCard({ review }: ExternalReviewCardProps) 
               </div>
               <div className="ext-review-modal__reviewer">
                 {review.reviewerAvatar ? (
-                  <img src={review.reviewerAvatar} alt="" className="ext-review-card__avatar" />
+                  <img src={review.reviewerAvatar} alt="" className="ext-review-card__avatar" loading="lazy" decoding="async" width={32} height={32} />
                 ) : (
                   <div className="ext-review-card__avatar ext-review-card__avatar--initials">
                     {review.reviewerName.charAt(0)}

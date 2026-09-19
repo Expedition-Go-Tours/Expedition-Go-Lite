@@ -141,7 +141,7 @@
   font-size: 0.875rem;
   font-weight: 700;
   cursor: pointer;
-  background: linear-gradient(135deg, #137A2E, #1a9e3a, #22c55e);
+  background: linear-gradient(135deg, #16a34a, #1a9e3a, #22c55e);
   color: #fff;
   transition: box-shadow 0.25s, transform 0.15s;
 }
@@ -165,7 +165,7 @@
   font-family: 'Raleway', sans-serif;
   font-size: 0.8125rem;
   font-weight: 600;
-  color: #137A2E;
+  color: #16a34a;
   cursor: pointer;
 }
 

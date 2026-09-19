@@ -11,7 +11,7 @@
   --pp-text: #344054;
   --pp-muted: #5d6b7e;
 
-  --pp-accent: #137a2e;
+  --pp-accent: #16a34a;
   --pp-accent-strong: #15803d;
 
   --pp-glass: rgba(255, 255, 255, 0.6);
@@ -117,7 +117,7 @@
 /* Both gradient stops clear 4.5:1 against white text. */
 .pp-btn--primary {
   color: #fff;
-  background: linear-gradient(135deg, #137a2e 0%, #15803d 100%);
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
   box-shadow: 0 10px 24px -12px rgba(19, 122, 46, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.24);
 }
 
@@ -559,7 +559,7 @@
   display: grid;
   place-items: center;
   color: #fff;
-  background: linear-gradient(135deg, #137a2e 0%, #15803d 60%, #16a34a 100%);
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 60%, #16a34a 100%);
   border: 2px solid rgba(255, 255, 255, 0.9);
   box-shadow: 0 10px 20px -12px rgba(19, 122, 46, 0.8);
 }
@@ -605,7 +605,7 @@
   font-weight: 700;
   text-decoration: none;
   color: #fff;
-  background: linear-gradient(135deg, #137a2e 0%, #15803d 100%);
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
   box-shadow: 0 8px 18px -12px rgba(19, 122, 46, 0.7);
   transition: transform 0.18s ease, box-shadow 0.22s ease;
 }

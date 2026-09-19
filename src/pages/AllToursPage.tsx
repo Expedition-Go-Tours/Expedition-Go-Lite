@@ -710,6 +710,7 @@ export default function AllToursPage() {
                       hideFeatures
                       compactDurationOnMobile
                       bodyOfferBadgesOnMobile
+                      openInNewTab
                     />
                 </motion.div>
               ))}

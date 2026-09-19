@@ -18,6 +18,7 @@ import { useTravelerSelection } from '../../hooks/useTravelerSelection'
 import { headlineUnitPrice, cardParityUnitPrice } from '../../lib/startingPrice'
 import BookingDeadlineTimer from './BookingDeadlineTimer'
 import { preloadMapEngine } from '../../lib/mapWarmup'
+import { shouldIdlePrefetch } from '../../lib/perfProfile'
 import { fetchWithAuth } from '../../lib/api'
 import { buildPromoValidationPayload, isValidPromoCodeFormat, normalizePromoCode, PROMO_CODE_MIN_LENGTH } from '../../lib/promo'
 import { useQueryClient } from '@tanstack/react-query'
@@ -26,6 +27,19 @@ import './BookingWidget.css'
 // Loaded only when the booking transition actually plays (after Book Now) —
 // its dotlottie dependency is ~65 KB and has no business in the route chunk.
 const BookingTransition = lazy(() => import('../../components/BookingTransition'))
+
+// Warm the transition chunk, the dotLottie WASM and the animation while the
+// traveller is still on this page (idle after mount, or on button
+// hover/focus/touch). By the time Book Now is pressed the overlay adopts the
+// already-decoded player — no button spinner, no animation appearing late.
+// The transition module guards repeat calls, so this stays cheap per event.
+function warmBookingTransition() {
+  void import('../../components/BookingTransition')
+    .then((mod) => mod.warmBookingTransition())
+    .catch(() => {
+      /* best-effort: the transition still loads on click */
+    })
+}
 
 interface BookingWidgetProps {
   tour: TourDetailData
@@ -270,6 +284,22 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
     }
   }, [tour.id, travelersPayload, promoApplied, promoCode, queryClient])
 
+  // Warm the Book Now transition in the background so the click lands on an
+  // already-decoded Lottie (skipped on save-data/2G-3G connections).
+  useEffect(() => {
+    if (!shouldIdlePrefetch()) return
+    const idleWindow = window as Window & {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number
+      cancelIdleCallback?: (id: number) => void
+    }
+    if (typeof idleWindow.requestIdleCallback === 'function') {
+      const id = idleWindow.requestIdleCallback(warmBookingTransition, { timeout: 2500 })
+      return () => idleWindow.cancelIdleCallback?.(id)
+    }
+    const id = window.setTimeout(warmBookingTransition, 1200)
+    return () => window.clearTimeout(id)
+  }, [])
+
   // Auto-refresh the real-time price when the date or traveler mix changes
   // (Viator re-checks on date+pax selection). Debounced so +/- taps don't
   // hammer the API.
@@ -413,13 +443,29 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
     }
 
     setIsBooking(true)
-    // Spinner on the button for a moment, then reveal the travel transition.
-    setTimeout(() => setShowTransition(true), 1100)
+    // No button spinner: the transition overlay takes over immediately with the
+    // pre-decoded Lottie. The warm call is a no-op when idle/hover already did
+    // it, and is the fallback for a cold click.
+    warmBookingTransition()
+    setShowTransition(true)
   }, [selectedDate, selectedTime, t, tour, isPerGroup, groupHeadcount, travelerGroups, categoryCounts, travelersPayload, matchingGroupBand, totalPrice, clientSubtotal, pricingResult, lastQuoteKey, getSelectedDayInfo, openingHoursLabel, promoApplied, promoCode, appliedPromo, totalTravelers])
 
-  const handleTransitionDone = useCallback(() => {
+  // A transition can only ever commit the booking once — the transition's own
+  // timer and the watchdog below both funnel through this guard.
+  const bookingCommittedRef = useRef(false)
+  const finishBookingNavigation = useCallback(() => {
+    if (bookingCommittedRef.current) return
+    bookingCommittedRef.current = true
     navigate(`/${encodeURIComponent(tour.id)}/booking`, { state: pendingNavState.current })
   }, [navigate, tour.id])
+
+  // Safety net: if the lazy transition chunk or its animation ever stalls,
+  // finish the flow instead of stranding the user on a spinner.
+  useEffect(() => {
+    if (!showTransition) return
+    const watchdog = window.setTimeout(finishBookingNavigation, 6000)
+    return () => window.clearTimeout(watchdog)
+  }, [showTransition, finishBookingNavigation])
 
   const handleUpdatePricing = useCallback(() => {
     // Close the picker so the recalculated price/total is visible.
@@ -1256,22 +1302,17 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
             </p>
           )}
 
-          {/* Submit */}
+          {/* Submit — no spinner state: the Book Now transition overlay is the
+              only feedback, shown the instant the button is pressed. */}
           <Button
             className="booking-submit-btn"
             onClick={handleBookNow}
+            onPointerEnter={warmBookingTransition}
+            onFocus={warmBookingTransition}
+            onTouchStart={warmBookingTransition}
             disabled={isBooking || (!!selectedDate && selectedDaySlots.length > 0 && !selectedTime) || (!isPerGroup && mixIssues.length > 0)}
           >
-            {isBooking ? (
-              <span className="booking-btn-loader">
-                <svg className="booking-spinner" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <circle cx="12" cy="12" r="10" strokeDasharray="31.4 31.4" strokeLinecap="round" />
-                </svg>
-                {t('booking.checking')}
-              </span>
-            ) : (
-              t('tourDetail.bookNow')
-            )}
+            {t('tourDetail.bookNow')}
           </Button>
 
           {/* Date-specific cancellation cutoff — matches the Quick facts
@@ -1292,7 +1333,7 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
       <AnimatePresence>
         {showTransition && (
           <Suspense fallback={null}>
-            <BookingTransition onDone={handleTransitionDone} />
+            <BookingTransition onDone={finishBookingNavigation} />
           </Suspense>
         )}
       </AnimatePresence>

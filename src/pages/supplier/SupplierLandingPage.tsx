@@ -10,18 +10,14 @@
  * @see components/Footer.tsx (entry point)
  * @see pages/partner/PartnerApplyPage.tsx (new application form)
  */
-import { useState, useEffect, useRef, lazy, Suspense } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence, animate } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   ClipboardList, BadgeCheck, Wallet, Rocket,
   ShieldCheck, Plane, LifeBuoy,
   Megaphone, ChevronDown, ChevronLeft, ChevronRight,
 } from 'lucide-react'
-import image01Src from '../../assets/Image01.webp'
-import image02Src from '../../assets/Image02.webp'
-import image03Src from '../../assets/Image03.webp'
-import image04Src from '../../assets/Image04.webp'
 import tour1 from '../../assets/tours/tour1.avif'
 import tour2 from '../../assets/tours/tour2.avif'
 import tour3 from '../../assets/tours/tour3.avif'
@@ -32,73 +28,10 @@ import tour7 from '../../assets/tours/tour7.avif'
 import tour8 from '../../assets/tours/tour8.avif'
 import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer'
+import PhoneShowcaseSection from './PhoneShowcaseSection'
 import { useAuthUser } from '../../hooks/useAuthUser'
 import { setAuthReturnTo } from '../../lib/auth'
 import './SupplierLandingPage.css'
-
-// three.js is heavy (~500KB minified). Keep it out of this page's chunk so the
-// route renders instantly and the animated wave streams in asynchronously.
-const AnimatedWave = lazy(() => import('../../components/ui/AnimatedWave'))
-
-function WaveFallback() {
-  return (
-    <div
-      className="absolute inset-0 z-0 supplier-landing-wave-fallback"
-      aria-hidden="true"
-    />
-  )
-}
-
-const CAROUSEL_IMAGES = [
-  { src: image01Src, alt: 'Travelers exploring a destination' },
-  { src: image02Src, alt: 'Guided tour experience' },
-  { src: image03Src, alt: 'African landscape adventure' },
-  { src: image04Src, alt: 'Cultural experience' },
-]
-
-function TicketCard() {
-  const [currentIndex, setCurrentIndex] = useState(0)
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % CAROUSEL_IMAGES.length)
-    }, 4000)
-    return () => clearInterval(timer)
-  }, [])
-
-  return (
-    <div className="supplier-ticket-card">
-      <div className="supplier-ticket-notch supplier-ticket-notch--left" />
-      <div className="supplier-ticket-notch supplier-ticket-notch--right" />
-      <div className="supplier-ticket-image-container">
-        <AnimatePresence mode="wait">
-          <motion.img
-            key={currentIndex}
-            src={CAROUSEL_IMAGES[currentIndex].src}
-            alt={CAROUSEL_IMAGES[currentIndex].alt}
-            initial={{ opacity: 0, scale: 1.1 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.6 }}
-            loading={currentIndex === 0 ? 'eager' : 'lazy'}
-          />
-        </AnimatePresence>
-      </div>
-      <div className="supplier-ticket-overlay">
-        <span className="supplier-ticket-label">Expedition Go Tours</span>
-        <span className="supplier-ticket-title">List Your Experience</span>
-      </div>
-      <div className="supplier-ticket-dots">
-        {CAROUSEL_IMAGES.map((_, i) => (
-          <span
-            key={i}
-            className={`supplier-ticket-dot${i === currentIndex ? ' active' : ''}`}
-          />
-        ))}
-      </div>
-    </div>
-  )
-}
 
 const GALLERY_CARDS = [
   { src: tour1, label: 'Guided Tours' },
@@ -454,19 +387,6 @@ export default function SupplierLandingPage({ onOpenAuth }: SupplierLandingPageP
     navigate('/partners/tour-operators/apply')
   }
 
-  const handleReadFaq = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault()
-    const target = document.getElementById('supplier-landing-faq')
-    if (!target) return
-    const start = window.scrollY
-    const end = target.getBoundingClientRect().top + window.scrollY
-    animate(start, end, {
-      duration: 0.8,
-      ease: [0.25, 0.1, 0.25, 1],
-      onUpdate: (value) => window.scrollTo(0, value),
-    })
-  }
-
   return (
     <AnimatePresence>
       <motion.div
@@ -479,46 +399,8 @@ export default function SupplierLandingPage({ onOpenAuth }: SupplierLandingPageP
       >
       <Navbar onOpenAuth={onOpenAuth} />
 
-      {/* Hero */}
-      <section className="supplier-landing-hero">
-        <Suspense fallback={<WaveFallback />}>
-          <AnimatedWave
-            colorFrom="#1ba845"
-            colorTo="#0f2418"
-            speed={0.8}
-            amplitude={30}
-            wireframe
-            showParticles
-            particleSize={4}
-            resolution={45}
-            opacity={0.35}
-            cameraX={0}
-            cameraY={160}
-            cameraZ={250}
-            className="z-0"
-          />
-        </Suspense>
-        <div className="supplier-landing-hero-inner">
-          <div className="supplier-landing-hero-copy">
-            <h1 className="supplier-landing-hero-title">
-              Share your experience with travelers around the world
-            </h1>
-            <p className="supplier-landing-hero-subtitle">
-              List your tours and activities on Expedition Go Tours and reach adventure travelers
-              actively searching for their next unforgettable trip.
-            </p>
-            <div className="supplier-landing-hero-actions">
-              <button type="button" className="supplier-landing-cta-primary" onClick={handleBecomeSupplier}>
-                Become a Supplier
-              </button>
-              <a href="#supplier-landing-faq" className="supplier-landing-cta-secondary" onClick={handleReadFaq}>
-                Read the FAQ
-              </a>
-            </div>
-          </div>
-          <TicketCard />
-        </div>
-      </section>
+      {/* Phone Showcase — replaces the old hero */}
+      <PhoneShowcaseSection onBecomeSupplier={handleBecomeSupplier} />
 
       {/* How it works */}
       <section className="supplier-landing-section">

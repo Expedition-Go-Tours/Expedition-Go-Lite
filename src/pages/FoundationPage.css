@@ -42,7 +42,7 @@
   --fn-faint: #98a2b3;
 
   /* Accent */
-  --fn-accent: #137a2e;
+  --fn-accent: #16a34a;
   --fn-accent-2: #16a34a;
   --fn-accent-3: #22c55e;
 
@@ -420,7 +420,7 @@
   place-items: center;
   margin: 0 auto 24px;
   color: #fff;
-  background: linear-gradient(135deg, #137a2e 0%, #16a34a 60%, #22c55e 100%);
+  background: linear-gradient(135deg, #16a34a 0%, #16a34a 60%, #22c55e 100%);
   box-shadow: 0 10px 22px -10px rgba(19, 122, 46, 0.75),
     inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
@@ -495,7 +495,7 @@
   left: 0;
   right: 0;
   height: 2px;
-  background: linear-gradient(90deg, #137a2e, #22c55e, #4ade80, #22c55e, #137a2e);
+  background: linear-gradient(90deg, #16a34a, #22c55e, #4ade80, #22c55e, #16a34a);
   background-size: 200% 100%;
   animation: fn-shimmer 5s linear infinite;
   animation-play-state: paused;
@@ -547,7 +547,7 @@
   place-items: center;
   margin-bottom: 18px;
   color: #fff;
-  background: linear-gradient(135deg, #137a2e 0%, #16a34a 60%, #22c55e 100%);
+  background: linear-gradient(135deg, #16a34a 0%, #16a34a 60%, #22c55e 100%);
   box-shadow: 0 8px 18px -10px rgba(19, 122, 46, 0.75),
     inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }

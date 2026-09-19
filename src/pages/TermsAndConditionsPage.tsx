@@ -52,7 +52,7 @@ export default function TermsAndConditionsPage() {
             company limited by shares incorporated in the Republic of Ghana on{' '}
             <strong>18 February 2023</strong> under the Companies Act, 2019 (Act 992), with
             company registration number <strong>CS026170223</strong> and taxpayer identification
-            number <strong>C0062656392</strong> (<strong>&ldquo;Expedition-Go&rdquo;</strong>,{' '}
+            number <strong>C0062656392</strong> (<strong>&ldquo;Expedition-Go Tours&rdquo;</strong>,{' '}
             <strong>&ldquo;we&rdquo;</strong>, <strong>&ldquo;us&rdquo;</strong> or{' '}
             <strong>&ldquo;our&rdquo;</strong>).
           </p>
@@ -105,11 +105,11 @@ export default function TermsAndConditionsPage() {
             </li>
           </ol>
           <p>
-            Where Expedition-Go operates the Experience directly, your contract for the Experience
-            is with Expedition-Go.
+            Where Expedition-Go Tours operates the Experience directly, your contract for the Experience
+            is with Expedition-Go Tours.
           </p>
           <p>
-            Where an independent Supplier operates the Experience, Expedition-Go provides booking,
+            Where an independent Supplier operates the Experience, Expedition-Go Tours provides booking,
             payment collection, customer-support and marketplace services and may act as the
             Supplier&apos;s disclosed commercial agent. Unless the booking page states otherwise, the
             contract for delivery of that Experience is between you and the Supplier. The Supplier
@@ -117,8 +117,8 @@ export default function TermsAndConditionsPage() {
             as described.
           </p>
           <p>
-            Independent Suppliers are not employees of Expedition-Go. Nothing in these Terms
-            removes any responsibility that Expedition-Go has under applicable law or for services
+            Independent Suppliers are not employees of Expedition-Go Tours. Nothing in these Terms
+            removes any responsibility that Expedition-Go Tours has under applicable law or for services
             it directly provides.
           </p>
 
@@ -167,9 +167,9 @@ export default function TermsAndConditionsPage() {
             where applicable.
           </p>
           <p>
-            Payments may be collected by Expedition-Go under the Expedition-Go Tours, Travio
-            Ghana or Travio Africa trading name, or by an authorised payment processor on behalf
-            of Expedition-Go or the relevant Supplier. You authorise us and our payment providers
+            Payments may be collected by us under the Expedition-Go Tours, Travio
+            Ghana or Travio Africa trading name, or by an authorised payment processor on our
+            behalf or on behalf of the relevant Supplier. You authorise us and our payment providers
             to charge the selected payment method for the total amount shown at checkout.
           </p>
           <p>
@@ -288,7 +288,7 @@ export default function TermsAndConditionsPage() {
             your bank or card provider may not be refundable by us.
           </p>
 
-          <p><strong>11.4 Changes or cancellation by Expedition-Go or a Supplier</strong></p>
+          <p><strong>11.4 Changes or cancellation by Expedition-Go Tours or a Supplier</strong></p>
           <p>
             We or the Supplier may make reasonable non-material changes to the itinerary for
             operational, safety or local conditions. If an Experience is cancelled, cannot be
@@ -341,7 +341,7 @@ export default function TermsAndConditionsPage() {
             misleading material.
           </p>
           <p>
-            You retain ownership of your User Content but grant Expedition-Go a worldwide,
+            You retain ownership of your User Content but grant Expedition-Go Tours a worldwide,
             non-exclusive, royalty-free licence to host, reproduce, adapt for formatting,
             translate, publish and display it for operating and promoting the Platform and
             Experiences. This licence ends when the content is deleted from our systems, except
@@ -354,7 +354,7 @@ export default function TermsAndConditionsPage() {
             or video for promotional purposes.
           </p>
 
-          <h2>15. Privacy and use of information across the Expedition-Go ecosystem</h2>
+          <h2>15. Privacy and use of information across the Expedition-Go Tours ecosystem</h2>
           <p>
             We collect and process personal information in accordance with our Privacy Policy and
             applicable data-protection law, including Ghana&apos;s Data Protection Act, 2012 (Act
@@ -365,7 +365,7 @@ export default function TermsAndConditionsPage() {
             names of Expedition-Go Tours Ltd rather than separate companies, information used
             through those branded services remains under the responsibility of Expedition-Go Tours
             Ltd. By using the Platform or making a booking, you acknowledge and agree that
-            Expedition-Go may use and make relevant personal information available across the
+            Expedition-Go Tours may use and make relevant personal information available across the
             Expedition-Go Tours, Travio Ghana and Travio Africa branded platforms, systems and
             operational teams where reasonably necessary to:
           </p>
@@ -410,7 +410,7 @@ export default function TermsAndConditionsPage() {
           <p>
             The Platform and its content&mdash;including software, design, text, graphics,
             trademarks, databases and original photographs&mdash;are owned by or licensed to
-            Expedition-Go and are protected by applicable intellectual-property law.
+            Expedition-Go Tours and are protected by applicable intellectual-property law.
           </p>
           <p>
             We grant you a limited, revocable, non-exclusive, non-transferable licence to use the
@@ -434,20 +434,20 @@ export default function TermsAndConditionsPage() {
           <p>Subject to the paragraph above and applicable consumer law:</p>
           <ul>
             <li>
-              Expedition-Go is responsible for losses that are a reasonably foreseeable result of
+              Expedition-Go Tours is responsible for losses that are a reasonably foreseeable result of
               its breach of these Terms or failure to exercise reasonable care and skill;
             </li>
             <li>
-              Expedition-Go is not responsible for loss caused by your breach, failure to follow
+              Expedition-Go Tours is not responsible for loss caused by your breach, failure to follow
               instructions, inaccurate information or failure to obtain required travel documents;
             </li>
             <li>
               where an independent Supplier provides the Experience, that Supplier is principally
               responsible for its performance, acts and omissions, although this does not remove
-              any separate duty owed by Expedition-Go; and
+              any separate duty owed by Expedition-Go Tours; and
             </li>
             <li>
-              Expedition-Go is not liable for indirect or consequential business loss, loss of
+              Expedition-Go Tours is not liable for indirect or consequential business loss, loss of
               profit, loss of opportunity or loss of data arising from personal consumer use of
               the Platform.
             </li>
@@ -496,7 +496,7 @@ export default function TermsAndConditionsPage() {
             your country of residence.
           </p>
           <p>
-            You and Expedition-Go should first attempt to resolve a dispute through the complaint
+            You and Expedition-Go Tours should first attempt to resolve a dispute through the complaint
             process in Section 13. If it cannot be resolved, the courts of competent jurisdiction
             in Ghana will have jurisdiction, except where mandatory consumer law permits you to
             bring proceedings elsewhere.

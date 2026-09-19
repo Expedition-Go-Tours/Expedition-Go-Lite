@@ -1,7 +1,8 @@
 /* ===== FOOTER - DESKTOP FIRST ===== */
 
 .footer {
-  background: #01311a;
+  /* Match the hero search button's resting color (var(--primary) = #16a34a). */
+  background: var(--primary, #16a34a);
   padding: 48px 0 0;
 }
 

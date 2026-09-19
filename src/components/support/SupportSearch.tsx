@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { AnimatePresence, motion } from 'framer-motion'
 import { Search } from 'lucide-react'
 import { getAllFaqs } from '../../lib/faq'
 
@@ -108,33 +109,43 @@ export default function SupportSearch({ className, linkState }: SupportSearchPro
         </button>
       </form>
 
-      {showDropdown && (
-        <div className="sh-search-dropdown" id="sh-search-results" role="listbox">
-          {results.length === 0 ? (
-            <p className="sh-search-empty">
-              {t('supportHub.searchNoResults', { query: query.trim() })}
-            </p>
-          ) : (
-            results.map((result, index) => (
-              <button
-                key={result.id}
-                type="button"
-                role="option"
-                aria-selected={index === highlighted}
-                className={`sh-search-result${index === highlighted ? ' active' : ''}`}
-                onMouseDown={(event) => {
-                  event.preventDefault()
-                  goTo(result.id)
-                }}
-                onMouseEnter={() => setHighlighted(index)}
-              >
-                <span className="sh-search-result-cat">{result.category}</span>
-                <span className="sh-search-result-q">{result.q}</span>
-              </button>
-            ))
-          )}
-        </div>
-      )}
+      <AnimatePresence>
+        {showDropdown && (
+          <motion.div
+            className="sh-search-dropdown"
+            id="sh-search-results"
+            role="listbox"
+            initial={{ opacity: 0, y: -6, scale: 0.99 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.16, ease: 'easeOut' }}
+          >
+            {results.length === 0 ? (
+              <p className="sh-search-empty">
+                {t('supportHub.searchNoResults', { query: query.trim() })}
+              </p>
+            ) : (
+              results.map((result, index) => (
+                <button
+                  key={result.id}
+                  type="button"
+                  role="option"
+                  aria-selected={index === highlighted}
+                  className={`sh-search-result${index === highlighted ? ' active' : ''}`}
+                  onMouseDown={(event) => {
+                    event.preventDefault()
+                    goTo(result.id)
+                  }}
+                  onMouseEnter={() => setHighlighted(index)}
+                >
+                  <span className="sh-search-result-cat">{result.category}</span>
+                  <span className="sh-search-result-q">{result.q}</span>
+                </button>
+              ))
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

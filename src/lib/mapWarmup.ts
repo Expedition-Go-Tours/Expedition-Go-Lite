@@ -6,6 +6,8 @@
  * `preloadMapEngine` and is only triggered on booking intent.
  */
 
+import { prefersReducedData } from './perfProfile'
+
 /** OpenFreeMap "Liberty" vector style (keyless OSM tiles). */
 export const TILE_STYLE = 'https://tiles.openfreemap.org/styles/liberty'
 
@@ -69,17 +71,7 @@ export function warmMapResources(): void {
  * still runs — this only gates the ~1 MB engine chunk and offscreen map.
  */
 export function shouldSkipHeavyMapPrefetch(): boolean {
-  if (typeof navigator === 'undefined') return true
-  const connection = (
-    navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }
-  ).connection
-  if (!connection) return false
-  if (connection.saveData) return true
-  return (
-    connection.effectiveType === 'slow-2g' ||
-    connection.effectiveType === '2g' ||
-    connection.effectiveType === '3g'
-  )
+  return prefersReducedData()
 }
 
 let enginePreloadPromise: Promise<void> | null = null

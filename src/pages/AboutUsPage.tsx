@@ -19,6 +19,8 @@ import SEO, { buildBreadcrumbSchema, buildOrganizationSchema } from '../componen
 import BackToHelpCentre from '../components/support/BackToHelpCentre'
 import ImageLightbox, { type GalleryImage } from '../components/gallery/ImageLightbox'
 import SwipeCarousel from '../components/SwipeCarousel'
+import PartnersSection from '../components/PartnersSection'
+import WhyBookSection from '../components/WhyBookSection'
 import useMediaQuery from '../hooks/useMediaQuery'
 import './AboutUsPage.css'
 
@@ -203,8 +205,8 @@ export default function AboutUsPage() {
       <div className="about-page">
         <SEO
           title={t('about.pageTitle')}
-          description="Learn about Expedition-Go Tours — Ghana's premier tour platform. We connect travelers with authentic local experiences, cultural tours, wildlife safaris, and adventure activities across Ghana. Meet our team and mission."
-          keywords="Expedition-Go Tours, about us, Ghana tour company, Ghana travel platform, local tours Ghana, authentic experiences Ghana, Ghana tourism company"
+          description="Learn about Expedition-Go Tours — Ghana's premier tour platform. We connect travellers with authentic local experiences and partner with the world's leading travel brands. Meet our team, mission and why travellers book with us."
+          keywords="Expedition-Go Tours, about us, Ghana tour company, Ghana travel platform, local tours Ghana, authentic experiences Ghana, Ghana tourism company, trusted travel partners Ghana, why book with us"
           jsonLd={[
             buildBreadcrumbSchema([
               { name: 'Home', url: 'https://www.expeditiongotours.com/' },
@@ -340,6 +342,28 @@ export default function AboutUsPage() {
               <div className="about-values-grid">{valueCards}</div>
             )}
           </motion.section>
+
+          {/* ===== Partners — trust logos (moved from the home page) ===== */}
+          <motion.div
+            className="about-partners"
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-80px' }}
+            variants={fadeUp}
+          >
+            <PartnersSection />
+          </motion.div>
+
+          {/* ===== Why travellers book with us (moved from the home page) ===== */}
+          <motion.div
+            className="about-whybook"
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-80px' }}
+            variants={fadeUp}
+          >
+            <WhyBookSection />
+          </motion.div>
 
           {/* ===== CTA ===== */}
           <motion.section

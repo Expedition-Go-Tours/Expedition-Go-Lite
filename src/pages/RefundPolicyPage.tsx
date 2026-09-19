@@ -255,7 +255,7 @@ export default function RefundPolicyPage() {
             amounts recoverable from Suppliers and your mandatory legal rights.
           </p>
 
-          <h2>11. Cancellation by Expedition-Go or a Supplier</h2>
+          <h2>11. Cancellation by Expedition-Go Tours or a Supplier</h2>
           <p>
             We or the Supplier may cancel an experience because of safety concerns, severe weather,
             attraction closure, vehicle failure, guide unavailability, insufficient participation,
@@ -305,7 +305,7 @@ export default function RefundPolicyPage() {
             conduct, failure to follow safety instructions or risk to others, no refund is normally due.
           </p>
           <p>
-            If the experience is ended early because of a failure by Expedition-Go or the Supplier, or
+            If the experience is ended early because of a failure by Expedition-Go Tours or the Supplier, or
             because safe performance becomes impossible, we will assess an appropriate remedy based on the
             circumstances, the proportion delivered and applicable law.
           </p>

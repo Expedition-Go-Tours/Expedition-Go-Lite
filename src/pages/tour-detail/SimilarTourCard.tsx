@@ -64,6 +64,7 @@ export default function SimilarTourCard({
 
   const tourSlug = getTourSlug(title)
 
+  // New tab, like every other tour card.
   const handleCardClick = () => {
     window.open(`/tour/${tourSlug}`, '_blank', 'noopener')
   }

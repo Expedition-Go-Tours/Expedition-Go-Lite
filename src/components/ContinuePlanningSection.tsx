@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect, useCallback, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { Star, Heart, Car, Compass, Languages as LanguagesIcon, ShieldCheck, Ban, TrendingUp } from 'lucide-react'
@@ -71,6 +72,7 @@ function hasActiveOffer(offers: SpecialOfferData[] | undefined): boolean {
 
 function ContinuePlanningCard({ item, likelyToSellOut }: { item: ContinuePlanningItem; likelyToSellOut?: boolean }) {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist()
   const inWishlist = isInWishlist(item.id)
   const hasOffer = hasActiveOffer(item.specialOffers)
@@ -87,7 +89,7 @@ function ContinuePlanningCard({ item, likelyToSellOut }: { item: ContinuePlannin
 
   const openTour = () => {
     const slug = item.slug || item.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
-    window.open(`/tour/${slug}`, '_blank', 'noopener')
+    navigate(`/tour/${slug}`)
   }
 
   const handleWishlist = (e: React.MouseEvent) => {

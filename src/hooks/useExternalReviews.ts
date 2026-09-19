@@ -56,6 +56,7 @@ export interface ExternalReviewData {
 }
 
 const DATA_URL = `${import.meta.env.BASE_URL}data/externalReviews.json`
+const STATS_URL = `${import.meta.env.BASE_URL}data/externalReviewStats.json`
 
 async function fetchExternalReviewData(): Promise<ExternalReviewData> {
   const res = await fetch(DATA_URL, { headers: { Accept: 'application/json' } })
@@ -69,11 +70,57 @@ async function fetchExternalReviewData(): Promise<ExternalReviewData> {
   }
 }
 
-/** Scraped reviews dataset (fetched at runtime — never bundled). */
-export function useExternalReviewData() {
+/** Product record from the slim stats file, with the resolved (official or
+ * sampled-scaled) star distribution used for review histograms. */
+export interface ExternalReviewStatsProduct extends ExternalReviewProduct {
+  resolvedDistribution: Record<number, number> | null
+  /** Whether the product carried an official review total. */
+  official: boolean
+}
+
+export interface ExternalReviewStatsData {
+  generatedAt?: string
+  stats: ExternalReviewStats
+  products: ExternalReviewStatsProduct[]
+  productAggregates: Record<string, { count: number; sum: number }>
+  /** Small deterministic slice for the homepage rail (no row dataset needed). */
+  featuredReviews: ExternalReview[]
+}
+
+async function fetchExternalReviewStatsData(): Promise<ExternalReviewStatsData> {
+  const res = await fetch(STATS_URL, { headers: { Accept: 'application/json' } })
+  if (!res.ok) throw new Error(`Failed to load external review stats (${res.status})`)
+  const payload = await res.json().catch(() => ({}))
+  return {
+    generatedAt: payload.generatedAt,
+    stats: payload.stats ?? { totalReviews: 0, averageRating: null, platforms: [] },
+    products: Array.isArray(payload.products) ? payload.products : [],
+    productAggregates: payload.productAggregates ?? {},
+    featuredReviews: Array.isArray(payload.featuredReviews) ? payload.featuredReviews : [],
+  }
+}
+
+/**
+ * Full scraped row dataset (1.6 MB) — only fetch this when the rows are really
+ * about to be rendered (review rails/sections), never from tour cards.
+ * `enabled` lets viewport-aware callers defer the request.
+ */
+export function useExternalReviewData(enabled = true) {
   return useQuery({
     queryKey: ['external-reviews-data'],
     queryFn: fetchExternalReviewData,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    retry: 1,
+    enabled,
+  })
+}
+
+/** Slim (~7 KB) derived dataset: headline stats, product totals + aggregates. */
+export function useExternalReviewStatsData() {
+  return useQuery({
+    queryKey: ['external-review-stats'],
+    queryFn: fetchExternalReviewStatsData,
     staleTime: Infinity,
     gcTime: Infinity,
     retry: 1,
@@ -119,8 +166,8 @@ function visibleReviews(reviews: ExternalReview[]): ExternalReview[] {
   return reviews.filter(isVisibleExternalReview)
 }
 
-export function useExternalReviews(limit = 100) {
-  const query = useExternalReviewData()
+export function useExternalReviews(limit = 100, enabled = true) {
+  const query = useExternalReviewData(enabled)
   const reviews = useMemo(
     () => (query.data ? shuffle(visibleReviews(query.data.reviews)).slice(0, limit) : undefined),
     [query.data, limit],
@@ -128,8 +175,8 @@ export function useExternalReviews(limit = 100) {
   return { ...query, data: reviews }
 }
 
-export function useAllExternalReviews() {
-  const query = useExternalReviewData()
+export function useAllExternalReviews(enabled = true) {
+  const query = useExternalReviewData(enabled)
   const reviews = useMemo(() => (query.data ? visibleReviews(query.data.reviews) : undefined), [query.data])
   return { ...query, data: reviews }
 }
@@ -174,13 +221,20 @@ export function computeExternalReviewStats(reviews: ExternalReview[]): ExternalR
   }
 }
 
+/** Headline stats, served from the slim stats file (no row dataset needed). */
 export function useExternalReviewStats() {
-  const query = useExternalReviewData()
-  const stats = useMemo(
-    () => (query.data ? computeExternalReviewStats(visibleReviews(query.data.reviews)) : undefined),
-    [query.data],
-  )
-  return { ...query, data: stats }
+  const query = useExternalReviewStatsData()
+  return { ...query, data: query.data?.stats }
+}
+
+/**
+ * Homepage rail reviews — a small precomputed slice in the stats file, so the
+ * rail never downloads or parses the 1.6 MB row dataset. The full dataset
+ * remains for /reviews and the tour-detail reviews tab.
+ */
+export function useFeaturedExternalReviews() {
+  const query = useExternalReviewStatsData()
+  return { ...query, data: query.data?.featuredReviews }
 }
 
 // ─── Matching (tour ↔ scraped product) ───────────────────────────────────────
@@ -261,8 +315,8 @@ export function getMatchedTourReviews(
  * tour detail page so a product shows the TripAdvisor / GetYourGuide reviews
  * scraped for it, not just in-app ones.
  */
-export function useTourExternalReviews(tour: MatchableTour | null | undefined) {
-  const { data, isLoading } = useExternalReviewData()
+export function useTourExternalReviews(tour: MatchableTour | null | undefined, enabled = true) {
+  const { data, isLoading } = useExternalReviewData(enabled)
   const title = tour?.title
   const location = tour?.location
 
@@ -274,18 +328,44 @@ export function useTourExternalReviews(tour: MatchableTour | null | undefined) {
   return { reviews, isLoading }
 }
 
-/** Official product summaries matched to a tour (for counts/histogram). */
+/**
+ * Official product summaries matched to a tour (for counts/histogram). Served
+ * from the slim stats file — no need to download the raw review rows.
+ */
 export function useTourExternalProducts(tour: MatchableTour | null | undefined) {
-  const { data, isLoading } = useExternalReviewData()
+  const { data, isLoading } = useExternalReviewStatsData()
   const title = tour?.title
   const location = tour?.location
 
   const products = useMemo(() => {
-    if (!data || !title) return [] as ExternalReviewProduct[]
-    return getMatchedTourReviews(data, { title, location }).products
+    if (!data || !title) return [] as ExternalReviewStatsProduct[]
+    return data.products.filter(
+      (product) => matchTourForTitle(product.tourTitle, [{ title, location }]) !== null,
+    )
   }, [data, title, location])
 
   return { products, isLoading }
+}
+
+/**
+ * Star → count histogram from the pre-resolved per-product distributions.
+ * Mirrors `combinedExternalDistribution` for the official-products path;
+ * returns null when no matched product carries official totals (callers then
+ * count the visible rows).
+ */
+export function aggregateResolvedDistribution(
+  products: ExternalReviewStatsProduct[],
+): Record<number, number> | null {
+  const totals = emptyDistribution()
+  let sawOfficial = false
+  for (const product of products) {
+    if (!product.official || !product.resolvedDistribution) continue
+    sawOfficial = true
+    for (const star of STAR_ORDER) {
+      totals[star] += Math.max(0, Number(product.resolvedDistribution[star]) || 0)
+    }
+  }
+  return sawOfficial ? totals : null
 }
 
 // ─── Combined stats ──────────────────────────────────────────────────────────
@@ -486,7 +566,7 @@ export interface CombinedStatsTour extends MatchableTour {
  * always agree with the review cards on screen.
  */
 export function useCombinedTourStats(tour: CombinedStatsTour | null | undefined): CombinedReviewStats {
-  const { data } = useExternalReviewData()
+  const { data } = useExternalReviewStatsData()
   const title = tour?.title
   const location = tour?.location
   const rating = tour?.rating
@@ -494,7 +574,23 @@ export function useCombinedTourStats(tour: CombinedStatsTour | null | undefined)
 
   return useMemo(() => {
     if (!data || !title) return combineReviewStats({ rating, reviewCount }, [])
-    const { products, rows } = getMatchedTourReviews(data, { title, location })
-    return combineReviewStats({ rating, reviewCount }, rows, aggregateProducts(products))
+    const matched = data.products.filter(
+      (product) => matchTourForTitle(product.tourTitle, [{ title, location }]) !== null,
+    )
+    const aggregate = aggregateProducts(matched)
+    if (aggregate) return combineReviewStats({ rating, reviewCount }, [], aggregate)
+
+    // No official totals on any matched product: count the pre-aggregated
+    // visible counted rows instead of downloading the raw dataset.
+    let count = 0
+    let sum = 0
+    for (const product of matched) {
+      const entry = data.productAggregates[product.id]
+      if (!entry) continue
+      count += entry.count
+      sum += entry.sum
+    }
+    const fallback = count > 0 ? { rating: roundOne(sum / count), reviewCount: count } : null
+    return combineReviewStats({ rating, reviewCount }, [], fallback)
   }, [data, title, location, rating, reviewCount])
 }

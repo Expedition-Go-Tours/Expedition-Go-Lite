@@ -1,10 +1,13 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { MotionConfig, motion } from 'framer-motion'
 import { toast } from 'sonner'
 import { Clock, ClipboardCopy, Headset, Mail, MapPin, MessageCircle, Phone } from 'lucide-react'
 import Footer from '../components/Footer'
 import SEO, { buildBreadcrumbSchema } from '../components/SEO'
+import DeferredMap from '../components/support/DeferredMap'
+import { fadeUp, revealViewport, stagger, staggerItem } from '../components/support/motion'
 import {
   OFFICE_DIRECTIONS_URL,
   OFFICE_MAP_EMBED,
@@ -14,6 +17,7 @@ import {
   SUPPORT_PHONE_DIGITS,
   WHATSAPP_URL,
 } from '../lib/support'
+import { scheduleSupportPrefetch } from '../lib/prefetchSupport'
 import { useAuthUser } from '../hooks/useAuthUser'
 import { setAuthReturnTo } from '../lib/auth'
 import './SupportPages.css'
@@ -41,6 +45,11 @@ export default function ContactUsPage() {
   const user = useAuthUser()
   const [form, setForm] = useState<ContactFormState>(EMPTY_FORM)
   const [errors, setErrors] = useState<Partial<Record<keyof ContactFormState, string>>>({})
+
+  // Warm the Help Centre + FAQ chunks so the cross-links open without a fallback.
+  useEffect(() => {
+    scheduleSupportPrefetch()
+  }, [])
 
   const TOPIC_OPTIONS = [
     { value: 'booking', label: t('contact.form.topicBooking') },
@@ -84,7 +93,7 @@ export default function ContactUsPage() {
 
     const topicLabel = TOPIC_OPTIONS.find((option) => option.value === form.topic)?.label ?? form.topic
     const bookingRef = form.bookingRef.trim()
-    const subject = `[${topicLabel}]${bookingRef ? ` ${bookingRef}` : ''} — Expedition-Go support`
+    const subject = `[${topicLabel}]${bookingRef ? ` ${bookingRef}` : ''} — Expedition-Go Tours support`
     const body = [
       `${t('contact.form.name')}: ${form.name.trim()}`,
       `${t('contact.form.email')}: ${form.email.trim()}`,
@@ -101,42 +110,71 @@ export default function ContactUsPage() {
   }
 
   return (
-    <div className="support-page sh-hub">
-      <SEO
-        title="Contact Expedition-Go Tours - Ghana Tours Support"
-        description="Get in touch with Expedition-Go Tours. Contact us for booking inquiries, partnerships, supplier registration, and customer support. We're here to help with your Ghana travel experience."
-        keywords="contact Expedition-Go Tours, Ghana tours support, booking help, customer service, partnership inquiries"
-        jsonLd={buildBreadcrumbSchema([
-          { name: 'Home', url: 'https://www.expeditiongotours.com/' },
-          { name: 'Contact Us', url: 'https://www.expeditiongotours.com/contact-us' },
-        ])}
-      />
+    <MotionConfig reducedMotion="user">
+      <div className="support-page sh-hub">
+        <SEO
+          title="Contact Expedition-Go Tours - Ghana Tours Support"
+          description="Get in touch with Expedition-Go Tours. Contact us for booking inquiries, partnerships, supplier registration, and customer support. We're here to help with your Ghana travel experience."
+          keywords="contact Expedition-Go Tours, Ghana tours support, booking help, customer service, partnership inquiries"
+          jsonLd={buildBreadcrumbSchema([
+            { name: 'Home', url: 'https://www.expeditiongotours.com/' },
+            { name: 'Contact Us', url: 'https://www.expeditiongotours.com/contact-us' },
+          ])}
+        />
 
-      <header className="sh-hero">
-        <div className="sh-hero-inner">
-          <p className="sh-eyebrow">{t('supportHub.eyebrow')}</p>
-          <h1 className="sh-title" id="contact-hero-title">{t('supportHub.contactTitle')}</h1>
-          <p className="sh-sub">{t('support.contactUsSubtitle')}</p>
-          <div className="sh-quick">
-            <a href={`mailto:${SUPPORT_EMAIL}`} className="sh-quick-chip">
-              <Mail size={14} aria-hidden="true" />
-              {t('support.emailUs')}
-            </a>
-            <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="sh-quick-chip">
-              <MessageCircle size={14} aria-hidden="true" />
-              {t('contact.whatsappLabel')}
-            </a>
-            <Link to="/faq" className="sh-quick-chip">
-              {t('footer.faq')}
-            </Link>
-          </div>
-        </div>
-      </header>
+        <header className="sh-hero">
+          <motion.div
+            className="sh-hero-inner"
+            initial="hidden"
+            animate="visible"
+            variants={stagger}
+          >
+            <motion.p className="sh-eyebrow" variants={staggerItem}>
+              {t('supportHub.eyebrow')}
+            </motion.p>
+            <motion.h1 className="sh-title" id="contact-hero-title" variants={staggerItem}>
+              {t('supportHub.contactTitle')}
+            </motion.h1>
+            <motion.p className="sh-sub" variants={staggerItem}>
+              {t('support.contactUsSubtitle')}
+            </motion.p>
+            <motion.div className="sh-quick" variants={staggerItem}>
+              <a href={`mailto:${SUPPORT_EMAIL}`} className="sh-quick-chip">
+                <Mail size={14} aria-hidden="true" />
+                {t('support.emailUs')}
+              </a>
+              <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="sh-quick-chip">
+                <MessageCircle size={14} aria-hidden="true" />
+                {t('contact.whatsappLabel')}
+              </a>
+              <Link to="/faq" className="sh-quick-chip">
+                {t('footer.faq')}
+              </Link>
+            </motion.div>
+          </motion.div>
+        </header>
 
       <div className="support-container sh-main">
-        <section className="sh-block" aria-label={t('supportHub.channelsTitle')}>
-          <div className="sh-channels">
-            <a href={`mailto:${SUPPORT_EMAIL}`} className="sh-channel sh-channel--email">
+        <motion.section
+          className="sh-block"
+          aria-label={t('supportHub.channelsTitle')}
+          initial="hidden"
+          whileInView="visible"
+          viewport={revealViewport}
+          variants={fadeUp}
+        >
+          <motion.div
+            className="sh-channels"
+            initial="hidden"
+            whileInView="visible"
+            viewport={revealViewport}
+            variants={stagger}
+          >
+            <motion.a
+              href={`mailto:${SUPPORT_EMAIL}`}
+              className="sh-channel sh-channel--email"
+              variants={staggerItem}
+            >
               <span className="sh-channel-head">
                 <span className="sh-channel-label">
                   <Mail size={14} aria-hidden="true" />
@@ -145,9 +183,13 @@ export default function ContactUsPage() {
               </span>
               <span className="sh-channel-value">{SUPPORT_EMAIL}</span>
               <span className="sh-channel-note">{t('contact.emailNote')}</span>
-            </a>
+            </motion.a>
 
-            <a href={`tel:${SUPPORT_PHONE_DIGITS}`} className="sh-channel sh-channel--phone">
+            <motion.a
+              href={`tel:${SUPPORT_PHONE_DIGITS}`}
+              className="sh-channel sh-channel--phone"
+              variants={staggerItem}
+            >
               <span className="sh-channel-head">
                 <span className="sh-channel-label">
                   <Phone size={14} aria-hidden="true" />
@@ -156,9 +198,15 @@ export default function ContactUsPage() {
               </span>
               <span className="sh-channel-value">{SUPPORT_PHONE}</span>
               <span className="sh-channel-note">{t('contact.phoneNote')}</span>
-            </a>
+            </motion.a>
 
-            <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="sh-channel sh-channel--whatsapp">
+            <motion.a
+              href={WHATSAPP_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="sh-channel sh-channel--whatsapp"
+              variants={staggerItem}
+            >
               <span className="sh-channel-head">
                 <span className="sh-channel-label">
                   <MessageCircle size={14} aria-hidden="true" />
@@ -167,9 +215,14 @@ export default function ContactUsPage() {
               </span>
               <span className="sh-channel-value">{SUPPORT_PHONE}</span>
               <span className="sh-channel-note">{t('contact.whatsappNote')}</span>
-            </a>
+            </motion.a>
 
-            <button type="button" className="sh-channel sh-channel--chat" onClick={openChat}>
+            <motion.button
+              type="button"
+              className="sh-channel sh-channel--chat"
+              onClick={openChat}
+              variants={staggerItem}
+            >
               <span className="sh-channel-head">
                 <span className="sh-channel-label">
                   <Headset size={14} aria-hidden="true" />
@@ -179,11 +232,18 @@ export default function ContactUsPage() {
               </span>
               <span className="sh-channel-value">{t('contact.chatValue')}</span>
               <span className="sh-channel-note">{t('contact.chatNote')}</span>
-            </button>
-          </div>
-        </section>
+            </motion.button>
+          </motion.div>
+        </motion.section>
 
-        <section className="sh-block" aria-labelledby="sh-form-title">
+        <motion.section
+          className="sh-block"
+          aria-labelledby="sh-form-title"
+          initial="hidden"
+          whileInView="visible"
+          viewport={revealViewport}
+          variants={fadeUp}
+        >
           <div className="sh-form-card">
             <div className="sh-form-intro">
               <h2 className="sh-form-title" id="sh-form-title">{t('contact.form.title')}</h2>
@@ -276,12 +336,25 @@ export default function ContactUsPage() {
               </div>
             </form>
           </div>
-        </section>
+        </motion.section>
 
-        <section className="sh-block" aria-labelledby="sh-contact-details-title">
+        <motion.section
+          className="sh-block"
+          aria-labelledby="sh-contact-details-title"
+          initial="hidden"
+          whileInView="visible"
+          viewport={revealViewport}
+          variants={fadeUp}
+        >
           <h2 className="sh-block-title" id="sh-contact-details-title">{t('support.supportHours')}</h2>
           <div className="sh-support-grid">
-            <div className="sh-hours-card">
+            <motion.div
+              className="sh-hours-card"
+              initial="hidden"
+              whileInView="visible"
+              viewport={revealViewport}
+              variants={staggerItem}
+            >
               <h3 className="sh-hours-heading">
                 <Clock size={17} aria-hidden="true" />
                 {t('support.supportHours')}
@@ -295,20 +368,15 @@ export default function ContactUsPage() {
                 ))}
               </ul>
               <p className="sh-hours-note">{t('supportHub.hoursNote')}</p>
-            </div>
-            <div className="sh-map-card">
-              <div className="sh-map">
-                <iframe
-                  title={t('contact.officeIframeTitle')}
-                  src={OFFICE_MAP_EMBED}
-                  width="100%"
-                  height="100%"
-                  style={{ border: 0 }}
-                  allowFullScreen
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                />
-              </div>
+            </motion.div>
+            <motion.div
+              className="sh-map-card"
+              initial="hidden"
+              whileInView="visible"
+              viewport={revealViewport}
+              variants={staggerItem}
+            >
+              <DeferredMap title={t('contact.officeIframeTitle')} src={OFFICE_MAP_EMBED} />
               <div className="sh-map-info">
                 <img src="/logo.png" alt="Expedition-Go Tours" className="sh-map-logo" />
                 <span className="sh-map-label">
@@ -330,12 +398,13 @@ export default function ContactUsPage() {
                   {t('contact.getDirections')}
                 </a>
               </div>
-            </div>
+            </motion.div>
           </div>
-        </section>
+        </motion.section>
       </div>
 
       <Footer />
     </div>
+    </MotionConfig>
   )
 }

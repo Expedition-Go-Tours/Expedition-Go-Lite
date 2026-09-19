@@ -18,7 +18,7 @@ import {
   useTourExternalProducts,
   combineReviewStats,
   aggregateProducts,
-  combinedExternalDistribution,
+  aggregateResolvedDistribution,
   scaleDistribution,
   COUNTED_SOURCES,
 } from '../../hooks/useExternalReviews'
@@ -116,14 +116,17 @@ export default function TourDetailPage() {
   const navigate = useNavigate()
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist()
   const { addToContinuePlanning } = useContinuePlanning()
+  const [activeTab, setActiveTab] = useState('overview')
 
   const { data: tour, isLoading, isError, isFetching } = useExpeditionTour(tourId)
   const { data: reviewsData } = useExpeditionTourReviews(tourId, 1, 10, tour?.id)
   // Platform reviews (TripAdvisor / GetYourGuide / Google) whose scraped tour
   // title maps to this product via matchTourForTitle — shown alongside the
-  // in-app reviews with the same card layouts.
+  // in-app reviews with the same card layouts. The 1.6 MB row dataset is only
+  // fetched once the reviews tab is actually opened.
   const { reviews: externalMatchedReviews } = useTourExternalReviews(
     tour ? { title: tour.title, location: tour.location } : null,
+    activeTab === 'reviews',
   )
   // Official product totals (e.g. TripAdvisor "4.9 (595 reviews)") for the
   // matched scraped listings — used for the headline rating/count.
@@ -236,31 +239,37 @@ export default function TourDetailPage() {
   // the top they stick instead, so the title bar steps aside.
   const [showStickyTitle, setShowStickyTitle] = useState(false)
   useEffect(() => {
-    const STICKY_TOP = 64
-    const compute = () => {
-      if (window.innerWidth >= 1024) {
-        setShowStickyTitle(false)
-        return
+    // Synchronous (not rAF-throttled): iOS Safari pauses rAF during momentum
+    // scrolling, which would delay the sticky title until the scroll stops.
+    // Writes only happen when the boolean actually changes.
+    let lastShow = false
+    const computeStickyTitle = () => {
+      let next = false
+      if (window.innerWidth < 1024) {
+        const header = document.querySelector<HTMLElement>('.tour-header-new')
+        const tabs = document.querySelector<HTMLElement>('.tour-detail-tabs')
+        if (header && tabs) {
+          const STICKY_TOP = 64
+          const headerGone = header.getBoundingClientRect().bottom <= STICKY_TOP + 1
+          const tabsReached = tabs.getBoundingClientRect().top <= STICKY_TOP + 1
+          next = headerGone && !tabsReached
+        }
       }
-      const header = document.querySelector<HTMLElement>('.tour-header-new')
-      const tabs = document.querySelector<HTMLElement>('.tour-detail-tabs')
-      if (!header || !tabs) return
-      const headerGone = header.getBoundingClientRect().bottom <= STICKY_TOP + 1
-      const tabsReached = tabs.getBoundingClientRect().top <= STICKY_TOP + 1
-      setShowStickyTitle(headerGone && !tabsReached)
+      if (next === lastShow) return
+      lastShow = next
+      setShowStickyTitle(next)
     }
-    compute()
-    window.addEventListener('scroll', compute, { passive: true })
-    window.addEventListener('resize', compute)
+    computeStickyTitle()
+    window.addEventListener('scroll', computeStickyTitle, { passive: true })
+    window.addEventListener('resize', computeStickyTitle)
     return () => {
-      window.removeEventListener('scroll', compute)
-      window.removeEventListener('resize', compute)
+      window.removeEventListener('scroll', computeStickyTitle)
+      window.removeEventListener('resize', computeStickyTitle)
     }
   }, [])
 
   const pricingRef = useRef<HTMLDivElement>(null)
   const reviewsRef = useRef<HTMLDivElement>(null)
-  const [activeTab, setActiveTab] = useState('overview')
   const [reviewDetail, setReviewDetail] = useState<{ name: string; date: string; rating: number; text: string } | null>(null)
   const [isWriteReviewOpen, setIsWriteReviewOpen] = useState(false)
   const [reviewStarFilter, setReviewStarFilter] = useState<number | null>(null)
@@ -490,10 +499,7 @@ export default function TourDetailPage() {
     // platform exposes one, otherwise their sampled rows scaled to the total),
     // so the bars always reconcile with the headline count.
     const counts: Record<number, number> = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
-    const officialDistribution = combinedExternalDistribution(
-      externalMatchedProducts,
-      externalMatchedReviews,
-    )
+    const officialDistribution = aggregateResolvedDistribution(externalMatchedProducts)
     if (officialDistribution) {
       for (const star of [5, 4, 3, 2, 1]) {
         counts[star] = localDistribution[star] + (officialDistribution[star] ?? 0)
@@ -511,7 +517,7 @@ export default function TourDetailPage() {
       count: counts[item.stars],
       percentage: Math.round((counts[item.stars] / total) * 100),
     }))
-  }, [allReviewCards, externalReviewCards, externalMatchedProducts, externalMatchedReviews, localTourReviews, t])
+  }, [allReviewCards, externalReviewCards, externalMatchedProducts, localTourReviews, t])
 
   const difficultyColorMap = useMemo<Record<string, string>>(() => ({
     'Easy': '#22c55e',

@@ -22,12 +22,41 @@ function formatMoney(amount: number, currency: string): string {
 function useCountdown(expiresAt?: string | null) {
   const [now, setNow] = useState(() => Date.now())
   useEffect(() => {
+    if (!expiresAt) return
     const id = setInterval(() => setNow(Date.now()), 1000)
     return () => clearInterval(id)
-  }, [])
+  }, [expiresAt])
   if (!expiresAt) return { expired: false, minutes: 0, seconds: 0 }
   const ms = Math.max(0, new Date(expiresAt).getTime() - now)
   return { expired: ms <= 0, minutes: Math.floor(ms / 60000), seconds: Math.floor((ms % 60000) / 1000) }
+}
+
+/**
+ * Whether the seat hold has lapsed, without a per-second clock: a single
+ * timeout fires exactly at the deadline, so the page re-renders at most twice
+ * (mount + expiry) instead of once per second.
+ */
+function useHoldExpired(expiresAt?: string | null): boolean {
+  const [expiredKey, setExpiredKey] = useState<string | null>(null)
+  useEffect(() => {
+    if (!expiresAt) return
+    const ms = Math.max(0, new Date(expiresAt).getTime() - Date.now())
+    const timer = setTimeout(() => setExpiredKey(expiresAt), ms)
+    return () => clearTimeout(timer)
+  }, [expiresAt])
+  return !!expiresAt && expiredKey === expiresAt
+}
+
+/** The ticking text lives in its own component so only this node re-renders
+ * each second while a hold is active. */
+function HoldTimer({ expiresAt }: { expiresAt?: string | null }) {
+  const { expired, minutes, seconds } = useCountdown(expiresAt)
+  if (!expiresAt || expired) return null
+  return (
+    <p className="co-hold" role="timer">
+      Your spot is reserved for {minutes}:{String(seconds).padStart(2, '0')}
+    </p>
+  )
 }
 
 /** Back arrow used in both desktop (left pane) and mobile (compact) headers. */
@@ -44,15 +73,11 @@ function BackButton({ onClick }: { onClick: () => void }) {
  *  when expanded, in the mobile collapsed summary (light tone). */
 function OrderSummary({
   draft,
-  holdExpired,
-  minutes,
-  seconds,
+  expiresAt,
   light = false,
 }: {
   draft: CheckoutDraftSummary
-  holdExpired: boolean
-  minutes: number
-  seconds: number
+  expiresAt?: string | null
   light?: boolean
 }) {
   return (
@@ -111,11 +136,7 @@ function OrderSummary({
         <span>{formatMoney(draft.pricing.total, draft.currency)}</span>
       </div>
 
-      {!holdExpired && (
-        <p className="co-hold" role="timer">
-          Your spot is reserved for {minutes}:{String(seconds).padStart(2, '0')}
-        </p>
-      )}
+      <HoldTimer expiresAt={expiresAt} />
     </div>
   )
 }
@@ -126,7 +147,7 @@ export default function CheckoutPage() {
   const draftId = searchParams.get('draft') || undefined
   const { data: draft, isLoading, isError } = useCheckoutDraft(draftId)
   const release = useReleaseCheckoutDraft()
-  const { expired: holdExpired, minutes, seconds } = useCountdown(draft?.expiresAt)
+  const holdExpired = useHoldExpired(draft?.expiresAt)
 
   const [elementsState, setElementsState] = useState({ ready: false, complete: false })
   const [paymentError, setPaymentError] = useState<string | null>(null)
@@ -311,7 +332,7 @@ export default function CheckoutPage() {
               <div className="co-total">{formatMoney(draft.pricing.total, draft.currency)}</div>
             </div>
 
-            <OrderSummary draft={draft} holdExpired={holdExpired} minutes={minutes} seconds={seconds} />
+            <OrderSummary draft={draft} expiresAt={draft?.expiresAt} />
 
             <p className="co-security">
               <ShieldCheck size={14} />
@@ -344,7 +365,7 @@ export default function CheckoutPage() {
             </button>
             {mobileSummaryOpen && (
               <div className="co-summary-details">
-                <OrderSummary draft={draft} holdExpired={holdExpired} minutes={minutes} seconds={seconds} light />
+                <OrderSummary draft={draft} expiresAt={draft?.expiresAt} light />
               </div>
             )}
           </div>

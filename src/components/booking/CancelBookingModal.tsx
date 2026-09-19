@@ -40,10 +40,13 @@ export default function CancelBookingModal({
 }: CancelBookingModalProps) {
   const [step, setStep] = useState<Step>('confirm')
 
-  // Reset to first step when modal opens
-  useEffect(() => {
+  // Reset to the confirm step each time the modal opens (state adjustment
+  // during render — the lint-approved alternative to a reset effect).
+  const [prevOpen, setPrevOpen] = useState(isOpen)
+  if (isOpen !== prevOpen) {
+    setPrevOpen(isOpen)
     if (isOpen) setStep('confirm')
-  }, [isOpen])
+  }
 
   // Close on Escape
   useEffect(() => {

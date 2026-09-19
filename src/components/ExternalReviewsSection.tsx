@@ -3,7 +3,9 @@ import { useTranslation } from 'react-i18next'
 import SectionHeading from './SectionHeading'
 import ExternalReviewCard from './ExternalReviewCard'
 import StarRating from './StarRating'
-import { useExternalReviews, useExternalReviewStats } from '../hooks/useExternalReviews'
+import { useFeaturedExternalReviews, useExternalReviewStats } from '../hooks/useExternalReviews'
+import useMediaQuery from '../hooks/useMediaQuery'
+import useRafCallback from '../hooks/useRafCallback'
 import './ExternalReviewsSection.css'
 
 const CARD_WIDTH = 295
@@ -12,13 +14,24 @@ const AUTO_SCROLL_INTERVAL = 3000
 
 export default function ExternalReviewsSection() {
   const { t } = useTranslation()
-  const { data: reviews, isLoading } = useExternalReviews(50)
-  const { data: stats } = useExternalReviewStats()
   const scrollRef = useRef<HTMLDivElement>(null)
+  const sectionRef = useRef<HTMLElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
+  const [sectionVisible, setSectionVisible] = useState(false)
+  const [pageVisible, setPageVisible] = useState(() =>
+    typeof document === 'undefined' ? true : document.visibilityState !== 'hidden',
+  )
+  // Mobile users swipe the rail themselves; auto-advancing it burns CPU/battery
+  // and fights touch scrolling.
+  const isMobile = useMediaQuery('(max-width: 1023px)')
   const isHovering = useRef(false)
   const autoScrollTimer = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  // Served from the ~18 KB stats file (16 pre-picked reviews) — the full 1.6 MB
+  // row dataset is only used by /reviews and the tour-detail reviews tab.
+  const { data: reviews, isLoading } = useFeaturedExternalReviews()
+  const { data: stats } = useExternalReviewStats()
 
   const updateArrows = useCallback(() => {
     const el = scrollRef.current
@@ -27,6 +40,7 @@ export default function ExternalReviewsSection() {
     setCanScrollLeft(el.scrollLeft > 5)
     setCanScrollRight(el.scrollLeft < maxScroll - 5)
   }, [])
+  const updateArrowsRaf = useRafCallback(updateArrows)
 
   const scrollTo = (target: number) => {
     const el = scrollRef.current
@@ -76,18 +90,39 @@ export default function ExternalReviewsSection() {
     const el = scrollRef.current
     if (!el) return
     updateArrows()
-    const onScroll = () => updateArrows()
+    const onScroll = () => updateArrowsRaf()
     el.addEventListener('scroll', onScroll, { passive: true })
     return () => el.removeEventListener('scroll', onScroll)
-  }, [updateArrows, reviews])
+  }, [updateArrows, updateArrowsRaf, reviews])
 
-  // Start auto-scroll when reviews load
+  // Track the rendered section's visibility so the ambient auto-scroll only
+  // runs while it is on-screen. Re-attaches whenever the section (un)mounts.
   useEffect(() => {
-    if (reviews && reviews.length > 0) {
-      startAutoScroll()
+    const el = sectionRef.current
+    if (!el || typeof IntersectionObserver === 'undefined') return
+    const io = new IntersectionObserver(
+      ([entry]) => setSectionVisible(entry.isIntersecting),
+      { rootMargin: '200px' },
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [reviews])
+
+  useEffect(() => {
+    const onVisibility = () => setPageVisible(document.visibilityState !== 'hidden')
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => document.removeEventListener('visibilitychange', onVisibility)
+  }, [])
+
+  // Start auto-scroll when reviews load and the section is actually visible
+  useEffect(() => {
+    if (isMobile || !sectionVisible || !pageVisible || !reviews || reviews.length === 0) {
+      stopAutoScroll()
+      return
     }
+    startAutoScroll()
     return () => stopAutoScroll()
-  }, [reviews, startAutoScroll, stopAutoScroll])
+  }, [isMobile, sectionVisible, pageVisible, reviews, startAutoScroll, stopAutoScroll])
 
   const handleMouseEnter = () => { isHovering.current = true }
   const handleMouseLeave = () => { isHovering.current = false }
@@ -97,7 +132,7 @@ export default function ExternalReviewsSection() {
   }
 
   return (
-    <section className="ext-reviews-section">
+    <section className="ext-reviews-section" ref={sectionRef}>
       <div className="ext-reviews-container">
         <div className="ext-reviews-viewport">
           <SectionHeading

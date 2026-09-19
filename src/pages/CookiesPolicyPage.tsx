@@ -50,7 +50,7 @@ export default function CookiesPolicyPage() {
           <h2>1. About this policy</h2>
           <p>
             This Cookie Policy explains how <strong>Expedition-Go Tours Ltd</strong> (
-            <strong>&ldquo;Expedition-Go&rdquo;</strong>, <strong>&ldquo;we&rdquo;</strong>,{' '}
+            <strong>&ldquo;Expedition-Go Tours&rdquo;</strong>, <strong>&ldquo;we&rdquo;</strong>,{' '}
             <strong>&ldquo;us&rdquo;</strong> or <strong>&ldquo;our&rdquo;</strong>) uses cookies and
             similar technologies when you visit or use:
           </p>
@@ -104,7 +104,7 @@ export default function CookiesPolicyPage() {
           <p>They may also be:</p>
           <ul>
             <li>
-              <strong>First-party cookies</strong>, set by the Expedition-Go, Travio Ghana or
+              <strong>First-party cookies</strong>, set by the Expedition-Go Tours, Travio Ghana or
               Travio Africa domain you are visiting; or
             </li>
             <li>
@@ -179,7 +179,7 @@ export default function CookiesPolicyPage() {
             <li>limit how often an advertisement is shown;</li>
             <li>understand whether a booking followed an advertisement;</li>
             <li>build or use audiences for relevant advertising; and</li>
-            <li>show Expedition-Go, Travio Ghana or Travio Africa promotions on other websites and platforms.</li>
+            <li>show Expedition-Go Tours, Travio Ghana or Travio Africa promotions on other websites and platforms.</li>
           </ul>
           <p>
             These technologies may recognise your browser or device across services. If you reject
@@ -197,7 +197,7 @@ export default function CookiesPolicyPage() {
             Category: strictly necessary.
           </p>
           <p>
-            <strong>Account and booking system</strong> — Expedition-Go account, supplier portal
+            <strong>Account and booking system</strong> — Expedition-Go Tours account, supplier portal
             and booking tools. Purpose: login, session management, basket and booking progress.
             Category: strictly necessary.
           </p>
@@ -207,7 +207,7 @@ export default function CookiesPolicyPage() {
             necessary.
           </p>
           <p>
-            <strong>Consent management</strong> — Expedition-Go or its consent-management provider.
+            <strong>Consent management</strong> — Expedition-Go Tours or its consent-management provider.
             Purpose: store and apply cookie choices. Category: strictly necessary.
           </p>
           <p>

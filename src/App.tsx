@@ -1,6 +1,6 @@
 import { useState, useEffect, useLayoutEffect, useMemo, lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation, useParams } from 'react-router-dom'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, MotionConfig, motion } from 'framer-motion'
 import { Toaster } from 'sonner'
 import Navbar from './components/Navbar'
 import Hero from './components/Hero'
@@ -10,10 +10,10 @@ import MoodSection from './components/MoodSection'
 import RecommendSection from './components/RecommendSection'
 import PopularLocations from './components/PopularLocations'
 import ExternalReviewsSection from './components/ExternalReviewsSection'
-import PartnersSection from './components/PartnersSection'
-import WhyBookSection from './components/WhyBookSection'
+import NewsletterSection from './components/NewsletterSection'
 import LocationSearchSkeleton from './components/LocationSearchSkeleton'
 import HomeSectionSkeleton from './components/HomeSectionSkeleton'
+import SupportPageSkeleton from './components/support/SupportPageSkeleton'
 import HistorySections from './components/HistorySections'
 import PreviousSearchSections from './components/PreviousSearchSections'
 
@@ -97,21 +97,9 @@ function HomePage() {
   const data = hasActiveSearch && !isCityError ? (cityHomepage ?? homepage) : homepage
   const loading = hasActiveSearch ? isCityLoading : isLoading
 
-  // Prefetch below-fold section chunks during browser idle time.
-  useEffect(() => {
-    const prefetch = () => {
-      import('./components/TopRatedSection')
-      import('./components/SellOutSection')
-      import('./components/LastMinuteDealsSection')
-      import('./components/NewExperiencesSection')
-      import('./components/TopAttractionsNearbySection')
-    }
-    if ('requestIdleCallback' in window) {
-      (window as any).requestIdleCallback(prefetch, { timeout: 3000 })
-    } else {
-      setTimeout(prefetch, 1000)
-    }
-  }, [])
+  // Below-fold section chunks are imported by MountOnView when the user
+  // approaches them — no idle prefetch needed (it only stole bandwidth from
+  // the initial render on mobile).
 
   // Memoize the title formatter to avoid re-renders in section components
   // (must be above any conditional returns — Rules of Hooks)
@@ -173,16 +161,18 @@ function HomePage() {
       />
       {/* PopularLocations: hidden when personalized per spec */}
       {!hasActiveSearch && <PopularLocations preloaded={data?.destinations} />}
-      <Suspense fallback={<HomeSectionSkeleton />}><TopRatedSection preloaded={data?.topRated} isLoading={loading} title={locationTitle?.('Top Rated')} location={locationFilter} backfill={data?.topRatedBackfill} /></Suspense>
-      <Suspense fallback={<HomeSectionSkeleton />}><SellOutSection preloaded={data?.sellOut} isLoading={loading} title={locationTitle?.('Likely To Sell Out')} location={locationFilter} backfill={data?.sellOutBackfill} /></Suspense>
-      <Suspense fallback={<HomeSectionSkeleton />}><LastMinuteDealsSection preloaded={data?.offers} isLoading={loading} title={locationTitle?.('Special Offers')} location={locationFilter} /></Suspense>
-      <Suspense fallback={<HomeSectionSkeleton />}><NewExperiencesSection isLoading={loading} title={locationTitle?.('New Experiences')} location={locationFilter} backfill={data?.newExperiencesBackfill} /></Suspense>
-      <Suspense fallback={<HomeSectionSkeleton />}><TopAttractionsNearbySection preloaded={data?.attractions} title={locationTitle?.('Top Attractions Nearby')} location={locationFilter} /></Suspense>
-      <MountOnView><ExternalReviewsSection /></MountOnView>
-      <MountOnView><PreviousSearchSections /></MountOnView>
-      {/* Trust block only on the generic homepage (matches the prototype) */}
-      {!hasActiveSearch && <MountOnView><PartnersSection /></MountOnView>}
-      {!hasActiveSearch && <MountOnView><WhyBookSection /></MountOnView>}
+      {/* Below-the-fold content: off-screen sections skip style/layout/paint
+          via `content-visibility: auto` (see .home-deferred in index.css). */}
+      <div className="home-deferred">
+        <MountOnView><Suspense fallback={<HomeSectionSkeleton />}><TopRatedSection preloaded={data?.topRated} isLoading={loading} title={locationTitle?.('Top Rated')} location={locationFilter} backfill={data?.topRatedBackfill} /></Suspense></MountOnView>
+        <MountOnView><Suspense fallback={<HomeSectionSkeleton />}><SellOutSection preloaded={data?.sellOut} isLoading={loading} title={locationTitle?.('Likely To Sell Out')} location={locationFilter} backfill={data?.sellOutBackfill} /></Suspense></MountOnView>
+        <MountOnView><Suspense fallback={<HomeSectionSkeleton />}><LastMinuteDealsSection preloaded={data?.offers} isLoading={loading} title={locationTitle?.('Special Offers')} location={locationFilter} /></Suspense></MountOnView>
+        <MountOnView><Suspense fallback={<HomeSectionSkeleton />}><NewExperiencesSection isLoading={loading} title={locationTitle?.('New Experiences')} location={locationFilter} backfill={data?.newExperiencesBackfill} /></Suspense></MountOnView>
+        <MountOnView><Suspense fallback={<HomeSectionSkeleton />}><TopAttractionsNearbySection preloaded={data?.attractions} title={locationTitle?.('Top Attractions Nearby')} location={locationFilter} /></Suspense></MountOnView>
+        <MountOnView><ExternalReviewsSection /></MountOnView>
+        <MountOnView><NewsletterSection /></MountOnView>
+        <MountOnView><PreviousSearchSections /></MountOnView>
+      </div>
       <Footer />
     </SellOutProvider>
   )
@@ -329,10 +319,10 @@ function AppContent() {
           <Route path="/search" element={
             <SearchResultsPage />
           } />
-          <Route path="/help-centre" element={<HelpCentrePage />} />
-          <Route path="/contact-us" element={<ContactUsPage />} />
+          <Route path="/help-centre" element={<Suspense fallback={<SupportPageSkeleton />}><HelpCentrePage /></Suspense>} />
+          <Route path="/contact-us" element={<Suspense fallback={<SupportPageSkeleton />}><ContactUsPage /></Suspense>} />
           <Route path="/refund-policy" element={<RefundPolicyPage />} />
-          <Route path="/faq" element={<FAQPage />} />
+          <Route path="/faq" element={<Suspense fallback={<SupportPageSkeleton />}><FAQPage /></Suspense>} />
           <Route path="/about-us" element={<AboutUsPage />} />
           <Route path="/careers" element={<CareersPage />} />
           <Route path="/partnerships" element={<PartnershipsPage />} />
@@ -432,25 +422,27 @@ function AppContent() {
 
 function App() {
   return (
-    <BrowserRouter>
-      <CookieConsentProvider>
-        <WishlistProvider>
-          <AuthProvider>
-            <ContinuePlanningProvider>
-              <LocationSearchProvider>
-                <SearchInputProvider>
-                  <AppContent />
-                  {/* Consent UI lives outside the route tree so a choice can be
-                      made (or revisited) on any page, including the dashboard. */}
-                  <CookieBanner />
-                  <CookiePreferences />
-                </SearchInputProvider>
-              </LocationSearchProvider>
-            </ContinuePlanningProvider>
-          </AuthProvider>
-        </WishlistProvider>
-      </CookieConsentProvider>
-    </BrowserRouter>
+    <MotionConfig reducedMotion="user">
+      <BrowserRouter>
+        <CookieConsentProvider>
+          <WishlistProvider>
+            <AuthProvider>
+              <ContinuePlanningProvider>
+                <LocationSearchProvider>
+                  <SearchInputProvider>
+                    <AppContent />
+                    {/* Consent UI lives outside the route tree so a choice can
+                        be made (or revisited) on any page, including the dashboard. */}
+                    <CookieBanner />
+                    <CookiePreferences />
+                  </SearchInputProvider>
+                </LocationSearchProvider>
+              </ContinuePlanningProvider>
+            </AuthProvider>
+          </WishlistProvider>
+        </CookieConsentProvider>
+      </BrowserRouter>
+    </MotionConfig>
   )
 }
 

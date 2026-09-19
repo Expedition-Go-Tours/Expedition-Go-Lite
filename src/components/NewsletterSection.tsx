@@ -1,41 +1,86 @@
-import { useTranslation } from 'react-i18next'
+import { useState, type FormEvent } from 'react'
+import { motion, useReducedMotion } from 'framer-motion'
+import { Send, CheckCircle } from 'lucide-react'
+import newsletterImg from '../assets/newsletter-accra.jpg'
 import './NewsletterSection.css'
-import heroSrc from '../assets/newsletter-hero.jpg'
 
 export default function NewsletterSection() {
-  const { t } = useTranslation()
+  const [email, setEmail] = useState('')
+  const [submitted, setSubmitted] = useState(false)
+  const reduce = useReducedMotion()
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault()
+    if (!email.trim()) return
+    setSubmitted(true)
+    setEmail('')
+  }
 
   return (
     <section className="newsletter-section">
       <div className="newsletter-container">
-        <div className="newsletter-viewport">
-          <div className="newsletter-card">
-        <div className="newsletter-image">
-          <img src={heroSrc} alt={t('newsletter.imageAlt')} loading="lazy" decoding="async" width={600} height={400} />
-        </div>
-        <div className="newsletter-content">
-          <h2 className="newsletter-heading">{t('newsletter.title')}</h2>
-          <p className="newsletter-text">
-            {t('newsletter.description')}
+        <motion.div
+          className="newsletter-image-wrap"
+          initial={reduce ? undefined : { opacity: 0, x: -30 }}
+          whileInView={reduce ? undefined : { opacity: 1, x: 0 }}
+          viewport={{ once: true, margin: '-60px' }}
+          transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
+        >
+          <img
+            src={newsletterImg}
+            alt="Accra cityscape at sunset"
+            className="newsletter-image"
+            loading="lazy"
+            width={560}
+            height={400}
+          />
+          <div className="newsletter-image-overlay" />
+        </motion.div>
+
+        <motion.div
+          className="newsletter-content"
+          initial={reduce ? undefined : { opacity: 0, x: 30 }}
+          whileInView={reduce ? undefined : { opacity: 1, x: 0 }}
+          viewport={{ once: true, margin: '-60px' }}
+          transition={{ duration: 0.6, delay: 0.15, ease: [0.25, 0.46, 0.45, 0.94] }}
+        >
+          <span className="newsletter-eyebrow">Stay in the loop</span>
+          <h2 className="newsletter-title">
+            Never Miss a <span className="newsletter-highlight">Deal</span> or <span className="newsletter-highlight">Destination</span>
+          </h2>
+          <p className="newsletter-sub">
+            Get exclusive travel tips, early-bird offers, and curated Ghana experiences
+            delivered straight to your inbox. No spam, just adventures.
           </p>
-          <form className="newsletter-form" onSubmit={(e) => e.preventDefault()}>
-            <div className="newsletter-input-wrap">
-              <input
-                type="email"
-                className="newsletter-input"
-                placeholder={t('newsletter.emailPlaceholder')}
-                required
-                autoComplete="email"
-              />
-              <button type="submit" className="newsletter-btn">{t('newsletter.signUp')}</button>
+
+          {submitted ? (
+            <div className="newsletter-success">
+              <CheckCircle size={20} />
+              <span>You are in! Watch your inbox for something special.</span>
             </div>
-          </form>
-          <p className="newsletter-disclaimer">
-            {t('newsletter.disclaimer')} <a href="#" className="newsletter-link">{t('newsletter.privacyLink')}</a>.
-          </p>
-        </div>
-          </div>
-        </div>
+          ) : (
+            <form className="newsletter-form" onSubmit={handleSubmit}>
+              <div className="newsletter-input-wrap">
+                <input
+                  type="email"
+                  className="newsletter-input"
+                  placeholder="Enter your email address"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  aria-label="Email address"
+                />
+                <button type="submit" className="newsletter-btn" aria-label="Subscribe">
+                  <Send size={18} />
+                  <span className="newsletter-btn-text">Subscribe</span>
+                </button>
+              </div>
+              <p className="newsletter-disclaimer">
+                By subscribing you agree to our Privacy Policy. Unsubscribe anytime.
+              </p>
+            </form>
+          )}
+        </motion.div>
       </div>
     </section>
   )

@@ -24,8 +24,10 @@ export default function RecommendSection({ preloaded, isLoading, title, location
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
   const { data: personalizedTours } = useRecommended(12, !preloaded)
-  const { data: liveTours } = useRecommendedTours(12)
-  const { data: offerTours } = useExpeditionOffers(12)
+  // Only fall back to live endpoints when the aggregate homepage payload did
+  // not supply the section — otherwise these duplicate the boot requests.
+  const { data: liveTours } = useRecommendedTours(12, !preloaded)
+  const { data: offerTours } = useExpeditionOffers(12, !preloaded)
 
   // Prefer preloaded > personalized > liveTours
   const baseTours = preloaded?.length

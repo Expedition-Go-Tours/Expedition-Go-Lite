@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
 import { Car, Languages as LanguagesIcon, ShieldCheck, Ban, TrendingUp, BedDouble, Compass } from 'lucide-react'
@@ -13,11 +14,12 @@ import OptimizedImage from '@/components/shared/OptimizedImage'
 import type { SpecialOfferData } from '../hooks/useExpeditionTours'
 import { bestOfferDiscountAmount, hasActiveOffer } from '../hooks/useExpeditionTours'
 import { useCombinedTourStats } from '../hooks/useExternalReviews'
+import { shouldIdlePrefetch } from '../lib/perfProfile'
 
-// Tour cards open the detail page in a new tab (`window.open`). Warming the
-// lazy route chunk here puts its hashed JS/CSS in the browser HTTP cache
-// (`/assets/*` is immutable per vercel.json), so the new tab doesn't discover
-// and download the route after boot — it reads it from disk cache. Runs once
+// Tour cards open the detail page in a new tab so a traveller never loses the
+// list they were browsing. Warming the lazy route chunk here puts its hashed
+// JS/CSS in the browser HTTP cache (`/assets/*` is immutable per vercel.json),
+// so the new tab renders without flashing the Suspense fallback. Runs once
 // per session, at idle or on first hover/focus/touch.
 let tourRouteWarmed = false
 function warmTourRouteChunk() {
@@ -61,10 +63,15 @@ interface TourCardProps extends Tour {
   bodyOfferBadgesOnMobile?: boolean
   /** Mark the card's first image as the LCP (eager + fetchpriority=high). */
   priority?: boolean
+  /** Open the tour in a new tab instead of SPA navigation. Defaults to true —
+      every tour click keeps the current page; pass false to opt a surface
+      back into same-tab routing. */
+  openInNewTab?: boolean
 }
 
-export default function TourCard({ id, title, duration, features, price, rating, reviews, location, image, photos, discount, difficulty, cancellationPolicy, pickupIncluded, accommodationIncluded, meetingMode, category, languages, source, externalUrl, slug, isNew, hideSourceBadge, hideFeatures, imageClean, priceValue, specialOffers, likelyToSellOut, hideOfferBadge, compactDurationOnMobile, bodyOfferBadgesOnMobile, priority }: TourCardProps) {
+export default function TourCard({ id, title, duration, features, price, rating, reviews, location, image, photos, discount, difficulty, cancellationPolicy, pickupIncluded, accommodationIncluded, meetingMode, category, languages, source, externalUrl, slug, isNew, hideSourceBadge, hideFeatures, imageClean, priceValue, specialOffers, likelyToSellOut, hideOfferBadge, compactDurationOnMobile, bodyOfferBadgesOnMobile, priority, openInNewTab = true }: TourCardProps) {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist()
   const { isLikelyToSellOut } = useSellOutContext()
   const showSellOutTag = likelyToSellOut || isLikelyToSellOut({ id, title })
@@ -87,7 +94,10 @@ export default function TourCard({ id, title, duration, features, price, rating,
   }, [])
 
   // Idle warm so touch users (no hover) also get a cached route chunk.
+  // Skipped on save-data/2G-3G connections so it can't compete with the page
+  // the user is actually waiting for.
   useEffect(() => {
+    if (!shouldIdlePrefetch()) return
     const w = window as Window & {
       requestIdleCallback?: (cb: () => void, opts?: { timeout?: number }) => number
       cancelIdleCallback?: (id: number) => void
@@ -191,13 +201,21 @@ export default function TourCard({ id, title, duration, features, price, rating,
     }
   }
 
-  const handleCardClick = () => {
+  const handleCardClick = (event?: React.MouseEvent) => {
     // A horizontal swipe on the image ends with a click — don't navigate.
     if (swipeJustHappened.current) {
       swipeJustHappened.current = false
       return
     }
-    window.open(`/tour/${tourSlug}`, '_blank', 'noopener')
+    const url = `/tour/${tourSlug}`
+    // Modifier/middle clicks keep their browser meaning: open a new tab.
+    const wantsNewTab = openInNewTab
+      || (event != null && (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button === 1))
+    if (wantsNewTab) {
+      window.open(url, '_blank', 'noopener')
+      return
+    }
+    navigate(url)
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -237,6 +255,7 @@ export default function TourCard({ id, title, duration, features, price, rating,
     <div
       className={`tour-card${imageClean ? ' tour-card-clean' : ''}`}
       onClick={handleCardClick}
+      onAuxClick={(e) => { if (e.button === 1) handleCardClick(e) }}
       onKeyDown={handleKeyDown}
       onMouseEnter={warmTourRouteChunk}
       onFocus={warmTourRouteChunk}
@@ -274,7 +293,7 @@ export default function TourCard({ id, title, duration, features, price, rating,
             return (
               <div key={`${src}-${i}`} className={`tour-card-slide${isActive ? ' tour-card-slide-active' : ''}`}>
                 {shouldLoad ? (
-                  <OptimizedImage src={src} alt={title} width={600} height={400} fit="crop" loading={isActive ? 'eager' : 'lazy'} priority={priority && i === 0} />
+                  <OptimizedImage src={src} alt={title} width={600} height={400} fit="crop" loading={priority && i === 0 ? 'eager' : 'lazy'} priority={priority && i === 0} />
                 ) : null}
               </div>
             )

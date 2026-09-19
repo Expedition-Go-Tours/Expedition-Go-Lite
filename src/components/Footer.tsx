@@ -1,9 +1,11 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronDown } from 'lucide-react'
 import { useCurrency, availableCurrencies } from '../contexts/CurrencyContext'
 import { useCookieConsent } from '../context/CookieConsentContext'
+import { prefetchRouteChunk } from '../lib/prefetchRouteChunks'
 import LanguageCurrencyModal from './LanguageCurrencyModal'
 import './Footer.css'
 import visaSrc from '../assets/icons/visa.svg'
@@ -20,6 +22,32 @@ const LANGUAGES = [
   { code: 'de', flag: '🇩🇪', label: 'Deutsch' },
   { code: 'nl', flag: '🇳🇱', label: 'Nederlands' },
 ]
+
+/**
+ * Footer link: same-tab SPA navigation (never a new tab — social links below
+ * stay external), with the destination chunk warmed on hover/focus so the
+ * route transition doesn't flash the Suspense fallback.
+ */
+function FooterLink({
+  to,
+  className = 'footer-link',
+  children,
+}: {
+  to: string
+  className?: string
+  children: ReactNode
+}) {
+  return (
+    <Link
+      to={to}
+      className={className}
+      onPointerEnter={() => prefetchRouteChunk(to)}
+      onFocus={() => prefetchRouteChunk(to)}
+    >
+      {children}
+    </Link>
+  )
+}
 
 interface FooterAccordionProps {
   title: string
@@ -177,9 +205,9 @@ export default function Footer() {
           <div className="footer-col">
             <FooterAccordion title={t('footer.support')}>
               <div className="footer-links">
-                <a href="/help-centre" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.helpCentre')}</a>
-                <a href="/contact-us" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.contactUs')}</a>
-                <a href="/faq" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.faq')}</a>
+                <FooterLink to="/help-centre">{t('footer.helpCentre')}</FooterLink>
+                <FooterLink to="/contact-us">{t('footer.contactUs')}</FooterLink>
+                <FooterLink to="/faq">{t('footer.faq')}</FooterLink>
               </div>
             </FooterAccordion>
           </div>
@@ -188,11 +216,11 @@ export default function Footer() {
           <div className="footer-col">
             <FooterAccordion title={t('footer.company')}>
               <div className="footer-links">
-                <a href="/about-us" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.aboutUs')}</a>
-                <a href="/careers" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.careers')}</a>
-                <a href="/partnerships" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.partnerships')}</a>
-                <a href="/foundation" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.foundation')}</a>
-                <a href="/supplier-terms" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.supplierTerms')}</a>
+                <FooterLink to="/about-us">{t('footer.aboutUs')}</FooterLink>
+                <FooterLink to="/careers">{t('footer.careers')}</FooterLink>
+                <FooterLink to="/partnerships">{t('footer.partnerships')}</FooterLink>
+                <FooterLink to="/foundation">{t('footer.foundation')}</FooterLink>
+                <FooterLink to="/supplier-terms">{t('footer.supplierTerms')}</FooterLink>
               </div>
             </FooterAccordion>
           </div>
@@ -201,11 +229,11 @@ export default function Footer() {
           <div className="footer-col">
             <FooterAccordion title={t('footer.supplierZone')}>
               <div className="footer-links">
-                <a href="/content-creators" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.asContentCreator')}</a>
-                <a href="/supplier/list-experience" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.asSupplier')}</a>
-                <a href="/hotels" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.asAccommodationProvider')}</a>
-                <a href="/travel-agents" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.asTravelAgentReseller')}</a>
-                <a href="/transport-providers" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.asTransportProvider')}</a>
+                <FooterLink to="/content-creators">{t('footer.asContentCreator')}</FooterLink>
+                <FooterLink to="/supplier/list-experience">{t('footer.asSupplier')}</FooterLink>
+                <FooterLink to="/hotels">{t('footer.asAccommodationProvider')}</FooterLink>
+                <FooterLink to="/travel-agents">{t('footer.asTravelAgentReseller')}</FooterLink>
+                <FooterLink to="/transport-providers">{t('footer.asTransportProvider')}</FooterLink>
               </div>
             </FooterAccordion>
           </div>
@@ -214,9 +242,9 @@ export default function Footer() {
           <div className="footer-col">
             <FooterAccordion title={t('footer.explore')}>
               <div className="footer-links">
-                <a href="/" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.home')}</a>
-                <a href="/tours" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.tours')}</a>
-                <a href="/blog" target="_blank" rel="noopener noreferrer" className="footer-link">{t('footer.blog')}</a>
+                <FooterLink to="/">{t('footer.home')}</FooterLink>
+                <FooterLink to="/tours">{t('footer.tours')}</FooterLink>
+                <FooterLink to="/blog">{t('footer.blog')}</FooterLink>
               </div>
             </FooterAccordion>
           </div>
@@ -244,13 +272,13 @@ export default function Footer() {
             </div>
           </div>
           <div className="footer-bottom-links">
-            <a href="/terms-and-conditions" target="_blank" rel="noopener noreferrer" className="footer-bottom-link">{t('footer.termsConditions')}</a>
+            <FooterLink to="/terms-and-conditions" className="footer-bottom-link">{t('footer.termsConditions')}</FooterLink>
             <span className="footer-bottom-divider" aria-hidden="true" />
-            <a href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="footer-bottom-link">{t('footer.privacyPolicy')}</a>
+            <FooterLink to="/privacy-policy" className="footer-bottom-link">{t('footer.privacyPolicy')}</FooterLink>
             <span className="footer-bottom-divider" aria-hidden="true" />
-            <a href="/refund-policy" target="_blank" rel="noopener noreferrer" className="footer-bottom-link">{t('footer.refundPolicy')}</a>
+            <FooterLink to="/refund-policy" className="footer-bottom-link">{t('footer.refundPolicy')}</FooterLink>
             <span className="footer-bottom-divider" aria-hidden="true" />
-            <a href="/cookies-policy" target="_blank" rel="noopener noreferrer" className="footer-bottom-link">{t('footer.cookiesPolicy')}</a>
+            <FooterLink to="/cookies-policy" className="footer-bottom-link">{t('footer.cookiesPolicy')}</FooterLink>
             <span className="footer-bottom-divider" aria-hidden="true" />
             {/* Reopens the consent panel. The Cookie Policy commits to this
                 being available from the footer at any time. */}

@@ -10,6 +10,8 @@ import logoSrc from '../assets/expo_trans.png'
 import userSrc from '../assets/icons/User Circle.png'
 import { subscribeToAuthState, signOutUser, getStoredAuthUser, type AuthUser } from '../lib/auth'
 import { readBookingsSeen, writeBookingsSeen } from '../lib/bookingsBadge'
+import { shouldIdlePrefetch } from '../lib/perfProfile'
+import { prefetchSupportPages } from '../lib/prefetchSupport'
 import { useSupplierStatus } from '../hooks/useSupplierStatus'
 import { useMyBookingsCount } from '../hooks/useExpeditionBookings'
 import { useWishlist } from '../context/WishlistContext'
@@ -104,30 +106,56 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
     return () => { unsub.then((fn) => fn()) }
   }, [])
 
+  // Updates the sticky-search state synchronously on scroll — deliberately not
+  // rAF-throttled, because iOS Safari pauses rAF during momentum scrolling
+  // (the bar would only stick after the user stops). Layout thrash is avoided
+  // instead by writing to the DOM only when the boolean actually flips.
+  const lastStickyRef = useRef(false)
   useEffect(() => {
-    const handleScroll = () => {
-      const heroSearch = document.getElementById('hero-search-bar')
-      if (!heroSearch) return
+    let heroSearch: HTMLElement | null = null
+    let navbarHeight = 64
+
+    const handleNavScroll = () => {
+      if (!heroSearch || !heroSearch.isConnected) {
+        heroSearch = document.getElementById('hero-search-bar')
+        const navbarEl = document.querySelector('.navbar')
+        navbarHeight = navbarEl ? (navbarEl as HTMLElement).clientHeight : 64
+      }
+      if (!heroSearch) {
+        // Left the homepage while sticky — clear the body class so other pages
+        // don't render the compact search.
+        if (lastStickyRef.current) {
+          lastStickyRef.current = false
+          document.body.classList.remove('hero--search-sticky')
+          setSearchBarSticky(false)
+        }
+        return
+      }
 
       if (window.scrollY < 10) {
-        document.body.classList.remove('hero--search-sticky')
-        setSearchBarSticky(false)
+        if (lastStickyRef.current) {
+          lastStickyRef.current = false
+          document.body.classList.remove('hero--search-sticky')
+          setSearchBarSticky(false)
+        }
         return
       }
       const rect = heroSearch.getBoundingClientRect()
       if (rect.height === 0) return
-      const navbarEl = document.querySelector('.navbar')
-      const navbarHeight = navbarEl ? navbarEl.clientHeight : 64
       const sticky = rect.top <= navbarHeight + 4
+      if (sticky === lastStickyRef.current) return
+      lastStickyRef.current = sticky
       document.body.classList.toggle('hero--search-sticky', sticky)
       setSearchBarSticky(sticky)
     }
 
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    handleScroll()
+    window.addEventListener('scroll', handleNavScroll, { passive: true })
+    window.addEventListener('resize', handleNavScroll)
+    handleNavScroll()
 
     return () => {
-      window.removeEventListener('scroll', handleScroll)
+      window.removeEventListener('scroll', handleNavScroll)
+      window.removeEventListener('resize', handleNavScroll)
       document.body.classList.remove('hero--search-sticky')
     }
   }, [])
@@ -245,6 +273,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
   }, [])
 
   useEffect(() => {
+    if (!shouldIdlePrefetch()) return
     const canIdle = 'requestIdleCallback' in window
     const id = canIdle
       ? window.requestIdleCallback(prefetchSupplierRoutes, { timeout: 3000 })
@@ -285,6 +314,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
   // tap on the wishlist/bookings icons is instant even on touch devices
   // (which never fire the hover/focus prefetches above).
   useEffect(() => {
+    if (!shouldIdlePrefetch()) return
     const prefetchDashboardIdle = () => {
       import('../pages/dashboard/DashboardLayout').catch(() => {})
       import('../pages/Wishlist').catch(() => {})
@@ -634,6 +664,8 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
                       key={link.label}
                       href="#"
                       className="nav-dropdown-item"
+                      onPointerEnter={link.key === 'Contact' ? prefetchSupportPages : undefined}
+                      onFocus={link.key === 'Contact' ? prefetchSupportPages : undefined}
                       onClick={(e) => {
                         e.preventDefault()
                         e.stopPropagation()
@@ -822,7 +854,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
               </svg>
               {t('nav.about')}
             </a>
-            <a href="#" className="nav-mobile-link" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMobileMenuOpen(false); navigate('/contact-us') }}>
+            <a href="#" className="nav-mobile-link" onPointerEnter={prefetchSupportPages} onFocus={prefetchSupportPages} onClick={(e) => { e.preventDefault(); e.stopPropagation(); setMobileMenuOpen(false); navigate('/contact-us') }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
                 <polyline points="22,6 12,13 2,6" />

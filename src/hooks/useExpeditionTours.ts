@@ -1742,8 +1742,11 @@ export function useExpeditionTour(slug: string | undefined) {
     // edit, so this query always treats its data as stale and refetches on
     // every mount — the tour detail page (and its booking widget) should
     // always reflect the supplier's current pricing and availability.
-    staleTime: 0,
-    refetchOnMount: 'always',
+    // Freshness vs. mobile cost: treat the cached tour as usable for a short
+    // window so back/forward navigation doesn't refetch every mount (each
+    // remount otherwise costs a round trip + skeleton flash on 4G). Window
+    // focus still refreshes it, and checkout re-validates before payment.
+    staleTime: 60_000,
     // The global client default turns refetchOnWindowFocus off; the tour
     // detail page must stay fresh even while the tab sits in the background
     // (e.g. an admin just approved a supplier's update), so refetch on focus.
@@ -2244,10 +2247,11 @@ export function hasActiveOffer(specialOffers: SpecialOfferData[] | undefined): b
  * fetched to decide eligibility. The catalog is small and the detail endpoint
  * is HTTP-cached (max-age=60), so this stays cheap after the first load.
  */
-export function useExpeditionOffers(limit = 12) {
+export function useExpeditionOffers(limit = 12, enabled = true) {
   return useQuery({
     queryKey: ['expedition', 'offers', limit],
     staleTime: 60_000,
+    enabled,
     queryFn: async (): Promise<TourCardData[]> => {
       const payload = await expeditionFetchRaw(`/tours?limit=${limit}&sortBy=views&sortOrder=desc`)
       const tours: any[] = payload.data?.tours ?? payload.tours ?? []
@@ -2318,9 +2322,10 @@ async function fetchSimilarToursFallback(excludeTourId: string | undefined, cate
  * manual curation. Curated tours still take priority in ordering; any
  * new tour not yet curated is appended (deduped) so nothing is lost.
  */
-export function useRecommendedTours(limit: number = 12) {
+export function useRecommendedTours(limit: number = 12, enabled = true) {
   return useQuery({
     queryKey: ['expedition', 'tours', 'recommended', limit],
+    enabled,
     queryFn: async (): Promise<TourCardData[]> => {
       const [curatedResult, newestResult] = await Promise.allSettled([
         expeditionFetchRaw(`/expedition/tours?limit=${limit}`),

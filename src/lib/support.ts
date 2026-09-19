@@ -25,5 +25,4 @@ export interface SupportHoursEntry {
 export const SUPPORT_HOURS: SupportHoursEntry[] = [
   { labelKey: 'help.hours1Label', valueKey: 'help.hours1Value' },
   { labelKey: 'help.hours2Label', valueKey: 'help.hours2Value' },
-  { labelKey: 'help.hours3Label', valueKey: 'help.hours3Value', closed: true },
 ]

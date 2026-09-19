@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
-import { GoogleOAuthProvider, useGoogleOneTapLogin } from '@react-oauth/google'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { useAuthUser } from '../hooks/useAuthUser'
 import {
@@ -7,6 +6,11 @@ import {
   getGoogleClientId,
   googleOneTapSupported,
 } from '../lib/auth'
+import { prefersReducedData } from '../lib/perfProfile'
+
+// Only loaded after the prompt arms, keeping @react-oauth/google out of the
+// entry bundle.
+const GoogleOneTapLazy = lazy(() => import('./GoogleOneTapLazy'))
 
 /**
  * Homepage Google One Tap for signed-out visitors.
@@ -62,39 +66,20 @@ export function clearHomeOneTapCaps(): void {
   }
 }
 
-function GoogleOneTapInner() {
-  useGoogleOneTapLogin({
-    onSuccess: async (credentialResponse) => {
-      markHomeOneTapShown()
-      const credential = credentialResponse?.credential
-      if (!credential) return
-      try {
-        await signInWithGoogleOneTap(credential)
-        toast.success('Signed in successfully')
-      } catch (err: unknown) {
-        toast.error(err instanceof Error ? err.message : 'Google sign in failed')
-      }
-    },
-    onError: () => {
-      // Covers the visitor dismissing the prompt — don't re-ask this session.
-      markHomeOneTapShown()
-    },
-    cancel_on_tap_outside: false,
-  })
-
-  return null
-}
-
 export default function GoogleOneTapPrompt() {
   const user = useAuthUser()
   const [armed, setArmed] = useState(false)
   const prevUserRef = useRef(user)
 
   // Arm (after a short delay) only while signed out and within the caps.
+  // Skip on save-data/2G-3G connections: the prompt pulls Google's GSI script
+  // and 1.2 MB lottie-style payloads have no place competing with first paint
+  // on a constrained connection.
   useEffect(() => {
     if (user || !googleOneTapSupported()) return
     if (!shouldPromptHomeOneTap()) return
-    const timer = window.setTimeout(() => setArmed(true), 2000)
+    if (prefersReducedData()) return
+    const timer = window.setTimeout(() => setArmed(true), 3000)
     return () => window.clearTimeout(timer)
   }, [user])
 
@@ -110,8 +95,24 @@ export default function GoogleOneTapPrompt() {
   if (user || !googleOneTapSupported() || !armed) return null
 
   return (
-    <GoogleOAuthProvider clientId={getGoogleClientId()}>
-      <GoogleOneTapInner />
-    </GoogleOAuthProvider>
+    <Suspense fallback={null}>
+      <GoogleOneTapLazy
+        clientId={getGoogleClientId()}
+        onSuccess={async (credential) => {
+          markHomeOneTapShown()
+          if (!credential) return
+          try {
+            await signInWithGoogleOneTap(credential)
+            toast.success('Signed in successfully')
+          } catch (err: unknown) {
+            toast.error(err instanceof Error ? err.message : 'Google sign in failed')
+          }
+        }}
+        onError={() => {
+          // Covers the visitor dismissing the prompt — don't re-ask this session.
+          markHomeOneTapShown()
+        }}
+      />
+    </Suspense>
   )
 }
