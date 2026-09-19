@@ -52,7 +52,7 @@ export function matchDestination(title: string, available: string[]): string | n
 
 /** Build the local tours link for a resolved destination (falls back to all tours). */
 export function buildTourLink(destination: string | null): string {
-  return destination ? `/tours?location=${encodeURIComponent(destination)}` : '/tours'
+  return destination ? `/tours?place=${encodeURIComponent(destination)}` : '/tours'
 }
 
 // ─── Review title → specific tour matching ───────────────────────────────────

@@ -46,7 +46,7 @@ describe('matchDestination', () => {
 
 describe('buildTourLink', () => {
   it('builds an encoded local tours link', () => {
-    expect(buildTourLink('Cape Coast')).toBe('/tours?location=Cape%20Coast')
+    expect(buildTourLink('Cape Coast')).toBe('/tours?place=Cape%20Coast')
   })
 
   it('falls back to all local tours when no destination resolves', () => {
