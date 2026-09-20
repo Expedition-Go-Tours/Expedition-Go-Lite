@@ -39,14 +39,14 @@ describe('chatApi', () => {
   it('getConversations returns the conversation list', async () => {
     mockFetchWithAuth.mockResolvedValueOnce(jsonResponse({ conversations: [conversation] }))
     const result = await getConversations()
-    expect(mockFetchWithAuth).toHaveBeenCalledWith('/chat/conversations')
+    expect(mockFetchWithAuth).toHaveBeenCalledWith('/expedition/chat/conversations')
     expect(result).toEqual([conversation])
   })
 
   it('getOrCreateConversation posts recipient + type and returns the conversation', async () => {
     mockFetchWithAuth.mockResolvedValueOnce(jsonResponse({ conversation }))
     const result = await getOrCreateConversation('supplier-1', 'SUPPLIER_CUSTOMER')
-    expect(mockFetchWithAuth).toHaveBeenCalledWith('/chat/conversations', {
+    expect(mockFetchWithAuth).toHaveBeenCalledWith('/expedition/chat/conversations', {
       method: 'POST',
       body: JSON.stringify({ recipientId: 'supplier-1', type: 'SUPPLIER_CUSTOMER' }),
     })
@@ -58,7 +58,7 @@ describe('chatApi', () => {
     mockFetchWithAuth.mockResolvedValueOnce(jsonResponse(page))
     const result = await getMessages('conv-1', '2026-08-27T08:00:00.000Z', 30)
     expect(mockFetchWithAuth).toHaveBeenCalledWith(
-      '/chat/conversations/conv-1/messages?limit=30&cursor=2026-08-27T08%3A00%3A00.000Z',
+      '/expedition/chat/conversations/conv-1/messages?limit=30&cursor=2026-08-27T08%3A00%3A00.000Z',
     )
     expect(result).toEqual(page)
   })
@@ -67,7 +67,7 @@ describe('chatApi', () => {
     const message = { id: 'm2', conversationId: 'conv-1', senderId: 'u1', content: 'hello', createdAt: '2026-08-27T10:00:00.000Z' }
     mockFetchWithAuth.mockResolvedValueOnce(jsonResponse({ message }))
     const result = await sendMessageRest('conv-1', 'hello', { url: 'https://img', type: 'image' })
-    expect(mockFetchWithAuth).toHaveBeenCalledWith('/chat/conversations/conv-1/messages', {
+    expect(mockFetchWithAuth).toHaveBeenCalledWith('/expedition/chat/conversations/conv-1/messages', {
       method: 'POST',
       body: JSON.stringify({ content: 'hello', attachmentUrl: 'https://img', attachmentType: 'image' }),
     })
@@ -77,13 +77,13 @@ describe('chatApi', () => {
   it('markConversationAsRead patches the read endpoint', async () => {
     mockFetchWithAuth.mockResolvedValueOnce({ ok: true } as Response)
     await markConversationAsRead('conv-1')
-    expect(mockFetchWithAuth).toHaveBeenCalledWith('/chat/conversations/conv-1/read', { method: 'PATCH' })
+    expect(mockFetchWithAuth).toHaveBeenCalledWith('/expedition/chat/conversations/conv-1/read', { method: 'PATCH' })
   })
 
   it('hideMessageForMe posts to the hide-for-me endpoint', async () => {
     mockFetchWithAuth.mockResolvedValueOnce({ ok: true, json: async () => ({ status: 'success', data: null }) } as unknown as Response)
     await hideMessageForMe('conv-1', 'm1')
-    expect(mockFetchWithAuth).toHaveBeenCalledWith('/chat/conversations/conv-1/messages/m1/hide-for-me', {
+    expect(mockFetchWithAuth).toHaveBeenCalledWith('/expedition/chat/conversations/conv-1/messages/m1/hide-for-me', {
       method: 'POST',
     })
   })
@@ -98,8 +98,8 @@ describe('chatApi', () => {
       .mockResolvedValueOnce({ ok: false, status: 404 } as Response)
       .mockResolvedValueOnce(jsonResponse({ expeditionId: 'exp-1' }))
     expect(await getSupportUserId()).toBe('exp-1')
-    expect(mockFetchWithAuth).toHaveBeenNthCalledWith(1, '/chat/admin-support')
-    expect(mockFetchWithAuth).toHaveBeenNthCalledWith(2, '/chat/expedition-support')
+    expect(mockFetchWithAuth).toHaveBeenNthCalledWith(1, '/expedition/chat/admin-support')
+    expect(mockFetchWithAuth).toHaveBeenNthCalledWith(2, '/expedition/chat/expedition-support')
   })
 
   it('getSupportUserId returns the admin support identity when available', async () => {
@@ -120,7 +120,7 @@ describe('chatApi', () => {
     const result = await uploadChatImage(file)
     expect(result).toEqual({ url: 'https://cdn/x.jpg', type: 'image' })
     const [path, options] = mockFetchWithAuth.mock.calls[0]
-    expect(path).toBe('/chat/upload')
+    expect(path).toBe('/expedition/chat/upload')
     expect(options?.method).toBe('POST')
     expect(options?.body).toBeInstanceOf(FormData)
   })
