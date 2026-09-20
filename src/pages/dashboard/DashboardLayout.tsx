@@ -14,7 +14,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { toast } from "sonner";
-import { signOutUser } from "@/lib/auth";
+import { signOutUser, setAuthReturnTo } from "@/lib/auth";
 import { useAuthUser } from "@/hooks/useAuthUser";
 import { useChat } from "@/chat/ChatContext";
 import logoSrc from "../../assets/expo_trans.png";
@@ -356,6 +356,7 @@ export default function DashboardLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { unreadCount } = useChat();
+  const user = useAuthUser();
 
   // Keep every visited dashboard page mounted (hidden, not unmounted) so
   // navigating away and back never remounts the page / refetches data.
@@ -372,6 +373,18 @@ export default function DashboardLayout() {
   // back to Bookings/Wishlist/etc. instead of being stranded on a bare page.
   const modifyMatch = location.pathname.match(/^\/dashboard\/bookings\/([^/]+)\/modify$/);
   const modifyBookingId = modifyMatch ? decodeURIComponent(modifyMatch[1]) : null;
+
+  // Account settings requires an authenticated user — signed-out visitors are
+  // sent to login and returned here after signing in.
+  useEffect(() => {
+    if (location.pathname === "/dashboard/settings" && !user) {
+      setAuthReturnTo(location.pathname);
+    }
+  }, [location.pathname, user]);
+
+  if (location.pathname === "/dashboard/settings" && !user) {
+    return <Navigate to="/login" replace />;
+  }
 
   if (!activeRoute && !modifyBookingId) {
     return <Navigate to="/dashboard/bookings" replace />;

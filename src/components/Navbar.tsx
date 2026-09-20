@@ -416,7 +416,9 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
   const dropdownLinks: { label: string; key: string; icon: string }[] = [
     { label: t('nav.about'), key: 'About' as const, icon: 'info' as const },
     { label: t('nav.contact'), key: 'Contact' as const, icon: 'mail' as const },
-    { label: t('nav.accountSettings', 'Account Settings'), key: 'AccountSettings' as const, icon: 'settings' as const },
+    ...(user
+      ? [{ label: t('nav.accountSettings', 'Account Settings'), key: 'AccountSettings' as const, icon: 'settings' as const }]
+      : []),
   ]
 
   const navDropdownOpen =
