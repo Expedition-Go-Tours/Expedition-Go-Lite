@@ -2,7 +2,7 @@
    SUPPORT HUB — Deep Forest Green Design System
    Help Centre · Contact Us · FAQ
    Scoped under .sh-* prefix
-   Fonts: Raleway (body) + GT Esti Pro Display (headings)
+   Fonts: DM Sans (body) + Manrope (headings)
    ============================================================ */
 
 .support-page.sh-hub {
@@ -74,7 +74,7 @@
   padding: 16px 18px;
   background: var(--sh-surface);
   border-right: 1px solid var(--sh-line);
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 13.5px;
   font-weight: 600;
   color: var(--sh-ink);
@@ -171,7 +171,7 @@
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, .22);
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 11.5px;
   font-weight: 700;
   letter-spacing: .1em;
@@ -181,7 +181,7 @@
 
 .sh-title {
   margin: 0 0 16px;
-  font-family: var(--font-heading, 'GT Esti Pro Display', sans-serif);
+  font-family: var(--font-heading, 'Manrope', sans-serif);
   font-size: clamp(2rem, 4.4vw, 3rem);
   font-weight: 800;
   line-height: 1.1;
@@ -192,7 +192,7 @@
 .sh-sub {
   max-width: 610px;
   margin: 0 auto;
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 16.5px;
   line-height: 1.65;
   color: rgba(255, 255, 255, .82);
@@ -219,7 +219,7 @@
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   color: #fff;
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 13.5px;
   font-weight: 700;
   text-decoration: none;
@@ -279,7 +279,7 @@
   border: 0;
   outline: 0;
   background: transparent;
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 15px;
   color: var(--sh-ink);
 }
@@ -301,7 +301,7 @@
   border-radius: 999px;
   background: var(--sh-green-700);
   color: #fff;
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 14px;
   font-weight: 700;
   letter-spacing: 0.02em;
@@ -374,7 +374,7 @@
 }
 
 .sh-search-result-q {
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 14.5px;
   font-weight: 600;
   color: var(--sh-ink);
@@ -396,7 +396,7 @@
   margin-inline: auto;
   padding-top: 4px;
   padding-bottom: 80px;
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
 }
 
 .sh-main--faq {
@@ -420,7 +420,7 @@
 
 .sh-block-title {
   margin: 0 0 20px;
-  font-family: var(--font-heading, 'GT Esti Pro Display', sans-serif);
+  font-family: var(--font-heading, 'Manrope', sans-serif);
   font-size: 23px;
   font-weight: 800;
   letter-spacing: -.02em;
@@ -436,7 +436,7 @@
   align-items: center;
   gap: 6px;
   padding-bottom: 2px;
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 14px;
   font-weight: 700;
   color: var(--sh-green-700);
@@ -470,7 +470,7 @@
 
 .sh-about-title {
   margin: 0 0 10px;
-  font-family: var(--font-heading, 'GT Esti Pro Display', sans-serif);
+  font-family: var(--font-heading, 'Manrope', sans-serif);
   font-size: 21px;
   font-weight: 800;
   color: #fff;
@@ -478,7 +478,7 @@
 
 .sh-about-text {
   margin: 0;
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 15.5px;
   line-height: 1.7;
   color: rgba(255, 255, 255, .78);
@@ -501,7 +501,7 @@
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, .15);
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 13.5px;
   font-weight: 600;
   color: #fff;
@@ -525,7 +525,7 @@
   border-radius: 12px;
   background: rgba(255, 255, 255, .08);
   border: 1px solid rgba(255, 255, 255, .12);
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 13.5px;
   line-height: 1.35;
   font-weight: 600;
@@ -627,7 +627,7 @@
 
 .sh-topic-title {
   margin: 0;
-  font-family: var(--font-heading, 'GT Esti Pro Display', sans-serif);
+  font-family: var(--font-heading, 'Manrope', sans-serif);
   font-size: 17px;
   font-weight: 700;
   letter-spacing: -0.02em;
@@ -636,7 +636,7 @@
 
 .sh-topic-desc {
   margin: 0;
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 14.5px;
   line-height: 1.6;
   color: var(--sh-muted);
@@ -648,7 +648,7 @@
   gap: 6px;
   margin-top: auto;
   padding-top: 4px;
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 13.5px;
   font-weight: 700;
   color: var(--sh-green-700);
@@ -692,7 +692,7 @@
 }
 
 .sh-faq-results-count {
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 14px;
   color: var(--sh-muted);
 }
@@ -706,7 +706,7 @@
   border: 1px solid var(--sh-line);
   background: var(--sh-surface);
   color: var(--sh-muted);
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -767,7 +767,7 @@
 
 .sh-faq-group-title {
   margin: 0;
-  font-family: var(--font-heading, 'GT Esti Pro Display', sans-serif);
+  font-family: var(--font-heading, 'Manrope', sans-serif);
   font-size: 20px;
   font-weight: 800;
   letter-spacing: -.02em;
@@ -777,7 +777,7 @@
 
 .sh-faq-group-subtitle {
   margin: 4px 0 0;
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 14px;
   color: var(--sh-muted);
 }
@@ -827,7 +827,7 @@
   background: none;
   cursor: pointer;
   text-align: left;
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 16px;
   font-weight: 600;
   color: var(--sh-ink);
@@ -869,7 +869,7 @@
 .sh-faq-a p {
   margin: 0;
   padding: 0 20px 18px 22px;
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 15px;
   line-height: 1.7;
   color: var(--sh-muted);
@@ -889,7 +889,7 @@
   background: none;
   cursor: pointer;
   text-align: left;
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 16px;
   font-weight: 600;
   color: var(--sh-ink);
@@ -960,7 +960,7 @@
   background: var(--sh-surface);
   box-shadow: none;
   color: var(--sh-ink);
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 13.5px;
   font-weight: 600;
   line-height: 1.2;
@@ -1051,7 +1051,7 @@
   align-items: center;
   gap: 9px;
   margin: 0 0 16px;
-  font-family: var(--font-heading, 'GT Esti Pro Display', sans-serif);
+  font-family: var(--font-heading, 'Manrope', sans-serif);
   font-size: 16px;
   font-weight: 700;
   letter-spacing: -0.02em;
@@ -1075,7 +1075,7 @@
   display: flex;
   align-items: baseline;
   gap: 8px;
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 14.5px;
   font-weight: 600;
   color: #fff;
@@ -1098,7 +1098,7 @@
 
 .sh-hours-note {
   margin: 16px 0 0;
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 12.5px;
   color: rgba(255, 255, 255, .65);
 }
@@ -1114,7 +1114,7 @@
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, .2);
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 12px;
   font-weight: 700;
   color: #fff;
@@ -1135,7 +1135,7 @@
   gap: 12px;
   padding-top: 12px;
   border-top: 1px solid rgba(255, 255, 255, .18);
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 14.5px;
   font-weight: 600;
   color: #fff;
@@ -1194,7 +1194,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 11.5px;
   font-weight: 700;
   letter-spacing: .08em;
@@ -1223,7 +1223,7 @@
   border-radius: 999px;
   background: var(--sh-gold);
   color: var(--sh-green-900);
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 10.5px;
   font-weight: 700;
   letter-spacing: .04em;
@@ -1231,7 +1231,7 @@
 }
 
 .sh-channel-value {
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 16px;
   font-weight: 700;
   color: var(--sh-ink);
@@ -1240,7 +1240,7 @@
 }
 
 .sh-channel-note {
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 13px;
   line-height: 1.65;
   color: var(--sh-muted);
@@ -1289,7 +1289,7 @@
   border-radius: 999px;
   background: var(--sh-gold);
   color: var(--sh-green-900);
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 10.5px;
   font-weight: 700;
   letter-spacing: .04em;
@@ -1413,7 +1413,7 @@
   background: var(--sh-surface);
   box-shadow: var(--sh-shadow-sm);
   border: 1px solid var(--sh-line);
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 11.5px;
   font-weight: 700;
   letter-spacing: .06em;
@@ -1523,7 +1523,7 @@
 
 .sh-map-name {
   margin: 0;
-  font-family: var(--font-heading, 'GT Esti Pro Display', sans-serif);
+  font-family: var(--font-heading, 'Manrope', sans-serif);
   font-size: 19px;
   font-weight: 700;
   letter-spacing: -0.02em;
@@ -1532,7 +1532,7 @@
 
 .sh-map-address {
   margin: 0 0 14px;
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 15px;
   line-height: 1.6;
   color: var(--sh-muted);
@@ -1550,7 +1550,7 @@
   padding: 12px 26px;
   border: 0;
   border-radius: 999px;
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 14.5px;
   font-weight: 700;
   letter-spacing: 0.02em;
@@ -1615,7 +1615,7 @@
 
 .sh-form-title {
   margin: 0;
-  font-family: var(--font-heading, 'GT Esti Pro Display', sans-serif);
+  font-family: var(--font-heading, 'Manrope', sans-serif);
   font-size: 23px;
   font-weight: 800;
   color: var(--sh-ink);
@@ -1623,7 +1623,7 @@
 
 .sh-form-sub {
   margin: 0;
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 15px;
   line-height: 1.7;
   color: var(--sh-muted);
@@ -1648,7 +1648,7 @@
   border: 1.5px solid var(--sh-line);
   background: var(--sh-surface);
   color: var(--sh-ink);
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -1670,7 +1670,7 @@
 .sh-form-note {
   margin: 0;
   flex: 1 1 240px;
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 12.5px;
   line-height: 1.6;
   color: var(--sh-muted);
@@ -1699,7 +1699,7 @@
 }
 
 .sh-label {
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 13px;
   font-weight: 700;
   letter-spacing: .02em;
@@ -1715,7 +1715,7 @@
   border-radius: 14px;
   background: var(--sh-surface);
   box-shadow: 0 1px 3px rgba(8, 122, 74, .04);
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 14.5px;
   color: var(--sh-ink);
   transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
@@ -1753,7 +1753,7 @@
 }
 
 .sh-error {
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 12.5px;
   color: #a3441f;
 }
@@ -1787,7 +1787,7 @@
 
 .sh-cta-title {
   margin: 0 auto 6px;
-  font-family: var(--font-heading, 'GT Esti Pro Display', sans-serif);
+  font-family: var(--font-heading, 'Manrope', sans-serif);
   font-size: 21px;
   font-weight: 800;
   color: #fff;
@@ -1796,7 +1796,7 @@
 .sh-cta-text {
   margin: 0 auto;
   max-width: 520px;
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 14.5px;
   line-height: 1.65;
   color: rgba(255, 255, 255, .78);
@@ -1842,7 +1842,7 @@
   border-radius: var(--sh-radius-sm);
   background: var(--sh-green-700);
   color: #fff;
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 14px;
   font-weight: 700;
   text-decoration: none;
@@ -2104,14 +2104,14 @@
 }
 
 .sh-trust-strip-text strong {
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 13.5px;
   font-weight: 700;
   color: var(--sh-ink);
 }
 
 .sh-trust-strip-text span {
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 12.5px;
   color: var(--sh-muted);
 }
@@ -2125,7 +2125,7 @@
   padding: 5px 13px;
   border-radius: 999px;
   background: var(--sh-green-50);
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 11.5px;
   font-weight: 700;
   letter-spacing: .14em;
@@ -2141,7 +2141,7 @@
 .sh-block-sub {
   max-width: 540px;
   margin: -8px 0 24px;
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 15.5px;
   line-height: 1.65;
   color: var(--sh-muted);
@@ -2186,7 +2186,7 @@
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, .2);
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 12.5px;
   font-weight: 700;
   color: #fff;
@@ -2246,7 +2246,7 @@
   border-radius: 999px;
   background: rgba(255, 255, 255, .12);
   border: 1px solid rgba(255, 255, 255, .15);
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 11.5px;
   font-weight: 700;
   letter-spacing: .08em;
@@ -2257,7 +2257,7 @@
 .sh-about-panel-title {
   max-width: 600px;
   margin: 0 0 14px;
-  font-family: var(--font-heading, 'GT Esti Pro Display', sans-serif);
+  font-family: var(--font-heading, 'Manrope', sans-serif);
   font-size: clamp(1.35rem, 3vw, 1.65rem);
   font-weight: 800;
   line-height: 1.25;
@@ -2267,7 +2267,7 @@
 .sh-about-panel-desc {
   max-width: 560px;
   margin: 0 0 28px;
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 15.5px;
   line-height: 1.7;
   color: rgba(255, 255, 255, .78);
@@ -2289,7 +2289,7 @@
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, .15);
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 13.5px;
   font-weight: 600;
   color: #fff;
@@ -2305,7 +2305,7 @@
 .sh-contact-title {
   max-width: 480px;
   margin: 0 0 8px;
-  font-family: var(--font-heading, 'GT Esti Pro Display', sans-serif);
+  font-family: var(--font-heading, 'Manrope', sans-serif);
   font-size: clamp(1.35rem, 3vw, 1.65rem);
   font-weight: 800;
   color: var(--sh-ink);
@@ -2314,7 +2314,7 @@
 .sh-contact-sub {
   max-width: 440px;
   margin: 0 0 28px;
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 15.5px;
   line-height: 1.65;
   color: var(--sh-muted);
@@ -2339,7 +2339,7 @@
 
 .sh-visit-name {
   margin: 4px 0 6px;
-  font-family: var(--font-heading, 'GT Esti Pro Display', sans-serif);
+  font-family: var(--font-heading, 'Manrope', sans-serif);
   font-size: 21px;
   font-weight: 700;
   letter-spacing: -0.02em;
@@ -2348,7 +2348,7 @@
 
 .sh-visit-address {
   margin: 0 0 18px;
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 15px;
   line-height: 1.65;
   color: var(--sh-muted);
@@ -2394,7 +2394,7 @@
   background: var(--sh-surface);
   box-shadow: var(--sh-shadow-sm);
   border: 1px solid var(--sh-line);
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 13.5px;
   font-weight: 700;
   color: var(--sh-ink);
@@ -2413,7 +2413,7 @@
   border-radius: var(--sh-radius-sm);
   background: var(--sh-green-700);
   color: #fff;
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 14px;
   font-weight: 700;
   text-decoration: none;
@@ -2514,7 +2514,7 @@
   border-radius: 999px;
   background: rgba(255, 255, 255, .12);
   border: 1px solid rgba(255, 255, 255, .18);
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 12.5px;
   font-weight: 700;
   color: #fff;
@@ -2539,7 +2539,7 @@
 /* Response card inner elements */
 .sh-response-heading {
   margin: 0;
-  font-family: var(--font-heading, 'GT Esti Pro Display', sans-serif);
+  font-family: var(--font-heading, 'Manrope', sans-serif);
   font-size: 20px;
   font-weight: 700;
   letter-spacing: -0.02em;
@@ -2548,7 +2548,7 @@
 
 .sh-response-desc {
   margin: 0;
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 14.5px;
   line-height: 1.65;
   color: rgba(255, 255, 255, .78);
@@ -2568,7 +2568,7 @@
   gap: 12px;
   padding: 12px 0;
   border-top: 1px solid rgba(255, 255, 255, .18);
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 14px;
 }
 
@@ -2641,7 +2641,7 @@
 
 .sh-enquiry-title {
   margin: 0;
-  font-family: var(--font-heading, 'GT Esti Pro Display', sans-serif);
+  font-family: var(--font-heading, 'Manrope', sans-serif);
   font-size: 24px;
   font-weight: 800;
   letter-spacing: -0.03em;
@@ -2650,7 +2650,7 @@
 
 .sh-enquiry-sub {
   margin: -8px 0 0;
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 15px;
   line-height: 1.6;
   color: var(--sh-muted);
@@ -2703,7 +2703,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 11.5px;
   font-weight: 700;
   letter-spacing: .08em;
@@ -2717,7 +2717,7 @@
 
 .sh-sidebar-card-name {
   margin: 0;
-  font-family: var(--font-heading, 'GT Esti Pro Display', sans-serif);
+  font-family: var(--font-heading, 'Manrope', sans-serif);
   font-size: 17px;
   font-weight: 700;
   letter-spacing: -0.02em;
@@ -2726,7 +2726,7 @@
 
 .sh-sidebar-card-address {
   margin: 0;
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 14.5px;
   line-height: 1.65;
   color: var(--sh-muted);
@@ -2737,7 +2737,7 @@
   align-items: center;
   gap: 6px;
   margin-top: 4px;
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 14px;
   font-weight: 700;
   color: var(--sh-green-700);
@@ -2758,7 +2758,7 @@
 
 .sh-sidebar-card-title {
   margin: 0;
-  font-family: var(--font-heading, 'GT Esti Pro Display', sans-serif);
+  font-family: var(--font-heading, 'Manrope', sans-serif);
   font-size: 16px;
   font-weight: 700;
   letter-spacing: -0.02em;
@@ -2790,7 +2790,7 @@
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 14px;
   line-height: 1.6;
   color: var(--sh-ink);
@@ -2820,7 +2820,7 @@
 
 .sh-help-strip-title {
   margin: 0;
-  font-family: var(--font-heading, 'GT Esti Pro Display', sans-serif);
+  font-family: var(--font-heading, 'Manrope', sans-serif);
   font-size: clamp(1.2rem, 2.5vw, 1.55rem);
   font-weight: 800;
   letter-spacing: -0.03em;

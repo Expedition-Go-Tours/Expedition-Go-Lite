@@ -15,12 +15,13 @@
 }
 
 .partners-heading {
-  font-family: 'GT Esti Pro Display', sans-serif;
-  font-weight: 700;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 800;
   font-size: clamp(24px, 2.2vw, 32px);
   color: #1a1a1a;
   margin: 0 0 8px;
   line-height: 1.2;
+  letter-spacing: -0.02em;
   text-align: center;
   text-wrap: balance;
 }
@@ -47,8 +48,8 @@
 }
 
 .partners-subtitle {
-  font-family: 'GT Esti Pro Display', sans-serif;
-  font-weight: 400;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 500;
   font-size: clamp(14px, 1.2vw, 16px);
   color: #555;
   margin: 0 0 24px;

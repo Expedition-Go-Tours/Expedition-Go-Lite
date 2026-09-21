@@ -17,12 +17,13 @@
 }
 
 .mood-title {
-  font-family: 'GT Esti Pro Display', sans-serif;
-  font-weight: 700;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 800;
   font-size: clamp(19px, 2.2vw, 32px);
   color: #1a1a1a;
   margin: 0;
   line-height: 1.15;
+  letter-spacing: -0.02em;
   text-wrap: balance;
 }
 
@@ -133,7 +134,7 @@
   left: 16px;
   background: rgba(23, 146, 55, 0.9);
   color: #fff;
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 12px;
   font-weight: 600;
   padding: 4px 12px;
@@ -148,7 +149,7 @@
   right: 16px;
   background: rgba(255, 255, 255, 0.9);
   color: #333;
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 12px;
   font-weight: 700;
   padding: 4px 12px;
@@ -175,8 +176,8 @@
 }
 
 .mood-card-title {
-  font-family: 'GT Esti Pro Display', sans-serif;
-  font-weight: 700;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 800;
   font-size: 22px;
   color: #fff;
   margin: 0;

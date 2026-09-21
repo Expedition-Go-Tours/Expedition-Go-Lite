@@ -22,7 +22,7 @@
 
 /* Tour title — plain text, not a link */
 .ext-review-card__tour-title {
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-weight: 800;
   font-size: 15px;
   color: #111827;
@@ -48,7 +48,7 @@
   align-items: center;
   gap: 5px;
   min-width: 0;
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 12px;
   color: #6b7280;
 }
@@ -85,7 +85,7 @@
 
 /* Review title */
 .ext-review-card__title {
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 13px;
   font-weight: 700;
   color: #1a1a1a;
@@ -94,7 +94,7 @@
 
 /* Review text — truncated */
 .ext-review-card__text {
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 13px;
   color: #4b5563;
   line-height: 1.5;
@@ -109,7 +109,7 @@
   background: none;
   border: none;
   color: var(--primary);
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 13px;
   font-weight: 600;
   text-decoration: underline;
@@ -144,7 +144,7 @@
 }
 
 .ext-review-card__cta {
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 12px;
   font-weight: 700;
   color: #fff;
@@ -213,7 +213,7 @@
 }
 
 .ext-review-modal__tour-title {
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-weight: 800;
   font-size: 16px;
   color: #111827;
@@ -232,13 +232,13 @@
   display: flex;
   align-items: center;
   gap: 5px;
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 13px;
   color: #6b7280;
 }
 
 .ext-review-modal__title {
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 15px;
   font-weight: 700;
   color: #1a1a1a;
@@ -246,7 +246,7 @@
 }
 
 .ext-review-modal__text {
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 14px;
   color: #374151;
   line-height: 1.7;

@@ -283,7 +283,7 @@
   border: none;
   background: var(--bv-accent-soft, #ecfdf3);
   color: var(--bv-accent, #16a34a);
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 12px;
   font-weight: 600;
   border-radius: 999px;
@@ -300,14 +300,14 @@
   text-align: center;
   color: #9ca3af;
   font-size: 13px;
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   padding: 24px 12px;
 }
 
 .support-chat-typing-name {
   font-size: 11px;
   color: #6b7280;
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   margin-left: 2px;
 }
 
@@ -352,7 +352,7 @@
   font-size: 15px;
   font-weight: 600;
   color: var(--bv-ink, #101828);
-  font-family: 'GT Esti Pro Display', sans-serif;
+  font-family: 'Manrope', sans-serif;
   letter-spacing: 0.01em;
 }
 

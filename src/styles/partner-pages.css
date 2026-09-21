@@ -32,9 +32,8 @@
   --eg-mint:    #edf4ef;
   --eg-acid:    #d5e5a8;
 
-  /* DM Sans + Manrope (loaded via index.html Google Fonts) */
-  --font-body: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-display: 'Manrope', 'DM Sans', sans-serif;
+  /* Display font (self-hosted). Body text inherits the global --font-body. */
+  --font-display: 'Manrope', sans-serif;
 }
 
 /* ── Shared layout primitives ─────────────────────────────── */

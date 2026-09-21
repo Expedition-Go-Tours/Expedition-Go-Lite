@@ -24,7 +24,7 @@ export function checkoutElementsOptions(
         colorTextSecondary: '#667085',
         colorDanger: '#dc2626',
         colorBackground: '#ffffff',
-        fontFamily: '"Raleway", "GT Esti Pro Display", sans-serif',
+        fontFamily: '"DM Sans", "Manrope", sans-serif',
         fontSizeBase: '15px',
         borderRadius: '10px',
         spacingUnit: '3px',

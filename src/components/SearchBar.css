@@ -54,7 +54,7 @@
   outline: none;
   background: transparent;
   font-size: 17px;
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   color: #333;
 }
 
@@ -77,7 +77,7 @@
   padding: 0 36px;
   font-size: 16px;
   font-weight: 600;
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   cursor: pointer;
   transition: background 0.2s;
   white-space: nowrap;
@@ -146,14 +146,14 @@ body.hero--search-sticky .hero-search-wrap {
 }
 
 .search-smart-header strong {
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 12px;
   font-weight: 700;
   color: #0f172a;
 }
 
 .search-smart-header span {
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 11px;
   color: #94a3b8;
 }
@@ -171,7 +171,7 @@ body.hero--search-sticky .hero-search-wrap {
 }
 
 .search-smart-footer span {
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 10px;
   color: #94a3b8;
 }
@@ -271,7 +271,7 @@ body.hero--search-sticky .hero-search-wrap {
 }
 
 .search-suggestion-title {
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 13px;
   font-weight: 600;
   color: #1a1a1a;
@@ -283,7 +283,7 @@ body.hero--search-sticky .hero-search-wrap {
 }
 
 .search-suggestion-sub {
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 11px;
   font-weight: 400;
   color: #6b7280;
@@ -295,7 +295,7 @@ body.hero--search-sticky .hero-search-wrap {
 }
 
 .search-suggestion-meta {
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 10px;
   font-weight: 400;
   color: #94a3b8;
@@ -308,7 +308,7 @@ body.hero--search-sticky .hero-search-wrap {
 
 .search-suggestion-badge {
   flex-shrink: 0;
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 10px;
   font-weight: 600;
   text-transform: uppercase;
@@ -337,7 +337,7 @@ body.hero--search-sticky .hero-search-wrap {
 .search-suggestion-empty {
   padding: 16px;
   text-align: center;
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 13px;
   color: #64748b;
 }
@@ -403,7 +403,7 @@ body.hero--search-sticky .hero-search-wrap {
 
 .search-recent-heading {
   padding: 8px 16px 6px;
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 11px;
   font-weight: 700;
   color: #6b7280;
@@ -446,7 +446,7 @@ body.hero--search-sticky .hero-search-wrap {
 
 .search-recent-title {
   display: block;
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 13px;
   font-weight: 600;
   color: #1a1a1a;
@@ -486,7 +486,7 @@ body.hero--search-sticky .hero-search-wrap {
 
 .search-recent-clear {
   padding: 6px 16px 8px;
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 11px;
   font-weight: 600;
   color: #166534;

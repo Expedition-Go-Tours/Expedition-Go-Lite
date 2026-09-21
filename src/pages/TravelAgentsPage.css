@@ -3,7 +3,7 @@
 .ta-page {
   min-height: 100vh;
   background: #f8f9fb;
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
 }
 
 /* ---------- Hero ---------- */
@@ -25,7 +25,7 @@
 }
 
 .ta-hero-title {
-  font-family: var(--font-heading, 'GT Esti Pro Display', sans-serif);
+  font-family: var(--font-heading, 'Manrope', sans-serif);
   font-weight: 700;
   font-size: clamp(32px, 4vw, 52px);
   line-height: 1.12;
@@ -52,7 +52,7 @@
   gap: 8px;
   border: none;
   border-radius: 999px;
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
@@ -126,7 +126,7 @@
 
 .ta-stat-card strong {
   display: block;
-  font-family: var(--font-heading, 'GT Esti Pro Display', sans-serif);
+  font-family: var(--font-heading, 'Manrope', sans-serif);
   font-size: 18px;
   font-weight: 700;
   color: #0f172a;
@@ -166,7 +166,7 @@
 }
 
 .ta-stats-title {
-  font-family: var(--font-heading, 'GT Esti Pro Display', sans-serif);
+  font-family: var(--font-heading, 'Manrope', sans-serif);
   font-weight: 700;
   font-size: clamp(24px, 3vw, 36px);
   line-height: 1.25;
@@ -193,7 +193,7 @@
 
 .ta-stats-value {
   display: block;
-  font-family: var(--font-heading, 'GT Esti Pro Display', sans-serif);
+  font-family: var(--font-heading, 'Manrope', sans-serif);
   font-weight: 700;
   font-size: 28px;
   color: #16a34a;
@@ -219,7 +219,7 @@
 }
 
 .ta-section-title {
-  font-family: var(--font-heading, 'GT Esti Pro Display', sans-serif);
+  font-family: var(--font-heading, 'Manrope', sans-serif);
   font-weight: 700;
   font-size: clamp(26px, 3.5vw, 40px);
   line-height: 1.2;
@@ -249,7 +249,7 @@
 }
 
 .ta-feature-title {
-  font-family: var(--font-heading, 'GT Esti Pro Display', sans-serif);
+  font-family: var(--font-heading, 'Manrope', sans-serif);
   font-weight: 700;
   font-size: 20px;
   color: #0f172a;
@@ -296,7 +296,7 @@
 }
 
 .ta-gs-dark-title {
-  font-family: var(--font-heading, 'GT Esti Pro Display', sans-serif);
+  font-family: var(--font-heading, 'Manrope', sans-serif);
   font-weight: 700;
   font-size: 26px;
   line-height: 1.25;
@@ -327,7 +327,7 @@
   border-radius: 50%;
   background: #16a34a;
   color: #fff;
-  font-family: var(--font-heading, 'GT Esti Pro Display', sans-serif);
+  font-family: var(--font-heading, 'Manrope', sans-serif);
   font-weight: 700;
   font-size: 16px;
   display: grid;
@@ -343,7 +343,7 @@
 }
 
 .ta-gs-step-title {
-  font-family: var(--font-heading, 'GT Esti Pro Display', sans-serif);
+  font-family: var(--font-heading, 'Manrope', sans-serif);
   font-weight: 700;
   font-size: 18px;
   color: #0f172a;
@@ -395,7 +395,7 @@
   background: none;
   cursor: pointer;
   text-align: left;
-  font-family: var(--font-heading, 'GT Esti Pro Display', sans-serif);
+  font-family: var(--font-heading, 'Manrope', sans-serif);
   font-weight: 700;
   font-size: 16px;
   color: #0f172a;
@@ -435,7 +435,7 @@
 }
 
 .ta-faq-sidebar-title {
-  font-family: var(--font-heading, 'GT Esti Pro Display', sans-serif);
+  font-family: var(--font-heading, 'Manrope', sans-serif);
   font-weight: 700;
   font-size: 18px;
   color: #0f172a;
@@ -473,7 +473,7 @@
 }
 
 .ta-cta-title {
-  font-family: var(--font-heading, 'GT Esti Pro Display', sans-serif);
+  font-family: var(--font-heading, 'Manrope', sans-serif);
   font-weight: 700;
   font-size: clamp(26px, 3.5vw, 40px);
   line-height: 1.2;

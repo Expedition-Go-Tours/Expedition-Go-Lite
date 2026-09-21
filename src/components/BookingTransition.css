@@ -110,7 +110,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-family: var(--font-heading, 'GT Esti Pro Display', sans-serif);
+  font-family: var(--font-heading, 'Manrope', sans-serif);
   font-size: clamp(16px, 3vw, 20px);
   font-weight: 700;
   color: #0f172a;

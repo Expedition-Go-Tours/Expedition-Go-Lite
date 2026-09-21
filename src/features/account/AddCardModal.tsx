@@ -67,7 +67,7 @@ export default function AddCardModal({ onClose, onAdded }: AddCardModalProps) {
               colorTextSecondary: '#667085',
               colorDanger: '#dc2626',
               colorBackground: '#ffffff',
-              fontFamily: '"Raleway", "GT Esti Pro Display", sans-serif',
+              fontFamily: '"DM Sans", "Manrope", sans-serif',
               fontSizeBase: '16px',
               borderRadius: '10px',
               spacingUnit: '3px',

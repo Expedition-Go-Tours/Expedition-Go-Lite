@@ -49,7 +49,7 @@
 }
 
 .partner-apply-page p {
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
 }
 
 .partner-apply-container {
@@ -122,7 +122,7 @@
 
 .partner-apply-card p,
 .partner-apply-auth-prompt p {
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 0.875rem;
   color: #6b7280;
   margin: 0;
@@ -137,7 +137,7 @@
   padding: 10px 28px;
   border-radius: 999px;
   border: none;
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 0.875rem;
   font-weight: 700;
   cursor: pointer;
@@ -162,7 +162,7 @@
   background: none;
   border: none;
   padding: 0;
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 0.8125rem;
   font-weight: 600;
   color: #16a34a;

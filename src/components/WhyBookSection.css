@@ -44,12 +44,13 @@
 }
 
 .whybook-heading {
-  font-family: 'GT Esti Pro Display', sans-serif;
-  font-weight: 700;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 800;
   font-size: 32px;
   color: #0f2418;
   margin: 0 0 14px;
   line-height: 1.15;
+  letter-spacing: -0.02em;
 }
 
 .whybook-heading-underline {
@@ -61,7 +62,7 @@
 }
 
 .whybook-description {
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 15px;
   line-height: 1.7;
   color: #4b5563;
@@ -76,7 +77,7 @@
   border: 1px solid #d4e6d8;
   border-radius: 999px;
   padding: 10px 18px;
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 14px;
   font-weight: 600;
   color: #2d5a3d;
@@ -130,8 +131,8 @@
 }
 
 .whybook-feature-title {
-  font-family: 'GT Esti Pro Display', sans-serif;
-  font-weight: 700;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 800;
   font-size: 17px;
   color: #0f2418;
   margin: 0;
@@ -139,7 +140,7 @@
 }
 
 .whybook-feature-desc {
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 14px;
   line-height: 1.6;
   color: #6b7280;

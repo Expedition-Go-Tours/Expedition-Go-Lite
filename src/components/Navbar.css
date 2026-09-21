@@ -72,7 +72,7 @@ body:has(.story-detail) .navbar,
 
 .nav-wishlist-mobile .nav-icon-label,
 .nav-bookings-mobile .nav-icon-label {
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: clamp(7px, 1.8vw, 9.5px);
   font-weight: 500;
   letter-spacing: 0.15px;
@@ -201,7 +201,7 @@ body:has(.story-detail) .navbar-compact-search {
   outline: none;
   background: transparent;
   font-size: 15px;
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   color: #333;
 }
 
@@ -224,7 +224,7 @@ body:has(.story-detail) .navbar-compact-search {
   padding: 0 22px;
   font-size: 14px;
   font-weight: 600;
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   cursor: pointer;
   transition: background 0.2s;
   white-space: nowrap;
@@ -295,7 +295,7 @@ body:has(.story-detail) .navbar-compact-search {
 
 .nav-icon-label {
   position: relative;
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 10px;
   font-weight: 600;
   color: inherit;
@@ -404,7 +404,7 @@ body:has(.story-detail) .navbar-compact-search {
 }
 
 .nav-list-experience-label {
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.1px;
@@ -454,7 +454,7 @@ body:has(.story-detail) .navbar-compact-search {
 }
 
 .nav-mobile-list-experience-title {
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 15px;
   font-weight: 700;
   color: #14532d;
@@ -462,7 +462,7 @@ body:has(.story-detail) .navbar-compact-search {
 }
 
 .nav-mobile-list-experience-sub {
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 12px;
   font-weight: 500;
   color: #4b7a5c;
@@ -501,7 +501,7 @@ body:has(.story-detail) .navbar-compact-search {
   align-items: center;
   justify-content: space-between;
   padding: 3px 7px 1px;
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 9px;
   font-weight: 700;
   text-transform: uppercase;
@@ -525,7 +525,7 @@ body:has(.story-detail) .navbar-compact-search {
   border-radius: 7px;
   background: transparent;
   color: #1e293b;
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   cursor: pointer;
   transition: all 0.15s ease;
   text-align: left;
@@ -667,7 +667,7 @@ body:has(.story-detail) .navbar-compact-search {
 }
 
 .nav-dropdown-email {
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 13px;
   color: #666;
   white-space: nowrap;
@@ -682,7 +682,7 @@ body:has(.story-detail) .navbar-compact-search {
   align-items: center;
   gap: 10px;
   white-space: nowrap;
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-weight: 600;
   font-size: 14px;
   color: #333;
@@ -700,7 +700,7 @@ body:has(.story-detail) .navbar-compact-search {
   align-items: center;
   gap: 10px;
   padding: 12px 20px;
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 14px;
   color: #333;
   text-decoration: none;
@@ -739,7 +739,7 @@ body:has(.story-detail) .navbar-compact-search {
   align-items: center;
   gap: 10px;
   padding: 12px 20px;
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 14px;
   color: #e53e3e;
   text-decoration: none;
@@ -772,7 +772,7 @@ body:has(.story-detail) .navbar-compact-search {
   align-items: center;
   gap: 10px;
   padding: 12px 20px;
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 14px;
   font-weight: 600;
   color: #e53e3e;
@@ -841,7 +841,7 @@ body:has(.story-detail) .navbar-compact-search {
 .nav-mobile-heading {
   margin: 0 0 10px;
   padding: 0 16px;
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 20px;
   font-weight: 800;
   color: #111827;
@@ -853,7 +853,7 @@ body:has(.story-detail) .navbar-compact-search {
   align-items: center;
   gap: 12px;
   padding: 14px 16px;
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 16px;
   font-weight: 600;
   color: #137A2E;
@@ -871,7 +871,7 @@ body:has(.story-detail) .navbar-compact-search {
   align-items: center;
   gap: 12px;
   padding: 14px 16px;
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 16px;
   font-weight: 500;
   color: #333;
@@ -900,7 +900,7 @@ body:has(.story-detail) .navbar-compact-search {
   gap: 10px;
   white-space: nowrap;
   padding: 14px 16px;
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-weight: 600;
   font-size: 15px;
   color: #333;
@@ -938,7 +938,7 @@ body:has(.story-detail) .navbar-compact-search {
 }
 
 .nav-mobile-user-name {
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 14px;
   font-weight: 600;
   color: #333;
@@ -948,7 +948,7 @@ body:has(.story-detail) .navbar-compact-search {
 }
 
 .nav-mobile-user-email {
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 12px;
   color: #888;
   white-space: nowrap;
@@ -982,7 +982,7 @@ body:has(.story-detail) .navbar-compact-search {
   align-items: center;
   gap: 12px;
   padding: 14px 16px;
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-weight: 600;
   font-size: 15px;
   color: #e53e3e;
@@ -1006,7 +1006,7 @@ body:has(.story-detail) .navbar-compact-search {
   align-items: center;
   gap: 12px;
   padding: 14px 16px;
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-weight: 600;
   font-size: 15px;
   color: #e53e3e;
@@ -1035,7 +1035,7 @@ body:has(.story-detail) .navbar-compact-search {
   color: #333;
   font-size: 16px;
   font-weight: 500;
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   cursor: pointer;
   transition: background 0.2s;
   text-align: left;
@@ -1084,7 +1084,7 @@ body:has(.story-detail) .navbar-compact-search {
   border-radius: 10px;
   background: transparent;
   color: #1e293b;
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 14px;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -1349,7 +1349,7 @@ body:has(.story-detail) .navbar-compact-search {
 
 .nav-subdrawer-title {
   margin: 0;
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 20px;
   font-weight: 800;
   color: #111827;
@@ -1390,7 +1390,7 @@ body:has(.story-detail) .navbar-compact-search {
   border: none;
   border-radius: 10px;
   background: transparent;
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 15px;
   font-weight: 500;
   color: #333;
@@ -1467,7 +1467,7 @@ body:has(.story-detail) .navbar-compact-search {
   padding: 4px 6px;
   border: none;
   background: transparent;
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 13px;
   font-weight: 600;
   color: #137A2E;
@@ -1513,7 +1513,7 @@ body:has(.story-detail) .navbar-compact-search {
 }
 
 .nav-updates-preview-title {
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 14px;
   font-weight: 600;
   color: #111827;

@@ -60,7 +60,7 @@
 }
 
 .phone-showcase-title {
-  font-family: var(--font-heading, 'GT Esti Pro Display', sans-serif);
+  font-family: var(--font-heading, 'Manrope', sans-serif);
   font-weight: 700;
   font-size: clamp(28px, 5vw, 44px);
   line-height: 1.15;
@@ -88,7 +88,7 @@
   color: #1a1a1a;
   font-size: 16px;
   font-weight: 700;
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   cursor: pointer;
   box-shadow: 0 8px 24px -4px rgba(250, 204, 21, 0.45);
   transition: filter 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
@@ -300,7 +300,7 @@
   color: #1a1a1a;
   font-size: 12px;
   font-weight: 600;
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
 }
 
 .phone-overlay-skip {

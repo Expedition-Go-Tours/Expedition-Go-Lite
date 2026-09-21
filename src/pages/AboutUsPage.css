@@ -1,7 +1,7 @@
 /* ============================================================
    ABOUT US — modern editorial green theme.
    Scoped entirely under .about-page. Fonts follow the site
-   pattern: GT Esti Pro Display (headings) + Raleway (body).
+   pattern: Manrope (headings) + DM Sans (body).
    ============================================================ */
 
 .about-page {
@@ -25,7 +25,7 @@
   overflow-x: clip;
   color: var(--ab-ink);
   background: #fff;
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 16px;
   line-height: 1.65;
 }
@@ -46,7 +46,7 @@
   gap: 9px;
   margin: 0;
   color: var(--ab-green);
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 12.5px;
   font-weight: 800;
   letter-spacing: 0.12em;
@@ -68,7 +68,7 @@
 .about-title {
   max-width: 760px;
   margin: 12px 0 16px;
-  font-family: var(--font-heading, 'GT Esti Pro Display', sans-serif);
+  font-family: var(--font-heading, 'Manrope', sans-serif);
   font-size: clamp(1.9rem, 3.8vw, 3.3rem);
   font-weight: 700;
   line-height: 1.04;
@@ -102,7 +102,7 @@
   padding: 0 22px;
   border: 1px solid transparent;
   border-radius: 14px;
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 15px;
   font-weight: 800;
   line-height: 1.2;
@@ -195,7 +195,7 @@
   border-radius: 999px;
   background: var(--ab-mint);
   color: var(--ab-dark);
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.04em;
@@ -213,7 +213,7 @@
 .about-hero-title {
   max-width: 650px;
   margin: 0;
-  font-family: var(--font-heading, 'GT Esti Pro Display', sans-serif);
+  font-family: var(--font-heading, 'Manrope', sans-serif);
   font-size: clamp(2.9rem, 5.4vw, 5.4rem);
   font-weight: 700;
   line-height: 0.91;
@@ -333,7 +333,7 @@
   border-radius: 9px;
   background: rgba(4, 40, 25, 0.76);
   color: #fff;
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 11px;
   font-weight: 800;
   backdrop-filter: blur(8px);
@@ -353,7 +353,7 @@
   border-radius: 13px;
   background: #fff;
   box-shadow: 0 10px 30px rgba(4, 35, 22, 0.2);
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 12px;
   font-weight: 800;
   white-space: nowrap;
@@ -482,7 +482,7 @@
   border-radius: 12px;
   background: var(--ab-mint);
   color: var(--ab-green);
-  font-family: var(--font-heading, 'GT Esti Pro Display', sans-serif);
+  font-family: var(--font-heading, 'Manrope', sans-serif);
   font-size: 14px;
   font-weight: 700;
 }
@@ -494,7 +494,7 @@
 
 .about-story-card h3 {
   margin: 0 0 10px;
-  font-family: var(--font-heading, 'GT Esti Pro Display', sans-serif);
+  font-family: var(--font-heading, 'Manrope', sans-serif);
   font-size: 1.35rem;
   font-weight: 700;
   line-height: 1.2;
@@ -567,7 +567,7 @@
 
 .about-category-num {
   color: var(--ab-acid);
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   font-size: 12px;
   font-weight: 900;
   letter-spacing: 0.12em;
@@ -589,7 +589,7 @@
 
 .about-category-card h3 {
   margin: 19px 0 8px;
-  font-family: var(--font-heading, 'GT Esti Pro Display', sans-serif);
+  font-family: var(--font-heading, 'Manrope', sans-serif);
   font-size: 1.14rem;
   font-weight: 700;
   line-height: 1.25;
@@ -664,7 +664,7 @@
 
 .about-value-card h3 {
   margin: 0 0 9px;
-  font-family: var(--font-heading, 'GT Esti Pro Display', sans-serif);
+  font-family: var(--font-heading, 'Manrope', sans-serif);
   font-size: 1.02rem;
   font-weight: 700;
   line-height: 1.3;
@@ -698,12 +698,12 @@
 }
 
 .about-page .partners-heading {
-  font-family: var(--font-heading, 'GT Esti Pro Display', sans-serif);
+  font-family: var(--font-heading, 'Manrope', sans-serif);
   color: var(--ab-ink);
 }
 
 .about-page .partners-subtitle {
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
   color: var(--ab-sub);
 }
 
@@ -743,7 +743,7 @@
 
 .about-promise-title {
   margin: 12px 0 0;
-  font-family: var(--font-heading, 'GT Esti Pro Display', sans-serif);
+  font-family: var(--font-heading, 'Manrope', sans-serif);
   font-size: clamp(1.7rem, 3vw, 2.6rem);
   font-weight: 700;
   line-height: 1.05;
@@ -773,7 +773,7 @@
   display: block;
   margin-bottom: 7px;
   color: var(--ab-green);
-  font-family: var(--font-heading, 'GT Esti Pro Display', sans-serif);
+  font-family: var(--font-heading, 'Manrope', sans-serif);
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -800,7 +800,7 @@
 
 .about-cta-inner h2 {
   margin: 0 0 5px;
-  font-family: var(--font-heading, 'GT Esti Pro Display', sans-serif);
+  font-family: var(--font-heading, 'Manrope', sans-serif);
   font-size: clamp(1.35rem, 2.6vw, 2rem);
   font-weight: 700;
   letter-spacing: -0.03em;

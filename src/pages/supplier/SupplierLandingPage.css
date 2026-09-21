@@ -3,7 +3,7 @@
 .supplier-landing-page {
   min-height: 100vh;
   background: #fff;
-  font-family: var(--font-body, 'Raleway', sans-serif);
+  font-family: var(--font-body, 'DM Sans', sans-serif);
 }
 
 /* ---------- CTA primary / secondary (shared by multiple sections) ---------- */
@@ -86,7 +86,7 @@
 }
 
 .supplier-landing-section-title {
-  font-family: var(--font-heading, 'GT Esti Pro Display', sans-serif);
+  font-family: var(--font-heading, 'Manrope', sans-serif);
   font-weight: 700;
   font-size: clamp(24px, 4vw, 32px);
   line-height: 1.25;
@@ -132,7 +132,7 @@
   position: absolute;
   top: 16px;
   right: 18px;
-  font-family: var(--font-heading, 'GT Esti Pro Display', sans-serif);
+  font-family: var(--font-heading, 'Manrope', sans-serif);
   font-size: 28px;
   font-weight: 700;
   color: #eef4ef;
@@ -433,7 +433,7 @@
 }
 
 .supplier-landing-cta-band-inner h2 {
-  font-family: var(--font-heading, 'GT Esti Pro Display', sans-serif);
+  font-family: var(--font-heading, 'Manrope', sans-serif);
   font-size: clamp(20px, 4vw, 26px);
   font-weight: 700;
   color: #fff;

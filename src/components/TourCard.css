@@ -146,7 +146,7 @@
   flex-wrap: wrap;
   gap: 6px;
   min-width: 0;
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
 }
 
 /* Industry-standard pill badges (GetYourGuide/Viator style): compact,
@@ -253,7 +253,7 @@
   right: 8px;
   background: rgba(0, 0, 0, 0.75);
   color: #fff;
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 11px;
   font-weight: 600;
   padding: 5px 10px;
@@ -318,7 +318,7 @@
   font-size: 12px;
   font-weight: 600;
   color: #6b7280;
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -332,7 +332,7 @@
 
 .tour-card-discount {
   flex-shrink: 0;
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 10px;
   font-weight: 700;
   line-height: 1.4;
@@ -344,7 +344,7 @@
 }
 
 .tour-card-title {
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-weight: 800;
   font-size: 15px;
   color: #111827;
@@ -361,7 +361,7 @@
   font-size: 12px;
   font-weight: 500;
   color: #374151;
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -383,7 +383,7 @@
 }
 
 .tour-card-rating-value {
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-weight: 700;
   font-size: 14px;
   color: #111827;
@@ -392,7 +392,7 @@
 .tour-card-rating-reviews {
   font-size: 12px;
   color: #6b7280;
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
 }
 
 .tour-card-price {
@@ -406,11 +406,11 @@
   font-size: 11px;
   font-weight: 600;
   color: #6b7280;
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
 }
 
 .tour-card-price-value {
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-weight: 700;
   font-size: 22px;
   color: #111827;
@@ -419,7 +419,7 @@
 /* Offer pricing: the original (full) price is struck through and the promo
    price is shown in red next to it. */
 .tour-card-price-strike {
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-weight: 600;
   font-size: 14px;
   color: #9ca3af;
@@ -427,7 +427,7 @@
 }
 
 .tour-card-price-promo {
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-weight: 700;
   font-size: 22px;
   color: #dc2626;
@@ -493,7 +493,7 @@
   z-index: 2;
   display: inline-flex;
   align-items: center;
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.3px;
@@ -516,7 +516,7 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 11px;
   font-weight: 700;
   color: #fff;
@@ -536,7 +536,7 @@
   z-index: 2;
   display: inline-flex;
   align-items: center;
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.3px;
@@ -583,7 +583,7 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-family: 'Raleway', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   font-size: 11px;
   font-weight: 700;
   color: #fff;
