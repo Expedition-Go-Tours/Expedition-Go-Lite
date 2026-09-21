@@ -1,4 +1,6 @@
 import LegalPageShell from '../components/shared/LegalPageShell'
+import './SupportPages.css'
+import './SupplierTermsPage.css'
 
 const SUMMARY = [
   { icon: '✓', text: 'Free to list and maintain' },
@@ -18,41 +20,6 @@ const TOC = [
   { id: '8-suspension-and-termination', num: '08', label: 'Suspension and termination' },
   { id: '9-liability-and-indemnity', num: '09', label: 'Liability and indemnity' },
   { id: '10-general', num: '10', label: 'General' },
-]
-import { useCallback, useEffect, useState } from 'react'
-import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
-import { Rocket, ArrowRight, ChevronUp } from 'lucide-react'
-import Footer from '../components/Footer'
-import SEO, { buildBreadcrumbSchema } from '../components/SEO'
-import './SupportPages.css'
-import './SupplierTermsPage.css'
-
-const POLICY_TABS = [
-  { label: 'Supplier Terms', href: '/supplier-terms', active: true },
-  { label: 'Terms & Conditions', href: '/terms-and-conditions' },
-  { label: 'Privacy Policy', href: '/privacy-policy' },
-  { label: 'Cookies Policy', href: '/cookies-policy' },
-]
-
-const SUMMARY_ITEMS = [
-  'Free to list and maintain',
-  '15% commission on successful bookings',
-  'Monthly or bi-weekly payouts',
-  'Accurate listings and safe delivery required',
-]
-
-const SECTIONS = [
-  { id: '1-introduction', num: '01', titleKey: 'supplierTerms.s1Title', contentKey: 'supplierTerms.s1Text' },
-  { id: '2-registration-and-approval', num: '02', titleKey: 'supplierTerms.s2Title', contentKeys: ['supplierTerms.s2Text1', 'supplierTerms.s2Text2'] },
-  { id: '3-listing-obligations', num: '03', titleKey: 'supplierTerms.s3Title', contentKey: 'supplierTerms.s3Text' },
-  { id: '4-commission', num: '04', titleKey: 'supplierTerms.s4Title', contentKey: 'supplierTerms.s4Text' },
-  { id: '5-payouts', num: '05', titleKey: 'supplierTerms.s5Title', contentKeys: ['supplierTerms.s5Text1', 'supplierTerms.s5Text2'] },
-  { id: '6-bookings-and-cancellations', num: '06', titleKey: 'supplierTerms.s6Title', contentKey: 'supplierTerms.s6Text' },
-  { id: '7-conduct-and-quality-standards', num: '07', titleKey: 'supplierTerms.s7Title', contentKey: 'supplierTerms.s7Text' },
-  { id: '8-suspension-and-termination', num: '08', titleKey: 'supplierTerms.s8Title', contentKey: 'supplierTerms.s8Text' },
-  { id: '9-liability-and-intellectual-property', num: '09', titleKey: 'supplierTerms.s9Title', contentKey: 'supplierTerms.s9Text' },
-  { id: '10-changes-and-contact', num: '10', titleKey: 'supplierTerms.s10Title', contentKey: 'supplierTerms.s10Text' },
 ]
 
 export default function SupplierTermsPage() {
