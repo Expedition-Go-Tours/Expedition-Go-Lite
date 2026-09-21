@@ -146,7 +146,7 @@ export default function HotelsProviderPage({ onOpenAuth }: HotelsProviderPagePro
         <div className="wrap">
           <RevealOnScroll>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'end', gap: 40, marginBottom: 50 }}>
-              <h2 className="section-title" style={{ fontFamily: 'var(--font-display)', maxWidth: 760 }}>
+              <h2 className="eg-section-title" style={{ fontFamily: 'var(--font-display)', maxWidth: 760 }}>
                 Your property business,<br />under one roof.
               </h2>
               <p style={{ maxWidth: 430, color: '#68716c', lineHeight: 1.6 }}>
@@ -195,7 +195,7 @@ export default function HotelsProviderPage({ onOpenAuth }: HotelsProviderPagePro
             <div className="hs-steps">
               <div className="hs-steps-copy">
                 <div className="hs-eyebrow">How it works</div>
-                <h2 className="section-title" style={{ marginTop: 22 }}>From property to published.</h2>
+                <h2 className="eg-section-title" style={{ marginTop: 22 }}>From property to published.</h2>
                 <p>Share the essentials, prepare your inventory and start welcoming travellers through the Expedition-Go network.</p>
                 <a className="hs-btn hs-btn-dark" href="#apply" style={{ marginTop: 20 }}>Start your listing <i>↗</i></a>
               </div>
@@ -217,7 +217,7 @@ export default function HotelsProviderPage({ onOpenAuth }: HotelsProviderPagePro
         <div className="wrap">
           <RevealOnScroll>
             <div className="hs-eyebrow" style={{ color: '#e9b597' }}>Why accommodation partners join</div>
-            <h2 className="section-title" style={{ marginTop: 22 }}>More than a listing.<br />A stronger guest journey.</h2>
+            <h2 className="eg-section-title" style={{ marginTop: 22 }}>More than a listing.<br />A stronger guest journey.</h2>
             <div className="hs-benefit-grid">
               {BENEFITS.map((b, i) => (
                 <article key={i} className="hs-benefit">
@@ -234,7 +234,7 @@ export default function HotelsProviderPage({ onOpenAuth }: HotelsProviderPagePro
       <section className="hs-section">
         <div className="wrap">
           <RevealOnScroll>
-            <h2 className="section-title" style={{ marginBottom: 45 }}>Before you list.</h2>
+            <h2 className="eg-section-title" style={{ marginBottom: 45 }}>Before you list.</h2>
             <FAQAccordion items={FAQ_ITEMS} />
           </RevealOnScroll>
         </div>

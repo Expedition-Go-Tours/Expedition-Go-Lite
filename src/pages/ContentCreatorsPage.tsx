@@ -109,7 +109,7 @@ export default function ContentCreatorsPage({ onOpenAuth }: ContentCreatorsPageP
         <div className="wrap">
           <RevealOnScroll>
             <div className="cc-benefit-head">
-              <h2 className="section-title">Made for creators<br />who want more.</h2>
+              <h2 className="eg-section-title">Made for creators<br />who want more.</h2>
               <p>Authentic content, curated experiences and transparent earnings — built for creators who care about what they share.</p>
             </div>
             <div className="cc-benefit-grid">
@@ -134,7 +134,7 @@ export default function ContentCreatorsPage({ onOpenAuth }: ContentCreatorsPageP
             <div className="cc-how-grid">
               <div className="cc-how-sticky">
                 <div className="cc-kicker"><span />Three steps to start</div>
-                <h2 className="section-title" style={{ marginTop: 22 }}>From content<br />to commission.</h2>
+                <h2 className="eg-section-title" style={{ marginTop: 22 }}>From content<br />to commission.</h2>
                 <p>Getting started is straightforward. Apply, choose experiences that fit your audience and start earning from your content.</p>
               </div>
               <div className="cc-step-stack">
@@ -154,7 +154,7 @@ export default function ContentCreatorsPage({ onOpenAuth }: ContentCreatorsPageP
       <section className="cc-section" style={{ background: '#f8faf8' }}>
         <div className="wrap">
           <RevealOnScroll>
-            <h2 className="section-title" style={{ textAlign: 'center', marginBottom: 50 }}>Transparent creator earnings.</h2>
+            <h2 className="eg-section-title" style={{ textAlign: 'center', marginBottom: 50 }}>Transparent creator earnings.</h2>
             <div className="cc-benefit-grid" style={{ maxWidth: 900, margin: '0 auto', gridTemplateColumns: 'repeat(3, 1fr)' }}>
               {EARNINGS.map((e, i) => (
                 <div key={i} style={{ textAlign: 'center', padding: 28, border: '1px solid #dfe7e1', borderRadius: 22 }}>
@@ -171,7 +171,7 @@ export default function ContentCreatorsPage({ onOpenAuth }: ContentCreatorsPageP
       <section className="cc-section">
         <div className="wrap">
           <RevealOnScroll>
-            <h2 className="section-title" style={{ textAlign: 'center', marginBottom: 50 }}>Questions, answered.</h2>
+            <h2 className="eg-section-title" style={{ textAlign: 'center', marginBottom: 50 }}>Questions, answered.</h2>
             <FAQAccordion items={FAQ_ITEMS} />
           </RevealOnScroll>
         </div>

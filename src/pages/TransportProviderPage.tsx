@@ -184,7 +184,7 @@ export default function TransportProviderPage({ onOpenAuth }: TransportProviderP
             <div className="tp-steps">
               <div className="tp-sticky">
                 <div className="tp-eyebrow">How to get started</div>
-                <h2 className="section-title" style={{ marginTop: 22, fontFamily: 'var(--font-display)' }}>
+                <h2 className="eg-section-title" style={{ marginTop: 22, fontFamily: 'var(--font-display)' }}>
                   Three steps. More roads ahead.
                 </h2>
                 <p>Getting listed is straightforward. Tell us about your business, add your fleet and start receiving suitable opportunities.</p>
@@ -211,7 +211,7 @@ export default function TransportProviderPage({ onOpenAuth }: TransportProviderP
         <div className="wrap">
           <RevealOnScroll>
             <div className="tp-benefit-head">
-              <h2 className="section-title" style={{ fontFamily: 'var(--font-display)' }}>Built to keep<br />business moving.</h2>
+              <h2 className="eg-section-title" style={{ fontFamily: 'var(--font-display)' }}>Built to keep<br />business moving.</h2>
               <p>Practical tools and support for transport companies that want more visibility, stronger travel partnerships and better fleet utilisation.</p>
             </div>
             <div className="tp-cards">
@@ -259,7 +259,7 @@ export default function TransportProviderPage({ onOpenAuth }: TransportProviderP
       <section className="tp-section">
         <div className="wrap">
           <RevealOnScroll>
-            <h2 className="section-title" style={{ textAlign: 'center', marginBottom: 50, fontFamily: 'var(--font-display)' }}>
+            <h2 className="eg-section-title" style={{ textAlign: 'center', marginBottom: 50, fontFamily: 'var(--font-display)' }}>
               Questions, answered.
             </h2>
             <FAQAccordion items={FAQ_ITEMS} />

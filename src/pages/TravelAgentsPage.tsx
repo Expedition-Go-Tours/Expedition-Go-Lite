@@ -108,7 +108,7 @@ export default function TravelAgentsPage({ onOpenAuth }: TravelAgentsPageProps) 
             <div className="ta-features">
               <div className="ta-sticky">
                 <div className="ta-kicker"><span />Built for agents</div>
-                <h2 className="section-title" style={{ marginTop: 22 }}>Tools that earn<br />your trust.</h2>
+                <h2 className="eg-section-title" style={{ marginTop: 22 }}>Tools that earn<br />your trust.</h2>
                 <p>Everything you need to recommend, book and manage client experiences — without extra paperwork.</p>
               </div>
               <div className="ta-feature-list">
@@ -132,7 +132,7 @@ export default function TravelAgentsPage({ onOpenAuth }: TravelAgentsPageProps) 
         <div className="wrap">
           <RevealOnScroll>
             <div className="ta-benefit-head">
-              <h2 className="section-title">Built to help<br />your business grow.</h2>
+              <h2 className="eg-section-title">Built to help<br />your business grow.</h2>
               <p>Practical tools and support for travel agents who want more earnings, stronger client relationships and simpler bookings.</p>
             </div>
             <div className="ta-cards">
@@ -155,7 +155,7 @@ export default function TravelAgentsPage({ onOpenAuth }: TravelAgentsPageProps) 
       <section className="ta-section">
         <div className="wrap">
           <RevealOnScroll>
-            <h2 className="section-title" style={{ textAlign: 'center', marginBottom: 50 }}>Questions, answered.</h2>
+            <h2 className="eg-section-title" style={{ textAlign: 'center', marginBottom: 50 }}>Questions, answered.</h2>
             <FAQAccordion items={FAQ_ITEMS} />
           </RevealOnScroll>
         </div>

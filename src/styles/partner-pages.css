@@ -42,7 +42,7 @@
   margin-left: auto;
   margin-right: auto;
 }
-.section-title {
+.eg-section-title {
   font-family: var(--font-display);
   letter-spacing: -0.055em;
   line-height: 0.94;
@@ -149,7 +149,7 @@
 }
 @media (max-width: 700px) {
   .wrap { width: calc(100% - 26px); }
-  .section-title { font-size: 38px; }
+  .eg-section-title { font-size: 38px; }
 }
 @media (max-width: 900px) {
   .eg-cta { padding: 55px 35px; }
