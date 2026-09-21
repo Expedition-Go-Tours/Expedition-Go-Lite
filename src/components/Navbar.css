@@ -1595,11 +1595,8 @@ body:has(.story-detail) .navbar-compact-search {
 /* Footer-linked pages: align the navbar (logo + icons) with each page's
    content grid on desktop. Grouped by container max-width + gutter. */
 
-/* 1140px container + 32px gutters: Hotels, Travel Agents, Transport, Blog */
+/* 1140px container + 32px gutters: Blog */
 @media (min-width: 1025px) {
-  .page-hotel .navbar,
-  .page-travel-agents .navbar,
-  .page-transport-providers .navbar,
   .page-blog .navbar {
     padding-left: max(32px, calc((100vw - 1140px) / 2 + 32px));
     padding-right: max(32px, calc((100vw - 1140px) / 2 + 32px));
@@ -1619,14 +1616,6 @@ body:has(.story-detail) .navbar-compact-search {
   .page-about .navbar {
     padding-left: max(24px, calc((100vw - 1100px) / 2 + 24px));
     padding-right: max(24px, calc((100vw - 1100px) / 2 + 24px));
-  }
-}
-
-/* 1000px container + 0px gutters: Content Creators */
-@media (min-width: 1025px) {
-  .page-content-creators .navbar {
-    padding-left: max(0px, calc((100vw - 1000px) / 2));
-    padding-right: max(0px, calc((100vw - 1000px) / 2));
   }
 }
 

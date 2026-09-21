@@ -1,14 +1,46 @@
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import Footer from '../components/Footer'
 import SEO, { buildBreadcrumbSchema } from '../components/SEO'
-import './SupportPages.css'
+import LegalPageShell from '../components/shared/LegalPageShell'
+
+const SUMMARY = [
+  { icon: '✓', text: 'How we collect and use your information' },
+  { icon: '✓', text: 'Data shared across our trading names' },
+  { icon: '✓', text: 'Your rights under the Data Protection Act (Act 843)' },
+  { icon: '✓', text: 'Contact us for any privacy request' },
+]
+
+const TOC = [
+  { id: '2-who-we-are', num: '02', label: 'Who we are' },
+  { id: '3-our-trading-names-and-platforms', num: '03', label: 'Our trading names and platforms' },
+  { id: '4-laws-that-apply', num: '04', label: 'Laws that apply' },
+  { id: '5-personal-information-we-collect', num: '05', label: 'Personal information we collect' },
+  { id: '6-how-we-collect-information', num: '06', label: 'How we collect information' },
+  { id: '7-why-we-use-your-information-and-our-lawful-bases', num: '07', label: 'Why we use your information and our lawful bases' },
+  { id: '8-information-used-across-expedition-go-tours-travio-ghana-and-travio-africa', num: '08', label: 'Information used across Expedition-Go Tours, Travio Ghana and Travio Africa' },
+  { id: '9-independent-suppliers', num: '09', label: 'Independent suppliers' },
+  { id: '10-who-we-share-information-with', num: '10', label: 'Who we share information with' },
+  { id: '11-payments', num: '11', label: 'Payments' },
+  { id: '12-cookies-and-similar-technologies', num: '12', label: 'Cookies and similar technologies' },
+  { id: '13-marketing-and-communication-preferences', num: '13', label: 'Marketing and communication preferences' },
+  { id: '14-social-media-and-third-party-websites', num: '14', label: 'Social media and third-party websites' },
+  { id: '15-reviews-photographs-and-promotional-content', num: '15', label: 'Reviews, photographs and promotional content' },
+  { id: '16-international-transfers', num: '16', label: 'International transfers' },
+  { id: '17-how-long-we-keep-information', num: '17', label: 'How long we keep information' },
+  { id: '18-how-we-protect-information', num: '18', label: 'How we protect information' },
+  { id: '19-children', num: '19', label: 'Children' },
+  { id: '20-automated-decision-making', num: '20', label: 'Automated decision-making' },
+  { id: '21-your-privacy-rights', num: '21', label: 'Your privacy rights' },
+  { id: '22-complaints-to-regulators', num: '22', label: 'Complaints to regulators' },
+  { id: '23-changes-to-this-policy', num: '23', label: 'Changes to this policy' },
+  { id: '24-contact-us', num: '24', label: 'Contact us' },
+]
 
 export default function PrivacyPolicyPage() {
   const { t } = useTranslation()
 
   return (
-    <div className="support-page">
+    <>
       <SEO
         title="Privacy Policy - Expedition-Go Tours Ghana"
         description="Expedition-Go Tours respects your privacy. Learn how we collect, use, and protect your personal data when you book tours and experiences through our platform."
@@ -19,15 +51,15 @@ export default function PrivacyPolicyPage() {
           { name: 'Privacy Policy', url: 'https://expeditiongotours.com/privacy-policy' },
         ])}
       />
-      <div className="support-hero">
-        <div className="support-hero-content">
-          <h1 className="support-title">{t('footer.privacyPolicy')}</h1>
-          <p className="support-subtitle">{t('company.privacySubtitle')}</p>
-        </div>
-      </div>
-
-      <div className="support-container">
-        <div className="support-article">
+      <LegalPageShell
+        eyebrow="Privacy"
+        title={t('footer.privacyPolicy')}
+        description={t('company.privacySubtitle')}
+        updated="Last updated · August 2026"
+        summary={SUMMARY}
+        toc={TOC}
+        activeTab="privacy"
+      >
           <p>
             Expedition-Go Tours Ltd respects your privacy and is committed to handling personal
             information fairly, lawfully, securely and transparently.
@@ -47,7 +79,7 @@ export default function PrivacyPolicyPage() {
             <li>otherwise interact with Expedition-Go Tours Ltd.</li>
           </ul>
 
-          <h2>2. Who we are</h2>
+          <h2 id="2-who-we-are">2. Who we are</h2>
           <p>The controller responsible for your personal information is:</p>
           <p>
             <strong>Expedition-Go Tours Ltd</strong>
@@ -81,7 +113,7 @@ export default function PrivacyPolicyPage() {
             <li>Current registration expiry date: <strong>1 June 2027</strong></li>
           </ul>
 
-          <h2>3. Our trading names and platforms</h2>
+          <h2 id="3-our-trading-names-and-platforms">3. Our trading names and platforms</h2>
           <p>
             <strong>Travio Ghana</strong> and <strong>Travio Africa</strong> are registered trading
             names of Expedition-Go Tours Ltd. They are not separate legal entities.
@@ -112,7 +144,7 @@ export default function PrivacyPolicyPage() {
             entity, not a sale or transfer to separate Travio companies.
           </p>
 
-          <h2>4. Laws that apply</h2>
+          <h2 id="4-laws-that-apply">4. Laws that apply</h2>
           <p>
             We process personal information in accordance with applicable data-protection and
             electronic-marketing laws, including:
@@ -130,7 +162,7 @@ export default function PrivacyPolicyPage() {
             relevant processing and individual.
           </p>
 
-          <h2>5. Personal information we collect</h2>
+          <h2 id="5-personal-information-we-collect">5. Personal information we collect</h2>
           <p>
             Depending on how you interact with us, we may collect the following categories of
             information.
@@ -245,7 +277,7 @@ export default function PrivacyPolicyPage() {
           </p>
           <p>Please do not send sensitive information that is not necessary for your booking.</p>
 
-          <h2>6. How we collect information</h2>
+          <h2 id="6-how-we-collect-information">6. How we collect information</h2>
           <p>We collect information:</p>
           <ul>
             <li>directly from you when you create an account, book, contact us, submit content or become a supplier;</li>
@@ -261,74 +293,74 @@ export default function PrivacyPolicyPage() {
             must make this policy available to them.
           </p>
 
-          <h2>7. Why we use your information and our lawful bases</h2>
+          <h2 id="7-why-we-use-your-information-and-our-lawful-bases">7. Why we use your information and our lawful bases</h2>
           <p>
             The lawful basis depends on the purpose and the law that applies.
           </p>
           <p>
-            <strong>Create and manage accounts</strong> — Identity, contact and account information.
+            <strong>Create and manage accounts</strong> â€” Identity, contact and account information.
             Lawful basis: Contract; legitimate interests in providing account features and security.
           </p>
           <p>
-            <strong>Search, book and deliver experiences</strong> — Identity, contact, booking,
+            <strong>Search, book and deliver experiences</strong> â€” Identity, contact, booking,
             travel and payment information. Lawful basis: Contract; steps requested before
             entering a contract.
           </p>
           <p>
-            <strong>Share booking details with the relevant supplier</strong> — Identity, contact,
+            <strong>Share booking details with the relevant supplier</strong> â€” Identity, contact,
             booking, pickup and necessary travel information. Lawful basis: Contract; legitimate
             interests in completing and supporting the booking.
           </p>
           <p>
-            <strong>Process payments, refunds and payouts</strong> — Identity, transaction and
+            <strong>Process payments, refunds and payouts</strong> â€” Identity, transaction and
             payment information. Lawful basis: Contract; legal obligation; legitimate interests in
             financial administration.
           </p>
           <p>
-            <strong>Provide support and handle complaints</strong> — Contact, booking and
+            <strong>Provide support and handle complaints</strong> â€” Contact, booking and
             communications information. Lawful basis: Contract; legal obligation; legitimate
             interests in customer service and dispute resolution.
           </p>
           <p>
-            <strong>Manage safety, emergencies and accessibility</strong> — Booking, contact and
+            <strong>Manage safety, emergencies and accessibility</strong> â€” Booking, contact and
             necessary health or accessibility information. Lawful basis: Contract; vital
             interests; explicit consent or other special-category condition where required.
           </p>
           <p>
-            <strong>Prevent fraud and protect the Platform</strong> — Identity, transaction,
+            <strong>Prevent fraud and protect the Platform</strong> â€” Identity, transaction,
             device, usage and security information. Lawful basis: Legitimate interests; legal
             obligation.
           </p>
           <p>
-            <strong>Verify and manage suppliers</strong> — Identity, business, tax, licensing,
+            <strong>Verify and manage suppliers</strong> â€” Identity, business, tax, licensing,
             payout and performance information. Lawful basis: Contract; legal obligation;
             legitimate interests in marketplace quality and safety.
           </p>
           <p>
-            <strong>Send service communications</strong> — Contact and booking information. Lawful
+            <strong>Send service communications</strong> â€” Contact and booking information. Lawful
             basis: Contract; legitimate interests in keeping you informed.
           </p>
           <p>
-            <strong>Request and publish reviews</strong> — Booking information and content you
+            <strong>Request and publish reviews</strong> â€” Booking information and content you
             submit. Lawful basis: Legitimate interests in quality, transparency and customer
             information; consent where required.
           </p>
           <p>
-            <strong>Improve services and produce aggregated analytics</strong> — Usage, booking,
+            <strong>Improve services and produce aggregated analytics</strong> â€” Usage, booking,
             support and survey information. Lawful basis: Legitimate interests; consent where
             cookies or similar technologies require it.
           </p>
           <p>
-            <strong>Send direct marketing</strong> — Contact details and marketing preferences.
+            <strong>Send direct marketing</strong> â€” Contact details and marketing preferences.
             Lawful basis: Consent where required; legitimate interests only where permitted by law.
           </p>
           <p>
-            <strong>Comply with tax, accounting, regulatory and legal duties</strong> — Identity,
+            <strong>Comply with tax, accounting, regulatory and legal duties</strong> â€” Identity,
             booking, transaction and communications information. Lawful basis: Legal obligation;
             legitimate interests in establishing and defending legal claims.
           </p>
           <p>
-            <strong>Corporate transactions and professional advice</strong> — Relevant business
+            <strong>Corporate transactions and professional advice</strong> â€” Relevant business
             and customer records. Lawful basis: Legitimate interests; legal obligation where
             applicable.
           </p>
@@ -341,7 +373,7 @@ export default function PrivacyPolicyPage() {
             processing that was lawful before withdrawal.
           </p>
 
-          <h2>8. Information used across Expedition-Go Tours, Travio Ghana and Travio Africa</h2>
+          <h2 id="8-information-used-across-expedition-go-tours-travio-ghana-and-travio-africa">8. Information used across Expedition-Go Tours, Travio Ghana and Travio Africa</h2>
           <p>
             When you use any of our branded services, you agree that relevant information may be
             accessed and used within Expedition-Go Tours Ltd across the Expedition-Go Tours,
@@ -366,7 +398,7 @@ export default function PrivacyPolicyPage() {
             trading names will follow your marketing preferences and any consent required by law.
           </p>
 
-          <h2>9. Independent suppliers</h2>
+          <h2 id="9-independent-suppliers">9. Independent suppliers</h2>
           <p>
             Some experiences are delivered directly by Expedition-Go Tours. Others are delivered by
             independent tour operators, guides, attractions, transport providers or other
@@ -384,7 +416,7 @@ export default function PrivacyPolicyPage() {
             connected with the booking and their legal duties.
           </p>
 
-          <h2>10. Who we share information with</h2>
+          <h2 id="10-who-we-share-information-with">10. Who we share information with</h2>
           <p>We may share relevant information with:</p>
           <ul>
             <li>the supplier, guide, driver, attraction or other provider responsible for the experience;</li>
@@ -404,7 +436,7 @@ export default function PrivacyPolicyPage() {
           </p>
           <p>We do not sell your personal information.</p>
 
-          <h2>11. Payments</h2>
+          <h2 id="11-payments">11. Payments</h2>
           <p>
             Payments may be handled by third-party payment providers. These providers may act as
             processors or independent controllers depending on the service and applicable law.
@@ -417,7 +449,7 @@ export default function PrivacyPolicyPage() {
           </p>
           <p>Do not send full card information through ordinary email, social media or WhatsApp.</p>
 
-          <h2>12. Cookies and similar technologies</h2>
+          <h2 id="12-cookies-and-similar-technologies">12. Cookies and similar technologies</h2>
           <p>
             We use cookies, pixels, tags, local storage and similar technologies for:
           </p>
@@ -444,7 +476,7 @@ export default function PrivacyPolicyPage() {
             currently used on each Platform.
           </p>
 
-          <h2>13. Marketing and communication preferences</h2>
+          <h2 id="13-marketing-and-communication-preferences">13. Marketing and communication preferences</h2>
           <p>
             We may send booking confirmations, safety notices, pickup updates, account messages
             and other service communications necessary for your relationship with us. These are
@@ -464,7 +496,7 @@ export default function PrivacyPolicyPage() {
           </ul>
           <p>We may retain a minimal suppression record so that we can respect your opt-out.</p>
 
-          <h2>14. Social media and third-party websites</h2>
+          <h2 id="14-social-media-and-third-party-websites">14. Social media and third-party websites</h2>
           <p>
             If you interact with us on Facebook, Instagram, TikTok, YouTube, X, LinkedIn or
             another social platform, that platform may independently process information under
@@ -479,7 +511,7 @@ export default function PrivacyPolicyPage() {
             provide any required information and obtain consent where required.
           </p>
 
-          <h2>15. Reviews, photographs and promotional content</h2>
+          <h2 id="15-reviews-photographs-and-promotional-content">15. Reviews, photographs and promotional content</h2>
           <p>
             When you submit a review, rating, photograph or video, we process the information you
             choose to provide to publish, moderate and respond to it and to help other travellers
@@ -497,7 +529,7 @@ export default function PrivacyPolicyPage() {
             already lawfully printed or published.
           </p>
 
-          <h2>16. International transfers</h2>
+          <h2 id="16-international-transfers">16. International transfers</h2>
           <p>
             Expedition-Go Tours operates from Ghana and serves travellers and suppliers internationally,
             including in the United Kingdom. Information may therefore be accessed or processed
@@ -523,47 +555,47 @@ export default function PrivacyPolicyPage() {
             about safeguards relevant to your information.
           </p>
 
-          <h2>17. How long we keep information</h2>
+          <h2 id="17-how-long-we-keep-information">17. How long we keep information</h2>
           <p>
             We keep personal information only as long as reasonably necessary for the purpose
             collected, including legal, tax, accounting, fraud-prevention and dispute requirements.
           </p>
           <p>Our general retention approach is:</p>
           <p>
-            <strong>Account information</strong> — While the account is active and for up to 24
+            <strong>Account information</strong> â€” While the account is active and for up to 24
             months after closure, unless longer retention is required.
           </p>
           <p>
-            <strong>Booking, payment, invoice and refund records</strong> — Up to 6 years after
+            <strong>Booking, payment, invoice and refund records</strong> â€” Up to 6 years after
             the transaction or longer where required by Ghanaian or UK law.
           </p>
           <p>
-            <strong>Customer-support and complaint records</strong> — Normally up to 3 years after
+            <strong>Customer-support and complaint records</strong> â€” Normally up to 3 years after
             resolution; longer where connected to a claim or legal duty.
           </p>
           <p>
-            <strong>Identity or travel documents collected for a specific service</strong> —
+            <strong>Identity or travel documents collected for a specific service</strong> â€”
             Deleted or securely restricted when the service and required verification period end,
             unless law requires longer retention.
           </p>
           <p>
-            <strong>Supplier verification, contract and payout records</strong> — During the
+            <strong>Supplier verification, contract and payout records</strong> â€” During the
             relationship and normally up to 6 years afterwards.
           </p>
           <p>
-            <strong>Security and technical logs</strong> — Normally up to 12 months, unless needed
+            <strong>Security and technical logs</strong> â€” Normally up to 12 months, unless needed
             to investigate an incident.
           </p>
           <p>
-            <strong>Marketing records</strong> — Until consent is withdrawn, you opt out, or the
+            <strong>Marketing records</strong> â€” Until consent is withdrawn, you opt out, or the
             data is no longer needed; suppression records may be retained to honour your choice.
           </p>
           <p>
-            <strong>Cookie and consent records</strong> — According to the cookie schedule and as
+            <strong>Cookie and consent records</strong> â€” According to the cookie schedule and as
             needed to demonstrate your preferences.
           </p>
           <p>
-            <strong>Reviews and public content</strong> — While published or until removal is
+            <strong>Reviews and public content</strong> â€” While published or until removal is
             justified, with limited archival retention where necessary.
           </p>
           <p>
@@ -571,7 +603,7 @@ export default function PrivacyPolicyPage() {
             information, risk, disputes and whether information can be anonymised.
           </p>
 
-          <h2>18. How we protect information</h2>
+          <h2 id="18-how-we-protect-information">18. How we protect information</h2>
           <p>
             We use proportionate technical and organisational measures designed to protect
             personal information, including where appropriate:
@@ -595,7 +627,7 @@ export default function PrivacyPolicyPage() {
             relevant regulator and affected individuals where the law requires.
           </p>
 
-          <h2>19. Children</h2>
+          <h2 id="19-children">19. Children</h2>
           <p>
             Our Platform is intended for adults making travel arrangements. A person under 18
             must not create an account or make a booking independently.
@@ -608,7 +640,7 @@ export default function PrivacyPolicyPage() {
           </p>
           <p>Contact us if you believe a child has provided information without appropriate authority.</p>
 
-          <h2>20. Automated decision-making</h2>
+          <h2 id="20-automated-decision-making">20. Automated decision-making</h2>
           <p>
             We may use automated tools to help detect payment fraud, account misuse or security
             risks, or to rank and recommend experiences.
@@ -621,7 +653,7 @@ export default function PrivacyPolicyPage() {
             challenge the decision.
           </p>
 
-          <h2>21. Your privacy rights</h2>
+          <h2 id="21-your-privacy-rights">21. Your privacy rights</h2>
           <p>
             Your exact rights depend on your location and the applicable law. Subject to legal
             conditions and exceptions, you may have the right to:
@@ -654,7 +686,7 @@ export default function PrivacyPolicyPage() {
             that law.
           </p>
 
-          <h2>22. Complaints to regulators</h2>
+          <h2 id="22-complaints-to-regulators">22. Complaints to regulators</h2>
           <p>Please contact us first so we can try to resolve your concern.</p>
           <p>You may also complain to the regulator applicable to you:</p>
           <ul>
@@ -670,7 +702,7 @@ export default function PrivacyPolicyPage() {
           </ul>
           <p>Your right to complain or seek another legal remedy is not affected by contacting us first.</p>
 
-          <h2>23. Changes to this policy</h2>
+          <h2 id="23-changes-to-this-policy">23. Changes to this policy</h2>
           <p>
             We may update this policy to reflect changes in our services, technology, suppliers or
             legal obligations. The current version and effective date will be displayed on the
@@ -681,7 +713,7 @@ export default function PrivacyPolicyPage() {
             appropriate notice and obtain consent where required.
           </p>
 
-          <h2>24. Contact us</h2>
+          <h2 id="24-contact-us">24. Contact us</h2>
           <p>For privacy questions or requests, contact:</p>
           <p>
             <strong>Expedition-Go Tours Ltd</strong>
@@ -707,11 +739,8 @@ export default function PrivacyPolicyPage() {
             appropriately.
           </p>
 
-          <p className="support-meta">{t('support.updatedDate')}: August 2026</p>
-        </div>
-      </div>
-
-      <Footer />
-    </div>
+          <p>Last updated: August 2026</p>
+      </LegalPageShell>
+    </>
   )
 }
