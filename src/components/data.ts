@@ -609,6 +609,10 @@ export interface TravelStory {
   author: string
   date: string
   link: string
+  /** Topic filters the story belongs to (nature, culture, food, adventure, heritage). */
+  categories?: string[]
+  /** Estimated reading time in minutes, shown on blog/story cards. */
+  readTime?: number
 }
 
 const travelStories: TravelStory[] = [
@@ -619,6 +623,8 @@ const travelStories: TravelStory[] = [
     author: 'Expedition-Go Tours Team',
     date: 'June 12, 2026',
     link: '#',
+    categories: ['nature', 'adventure'],
+    readTime: 5,
   },
   {
     title: 'The History and Heritage of Cape Coast Castle',
@@ -627,6 +633,8 @@ const travelStories: TravelStory[] = [
     author: 'Kwame Asante',
     date: 'May 28, 2026',
     link: '#',
+    categories: ['heritage', 'culture'],
+    readTime: 7,
   },
   {
     title: 'A Food Lover\'s Guide to Accra',
@@ -635,6 +643,8 @@ const travelStories: TravelStory[] = [
     author: 'Ama Serwaa',
     date: 'May 15, 2026',
     link: '#',
+    categories: ['food', 'culture'],
+    readTime: 5,
   },
   {
     title: 'Wildlife Encounters: Mole National Park Safari',
@@ -643,6 +653,8 @@ const travelStories: TravelStory[] = [
     author: 'Expedition-Go Tours Team',
     date: 'April 30, 2026',
     link: '#',
+    categories: ['nature', 'adventure'],
+    readTime: 6,
   },
   {
     title: 'The Best Beaches in Ghana for a Weekend Escape',
@@ -651,6 +663,8 @@ const travelStories: TravelStory[] = [
     author: 'Nana Yaw',
     date: 'April 18, 2026',
     link: '#',
+    categories: ['nature', 'adventure'],
+    readTime: 4,
   },
   {
     title: 'Exploring Ashanti Culture in Kumasi',
@@ -659,6 +673,8 @@ const travelStories: TravelStory[] = [
     author: 'Akua Mensah',
     date: 'March 22, 2026',
     link: '#',
+    categories: ['culture', 'heritage'],
+    readTime: 6,
   },
 ]
 

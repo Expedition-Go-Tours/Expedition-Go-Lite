@@ -170,8 +170,8 @@ function HomePage() {
         <MountOnView><Suspense fallback={<HomeSectionSkeleton />}><NewExperiencesSection isLoading={loading} title={locationTitle?.('New Experiences')} location={locationFilter} backfill={data?.newExperiencesBackfill} /></Suspense></MountOnView>
         <MountOnView><Suspense fallback={<HomeSectionSkeleton />}><TopAttractionsNearbySection preloaded={data?.attractions} title={locationTitle?.('Top Attractions Nearby')} location={locationFilter} /></Suspense></MountOnView>
         <MountOnView><ExternalReviewsSection /></MountOnView>
-        <MountOnView><NewsletterSection /></MountOnView>
         <MountOnView><PreviousSearchSections /></MountOnView>
+        <MountOnView><NewsletterSection /></MountOnView>
       </div>
       <Footer />
     </SellOutProvider>
@@ -383,7 +383,7 @@ function AppContent() {
           <Route path="/stories" element={<AllStoriesPage />} />
           <Route path="/stories/:slug" element={<StoryDetailPage />} />
           <Route path="/reviews" element={<AllReviewsPage />} />
-          <Route path="/blog" element={<BlogPage onOpenAuth={handleOpenAuth} />} />
+          <Route path="/blog" element={<BlogPage />} />
           <Route path="/*" element={
             <AnimatePresence mode="wait">
               {currentPage === 'signin' || currentPage === 'signup' ? (

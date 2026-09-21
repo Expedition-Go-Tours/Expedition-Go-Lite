@@ -1595,20 +1595,20 @@ body:has(.story-detail) .navbar-compact-search {
 /* Footer-linked pages: align the navbar (logo + icons) with each page's
    content grid on desktop. Grouped by container max-width + gutter. */
 
-/* 1140px container + 32px gutters: Hotels, Travel Agents, Transport, Blog */
+/* 1140px container + 32px gutters: Hotels, Travel Agents, Transport */
 @media (min-width: 1025px) {
   .page-hotel .navbar,
   .page-travel-agents .navbar,
-  .page-transport-providers .navbar,
-  .page-blog .navbar {
+  .page-transport-providers .navbar {
     padding-left: max(32px, calc((100vw - 1140px) / 2 + 32px));
     padding-right: max(32px, calc((100vw - 1140px) / 2 + 32px));
   }
 }
 
-/* 1200px container + 32px gutters: Foundation */
+/* 1200px container + 32px gutters: Foundation, Blog */
 @media (min-width: 1025px) {
-  .page-foundation .navbar {
+  .page-foundation .navbar,
+  .page-blog .navbar {
     padding-left: max(32px, calc((100vw - 1200px) / 2 + 32px));
     padding-right: max(32px, calc((100vw - 1200px) / 2 + 32px));
   }

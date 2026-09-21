@@ -1,20 +1,22 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { AnimatePresence, MotionConfig, motion, type Variants } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
+import { MotionConfig, motion } from 'framer-motion'
 import {
-  ArrowRight,
+  Heart,
+  Users,
   Folder,
   Handshake,
-  Heart,
-  User,
-  Users,
+  Check,
+  ChevronRight,
+  ArrowRight,
 } from 'lucide-react'
 import Footer from '../components/Footer'
 import SEO, { buildBreadcrumbSchema, buildOrganizationSchema } from '../components/SEO'
-import SwipeCarousel from '../components/SwipeCarousel'
-import ImageLightbox, { type GalleryImage } from '../components/gallery/ImageLightbox'
-import useMediaQuery from '../hooks/useMediaQuery'
+import {
+  fadeUp,
+  revealViewport,
+  stagger,
+  staggerItem,
+} from '../components/support/motion'
 import help1 from '../assets/foundation/help1.avif'
 import help2 from '../assets/foundation/help2.avif'
 import help3 from '../assets/foundation/help3.avif'
@@ -24,191 +26,104 @@ import help6 from '../assets/foundation/help6.avif'
 import help7 from '../assets/foundation/help7.avif'
 import help8 from '../assets/foundation/help8.avif'
 import help9 from '../assets/foundation/help9.avif'
+import './SupportPages.css'
 import './FoundationPage.css'
 
-const HERO_IMAGES = [
-  { src: help1, width: 830, height: 624 },
-  { src: help2, width: 801, height: 624 },
-  { src: help3, width: 702, height: 624 },
-  { src: help4, width: 777, height: 624 },
-  { src: help5, width: 841, height: 421 },
+const GALLERY_LANE_1 = [
+  { src: help1, alt: 'Expedition-Go Foundation community activity', label: 'Community' },
+  { src: help3, alt: 'People taking part in a Foundation initiative', label: 'Support' },
+  { src: help5, alt: 'Local impact supported by Expedition-Go', label: 'Opportunity' },
 ]
 
-const GALLERY_IMAGES = [
-  { src: help6, key: 'galleryCaption1', width: 841, height: 600 },
-  { src: help7, key: 'galleryCaption2', width: 841, height: 520 },
-  { src: help8, key: 'galleryCaption3', width: 841, height: 492 },
-  { src: help9, key: 'galleryCaption4', width: 841, height: 569 },
+const GALLERY_LANE_2 = [
+  { src: help2, alt: 'Foundation volunteers in Ghana', label: 'Together' },
+  { src: help4, alt: 'Community-led Foundation work', label: 'Local action' },
+  { src: help6, alt: 'Making a positive impact', label: 'Impact' },
 ]
 
-const HELP_CARD_IMAGES = [
-  { src: help7, width: 841, height: 520 },
-  { src: help8, width: 841, height: 492 },
+const MISSION_CARDS = [
+  {
+    titleKey: 'foundation.missionTitle',
+    desc: 'We commit 2% of every booking revenue generated through the Expedition-Go platform to the Foundation.',
+  },
+  {
+    title: 'Local needs guide the work',
+    desc: 'We listen to individuals, community leaders, schools and organisations to understand where support can be most useful.',
+  },
+  {
+    title: 'Support creates opportunity',
+    desc: 'From urgent personal needs to education, conservation and local development, the goal is practical, positive impact.',
+  },
 ]
 
-const VOLUNTEER_IMAGE = { src: help9, width: 841, height: 569 }
+const FOCUS_AREAS = [
+  {
+    num: '01 / PEOPLE',
+    Icon: Heart,
+    titleKey: 'foundation.area1Title',
+    descKey: 'foundation.area1Desc',
+  },
+  {
+    num: '02 / PLACES',
+    Icon: Users,
+    titleKey: 'foundation.area2Title',
+    descKey: 'foundation.area2Desc',
+  },
+  {
+    num: '03 / PROGRESS',
+    Icon: Folder,
+    titleKey: 'foundation.area3Title',
+    descKey: 'foundation.area3Desc',
+  },
+  {
+    num: '04 / TOGETHER',
+    Icon: Handshake,
+    titleKey: 'foundation.area4Title',
+    descKey: 'foundation.area4Desc',
+  },
+]
 
-const AUTOPLAY_MS = 6500
+const IMPACT_SHOTS = [
+  { src: help6, alt: 'Expedition-Go Foundation making an impact', caption: 'Making an impact' },
+  { src: help7, alt: 'Foundation individual support', caption: 'Supporting people' },
+  { src: help8, alt: 'Foundation community support', caption: 'Strengthening communities' },
+  { src: help9, alt: 'Foundation volunteers', caption: 'Moving together' },
+]
 
-const fadeUp: Variants = {
-  hidden: { opacity: 0, y: 26 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.55, ease: 'easeOut' } },
-}
-
-const stagger: Variants = {
-  visible: { transition: { staggerChildren: 0.1 } },
+function GalleryLane({ images }: { images: typeof GALLERY_LANE_1 }) {
+  return (
+    <div className="fn-lane">
+      <div className="fn-strip">
+        <div className="fn-set">
+          {images.map((img) => (
+            <figure key={img.label} className="fn-photo">
+              <img src={img.src} alt={img.alt} loading="lazy" />
+              <span>{img.label}</span>
+            </figure>
+          ))}
+        </div>
+        <div className="fn-set" aria-hidden="true">
+          {images.map((img) => (
+            <figure key={`dup-${img.label}`} className="fn-photo">
+              <img src={img.src} alt="" loading="lazy" />
+              <span>{img.label}</span>
+            </figure>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export default function FoundationPage() {
   const { t } = useTranslation()
-  const isMobile = useMediaQuery('(max-width: 900px)')
-  const reduceMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
-
-  const [currentSlide, setCurrentSlide] = useState(0)
-  const [cycleKey, setCycleKey] = useState(0)
-  const [heroPaused, setHeroPaused] = useState(false)
-  const [heroInView, setHeroInView] = useState(true)
-  const [pageVisible, setPageVisible] = useState(true)
-  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
-
-  const heroRef = useRef<HTMLElement>(null)
-  const touchStartX = useRef<number | null>(null)
-
-  const CORE_AREAS = [
-    { Icon: Users, title: t('foundation.area1Title'), subtitle: t('foundation.area1Subtitle'), description: t('foundation.area1Desc') },
-    { Icon: Heart, title: t('foundation.area2Title'), subtitle: t('foundation.area2Subtitle'), description: t('foundation.area2Desc') },
-    { Icon: Folder, title: t('foundation.area3Title'), subtitle: t('foundation.area3Subtitle'), description: t('foundation.area3Desc') },
-    { Icon: Handshake, title: t('foundation.area4Title'), subtitle: t('foundation.area4Subtitle'), description: t('foundation.area4Desc') },
-  ]
-
-  const gallery = useMemo<GalleryImage[]>(
-    () =>
-      GALLERY_IMAGES.map((img) => ({
-        src: img.src,
-        alt: t(`foundation.${img.key}`),
-        width: img.width,
-        height: img.height,
-      })),
-    [t],
-  )
-
-  const openLightbox = useCallback(
-    (src: string) => {
-      const index = gallery.findIndex((img) => img.src === src)
-      if (index !== -1) setLightboxIndex(index)
-    },
-    [gallery],
-  )
-
-  const closeLightbox = useCallback(() => setLightboxIndex(null), [])
-
-  const navigateLightbox = useCallback(
-    (delta: number) => {
-      setLightboxIndex((index) =>
-        index === null ? index : (index + delta + gallery.length) % gallery.length,
-      )
-    },
-    [gallery.length],
-  )
-
-  /* Autoplay only while the hero is on screen, the page is visible, the
-     pointer/keyboard is away, and the user has not asked for reduced motion. */
-  useEffect(() => {
-    const node = heroRef.current
-    if (!node || typeof IntersectionObserver === 'undefined') return
-    const observer = new IntersectionObserver(
-      ([entry]) => setHeroInView(entry.isIntersecting),
-      { threshold: 0.25 },
-    )
-    observer.observe(node)
-    return () => observer.disconnect()
-  }, [])
-
-  useEffect(() => {
-    const onVisibility = () => setPageVisible(!document.hidden)
-    document.addEventListener('visibilitychange', onVisibility)
-    return () => document.removeEventListener('visibilitychange', onVisibility)
-  }, [])
-
-  useEffect(() => {
-    if (reduceMotion || heroPaused || !heroInView || !pageVisible) return
-    const id = window.setInterval(
-      () => setCurrentSlide((prev) => (prev + 1) % HERO_IMAGES.length),
-      AUTOPLAY_MS,
-    )
-    return () => window.clearInterval(id)
-  }, [reduceMotion, heroPaused, heroInView, pageVisible, cycleKey])
-
-  const goToSlide = useCallback((index: number) => {
-    setCurrentSlide(index)
-    setCycleKey((key) => key + 1)
-  }, [])
-
-  const stepSlide = useCallback(
-    (delta: number) => {
-      setCurrentSlide((prev) => (prev + delta + HERO_IMAGES.length) % HERO_IMAGES.length)
-      setCycleKey((key) => key + 1)
-    },
-    [],
-  )
-
-  const areaCards = CORE_AREAS.map((area) => (
-    <div key={area.title} className="foundation-area-card foundation-glass">
-      <div className="foundation-area-icon" aria-hidden="true">
-        <area.Icon size={24} />
-      </div>
-      <h3 className="foundation-area-title">{area.title}</h3>
-      <p className="foundation-area-subtitle">{area.subtitle}</p>
-      <p className="foundation-area-description">{area.description}</p>
-    </div>
-  ))
-
-  const galleryTiles = GALLERY_IMAGES.map((img) => (
-    <button
-      key={img.key}
-      type="button"
-      className="foundation-gallery-item"
-      onClick={() => openLightbox(img.src)}
-    >
-      <img
-        src={img.src}
-        alt={t(`foundation.${img.key}`)}
-        width={img.width}
-        height={img.height}
-        loading={isMobile ? 'eager' : 'lazy'}
-        decoding="async"
-      />
-      <span className="foundation-gallery-caption">{t(`foundation.${img.key}`)}</span>
-    </button>
-  ))
-
-  const helpCards = [
-    {
-      key: 'individual',
-      image: HELP_CARD_IMAGES[0],
-      Icon: User,
-      title: t('foundation.forIndividuals'),
-      subtitle: t('foundation.individualSubtitle'),
-      description: t('foundation.individualDesc'),
-      action: t('foundation.requestHelpBtn'),
-    },
-    {
-      key: 'community',
-      image: HELP_CARD_IMAGES[1],
-      Icon: Users,
-      title: t('foundation.forCommunities'),
-      subtitle: t('foundation.communitySubtitle'),
-      description: t('foundation.communityDesc'),
-      action: t('foundation.getSupport'),
-    },
-  ]
 
   return (
     <MotionConfig reducedMotion="user">
-      <div className="foundation-page">
+      <div className="support-page">
         <SEO
           title={t('foundation.pageTitle')}
-          description="The Expedition-Go Tours Foundation supports communities across Ghana through education, healthcare, environmental conservation, and sustainable tourism initiatives."
+          description="The Expedition-Go Tours Foundation turns every booking into positive impact for individuals, communities and community-led projects across Ghana."
           keywords="Expedition-Go Tours Foundation, Ghana community support, sustainable tourism Ghana, travel foundation Ghana, community impact Ghana"
           jsonLd={[
             buildBreadcrumbSchema([
@@ -219,277 +134,389 @@ export default function FoundationPage() {
           ]}
         />
 
-        {/* ===== Hero — rotating photo backdrop behind a glass panel ===== */}
-        <section
-          ref={heroRef}
-          className="foundation-hero"
-          aria-roledescription="carousel"
-          aria-label={t('foundation.heroLabel')}
-          onMouseEnter={() => setHeroPaused(true)}
-          onMouseLeave={() => setHeroPaused(false)}
-          onFocus={() => setHeroPaused(true)}
-          onBlur={(e) => {
-            if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setHeroPaused(false)
-          }}
-          onTouchStart={(e) => {
-            touchStartX.current = e.touches[0]?.clientX ?? null
-          }}
-          onTouchEnd={(e) => {
-            const start = touchStartX.current
-            touchStartX.current = null
-            if (start == null) return
-            const end = e.changedTouches[0]?.clientX ?? start
-            const dx = end - start
-            if (Math.abs(dx) > 48) stepSlide(dx > 0 ? -1 : 1)
-          }}
-        >
-          <div className="foundation-hero-carousel" aria-hidden="true">
-            {HERO_IMAGES.map((img, index) => (
-              <div
-                key={index}
-                className={`foundation-hero-slide${index === currentSlide ? ' active' : ''}`}
-              >
-                <img
-                  src={img.src}
-                  alt=""
-                  width={img.width}
-                  height={img.height}
-                  loading={index === 0 ? 'eager' : 'lazy'}
-                  fetchPriority={index === 0 ? 'high' : undefined}
-                  decoding="async"
-                />
+        {/* ============================================================ */}
+        {/* 1. Hero                                                       */}
+        {/* ============================================================ */}
+        <section className="fn-hero">
+          <div className="support-container fn-hero-grid">
+            <motion.div
+              className="fn-hero-copy"
+              initial="hidden"
+              animate="visible"
+              variants={stagger}
+            >
+              <motion.div className="fn-kicker" variants={staggerItem}>
+                <span className="fn-kicker-dot" />
+                {t('foundation.heroLabel')}
+              </motion.div>
+              <motion.h1 variants={staggerItem}>
+                Every journey can make a <em>difference.</em>
+              </motion.h1>
+              <motion.p variants={staggerItem}>
+                We believe tourism should do more than create memorable
+                experiences. It should help build stronger communities, support
+                people in need and open new possibilities across Ghana.
+              </motion.p>
+              <motion.div className="fn-actions" variants={staggerItem}>
+                <a href="#impact" className="fn-btn fn-btn--primary">
+                  See how we help
+                  <ChevronRight size={18} />
+                </a>
+                <a href="#get-involved" className="fn-btn fn-btn--secondary">
+                  Get involved
+                </a>
+              </motion.div>
+              <motion.div className="fn-micro" variants={staggerItem}>
+                Every booking contributes &middot; Locally led support &middot; Shared impact
+              </motion.div>
+            </motion.div>
+
+            <motion.div
+              className="fn-gallery"
+              aria-label="Moving gallery of the Expedition-Go Foundation's community work"
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.7, delay: 0.3, ease: 'easeOut' }}
+            >
+              <GalleryLane images={GALLERY_LANE_1} />
+              <GalleryLane images={GALLERY_LANE_2} />
+              <div className="fn-gallery-badge">
+                <i />
+                Travel that gives back.
               </div>
-            ))}
-          </div>
-          <div className="foundation-hero-veil" aria-hidden="true" />
-          <span className="foundation-hero-orb foundation-hero-orb--a" aria-hidden="true" />
-          <span className="foundation-hero-orb foundation-hero-orb--b" aria-hidden="true" />
-
-          <motion.div
-            className="foundation-hero-panel foundation-glass"
-            initial="hidden"
-            animate="visible"
-            variants={fadeUp}
-          >
-            <p className="foundation-hero-label">
-              <span className="foundation-hero-label-dot" aria-hidden="true" />
-              {t('foundation.heroLabel')}
-            </p>
-            <h1 className="foundation-hero-title">{t('foundation.heroTitle')}</h1>
-          </motion.div>
-
-          <div className="foundation-hero-dots">
-            {HERO_IMAGES.map((_, index) => (
-              <button
-                key={index}
-                type="button"
-                className={`foundation-hero-dot${index === currentSlide ? ' active' : ''}`}
-                onClick={() => goToSlide(index)}
-                aria-label={t('foundation.goToSlide', { number: index + 1 })}
-                aria-current={index === currentSlide ? 'true' : undefined}
-              >
-                <span className="foundation-hero-dot-mark" aria-hidden="true" />
-              </button>
-            ))}
+            </motion.div>
           </div>
         </section>
 
-        <div className="foundation-shell">
-          {/* ===== Mission ===== */}
-          <motion.section
-            className="foundation-mission"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: '-80px' }}
-            variants={fadeUp}
-          >
-            <div className="foundation-mission-panel foundation-glass">
-              <div className="foundation-mission-icon" aria-hidden="true">
-                <Heart size={30} />
-              </div>
-              <h2 className="foundation-mission-title">{t('foundation.missionTitle')}</h2>
-              <p className="foundation-mission-text">{t('foundation.missionText1')}</p>
-              <p
-                className="foundation-mission-text"
-                dangerouslySetInnerHTML={{ __html: t('foundation.missionText2') }}
-              />
-              <p className="foundation-mission-text foundation-mission-highlight">
-                {t('foundation.missionHighlight')}
-              </p>
-              <p className="foundation-mission-text foundation-mission-cta-text">
-                {t('foundation.missionCta')}
-              </p>
+        {/* ============================================================ */}
+        {/* 2. Proof strip                                                */}
+        {/* ============================================================ */}
+        <div className="fn-proof">
+          <div className="support-container fn-proof-inner">
+            <div className="fn-proof-item">
+              <strong>2%</strong> of every booking revenue
             </div>
-          </motion.section>
+            <div className="fn-proof-item">
+              <span className="fn-proof-mark">01</span>
+              Individual support
+            </div>
+            <div className="fn-proof-item">
+              <span className="fn-proof-mark">02</span>
+              Community action
+            </div>
+            <div className="fn-proof-item">
+              <span className="fn-proof-mark">03</span>
+              Local projects
+            </div>
+          </div>
+        </div>
 
-          {/* ===== Focus areas ===== */}
-          <motion.section
-            className="foundation-areas"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: '-80px' }}
-            variants={stagger}
-          >
-            <motion.div className="foundation-section-head" variants={fadeUp}>
-              <p className="foundation-section-label">{t('foundation.howWeHelp')}</p>
-              <h2 className="foundation-section-title">{t('foundation.focusAreas')}</h2>
+        {/* ============================================================ */}
+        {/* 3. Mission / Impact                                          */}
+        {/* ============================================================ */}
+        <section className="fn-mission" id="impact">
+          <div className="support-container fn-mission-grid">
+            <motion.div
+              className="fn-mission-side"
+              initial="hidden"
+              whileInView="visible"
+              viewport={revealViewport}
+              variants={fadeUp}
+            >
+              <span className="fn-label">Making a difference through travel</span>
+              <h2 className="fn-title">Travel should leave more behind than memories.</h2>
+              <p className="fn-lead">
+                A portion of each journey booked through Expedition-Go helps
+                support individuals, strengthen communities and move important
+                local projects forward.
+              </p>
+              <div className="fn-note">
+                <strong>Your journey becomes part of theirs.</strong>
+                When you travel with Expedition-Go Tours, you are helping create
+                a better journey for someone else.
+              </div>
             </motion.div>
 
-            {isMobile ? (
-              <SwipeCarousel
-                label={t('foundation.focusAreas')}
-                slides={areaCards}
-                className="foundation-swipe"
-              />
-            ) : (
-              <div className="foundation-areas-grid">{areaCards}</div>
-            )}
-          </motion.section>
-
-          {/* ===== Request for help ===== */}
-          <motion.section
-            className="foundation-help"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: '-80px' }}
-            variants={stagger}
-          >
-            <motion.div className="foundation-section-head" variants={fadeUp}>
-              <p className="foundation-section-label">{t('foundation.needSupport')}</p>
-              <h2 className="foundation-section-title">{t('foundation.requestHelp')}</h2>
-              <p className="foundation-help-intro">{t('foundation.helpIntro')}</p>
-            </motion.div>
-
-            <div className="foundation-help-grid">
-              {helpCards.map((card) => (
+            <div className="fn-mission-content">
+              {MISSION_CARDS.map((card, i) => (
                 <motion.article
-                  key={card.key}
-                  className="foundation-help-card foundation-glass"
+                  key={i}
+                  className="fn-mission-card"
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={revealViewport}
                   variants={fadeUp}
                 >
-                  <div className="foundation-help-card-image">
-                    <img
-                      src={card.image.src}
-                      alt={card.title}
-                      width={card.image.width}
-                      height={card.image.height}
-                      loading="lazy"
-                      decoding="async"
-                    />
-                    <span className="foundation-help-card-scrim" aria-hidden="true" />
-                  </div>
-                  <div className="foundation-help-card-content">
-                    <div className="foundation-area-icon" aria-hidden="true">
-                      <card.Icon size={24} />
+                  <span className="fn-step">{`0${i + 1}`}</span>
+                  <h3>{card.titleKey ? t(card.titleKey) : card.title}</h3>
+                  <p>{card.desc}</p>
+                </motion.article>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ============================================================ */}
+        {/* 4. Focus areas (dark section)                                */}
+        {/* ============================================================ */}
+        <section className="fn-focus" id="focus">
+          <div className="support-container">
+            <motion.div
+              className="fn-section-head"
+              initial="hidden"
+              whileInView="visible"
+              viewport={revealViewport}
+              variants={fadeUp}
+            >
+              <div>
+                <span className="fn-label" style={{ color: '#baf0cb' }}>
+                  {t('foundation.howWeHelp')}
+                </span>
+                <h2 className="fn-title">Four ways we help change the journey.</h2>
+              </div>
+              <p>
+                Impact starts by listening. We work with people and partners to
+                direct support where it can genuinely make a difference.
+              </p>
+            </motion.div>
+
+            <div className="fn-focus-grid">
+              {FOCUS_AREAS.map((area) => (
+                <motion.article
+                  key={area.num}
+                  className="fn-focus-card"
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={revealViewport}
+                  variants={fadeUp}
+                >
+                  <span className="fn-focus-num">{area.num}</span>
+                  <div>
+                    <div className="fn-focus-icon">
+                      <area.Icon size={25} />
                     </div>
-                    <h3 className="foundation-area-title">{card.title}</h3>
-                    <p className="foundation-area-subtitle">{card.subtitle}</p>
-                    <p className="foundation-area-description">{card.description}</p>
-                    <Link to="/contact-us" className="foundation-btn foundation-btn--primary">
-                      {card.action}
-                      <ArrowRight size={17} aria-hidden="true" />
-                    </Link>
+                    <h3>{t(area.titleKey)}</h3>
+                    <p>{t(area.descKey)}</p>
                   </div>
                 </motion.article>
               ))}
             </div>
-          </motion.section>
+          </div>
+        </section>
 
-          {/* ===== Impact gallery ===== */}
-          <motion.section
-            className="foundation-gallery"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: '-80px' }}
-            variants={stagger}
-          >
-            <motion.div className="foundation-section-head" variants={fadeUp}>
-              <p className="foundation-section-label">{t('foundation.ourImpact')}</p>
-              <h2 className="foundation-section-title">{t('foundation.impactTitle')}</h2>
-            </motion.div>
-
-            {isMobile ? (
-              <SwipeCarousel
-                label={t('foundation.impactTitle')}
-                slides={galleryTiles}
-                className="foundation-swipe"
-              />
-            ) : (
-              <div className="foundation-gallery-grid">{galleryTiles}</div>
-            )}
-          </motion.section>
-
-          {/* ===== Volunteer ===== */}
-          <motion.section
-            className="foundation-volunteer"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: '-80px' }}
-            variants={stagger}
-          >
-            <motion.div className="foundation-volunteer-panel foundation-glass" variants={fadeUp}>
-              <p className="foundation-section-label">{t('foundation.getInvolved')}</p>
-              <h2 className="foundation-volunteer-title">{t('foundation.volunteerTitle')}</h2>
-              <p className="foundation-volunteer-subtitle">{t('foundation.volunteerSubtitle')}</p>
-              <p className="foundation-volunteer-text">{t('foundation.volunteerDesc')}</p>
-              <Link to="/contact-us" className="foundation-btn foundation-btn--primary">
-                {t('foundation.volunteerBtn')}
-                <ArrowRight size={17} aria-hidden="true" />
-              </Link>
-            </motion.div>
-
-            <motion.div className="foundation-volunteer-image" variants={fadeUp}>
-              <img
-                src={VOLUNTEER_IMAGE.src}
-                alt={t('foundation.volunteerTitle')}
-                width={VOLUNTEER_IMAGE.width}
-                height={VOLUNTEER_IMAGE.height}
-                loading="lazy"
-                decoding="async"
-              />
-              <span className="foundation-volunteer-badge foundation-glass">
-                <Heart size={16} aria-hidden="true" />
-                {t('foundation.volunteerSubtitle')}
-              </span>
-            </motion.div>
-          </motion.section>
-
-          {/* ===== CTA ===== */}
-          <motion.section
-            className="foundation-cta"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: '-60px' }}
-            variants={fadeUp}
-          >
-            <span className="foundation-cta-orb foundation-cta-orb--a" aria-hidden="true" />
-            <span className="foundation-cta-orb foundation-cta-orb--b" aria-hidden="true" />
-            <div className="foundation-cta-content">
-              <h2 className="foundation-cta-title">{t('foundation.ctaTitle')}</h2>
-              <p className="foundation-cta-text">{t('foundation.ctaText')}</p>
-              <div className="foundation-cta-buttons">
-                <Link to="/contact-us" className="foundation-btn foundation-btn--primary">
-                  {t('foundation.ctaGetInvolved')}
-                  <ArrowRight size={17} aria-hidden="true" />
-                </Link>
-                <Link to="/about-us" className="foundation-btn foundation-btn--outline">
-                  {t('foundation.ctaLearnMore')}
-                </Link>
+        {/* ============================================================ */}
+        {/* 5. Commitment shell                                           */}
+        {/* ============================================================ */}
+        <section className="fn-commitment">
+          <div className="support-container">
+            <motion.div
+              className="fn-commitment-shell"
+              initial="hidden"
+              whileInView="visible"
+              viewport={revealViewport}
+              variants={fadeUp}
+            >
+              <div className="fn-percent">
+                2%
+                <small>of every booking revenue</small>
               </div>
-            </div>
-          </motion.section>
-        </div>
+              <div className="fn-commitment-copy">
+                <span className="fn-label">One simple commitment</span>
+                <h2 className="fn-title">Your trip helps another journey begin.</h2>
+                <p>
+                  Every qualifying booking on the Expedition-Go platform
+                  contributes to the Foundation. It is a simple way to connect
+                  travel with real support — without asking travellers to add
+                  anything extra.
+                </p>
+                <div className="fn-rule">
+                  <span className="fn-rule-icon">
+                    <Check size={18} />
+                  </span>
+                  Book an experience. Explore Ghana. Help create impact.
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </section>
 
-        <AnimatePresence>
-          {lightboxIndex !== null && (
-            <ImageLightbox
-              images={gallery}
-              index={lightboxIndex}
-              onClose={closeLightbox}
-              onNavigate={navigateLightbox}
-            />
-          )}
-        </AnimatePresence>
+        {/* ============================================================ */}
+        {/* 6. Help / Request support                                     */}
+        {/* ============================================================ */}
+        <section className="fn-help" id="request-help">
+          <div className="support-container">
+            <motion.div
+              className="fn-help-head"
+              initial="hidden"
+              whileInView="visible"
+              viewport={revealViewport}
+              variants={fadeUp}
+            >
+              <div>
+                <span className="fn-label">{t('foundation.needSupport')}</span>
+                <h2 className="fn-title">Tell us where help is needed.</h2>
+              </div>
+              <p>
+                Whether you are reaching out for yourself or on behalf of a
+                community, the Foundation is ready to listen.
+              </p>
+            </motion.div>
+
+            <div className="fn-help-grid">
+              <motion.article
+                className="fn-help-card"
+                initial="hidden"
+                whileInView="visible"
+                viewport={revealViewport}
+                variants={fadeUp}
+              >
+                <img src={help7} alt="Individual support through the Expedition-Go Foundation" loading="lazy" />
+                <div className="fn-help-copy">
+                  <span className="fn-help-tag">{t('foundation.forIndividuals')}</span>
+                  <h3>Share your situation.</h3>
+                  <p>
+                    If you or someone you know needs support, start by telling
+                    the Foundation what is happening and how help could make a
+                    difference.
+                  </p>
+                  <a href="/contact-us" className="fn-btn">
+                    {t('foundation.requestHelpBtn')}
+                    <ArrowRight size={16} />
+                  </a>
+                </div>
+              </motion.article>
+
+              <motion.article
+                className="fn-help-card"
+                initial="hidden"
+                whileInView="visible"
+                viewport={revealViewport}
+                variants={fadeUp}
+              >
+                <img src={help8} alt="Community support through the Expedition-Go Foundation" loading="lazy" />
+                <div className="fn-help-copy">
+                  <span className="fn-help-tag">{t('foundation.forCommunities')}</span>
+                  <h3>Bring a local need forward.</h3>
+                  <p>
+                    Community leaders, schools and organisations can share an
+                    initiative or need for the Foundation to consider.
+                  </p>
+                  <a href="/contact-us" className="fn-btn">
+                    {t('foundation.getSupport')}
+                    <ArrowRight size={16} />
+                  </a>
+                </div>
+              </motion.article>
+            </div>
+          </div>
+        </section>
+
+        {/* ============================================================ */}
+        {/* 7. Gallery section                                            */}
+        {/* ============================================================ */}
+        <section className="fn-gallery-section">
+          <div className="support-container">
+            <motion.div
+              className="fn-gallery-head"
+              initial="hidden"
+              whileInView="visible"
+              viewport={revealViewport}
+              variants={fadeUp}
+            >
+              <span className="fn-label">{t('foundation.ourImpact')}</span>
+              <h2 className="fn-title">Impact is built side by side.</h2>
+              <p className="fn-lead">
+                People, communities, travellers and partners all have a part to
+                play in making tourism a force for good.
+              </p>
+            </motion.div>
+
+            <div className="fn-impact-track">
+              {IMPACT_SHOTS.map((shot) => (
+                <motion.figure
+                  key={shot.caption}
+                  className="fn-impact-shot"
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={revealViewport}
+                  variants={fadeUp}
+                >
+                  <img src={shot.src} alt={shot.alt} loading="lazy" />
+                  <figcaption>{shot.caption}</figcaption>
+                </motion.figure>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ============================================================ */}
+        {/* 8. Volunteer                                                  */}
+        {/* ============================================================ */}
+        <section className="fn-volunteer" id="get-involved">
+          <div className="support-container">
+            <motion.div
+              className="fn-volunteer-shell"
+              initial="hidden"
+              whileInView="visible"
+              viewport={revealViewport}
+              variants={fadeUp}
+            >
+              <div className="fn-volunteer-photo">
+                <img src={help9} alt="Volunteer with the Expedition-Go Tours Foundation" loading="lazy" />
+              </div>
+              <div className="fn-volunteer-copy">
+                <span className="fn-label">{t('foundation.getInvolved')}</span>
+                <h2 className="fn-title">Give your time. Make a difference.</h2>
+                <p>
+                  Meaningful change takes people who are ready to show up. Join
+                  the Foundation's work and help turn care, experience and
+                  practical skills into local action.
+                </p>
+                <ul className="fn-volunteer-points">
+                  <li>
+                    <span className="fn-check"><Check size={14} /></span>
+                    Support community-led activities
+                  </li>
+                  <li>
+                    <span className="fn-check"><Check size={14} /></span>
+                    Contribute skills and experience
+                  </li>
+                  <li>
+                    <span className="fn-check"><Check size={14} /></span>
+                    Help meaningful projects move forward
+                  </li>
+                </ul>
+                <a href="/contact-us" className="fn-btn fn-btn--primary">
+                  {t('foundation.volunteerBtn')}
+                  <ArrowRight size={17} />
+                </a>
+              </div>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* ============================================================ */}
+        {/* 9. CTA                                                        */}
+        {/* ============================================================ */}
+        <section className="fn-cta">
+          <div className="support-container">
+            <motion.div
+              className="fn-cta-inner"
+              initial="hidden"
+              whileInView="visible"
+              viewport={revealViewport}
+              variants={fadeUp}
+            >
+              <div>
+                <h2>{t('foundation.ctaTitle')}</h2>
+                <p>{t('foundation.ctaText')}</p>
+              </div>
+              <a href="/contact-us" className="fn-btn">
+                {t('foundation.ctaGetInvolved')}
+              </a>
+            </motion.div>
+          </div>
+        </section>
 
         <Footer />
       </div>

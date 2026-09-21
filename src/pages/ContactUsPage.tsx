@@ -3,14 +3,23 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { MotionConfig, motion } from 'framer-motion'
 import { toast } from 'sonner'
-import { Clock, ClipboardCopy, Headset, Mail, MapPin, MessageCircle, Phone } from 'lucide-react'
+import {
+  ArrowRight,
+  CheckCircle2,
+  ClipboardCopy,
+  Clock,
+  Headset,
+  Mail,
+  MapPin,
+  MessageCircle,
+  Phone,
+  Send,
+} from 'lucide-react'
 import Footer from '../components/Footer'
 import SEO, { buildBreadcrumbSchema } from '../components/SEO'
-import DeferredMap from '../components/support/DeferredMap'
 import { fadeUp, revealViewport, stagger, staggerItem } from '../components/support/motion'
 import {
   OFFICE_DIRECTIONS_URL,
-  OFFICE_MAP_EMBED,
   SUPPORT_EMAIL,
   SUPPORT_HOURS,
   SUPPORT_PHONE,
@@ -22,6 +31,10 @@ import { useAuthUser } from '../hooks/useAuthUser'
 import { setAuthReturnTo } from '../lib/auth'
 import './SupportPages.css'
 import './SupportHub.css'
+
+/* ------------------------------------------------------------------ */
+/*  Form state                                                         */
+/* ------------------------------------------------------------------ */
 
 interface ContactFormState {
   name: string
@@ -39,6 +52,10 @@ const EMPTY_FORM: ContactFormState = {
   message: '',
 }
 
+/* ------------------------------------------------------------------ */
+/*  Component                                                          */
+/* ------------------------------------------------------------------ */
+
 export default function ContactUsPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -46,7 +63,6 @@ export default function ContactUsPage() {
   const [form, setForm] = useState<ContactFormState>(EMPTY_FORM)
   const [errors, setErrors] = useState<Partial<Record<keyof ContactFormState, string>>>({})
 
-  // Warm the Help Centre + FAQ chunks so the cross-links open without a fallback.
   useEffect(() => {
     scheduleSupportPrefetch()
   }, [])
@@ -109,6 +125,10 @@ export default function ContactUsPage() {
     toast.success(t('contact.form.mailtoOpened'))
   }
 
+  /* ---------------------------------------------------------------- */
+  /*  Render                                                           */
+  /* ---------------------------------------------------------------- */
+
   return (
     <MotionConfig reducedMotion="user">
       <div className="support-page sh-hub">
@@ -122,289 +142,431 @@ export default function ContactUsPage() {
           ])}
         />
 
+        {/* ============================================================ */}
+        {/*  1. Hero — two-column grid                                    */}
+        {/* ============================================================ */}
+
         <header className="sh-hero">
           <motion.div
-            className="sh-hero-inner"
+            className="sh-hero-grid"
             initial="hidden"
             animate="visible"
             variants={stagger}
           >
-            <motion.p className="sh-eyebrow" variants={staggerItem}>
-              {t('supportHub.eyebrow')}
-            </motion.p>
-            <motion.h1 className="sh-title" id="contact-hero-title" variants={staggerItem}>
-              {t('supportHub.contactTitle')}
-            </motion.h1>
-            <motion.p className="sh-sub" variants={staggerItem}>
-              {t('support.contactUsSubtitle')}
-            </motion.p>
-            <motion.div className="sh-quick" variants={staggerItem}>
-              <a href={`mailto:${SUPPORT_EMAIL}`} className="sh-quick-chip">
-                <Mail size={14} aria-hidden="true" />
-                {t('support.emailUs')}
-              </a>
-              <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="sh-quick-chip">
-                <MessageCircle size={14} aria-hidden="true" />
-                {t('contact.whatsappLabel')}
-              </a>
-              <Link to="/faq" className="sh-quick-chip">
-                {t('footer.faq')}
-              </Link>
+            {/* Left column — copy + CTA */}
+            <motion.div className="sh-hero-left" variants={staggerItem}>
+              <p className="sh-eyebrow">{t('supportHub.eyebrow')}</p>
+              <h1 className="sh-title" id="contact-hero-title">
+                Talk to our team.
+              </h1>
+              <p className="sh-sub" style={{ margin: '0 0 28px', maxWidth: 'none' }}>
+                Questions about a booking, pickup or partnership? Reach our Ghana-based
+                support team using the channel that suits you best.
+              </p>
+              <div className="sh-hero-actions">
+                <a href={`mailto:${SUPPORT_EMAIL}`} className="sh-btn sh-btn--hero-primary">
+                  <Mail size={16} aria-hidden="true" />
+                  Email us
+                </a>
+                <a
+                  href={WHATSAPP_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="sh-btn sh-btn--hero-glass"
+                >
+                  <MessageCircle size={16} aria-hidden="true" />
+                  WhatsApp
+                </a>
+              </div>
+            </motion.div>
+
+            {/* Right column — glass response card */}
+            <motion.div className="sh-hero-right" variants={staggerItem}>
+              <div className="sh-response-card">
+                <div className="sh-response-status">
+                  <span className="sh-response-dot" aria-hidden="true" />
+                  Support is available today
+                </div>
+                <h3 className="sh-response-heading">Real people, local knowledge.</h3>
+                <p className="sh-response-desc">
+                  Our Accra-based support team knows Ghana inside out — from the
+                  best coastal routes to last-minute pickup changes. We respond
+                  quickly because we care about every trip.
+                </p>
+                <div className="sh-response-rows">
+                  <div className="sh-response-row">
+                    <span className="sh-response-row-label">Email response</span>
+                    <span className="sh-response-row-value">Within 1 business day</span>
+                  </div>
+                  <div className="sh-response-row">
+                    <span className="sh-response-row-label">Phone &amp; WhatsApp</span>
+                    <span className="sh-response-row-value">During support hours</span>
+                  </div>
+                </div>
+              </div>
             </motion.div>
           </motion.div>
         </header>
 
-      <div className="support-container sh-main">
-        <motion.section
-          className="sh-block"
-          aria-label={t('supportHub.channelsTitle')}
-          initial="hidden"
-          whileInView="visible"
-          viewport={revealViewport}
-          variants={fadeUp}
-        >
-          <motion.div
-            className="sh-channels"
+        {/* ============================================================ */}
+        {/*  2. Channel strip — 4 overlapping cards                       */}
+        {/* ============================================================ */}
+
+        <div className="support-container sh-main">
+          <motion.section
+            className="sh-block"
+            aria-label={t('supportHub.channelsTitle')}
             initial="hidden"
             whileInView="visible"
             viewport={revealViewport}
-            variants={stagger}
+            variants={fadeUp}
           >
-            <motion.a
-              href={`mailto:${SUPPORT_EMAIL}`}
-              className="sh-channel sh-channel--email"
-              variants={staggerItem}
+            <motion.div
+              className="sh-channels"
+              initial="hidden"
+              whileInView="visible"
+              viewport={revealViewport}
+              variants={stagger}
             >
-              <span className="sh-channel-head">
-                <span className="sh-channel-label">
-                  <Mail size={14} aria-hidden="true" />
-                  {t('contact.emailLabel')}
+              <motion.a
+                href={`mailto:${SUPPORT_EMAIL}`}
+                className="sh-channel sh-channel--email"
+                variants={staggerItem}
+              >
+                <span className="sh-channel-head">
+                  <span className="sh-channel-label">
+                    <Mail size={14} aria-hidden="true" />
+                    {t('contact.emailLabel')}
+                  </span>
                 </span>
-              </span>
-              <span className="sh-channel-value">{SUPPORT_EMAIL}</span>
-              <span className="sh-channel-note">{t('contact.emailNote')}</span>
-            </motion.a>
+                <span className="sh-channel-value">{SUPPORT_EMAIL}</span>
+                <span className="sh-channel-note">{t('contact.emailNote')}</span>
+              </motion.a>
 
-            <motion.a
-              href={`tel:${SUPPORT_PHONE_DIGITS}`}
-              className="sh-channel sh-channel--phone"
-              variants={staggerItem}
-            >
-              <span className="sh-channel-head">
-                <span className="sh-channel-label">
-                  <Phone size={14} aria-hidden="true" />
-                  {t('contact.phoneLabel')}
+              <motion.a
+                href={`tel:${SUPPORT_PHONE_DIGITS}`}
+                className="sh-channel sh-channel--phone"
+                variants={staggerItem}
+              >
+                <span className="sh-channel-head">
+                  <span className="sh-channel-label">
+                    <Phone size={14} aria-hidden="true" />
+                    {t('contact.phoneLabel')}
+                  </span>
                 </span>
-              </span>
-              <span className="sh-channel-value">{SUPPORT_PHONE}</span>
-              <span className="sh-channel-note">{t('contact.phoneNote')}</span>
-            </motion.a>
+                <span className="sh-channel-value">{SUPPORT_PHONE}</span>
+                <span className="sh-channel-note">{t('contact.phoneNote')}</span>
+              </motion.a>
 
-            <motion.a
-              href={WHATSAPP_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="sh-channel sh-channel--whatsapp"
-              variants={staggerItem}
-            >
-              <span className="sh-channel-head">
-                <span className="sh-channel-label">
-                  <MessageCircle size={14} aria-hidden="true" />
-                  {t('contact.whatsappLabel')}
+              <motion.a
+                href={WHATSAPP_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="sh-channel sh-channel--whatsapp"
+                variants={staggerItem}
+              >
+                <span className="sh-channel-head">
+                  <span className="sh-channel-label">
+                    <MessageCircle size={14} aria-hidden="true" />
+                    {t('contact.whatsappLabel')}
+                  </span>
                 </span>
-              </span>
-              <span className="sh-channel-value">{SUPPORT_PHONE}</span>
-              <span className="sh-channel-note">{t('contact.whatsappNote')}</span>
-            </motion.a>
+                <span className="sh-channel-value">{SUPPORT_PHONE}</span>
+                <span className="sh-channel-note">{t('contact.whatsappNote')}</span>
+              </motion.a>
 
-            <motion.button
-              type="button"
-              className="sh-channel sh-channel--chat"
-              onClick={openChat}
-              variants={staggerItem}
-            >
-              <span className="sh-channel-head">
-                <span className="sh-channel-label">
-                  <Headset size={14} aria-hidden="true" />
-                  {t('support.chatWithUs')}
+              <motion.button
+                type="button"
+                className="sh-channel sh-channel--chat"
+                onClick={openChat}
+                variants={staggerItem}
+              >
+                <span className="sh-channel-head">
+                  <span className="sh-channel-label">
+                    <Headset size={14} aria-hidden="true" />
+                    {t('support.chatWithUs')}
+                  </span>
+                  <span className="sh-channel-badge">{t('contact.fastest')}</span>
                 </span>
-                <span className="sh-channel-badge">{t('contact.fastest')}</span>
-              </span>
-              <span className="sh-channel-value">{t('contact.chatValue')}</span>
-              <span className="sh-channel-note">{t('contact.chatNote')}</span>
-            </motion.button>
-          </motion.div>
-        </motion.section>
+                <span className="sh-channel-value">{t('contact.chatValue')}</span>
+                <span className="sh-channel-note">{t('contact.chatNote')}</span>
+              </motion.button>
+            </motion.div>
+          </motion.section>
 
-        <motion.section
-          className="sh-block"
-          aria-labelledby="sh-form-title"
-          initial="hidden"
-          whileInView="visible"
-          viewport={revealViewport}
-          variants={fadeUp}
-        >
-          <div className="sh-form-card">
-            <div className="sh-form-intro">
-              <h2 className="sh-form-title" id="sh-form-title">{t('contact.form.title')}</h2>
-              <p className="sh-form-sub">{t('contact.form.subtitle')}</p>
-              <div className="sh-form-aside">
+          {/* ============================================================ */}
+          {/*  3. Enquiry section — form + sidebar                          */}
+          {/* ============================================================ */}
+
+          <motion.section
+            className="sh-block"
+            aria-labelledby="sh-enquiry-title"
+            initial="hidden"
+            whileInView="visible"
+            viewport={revealViewport}
+            variants={fadeUp}
+          >
+            <div className="sh-enquiry-grid">
+              {/* Left — form panel */}
+              <div className="sh-enquiry-form-panel">
+                <h2 className="sh-enquiry-title" id="sh-enquiry-title">
+                  Send us a message
+                </h2>
+                <p className="sh-enquiry-sub">
+                  No account is needed to contact our team.
+                </p>
                 <button type="button" className="sh-copy-btn" onClick={copyEmail}>
                   <ClipboardCopy size={15} aria-hidden="true" />
-                  {t('contact.form.copyEmail')}
+                  Copy email address
                 </button>
-                <p className="sh-form-note">
-                  {t('contact.form.preferEmail', { email: SUPPORT_EMAIL })} <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>
-                </p>
+
+                <form className="sh-form sh-enquiry-form" onSubmit={handleSubmit} noValidate>
+                  <div className="sh-field">
+                    <label className="sh-label" htmlFor="contact-name">
+                      {t('contact.form.name')}
+                    </label>
+                    <input
+                      id="contact-name"
+                      className="sh-input"
+                      type="text"
+                      autoComplete="name"
+                      required
+                      value={form.name}
+                      aria-invalid={!!errors.name}
+                      aria-describedby={errors.name ? 'contact-name-error' : undefined}
+                      onChange={(event) => update('name', event.target.value)}
+                    />
+                    {errors.name && (
+                      <span className="sh-error" id="contact-name-error">{errors.name}</span>
+                    )}
+                  </div>
+
+                  <div className="sh-field">
+                    <label className="sh-label" htmlFor="contact-email">
+                      {t('contact.form.email')}
+                    </label>
+                    <input
+                      id="contact-email"
+                      className="sh-input"
+                      type="email"
+                      autoComplete="email"
+                      required
+                      value={form.email}
+                      aria-invalid={!!errors.email}
+                      aria-describedby={errors.email ? 'contact-email-error' : undefined}
+                      onChange={(event) => update('email', event.target.value)}
+                    />
+                    {errors.email && (
+                      <span className="sh-error" id="contact-email-error">{errors.email}</span>
+                    )}
+                  </div>
+
+                  <div className="sh-field">
+                    <label className="sh-label" htmlFor="contact-topic">
+                      {t('contact.form.topic')}
+                    </label>
+                    <select
+                      id="contact-topic"
+                      className="sh-select"
+                      value={form.topic}
+                      onChange={(event) => update('topic', event.target.value)}
+                    >
+                      {TOPIC_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="sh-field">
+                    <label className="sh-label" htmlFor="contact-booking-ref">
+                      {t('contact.form.bookingRef')}
+                    </label>
+                    <input
+                      id="contact-booking-ref"
+                      className="sh-input"
+                      type="text"
+                      placeholder="e.g. EXP-12345678"
+                      value={form.bookingRef}
+                      onChange={(event) => update('bookingRef', event.target.value)}
+                    />
+                  </div>
+
+                  <div className="sh-field sh-field--full">
+                    <label className="sh-label" htmlFor="contact-message">
+                      {t('contact.form.message')}
+                    </label>
+                    <textarea
+                      id="contact-message"
+                      className="sh-textarea"
+                      required
+                      value={form.message}
+                      aria-invalid={!!errors.message}
+                      aria-describedby={errors.message ? 'contact-message-error' : undefined}
+                      onChange={(event) => update('message', event.target.value)}
+                    />
+                    {errors.message && (
+                      <span className="sh-error" id="contact-message-error">{errors.message}</span>
+                    )}
+                  </div>
+
+                  <div className="sh-form-foot">
+                    <button type="submit" className="sh-btn sh-btn--primary">
+                      <Send size={15} aria-hidden="true" />
+                      Open email draft
+                    </button>
+                    <p className="sh-form-note">
+                      This opens your email app with the details filled in — no
+                      account needed.
+                    </p>
+                  </div>
+                </form>
+              </div>
+
+              {/* Right — sidebar */}
+              <aside className="sh-enquiry-sidebar">
+                {/* Support hours card */}
+                <motion.div
+                  className="sh-hours-card sh-hours-card--dark"
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={revealViewport}
+                  variants={staggerItem}
+                >
+                  <h3 className="sh-hours-heading">
+                    <Clock size={17} aria-hidden="true" />
+                    {t('support.supportHours')}
+                  </h3>
+                  <ul className="sh-hours">
+                    {SUPPORT_HOURS.map((entry) => (
+                      <li key={entry.labelKey}>
+                        <span>{t(entry.labelKey)}</span>
+                        <span className={entry.closed ? 'sh-hours-closed' : ''}>
+                          {t(entry.valueKey)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="sh-hours-note">{t('supportHub.hoursNote')}</p>
+                </motion.div>
+
+                {/* Office card */}
+                <motion.div
+                  className="sh-sidebar-card"
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={revealViewport}
+                  variants={staggerItem}
+                >
+                  <span className="sh-sidebar-card-label">
+                    <MapPin size={14} aria-hidden="true" />
+                    {t('contact.officeLabel')}
+                  </span>
+                  <h4 className="sh-sidebar-card-name">{t('contact.companyName')}</h4>
+                  <p className="sh-sidebar-card-address">
+                    {t('contact.addressLine1')}
+                    <br />
+                    {t('contact.addressLine2')}
+                  </p>
+                  <a
+                    href={OFFICE_DIRECTIONS_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="sh-sidebar-card-link"
+                  >
+                    <MapPin size={14} aria-hidden="true" />
+                    Get directions
+                    <ArrowRight size={14} aria-hidden="true" />
+                  </a>
+                </motion.div>
+
+                {/* Tips card */}
+                <motion.div
+                  className="sh-sidebar-card sh-tips-card"
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={revealViewport}
+                  variants={staggerItem}
+                >
+                  <h4 className="sh-sidebar-card-title">For a faster response</h4>
+                  <ul className="sh-tips-list">
+                    <li>
+                      <CheckCircle2 size={15} aria-hidden="true" />
+                      Include your booking reference if you have one
+                    </li>
+                    <li>
+                      <CheckCircle2 size={15} aria-hidden="true" />
+                      Choose the right topic so we route your enquiry quickly
+                    </li>
+                    <li>
+                      <CheckCircle2 size={15} aria-hidden="true" />
+                      For urgent pickup issues, message us on WhatsApp
+                    </li>
+                  </ul>
+                </motion.div>
+              </aside>
+            </div>
+          </motion.section>
+
+          {/* ============================================================ */}
+          {/*  4. Help strip — light green background                       */}
+          {/* ============================================================ */}
+
+          <motion.section
+            className="sh-block"
+            aria-labelledby="sh-help-strip-title"
+            initial="hidden"
+            whileInView="visible"
+            viewport={revealViewport}
+            variants={fadeUp}
+          >
+            <div className="sh-help-strip">
+              <h2 className="sh-help-strip-title" id="sh-help-strip-title">
+                Find quick answers in our Help Centre.
+              </h2>
+              <div className="sh-help-strip-actions">
+                <Link to="/help-centre" className="sh-btn sh-btn--help-primary">
+                  Visit Help Centre
+                  <ArrowRight size={15} aria-hidden="true" />
+                </Link>
+                <Link to="/faq" className="sh-btn sh-btn--help-ghost">
+                  View FAQs
+                </Link>
               </div>
             </div>
+          </motion.section>
+        </div>
 
-            <form className="sh-form" onSubmit={handleSubmit} noValidate>
-              <div className="sh-field">
-                <label className="sh-label" htmlFor="contact-name">{t('contact.form.name')}</label>
-                <input
-                  id="contact-name"
-                  className="sh-input"
-                  type="text"
-                  autoComplete="name"
-                  value={form.name}
-                  aria-invalid={!!errors.name}
-                  aria-describedby={errors.name ? 'contact-name-error' : undefined}
-                  onChange={(event) => update('name', event.target.value)}
-                />
-                {errors.name && <span className="sh-error" id="contact-name-error">{errors.name}</span>}
-              </div>
+        {/* ============================================================ */}
+        {/*  5. Mobile contact bar                                        */}
+        {/* ============================================================ */}
 
-              <div className="sh-field">
-                <label className="sh-label" htmlFor="contact-email">{t('contact.form.email')}</label>
-                <input
-                  id="contact-email"
-                  className="sh-input"
-                  type="email"
-                  autoComplete="email"
-                  value={form.email}
-                  aria-invalid={!!errors.email}
-                  aria-describedby={errors.email ? 'contact-email-error' : undefined}
-                  onChange={(event) => update('email', event.target.value)}
-                />
-                {errors.email && <span className="sh-error" id="contact-email-error">{errors.email}</span>}
-              </div>
+        <div className="sh-mobile-contact-bar" role="complementary" aria-label="Quick contact">
+          <a href={`mailto:${SUPPORT_EMAIL}`} className="sh-mobile-contact-bar-btn sh-mobile-contact-bar-btn--email">
+            <Mail size={16} aria-hidden="true" />
+            Email
+          </a>
+          <a
+            href={WHATSAPP_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="sh-mobile-contact-bar-btn sh-mobile-contact-bar-btn--whatsapp"
+          >
+            <MessageCircle size={16} aria-hidden="true" />
+            WhatsApp
+          </a>
+          <a
+            href={`tel:${SUPPORT_PHONE_DIGITS}`}
+            className="sh-mobile-contact-bar-btn sh-mobile-contact-bar-btn--call"
+          >
+            <Phone size={16} aria-hidden="true" />
+            Call
+          </a>
+        </div>
 
-              <div className="sh-field">
-                <label className="sh-label" htmlFor="contact-topic">{t('contact.form.topic')}</label>
-                <select
-                  id="contact-topic"
-                  className="sh-select"
-                  value={form.topic}
-                  onChange={(event) => update('topic', event.target.value)}
-                >
-                  {TOPIC_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>{option.label}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="sh-field">
-                <label className="sh-label" htmlFor="contact-booking-ref">{t('contact.form.bookingRef')}</label>
-                <input
-                  id="contact-booking-ref"
-                  className="sh-input"
-                  type="text"
-                  placeholder={t('contact.form.bookingRefPlaceholder')}
-                  value={form.bookingRef}
-                  onChange={(event) => update('bookingRef', event.target.value)}
-                />
-              </div>
-
-              <div className="sh-field sh-field--full">
-                <label className="sh-label" htmlFor="contact-message">{t('contact.form.message')}</label>
-                <textarea
-                  id="contact-message"
-                  className="sh-textarea"
-                  placeholder={t('contact.form.messagePlaceholder')}
-                  value={form.message}
-                  aria-invalid={!!errors.message}
-                  aria-describedby={errors.message ? 'contact-message-error' : undefined}
-                  onChange={(event) => update('message', event.target.value)}
-                />
-                {errors.message && <span className="sh-error" id="contact-message-error">{errors.message}</span>}
-              </div>
-
-              <div className="sh-form-foot">
-                <button type="submit" className="sh-btn sh-btn--primary">{t('contact.form.submit')}</button>
-                <p className="sh-form-note">{t('contact.form.note')}</p>
-              </div>
-            </form>
-          </div>
-        </motion.section>
-
-        <motion.section
-          className="sh-block"
-          aria-labelledby="sh-contact-details-title"
-          initial="hidden"
-          whileInView="visible"
-          viewport={revealViewport}
-          variants={fadeUp}
-        >
-          <h2 className="sh-block-title" id="sh-contact-details-title">{t('support.supportHours')}</h2>
-          <div className="sh-support-grid">
-            <motion.div
-              className="sh-hours-card"
-              initial="hidden"
-              whileInView="visible"
-              viewport={revealViewport}
-              variants={staggerItem}
-            >
-              <h3 className="sh-hours-heading">
-                <Clock size={17} aria-hidden="true" />
-                {t('support.supportHours')}
-              </h3>
-              <ul className="sh-hours">
-                {SUPPORT_HOURS.map((entry) => (
-                  <li key={entry.labelKey}>
-                    <span>{t(entry.labelKey)}</span>
-                    <span className={entry.closed ? 'sh-hours-closed' : ''}>{t(entry.valueKey)}</span>
-                  </li>
-                ))}
-              </ul>
-              <p className="sh-hours-note">{t('supportHub.hoursNote')}</p>
-            </motion.div>
-            <motion.div
-              className="sh-map-card"
-              initial="hidden"
-              whileInView="visible"
-              viewport={revealViewport}
-              variants={staggerItem}
-            >
-              <DeferredMap title={t('contact.officeIframeTitle')} src={OFFICE_MAP_EMBED} />
-              <div className="sh-map-info">
-                <img src="/logo.png" alt="Expedition-Go Tours" className="sh-map-logo" />
-                <span className="sh-map-label">
-                  <MapPin size={14} aria-hidden="true" />
-                  {t('contact.officeLabel')}
-                </span>
-                <h3 className="sh-map-name">{t('contact.companyName')}</h3>
-                <p className="sh-map-address">
-                  {t('contact.addressLine1')}<br />
-                  {t('contact.addressLine2')}
-                </p>
-                <a
-                  href={OFFICE_DIRECTIONS_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="sh-btn sh-btn--ghost"
-                >
-                  <MapPin size={15} aria-hidden="true" />
-                  {t('contact.getDirections')}
-                </a>
-              </div>
-            </motion.div>
-          </div>
-        </motion.section>
+        <Footer />
       </div>
-
-      <Footer />
-    </div>
     </MotionConfig>
   )
 }
