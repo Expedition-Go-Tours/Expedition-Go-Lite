@@ -21,6 +21,14 @@ import RevealOnScroll from '@/components/shared/RevealOnScroll'
 import FAQAccordion from '@/components/shared/FAQAccordion'
 import '@/styles/partner-pages.css'
 import '@/styles/ListExperience.css'
+import tour1 from '@/assets/tours/tour1.avif'
+import tour2 from '@/assets/tours/tour2.avif'
+import tour3 from '@/assets/tours/tour3.avif'
+import tour4 from '@/assets/tours/tour4.avif'
+import tour5 from '@/assets/tours/tour5.avif'
+import tour6 from '@/assets/tours/tour6.avif'
+import tour7 from '@/assets/tours/tour7.avif'
+import tour8 from '@/assets/tours/tour8.avif'
 
 interface SupplierRegisterPageProps {
   onOpenAuth?: (mode: 'signin' | 'signup') => void
@@ -61,14 +69,14 @@ const TERMS = [
 ]
 
 const EXPERIENCES = [
-  { src: 'https://www.expeditiongotours.com/assets/tour1-C0vx7OMU.avif', title: 'Guided Tours', desc: 'Stories, places and local insight' },
-  { src: 'https://www.expeditiongotours.com/assets/tour2-CVZ2q9Sl.avif', title: 'Cultural Experiences', desc: 'Tradition, community and heritage' },
-  { src: 'https://www.expeditiongotours.com/assets/tour3-GGMzaV-4.avif', title: 'Adventure & Wildlife', desc: 'Nature-led moments worth booking' },
-  { src: 'https://www.expeditiongotours.com/assets/tour4-Bf8Va1st.avif', title: 'Nature Walks', desc: 'Trails, waterfalls and landscapes' },
-  { src: 'https://www.expeditiongotours.com/assets/tour5-Ci5ePHge.avif', title: 'City Exploration', desc: 'Neighbourhoods, landmarks and life' },
-  { src: 'https://www.expeditiongotours.com/assets/tour6-D3rT_aGw.avif', title: 'Beach & Water Sports', desc: 'Coastal and on-the-water activities' },
-  { src: 'https://www.expeditiongotours.com/assets/tour7-6JJQ4gqr.avif', title: 'Historical Tours', desc: 'Places that shape Ghana\'s story' },
-  { src: 'https://www.expeditiongotours.com/assets/tour8-Dm85Mkyl.avif', title: 'Food & Culinary', desc: 'Flavours, kitchens and local makers' },
+  { src: tour1, title: 'Guided Tours', desc: 'Stories, places and local insight' },
+  { src: tour2, title: 'Cultural Experiences', desc: 'Tradition, community and heritage' },
+  { src: tour3, title: 'Adventure & Wildlife', desc: 'Nature-led moments worth booking' },
+  { src: tour4, title: 'Nature Walks', desc: 'Trails, waterfalls and landscapes' },
+  { src: tour5, title: 'City Exploration', desc: 'Neighbourhoods, landmarks and life' },
+  { src: tour6, title: 'Beach & Water Sports', desc: 'Coastal and on-the-water activities' },
+  { src: tour7, title: 'Historical Tours', desc: 'Places that shape Ghana\'s story' },
+  { src: tour8, title: 'Food & Culinary', desc: 'Flavours, kitchens and local makers' },
 ]
 
 const FAQ_ITEMS = [

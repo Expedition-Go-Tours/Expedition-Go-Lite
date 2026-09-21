@@ -74,7 +74,7 @@ export default function TermsAndConditionsPage() {
   }, [])
 
   return (
-    <main style={{ paddingTop: 60, background: '#f7f7f3' }}>
+    <main style={{ paddingTop: 80, background: '#f7f7f3' }}>
       {/* ── Hero card ──────────────────────────────────── */}
       <section className="leg-wrap leg-hero">
         <div>

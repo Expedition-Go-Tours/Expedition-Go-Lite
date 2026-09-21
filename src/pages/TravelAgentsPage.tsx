@@ -5,6 +5,7 @@ import RevealOnScroll from '../components/shared/RevealOnScroll'
 import FAQAccordion from '../components/shared/FAQAccordion'
 import '../styles/partner-pages.css'
 import '../styles/TravelAgents.css'
+import partners9 from '../assets/partners/partners9.avif'
 
 interface TravelAgentsPageProps {
   onOpenAuth?: (mode: 'signin' | 'signup') => void
@@ -66,7 +67,7 @@ export default function TravelAgentsPage({ onOpenAuth }: TravelAgentsPageProps) 
           </div>
           <div className="ta-portrait-stage">
             <div className="ta-portrait-frame">
-              <img src="https://www.expeditiongotours.com/assets/partners9-CL45znP_.avif" alt="Travel agents and clients planning a Ghana experience" loading="eager" />
+              <img src={partners9} alt="Travel agents and clients planning a Ghana experience" loading="eager" />
             </div>
             <div className="ta-agent-badge">
               <span>Verified agent</span>

@@ -73,7 +73,7 @@ export default function LegalPageShell({
   }, [toc])
 
   return (
-    <main style={{ paddingTop: 60, background: '#f7f7f3' }}>
+    <main style={{ paddingTop: 80, background: '#f7f7f3' }}>
       {/* Hero card */}
       <section className="leg-wrap leg-hero">
         <div>

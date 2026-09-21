@@ -5,19 +5,26 @@ import RevealOnScroll from '../components/shared/RevealOnScroll'
 import FAQAccordion from '../components/shared/FAQAccordion'
 import '../styles/partner-pages.css'
 import '../styles/ContentCreators.css'
+import content1 from '../assets/content-creators/content1.avif'
+import content2 from '../assets/content-creators/content2.avif'
+import content3 from '../assets/content-creators/content3.avif'
+import content4 from '../assets/content-creators/content4.avif'
+import content5 from '../assets/content-creators/content5.avif'
+import content6 from '../assets/content-creators/content6.avif'
+import content7 from '../assets/content-creators/content7.avif'
 
 interface ContentCreatorsPageProps {
   onOpenAuth?: (mode: 'signin' | 'signup') => void
 }
 
 const CREATOR_IMAGES = [
-  { src: 'https://www.expeditiongotours.com/assets/content1-DluV9eik.avif', label: 'Travel storyteller' },
-  { src: 'https://www.expeditiongotours.com/assets/content2-Doqizj3l.avif', label: 'Community' },
-  { src: 'https://www.expeditiongotours.com/assets/content3-lt1i5j1H.avif', label: 'Food & lifestyle' },
-  { src: 'https://www.expeditiongotours.com/assets/content4-CT0sVpjK.avif', label: 'Culture & lifestyle' },
-  { src: 'https://www.expeditiongotours.com/assets/content5-C8-Cb7fY.avif', label: 'Experiences' },
-  { src: 'https://www.expeditiongotours.com/assets/content6-Cu2o7PTH.avif', label: 'Original content' },
-  { src: 'https://www.expeditiongotours.com/assets/content7-D8vf_7Ta.avif', label: 'Explore Ghana' },
+  { src: content1, label: 'Travel storyteller' },
+  { src: content2, label: 'Community' },
+  { src: content3, label: 'Food & lifestyle' },
+  { src: content4, label: 'Culture & lifestyle' },
+  { src: content5, label: 'Experiences' },
+  { src: content6, label: 'Original content' },
+  { src: content7, label: 'Explore Ghana' },
 ]
 
 const COMMUNITY_POINTS = [
