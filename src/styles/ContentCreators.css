@@ -5,7 +5,7 @@
 /* ── Hero (centred) ───────────────────────────────────────── */
 .cc-hero {
   position: relative;
-  padding: 76px 0 0;
+  padding: 112px 0 0;
   background: linear-gradient(180deg, #fff 0, #fbfdfb 70%, #f1f8f3 100%);
   overflow: hidden;
 }
@@ -247,7 +247,7 @@
   .cc-how-sticky { position: static; }
 }
 @media (max-width: 600px) {
-  .cc-hero { padding: 48px 0 0; }
+  .cc-hero { padding: 88px 0 0; }
   .cc-hero h1 { font-size: 46px; }
   .cc-hero-copy > p { font-size: 16px; }
   .cc-section { padding: 80px 0; }
