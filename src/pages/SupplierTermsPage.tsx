@@ -1,3 +1,24 @@
+import LegalPageShell from '../components/shared/LegalPageShell'
+
+const SUMMARY = [
+  { icon: '✓', text: 'Free to list and maintain' },
+  { icon: '✓', text: '15% commission on successful bookings' },
+  { icon: '✓', text: 'Monthly or bi-weekly payouts' },
+  { icon: '✓', text: 'Accurate listings and safe delivery required' },
+]
+
+const TOC = [
+  { id: '1-introduction', num: '01', label: 'Introduction' },
+  { id: '2-registration-and-approval', num: '02', label: 'Registration and approval' },
+  { id: '3-listing-obligations', num: '03', label: 'Listing obligations' },
+  { id: '4-commission', num: '04', label: 'Commission' },
+  { id: '5-payouts', num: '05', label: 'Payouts' },
+  { id: '6-bookings-and-cancellations', num: '06', label: 'Bookings and cancellations' },
+  { id: '7-conduct-and-quality-standards', num: '07', label: 'Conduct and quality standards' },
+  { id: '8-suspension-and-termination', num: '08', label: 'Suspension and termination' },
+  { id: '9-liability-and-indemnity', num: '09', label: 'Liability and indemnity' },
+  { id: '10-general', num: '10', label: 'General' },
+]
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
@@ -35,159 +56,110 @@ const SECTIONS = [
 ]
 
 export default function SupplierTermsPage() {
-  const { t } = useTranslation()
-  const [activeSection, setActiveSection] = useState(SECTIONS[0].id)
-  const [showToTop, setShowToTop] = useState(false)
-
-  /* ---------- Scroll observer for active TOC ---------- */
-  useEffect(() => {
-    const sectionIds = SECTIONS.map((s) => s.id)
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            setActiveSection(entry.target.id)
-            break
-          }
-        }
-      },
-      { rootMargin: '-120px 0px -60% 0px', threshold: 0 },
-    )
-
-    sectionIds.forEach((id) => {
-      const el = document.getElementById(id)
-      if (el) observer.observe(el)
-    })
-
-    return () => observer.disconnect()
-  }, [])
-
-  /* ---------- Back to top visibility ---------- */
-  useEffect(() => {
-    const onScroll = () => setShowToTop(window.scrollY > 400)
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
-
-  const scrollToTop = useCallback(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }, [])
-
   return (
-    <div className="support-page">
-      <SEO
-        title="Supplier Terms & Conditions - Expedition-Go Tours Ghana"
-        description="The terms that govern selling tours and experiences through Expedition-Go Tours. Understand payment terms, commission rates, and partnership requirements."
-        keywords="Expedition-Go Tours supplier terms, tour operator terms Ghana, supplier agreement, partnership terms"
-        jsonLd={buildBreadcrumbSchema([
-          { name: 'Home', url: 'https://expeditiongotours.com/' },
-          { name: 'Supplier Terms', url: 'https://expeditiongotours.com/supplier-terms' },
-        ])}
-      />
+    <LegalPageShell
+      eyebrow="Partner agreement"
+      title="Supplier Terms"
+      description="The terms that govern selling tours and experiences through Expedition-Go Tours."
+      updated="Last updated · August 2026"
+      summary={SUMMARY}
+      toc={TOC}
+      activeTab="supplier-terms"
+    >
+      <h2 id="1-introduction">1. Introduction</h2>
+      <p>
+        These Supplier Terms (the &ldquo;Terms&rdquo;) form a legally binding agreement between you (&ldquo;Supplier&rdquo;, &ldquo;you&rdquo;) and Expedition-Go Tours Ltd (&ldquo;Expedition-Go&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;). By registering a supplier account and listing experiences on the Expedition-Go Tours platform (the &ldquo;Platform&rdquo;), you accept and agree to these Terms.
+      </p>
+      <p>
+        These Terms apply to every Supplier who lists, manages or fulfils bookable tours, activities and experiences on the Platform. They should be read together with our general <a href="/terms-and-conditions">Terms &amp; Conditions</a>, <a href="/privacy-policy">Privacy Policy</a> and any product-specific policies published on the Platform.
+      </p>
+      <p>
+        We may update these Terms from time to time. Material changes will be communicated to registered Suppliers at least 14 days before they take effect. Continued listing after the effective date constitutes acceptance of the revised Terms.
+      </p>
 
-      {/* ============================================================ */}
-      {/* Hero                                                          */}
-      {/* ============================================================ */}
-      <section className="support-container st-hero">
-        <div>
-          <div className="st-kicker">Partner agreement</div>
-          <h1>Supplier Terms</h1>
-          <p>{t('supplier.termsSubtitle')}</p>
-          <div className="st-updated">
-            <span className="st-updated-dot" />
-            Last updated &middot; August 2026
-          </div>
-        </div>
-        <aside className="st-summary">
-          <h2>At a glance</h2>
-          <ul>
-            {SUMMARY_ITEMS.map((item) => (
-              <li key={item}>
-                <span className="st-summary-check">&#10003;</span>
-                {item}
-              </li>
-            ))}
-          </ul>
-        </aside>
-      </section>
+      <h2 id="2-registration-and-approval">2. Registration and approval</h2>
+      <p>
+        To sell on the Platform you must complete a supplier application and be approved by the Expedition-Go team. We may accept or reject any application at our sole discretion without obligation to disclose the reason.
+      </p>
+      <p>
+        You agree that all information submitted during registration is accurate, current and complete. You must promptly update your profile if any information changes.
+      </p>
+      <p>
+        A supplier account is personal to you and may not be transferred, shared or sold to any third party without our prior written consent.
+      </p>
 
-      {/* ============================================================ */}
-      {/* Policy tabs                                                   */}
-      {/* ============================================================ */}
-      <div className="support-container st-legal-nav">
-        <nav className="st-policy-tabs" aria-label="Legal pages">
-          {POLICY_TABS.map((tab) => (
-            <Link
-              key={tab.href}
-              to={tab.href}
-              className={`st-policy-tab${tab.active ? ' st-policy-tab--active' : ''}`}
-            >
-              {tab.label}
-            </Link>
-          ))}
-        </nav>
-      </div>
+      <h2 id="3-listing-obligations">3. Listing obligations</h2>
+      <p>
+        Each experience you list on the Platform must be accurately and honestly described. Photos, itineraries, pricing, inclusions, exclusions, meeting points, age or fitness restrictions and cancellation policies must be current and not misleading.
+      </p>
+      <p>
+        You may not list experiences that are illegal, unsafe, discriminatory or that infringe the intellectual property rights of any third party. We reserve the right to remove any listing at our discretion.
+      </p>
+      <p>
+        You are responsible for keeping availability and pricing current. Over-bookings caused by stale availability may result in penalties or suspension.
+      </p>
 
-      {/* ============================================================ */}
-      {/* Layout: sidebar + content                                     */}
-      {/* ============================================================ */}
-      <div className="support-container st-layout">
-        <aside className="st-sidebar">
-          <div className="st-sidebar-label">On this page</div>
-          <nav className="st-toc" aria-label="Table of contents">
-            {SECTIONS.map((section) => (
-              <a
-                key={section.id}
-                href={`#${section.id}`}
-                className={`st-toc-link${activeSection === section.id ? ' st-toc-link--active' : ''}`}
-              >
-                <span className="st-toc-num">{section.num}</span>
-                {t(section.titleKey).replace(/^\d+\.\s*/, '')}
-              </a>
-            ))}
-          </nav>
-        </aside>
+      <h2 id="4-commission">4. Commission</h2>
+      <p>
+        Expedition-Go charges a commission of 15% on the net payable amount of each successful booking made through the Platform. Commission is deducted automatically before payout remittance.
+      </p>
+      <p>
+        Commission applies to the final confirmed booking amount after discounts, promotions and refunds. You agree not to attempt to circumvent the Platform commission by conducting transactions with guests off-Platform.
+      </p>
 
-        <div className="st-content">
-          {SECTIONS.map((section) => (
-            <div key={section.id} id={section.id}>
-              <h2>{t(section.titleKey)}</h2>
-              {section.contentKey && (
-                <p>{t(section.contentKey)}</p>
-              )}
-              {section.contentKeys && section.contentKeys.map((key) => (
-                <p key={key}>{t(key)}</p>
-              ))}
-            </div>
-          ))}
+      <h2 id="5-payouts">5. Payouts</h2>
+      <p>
+        Payouts are processed on a monthly or bi-weekly cycle, depending on your configuration and region. A booking must have been completed and its payment settled before the corresponding supplier payout is released.
+      </p>
+      <p>
+        You must provide accurate and current payout method details. We are not liable for delayed or failed payouts caused by incorrect payout information.
+      </p>
+      <p>
+        Payouts are made in the currency configured for your account. Currency conversion, if applicable, uses the rate at payout time unless otherwise agreed.
+      </p>
 
-          <div className="st-meta">{t('support.updatedDate')}: August 2026</div>
+      <h2 id="6-bookings-and-cancellations">6. Bookings and cancellations</h2>
+      <p>
+        When a booking is confirmed through the Platform you must honour it. Cancellations by the Supplier should be exceptional and communicated promptly through the Platform.
+      </p>
+      <p>
+        Repeated or unjustified cancellations may result in penalties, reduced listing visibility or account suspension. Guest-initiated cancellations follow the cancellation policy stated on the listing.
+      </p>
 
-          <div className="st-content-cta">
-            <h3>{t('supplierTerms.readyTitle')}</h3>
-            <p>List your tours and experiences on Expedition-Go Tours and reach travellers ready to explore Ghana.</p>
-            <div className="st-content-actions">
-              <Link to="/supplier/list-experience" className="st-content-btn st-content-btn--primary">
-                <Rocket size={16} />
-                {t('supplierTerms.listBtn')}
-                <ArrowRight size={16} />
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
+      <h2 id="7-conduct-and-quality-standards">7. Conduct and quality standards</h2>
+      <p>
+        You must deliver all experiences safely, professionally and in accordance with applicable laws and industry standards. Discrimination, harassment, unsafe practices or fraudulent behaviour will result in immediate account suspension.
+      </p>
+      <p>
+        You must respond to booking enquiries, guest questions and platform communications in a timely and professional manner.
+      </p>
 
-      {/* Back to top */}
-      <button
-        type="button"
-        className={`st-to-top${showToTop ? ' st-to-top--visible' : ''}`}
-        onClick={scrollToTop}
-        aria-label="Back to top"
-      >
-        <ChevronUp size={20} />
-      </button>
+      <h2 id="8-suspension-and-termination">8. Suspension and termination</h2>
+      <p>
+        We may suspend or terminate your supplier account at our sole discretion, with or without notice, in the event of a breach of these Terms, a serious guest complaint, safety concerns, suspected fraud or extended inactivity.
+      </p>
+      <p>
+        You may terminate your supplier relationship by contacting us at <a href="mailto:partners@expedition-go.com">partners@expedition-go.com</a>. Outstanding confirmed bookings must be honoured or transferred with our assistance.
+      </p>
 
-      <Footer />
-    </div>
+      <h2 id="9-liability-and-indemnity">9. Liability and indemnity</h2>
+      <p>
+        Expedition-Go Tours acts as a booking platform and is not the direct provider of experiences unless expressly stated. You are solely responsible for the safety, legality and quality of your experiences.
+      </p>
+      <p>
+        You agree to indemnify and hold harmless Expedition-Go Tours, its directors, employees and agents from any claims, losses, damages or expenses arising from your listing, fulfilment or breach of these Terms.
+      </p>
+
+      <h2 id="10-general">10. General</h2>
+      <p>
+        These Terms are governed by the laws of Ghana. Any disputes arising under these Terms shall be subject to the exclusive jurisdiction of the courts of Accra, Ghana.
+      </p>
+      <p>
+        If any provision of these Terms is held unenforceable, the remaining provisions shall continue in full force and effect. Our failure to enforce any provision shall not constitute a waiver.
+      </p>
+      <p>
+        For questions about these Terms, contact <a href="mailto:partners@expedition-go.com">partners@expedition-go.com</a>.
+      </p>
+    </LegalPageShell>
   )
 }

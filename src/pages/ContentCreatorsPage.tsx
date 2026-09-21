@@ -1,7 +1,10 @@
-import { useNavigate } from 'react-router-dom'
-import { useTranslation } from 'react-i18next'
-import { motion } from 'framer-motion'
-import { DollarSign, Zap, Heart } from 'lucide-react'
+import { useEffect } from 'react'
+import { setAuthReturnTo } from '../lib/auth'
+import Footer from '../components/Footer'
+import RevealOnScroll from '../components/shared/RevealOnScroll'
+import FAQAccordion from '../components/shared/FAQAccordion'
+import '../styles/partner-pages.css'
+import '../styles/ContentCreators.css'
 import content1 from '../assets/content-creators/content1.avif'
 import content2 from '../assets/content-creators/content2.avif'
 import content3 from '../assets/content-creators/content3.avif'
@@ -9,202 +12,193 @@ import content4 from '../assets/content-creators/content4.avif'
 import content5 from '../assets/content-creators/content5.avif'
 import content6 from '../assets/content-creators/content6.avif'
 import content7 from '../assets/content-creators/content7.avif'
-import Navbar from '../components/Navbar'
-import Footer from '../components/Footer'
-import SEO, { buildBreadcrumbSchema } from '../components/SEO'
-import { useAuthUser } from '../hooks/useAuthUser'
-import { setAuthReturnTo } from '../lib/auth'
-import './ContentCreatorsPage.css'
-
-const fadeUp = {
-  hidden: { opacity: 0, y: 30 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' as const } },
-}
-
-const CREATOR_IMAGES = [content1, content2, content3, content4, content5, content6, content7]
 
 interface ContentCreatorsPageProps {
   onOpenAuth?: (mode: 'signin' | 'signup') => void
 }
 
+const CREATOR_IMAGES = [
+  { src: content1, label: 'Travel storyteller' },
+  { src: content2, label: 'Community' },
+  { src: content3, label: 'Food & lifestyle' },
+  { src: content4, label: 'Culture & lifestyle' },
+  { src: content5, label: 'Experiences' },
+  { src: content6, label: 'Original content' },
+  { src: content7, label: 'Explore Ghana' },
+]
+
+const COMMUNITY_POINTS = [
+  'Curated Ghana experiences with real guest reviews',
+  'Earn commission on every confirmed booking',
+  'Dedicated creator partner support',
+]
+
+const BENEFITS = [
+  { icon: '↗', title: 'Earn from every booking.', desc: 'Share your content and booking links with your audience and earn a transparent commission on every confirmed experience.' },
+  { icon: '◎', title: 'Access curated experiences.', desc: 'Choose from a growing portfolio of cultural tours, food safaris, wildlife adventures and unique stays across Ghana.' },
+  { icon: '⌁', title: 'A dedicated creator team.', desc: 'Receive support from a creator partner manager, early access to new experiences and practical partnership resources.' },
+]
+
+const HOW_STEPS = [
+  { num: '01', title: 'Apply to the creator programme', desc: 'Tell us about your platform, audience and content style. We review applications quickly.' },
+  { num: '02', title: 'Choose experiences and create', desc: 'Pick the experiences that fit your audience, visit or sample them and create authentic content.' },
+  { num: '03', title: 'Share and earn', desc: 'Publish your content with your personal booking link and earn commission on every confirmed booking.' },
+]
+
+const EARNINGS = [
+  { strong: '15%', span: 'Standard commission rate' },
+  { strong: '30 days', span: 'Cookie window for referral tracking' },
+  { strong: 'Monthly', span: 'Payout cycle for earnings' },
+]
+
+const FAQ_ITEMS = [
+  { question: 'What is the Expedition-Go Creator Programme?', answer: 'It is a partnership for travel and lifestyle content creators who want to feature authentic Ghana experiences, share curated booking links and earn commission on confirmed bookings.' },
+  { question: 'Do I need a minimum follower count?', answer: 'We review applications based on content quality, relevance and audience fit rather than a strict follower count.' },
+  { question: 'How do creators earn commission?', answer: 'Creators receive a personal booking link that tracks referrals. When a guest completes a booking through that link, the creator earns a transparent commission.' },
+  { question: 'Can I get sponsored access to experiences?', answer: 'Sponsored and hosted experiences are available for selected creators who align with the Expedition-Go brand. These are discussed during onboarding.' },
+  { question: 'How are creator payouts processed?', answer: 'Earnings accumulate monthly and are paid out through secure payout channels. Full details are provided during the partner setup.' },
+]
+
 export default function ContentCreatorsPage({ onOpenAuth }: ContentCreatorsPageProps) {
-  const { t } = useTranslation()
-  const navigate = useNavigate()
-  const user = useAuthUser()
+  useEffect(() => {
+    setAuthReturnTo('/content-creators')
+  }, [])
 
-  const FEATURES = [
-    {
-      icon: DollarSign,
-      text: t('contentCreators.feature1'),
-    },
-    {
-      icon: Zap,
-      text: t('contentCreators.feature2'),
-    },
-    {
-      icon: Heart,
-      text: t('contentCreators.feature3'),
-    },
-  ]
-
-  const CREATOR_EXAMPLES = [
-    { label: 'Creator #1', clicks: '170 clicks and bookings to Expedition-Go Tours', earning: 'GH₵ 60 /mo' },
-    { label: 'Creator #2', clicks: '6,500 clicks and bookings to Expedition-Go Tours', earning: 'GH₵ 2,300 /mo' },
-    { label: 'Creator #3', clicks: '950 clicks and bookings to Expedition-Go Tours', earning: 'GH₵ 110 /mo' },
-  ]
-
-  const HOW_IT_WORKS = [
-    t('contentCreators.step1'),
-    t('contentCreators.step2'),
-    t('contentCreators.step3'),
-  ]
-
-  const handleSignUp = () => {
-    if (!user) {
-      setAuthReturnTo('/partners/content-creators/apply')
-    }
-    navigate('/partners/content-creators/apply')
-  }
+  const handleApply = () => { onOpenAuth?.('signup') }
 
   return (
-    <div className="content-creator-page">
-      <SEO
-        title="Become a Content Creator - Expedition-Go Tours Ghana"
-        description="Join Expedition-Go Tours as a content creator. Earn commissions by sharing Ghana travel experiences with your audience. Sign up for free and start monetizing your content."
-        keywords="Expedition-Go Tours content creator, Ghana travel influencer, earn money travel content, affiliate program Ghana, content creator partnership"
-        jsonLd={buildBreadcrumbSchema([
-          { name: 'Home', url: 'https://expeditiongotours.com/' },
-          { name: 'Content Creators', url: 'https://expeditiongotours.com/content-creators' },
-        ])}
-      />
-      <Navbar onOpenAuth={onOpenAuth} />
-
-      {/* Section 1: Hero */}
-      <section className="content-creator-hero-top">
-        <motion.div
-          className="content-creator-hero-top-inner"
-          initial="hidden"
-          animate="visible"
-          variants={fadeUp}
-        >
-          <h1 className="content-creator-hero-top-title">
-            {t('contentCreators.heroTitle')}
-          </h1>
-        </motion.div>
-      </section>
-
-      <section className="content-creator-hero-strip" aria-label="Creators we work with">
-        <div className="content-creator-hero-strip-track">
-          {[...CREATOR_IMAGES, ...CREATOR_IMAGES].map((img, i) => (
-            <div
-              className="content-creator-strip-card"
-              aria-hidden={i >= CREATOR_IMAGES.length}
-              key={`${img}-${i}`}
-            >
-              <img
-                src={img}
-                alt={i < CREATOR_IMAGES.length ? `Content creator ${i + 1}` : ''}
-                width={300}
-                height={400}
-                decoding="async"
-                loading={i < 2 ? 'eager' : 'lazy'}
-                fetchPriority={i < 2 ? 'high' : undefined}
-              />
+    <main>
+      {/* ── Hero (centred) ──────────────────────────────── */}
+      <section className="cc-hero">
+        <div className="cc-hero-copy">
+          <div className="cc-kicker"><span />Creator programme</div>
+          <h1>Create content.<br /><em>Earn on Ghana experiences.</em></h1>
+          <p>Join the Expedition-Go creator programme, feature authentic travel experiences in Ghana and earn commission on every booking your audience makes.</p>
+          <div className="cc-hero-actions">
+            <button className="cc-btn cc-btn-primary" onClick={handleApply}>Apply to the creator programme</button>
+            <a className="cc-btn cc-btn-secondary" href="#benefits">Learn more</a>
+          </div>
+          <div className="cc-hero-proof">
+            <span><i /> Transparent commission</span>
+            <span><i /> Curated experiences</span>
+            <span><i /> Dedicated creator support</span>
+          </div>
+        </div>
+        <div className="cc-stage">
+          <div className="cc-track">
+            {[...CREATOR_IMAGES, ...CREATOR_IMAGES].map((img, i) => (
+              <figure key={i} className="cc-card">
+                <img src={img.src} alt={img.label} loading="lazy" />
+                <figcaption>{img.label}</figcaption>
+              </figure>
+            ))}
+          </div>
+          <div className="cc-community">
+            <h2>Authentic travel content starts with real experiences.</h2>
+            <div className="cc-points">
+              {COMMUNITY_POINTS.map((p, i) => (
+                <span key={i}><i>✓</i>{p}</span>
+              ))}
             </div>
-          ))}
-        </div>
-        <div className="content-creator-grow-overlay">
-          <h2 className="content-creator-grow-title">
-            {t('contentCreators.growTitle')}
-          </h2>
-          <ul className="content-creator-grow-list">
-            <li>{t('contentCreators.growItem1')}</li>
-            <li>{t('contentCreators.growItem2')}</li>
-          </ul>
+          </div>
         </div>
       </section>
 
-      {/* Section 2b: Make money */}
-      <section className="content-creator-make-section">
-        <div className="content-creator-make-inner">
-          <h2 className="content-creator-make-title">
-            {t('contentCreators.makeTitle')}
-          </h2>
-          <div className="content-creator-features">
-            {FEATURES.map((feature) => (
-              <div key={feature.text} className="content-creator-feature-card">
-                <div className="content-creator-feature-icon">
-                  <feature.icon size={24} strokeWidth={2} />
+      {/* ── Benefits ──────────────────────────────────────── */}
+      <section className="cc-section cc-benefits" id="benefits">
+        <div className="wrap">
+          <RevealOnScroll>
+            <div className="cc-benefit-head">
+              <h2 className="section-title">Made for creators<br />who want more.</h2>
+              <p>Authentic content, curated experiences and transparent earnings — built for creators who care about what they share.</p>
+            </div>
+            <div className="cc-benefit-grid">
+              {BENEFITS.map((b, i) => (
+                <article key={i} className="cc-benefit">
+                  <div className="cc-benefit-icon">{b.icon}</div>
+                  <div>
+                    <h3>{b.title}</h3>
+                    <p>{b.desc}</p>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </RevealOnScroll>
+        </div>
+      </section>
+
+      {/* ── How it works ─────────────────────────────────── */}
+      <section className="cc-section">
+        <div className="wrap">
+          <RevealOnScroll>
+            <div className="cc-how-grid">
+              <div className="cc-how-sticky">
+                <div className="cc-kicker"><span />Three steps to start</div>
+                <h2 className="section-title" style={{ marginTop: 22 }}>From content<br />to commission.</h2>
+                <p>Getting started is straightforward. Apply, choose experiences that fit your audience and start earning from your content.</p>
+              </div>
+              <div className="cc-step-stack">
+                {HOW_STEPS.map((s) => (
+                  <article key={s.num} className="cc-step">
+                    <span className="cc-step-num">{s.num}</span>
+                    <div><h3>{s.title}</h3><p>{s.desc}</p></div>
+                  </article>
+                ))}
+              </div>
+            </div>
+          </RevealOnScroll>
+        </div>
+      </section>
+
+      {/* ── Earnings ──────────────────────────────────────── */}
+      <section className="cc-section" style={{ background: '#f8faf8' }}>
+        <div className="wrap">
+          <RevealOnScroll>
+            <h2 className="section-title" style={{ textAlign: 'center', marginBottom: 50 }}>Transparent creator earnings.</h2>
+            <div className="cc-benefit-grid" style={{ maxWidth: 900, margin: '0 auto', gridTemplateColumns: 'repeat(3, 1fr)' }}>
+              {EARNINGS.map((e, i) => (
+                <div key={i} style={{ textAlign: 'center', padding: 28, border: '1px solid #dfe7e1', borderRadius: 22 }}>
+                  <strong style={{ fontFamily: 'var(--font-display)', fontSize: 42, color: '#087747', letterSpacing: '-.04em' }}>{e.strong}</strong>
+                  <p style={{ margin: '8px 0 0', color: '#5e6b64', fontSize: 14, fontWeight: 700 }}>{e.span}</p>
                 </div>
-                <p className="content-creator-feature-text">{feature.text}</p>
-              </div>
-            ))}
-          </div>
-          <button type="button" className="content-creator-cta" onClick={handleSignUp}>
-            {t('contentCreators.signupBtn')}
-          </button>
+              ))}
+            </div>
+          </RevealOnScroll>
         </div>
       </section>
 
-      {/* Section 3: Creator examples */}
-      <section className="content-creator-examples-section">
-        <div className="content-creator-examples-inner">
-          <h2 className="content-creator-examples-title">
-            {t('contentCreators.examplesTitle')}
-          </h2>
-          <div className="content-creator-example-rows">
-            {CREATOR_EXAMPLES.map((row) => (
-              <div key={row.label} className="content-creator-example-row">
-                <span className="content-creator-example-label">{row.label}</span>
-                <div className="content-creator-example-bar">
-                  <span>{row.clicks}</span>
-                  <span className="content-creator-example-earning">{row.earning}</span>
-                </div>
-              </div>
-            ))}
-          </div>
+      {/* ── FAQ ───────────────────────────────────────────── */}
+      <section className="cc-section">
+        <div className="wrap">
+          <RevealOnScroll>
+            <h2 className="section-title" style={{ textAlign: 'center', marginBottom: 50 }}>Questions, answered.</h2>
+            <FAQAccordion items={FAQ_ITEMS} />
+          </RevealOnScroll>
         </div>
       </section>
 
-      {/* Section 3b: How it works */}
-      <section className="content-creator-how-section">
-        <div className="content-creator-how-inner">
-          <h2 className="content-creator-how-title">{t('contentCreators.howTitle')}</h2>
-          <div className="content-creator-how-steps">
-            {HOW_IT_WORKS.map((step) => (
-              <div key={step} className="content-creator-how-card">
-                <p className="content-creator-how-card-text">{step}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Section 4: Become a partner + Need help */}
-      <section className="content-creator-partner-section">
-        <div className="content-creator-partner-inner">
-          <div className="content-creator-partner-col">
-            <h2>{t('contentCreators.partnerTitle')}</h2>
-            <p>
-              {t('contentCreators.partnerDesc')}
-            </p>
-            <button type="button" className="content-creator-cta" onClick={handleSignUp}>
-              {t('contentCreators.signupBtn')}
+      {/* ── CTA ───────────────────────────────────────────── */}
+      <div className="wrap" style={{ paddingTop: 20 }}>
+        <RevealOnScroll>
+          <div className="eg-cta" style={{ background: '#075634' }}>
+            <div className="eg-cta-eyebrow">Your audience deserves real travel stories</div>
+            <h2>Create.<br />Share. Earn.</h2>
+            <p>Join the Expedition-Go creator programme and turn authentic Ghana experiences into engaging content and transparent earnings.</p>
+            <button
+              onClick={handleApply}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 11,
+                padding: '16px 22px', background: '#fff', color: '#15201d',
+                borderRadius: 999, fontWeight: 700, fontSize: 15,
+                border: 'none', cursor: 'pointer', marginTop: 28, position: 'relative', zIndex: 2,
+              }}
+            >
+              Apply now
             </button>
           </div>
-          <div className="content-creator-partner-col">
-            <h2>{t('contentCreators.helpTitle')}</h2>
-            <p>
-              {t('contentCreators.helpDesc')}
-            </p>
-            <a href="/help-centre" className="content-creator-cta">
-              {t('contentCreators.helpBtn')}
-            </a>
-          </div>
-        </div>
-      </section>
-
+        </RevealOnScroll>
+      </div>
       <Footer />
-    </div>
+    </main>
   )
 }

@@ -1,303 +1,305 @@
-import { useState, useRef, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useTranslation } from 'react-i18next'
-import { motion } from 'framer-motion'
-import {
-  DollarSign, Layout, Mail, Check,
-  ArrowRight,
-} from 'lucide-react'
-import heroBg from '../assets/images/IMG_3538.webp'
-import Navbar from '../components/Navbar'
-import Footer from '../components/Footer'
-import SEO, { buildBreadcrumbSchema } from '../components/SEO'
-import { useAuthUser } from '../hooks/useAuthUser'
+import { useEffect } from 'react'
 import { setAuthReturnTo } from '../lib/auth'
-import './TransportProviderPage.css'
+import Footer from '../components/Footer'
+import RevealOnScroll from '../components/shared/RevealOnScroll'
+import FAQAccordion from '../components/shared/FAQAccordion'
+import '../styles/partner-pages.css'
+import '../styles/TransportPartners.css'
 
 interface TransportProviderPageProps {
   onOpenAuth?: (mode: 'signin' | 'signup') => void
 }
 
+const TICKER_ITEMS = [
+  'Tour transfers',
+  'Airport pickups',
+  'Group transport',
+  'Multi-day journeys',
+  'Private excursions',
+]
+
+const STEPS = [
+  { num: '01', title: 'List your fleet', desc: 'Showcase your vehicles, seating capacity and services to travellers and tour operators. Our simple onboarding gets you started quickly.' },
+  { num: '02', title: 'Set availability and pricing', desc: 'Keep vehicle availability current, set your own rates and receive booking requests that match your operation.' },
+  { num: '03', title: 'Accept journeys and earn', desc: 'Confirm suitable bookings, deliver reliable service and receive secure payment for every completed journey.' },
+]
+
+const BENEFITS = [
+  { tag: 'EARNING', icon: '↗', title: 'Competitive rates, set by you.', desc: 'Price your transport services and earn through a trusted network of tour operators who need dependable vehicles.' },
+  { tag: 'CONTROL', icon: '⌁', title: 'Simple fleet management.', desc: 'Manage vehicles, booking requests and real-time availability without a complicated setup.' },
+  { tag: 'SUPPORT', icon: '◎', title: 'A partner team beside you.', desc: 'Access a dedicated account manager, practical resources and ongoing partner support.' },
+]
+
+const CHECKS = [
+  { title: 'Road-ready vehicles', desc: 'Clean, maintained and suitable for guest transport.' },
+  { title: 'Professional service', desc: 'Reliable drivers, clear communication and timely pickups.' },
+  { title: 'Current availability', desc: 'Accurate fleet schedules help prevent missed opportunities.' },
+  { title: 'Traveller-first mindset', desc: 'Safe, comfortable journeys from pickup to destination.' },
+]
+
+const FAQ_ITEMS = [
+  { question: 'What is the Transport Partner Programme?', answer: 'It connects transport providers with tour operators and travellers who need safe, comfortable and dependable vehicles across Ghana.' },
+  { question: 'Can I choose my own prices?', answer: 'Yes. Transport partners set their own rates and decide which suitable booking requests to accept.' },
+  { question: 'How will I manage my fleet?', answer: 'The partner experience is designed to let you manage vehicles, availability and booking requests in one straightforward place.' },
+  { question: 'How are partner payments handled?', answer: 'Payments are processed securely for completed bookings. Full payout and onboarding information is provided during partner setup.' },
+  { question: 'Who can I contact about the programme?', answer: 'Contact the partnerships team at partners@expedition-go.com or use the Expedition-Go Contact Us page.' },
+]
+
 export default function TransportProviderPage({ onOpenAuth }: TransportProviderPageProps) {
-  const { t } = useTranslation()
-  const navigate = useNavigate()
-  const user = useAuthUser()
-  const carouselRef = useRef<HTMLDivElement>(null)
-  const [activeStep, setActiveStep] = useState(0)
-
-  const INTEGRATION_STEPS = [
-    {
-      num: 1,
-      title: 'List your fleet and reach more travelers',
-      points: [
-        'Showcase your vehicles to a global audience',
-        'Get started in minutes with easy onboarding',
-        'Maximize your fleet utilization',
-      ],
-    },
-    {
-      num: 2,
-      title: 'Connect directly with tour operators',
-      points: [
-        'Receive instant booking requests',
-        'Manage availability in real-time',
-        'Build lasting partner relationships',
-      ],
-    },
-    {
-      num: 3,
-      title: 'Grow with a trusted travel platform',
-      points: [
-        'Access marketing and promotional support',
-        'Benefit from secure payment processing',
-        'Join a network of verified transport providers',
-      ],
-    },
-  ]
-
-  const WHY_JOIN = [
-    {
-      icon: DollarSign,
-      title: 'Earn competitive rates',
-      desc: 'Set your own prices and earn more by partnering with tour operators who need reliable transport. Get paid securely for every booking.',
-    },
-    {
-      icon: Layout,
-      title: 'Easy fleet management',
-      desc: 'Our platform makes it simple to manage your vehicles, availability, and bookings all in one place. No complex setup required.',
-    },
-    {
-      icon: Mail,
-      title: 'Dedicated partner support',
-      desc: 'Get a dedicated account manager, access to our resource center, and ongoing support to help you succeed on the platform.',
-    },
-  ]
-
-  const handleSignUp = () => {
-    if (!user) {
-      setAuthReturnTo('/partners/transport-providers/apply')
-      onOpenAuth?.('signup')
-      return
-    }
-    navigate('/partners/transport-providers/apply')
-  }
-
-  const handleScroll = useCallback(() => {
-    const el = carouselRef.current
-    if (!el) return
-    const card = el.querySelector('.transport-integration-card') as HTMLElement
-    if (!card) return
-    const cardWidth = card.offsetWidth
-    const gap = 16
-    const index = Math.round(el.scrollLeft / (cardWidth + gap))
-    setActiveStep(Math.min(index, INTEGRATION_STEPS.length - 1))
+  useEffect(() => {
+    setAuthReturnTo('/transport-providers')
   }, [])
 
-  const scrollToStep = (index: number) => {
-    const el = carouselRef.current
-    if (!el) return
-    const cards = el.querySelectorAll('.transport-integration-card') as NodeListOf<HTMLElement>
-    const card = cards[index]
-    if (card) {
-      el.scrollTo({ left: card.offsetLeft, behavior: 'smooth' })
-    }
+  const handleApply = () => {
+    onOpenAuth?.('signup')
   }
 
   return (
-    <div className="transport-page">
-      <SEO
-        title="Transport Provider Program - Expedition-Go Tours Ghana"
-        description="Join Expedition-Go Tours as a transport provider. List your fleet, connect with tour operators, and earn competitive rates transporting travelers across Ghana."
-        keywords="transport provider Ghana, Expedition-Go Tours transport, list vehicles Ghana, transport partner program, tour transport Ghana"
-        jsonLd={buildBreadcrumbSchema([
-          { name: 'Home', url: 'https://expeditiongotours.com/' },
-          { name: 'Transport Partners', url: 'https://expeditiongotours.com/transport-providers' },
-        ])}
-      />
-      <Navbar onOpenAuth={onOpenAuth} />
-
-      {/* Hero — full-width image background */}
-      <section className="transport-hero">
-        <div className="transport-hero-bg">
-          <img src={heroBg} alt="" aria-hidden="true" />
-        </div>
-        <div className="transport-hero-overlay" />
-        <motion.div
-          className="transport-hero-content"
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, ease: 'easeOut' }}
-        >
-          <h1 className="transport-hero-title">
-            {t('transport.heroTitle', 'Partner with us and grow your transport business')}
-          </h1>
-          <p className="transport-hero-subtitle">
-            {t('transport.heroDesc', 'Connect with tour operators and travelers who need reliable, safe, and comfortable transport across Ghana.')}
-          </p>
-          <button type="button" className="transport-btn transport-btn-primary" onClick={handleSignUp}>
-            {t('transport.heroBtn', 'Sign up for free')}
-          </button>
-        </motion.div>
-      </section>
-
-      {/* Stats */}
-      <section className="transport-stats">
-        <div className="transport-container">
-          <div className="transport-stats-grid">
-            {[
-              { value: '500+', label: t('transport.stat1Label', 'Verified transport providers') },
-              { value: '50+', label: t('transport.stat2Label', 'Destinations covered') },
-              { value: '10k+', label: t('transport.stat3Label', 'Monthly bookings') },
-            ].map((stat, i) => (
-              <motion.div
-                key={stat.label}
-                className="transport-stat-item"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: i * 0.1 }}
-              >
-                <span className="transport-stat-value">{stat.value}</span>
-                <span className="transport-stat-label">{stat.label}</span>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Integration steps */}
-      <section className="transport-integration">
-        <div className="transport-container">
-          <motion.div
-            className="transport-integration-header"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-          >
-            <h2 className="transport-section-title">{t('transport.startTitle', 'How to get started')}</h2>
-            <p className="transport-section-desc">
-              {t('transport.startDesc', 'We make it easy for transport providers to join our platform and start earning. No complicated setup required.')}
+    <main>
+      {/* ── Hero ─────────────────────────────────────────── */}
+      <section className="tp-hero">
+        <div className="wrap tp-hero-grid">
+          <div>
+            <div className="tp-eyebrow">Transport partner network</div>
+            <h1>Put your fleet <em>in motion.</em></h1>
+            <p className="tp-hero-copy">
+              Connect with tour operators and travellers who need safe, reliable and comfortable transport across Ghana. You bring the vehicles. We help bring the journeys.
             </p>
-          </motion.div>
-          <div className="transport-integration-grid" ref={carouselRef} onScroll={handleScroll}>
-            {INTEGRATION_STEPS.map((step, i) => (
-              <motion.div
-                key={step.num}
-                className="transport-integration-card"
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: i * 0.12 }}
-              >
-                <span className="transport-step-num">{step.num}</span>
-                <h3 className="transport-step-title">{step.title}</h3>
-                <ul className="transport-step-list">
-                  {step.points.map((pt) => (
-                    <li key={pt}>
-                      <Check size={16} className="transport-check-icon" />
-                      <span>{pt}</span>
-                    </li>
-                  ))}
-                </ul>
-              </motion.div>
-            ))}
+            <div className="tp-actions">
+              <a className="tp-btn tp-btn-dark" href="#apply">Become a transport partner</a>
+              <a className="tp-btn tp-btn-light" href="#process">See how it works</a>
+            </div>
           </div>
-          <div className="transport-integration-dots">
-            {INTEGRATION_STEPS.map((_, i) => (
-              <button
-                key={i}
-                className={`transport-integration-dot${i === activeStep ? ' active' : ''}`}
-                onClick={() => scrollToStep(i)}
-                aria-label={t('transport.goToStep', { number: i + 1, defaultValue: `Go to step ${i + 1}` })}
+          <div className="tp-visual">
+            <div className="tp-route-line">
+              <span className="tp-route-dot" />
+              <span className="tp-route-dot" />
+              <span className="tp-route-dot" />
+            </div>
+            <div className="tp-photo">
+              <img
+                src="/images/transport.webp"
+                alt="Expedition-Go transport on a Ghana journey"
+                loading="eager"
               />
-            ))}
+              <div className="tp-image-caption">
+                <b>Ready when Ghana moves.</b>
+                <span>Reliable transport. More journeys.</span>
+              </div>
+            </div>
+            <div className="tp-fleet-chip tp-fleet-chip-top">
+              <strong>50+</strong>
+              <span>destinations covered</span>
+            </div>
+            <div className="tp-fleet-chip tp-fleet-chip-bottom">
+              <strong>10k+</strong>
+              <span>monthly bookings</span>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Why Join */}
-      <section className="transport-why">
-        <div className="transport-container">
-          <motion.h2
-            className="transport-section-title"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-          >
-            {t('transport.whyTitle', 'Why partner with Expedition-Go Tours')}
-          </motion.h2>
-          <div className="transport-why-grid">
-            {WHY_JOIN.map((item, i) => (
-              <motion.div
-                key={item.title}
-                className="transport-why-card"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: i * 0.1 }}
-              >
-                <div className="transport-why-icon">
-                  <item.icon size={24} />
+      {/* ── Ticker ───────────────────────────────────────── */}
+      <div className="tp-ticker">
+        <div className="tp-ticker-track">
+          {[...TICKER_ITEMS, ...TICKER_ITEMS].map((item, i) => (
+            <span key={i}>{item}</span>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Metrics / Intro ──────────────────────────────── */}
+      <section className="tp-section">
+        <div className="wrap">
+          <RevealOnScroll>
+            <div className="tp-intro">
+              <div>
+                <div className="tp-eyebrow">A better route to growth</div>
+              </div>
+              <div>
+                <p className="tp-lead">
+                  Your vehicles should spend more time earning and less time waiting. Expedition-Go helps verified transport businesses showcase their fleet, receive booking requests and build long-term relationships with travel operators.
+                </p>
+              </div>
+            </div>
+            <div className="tp-metrics">
+              <div className="tp-metric"><strong>500+</strong><span>Verified transport providers</span></div>
+              <div className="tp-metric"><strong>50+</strong><span>Destinations across the network</span></div>
+              <div className="tp-metric"><strong>10k+</strong><span>Monthly partner bookings</span></div>
+            </div>
+          </RevealOnScroll>
+        </div>
+      </section>
+
+      {/* ── Network / Dispatch ────────────────────────────── */}
+      <section className="tp-section" style={{ paddingTop: 0 }}>
+        <div className="wrap">
+          <RevealOnScroll>
+            <div className="tp-network">
+              <div className="tp-network-head">
+                <h2>A clearer view of every journey.</h2>
+                <p>A partnership designed around real trips: manage your fleet, keep availability current and respond to new booking requests from one place.</p>
+              </div>
+              <div className="tp-dispatch">
+                <aside className="tp-dispatch-side">
+                  <small>Available fleet</small>
+                  <div className="tp-fleet-list">
+                    <div className="tp-vehicle active">
+                      <div className="tp-vehicle-icon">▰</div>
+                      <div><b>Executive SUV</b><span>Available · 5 seats</span></div>
+                    </div>
+                    <div className="tp-vehicle">
+                      <div className="tp-vehicle-icon" style={{ background: '#3463e8' }}>▰</div>
+                      <div><b>Passenger van</b><span>On trip · 12 seats</span></div>
+                    </div>
+                    <div className="tp-vehicle">
+                      <div className="tp-vehicle-icon" style={{ background: '#79af55' }}>▰</div>
+                      <div><b>Coaster bus</b><span>Available · 28 seats</span></div>
+                    </div>
+                  </div>
+                </aside>
+                <div className="tp-dispatch-map">
+                  <div className="tp-map-grid" />
+                  <div className="tp-road" />
+                  <i className="tp-pin tp-pin-a" />
+                  <i className="tp-pin tp-pin-b" />
+                  <i className="tp-pin tp-pin-c" />
+                  <article className="tp-trip-card">
+                    <header><span>NEW ASSIGNMENT</span><span>EG-1048</span></header>
+                    <h3>Accra → Cape Coast</h3>
+                    <p>Private day tour · 5 passengers</p>
+                    <footer><b>06:00 departure</b><span className="tp-accepted">Accepted ✓</span></footer>
+                  </article>
                 </div>
-                <h3 className="transport-why-title">{item.title}</h3>
-                <p className="transport-why-desc">{item.desc}</p>
-              </motion.div>
-            ))}
-          </div>
+              </div>
+            </div>
+          </RevealOnScroll>
         </div>
       </section>
 
-      {/* About / Contact */}
-      <section className="transport-about">
-        <div className="transport-container">
-          <motion.h2
-            className="transport-section-title transport-about-title"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-          >
-            {t('transport.aboutTitle', 'About the Expedition-Go Tours Partner Program')}
-          </motion.h2>
-          <motion.div
-            className="transport-about-card"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-          >
-            <p className="transport-about-card-text">
-              {t('transport.contactText', 'For inquiries, contact partners@expedition-go.com')}
-            </p>
-            <a href="/contact-us" className="transport-btn transport-btn-contact">
-              {t('transport.contactBtn', 'Contact Us')}
-            </a>
-          </motion.div>
+      {/* ── Steps ─────────────────────────────────────────── */}
+      <section id="process" className="tp-section">
+        <div className="wrap">
+          <RevealOnScroll>
+            <div className="tp-steps">
+              <div className="tp-sticky">
+                <div className="tp-eyebrow">How to get started</div>
+                <h2 className="section-title" style={{ marginTop: 22, fontFamily: 'var(--font-display)' }}>
+                  Three steps. More roads ahead.
+                </h2>
+                <p>Getting listed is straightforward. Tell us about your business, add your fleet and start receiving suitable opportunities.</p>
+              </div>
+              <div className="tp-step-list">
+                {STEPS.map((s) => (
+                  <article key={s.num} className="tp-step">
+                    <span className="tp-step-num">{s.num}</span>
+                    <div>
+                      <h3>{s.title}</h3>
+                      <p>{s.desc}</p>
+                    </div>
+                    <span className="tp-step-arrow">↗</span>
+                  </article>
+                ))}
+              </div>
+            </div>
+          </RevealOnScroll>
         </div>
       </section>
 
-      {/* Bottom CTA */}
-      <section className="transport-cta">
-        <div className="transport-container">
-          <motion.div
-            className="transport-cta-inner"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-          >
-            <h2 className="transport-cta-title">{t('transport.ctaTitle', 'Ready to grow your transport business?')}</h2>
-            <p className="transport-cta-subtitle">{t('transport.ctaDesc', 'Join hundreds of transport partners already earning with us.')}</p>
-            <button type="button" className="transport-btn transport-btn-primary transport-btn-lg" onClick={handleSignUp}>
-              {t('transport.ctaBtn', 'Get started')} <ArrowRight size={18} />
+      {/* ── Benefits ──────────────────────────────────────── */}
+      <section className="tp-section tp-benefits" id="benefits">
+        <div className="wrap">
+          <RevealOnScroll>
+            <div className="tp-benefit-head">
+              <h2 className="section-title" style={{ fontFamily: 'var(--font-display)' }}>Built to keep<br />business moving.</h2>
+              <p>Practical tools and support for transport companies that want more visibility, stronger travel partnerships and better fleet utilisation.</p>
+            </div>
+            <div className="tp-cards">
+              {BENEFITS.map((b, i) => (
+                <article key={i} className="tp-card">
+                  <span className="tp-mini-tag">{b.tag}</span>
+                  <div>
+                    <div className="tp-card-icon">{b.icon}</div>
+                    <h3>{b.title}</h3>
+                    <p>{b.desc}</p>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </RevealOnScroll>
+        </div>
+      </section>
+
+      {/* ── Requirements ──────────────────────────────────── */}
+      <section className="tp-section">
+        <div className="wrap">
+          <RevealOnScroll>
+            <div className="tp-requirements">
+              <div className="tp-req-copy">
+                <div className="tp-eyebrow" style={{ color: '#9bcf9e' }}>Built on reliability</div>
+                <h2>Good journeys start with trusted partners.</h2>
+                <p>We welcome professional transport operators who care about safety, communication and the traveller experience.</p>
+                <a className="tp-btn tp-btn-light" style={{ marginTop: 20 }} href="#apply">Apply to join</a>
+              </div>
+              <div className="tp-checklist">
+                <h3>A strong partner profile</h3>
+                {CHECKS.map((c, i) => (
+                  <div key={i} className="tp-check">
+                    <span className="tp-check-icon">✓</span>
+                    <div><b>{c.title}</b><span>{c.desc}</span></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </RevealOnScroll>
+        </div>
+      </section>
+
+      {/* ── FAQ ───────────────────────────────────────────── */}
+      <section className="tp-section">
+        <div className="wrap">
+          <RevealOnScroll>
+            <h2 className="section-title" style={{ textAlign: 'center', marginBottom: 50, fontFamily: 'var(--font-display)' }}>
+              Questions, answered.
+            </h2>
+            <FAQAccordion items={FAQ_ITEMS} />
+          </RevealOnScroll>
+        </div>
+      </section>
+
+      {/* ── CTA ───────────────────────────────────────────── */}
+      <div className="wrap" style={{ paddingTop: 20 }}>
+        <RevealOnScroll>
+          <div className="eg-cta" id="apply">
+            <div className="eg-cta-eyebrow">Your next route starts here</div>
+            <h2>Ready to move more people—and your business?</h2>
+            <p>Join the Expedition-Go transport network and turn available fleet capacity into more journeys across Ghana.</p>
+            <button
+              className="eg-cta-btn"
+              onClick={handleApply}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 11,
+                padding: '16px 22px',
+                background: '#fff',
+                color: '#15201d',
+                borderRadius: 999,
+                fontWeight: 700,
+                fontSize: 15,
+                border: 'none',
+                cursor: 'pointer',
+                marginTop: 28,
+                position: 'relative',
+                zIndex: 2,
+              }}
+            >
+              List your fleet for free
             </button>
-          </motion.div>
-        </div>
-      </section>
-
+          </div>
+        </RevealOnScroll>
+      </div>
       <Footer />
-    </div>
+    </main>
   )
 }

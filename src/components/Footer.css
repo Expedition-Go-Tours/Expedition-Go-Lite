@@ -1,7 +1,8 @@
 /* ===== FOOTER - DESKTOP FIRST ===== */
 
 .footer {
-  background: var(--green-700, #087a4a);
+  /* Dark green match the CTA / partner-pages design language. */
+  background: #075634;
   padding: 48px 0 0;
 }
 

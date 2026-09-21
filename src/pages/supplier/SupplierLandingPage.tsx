@@ -26,7 +26,6 @@ import tour5 from '../../assets/tours/tour5.avif'
 import tour6 from '../../assets/tours/tour6.avif'
 import tour7 from '../../assets/tours/tour7.avif'
 import tour8 from '../../assets/tours/tour8.avif'
-import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer'
 import PhoneShowcaseSection from './PhoneShowcaseSection'
 import { useAuthUser } from '../../hooks/useAuthUser'
@@ -397,8 +396,6 @@ export default function SupplierLandingPage({ onOpenAuth }: SupplierLandingPageP
         exit={{ opacity: 0, y: -16 }}
         transition={{ duration: 0.35, ease: 'easeOut' }}
       >
-      <Navbar onOpenAuth={onOpenAuth} />
-
       {/* Phone Showcase — replaces the old hero */}
       <PhoneShowcaseSection onBecomeSupplier={handleBecomeSupplier} />
 
