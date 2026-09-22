@@ -3,6 +3,7 @@ import { fetchWithAuth } from '../lib/api'
 import { getStoredAuthTokens } from '../lib/auth'
 import { useAuthUser } from './useAuthUser'
 import type { DayAvailability, DayAvailabilityInfo, DayTimeSlot } from '../lib/tourAvailability'
+import type { CancellationChoice, RefundStatus } from '../lib/cancellationChoice'
 
 /**
  * `bypassCache` skips the browser's HTTP cache for this request. Availability
@@ -371,6 +372,14 @@ export interface ExpeditionBookingSummary {
   refundState?: 'open' | 'closed' | null
   /** True when the customer has already left a review for this booking. */
   reviewed?: boolean
+  /** Supplier-cancelled choice flow — one-time token, present only while a
+   *  decision is still owed for this booking. */
+  cancellationChoiceToken?: string | null
+  cancellationChoiceDeadline?: string | null
+  customerChoice?: CancellationChoice | null
+  refundStatus?: RefundStatus | string | null
+  cancellationReason?: string | null
+  refundAmount?: number | null
 }
 
 interface RawBookingListRecord {
@@ -384,6 +393,12 @@ interface RawBookingListRecord {
   createdAt: string
   travelDate: string
   selectedTime?: string | null
+  cancellationChoiceToken?: string | null
+  cancellationChoiceDeadline?: string | null
+  customerChoice?: string | null
+  refundStatus?: string | null
+  cancellationReason?: string | null
+  refundAmount?: number | string | null
   travelers?: unknown
   pickup?: Record<string, unknown> | null
   refundedAt?: string | null
@@ -440,6 +455,12 @@ function mapBookingSummary(b: RawBookingListRecord): ExpeditionBookingSummary {
     createdAt: b.createdAt,
     refundState: b.refundState ?? null,
     reviewed: !!b.reviewed,
+    cancellationChoiceToken: b.cancellationChoiceToken ?? null,
+    cancellationChoiceDeadline: b.cancellationChoiceDeadline ?? null,
+    customerChoice: (b.customerChoice ?? null) as CancellationChoice | null,
+    refundStatus: b.refundStatus ?? null,
+    cancellationReason: b.cancellationReason ?? null,
+    refundAmount: b.refundAmount == null ? null : Number(b.refundAmount),
   }
 }
 

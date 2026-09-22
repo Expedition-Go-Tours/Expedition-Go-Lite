@@ -4,6 +4,7 @@ import { currencySymbol } from '../../lib/currencySymbol'
 import type { ExpeditionBookingSummary } from '../../hooks/useExpeditionBookings'
 import { bookingStatusMeta, formatMediumDate, formatTimeString, partyLabel } from '../../lib/bookingUi'
 import { formatDuration } from '../../hooks/useExpeditionTours'
+import CancellationChoiceBanner from '../CancellationChoiceBanner'
 
 interface BookingCardProps {
   booking: ExpeditionBookingSummary
@@ -91,6 +92,17 @@ export default function BookingCard({
       </div>
 
       <div className="bk-body">
+        {/* Supplier cancelled this booking → decision banner, or the muted
+            "You chose …" line once the customer has answered. */}
+        <CancellationChoiceBanner
+          token={booking.cancellationChoiceToken}
+          customerChoice={booking.customerChoice}
+          deadline={booking.cancellationChoiceDeadline}
+          refundAmount={booking.refundAmount}
+          currency={booking.currency}
+          total={booking.total}
+        />
+
         <div className="bk-title-row">
           <h3 className="bk-title">{booking.tourTitle}</h3>
           <span className={`bk-chip bk-chip-${meta.kind}`}>

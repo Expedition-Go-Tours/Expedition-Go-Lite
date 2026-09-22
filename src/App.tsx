@@ -50,6 +50,7 @@ const SupplierRegisterPage = lazy(() => import('./pages/supplier/SupplierRegiste
 const BookingPage = lazy(() => import('./pages/BookingPage'))
 const BookingConfirmationPage = lazy(() => import('./pages/BookingConfirmationPage'))
 const CheckoutPage = lazy(() => import('./pages/CheckoutPage'))
+const CancellationChoicePage = lazy(() => import('./pages/CancellationChoicePage'))
 const BookingPickupPage = lazy(() => import('./pages/BookingPickupPage'))
 
 /** Old flat "Edit trip" URL → the dashboard-hosted page (keeps deep links working). */
@@ -366,6 +367,9 @@ function AppContent() {
           <Route path="/booking/confirmation" element={<BookingConfirmationPage />} />
           <Route path="/booking/:bookingId/pickup" element={<BookingPickupPage />} />
           <Route path="/booking/:bookingId/modify" element={<BookingModifyRedirect />} />
+          {/* Supplier-cancelled booking: choose a new date or a full refund.
+              Public, token-driven (?token=…) — no auth gate beyond the token. */}
+          <Route path="/cancellation-choice" element={<CancellationChoicePage />} />
           <Route path="/login" element={
             <AuthForm
               initialMode={loginInitialMode}
