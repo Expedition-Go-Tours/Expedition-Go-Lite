@@ -1,6 +1,5 @@
 ﻿import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
 import { User, MapPin, Lock, Camera, CalendarDays, Heart, Star } from "lucide-react";
 import { getStoredAuthUser } from "@/lib/auth";
 import { useAuthUser } from "@/hooks/useAuthUser";
@@ -8,10 +7,12 @@ import { useMyExpeditionBookings } from "../../hooks/useExpeditionBookings";
 import { useWishlist } from "../../context/WishlistContext";
 import { useMyReviews } from "../../hooks/useExpeditionReviews";
 import { Input } from "@/components/ui/input";
+import { useComingSoon } from "@/hooks/useComingSoon";
 import userFallback from "@/assets/icons/User Circle.png";
 
 export default function SettingsPage() {
   const navigate = useNavigate();
+  const comingSoon = useComingSoon();
   const user = useAuthUser();
   const stored = getStoredAuthUser();
   const { data: bookings = [] } = useMyExpeditionBookings(1, undefined, 100);
@@ -43,28 +44,6 @@ export default function SettingsPage() {
     setForm((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
-    }));
-  };
-
-  const handleSave = () => {
-    toast.success("Account settings saved");
-  };
-
-  const handleChangePassword = () => {
-    if (form.newPassword !== form.newPasswordAgain) {
-      toast.error("Passwords do not match");
-      return;
-    }
-    if (!form.currentPassword || !form.newPassword) {
-      toast.error("Please fill in all password fields");
-      return;
-    }
-    toast.success("Password changed successfully");
-    setForm((prev) => ({
-      ...prev,
-      currentPassword: "",
-      newPassword: "",
-      newPasswordAgain: "",
     }));
   };
 
@@ -119,8 +98,9 @@ export default function SettingsPage() {
             />
           </div>
           <button
-            className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
+            className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer is-coming-soon"
             aria-label="Change avatar"
+            {...comingSoon}
           >
             <Camera size={20} className="text-white" />
           </button>
@@ -204,8 +184,8 @@ export default function SettingsPage() {
 
         <div className="px-6 sm:px-8 py-4 border-t border-[var(--bv-border)] bg-[var(--bv-surface-2)]/50">
           <button
-            onClick={handleSave}
-            className="px-6 py-2.5 bg-[var(--bv-accent)] text-white rounded-xl text-[14px] font-semibold hover:bg-[var(--bv-accent-strong)] transition-colors"
+            className="px-6 py-2.5 bg-[var(--bv-accent)] text-white rounded-xl text-[14px] font-semibold hover:bg-[var(--bv-accent-strong)] transition-colors is-coming-soon"
+            {...comingSoon}
           >
             Save Changes
           </button>
@@ -286,8 +266,8 @@ export default function SettingsPage() {
 
         <div className="px-6 sm:px-8 py-4 border-t border-[var(--bv-border)] bg-[var(--bv-surface-2)]/50">
           <button
-            onClick={handleSave}
-            className="px-6 py-2.5 bg-[var(--bv-accent)] text-white rounded-xl text-[14px] font-semibold hover:bg-[var(--bv-accent-strong)] transition-colors"
+            className="px-6 py-2.5 bg-[var(--bv-accent)] text-white rounded-xl text-[14px] font-semibold hover:bg-[var(--bv-accent-strong)] transition-colors is-coming-soon"
+            {...comingSoon}
           >
             Save Changes
           </button>
@@ -341,8 +321,8 @@ export default function SettingsPage() {
 
         <div className="px-6 sm:px-8 py-4 border-t border-[var(--bv-border)] bg-[var(--bv-surface-2)]/50">
           <button
-            onClick={handleChangePassword}
-            className="px-6 py-2.5 bg-[var(--bv-accent)] text-white rounded-xl text-[14px] font-semibold hover:bg-[var(--bv-accent-strong)] transition-colors"
+            className="px-6 py-2.5 bg-[var(--bv-accent)] text-white rounded-xl text-[14px] font-semibold hover:bg-[var(--bv-accent-strong)] transition-colors is-coming-soon"
+            {...comingSoon}
           >
             Update Password
           </button>

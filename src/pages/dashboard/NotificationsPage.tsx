@@ -9,6 +9,7 @@ import {
 import { toast } from "sonner";
 import { fetchWithAuth } from "@/lib/api";
 import { useChat } from "@/chat/ChatContext";
+import { useComingSoon } from "@/hooks/useComingSoon";
 import "./NotificationsPage.css";
 
 /* ── Types ──────────────────────────────────────────────────────── */
@@ -228,6 +229,7 @@ function getActionLabel(n: BackendNotification): string | null {
 /* ── Component ──────────────────────────────────────────────────── */
 export default function NotificationsPage() {
   const navigate = useNavigate();
+  const comingSoon = useComingSoon();
   const chat = useChat();
   const [notifications, setNotifications] = useState<BackendNotification[]>([]);
   const [loading, setLoading] = useState(true);
@@ -707,11 +709,8 @@ export default function NotificationsPage() {
                   Cancel
                 </button>
                 <button
-                  className="notif-prefs-btn primary"
-                  onClick={() => {
-                    toast.success("Preferences saved");
-                    setShowPrefs(false);
-                  }}
+                  className="notif-prefs-btn primary is-coming-soon"
+                  {...comingSoon}
                 >
                   Save Preferences
                 </button>

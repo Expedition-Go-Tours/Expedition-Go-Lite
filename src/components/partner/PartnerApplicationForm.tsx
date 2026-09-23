@@ -24,12 +24,12 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronDown,
-  LoaderCircle,
   Upload,
   X,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { useComingSoon } from "@/hooks/useComingSoon"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 import {
@@ -657,13 +657,16 @@ export default function PartnerApplicationForm({
   onBack,
 }: PartnerApplicationFormProps) {
   const navigate = useNavigate()
+  const comingSoon = useComingSoon()
   const { steps, initialForm, validateStep } = config
   const [step, setStep] = useState(0)
   const [direction, setDirection] = useState(1)
   const [form, setForm] = useState<Record<string, any>>({ ...initialForm })
   const [errors, setErrors] = useState<Record<string, string>>({})
-  const [loading, setLoading] = useState(false)
-  const [success, setSuccess] = useState(false)
+  // The partner application is not wired to a backend yet: the submit button
+  // is marked "coming soon", so these never change.
+  const loading = false
+  const success = false
 
   const progress = ((step + 1) / steps.length) * 100
 
@@ -702,15 +705,6 @@ export default function PartnerApplicationForm({
     },
     [step]
   )
-
-  const handleSubmit = useCallback(async () => {
-    if (!validateCurrentStep()) return
-    setLoading(true)
-    // Simulate API call
-    await new Promise((r) => setTimeout(r, 2000))
-    setLoading(false)
-    setSuccess(true)
-  }, [validateCurrentStep])
 
   const stepCompleted = steps.map((s, i) => {
     if (i >= step) return false
@@ -900,11 +894,10 @@ export default function PartnerApplicationForm({
             ) : (
               <Button
                 type="button"
-                onClick={handleSubmit}
-                disabled={loading || !form.termsAccepted}
-                className="h-11 px-5"
+                disabled={!form.termsAccepted}
+                className="h-11 px-5 is-coming-soon"
+                {...comingSoon}
               >
-                {loading && <LoaderCircle className="mr-2 size-4 animate-spin" />}
                 Submit Application
               </Button>
             )}

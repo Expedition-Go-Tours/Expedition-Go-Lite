@@ -1,19 +1,19 @@
 import { useState, type FormEvent } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
-import { Mail, CheckCircle } from 'lucide-react'
+import { Mail } from 'lucide-react'
+import { useComingSoon } from '../hooks/useComingSoon'
 import newsletterImg from '../assets/newsletter-square.jpg'
 import './NewsletterSection.css'
 
 export default function NewsletterSection() {
   const [email, setEmail] = useState('')
-  const [submitted, setSubmitted] = useState(false)
+  const comingSoon = useComingSoon()
   const reduce = useReducedMotion()
 
+  // The mailing-list API is not wired up yet: the button is marked
+  // "coming soon" and submission is deliberately a no-op.
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
-    if (!email.trim()) return
-    setSubmitted(true)
-    setEmail('')
   }
 
   return (
@@ -50,30 +50,27 @@ export default function NewsletterSection() {
               delivered straight to your inbox. No spam, just adventures.
             </p>
 
-            {submitted ? (
-              <div className="newsletter-success">
-                <CheckCircle size={20} />
-                <span>You are in! Watch your inbox for something special.</span>
+            <form className="newsletter-form" onSubmit={handleSubmit}>
+              <div className="newsletter-input-wrap">
+                <input
+                  type="email"
+                  className="newsletter-input"
+                  placeholder="Email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  aria-label="Email address"
+                />
+                <Mail className="newsletter-input-icon" size={20} />
+                <button
+                  type="submit"
+                  className="newsletter-btn is-coming-soon"
+                  aria-label="Sign up"
+                  {...comingSoon}
+                >
+                  Sign up
+                </button>
               </div>
-            ) : (
-              <form className="newsletter-form" onSubmit={handleSubmit}>
-                <div className="newsletter-input-wrap">
-                  <input
-                    type="email"
-                    className="newsletter-input"
-                    placeholder="Email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    aria-label="Email address"
-                  />
-                  <Mail className="newsletter-input-icon" size={20} />
-                  <button type="submit" className="newsletter-btn" aria-label="Sign up">
-                    Sign up
-                  </button>
-                </div>
-              </form>
-            )}
+            </form>
           </motion.div>
         </div>
       </div>

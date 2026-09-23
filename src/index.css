@@ -435,3 +435,13 @@ input[type="radio"].pickup-radio:checked:focus {
   contain-intrinsic-size: auto 600px;
 }
 
+/* "Coming soon" affordance for controls whose feature is not built yet.
+   Deliberately NOT the `disabled` attribute: a disabled button does not fire
+   mouse events in Chrome/Safari, so its `title` tooltip would never appear.
+   These controls stay hoverable, intercept their own click, and expose
+   `aria-disabled="true"` to assistive tech. */
+.is-coming-soon {
+  cursor: not-allowed !important;
+  opacity: 0.55;
+}
+

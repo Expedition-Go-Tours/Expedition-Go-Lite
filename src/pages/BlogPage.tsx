@@ -2,11 +2,11 @@ import { useMemo, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { MotionConfig, motion, useReducedMotion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
+import { useComingSoon } from '../hooks/useComingSoon'
 import {
   ArrowRight,
   ArrowUpRight,
   BookOpen,
-  CheckCircle,
   Clock,
   Compass,
   Landmark,
@@ -94,7 +94,7 @@ export default function BlogPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [activeCategory, setActiveCategory] = useState<CategoryKey>('all')
   const [email, setEmail] = useState('')
-  const [subscribed, setSubscribed] = useState(false)
+  const comingSoon = useComingSoon()
 
   const filteredStories = useMemo(() => {
     const query = searchQuery.trim().toLowerCase()
@@ -144,11 +144,10 @@ export default function BlogPage() {
     scrollToGuides()
   }
 
+  // The mailing-list API is not wired up yet: the button is marked
+  // "coming soon" and submission is deliberately a no-op.
   const handleSubscribe = (event: FormEvent) => {
     event.preventDefault()
-    if (!email.trim()) return
-    setSubscribed(true)
-    setEmail('')
   }
 
   return (
@@ -492,28 +491,20 @@ export default function BlogPage() {
                 <p>{t('blog.newsletterDesc')}</p>
               </motion.div>
 
-              {subscribed ? (
-                <motion.p className="blog-newsletter-success" variants={fadeUp} role="status">
-                  <CheckCircle size={20} aria-hidden="true" />
-                  {t('blog.newsletterSuccess')}
-                </motion.p>
-              ) : (
-                <motion.form className="blog-newsletter-form" variants={fadeUp} onSubmit={handleSubscribe}>
-                  <input
-                    type="email"
-                    required
-                    className="blog-newsletter-input"
-                    value={email}
-                    onChange={(event) => setEmail(event.target.value)}
-                    placeholder={t('blog.emailPlaceholder')}
-                    aria-label={t('blog.emailPlaceholder')}
-                  />
-                  <button type="submit" className="blog-newsletter-btn">
-                    <Mail size={16} aria-hidden="true" />
-                    {t('blog.subscribe')}
-                  </button>
-                </motion.form>
-              )}
+              <motion.form className="blog-newsletter-form" variants={fadeUp} onSubmit={handleSubscribe}>
+                <input
+                  type="email"
+                  className="blog-newsletter-input"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  placeholder={t('blog.emailPlaceholder')}
+                  aria-label={t('blog.emailPlaceholder')}
+                />
+                <button type="submit" className="blog-newsletter-btn is-coming-soon" {...comingSoon}>
+                  <Mail size={16} aria-hidden="true" />
+                  {t('blog.subscribe')}
+                </button>
+              </motion.form>
             </motion.div>
           </div>
         </section>
