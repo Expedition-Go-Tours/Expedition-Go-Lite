@@ -780,7 +780,118 @@
 }
 
 /* ============================================================
-   8. CTA
+   8. VISIT US — office details + live Google Maps embed
+   ============================================================ */
+
+.about-visit {
+  padding: 0 0 90px;
+}
+
+.about-visit-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 26px;
+  padding: 30px;
+  border: 1px solid var(--ab-line);
+  border-radius: 24px;
+  background: var(--ab-sand);
+  box-shadow: var(--ab-shadow);
+}
+
+.about-visit-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+}
+
+.about-visit-title {
+  margin: 0;
+  font-family: var(--font-heading, 'Manrope', sans-serif);
+  font-size: clamp(1.35rem, 2.6vw, 1.9rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.about-visit-address {
+  margin: 0;
+  color: var(--ab-sub);
+  font-size: 15px;
+}
+
+.about-visit-info .about-btn {
+  margin-top: 6px;
+}
+
+/* Map shell. The About page does not load SupportHub.css, so the DeferredMap
+   wrapper (default class `sh-map`) needs its own box, skeleton and shimmer
+   here. The component swaps the skeleton for the iframe once the card nears
+   the viewport. */
+.about-visit-map {
+  position: relative;
+  min-width: 0;
+  min-height: 320px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--ab-mint);
+}
+
+.about-visit-map iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 320px;
+  border: 0;
+}
+
+.about-visit-map .sh-map-skeleton {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0) 25%, rgba(255, 255, 255, 0.55) 50%, rgba(255, 255, 255, 0) 75%),
+    var(--ab-mint);
+  background-size: 200% 100%;
+  animation: about-visit-shimmer 1.6s ease-in-out infinite;
+}
+
+.about-visit-map .sh-map-skeleton-pin {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  color: var(--ab-green);
+  background: #fff;
+  box-shadow: 0 8px 22px rgba(10, 53, 34, 0.12);
+}
+
+@keyframes about-visit-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@media (min-width: 860px) {
+  .about-visit-card {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    align-items: center;
+    gap: 40px;
+    padding: 38px 40px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .about-visit-map .sh-map-skeleton {
+    animation: none;
+  }
+}
+
+/* ============================================================
+   9. CTA
    ============================================================ */
 
 .about-cta {

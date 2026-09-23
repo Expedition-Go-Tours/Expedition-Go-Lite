@@ -24,10 +24,12 @@ import SEO, { buildBreadcrumbSchema } from '../components/SEO'
 import { HELP_CENTRE_STATE } from '../components/support/BackToHelpCentre'
 import SupportSearch from '../components/support/SupportSearch'
 import FaqAccordion from '../components/support/FaqAccordion'
+import DeferredMap from '../components/support/DeferredMap'
 import { fadeUp, revealViewport, stagger, staggerItem } from '../components/support/motion'
 import { getPopularFaqs } from '../lib/faq'
 import {
   OFFICE_DIRECTIONS_URL,
+  OFFICE_MAP_EMBED,
   SUPPORT_EMAIL,
   SUPPORT_HOURS,
   SUPPORT_PHONE,
@@ -417,13 +419,10 @@ export default function HelpCentrePage() {
                 {t('help.getDirections')}
               </a>
             </div>
-            <div className="sh-map-art" aria-hidden="true">
-              <div className="sh-map-art-grid" />
-              <div className="sh-map-art-pin">
-                <MapPin size={26} />
-              </div>
-              <span className="sh-map-art-label">Accra, Ghana</span>
-            </div>
+            <DeferredMap
+              title={`${t('help.companyName')} — ${t('help.addressLine1')}, ${t('help.addressLine2')}`}
+              src={OFFICE_MAP_EMBED}
+            />
           </motion.section>
         </div>
 

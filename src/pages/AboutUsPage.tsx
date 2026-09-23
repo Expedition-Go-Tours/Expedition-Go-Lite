@@ -7,6 +7,7 @@ import {
   Compass,
   Headset,
   Map as MapIcon,
+  Navigation,
   Shield,
   ShieldCheck,
   Star,
@@ -16,7 +17,8 @@ import {
 import Footer from '../components/Footer'
 import SEO, { buildBreadcrumbSchema, buildOrganizationSchema } from '../components/SEO'
 import PartnersSection from '../components/PartnersSection'
-import { SUPPORT_EMAIL } from '../lib/support'
+import DeferredMap from '../components/support/DeferredMap'
+import { OFFICE_DIRECTIONS_URL, OFFICE_MAP_EMBED, SUPPORT_EMAIL } from '../lib/support'
 import './AboutUsPage.css'
 
 import hero1 from '../assets/about/hero-1.webp'
@@ -451,7 +453,47 @@ export default function AboutUsPage() {
         </motion.section>
 
         {/* ================================================================
-            8. CTA
+            8. VISIT US — office location on Google Maps
+            ================================================================ */}
+        <motion.section
+          className="about-visit"
+          initial="hidden"
+          whileInView="visible"
+          viewport={revealViewport}
+          variants={fadeUp}
+          aria-label="Visit us"
+        >
+          <div className="about-container">
+            <div className="about-visit-card">
+              <div className="about-visit-info">
+                <p className="about-label">Visit us</p>
+                <h2 className="about-visit-title">{t('help.companyName')}</h2>
+                <p className="about-visit-address">
+                  {t('help.addressLine1')}
+                  <br />
+                  {t('help.addressLine2')}
+                </p>
+                <a
+                  href={OFFICE_DIRECTIONS_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="about-btn about-btn--primary"
+                >
+                  <Navigation size={16} aria-hidden="true" />
+                  {t('help.getDirections')}
+                </a>
+              </div>
+              <DeferredMap
+                className="about-visit-map"
+                title={`${t('help.companyName')} — ${t('help.addressLine1')}, ${t('help.addressLine2')}`}
+                src={OFFICE_MAP_EMBED}
+              />
+            </div>
+          </div>
+        </motion.section>
+
+        {/* ================================================================
+            9. CTA
             ================================================================ */}
         <motion.section
           className="about-cta"
