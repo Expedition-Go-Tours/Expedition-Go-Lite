@@ -77,6 +77,7 @@ const HotelsProviderPage = lazy(() => import('./pages/HotelsProviderPage'))
 const TransportPage = lazy(() => import('./pages/TransportPage'))
 const TransportProviderPage = lazy(() => import('./pages/TransportProviderPage'))
 const BlogPage = lazy(() => import('./pages/BlogPage'))
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'))
 
 // Below-fold homepage sections (lazy loaded, mounted on scroll)
 const TopRatedSection = lazy(() => import('./components/TopRatedSection'))
@@ -386,7 +387,11 @@ function AppContent() {
           <Route path="/stories/:slug" element={<StoryDetailPage />} />
           <Route path="/reviews" element={<AllReviewsPage />} />
           <Route path="/blog" element={<BlogPage />} />
-          <Route path="/*" element={
+          {/* Home + the state-driven auth overlay. handleOpenAuth() navigates
+              to "/" and only then sets currentPage, so the signin/signup
+              branch has to stay on this route rather than move to the
+              catch-all. */}
+          <Route path="/" element={
             <AnimatePresence mode="wait">
               {currentPage === 'signin' || currentPage === 'signup' ? (
                 <motion.div
@@ -414,6 +419,14 @@ function AppContent() {
               )}
             </AnimatePresence>
           } />
+          {/* Legacy auth URLs. The app opens the auth overlay on "/" (see
+              handleOpenAuth), so /signin and /signup were dead paths: they fell
+              through to the catch-all and rendered the homepage. Send them to
+              the real auth route instead. */}
+          <Route path="/signin" element={<Navigate to="/login" replace />} />
+          <Route path="/signup" element={<Navigate to="/login?mode=signup" replace />} />
+          {/* Anything else: a real 404 instead of a silent homepage render. */}
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
         </Suspense>
         </RouteErrorBoundary>

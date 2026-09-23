@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { motion, AnimatePresence, useAnimate } from 'framer-motion'
 import { toast } from 'sonner'
 import {
@@ -1369,8 +1369,8 @@ function PaymentDetailsStep({
 
             <p className="text-xs leading-relaxed text-slate-400">
               By clicking &quot;{buttonLabel}&quot;, you agree to our{' '}
-              <a href="#" className="font-semibold underline text-slate-500 hover:text-slate-700">Terms</a> &amp;{' '}
-              <a href="#" className="font-semibold underline text-slate-500 hover:text-slate-700">Privacy and Cookies Statement</a>
+              <Link to="/terms-and-conditions" className="font-semibold underline text-slate-500 hover:text-slate-700">Terms</Link> &amp;{' '}
+              <Link to="/privacy-policy" className="font-semibold underline text-slate-500 hover:text-slate-700">Privacy and Cookies Statement</Link>
               , plus the tour operator&apos;s rules &amp; regulations.
             </p>
 

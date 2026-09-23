@@ -432,7 +432,7 @@ export default function CheckoutPage() {
 
             <p className="co-terms">
               By paying you agree to the tour's cancellation policy and our{' '}
-              <Link to="/terms" className="co-link">terms</Link>.
+              <Link to="/terms-and-conditions" className="co-link">terms</Link>.
             </p>
           </div>
         </section>

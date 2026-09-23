@@ -254,6 +254,11 @@
     "tour": "Circuit",
     "toursAndExperiences": "Circuits et Expériences"
   },
+  "notFound": {
+    "title": "Page introuvable",
+    "subtitle": "La page que vous recherchez n'existe pas ou a été déplacée.",
+    "cta": "Retour à l'accueil"
+  },
   "sections": {
     "allToursTitle": "Circuits",
     "attractionsBadge": "Attractions",

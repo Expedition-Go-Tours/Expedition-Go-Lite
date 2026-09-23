@@ -254,6 +254,11 @@
     "tour": "Tour",
     "toursAndExperiences": "Tours en Ervaringen"
   },
+  "notFound": {
+    "title": "Pagina niet gevonden",
+    "subtitle": "De pagina die je zoekt bestaat niet of is verplaatst.",
+    "cta": "Terug naar de startpagina"
+  },
   "sections": {
     "allToursTitle": "Tours",
     "attractionsBadge": "Attracties",

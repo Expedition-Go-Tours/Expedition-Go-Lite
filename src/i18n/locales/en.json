@@ -291,6 +291,11 @@
     "experiencesCount_other": "{{count}} experiences",
     "loading": "Finding great experiences for you…"
   },
+  "notFound": {
+    "title": "Page not found",
+    "subtitle": "The page you're looking for doesn't exist or has been moved.",
+    "cta": "Back to homepage"
+  },
   "sections": {
     "allToursTitle": "Tours",
     "attractionsBadge": "Attractions",

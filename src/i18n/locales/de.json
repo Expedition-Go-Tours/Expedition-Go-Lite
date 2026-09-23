@@ -254,6 +254,11 @@
     "tour": "Tour",
     "toursAndExperiences": "Touren und Erlebnisse"
   },
+  "notFound": {
+    "title": "Seite nicht gefunden",
+    "subtitle": "Die gesuchte Seite existiert nicht oder wurde verschoben.",
+    "cta": "Zurück zur Startseite"
+  },
   "sections": {
     "allToursTitle": "Touren",
     "attractionsBadge": "Attraktionen",
