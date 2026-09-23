@@ -44,6 +44,18 @@ export type SupplierApplicationStatus =
   | 'SUSPENDED'
   | 'EXPIRED'
 
+/**
+ * Total files a single application may upload in one request.
+ *
+ * Mirrors MAX_SUPPLIER_DOCUMENT_FILES in the backend
+ * (config/supplierUploadFields.js) — the sum of that upload's per-field
+ * `maxCount`s (legacy named fields + `documents` + `vehiclePhotos`). The form
+ * pre-flights against this so a supplier with several vehicles gets an
+ * actionable message instead of the backend's generic 400 "Too many files
+ * uploaded".
+ */
+export const MAX_SUPPLIER_APPLICATION_FILES = 1 + 1 + 1 + 1 + 5 + 30 + 30
+
 export const SUPPLIER_TYPES: { value: string; label: string; description: string }[] = [
   { value: 'TOUR_GUIDE', label: 'Tour Guide', description: 'An individual who leads tours, with their own licence and ID.' },
   { value: 'TOUR_COMPANY', label: 'Tour Company', description: 'A registered business that operates tours and hires guides.' },

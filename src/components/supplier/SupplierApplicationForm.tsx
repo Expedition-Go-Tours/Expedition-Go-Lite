@@ -42,7 +42,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { applyAsSupplier, getSupplierApplicationStatus, SUPPLIER_TYPES, supplierTypeLabel, documentRequirementsFor, VEHICLE_DOC_TYPES, GUIDE_DOC_TYPES, documentTypeLabel } from "@/lib/supplier"
+import { applyAsSupplier, getSupplierApplicationStatus, SUPPLIER_TYPES, supplierTypeLabel, documentRequirementsFor, VEHICLE_DOC_TYPES, GUIDE_DOC_TYPES, documentTypeLabel, MAX_SUPPLIER_APPLICATION_FILES } from "@/lib/supplier"
 import { getAuthUserId } from "@/lib/auth"
 import { useAuthUser } from "@/hooks/useAuthUser"
 import GhanaDestinationSelect from "@/components/supplier/GhanaDestinationSelect"
@@ -977,6 +977,20 @@ export function SupplierApplicationForm({ onSubmitted }: SupplierApplicationForm
       setSuccess("")
 
       try {
+        // Pre-flight the upload size. The backend caps one request at
+        // MAX_SUPPLIER_DOCUMENT_FILES (config/supplierUploadFields.js) and
+        // answers with a generic 400 "Too many files uploaded"; catch it here
+        // so the user gets something actionable instead.
+        const uploadCount =
+          form.verificationDocuments.filter((d) => d.file).length +
+          form.vehicles.reduce((total, v) => total + v.photos.length, 0)
+        if (uploadCount > MAX_SUPPLIER_APPLICATION_FILES) {
+          const excess = uploadCount - MAX_SUPPLIER_APPLICATION_FILES
+          throw new Error(
+            `Your application includes ${uploadCount} files, but a single submission can include at most ${MAX_SUPPLIER_APPLICATION_FILES}. Please remove ${excess} file${excess === 1 ? "" : "s"} and submit again.`
+          )
+        }
+
         const rep = form.representativeInfo
 
         // Build multipart/form-data payload (matches backend route/multer design)
