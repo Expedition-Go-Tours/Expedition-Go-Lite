@@ -26,6 +26,13 @@
 .leg-tabs a{white-space:nowrap;background:#fff;border:1px solid rgba(24,33,30,.13);padding:10px 14px;border-radius:99px;font-size:12px;font-weight:700;text-decoration:none;color:#18211e;transition:background .2s,border-color .2s}
 .leg-tabs a.active{background:#153f32;color:#fff;border-color:#153f32}
 
+/* Both navigation pill rails (policy tabs + on-this-page) scroll horizontally on
+   narrow screens. Hide their scrollbars so no bar is drawn underneath them.
+   `scrollbar-width` alone is not enough — Safari before 18.2 ignores it and only
+   honours the WebKit pseudo-element, and older Edge/IE need the -ms property. */
+.leg-tabs,.leg-toc{-ms-overflow-style:none;scrollbar-width:none}
+.leg-tabs::-webkit-scrollbar,.leg-toc::-webkit-scrollbar{display:none}
+
 /* Layout */
 .leg-layout{display:grid;grid-template-columns:280px 1fr;gap:65px;padding:55px 0 100px}
 .leg-sidebar{position:sticky;top:85px;height:calc(100vh - 110px);overflow:auto;padding-right:15px;scrollbar-width:thin}
@@ -45,7 +52,7 @@
 .leg-helpbox a{display:inline-block;background:#b8ddf5;color:#0d2d25;padding:9px 11px;border-radius:8px;font-size:11px;font-weight:800;text-decoration:none}
 
 /* Content */
-.leg-content{min-width:0;background:#fff;border-radius:22px;padding:55px 65px;box-shadow:0 17px 45px rgba(20,45,36,.06);font-family:"DM Sans",sans-serif}
+.leg-content{min-width:0;overflow-wrap:anywhere;background:#fff;border-radius:22px;padding:55px 65px;box-shadow:0 17px 45px rgba(20,45,36,.06);font-family:"DM Sans",sans-serif}
 .leg-content>p:first-child{font-size:18px;line-height:1.7;color:#3f4b46}
 .leg-content h2{font:800 29px/1.15 "Manrope",sans-serif;letter-spacing:-.035em;margin:58px 0 16px;padding-top:7px;color:#18211e;scroll-margin-top:85px}
 .leg-content h2:first-of-type{margin-top:32px}
@@ -65,12 +72,42 @@
 @media(max-width:850px){
   .leg-hero{grid-template-columns:1fr;padding:42px 30px}
   .leg-summary{max-width:520px}
-  .leg-layout{grid-template-columns:1fr;gap:25px}
-  .leg-sidebar{position:static;height:auto;overflow:visible}
-  .leg-toc{display:flex;overflow:auto}
-  .leg-toc a{min-width:160px;border-left:0;border-bottom:2px solid rgba(24,33,30,.13)}
+  /* Single-row swipe rail: the four policy pills stay on one line and scroll
+     horizontally, never stacked. `overflow-x:auto` forces `overflow-y` to clip,
+     so the shadows below are kept tight and given padding room rather than
+     being cut off at the rail edges. */
+  .leg-tabs{flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;gap:8px;padding:3px 0;scroll-snap-type:x proximity}
+  .leg-tabs a{flex:0 0 auto;scroll-snap-align:start;box-shadow:0 1px 2px rgba(20,45,36,.06)}
+  .leg-tabs a.active{box-shadow:0 1px 3px rgba(21,63,50,.22)}
+  /* Block layout, not grid: a grid item's containing block is its own grid area,
+     so a sticky sidebar could never travel beyond its own short row. As a plain
+     block child it stays pinned for the whole article. (Block layout also drops
+     the grid's min-content sizing, which is what used to blow the single column
+     out to ~3695px and clip the article text on the right.) */
+  .leg-layout{display:block;padding:25px 0 100px}
+  .leg-content{margin-top:25px}
+  /* Pin the "on this page" rail under the fixed 64px navbar once it is scrolled
+     past. Needs an opaque background so the article can pass underneath it, a
+     z-index above .leg-content but below .navbar's 100, and a hairline rule so
+     the pinned strip reads as a separate layer. */
+  .leg-sidebar{position:sticky;top:64px;z-index:40;height:auto;overflow:visible;padding:8px 0 10px;background:#f7f7f3;border-bottom:1px solid rgba(24,33,30,.07)}
+  .leg-label{margin-bottom:6px}
+  /* Rail of pills, matching .leg-tabs above. `align-items:stretch` (the flex
+     default) made every chip as tall as the longest label, leaving ~67px of
+     dead space under one-line chips and merging their bottom borders into a
+     detached rule. max-width keeps the longest label from exceeding the
+     viewport, where it could never be read in one go. */
+  .leg-toc{display:flex;align-items:center;gap:8px;overflow:auto;overscroll-behavior-x:contain}
+  .leg-toc a{display:block;flex:0 0 auto;min-width:0;white-space:normal;max-width:min(72vw,300px);line-height:1.35;border:1px solid rgba(24,33,30,.13);border-radius:99px;background:#fff;padding:10px 14px}
+  .leg-toc a.current{background:#153f32;color:#fff;border-color:#153f32}
+  .leg-toc a.current .leg-toc-num{color:rgba(255,255,255,.55)}
+  .leg-toc-num{margin-right:6px}
   .leg-helpbox{display:none}
   .leg-content{padding:38px 28px}
+  /* Anchor jumps must clear the fixed navbar (64px) plus the pinned rail. The
+     rail is tallest at the narrowest widths (~111px at 320px, where chip labels
+     wrap to two lines), so budget for that worst case: 64 + 111 + breathing. */
+  .leg-content h2{scroll-margin-top:190px}
 }
 @media(max-width:560px){
   .leg-wrap{width:calc(100% - 26px)}

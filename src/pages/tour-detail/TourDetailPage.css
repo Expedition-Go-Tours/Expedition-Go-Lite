@@ -4,7 +4,14 @@
   width: 100%;
   background: #fff;
   min-height: 100vh;
-  padding-top: 64px;
+  /* No navbar offset here. <Breadcrumb> is rendered *before* this element, so a
+     64px `padding-top` did not clear the fixed navbar — it just pushed the title
+     down and showed a blank band above it. The title clears the navbar on the
+     strength of the breadcrumb's own in-flow height (48px mobile / 67px desktop)
+     plus .tour-detail-container's top padding.
+     NOTE: the breadcrumb is currently invisible behind the fixed navbar but is
+     load-bearing for this offset — do not remove it from the DOM, or set one
+     here, without re-checking the title's position. */
   /* Defensive: clip any residual horizontal overflow so a stray wide child
      can never introduce a page-level horizontal scrollbar. `clip` does not
      create a scroll container, so sticky tabs/headers keep working. */

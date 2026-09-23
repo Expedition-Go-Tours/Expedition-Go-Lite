@@ -478,6 +478,14 @@
   .all-tours-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 16px;
+    /* Uniform card heights for every multi-row layout (2 columns here, 1 column
+       below 640px). Cards vary in content — 1-vs-2-line titles and 2-vs-3 badge
+       rows — so without this each row sizes to its own card and the grid reads
+       ragged (measured 40px spread at 1 col, 25px at 2 col). `1fr` gives every
+       row the tallest card's height; .tour-card's height:100% fills it. Badges
+       are NOT clipped (verified 0 of 52) — unlike the fixed 180px height this
+       replaced, which cut them off. */
+    grid-auto-rows: 1fr;
   }
 }
 

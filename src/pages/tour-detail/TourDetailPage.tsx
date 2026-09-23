@@ -12,6 +12,7 @@ import { useWishlist } from '../../context/WishlistContext'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
 import { useExpeditionTour, useSimilarTours } from '../../hooks/useExpeditionTours'
+import { useSupplierTourCount } from '../../hooks/useSupplierTourCount'
 import { useExpeditionTourReviews, useCreateReview } from '../../hooks/useExpeditionReviews'
 import {
   useTourExternalReviews,
@@ -927,15 +928,14 @@ export default function TourDetailPage() {
         logo: tour?.supplierPhoto || '',
         description: tour?.supplierName ? t('tourDetail.supplierDescription', { name: tour.supplierName }) : null,
         rating: tour?.rating,
-        toursCount: relatedTours.length,
       },
     })
     return {
+      supplierId: mapped.supplierId,
       name: mapped.name || tour?.supplierName || 'Expedition-Go Tours Ltd',
       logo: mapped.logo || tour?.supplierPhoto || '',
       description: mapped.description || (tour?.supplierName ? t('tourDetail.supplierDescription', { name: tour.supplierName }) : ''),
       rating: mapped.rating ?? (tour?.rating ?? null),
-      totalTours: relatedTours.length,
       phone: mapped.phone || '',
       email: mapped.email || '',
       website: mapped.website || '',
@@ -943,7 +943,11 @@ export default function TourDetailPage() {
       verified: mapped.verified,
       supplierType: mapped.supplierType,
     }
-  }, [tour, relatedTours, t])
+  }, [tour, t])
+
+  // Authoritative supplier tour total for the "N tours" label. Falls back to
+  // the similar-row length only until the count request resolves.
+  const { data: supplierTourCount } = useSupplierTourCount(supplierData?.supplierId)
 
   // Same full TourCardData as the "similar experiences" row — the Supplier
   // tab cards must carry the identical props (photos carousel, priceValue for
@@ -1198,7 +1202,7 @@ export default function TourDetailPage() {
                       logo={supplierData.logo}
                       description={supplierData.description}
                       rating={supplierData.rating}
-                      totalTours={supplierData.totalTours}
+                      totalTours={supplierTourCount ?? relatedTours.length}
                       phone={supplierData.phone}
                       email={supplierData.email}
                       website={supplierData.website}

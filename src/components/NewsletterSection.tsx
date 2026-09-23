@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { Mail, CheckCircle } from 'lucide-react'
-import newsletterImg from '../assets/newsletter-accra.jpg'
+import newsletterImg from '../assets/newsletter-square.jpg'
 import './NewsletterSection.css'
 
 export default function NewsletterSection() {
@@ -29,7 +29,7 @@ export default function NewsletterSection() {
           >
             <img
               src={newsletterImg}
-              alt="Accra cityscape at sunset"
+              alt="Aerial view of Black Star Square and Independence Arch in Accra"
               className="newsletter-image"
               loading="lazy"
             />

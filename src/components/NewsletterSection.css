@@ -17,7 +17,7 @@
   align-items: stretch;
   border-radius: 20px;
   overflow: hidden;
-  height: 200px;
+  height: 320px;
 }
 
 /* --- Image side --- */
@@ -32,7 +32,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center 60%;
+  object-position: center 15%;
 }
 
 /* --- Content side --- */
