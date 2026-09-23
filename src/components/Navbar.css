@@ -31,20 +31,9 @@
   background-image: linear-gradient(180deg, rgba(23, 146, 55, 0.1) 0%, rgba(23, 146, 55, 0.04) 100%);
 }
 
-/* Pages that always render a white navbar: show shadow */
-.navbar--tour-detail,
-.tour-detail-page ~ .navbar,
-body:has(.tour-detail-page) .navbar,
-.page-all-tours .navbar,
-body:has(.supplier-page) .navbar,
-body:has(.supplier-landing-page) .navbar,
-body:has(.review-page) .navbar,
-body:has(.all-stories-page) .navbar,
-body:has(.story-detail) .navbar,
-.page-support .navbar,
-.page-about .navbar,
-.page-foundation .navbar,
-.page-search .navbar {
+/* Shadow only while scrolling — same resting look as the homepage. Applied on
+   every route by Navbar (`.navbar--elevated` is toggled past a few pixels). */
+.navbar--elevated {
   box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
 }
 

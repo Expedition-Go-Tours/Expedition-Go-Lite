@@ -1,4 +1,5 @@
 import { Component, useState, useEffect, useMemo, useRef, useCallback } from 'react'
+import type { CSSProperties } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
@@ -64,6 +65,10 @@ function TourDetailSkeleton() {
   const { t } = useTranslation()
   return (
     <div className="tour-detail-skeleton" role="status" aria-label={t('tourDetail.loadingTour')}>
+      {/* Breadcrumb bar — full-bleed strip under the navbar, like the loaded page */}
+      <div className="skeleton-breadcrumb">
+        <div className="skeleton-block skeleton-breadcrumb-line" />
+      </div>
       <div className="tour-detail-container">
         {/* Header skeleton */}
         <div className="tour-detail-header-row">
@@ -75,14 +80,17 @@ function TourDetailSkeleton() {
         </div>
 
         <div className="tour-detail-content">
-          {/* Image gallery skeleton */}
+          {/* Image gallery skeleton — mirrors the GYG mosaic (square on mobile) */}
           <div className="tour-detail-main">
             <div className="tour-detail-gallery-skeleton">
-              <div className="skeleton-block skeleton-main-image" />
-              <div className="skeleton-filmstrip">
-                {[0, 1, 2, 3, 4].map((i) => (
-                  <div key={i} className="skeleton-block skeleton-filmstrip-tile" />
-                ))}
+              <div className="skeleton-block skeleton-gallery-square" />
+              <div className="skeleton-gallery-mosaic">
+                <div className="skeleton-block" />
+                <div className="skeleton-block" />
+                <div className="skeleton-gallery-mosaic-col">
+                  <div className="skeleton-block" />
+                  <div className="skeleton-block" />
+                </div>
               </div>
             </div>
           </div>
@@ -271,6 +279,21 @@ export default function TourDetailPage() {
 
   const pricingRef = useRef<HTMLDivElement>(null)
   const reviewsRef = useRef<HTMLDivElement>(null)
+
+  // Height of the booking card, published as `--tour-hero-height` so the photo
+  // mosaic beside it can match it and the two columns finish on the same line.
+  const [heroHeight, setHeroHeight] = useState<number | null>(null)
+  useEffect(() => {
+    const el = pricingRef.current
+    if (!el || typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(() => {
+      const measured = Math.round(el.getBoundingClientRect().height)
+      const next = Math.min(560, Math.max(380, measured))
+      setHeroHeight((prev) => (prev === next ? prev : next))
+    })
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [isLoading, tour])
   const [reviewDetail, setReviewDetail] = useState<{ name: string; date: string; rating: number; text: string } | null>(null)
   const [isWriteReviewOpen, setIsWriteReviewOpen] = useState(false)
   const [reviewStarFilter, setReviewStarFilter] = useState<number | null>(null)
@@ -1018,9 +1041,11 @@ export default function TourDetailPage() {
           ]),
         ]}
       />
-      <Breadcrumb tour={tour} />
       <StickyNavHeader show={showStickyTitle} title={selectedTourTitle} onWriteReview={handleWriteReview} />
       <div className="tour-detail-page">
+        {/* Inside the page wrapper so the wrapper's 64px navbar clearance puts
+            it *below* the fixed navbar instead of underneath it. */}
+        <Breadcrumb tour={tour} />
         <div className="tour-detail-container">
           <div className="tour-detail-header-row">
             <TourHeader
@@ -1058,7 +1083,10 @@ export default function TourDetailPage() {
             </div>
           </div>
 
-          <div className="tour-detail-content">
+          <div
+            className="tour-detail-content"
+            style={heroHeight ? ({ '--tour-hero-height': `${heroHeight}px` } as CSSProperties) : undefined}
+          >
             <div className="tour-detail-main">
               <TourImageGallery
                 images={mergedImages}

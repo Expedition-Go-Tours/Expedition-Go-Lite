@@ -3,11 +3,20 @@
 .breadcrumb {
   background: #fff;
   border-bottom: 1px solid var(--border);
-  padding: 12px 16px;
+  padding: 10px 16px;
+  /* Mobile/tablet: hidden — the navbar already shows where you are, and the
+     title deserves the space. Matches the navbar's own mobile breakpoint. */
+  display: none;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   -ms-overflow-style: none;
+}
+
+@media (min-width: 1025px) {
+  .breadcrumb {
+    display: block;
+  }
 }
 
 .breadcrumb::-webkit-scrollbar {
@@ -57,7 +66,7 @@
 /* ===== TABLET VIEW (768px+) ===== */
 @media (min-width: 768px) {
   .breadcrumb {
-    padding: 16px 24px;
+    padding: 10px 24px;
   }
 
   .breadcrumb-item {
@@ -68,7 +77,7 @@
 /* ===== DESKTOP VIEW (1024px+) ===== */
 @media (min-width: 1024px) {
   .breadcrumb {
-    padding: 20px 40px;
+    padding: 12px 40px;
   }
 
   .breadcrumb-item {
@@ -79,6 +88,6 @@
 /* ===== LARGE DESKTOP (1400px+) ===== */
 @media (min-width: 1400px) {
   .breadcrumb {
-    padding: 20px 60px;
+    padding: 12px 60px;
   }
 }

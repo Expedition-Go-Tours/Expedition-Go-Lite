@@ -106,6 +106,23 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
     return () => { unsub.then((fn) => fn()) }
   }, [])
 
+  // Drop-shadow only once the page is actually scrolling, on every route —
+  // the navbar rests flat against the page like it does over the homepage hero.
+  // State only flips on the threshold crossing, so scrolling never re-renders.
+  const [elevated, setElevated] = useState(false)
+  const elevatedRef = useRef(false)
+  useEffect(() => {
+    const handleElevatedScroll = () => {
+      const next = window.scrollY > 4
+      if (next === elevatedRef.current) return
+      elevatedRef.current = next
+      setElevated(next)
+    }
+    window.addEventListener('scroll', handleElevatedScroll, { passive: true })
+    handleElevatedScroll()
+    return () => window.removeEventListener('scroll', handleElevatedScroll)
+  }, [])
+
   // Updates the sticky-search state synchronously on scroll — deliberately not
   // rAF-throttled, because iOS Safari pauses rAF during momentum scrolling
   // (the bar would only stick after the user stops). Layout thrash is avoided
@@ -430,7 +447,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
 
   return (
     <>
-    <nav className={`navbar${isOverHero ? ' navbar--over-hero' : ''}${searchBarSticky ? ' scrolled' : ''}${isTourDetailPage ? ' navbar--tour-detail' : ''}`}>
+    <nav className={`navbar${isOverHero ? ' navbar--over-hero' : ''}${searchBarSticky ? ' scrolled' : ''}${elevated ? ' navbar--elevated' : ''}${isTourDetailPage ? ' navbar--tour-detail' : ''}`}>
       <div className="nav-left">
         <div className="nav-logo">
           <a href="/" onClick={(e) => { e.preventDefault(); navigate('/') }}>

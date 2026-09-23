@@ -22,18 +22,18 @@
   width: 100%;
   max-width: 1520px;
   margin: 0 auto;
-  padding: 24px 16px;
+  padding: 16px 16px 0;
 }
 
 @media (min-width: 640px) {
   .tour-detail-container {
-    padding: 32px 24px 0;
+    padding: 20px 24px 0;
   }
 }
 
 @media (min-width: 1024px) {
   .tour-detail-container {
-    padding: 32px 32px 0;
+    padding: 20px 32px 0;
   }
 }
 
@@ -86,37 +86,94 @@
 }
 
 .tour-detail-gallery-skeleton {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.tour-detail-gallery-skeleton .skeleton-main-image {
-  height: 300px;
-  border-radius: 8px;
-}
-
-.tour-detail-gallery-skeleton .skeleton-filmstrip {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 8px;
-}
-
-.tour-detail-gallery-skeleton .skeleton-filmstrip-tile {
   width: 100%;
-  aspect-ratio: 4 / 3;
-  border-radius: 8px;
+}
+
+/* Breadcrumb placeholder: full-bleed bar matching the loaded page (desktop only). */
+.skeleton-breadcrumb {
+  display: none;
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+  padding: 10px 16px;
+}
+
+@media (min-width: 1025px) {
+  .skeleton-breadcrumb {
+    display: block;
+  }
+}
+
+.skeleton-breadcrumb-line {
+  width: 260px;
+  max-width: 70%;
+  height: 20px;
+  margin: 0 auto;
+  border-radius: 6px;
 }
 
 @media (min-width: 768px) {
-  .tour-detail-gallery-skeleton .skeleton-main-image {
-    height: 430px;
+  .skeleton-breadcrumb {
+    padding: 10px 24px;
   }
 }
 
 @media (min-width: 1024px) {
-  .tour-detail-gallery-skeleton .skeleton-main-image {
-    height: 520px;
+  .skeleton-breadcrumb {
+    padding: 12px 40px;
+  }
+}
+
+@media (min-width: 1400px) {
+  .skeleton-breadcrumb {
+    padding: 12px 60px;
+  }
+}
+
+/* Mobile: one square gallery, exactly like the loaded page. */
+.skeleton-gallery-square {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 0;
+}
+
+.skeleton-gallery-mosaic {
+  display: none;
+}
+
+/* ≥768px: the GetYourGuide 20% / 54% / 26% mosaic. */
+@media (min-width: 768px) {
+  .skeleton-gallery-square {
+    display: none;
+  }
+
+  .skeleton-gallery-mosaic {
+    display: flex;
+    gap: 4px;
+    border-radius: 12px;
+    overflow: hidden;
+    height: 50vw;
+    min-height: 380px;
+    max-height: 400px;
+  }
+
+  .skeleton-gallery-mosaic > .skeleton-block:nth-child(1) {
+    flex: 0 0 20%;
+  }
+
+  .skeleton-gallery-mosaic > .skeleton-block:nth-child(2) {
+    flex: 0 0 54%;
+  }
+
+  .skeleton-gallery-mosaic-col {
+    flex: 1 1 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .skeleton-gallery-mosaic-col > .skeleton-block {
+    flex: 1 1 0;
   }
 }
 
