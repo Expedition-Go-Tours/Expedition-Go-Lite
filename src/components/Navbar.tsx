@@ -13,6 +13,7 @@ import { readBookingsSeen, writeBookingsSeen } from '../lib/bookingsBadge'
 import { shouldIdlePrefetch } from '../lib/perfProfile'
 import { prefetchSupportPages } from '../lib/prefetchSupport'
 import { useSupplierStatus } from '../hooks/useSupplierStatus'
+import { getSupplierPortalUrl } from '../lib/supplier'
 import { useMyBookingsCount } from '../hooks/useExpeditionBookings'
 import { useWishlist } from '../context/WishlistContext'
 import { useLocationSearch } from '../context/LocationSearchContext'
@@ -89,7 +90,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
   const { recentSearches, addSearch, removeSearch, clearAll } = useRecentSearches()
   const { hasActiveSearch, setLocation, resetLocation } = useLocationSearch()
   const { clearContinuePlanning } = useContinuePlanning()
-  const { isApproved } = useSupplierStatus()
+  const { profile: supplierProfile, isApproved } = useSupplierStatus()
   // Counter of the user's confirmed bookings shown on the "Bookings" menu item.
   const { data: bookingsCount = 0 } = useMyBookingsCount('CONFIRMED,PENDING', !!user)
   // Bookings counter is dismissed once the user taps the Bookings item — it
@@ -267,17 +268,27 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
     }
   }, [navSearchValue, navigate, setLocation, navSuggestions])
 
-  // Navbar "List an Experience" CTA (desktop): always lands on the
-  // Partnerships page, whose "Get started" cards route into the partner /
-  // supplier flows.
-  const handleListExperience = useCallback(() => {
-    navigate('/partnerships')
-  }, [navigate])
+  // Navbar "List an Experience" CTA (desktop).
+  //
+  // Approved suppliers go straight into the supplier platform via SSO;
+  // everyone else (signed out, no application yet, or under review) lands on
+  // the "Join as a Supplier" page, which renders either the application form
+  // or the current application status.
+  const handleListExperience = useCallback(async () => {
+    if (isApproved) {
+      const portalUrl = await getSupplierPortalUrl(supplierProfile)
+      if (portalUrl) {
+        window.location.assign(portalUrl)
+        return
+      }
+    }
+    navigate('/supplier/register')
+  }, [isApproved, supplierProfile, navigate])
 
-  // Warm the Partnerships chunk so the CTA opens instantly — fired on
+  // Warm the supplier application chunk so the CTA opens instantly — fired on
   // hover/focus of the "List an Experience" links and once after first idle.
   const prefetchSupplierRoutes = useCallback(() => {
-    void import('../pages/PartnershipsPage').catch(() => {})
+    void import('../pages/supplier/SupplierRegisterPage').catch(() => {})
   }, [])
 
   // Warm the dashboard chunks (Wishlist / Bookings / Reviews / Settings) so
@@ -301,13 +312,12 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
     }
   }, [prefetchSupplierRoutes])
 
-  // Mobile "List an Experience": same destination as desktop — the
-  // Partnerships page. The drawer closes first so its AnimatePresence exit
-  // transition plays out smoothly.
+  // Mobile "List an Experience": same destination as desktop. The drawer
+  // closes first so its AnimatePresence exit transition plays out smoothly.
   const handleMobileListExperience = useCallback(() => {
     setMobileMenuOpen(false)
-    navigate('/partnerships')
-  }, [navigate, setMobileMenuOpen])
+    void handleListExperience()
+  }, [handleListExperience, setMobileMenuOpen])
 
   // Prefetch the dashboard chunks so navigating to Bookings / Wishlist /
   // Dashboard / Updates from the drawer (or avatar menu) is instant, not a
