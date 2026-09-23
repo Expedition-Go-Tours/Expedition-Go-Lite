@@ -134,16 +134,23 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
   const formatPrice = useCallback(
     (usdPrice: number) => {
       const info = getCurrencyInfo(currencyCode)
-      const converted = convertPrice(usdPrice)
+      // Round to the currency's precision first: rate conversions can carry
+      // float noise (95 * 0.95 => 95.00000000000001) that must not surface
+      // as fake cents below.
+      const factor = 10 ** info.decimals
+      const converted = Math.round(convertPrice(usdPrice) * factor) / factor
+      // Cents only when they exist: "$784" for whole amounts, "$784.50" for
+      // real ones — never a padded "$784.00".
+      const fractionDigits = converted % 1 === 0 ? 0 : info.decimals
       try {
         return new Intl.NumberFormat(info.locale, {
           style: 'currency',
           currency: currencyCode,
-          minimumFractionDigits: info.decimals,
+          minimumFractionDigits: fractionDigits,
           maximumFractionDigits: info.decimals,
         }).format(converted)
       } catch {
-        return `${info.symbol}${converted.toFixed(info.decimals)}`
+        return `${info.symbol}${converted.toFixed(fractionDigits)}`
       }
     },
     [currencyCode, convertPrice]

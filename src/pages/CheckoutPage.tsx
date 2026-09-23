@@ -15,7 +15,13 @@ import './CheckoutPage.css'
 
 function formatMoney(amount: number, currency: string): string {
   const symbol = currencySymbol(currency)
-  const value = Number.isFinite(amount) ? amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00'
+  // Round to cents (drops float noise), then show cents only when present:
+  // "$784" for whole amounts, "$784.50" for real ones — never "$784.00".
+  const rounded = Number.isFinite(amount) ? Math.round(amount * 100) / 100 : 0
+  const value = rounded.toLocaleString('en-US', {
+    minimumFractionDigits: rounded % 1 === 0 ? 0 : 2,
+    maximumFractionDigits: 2,
+  })
   return `${symbol}${value}`
 }
 
