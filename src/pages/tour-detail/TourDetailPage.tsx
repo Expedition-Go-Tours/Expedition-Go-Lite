@@ -329,7 +329,15 @@ export default function TourDetailPage() {
   const localTourReviews = tour?.reviewCount || 0
   const selectedTourRating = combinedTourStats.rating
   const selectedTourReviews = combinedTourStats.reviewCount
-  const slug = tourId || tour?.slug || ''
+  // The URL param may be an id, a slug, or /{id}/{slug} — the id is the
+  // identity and the slug decorative, so a stale-slug link still resolves.
+  // Links that want the readable form use the fetched tour's own slug.
+  const slug = tour?.slug || tourId || ''
+  // Canonical path for this tour: current id + current slug, so a visit via an
+  // out-of-date slug canonicalises to the authoritative URL.
+  const tourPath = tour?.id && tour?.slug
+    ? `/tour/${encodeURIComponent(tour.id)}/${encodeURIComponent(tour.slug)}`
+    : `/tour/${encodeURIComponent(tour?.id || tour?.slug || tourId || '')}`
 
   const wishlistItemId = tour?.id || selectedTourTitle
   const isFavorited = isInWishlist(wishlistItemId)
@@ -376,7 +384,7 @@ export default function TourDetailPage() {
     }
     navigate(`/review/${encodeURIComponent(slug)}`, {
       state: {
-        returnTo: `/tour/${slug}#reviews`,
+        returnTo: `${tourPath}#reviews`,
         bookingId: reviewableBookingId,
         tour: {
           title: selectedTourTitle,
@@ -1015,6 +1023,7 @@ export default function TourDetailPage() {
     <TourDetailErrorBoundary>
     <>
       <SEO
+        canonical={`https://www.expeditiongotours.com${tourPath}`}
         title={`${tour.title} in ${tour.location?.split(',')[0] || 'Ghana'}`}
         description={`${tour.title} - ${tour.duration} ${tour.category || 'experience'} in ${tour.location || 'Ghana'}. Book from $${tour.price}. ${tour.rating ? `Rated ${tour.rating}/5` : ''} Free cancellation, instant confirmation.`}
         keywords={`${tour.title}, ${tour.location} tours, ${tour.category || 'tours'} in ${tour.location?.split(',')[0] || 'Ghana'}, Ghana tours, book ${tour.title}`}
@@ -1030,6 +1039,7 @@ export default function TourDetailPage() {
             currency: 'USD',
             ratingValue: tour.rating,
             reviewCount: tour.reviewCount,
+            id: tour.id,
             slug: slug,
             city: tour.location?.split(',')[0],
             region: tour.location?.split(',')[1]?.trim(),
@@ -1038,7 +1048,7 @@ export default function TourDetailPage() {
             { name: 'Home', url: 'https://www.expeditiongotours.com/' },
             { name: tour.location?.split(',')[1]?.trim() || 'Ghana', url: 'https://www.expeditiongotours.com/tours' },
             { name: tour.location?.split(',')[0] || 'Tours', url: `https://www.expeditiongotours.com/tours?place=${encodeURIComponent(tour.location?.split(',')[0] || '')}` },
-            { name: tour.title, url: `https://www.expeditiongotours.com/tour/${slug}` },
+            { name: tour.title, url: `https://www.expeditiongotours.com${tourPath}` },
           ]),
         ]}
       />

@@ -12,6 +12,8 @@ export interface SearchSuggestion {
   badge: string
   score: number
   slug?: string
+  /** Real tour id (tour suggestions only) — the stable half of /tour/{id}/{slug}. */
+  tourId?: string
   city?: string
   image?: string
   region?: string
@@ -36,6 +38,7 @@ interface SearchApiResponse {
     badge: string
     score: number
     entity: {
+      id?: string
       slug?: string
       city?: string
       heroImage?: string
@@ -65,6 +68,7 @@ async function fetchUnifiedSearch(query: string): Promise<{ suggestions: SearchS
     badge: r.badge,
     score: r.score,
     slug: r.entity?.slug,
+    tourId: r.kind === 'tour' ? r.entity?.id : undefined,
     city: r.entity?.city,
     image: r.entity?.heroImage || r.entity?.coverPhoto,
     region: r.region,

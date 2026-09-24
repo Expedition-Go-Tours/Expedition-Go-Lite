@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { bookingPath } from '../lib/tourPath'
 import { AnimatePresence } from 'framer-motion'
 import { ArrowLeft, ChevronDown, Loader2, Lock, ShieldCheck } from 'lucide-react'
 import { useCheckoutDraft, useReleaseCheckoutDraft, type CheckoutDraftSummary } from '../hooks/useExpeditionBookings'
@@ -209,7 +210,7 @@ export default function CheckoutPage() {
       navigate('/')
       return
     }
-    navigate(`/${encodeURIComponent(draft.tour.slug || draft.tour.id)}/booking`)
+    navigate(`/${bookingPath(draft.tour.id, draft.tour.slug)}`)
   }, [draft, draftId, release, navigate])
 
   // Loading skeleton while the server summary + fresh secret resolve.
@@ -284,7 +285,7 @@ export default function CheckoutPage() {
           </p>
           <div className="co-state-actions">
             {draft?.tour && (
-              <Link className="co-btn co-btn-solid" to={`/${encodeURIComponent(draft.tour.slug || draft.tour.id)}/booking`}>
+              <Link className="co-btn co-btn-solid" to={bookingPath(draft.tour.id, draft.tour.slug)}>
                 Back to booking
               </Link>
             )}
@@ -307,7 +308,7 @@ export default function CheckoutPage() {
           <h1 className="co-state-title">Your hold expired</h1>
           <p className="co-state-body">The reserved spot has been released. Start again to rebook before it's gone.</p>
           <div className="co-state-actions">
-            <Link className="co-btn co-btn-solid" to={`/${encodeURIComponent(draft.tour.slug || draft.tour.id)}/booking`}>
+            <Link className="co-btn co-btn-solid" to={`/${bookingPath(draft.tour.id, draft.tour.slug)}`}>
               Rebook this tour
             </Link>
           </div>

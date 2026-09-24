@@ -117,7 +117,13 @@ async function main() {
 
     for (const t of tours) {
       if (!t?.slug) continue;
-      urls.push(urlEntry(`${SITE_URL}/tour/${encodeURIComponent(t.slug)}`, {
+      // Canonical form /tour/{id}/{slug}: the id keeps a link alive across
+      // title changes; the slug is decorative. Slug-only fallback for older
+      // sitemap payloads that predate the id field.
+      const tourUrl = t.id
+        ? `${SITE_URL}/tour/${encodeURIComponent(t.id)}/${encodeURIComponent(t.slug)}`
+        : `${SITE_URL}/tour/${encodeURIComponent(t.slug)}`;
+      urls.push(urlEntry(tourUrl, {
         priority: 0.8,
         changefreq: 'weekly',
         lastmod: isoDate(t.updatedAt),

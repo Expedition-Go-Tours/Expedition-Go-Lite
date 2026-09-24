@@ -2,6 +2,8 @@ import { useState, useCallback, useEffect } from 'react'
 import { readGated, writeGated } from '../lib/consentGatedStorage'
 
 export interface RecentSearch {
+  /** Real tour id when known — the stable half of /tour/{id}/{slug}. */
+  id?: string
   slug: string
   title: string
   type: 'destination' | 'tour'

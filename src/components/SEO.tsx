@@ -168,6 +168,7 @@ export function buildProductSchema(tour: {
   currency: string
   ratingValue?: number
   reviewCount?: number
+  id?: string
   slug: string
   city?: string
   region?: string
@@ -178,7 +179,9 @@ export function buildProductSchema(tour: {
     name: tour.title,
     description: tour.description?.slice(0, 500),
     image: tour.image,
-    url: `${SITE_URL}/tour/${tour.slug}`,
+    url: tour.id
+      ? `${SITE_URL}/tour/${encodeURIComponent(tour.id)}/${encodeURIComponent(tour.slug)}`
+      : `${SITE_URL}/tour/${tour.slug}`,
     brand: { '@type': 'Organization', name: SITE_NAME },
     offers: {
       '@type': 'Offer',

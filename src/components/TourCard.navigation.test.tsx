@@ -84,6 +84,17 @@ describe('TourCard navigation', () => {
     expect(window.open).not.toHaveBeenCalled()
   })
 
+  it('uses the canonical /tour/{id}/{slug} form when the tour id is known', () => {
+    const { container } = renderCard({ id: 'cmuefjdhj008gr44h8flybaj7' })
+    fireEvent.click(container.querySelector('.tour-card')!)
+
+    expect(window.open).toHaveBeenCalledWith(
+      '/tour/cmuefjdhj008gr44h8flybaj7/accra-city-tour',
+      '_blank',
+      'noopener',
+    )
+  })
+
   it('keeps modifier-click opening a new tab on same-tab cards', () => {
     const { container } = renderCard({ openInNewTab: false })
     fireEvent.click(container.querySelector('.tour-card')!, { ctrlKey: true })
