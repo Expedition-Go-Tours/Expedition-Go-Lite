@@ -27,7 +27,7 @@ import { setAuthReturnTo } from '../lib/auth'
 import type { CardElementHandle } from '../components/booking/CardField'
 import { fetchWithAuth } from '../lib/api'
 import { useCreateBooking, useCalculateCheckout } from '../hooks/useExpeditionBookings'
-import { buildE164Phone, isValidPhoneInput, splitE164Phone, COUNTRY_CODES } from '../lib/phone'
+import { buildE164Phone, isValidPhoneInput, splitE164Phone, formatPhoneDisplay, COUNTRY_CODES } from '../lib/phone'
 import { getAccount } from '../features/account/api'
 import type { TourOption } from '../lib/tourTypes'
 import { hasLocationOnlyAreas, isPickupLocationSatisfied, pickupZoneStatus, distanceMeters, type PickupAreaShape } from '../lib/pickupZone'
@@ -56,6 +56,7 @@ import {
 import { cancellationStatus } from '../lib/cancellationLabel'
 import { requestLocation } from '../lib/analytics'
 import { reverseGeocode } from '../lib/locations'
+import { SUPPORT_PHONE, SUPPORT_PHONE_DIGITS } from '../lib/support'
 
 /* --- Tour data from location state --- */
 
@@ -1726,8 +1727,8 @@ function BookingSidebar({
       <motion.div variants={itemVariants} className="rounded-[1.75rem] border border-slate-200/40 bg-white p-5 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)]">
         <p className="text-sm font-bold text-slate-900">Need help?</p>
         <div className="mt-3 flex items-center gap-4 text-sm">
-          <a href="tel:+18337642166" className="inline-flex items-center gap-1.5 font-medium text-slate-500 hover:text-emerald-600 transition-colors">
-            <Phone className="size-4" /> +1 833 764 2166
+          <a href={`tel:${SUPPORT_PHONE_DIGITS}`} className="inline-flex items-center gap-1.5 font-medium text-slate-500 hover:text-emerald-600 transition-colors">
+            <Phone className="size-4" /> {formatPhoneDisplay(SUPPORT_PHONE)}
           </a>
         </div>
       </motion.div>
