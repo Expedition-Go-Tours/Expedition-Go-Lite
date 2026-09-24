@@ -11,6 +11,9 @@ import OutOfRangeDistance from './OutOfRangeDistance'
 import TravelTimeChip from './TravelTimeChip'
 import { toNumber } from '@/lib/mapUtils'
 import { appleMapsDirectionsUrl, googleMapsDirectionsUrl } from '@/lib/geoapifyRouting'
+import { useTranslation } from 'react-i18next'
+import { useDeviceLocation } from '@/context/DeviceLocationContext'
+import EnableLocationButton from '@/components/shared/EnableLocationButton'
 
 const compactTime = (t?: string): string => (t ? t.replace('-', '–') : '')
 
@@ -83,6 +86,10 @@ export default function PickupLocationSection({
   resolvingPoints,
   onOpenMap,
 }: PickupLocationSectionProps) {
+  const { t } = useTranslation()
+  // Opt-in device location — gates the directions links below so they only
+  // appear once the traveller has turned location on themselves.
+  const { status: locationStatus, coords: deviceCoords } = useDeviceLocation()
   // ── Mode detection ──
   // Stabilised with useMemo so the fallback `[]` never creates a new array
   // identity on every render (which would churn the memos/effect below).
@@ -371,26 +378,32 @@ export default function PickupLocationSection({
               <p className="mt-0.5 text-xs text-emerald-700">{referenceStartLabel(tour.referenceStartTime)}</p>
             )}
             {lat != null && lng != null && (
-              <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+              <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
                 <span className="font-semibold text-emerald-700">Directions:</span>
-                <a
-                  href={googleMapsDirectionsUrl(null, { lat, lng }, 'drive')}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 font-semibold text-emerald-700 underline underline-offset-2 transition-colors hover:text-emerald-900"
-                >
-                  Open in Google Maps <ExternalLink size={11} />
-                </a>
-                <span className="text-emerald-300">·</span>
-                <a
-                  href={appleMapsDirectionsUrl(null, { lat, lng })}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 font-semibold text-emerald-700 underline underline-offset-2 transition-colors hover:text-emerald-900"
-                >
-                  Apple Maps <ExternalLink size={11} />
-                </a>
-              </p>
+                {locationStatus === 'granted' && deviceCoords ? (
+                  <>
+                    <a
+                      href={googleMapsDirectionsUrl(deviceCoords, { lat, lng }, 'drive')}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 font-semibold text-emerald-700 underline underline-offset-2 transition-colors hover:text-emerald-900"
+                    >
+                      Open in Google Maps <ExternalLink size={11} />
+                    </a>
+                    <span className="text-emerald-300">·</span>
+                    <a
+                      href={appleMapsDirectionsUrl(deviceCoords, { lat, lng })}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 font-semibold text-emerald-700 underline underline-offset-2 transition-colors hover:text-emerald-900"
+                    >
+                      Apple Maps <ExternalLink size={11} />
+                    </a>
+                  </>
+                ) : (
+                  <EnableLocationButton label={t('location.enableForDirections')} />
+                )}
+              </div>
             )}
           </div>
         </div>
@@ -543,26 +556,32 @@ export default function PickupLocationSection({
                         Traveler's pickup location: <span className="underline underline-offset-2">{selectedPinLabel || contact.location}</span>
                       </p>
                       {contact.pickupLat != null && contact.pickupLng != null && (
-                        <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+                        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
                           <span className="font-semibold text-emerald-700">Directions:</span>
-                          <a
-                            href={googleMapsDirectionsUrl(null, { lat: contact.pickupLat, lng: contact.pickupLng }, 'drive')}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 font-semibold text-emerald-700 underline underline-offset-2 transition-colors hover:text-emerald-900"
-                          >
-                            Open in Google Maps <ExternalLink size={11} />
-                          </a>
-                          <span className="text-emerald-300">·</span>
-                          <a
-                            href={appleMapsDirectionsUrl(null, { lat: contact.pickupLat, lng: contact.pickupLng })}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 font-semibold text-emerald-700 underline underline-offset-2 transition-colors hover:text-emerald-900"
-                          >
-                            Apple Maps <ExternalLink size={11} />
-                          </a>
-                        </p>
+                          {locationStatus === 'granted' && deviceCoords ? (
+                            <>
+                              <a
+                                href={googleMapsDirectionsUrl(deviceCoords, { lat: contact.pickupLat, lng: contact.pickupLng }, 'drive')}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 font-semibold text-emerald-700 underline underline-offset-2 transition-colors hover:text-emerald-900"
+                              >
+                                Open in Google Maps <ExternalLink size={11} />
+                              </a>
+                              <span className="text-emerald-300">·</span>
+                              <a
+                                href={appleMapsDirectionsUrl(deviceCoords, { lat: contact.pickupLat, lng: contact.pickupLng })}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 font-semibold text-emerald-700 underline underline-offset-2 transition-colors hover:text-emerald-900"
+                              >
+                                Apple Maps <ExternalLink size={11} />
+                              </a>
+                            </>
+                          ) : (
+                            <EnableLocationButton label={t('location.enableForDirections')} />
+                          )}
+                        </div>
                       )}
                     </div>
                   </div>

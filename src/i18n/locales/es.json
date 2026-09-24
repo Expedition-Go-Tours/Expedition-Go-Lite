@@ -208,6 +208,17 @@
     "de": "Deutsch",
     "nl": "Nederlands"
   },
+  "location": {
+    "enableForDirections": "Activa la ubicación para obtener indicaciones",
+    "useMyLocation": "Usar mi ubicación actual",
+    "startingPointTitle": "Añade tu punto de partida",
+    "startingPointHint": "Activa la ubicación para guardar desde dónde viajas: la usaremos para tu reserva y las indicaciones.",
+    "detecting": "Obteniendo tu ubicación…",
+    "deniedTitle": "La ubicación está bloqueada",
+    "deniedHelp": "Permite el acceso a la ubicación en la configuración del navegador y vuelve a intentarlo.",
+    "retry": "Reintentar",
+    "unsupported": "La ubicación no es compatible con este dispositivo."
+  },
   "mood": {
     "title": "¿Qué quieres hacer?",
     "tours": "tours"

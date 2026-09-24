@@ -218,6 +218,17 @@
     "de": "Deutsch",
     "nl": "Nederlands"
   },
+  "location": {
+    "enableForDirections": "Turn on location to get directions",
+    "useMyLocation": "Use my current location",
+    "startingPointTitle": "Add your starting point",
+    "startingPointHint": "Turn on location to save where you're travelling from — we'll use it for your booking and directions.",
+    "detecting": "Getting your location…",
+    "deniedTitle": "Location is blocked",
+    "deniedHelp": "Allow location access in your browser settings, then try again.",
+    "retry": "Try again",
+    "unsupported": "Location is not supported on this device."
+  },
   "mood": {
     "title": "What do you want to do?",
     "tours": "tours"

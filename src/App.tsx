@@ -26,13 +26,14 @@ import { SellOutProvider } from './context/SellOutContext'
 import { LocationSearchProvider, useLocationSearch } from './context/LocationSearchContext'
 import { SearchInputProvider } from './context/SearchInputContext'
 import { CookieConsentProvider } from './context/CookieConsentContext'
+import { DeviceLocationProvider } from './context/DeviceLocationContext'
 import CookieBanner from './components/consent/CookieBanner'
 import CookiePreferences from './components/consent/CookiePreferences'
 import GoogleOneTapPrompt from './components/GoogleOneTapPrompt'
 import { subscribeToAuthState, handleGoogleCallback, getAuthReturnTo, clearAuthReturnTo } from './lib/auth'
 import { AuthProvider } from './context/AuthContext'
 import { startSessionWatchdog, stopSessionWatchdog } from './auth/sessionManager'
-import { trackPageView, requestLocation } from './lib/analytics'
+import { trackPageView, getCachedLocation } from './lib/analytics'
 import { useHomepage, useHomepageByCity } from './hooks/useHomepageSections'
 
 // Route-level code splitting
@@ -273,9 +274,11 @@ function AppContent() {
     }
   }, [location.pathname])
 
-  // Request location once on mount for personalized recommendations
+  // Seed the remembered/approximate (IP) location used for personalisation.
+  // This never touches the browser location API, so no permission prompt can
+  // appear — device location is opt-in through DeviceLocationContext.
   useEffect(() => {
-    requestLocation()
+    void getCachedLocation()
   }, [])
 
   const isBookingConfirmation = location.pathname.startsWith('/booking/confirmation')
@@ -448,21 +451,25 @@ function App() {
     <MotionConfig reducedMotion="user">
       <BrowserRouter>
         <CookieConsentProvider>
-          <WishlistProvider>
-            <AuthProvider>
-              <ContinuePlanningProvider>
-                <LocationSearchProvider>
-                  <SearchInputProvider>
-                    <AppContent />
-                    {/* Consent UI lives outside the route tree so a choice can
-                        be made (or revisited) on any page, including the dashboard. */}
-                    <CookieBanner />
-                    <CookiePreferences />
-                  </SearchInputProvider>
-                </LocationSearchProvider>
-              </ContinuePlanningProvider>
-            </AuthProvider>
-          </WishlistProvider>
+          {/* Device location is opt-in — this provider never prompts on its
+              own; only an explicit click can raise the browser dialog. */}
+          <DeviceLocationProvider>
+            <WishlistProvider>
+              <AuthProvider>
+                <ContinuePlanningProvider>
+                  <LocationSearchProvider>
+                    <SearchInputProvider>
+                      <AppContent />
+                      {/* Consent UI lives outside the route tree so a choice can
+                          be made (or revisited) on any page, including the dashboard. */}
+                      <CookieBanner />
+                      <CookiePreferences />
+                    </SearchInputProvider>
+                  </LocationSearchProvider>
+                </ContinuePlanningProvider>
+              </AuthProvider>
+            </WishlistProvider>
+          </DeviceLocationProvider>
         </CookieConsentProvider>
       </BrowserRouter>
     </MotionConfig>

@@ -18,7 +18,7 @@
 
 import { getApiBaseUrl, getAuthToken } from './auth'
 import { hasConsent, subscribeConsent } from './cookieConsent'
-import { readGated, writeGated } from './consentGatedStorage'
+import { readGated, removeGated, writeGated } from './consentGatedStorage'
 
 // ─── Event queue (batched sends) ──────────────────────────────────────
 interface PendingEvent {
@@ -166,46 +166,62 @@ export function storeLocation(lat: number, lng: number): void {
   }
 }
 
-export function requestLocation(): Promise<UserLocation | null> {
+/**
+ * Remembered location for personalisation — this NEVER touches the browser's
+ * location API, so it can never raise a permission prompt. It uses what the
+ * visitor already shared (an explicit "turn on location" choice) and otherwise
+ * falls back to the backend's approximate IP lookup.
+ */
+export function getCachedLocation(): Promise<UserLocation | null> {
+  // Approximate location is optional personalisation: we must not touch the
+  // device location, the IP lookup, or store the result until the visitor has
+  // agreed to functional cookies.
+  if (!hasConsent('functional')) return Promise.resolve(null)
+
+  const stored = getStoredLocation()
+  if (stored) return Promise.resolve(stored)
+
+  return fetchIPLocation()
+}
+
+export type DeviceLocationResult =
+  | { ok: true; location: UserLocation }
+  | { ok: false; reason: 'denied' | 'unavailable' | 'error' }
+
+/**
+ * Ask the browser for the device location. Only ever call this from a user
+ * gesture (a click) — that is what makes the permission prompt deliberate.
+ * Returns a result instead of throwing so callers can distinguish a blocked
+ * permission from a transient failure.
+ */
+export function requestDeviceLocation(): Promise<DeviceLocationResult> {
+  if (typeof navigator === 'undefined' || !navigator.geolocation) {
+    return Promise.resolve({ ok: false, reason: 'unavailable' })
+  }
+
   return new Promise((resolve) => {
-    // Approximate location is optional personalisation: we must not touch the
-    // browser's location API, the IP lookup, or store the result until the
-    // visitor has agreed to functional cookies.
-    if (!hasConsent('functional')) {
-      resolve(null)
-      return
-    }
-
-    const stored = getStoredLocation()
-    if (stored) {
-      resolve(stored)
-      return
-    }
-
-    if (!navigator.geolocation) {
-      // No browser geolocation — try IP fallback
-      resolve(fetchIPLocation())
-      return
-    }
-
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        const loc: UserLocation = {
+        const location: UserLocation = {
           lat: pos.coords.latitude,
           lng: pos.coords.longitude,
           timestamp: Date.now(),
         }
-        storeLocation(loc.lat, loc.lng)
-        trackLocationShared(loc.lat, loc.lng)
-        resolve(loc)
+        storeLocation(location.lat, location.lng)
+        trackLocationShared(location.lat, location.lng)
+        resolve({ ok: true, location })
       },
-      () => {
-        // Browser geolocation denied — try IP fallback
-        resolve(fetchIPLocation())
+      (err) => {
+        resolve({ ok: false, reason: err?.code === 1 ? 'denied' : 'error' })
       },
-      { timeout: 5000, maximumAge: 300000 }
+      { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 },
     )
   })
+}
+
+/** Forget the remembered coordinates (used when the visitor turns location off). */
+export function clearStoredLocation(): void {
+  removeGated(LOCATION_KEY)
 }
 
 /**

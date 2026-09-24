@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import PickupLocationSection, { type PickupLocationSectionTour } from './PickupLocationSection'
+import { DeviceLocationProvider } from '@/context/DeviceLocationContext'
 import type { ResolvedTourPoint } from '@/lib/resolvePoints'
 
 vi.mock('./LocationMap', () => ({ default: () => <div data-testid="location-map" /> }))
@@ -53,6 +54,7 @@ describe('PickupLocationSection', () => {
         resolvedPoints={[point('p0', 'Kotoka Airport', 5.605, -0.166)]}
         mapTour={tour}
       />,
+      { wrapper: DeviceLocationProvider },
     )
 
     expect(screen.getByText('Your pickup point')).toBeInTheDocument()
@@ -80,6 +82,7 @@ describe('PickupLocationSection', () => {
         resolvedPoints={[{ id: 'z0', kind: 'zone', name: 'Osu', address: 'Osu, Accra', lat: 5.56, lng: -0.185, polygon: DRAWN_ZONE, query: '' }]}
         mapTour={tour}
       />,
+      { wrapper: DeviceLocationProvider },
     )
 
     expect(screen.getByText(/picks up within a specific zone/i)).toBeInTheDocument()
@@ -102,6 +105,7 @@ describe('PickupLocationSection', () => {
         resolvedPoints={[point('p0', 'Kotoka Airport', 5.605, -0.166), point('p1', 'Accra Mall', 5.62, -0.173)]}
         mapTour={tour}
       />,
+      { wrapper: DeviceLocationProvider },
     )
 
     expect(screen.getByText(/has 2 pickup points/i)).toBeInTheDocument()
@@ -122,6 +126,7 @@ describe('PickupLocationSection', () => {
         resolvedPoints={[{ id: 'z0', kind: 'zone', name: 'Osu', address: 'Osu, Accra', lat: 5.56, lng: -0.185, polygon: DRAWN_ZONE, query: '' }]}
         mapTour={tour}
       />,
+      { wrapper: DeviceLocationProvider },
     )
 
     fireEvent.click(screen.getByText(/Yes, I can add it now/i))

@@ -208,6 +208,17 @@
     "de": "Deutsch",
     "nl": "Nederlands"
   },
+  "location": {
+    "enableForDirections": "Schakel locatie in om de route te bekijken",
+    "useMyLocation": "Mijn huidige locatie gebruiken",
+    "startingPointTitle": "Voeg je vertrekpunt toe",
+    "startingPointHint": "Schakel locatie in om op te slaan waar je vandaan reist — we gebruiken het voor je boeking en de route.",
+    "detecting": "Je locatie wordt opgehaald…",
+    "deniedTitle": "Locatie is geblokkeerd",
+    "deniedHelp": "Sta locatietoegang toe in je browserinstellingen en probeer het opnieuw.",
+    "retry": "Opnieuw proberen",
+    "unsupported": "Locatie wordt niet ondersteund op dit apparaat."
+  },
   "mood": {
     "title": "Wat wil je doen?",
     "tours": "tours"

@@ -208,6 +208,17 @@
     "de": "Deutsch",
     "nl": "Nederlands"
   },
+  "location": {
+    "enableForDirections": "Standort aktivieren, um die Route zu erhalten",
+    "useMyLocation": "Meinen aktuellen Standort verwenden",
+    "startingPointTitle": "Startpunkt hinzufügen",
+    "startingPointHint": "Aktiviere den Standort, um zu speichern, wo du startest — wir verwenden ihn für deine Buchung und die Route.",
+    "detecting": "Standort wird ermittelt…",
+    "deniedTitle": "Standort ist blockiert",
+    "deniedHelp": "Erlaube den Standortzugriff in den Browser-Einstellungen und versuche es erneut.",
+    "retry": "Erneut versuchen",
+    "unsupported": "Der Standort wird auf diesem Gerät nicht unterstützt."
+  },
   "mood": {
     "title": "Was möchtest du tun?",
     "tours": "Touren"

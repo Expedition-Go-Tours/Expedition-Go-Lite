@@ -208,6 +208,17 @@
     "de": "Deutsch",
     "nl": "Nederlands"
   },
+  "location": {
+    "enableForDirections": "Activez la localisation pour obtenir l'itinéraire",
+    "useMyLocation": "Utiliser ma position actuelle",
+    "startingPointTitle": "Ajoutez votre point de départ",
+    "startingPointHint": "Activez la localisation pour enregistrer votre point de départ : nous l'utiliserons pour votre réservation et l'itinéraire.",
+    "detecting": "Localisation en cours…",
+    "deniedTitle": "La localisation est bloquée",
+    "deniedHelp": "Autorisez l'accès à la localisation dans les paramètres de votre navigateur, puis réessayez.",
+    "retry": "Réessayer",
+    "unsupported": "La localisation n'est pas prise en charge sur cet appareil."
+  },
   "mood": {
     "title": "Que voulez-vous faire ?",
     "tours": "circuits"
