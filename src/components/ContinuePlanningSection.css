@@ -77,11 +77,18 @@
   transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 
+/* Definite height, NOT `min-height` — the <img> inside is `height: 100%`, and
+   a percentage height only resolves against a definite parent height. With
+   `min-height` the image fell back to `auto` and the thumbnail took the source
+   photo's own aspect ratio, so a portrait upload (e.g. 720x1280) rendered 267px
+   tall and `align-items: stretch` dragged the whole row up with it. A fixed box
+   keeps every thumbnail the same rectangle and lets `object-fit: cover` crop
+   whatever the supplier uploads. */
 .cp-card-media {
   position: relative;
   width: 150px;
   min-width: 150px;
-  min-height: 132px;
+  height: 132px;
   border-radius: 8px;
   overflow: hidden;
   background: #f1f1f1;
@@ -441,7 +448,8 @@
   .cp-card-media {
     width: 128px;
     min-width: 128px;
-    min-height: 96px;
+    /* Definite height — see the note on the desktop rule. */
+    height: 96px;
   }
 
   .cp-card-title {
@@ -495,7 +503,8 @@
   position: relative;
   width: 150px;
   min-width: 150px;
-  min-height: 132px;
+  /* Definite height so the skeleton matches .cp-card-media exactly. */
+  height: 132px;
   border-radius: 8px;
   background: #e8e8e8;
   overflow: hidden;
