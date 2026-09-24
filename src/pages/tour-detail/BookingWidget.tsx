@@ -199,7 +199,6 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
     matchingGroupBand,
     lowestGroupBand,
     bookableBounds,
-    activeGroupBandLabel,
     mixIssues,
     canIncrementCount,
     canDecrementCount,
@@ -1034,11 +1033,6 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
                 <span className="booking-inline-value">
                   <Users size={16} className="booking-inline-icon" />
                   <span>{totalTravelers} {t('booking.traveler', { count: totalTravelers })}</span>
-                  {isPerGroup && totalTravelers > 1 && activeGroupBandLabel && (
-                    <span className="booking-active-band">
-                      {' '}· {t('booking.groupOf', 'Group of {{range}}', { range: activeGroupBandLabel })}
-                    </span>
-                  )}
                 </span>
                 <ChevronDown size={16} className="booking-inline-chevron" />
               </button>
