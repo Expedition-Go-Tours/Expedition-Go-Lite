@@ -456,8 +456,10 @@ export default function BookingWidget({ tour, getAvailability: propGetAvailabili
   const finishBookingNavigation = useCallback(() => {
     if (bookingCommittedRef.current) return
     bookingCommittedRef.current = true
-    navigate(`/${encodeURIComponent(tour.id)}/booking`, { state: pendingNavState.current })
-  }, [navigate, tour.id])
+    // Slug-first so booking URLs are human-readable (/:slug/booking); the id
+    // remains a fallback for tours missing a slug.
+    navigate(`/${encodeURIComponent(tour.slug || tour.id)}/booking`, { state: pendingNavState.current })
+  }, [navigate, tour.id, tour.slug])
 
   // Safety net: if the lazy transition chunk or its animation ever stalls,
   // finish the flow instead of stranding the user on a spinner.

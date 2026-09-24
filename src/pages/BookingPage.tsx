@@ -1832,10 +1832,11 @@ export default function BookingPage() {
   const plausibleTourId =
     typeof urlTourId === 'string' && urlTourId.length > 0 && /^[A-Za-z0-9_-]{8,}$/.test(urlTourId)
 
-  // The URL carries the tour id (/{tourId}/booking) so a refresh can rebuild
-  // the booking context. The persisted draft is only trusted when it belongs
-  // to THIS tour — matched against the URL id (refresh / back-from-checkout /
-  // sign-in round-trip) or the arriving state tour's own id/slug (browser Back
+  // The URL carries the tour id or slug (/{slug}/booking) so a refresh can
+  // rebuild the booking context. The persisted draft is only trusted when it
+  // belongs to THIS tour — matched against the URL id/slug (refresh /
+  // back-from-checkout / sign-in round-trip) or the arriving state tour's own
+  // id/slug (browser Back
   // restores that entry's router state, and checkout's back link may deep-link
   // with the slug instead of the id). A stale draft for another tour must
   // never bleed in.
