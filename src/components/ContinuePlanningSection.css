@@ -77,18 +77,14 @@
   transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 
-/* Definite height, NOT `min-height` — the <img> inside is `height: 100%`, and
-   a percentage height only resolves against a definite parent height. With
-   `min-height` the image fell back to `auto` and the thumbnail took the source
-   photo's own aspect ratio, so a portrait upload (e.g. 720x1280) rendered 267px
-   tall and `align-items: stretch` dragged the whole row up with it. A fixed box
-   keeps every thumbnail the same rectangle and lets `object-fit: cover` crop
-   whatever the supplier uploads. */
+/* No height: as a flex item of the card row this stretches to the card's
+   content height, so the photo fills the card edge to edge and no blank strip
+   is left under it. `min-height` only sets the floor for very short content. */
 .cp-card-media {
   position: relative;
   width: 150px;
   min-width: 150px;
-  height: 132px;
+  min-height: 132px;
   border-radius: 8px;
   overflow: hidden;
   background: #f1f1f1;
@@ -156,7 +152,14 @@
   background: rgba(55, 65, 81, 0.85);
 }
 
+/* Absolute so the photo can never drive the box height. An in-flow image with
+   `height: 100%` resolves against an indefinite parent and falls back to its own
+   aspect ratio — which is what let a portrait upload (720x1280) stretch the
+   whole row to 285px. Out of flow, the box is sized purely by the card's content
+   and the image simply fills whatever height that turns out to be. */
 .cp-card-media img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -448,8 +451,8 @@
   .cp-card-media {
     width: 128px;
     min-width: 128px;
-    /* Definite height — see the note on the desktop rule. */
-    height: 96px;
+    /* Floor only — see the note on the desktop rule. */
+    min-height: 96px;
   }
 
   .cp-card-title {
@@ -503,8 +506,8 @@
   position: relative;
   width: 150px;
   min-width: 150px;
-  /* Definite height so the skeleton matches .cp-card-media exactly. */
-  height: 132px;
+  /* Floor only, matching .cp-card-media. */
+  min-height: 132px;
   border-radius: 8px;
   background: #e8e8e8;
   overflow: hidden;
