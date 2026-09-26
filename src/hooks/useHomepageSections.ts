@@ -360,7 +360,7 @@ export function useAttractionTours(attractionName: string | null, limit = 12) {
 }
 
 /**
- * Mood Keywords â€” dynamic keywords for "What do you want to do?"
+ * Mood Keywords â€” dynamic keywords for "What do you want to explore?"
  */
 export function useMoodKeywords(limit = 8, enabled = true) {
   return useQuery({

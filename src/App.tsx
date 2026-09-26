@@ -147,7 +147,7 @@ function HomePage() {
       <ContinuePlanningSection />
       {/* Show history when no active search and user has previous locations */}
       {!hasActiveSearch && previousLocations.length > 0 && <HistorySections />}
-      {/* Categories: "What do you want to do?" on the generic homepage,
+      {/* Categories: "What do you want to explore?" on the generic homepage,
           "Based on your search in {city}" when personalized. */}
       <MoodSection
         preloaded={data?.mood}

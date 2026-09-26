@@ -44,7 +44,7 @@ function getKeywordFallbackImage(keyword: string): string {
 interface Props {
   preloaded?: MoodKeyword[]
   isLoading?: boolean
-  /** Overrides the default "What do you want to do?" heading — used on the
+  /** Overrides the default "What do you want to explore?" heading — used on the
    *  personalized homepage as "Based on your search in {city}". */
   title?: string
 }
