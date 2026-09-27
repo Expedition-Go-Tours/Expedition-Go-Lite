@@ -12,6 +12,7 @@ import content4 from '../assets/content-creators/content4.avif'
 import content5 from '../assets/content-creators/content5.avif'
 import content6 from '../assets/content-creators/content6.avif'
 import content7 from '../assets/content-creators/content7.avif'
+import SEO from '../components/SEO'
 
 interface ContentCreatorsPageProps {
   onOpenAuth?: (mode: 'signin' | 'signup') => void
@@ -68,6 +69,22 @@ export default function ContentCreatorsPage({ onOpenAuth }: ContentCreatorsPageP
 
   return (
     <main>
+      <SEO
+        title="Ghana Content Creator Programme — Earn on Travel Content"
+        description="Join the Expedition-Go Tours creator programme. Feature authentic Ghana travel experiences, earn commission on every booking your audience makes, and get transparent payouts plus dedicated creator support."
+        keywords="Ghana content creator programme, travel creator Ghana, Ghana travel influencer, earn from travel content Ghana, Ghana creator commission"
+        jsonLd={[
+          {
+            '@context': 'https://schema.org',
+            '@type': 'WebPage',
+            name: 'Ghana Content Creator Programme',
+            description:
+              'Join the Expedition-Go Tours creator programme, feature authentic travel experiences in Ghana and earn commission on every booking your audience makes.',
+            url: 'https://www.expeditiongotours.com/content-creators',
+            about: { '@type': 'Organization', name: 'Expedition-Go Tours', url: 'https://www.expeditiongotours.com' },
+          },
+        ]}
+      />
       {/* ── Hero (centred) ──────────────────────────────── */}
       <section className="cc-hero">
         <div className="cc-hero-copy">

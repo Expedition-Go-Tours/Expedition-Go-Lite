@@ -5,6 +5,7 @@ import RevealOnScroll from '../components/shared/RevealOnScroll'
 import FAQAccordion from '../components/shared/FAQAccordion'
 import '../styles/partner-pages.css'
 import '../styles/HotelsStays.css'
+import SEO from '../components/SEO'
 
 interface HotelsProviderPageProps {
   onOpenAuth?: (mode: 'signin' | 'signup') => void
@@ -46,6 +47,22 @@ export default function HotelsProviderPage({ onOpenAuth }: HotelsProviderPagePro
 
   return (
     <main>
+      <SEO
+        title="List Your Hotel or Guesthouse in Ghana — Accommodation Partners"
+        description="List your hotel, guesthouse, apartment or resort with Expedition-Go Tours. Manage rooms, rates and reservations in one dashboard while helping travellers experience more of Ghana."
+        keywords="list hotel Ghana, Ghana accommodation partner, sell rooms Ghana, guesthouse booking Ghana, hotel listing Ghana, resort partnership Ghana"
+        jsonLd={[
+          {
+            '@context': 'https://schema.org',
+            '@type': 'WebPage',
+            name: 'Accommodation Partners',
+            description:
+              'List your hotel, guesthouse, apartment or resort with Expedition-Go Tours. Manage rooms, rates and reservations while helping travellers experience more of Ghana.',
+            url: 'https://www.expeditiongotours.com/hotels',
+            about: { '@type': 'Organization', name: 'Expedition-Go Tours', url: 'https://www.expeditiongotours.com' },
+          },
+        ]}
+      />
       {/* ── Hero ─────────────────────────────────────────── */}
       <section className="hs-hero">
         <div className="wrap hs-hero-grid">
