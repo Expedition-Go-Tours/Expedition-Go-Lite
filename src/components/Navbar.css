@@ -103,15 +103,20 @@ body:has(.le-page) .navbar {
 }
 
 .nav-logo-img {
-  /* Sized for THIS storefront's wordmark: expo_trans.png crops to
-     2076×450 (≈4.61:1) — the green/gold wordmark with the Expedition-Go Tours
-     tagline and the Ghana flag pin nested between the two words. (The previous
-     mark, TravioG.png, was 1103×226 ≈ 4.9:1.) Fit by height, not width: 38px
-     renders ≈175px wide, which reads as a wordmark and still fits the 64px bar.
-     Lite's mark is 300×200 (1.5:1) and Lite sizes it at 120px tall — on a wide
-     wordmark that height would render ~586px wide and push the search/actions
-     around, hence the height-driven fit. */
-  height: 38px;
+  /* The height here is deliberately ~3x the height of the visible mark.
+     src/assets/expo_trans.png is a 300x200 (1.5:1) raster whose wordmark occupies
+     only rows 63-142 — 298x79px, i.e. 40% of the box height, with 63px of
+     transparent padding above and 58px below. So `height` sizes the BOX, not the
+     mark: 120px renders a 180x120 box carrying a ~179x47px mark.
+
+     That only works because the padding absorbs the overflow. The bar is a fixed
+     64px with align-items:center, so a 120px box centres at y=-28 and the mark
+     lands at y=10-57 — inside the bar, with the empty padding hanging above and
+     below it. Fitting the mark to the bar directly instead (height:38px) renders
+     a 57x38 box carrying a ~57x15px mark: sensible-looking CSS, a 3x too small
+     logo. Do not "fix" this number without first re-cropping the asset to its
+     bounding box. */
+  height: 120px;
   width: auto;
   display: block;
 }
@@ -1303,9 +1308,10 @@ body:has(.story-detail) .navbar-compact-search {
   }
 
   .nav-logo-img {
-    /* Same wordmark fit on phones (≈138px wide) so it leaves room for the
-       menu button and search. */
-    height: 30px;
+    /* Same box/mark ratio as desktop — see the base rule. 90px renders a 135x90
+       box carrying a ~134x36px mark, which still leaves room for the menu button
+       and search. */
+    height: 90px;
   }
 
   .navbar-search-dropdown {
