@@ -26,14 +26,13 @@ import { SellOutProvider } from './context/SellOutContext'
 import { LocationSearchProvider, useLocationSearch } from './context/LocationSearchContext'
 import { SearchInputProvider } from './context/SearchInputContext'
 import { CookieConsentProvider } from './context/CookieConsentContext'
-import { DeviceLocationProvider } from './context/DeviceLocationContext'
 import CookieBanner from './components/consent/CookieBanner'
 import CookiePreferences from './components/consent/CookiePreferences'
 import GoogleOneTapPrompt from './components/GoogleOneTapPrompt'
 import { subscribeToAuthState, handleGoogleCallback, getAuthReturnTo, clearAuthReturnTo } from './lib/auth'
 import { AuthProvider } from './context/AuthContext'
 import { startSessionWatchdog, stopSessionWatchdog } from './auth/sessionManager'
-import { trackPageView, getCachedLocation } from './lib/analytics'
+import { trackPageView } from './lib/analytics'
 import { useHomepage, useHomepageByCity } from './hooks/useHomepageSections'
 
 // Route-level code splitting
@@ -48,6 +47,7 @@ const AllReviewsPage = lazy(() => import('./pages/AllReviewsPage'))
 const ReviewExperiencePage = lazy(() => import('./pages/ReviewExperiencePage'))
 const SupplierPage = lazy(() => import('./pages/SupplierPage'))
 const SupplierRegisterPage = lazy(() => import('./pages/supplier/SupplierRegisterPage'))
+const ListExperiencePage = lazy(() => import('./pages/supplier/ListExperiencePage'))
 const BookingPage = lazy(() => import('./pages/BookingPage'))
 const BookingConfirmationPage = lazy(() => import('./pages/BookingConfirmationPage'))
 const CheckoutPage = lazy(() => import('./pages/CheckoutPage'))
@@ -147,7 +147,7 @@ function HomePage() {
       <ContinuePlanningSection />
       {/* Show history when no active search and user has previous locations */}
       {!hasActiveSearch && previousLocations.length > 0 && <HistorySections />}
-      {/* Categories: "What do you want to explore?" on the generic homepage,
+      {/* Categories: "What do you want to do?" on the generic homepage,
           "Based on your search in {city}" when personalized. */}
       <MoodSection
         preloaded={data?.mood}
@@ -169,12 +169,15 @@ function HomePage() {
         <MountOnView><Suspense fallback={<HomeSectionSkeleton />}><TopRatedSection preloaded={data?.topRated} isLoading={loading} title={locationTitle?.('Top Rated')} location={locationFilter} backfill={data?.topRatedBackfill} /></Suspense></MountOnView>
         <MountOnView><Suspense fallback={<HomeSectionSkeleton />}><SellOutSection preloaded={data?.sellOut} isLoading={loading} title={locationTitle?.('Likely To Sell Out')} location={locationFilter} backfill={data?.sellOutBackfill} /></Suspense></MountOnView>
         <MountOnView><Suspense fallback={<HomeSectionSkeleton />}><LastMinuteDealsSection preloaded={data?.offers} isLoading={loading} title={locationTitle?.('Special Offers')} location={locationFilter} /></Suspense></MountOnView>
-        <MountOnView><Suspense fallback={<HomeSectionSkeleton />}><NewExperiencesSection isLoading={loading} title={locationTitle?.('New Experiences')} location={locationFilter} backfill={data?.newExperiencesBackfill} /></Suspense></MountOnView>
+        <MountOnView><Suspense fallback={<HomeSectionSkeleton />}><NewExperiencesSection preloaded={data?.new} isLoading={loading} title={locationTitle?.('New Experiences')} location={locationFilter} backfill={data?.newExperiencesBackfill} /></Suspense></MountOnView>
         <MountOnView><Suspense fallback={<HomeSectionSkeleton />}><TopAttractionsNearbySection preloaded={data?.attractions} title={locationTitle?.('Top Attractions Nearby')} location={locationFilter} /></Suspense></MountOnView>
         <MountOnView><ExternalReviewsSection /></MountOnView>
         <MountOnView><PreviousSearchSections /></MountOnView>
-        <MountOnView><NewsletterSection /></MountOnView>
       </div>
+      {/* Always rendered: no MountOnView and no `.home-deferred`
+          content-visibility, so the newsletter is in the page from first
+          paint and its card never pops in with a blank image. */}
+      <NewsletterSection />
       <Footer />
     </SellOutProvider>
   )
@@ -231,9 +234,10 @@ function AppContent() {
     trackPageView(location.pathname + location.search)
   }, [location.pathname, location.search])
 
-  // Set a body class based on the current route so the navbar CSS
-  // (body:has(.page-*)) can align padding before lazy components load.
-  // useLayoutEffect (not useEffect) ensures the class is set before the
+  // Set body classes based on the current route so the navbar CSS can align
+  // padding before lazy components load. A route may carry several
+  // space-separated classes (a page marker plus a column-alignment class).
+  // useLayoutEffect (not useEffect) ensures the classes are set before the
   // browser paints — no visible flash of the wrong padding.
   useLayoutEffect(() => {
     const path = location.pathname
@@ -241,31 +245,33 @@ function AppContent() {
       ['/hotels', 'page-hotel'],
       ['/travel-agents', 'page-travel-agents'],
       ['/transport-providers', 'page-transport-providers'],
-      ['/foundation', 'page-foundation'],
-      ['/blog', 'page-blog'],
-      ['/about-us', 'page-about'],
+      // The `page-support-*` classes set the navbar's column alignment to the
+      // content width those routes use (see Navbar.css).
+      ['/foundation', 'page-foundation page-support-1180'],
+      ['/blog', 'page-blog page-support-1200'],
+      ['/about-us', 'page-about page-support-1200'],
       ['/content-creators', 'page-content-creators'],
-      ['/help-centre', 'page-support'],
-      ['/contact-us', 'page-support'],
-      ['/faq', 'page-support'],
-      ['/careers', 'page-support'],
-      ['/partnerships', 'page-support'],
-      ['/supplier-terms', 'page-support'],
-      ['/terms-and-conditions', 'page-support'],
-      ['/privacy-policy', 'page-support'],
-      ['/refund-policy', 'page-support'],
-      ['/cookies-policy', 'page-support'],
+      ['/help-centre', 'page-support page-support-1180'],
+      ['/contact-us', 'page-support page-support-1180'],
+      ['/faq', 'page-support page-support-1180'],
+      ['/careers', 'page-support page-support-1180'],
+      ['/partnerships', 'page-support page-support-1280'],
+      ['/supplier-terms', 'page-support page-support-1200'],
+      ['/terms-and-conditions', 'page-support page-support-1200'],
+      ['/privacy-policy', 'page-support page-support-1200'],
+      ['/refund-policy', 'page-support page-support-1180'],
+      ['/cookies-policy', 'page-support page-support-1200'],
       ['/tours', 'page-all-tours'],
       ['/search', 'page-search'],
       ['/booking/confirmation', 'page-confirmation'],
     ]
     const match = classMap.find(([prefix]) => path.startsWith(prefix))
-    const cls = match?.[1] ?? ''
+    const classes = (match?.[1] ?? '').split(' ').filter(Boolean)
 
     document.body.className = document.body.className
       .replace(/page-\S+/g, '')
       .trim()
-    if (cls) document.body.classList.add(cls)
+    for (const cls of classes) document.body.classList.add(cls)
 
     return () => {
       document.body.className = document.body.className
@@ -273,13 +279,6 @@ function AppContent() {
         .trim()
     }
   }, [location.pathname])
-
-  // Seed the remembered/approximate (IP) location used for personalisation.
-  // This never touches the browser location API, so no permission prompt can
-  // appear — device location is opt-in through DeviceLocationContext.
-  useEffect(() => {
-    void getCachedLocation()
-  }, [])
 
   const isBookingConfirmation = location.pathname.startsWith('/booking/confirmation')
   // The confirmation receipt is a normal page (keeps the navbar + footer). The
@@ -290,7 +289,6 @@ function AppContent() {
     location.pathname.startsWith('/dashboard') ||
     (location.pathname.startsWith('/booking') && !isBookingConfirmation) ||
     location.pathname.endsWith('/booking') ||
-    location.pathname.startsWith('/supplier/register') ||
     location.pathname.startsWith('/login') ||
     location.pathname.startsWith('/auth/callback')
 
@@ -340,7 +338,7 @@ function AppContent() {
             <ContentCreatorsPage onOpenAuth={handleOpenAuth} />
           } />
           <Route path="/travel-agents" element={
-            <TravelAgentsPage onOpenAuth={handleOpenAuth} />
+            <TravelAgentsPage />
           } />
           <Route path="/hotels" element={
             <HotelsProviderPage onOpenAuth={handleOpenAuth} />
@@ -369,7 +367,7 @@ function AppContent() {
             <SupplierRegisterPage onOpenAuth={handleOpenAuth} />
           } />
           <Route path="/supplier/list-experience" element={
-            <SupplierRegisterPage onOpenAuth={handleOpenAuth} />
+            <ListExperiencePage />
           } />
           <Route path="/booking" element={<BookingPage />} />
           <Route path="/:tourId/booking" element={<BookingPage />} />
@@ -451,25 +449,21 @@ function App() {
     <MotionConfig reducedMotion="user">
       <BrowserRouter>
         <CookieConsentProvider>
-          {/* Device location is opt-in — this provider never prompts on its
-              own; only an explicit click can raise the browser dialog. */}
-          <DeviceLocationProvider>
-            <WishlistProvider>
-              <AuthProvider>
-                <ContinuePlanningProvider>
-                  <LocationSearchProvider>
-                    <SearchInputProvider>
-                      <AppContent />
-                      {/* Consent UI lives outside the route tree so a choice can
-                          be made (or revisited) on any page, including the dashboard. */}
-                      <CookieBanner />
-                      <CookiePreferences />
-                    </SearchInputProvider>
-                  </LocationSearchProvider>
-                </ContinuePlanningProvider>
-              </AuthProvider>
-            </WishlistProvider>
-          </DeviceLocationProvider>
+          <WishlistProvider>
+            <AuthProvider>
+              <ContinuePlanningProvider>
+                <LocationSearchProvider>
+                  <SearchInputProvider>
+                    <AppContent />
+                    {/* Consent UI lives outside the route tree so a choice can
+                        be made (or revisited) on any page, including the dashboard. */}
+                    <CookieBanner />
+                    <CookiePreferences />
+                  </SearchInputProvider>
+                </LocationSearchProvider>
+              </ContinuePlanningProvider>
+            </AuthProvider>
+          </WishlistProvider>
         </CookieConsentProvider>
       </BrowserRouter>
     </MotionConfig>

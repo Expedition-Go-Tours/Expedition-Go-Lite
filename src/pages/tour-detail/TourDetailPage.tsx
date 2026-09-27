@@ -82,14 +82,14 @@ function TourDetailSkeleton() {
         </div>
 
         <div className="tour-detail-content">
-          {/* Image gallery skeleton — mirrors the GYG mosaic (square on mobile) */}
+          {/* Image gallery skeleton — mirrors the loaded mosaic (square on mobile) */}
           <div className="tour-detail-main">
             <div className="tour-detail-gallery-skeleton">
               <div className="skeleton-block skeleton-gallery-square" />
               <div className="skeleton-gallery-mosaic">
                 <div className="skeleton-block" />
-                <div className="skeleton-block" />
                 <div className="skeleton-gallery-mosaic-col">
+                  <div className="skeleton-block" />
                   <div className="skeleton-block" />
                   <div className="skeleton-block" />
                 </div>
@@ -136,13 +136,13 @@ export default function TourDetailPage() {
   // in-app reviews with the same card layouts. The 1.6 MB row dataset is only
   // fetched once the reviews tab is actually opened.
   const { reviews: externalMatchedReviews } = useTourExternalReviews(
-    tour ? { title: tour.title, location: tour.location } : null,
+    tour ? { title: tour.title, location: tour.location, supplierName: tour.supplierName } : null,
     activeTab === 'reviews',
   )
   // Official product totals (e.g. TripAdvisor "4.9 (595 reviews)") for the
   // matched scraped listings — used for the headline rating/count.
   const { products: externalMatchedProducts } = useTourExternalProducts(
-    tour ? { title: tour.title, location: tour.location } : null,
+    tour ? { title: tour.title, location: tour.location, supplierName: tour.supplierName } : null,
   )
   // Headline review stats = in-app reviews + the matched scraped TripAdvisor /
   // GetYourGuide product totals (falling back to counted rows when a product
@@ -222,6 +222,7 @@ export default function TourDetailPage() {
   useEffect(() => {
     if (tour) {
       addToContinuePlanning(toContinuePlanningItem({
+        id: tour.id,
         title: tour.title,
         location: tour.location,
         image: mergedImages[0] || '',
@@ -281,8 +282,7 @@ export default function TourDetailPage() {
       if (window.innerWidth < 1024) {
         const header = document.querySelector<HTMLElement>('.tour-header-new')
         if (header) {
-          const headerGone = header.getBoundingClientRect().bottom <= STICKY_TOP + 1
-          next = headerGone && !tabsReached
+          next = header.getBoundingClientRect().bottom <= STICKY_TOP + 1 && !tabsReached
         }
       }
       if (next !== lastShow) {
@@ -300,22 +300,70 @@ export default function TourDetailPage() {
   }, [])
 
   const pricingRef = useRef<HTMLDivElement>(null)
+  const galleryRef = useRef<HTMLDivElement>(null)
   const reviewsRef = useRef<HTMLDivElement>(null)
 
   // Height of the booking card, published as `--tour-hero-height` so the photo
   // mosaic beside it can match it and the two columns finish on the same line.
+  // The gallery must never overhang the card, so:
+  //   - the first measurement of a tour always applies (initial alignment),
+  //   - a shrink applies immediately, even while the gallery is on screen —
+  //     otherwise a card that collapsed after the baseline (availability rows,
+  //     closed calendar, shorter tour) leaves the mosaic hanging below it,
+  //   - growth is deferred while the gallery is visible: the card changes
+  //     height several times during a date/traveler selection (slot line,
+  //     pricing spinner → quote → "price updated" note) and applying those
+  //     live would bounce the mosaic and make every tile re-crop mid-interaction,
+  //   - leaving the viewport forces a full re-sync, so the columns are already
+  //     aligned again when the gallery scrolls back.
   const [heroHeight, setHeroHeight] = useState<number | null>(null)
+  const galleryVisibleRef = useRef(false)
+  const heroSyncedRef = useRef(false)
+
+  const applyHeroHeight = useCallback((measured: number, force = false) => {
+    heroSyncedRef.current = true
+    setHeroHeight((prev) => {
+      if (prev === measured) return prev
+      if (!force && prev != null && galleryVisibleRef.current && measured > prev) return prev
+      return measured
+    })
+  }, [])
+
+  const measureHeroHeight = useCallback((force = false) => {
+    const el = pricingRef.current
+    if (!el) return
+    const measured = Math.round(el.getBoundingClientRect().height)
+    // Ignore zero/negative measurements while the card is still mounting.
+    if (measured <= 0) return
+    applyHeroHeight(measured, force)
+  }, [applyHeroHeight])
+
   useEffect(() => {
     const el = pricingRef.current
     if (!el || typeof ResizeObserver === 'undefined') return
+    // A fresh tour (or the initial mount) starts a new sync: its first
+    // measurement becomes the baseline even while the gallery is visible.
+    heroSyncedRef.current = false
     const observer = new ResizeObserver(() => {
-      const measured = Math.round(el.getBoundingClientRect().height)
-      const next = Math.min(560, Math.max(380, measured))
-      setHeroHeight((prev) => (prev === next ? prev : next))
+      measureHeroHeight(!heroSyncedRef.current)
     })
     observer.observe(el)
     return () => observer.disconnect()
-  }, [isLoading, tour])
+  }, [isLoading, tour?.id, measureHeroHeight])
+
+  useEffect(() => {
+    const el = galleryRef.current
+    if (!el || typeof IntersectionObserver === 'undefined') return
+    const observer = new IntersectionObserver(([entry]) => {
+      galleryVisibleRef.current = entry.isIntersecting
+      // Just scrolled past the gallery: apply whatever the card height became
+      // while growth was deferred, so the resize happens off-screen.
+      if (!entry.isIntersecting) measureHeroHeight(true)
+    })
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [isLoading, tour?.id, measureHeroHeight])
+
   const [reviewDetail, setReviewDetail] = useState<{ name: string; date: string; rating: number; text: string } | null>(null)
   const [isWriteReviewOpen, setIsWriteReviewOpen] = useState(false)
   const [reviewStarFilter, setReviewStarFilter] = useState<number | null>(null)
@@ -375,12 +423,28 @@ export default function TourDetailPage() {
         location: tour?.location || '',
         price: tour?.price || 0,
         duration: tour?.duration || '',
+        category: tour?.category || undefined,
+        // Same highlight line the card shows, so the saved card keeps it.
+        features: tour?.highlights?.length ? tour.highlights.slice(0, 4).join(' · ') : '',
         imageUrl: mergedImages[0] || '',
+        photos: mergedImages.length > 0 ? mergedImages : undefined,
         rating: localTourRating,
         reviewCount: localTourReviews,
         addedDate: new Date().toISOString(),
         source: isExternal ? 'travio-africa' : 'expedition-go',
         externalUrl: tour?.externalUrl || undefined,
+        slug: tour?.slug || undefined,
+        supplierName: tour?.supplierName || undefined,
+        languages: tour?.languages,
+        difficulty: tour?.difficulty,
+        cancellationPolicy: tour?.cancellationPolicy,
+        pickupIncluded: tour?.pickupIncluded,
+        accommodationIncluded: tour?.accommodationIncluded,
+        meetingMode: tour?.meetingMode,
+        // Captured so the wishlist card keeps the promo badge/price; the
+        // wishlist page re-checks these against their date window and
+        // refreshes them from the live offers list.
+        specialOffers: tour?.specialOffers,
       })
       toast.success(t('common.addedToWishlist'))
     }
@@ -989,10 +1053,7 @@ export default function TourDetailPage() {
       logo: mapped.logo || tour?.supplierPhoto || '',
       description: mapped.description || (tour?.supplierName ? t('tourDetail.supplierDescription', { name: tour.supplierName }) : ''),
       rating: mapped.rating ?? (tour?.rating ?? null),
-      phone: mapped.phone || '',
       email: mapped.email || '',
-      website: mapped.website || '',
-      address: mapped.address || tour?.location || '',
       verified: mapped.verified,
       supplierType: mapped.supplierType,
     }
@@ -1044,12 +1105,12 @@ export default function TourDetailPage() {
     <TourDetailErrorBoundary>
     <>
       <SEO
-        canonical={`https://www.expeditiongotours.com${tourPath}`}
         title={`${tour.title} in ${tour.location?.split(',')[0] || 'Ghana'}`}
         description={`${tour.title} - ${tour.duration} ${tour.category || 'experience'} in ${tour.location || 'Ghana'}. Book from $${tour.price}. ${tour.rating ? `Rated ${tour.rating}/5` : ''} Free cancellation, instant confirmation.`}
         keywords={`${tour.title}, ${tour.location} tours, ${tour.category || 'tours'} in ${tour.location?.split(',')[0] || 'Ghana'}, Ghana tours, book ${tour.title}`}
         image={mergedImages[0] || undefined}
         type="product"
+        canonical={`https://www.expeditiongotours.com${tourPath}`}
         price={{ amount: String(tour.price), currency: 'USD' }}
         jsonLd={[
           buildProductSchema({
@@ -1060,7 +1121,6 @@ export default function TourDetailPage() {
             currency: 'USD',
             ratingValue: tour.rating,
             reviewCount: tour.reviewCount,
-            id: tour.id,
             slug: slug,
             city: tour.location?.split(',')[0],
             region: tour.location?.split(',')[1]?.trim(),
@@ -1077,11 +1137,12 @@ export default function TourDetailPage() {
       <div className="tour-detail-page">
         {/* Inside the page wrapper so the wrapper's 64px navbar clearance puts
             it *below* the fixed navbar instead of underneath it. */}
-        <Breadcrumb tour={tour} onBack={handleBack} />
+        <Breadcrumb tour={tour} />
         <div className="tour-detail-container">
           <div className="tour-detail-header-row">
             <TourHeader
               title={selectedTourTitle}
+              rating={selectedTourRating}
               reviewCount={selectedTourReviews}
               location={tour.location}
               supplierName={tour.supplierName}
@@ -1119,7 +1180,7 @@ export default function TourDetailPage() {
             className="tour-detail-content"
             style={heroHeight ? ({ '--tour-hero-height': `${heroHeight}px` } as CSSProperties) : undefined}
           >
-            <div className="tour-detail-main">
+            <div className="tour-detail-main" ref={galleryRef}>
               <TourImageGallery
                 images={mergedImages}
                 title={selectedTourTitle}
@@ -1267,14 +1328,12 @@ export default function TourDetailPage() {
                       description={supplierData.description}
                       rating={supplierData.rating}
                       totalTours={supplierTourCount ?? relatedTours.length}
-                      phone={supplierData.phone}
                       email={supplierData.email}
-                      website={supplierData.website}
-                      address={supplierData.address}
                       verified={supplierData.verified}
                       supplierType={supplierData.supplierType}
                       tours={supplierTours}
                       tourId={tour?.id}
+                      supplierId={supplierData.supplierId}
                       infoOpen={supplierInfoOpen}
                       onToggleInfo={() => setSupplierInfoOpen((v) => !v)}
                       onOpenInfo={() => setSupplierInfoOpen(true)}

@@ -8,9 +8,13 @@
      language/currency, Wishlist, Profile) with the homepage sections:
      the section headings sit inside a centered viewport of
      calc(295px * 5 + 16px * 4) with 32px gutters, so the navbar content
-     gets the same centered bounds (and 32px on narrower screens). */
-  padding-left: max(32px, calc((100vw - (295px * 5 + 16px * 4)) / 2));
-  padding-right: max(32px, calc((100vw - (295px * 5 + 16px * 4)) / 2));
+     gets the same centered bounds (and 32px on narrower screens).
+     The formulas use `%`, not `vw`: the content columns are laid out in the
+     viewport minus any classic scrollbar, while `100vw` includes it — using
+     `vw` shifted the logo/items by half a scrollbar width (~7.5px) on
+     Windows and on macOS with "Always show scroll bars". */
+  padding-left: max(32px, calc((100% - (295px * 5 + 16px * 4)) / 2));
+  padding-right: max(32px, calc((100% - (295px * 5 + 16px * 4)) / 2));
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -41,11 +45,21 @@
   box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
 }
 
+/* "List Your Experience" page (/supplier/list-experience): its content column is
+   `.wrap` — min(1200px, 100% - 40px) — while the navbar's default bounds are the
+   homepage's 1539px grid. On a 1600px screen that put the logo at 32px and the
+   page copy at 200px, so the logo/actions looked inset from the content. Match
+   the navbar gutters to this page's column so the logo and the profile icon sit
+   on the same edges as everything below. */
+body:has(.le-page) .navbar {
+  padding-left: max(20px, calc((100% - 1200px) / 2));
+  padding-right: max(20px, calc((100% - 1200px) / 2));
+}
+
 /* Hamburger - hidden on desktop */
 .nav-hamburger {
   display: none;
 }
-
 /* Mobile wishlist + bookings - hidden on desktop (desktop uses .nav-icons) */
 .nav-wishlist-mobile,
 .nav-bookings-mobile {
@@ -89,7 +103,15 @@
 }
 
 .nav-logo-img {
-  height: 120px;
+  /* Sized for THIS storefront's wordmark: expo_trans.png crops to
+     2076×450 (≈4.61:1) — the green/gold wordmark with the Expedition-Go Tours
+     tagline and the Ghana flag pin nested between the two words. (The previous
+     mark, TravioG.png, was 1103×226 ≈ 4.9:1.) Fit by height, not width: 38px
+     renders ≈175px wide, which reads as a wordmark and still fits the 64px bar.
+     Lite's mark is 300×200 (1.5:1) and Lite sizes it at 120px tall — on a wide
+     wordmark that height would render ~586px wide and push the search/actions
+     around, hence the height-driven fit. */
+  height: 38px;
   width: auto;
   display: block;
 }
@@ -1218,10 +1240,18 @@ body:has(.story-detail) .navbar-compact-search {
     display: none;
   }
 
-  body.hero--search-sticky .navbar,
-  .page-all-tours .navbar {
+  body.hero--search-sticky .navbar {
     box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
     padding: 0 8px;
+  }
+
+  /* All Tours keeps the page's own 24px tablet gutter (see
+     .all-tours-container) instead of the compact 8px search-bar gutter, so
+     the logo and the right-hand icons stay aligned with the content column. */
+  .page-all-tours .navbar {
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+    padding-left: 24px;
+    padding-right: 24px;
   }
 
   /* Mobile/tablet: hamburger drawer becomes a full-screen sheet (GYG-style) */
@@ -1265,8 +1295,17 @@ body:has(.story-detail) .navbar-compact-search {
     padding-right: 16px;
   }
 
+  /* All Tours: match .all-tours-container's 16px phone gutter. Declared after
+     the 24px tablet rule above so it wins at equal specificity. */
+  .page-all-tours .navbar {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
   .nav-logo-img {
-    height: 90px;
+    /* Same wordmark fit on phones (≈138px wide) so it leaves room for the
+       menu button and search. */
+    height: 30px;
   }
 
   .navbar-search-dropdown {
@@ -1370,82 +1409,6 @@ body:has(.story-detail) .navbar-compact-search {
   padding: 0 8px;
 }
 
-.nav-subdrawer-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  padding: 13px 14px;
-  border: none;
-  border-radius: 10px;
-  background: transparent;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 15px;
-  font-weight: 500;
-  color: #333;
-  text-align: left;
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-
-.nav-subdrawer-item:hover {
-  background: #f8fafc;
-}
-
-.nav-subdrawer-item.active {
-  color: #137A2E;
-  font-weight: 600;
-  background: rgba(19, 122, 46, 0.07);
-}
-
-.nav-subdrawer-item-symbol {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 34px;
-  height: 30px;
-  padding: 0 8px;
-  font-size: 13px;
-  font-weight: 700;
-  color: #64748b;
-  border-radius: 8px;
-  background: #f1f5f9;
-  flex-shrink: 0;
-}
-
-.nav-subdrawer-item.active .nav-subdrawer-item-symbol {
-  background: rgba(19, 122, 46, 0.12);
-  color: #137A2E;
-}
-
-.nav-subdrawer-item-label {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.nav-subdrawer-item-code {
-  font-size: 15px;
-  font-weight: 600;
-  color: inherit;
-  line-height: 1.2;
-}
-
-.nav-subdrawer-item-sub {
-  font-size: 11px;
-  color: #94a3b8;
-  line-height: 1.2;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.nav-subdrawer-check {
-  margin-left: auto;
-  color: #137A2E;
-  flex-shrink: 0;
-}
-
 /* "Mark all as read" — underlined link right below the header */
 .nav-subdrawer-mark-read {
   display: inline-flex;
@@ -1536,20 +1499,33 @@ body:has(.story-detail) .navbar-compact-search {
   color: #94a3b8;
 }
 
-/* Support pages (Help Centre / Contact Us / FAQ & shared .support-page shell):
-   center the navbar content on the support container's inner content edges
-   (max-width 1280px + 24px gutters) so the logo (left) and profile icon
-   (right) line up with the page grid instead of the homepage column. */
-.page-support .navbar {
-  padding-left: max(24px, calc((100vw - 1280px) / 2 + 24px));
-  padding-right: max(24px, calc((100vw - 1280px) / 2 + 24px));
+/* Support-family pages (Help Centre / Contact Us / FAQ from the footer's
+   Support column, plus Careers, Refund Policy, Foundation, Partnerships, the
+   legal/policy pages, Blog and About Us): each route's content column is
+   applied as a body class in App.tsx, and the navbar's content box is centered
+   on that column so the logo (left) and the action cluster (right) sit on the
+   same edges as the page content — instead of the homepage grid.
+   `max(...)` keeps the gutter once the viewport is narrower than the column,
+   so phones and tablets stay aligned too. */
+
+/* 1180px column + 20px gutters — .sh-main / .support-container
+   (Help Centre, Contact Us, FAQ, Careers, Refund Policy, Foundation) */
+.page-support-1180 .navbar {
+  padding-left: max(20px, calc((100% - 1180px) / 2));
+  padding-right: max(20px, calc((100% - 1180px) / 2));
 }
 
-@media (max-width: 768px) {
-  .page-support .navbar {
-    padding-left: 16px;
-    padding-right: 16px;
-  }
+/* 1280px column + 24px gutters — .pp-container (Partnerships) */
+.page-support-1280 .navbar {
+  padding-left: max(24px, calc((100% - 1280px) / 2));
+  padding-right: max(24px, calc((100% - 1280px) / 2));
+}
+
+/* 1200px column + 20px gutters — .leg-wrap (Terms, Privacy, Supplier Terms),
+   .cp-wrap (Cookies Policy), .about-container, .blog-container */
+.page-support-1200 .navbar {
+  padding-left: max(20px, calc((100% - 1200px) / 2));
+  padding-right: max(20px, calc((100% - 1200px) / 2));
 }
 
 /* All Tours (/tours — homepage "View all", mood/location/attraction filters)
@@ -1559,8 +1535,8 @@ body:has(.story-detail) .navbar-compact-search {
 @media (min-width: 1025px) {
   .page-all-tours .navbar,
   .page-search .navbar {
-    padding-left: max(40px, calc((100vw - 1400px) / 2 + 40px));
-    padding-right: max(40px, calc((100vw - 1400px) / 2 + 40px));
+    padding-left: max(40px, calc((100% - 1400px) / 2 + 40px));
+    padding-right: max(40px, calc((100% - 1400px) / 2 + 40px));
   }
 }
 
@@ -1576,40 +1552,66 @@ body:has(.story-detail) .navbar-compact-search {
    Align the navbar items on its inner content edges on desktop only. */
 @media (min-width: 1025px) {
   .page-confirmation .navbar {
-    padding-left: max(32px, calc((100vw - 1280px) / 2 + 32px));
-    padding-right: max(32px, calc((100vw - 1280px) / 2 + 32px));
+    padding-left: max(32px, calc((100% - 1280px) / 2 + 32px));
+    padding-right: max(32px, calc((100% - 1280px) / 2 + 32px));
+  }
+}
+
+/* Supplier profile (/supplier/:name): its content column is
+   `.supplier-page-main` — max-width 1280px with 20/24/32px gutters (640/1024
+   breakpoints). Match the navbar to those gutters so the logo and the
+   right-hand items sit on the same edges as the profile content. Selected via
+   `:has(.supplier-page)` rather than a /supplier route class, which would also
+   match /supplier/register, /supplier/list-experience and /supplier-terms. */
+body:has(.supplier-page) .navbar {
+  padding-left: 20px;
+  padding-right: 20px;
+}
+
+@media (min-width: 640px) {
+  body:has(.supplier-page) .navbar {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+}
+
+@media (min-width: 1024px) {
+  body:has(.supplier-page) .navbar {
+    padding-left: max(32px, calc((100% - 1280px) / 2 + 32px));
+    padding-right: max(32px, calc((100% - 1280px) / 2 + 32px));
   }
 }
 
 /* Footer-linked pages: align the navbar (logo + icons) with each page's
-   content grid on desktop. Grouped by container max-width + gutter. */
+   content grid. Blog, Foundation, About Us and the support/legal pages are
+   handled above by their `page-support-*` column classes. */
 
-/* 1140px container + 32px gutters: Blog */
-/* 1140px container + 32px gutters: Hotels, Travel Agents, Transport */
-@media (min-width: 1025px) {
-  .page-hotel .navbar,
-  .page-travel-agents .navbar,
-  .page-transport-providers .navbar,
-  .page-blog .navbar {
-    padding-left: max(32px, calc((100vw - 1140px) / 2 + 32px));
-    padding-right: max(32px, calc((100vw - 1140px) / 2 + 32px));
+/* Partner landing pages (Hotels & Stays, Travel Agents, Transport Partners —
+   the footer's "Work with us" column): all their content sits in `.wrap`
+   (min(1200px, 100% - 40px) in styles/partner-pages.css), so the navbar's
+   content box takes the same centered bounds. */
+.page-hotel .navbar,
+.page-travel-agents .navbar,
+.page-transport-providers .navbar {
+  padding-left: max(20px, calc((100% - 1200px) / 2));
+  padding-right: max(20px, calc((100% - 1200px) / 2));
+}
+
+/* Tour detail (/tour/:id/:slug): the content column is
+   `.tour-detail-container` — max-width 1520px with 32px gutters, 24px at
+   640–1023px, 16px below 640 (below that the base navbar already matches).
+   `navbar--tour-detail` is set by the Navbar itself on /tour* routes. */
+@media (min-width: 1024px) {
+  .navbar.navbar--tour-detail {
+    padding-left: max(32px, calc((100% - 1520px) / 2 + 32px));
+    padding-right: max(32px, calc((100% - 1520px) / 2 + 32px));
   }
 }
 
-/* 1200px container + 32px gutters: Foundation, Blog */
-@media (min-width: 1025px) {
-  .page-foundation .navbar,
-  .page-blog .navbar {
-    padding-left: max(32px, calc((100vw - 1200px) / 2 + 32px));
-    padding-right: max(32px, calc((100vw - 1200px) / 2 + 32px));
-  }
-}
-
-/* 1100px container + 24px gutters: About Us */
-@media (min-width: 1025px) {
-  .page-about .navbar {
-    padding-left: max(24px, calc((100vw - 1100px) / 2 + 24px));
-    padding-right: max(24px, calc((100vw - 1100px) / 2 + 24px));
+@media (min-width: 640px) and (max-width: 1023px) {
+  .navbar.navbar--tour-detail {
+    padding-left: 24px;
+    padding-right: 24px;
   }
 }
 

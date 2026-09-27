@@ -1,5 +1,14 @@
 const AUTH_STORAGE_KEY = 'expedition_go_auth'
 const AUTH_RETURN_TO_KEY = 'eg_auth_return_to'
+/** Remember-me choice for flows that leave the page (Google OAuth redirect). */
+const AUTH_PENDING_REMEMBER_KEY = 'eg_auth_pending_remember'
+
+/**
+ * Where the session lives:
+ *  - 'local'   → localStorage, survives browser restarts ("Remember me" on)
+ *  - 'session' → sessionStorage, cleared when the tab/browser closes
+ */
+type AuthStorageArea = 'local' | 'session'
 
 const rawBase = import.meta.env.VITE_AUTH_API_BASE_URL || import.meta.env.VITE_API_URL || '/api'
 
@@ -39,6 +48,8 @@ export interface AuthUser {
   email?: string
   photoURL?: string
   roles?: string[]
+  /** Whether the account has an email/password credential (false for Google-only). */
+  hasPassword?: boolean
 }
 
 type AuthStateListener = (user: AuthUser | null) => void
@@ -74,18 +85,41 @@ try {
   }
 } catch { /* ignore */ }
 
-function getStoredAuth(): StoredAuth {
+function areaStorage(area: AuthStorageArea): Storage | null {
+  if (typeof window === 'undefined') return null
   try {
-    const d = localStorage.getItem(AUTH_STORAGE_KEY)
-    return d ? JSON.parse(d) : { accessToken: null, refreshToken: null, user: null }
+    return area === 'session' ? window.sessionStorage : window.localStorage
   } catch {
-    return { accessToken: null, refreshToken: null, user: null }
+    return null
   }
 }
 
-function storeAuth(data: StoredAuth) {
+/**
+ * Read the stored session together with the area it lives in, so every later
+ * write (token refresh, profile patch) lands back in the same place — a
+ * session-only sign-in must never silently become persistent.
+ */
+function readStoredAuthState(): { auth: StoredAuth; area: AuthStorageArea | null } {
+  for (const area of ['local', 'session'] as const) {
+    try {
+      const raw = areaStorage(area)?.getItem(AUTH_STORAGE_KEY)
+      if (raw) return { auth: JSON.parse(raw) as StoredAuth, area }
+    } catch {
+      /* unreadable copy — try the next area */
+    }
+  }
+  return { auth: { accessToken: null, refreshToken: null, user: null }, area: null }
+}
+
+function getStoredAuth(): StoredAuth {
+  return readStoredAuthState().auth
+}
+
+function storeAuth(data: StoredAuth, area: AuthStorageArea = 'local') {
   try {
-    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(data))
+    areaStorage(area)?.setItem(AUTH_STORAGE_KEY, JSON.stringify(data))
+    // Never leave a stale copy behind in the other area.
+    areaStorage(area === 'local' ? 'session' : 'local')?.removeItem(AUTH_STORAGE_KEY)
   } catch (e) {
     console.error('Failed to store auth:', e)
   }
@@ -96,6 +130,36 @@ function clearAuth() {
     localStorage.removeItem(AUTH_STORAGE_KEY)
   } catch {
     /* ignore */
+  }
+  try {
+    sessionStorage.removeItem(AUTH_STORAGE_KEY)
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Map a remember-me choice to its storage area (default: remembered). */
+function rememberArea(remember?: boolean): AuthStorageArea {
+  return remember === false ? 'session' : 'local'
+}
+
+/** Record the remember-me choice for flows that leave the page (Google OAuth). */
+export function setPendingRemember(remember: boolean): void {
+  try {
+    sessionStorage.setItem(AUTH_PENDING_REMEMBER_KEY, remember ? '1' : '0')
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Consume the pending remember-me choice; defaults to remembered. */
+export function consumePendingRemember(): boolean {
+  try {
+    const raw = sessionStorage.getItem(AUTH_PENDING_REMEMBER_KEY)
+    sessionStorage.removeItem(AUTH_PENDING_REMEMBER_KEY)
+    return raw !== '0'
+  } catch {
+    return true
   }
 }
 
@@ -147,10 +211,10 @@ export function getStoredAuthUser(): AuthUser | null {
 
 /** Merge a partial update into the locally stored user and notify listeners. */
 export function updateStoredAuthUser(patch: Partial<AuthUser>): void {
-  const auth = getStoredAuth()
+  const { auth, area } = readStoredAuthState()
   if (!auth.user) return
   const updated = { ...auth.user, ...patch }
-  storeAuth({ ...auth, user: updated })
+  storeAuth({ ...auth, user: updated }, area ?? 'local')
   notifyAuthStateChange(updated)
 }
 
@@ -217,7 +281,12 @@ async function authFetch(path: string, options: RequestInit = {}) {
   return payload
 }
 
-export async function signInWithEmail(email: string, password: string): Promise<AuthUser> {
+export async function signInWithEmail(
+  email: string,
+  password: string,
+  options: { remember?: boolean } = {},
+): Promise<AuthUser> {
+  const area = rememberArea(options.remember)
   if (isBackend) {
     const payload = await authFetch('/auth/login', {
       method: 'POST',
@@ -228,7 +297,7 @@ export async function signInWithEmail(email: string, password: string): Promise<
     const accessToken = payload.data?.accessToken || payload.accessToken
     const refreshToken = payload.data?.refreshToken || payload.refreshToken
 
-    storeAuth({ accessToken, refreshToken, user })
+    storeAuth({ accessToken, refreshToken, user }, area)
     notifyAuthStateChange(user)
     return user
   }
@@ -243,12 +312,18 @@ export async function signInWithEmail(email: string, password: string): Promise<
     email,
     name: email.split('@')[0],
   }
-  storeAuth({ accessToken: null, refreshToken: null, user })
+  storeAuth({ accessToken: null, refreshToken: null, user }, area)
   notifyAuthStateChange(user)
   return user
 }
 
-export async function registerWithEmail(name: string, email: string, password: string): Promise<AuthUser> {
+export async function registerWithEmail(
+  name: string,
+  email: string,
+  password: string,
+  options: { remember?: boolean } = {},
+): Promise<AuthUser> {
+  const area = rememberArea(options.remember)
   if (isBackend) {
     const payload = await authFetch('/auth/register', {
       method: 'POST',
@@ -259,7 +334,7 @@ export async function registerWithEmail(name: string, email: string, password: s
     const accessToken = payload.data?.accessToken || payload.accessToken
     const refreshToken = payload.data?.refreshToken || payload.refreshToken
 
-    storeAuth({ accessToken, refreshToken, user })
+    storeAuth({ accessToken, refreshToken, user }, area)
     notifyAuthStateChange(user)
     return user
   }
@@ -274,12 +349,17 @@ export async function registerWithEmail(name: string, email: string, password: s
     email,
     name,
   }
-  storeAuth({ accessToken: null, refreshToken: null, user })
+  storeAuth({ accessToken: null, refreshToken: null, user }, area)
   notifyAuthStateChange(user)
   return user
 }
 
-export async function signInWithGoogle(): Promise<{ redirected?: boolean } | AuthUser> {
+export async function signInWithGoogle(options: { remember?: boolean } = {}): Promise<{ redirected?: boolean } | AuthUser> {
+  const remember = options.remember !== false
+  // Persist the choice for the redirect round-trip (the page unloads before
+  // handleGoogleCallback stores the session).
+  setPendingRemember(remember)
+
   if (isBackend) {
     await new Promise((r) => setTimeout(r, 600))
     const origin = window.location.origin
@@ -298,12 +378,16 @@ export async function signInWithGoogle(): Promise<{ redirected?: boolean } | Aut
     name: 'Google User',
     photoURL: 'https://via.placeholder.com/150',
   }
-  storeAuth({ accessToken: null, refreshToken: null, user })
+  storeAuth({ accessToken: null, refreshToken: null, user }, rememberArea(remember))
   notifyAuthStateChange(user)
   return user
 }
 
-export async function signInWithGoogleOneTap(credential: string): Promise<AuthUser> {
+export async function signInWithGoogleOneTap(
+  credential: string,
+  options: { remember?: boolean } = {},
+): Promise<AuthUser> {
+  const area = rememberArea(options.remember)
   if (isBackend) {
     const payload = await authFetch('/auth/google/onetap', {
       method: 'POST',
@@ -314,7 +398,7 @@ export async function signInWithGoogleOneTap(credential: string): Promise<AuthUs
     const accessToken = payload.data?.accessToken || payload.accessToken
     const refreshToken = payload.data?.refreshToken || payload.refreshToken
 
-    storeAuth({ accessToken, refreshToken, user })
+    storeAuth({ accessToken, refreshToken, user }, area)
     notifyAuthStateChange(user)
     return user
   }
@@ -329,7 +413,7 @@ export async function signInWithGoogleOneTap(credential: string): Promise<AuthUs
     email: 'user@gmail.com',
     name: 'Google User',
   }
-  storeAuth({ accessToken: null, refreshToken: null, user })
+  storeAuth({ accessToken: null, refreshToken: null, user }, area)
   notifyAuthStateChange(user)
   return user
 }
@@ -372,7 +456,8 @@ export async function refreshAuthToken(): Promise<string | null> {
   if (refreshPromise) return refreshPromise
 
   refreshPromise = (async () => {
-    const { refreshToken } = getStoredAuth()
+    const { auth: storedAuth, area } = readStoredAuthState()
+    const { refreshToken } = storedAuth
     if (!refreshToken) {
       clearAuth()
       notifyAuthStateChange(null)
@@ -387,9 +472,9 @@ export async function refreshAuthToken(): Promise<string | null> {
 
       const newAccessToken = payload.data?.accessToken || payload.accessToken
       const newRefreshToken = payload.data?.refreshToken || payload.refreshToken
-      const auth = getStoredAuth()
-
-      storeAuth({ accessToken: newAccessToken, refreshToken: newRefreshToken, user: auth.user })
+      // Preserve the session's own area: a session-only sign-in must stay
+      // session-only after a token refresh.
+      storeAuth({ accessToken: newAccessToken, refreshToken: newRefreshToken, user: storedAuth.user }, area ?? 'local')
 
       return newAccessToken
     } catch (error) {
@@ -430,8 +515,8 @@ export async function refreshStoredUserFromBackend(): Promise<AuthUser | null> {
 
     const user = payload?.data?.user ?? payload?.data ?? null
     if (user) {
-      const auth = getStoredAuth()
-      storeAuth({ ...auth, user })
+      const { auth, area } = readStoredAuthState()
+      storeAuth({ ...auth, user }, area ?? 'local')
       notifyAuthStateChange(user)
       return user
     }
@@ -473,6 +558,37 @@ export function getAccessTokenExpiryMs(): number | null {
   return decoded.exp * 1000
 }
 
+/**
+ * Set (or replace) the signed-in account's password.
+ *
+ * Social-login accounts (Google) are created without a password, so
+ * `currentPassword` is only needed when one already exists — the backend
+ * enforces that. On success the stored user is updated in place so
+ * `hasPassword` reflects reality without a second round trip.
+ */
+export async function setAccountPassword(
+  newPassword: string,
+  currentPassword?: string,
+): Promise<AuthUser> {
+  const token = await getAuthToken()
+  if (!token) {
+    throw new Error('You need to be signed in to set a password.')
+  }
+
+  const payload = await authFetch('/auth/set-password', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ newPassword, ...(currentPassword ? { currentPassword } : {}) }),
+  })
+
+  const updated: AuthUser = payload?.data?.user ?? payload?.user ?? { hasPassword: true }
+  const { auth, area } = readStoredAuthState()
+  const user = { ...(auth.user ?? {}), ...updated, hasPassword: true }
+  storeAuth({ ...auth, user }, area ?? 'local')
+  notifyAuthStateChange(user)
+  return user
+}
+
 /** True if a stored access token exists and has not yet expired. */
 export function isSessionValid(): boolean {
   const { accessToken } = getStoredAuth()
@@ -488,12 +604,15 @@ export async function handleGoogleCallback(): Promise<boolean> {
   const refreshToken = params.get('refreshToken')
   if (!accessToken || !refreshToken) return false
 
+  // Honor the remember-me choice made before the redirect (default: remembered).
+  const area = rememberArea(consumePendingRemember())
+
   const auth = getStoredAuth()
-  storeAuth({ ...auth, accessToken, refreshToken })
+  storeAuth({ ...auth, accessToken, refreshToken }, area)
 
   try {
     const user = await fetchCurrentUser(accessToken)
-    storeAuth({ accessToken, refreshToken, user })
+    storeAuth({ accessToken, refreshToken, user }, area)
     notifyAuthStateChange(user)
   } catch {
     const payload = decodeJwtPayload(accessToken)
@@ -501,7 +620,7 @@ export async function handleGoogleCallback(): Promise<boolean> {
     const fallbackUser: AuthUser = userId
       ? { id: String(userId), email: payload?.email ? String(payload.email) : undefined, name: payload?.name ? String(payload.name) : undefined }
       : {}
-    storeAuth({ accessToken, refreshToken, user: fallbackUser })
+    storeAuth({ accessToken, refreshToken, user: fallbackUser }, area)
     notifyAuthStateChange(fallbackUser)
   }
 

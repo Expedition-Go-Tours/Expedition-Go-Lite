@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-import { AnimatePresence, motion, type Variants } from 'framer-motion'
 import { tourPath } from '../lib/tourPath'
+import { AnimatePresence, motion, type Variants } from 'framer-motion'
 import { toast } from 'sonner'
-import { Globe, Megaphone, ChevronRight, LogIn, LogOut, DollarSign, Bell, Settings } from 'lucide-react'
+import { Globe, Megaphone, LayoutDashboard, ChevronRight, LogIn, LogOut, DollarSign, Bell, Settings } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import i18n from '../i18n/config'
 import { useCurrency } from '../contexts/CurrencyContext'
+import OptimizedImage from './shared/OptimizedImage'
 import logoSrc from '../assets/expo_trans.png'
 import userSrc from '../assets/icons/User Circle.png'
 import { subscribeToAuthState, signOutUser, getStoredAuthUser, type AuthUser } from '../lib/auth'
@@ -51,10 +52,33 @@ interface NavbarProps {
   onOpenAuth?: (mode: 'signin' | 'signup') => void
 }
 
+/**
+ * Hand an approved supplier off to their own dashboard in a new tab, leaving the
+ * storefront open behind it. They left to do work in the portal, not to keep
+ * browsing, and a same-tab load left them with no way back but the back button.
+ *
+ * The opener is severed by hand rather than with the `noopener` window feature
+ * the rest of the app passes: `noopener` makes `window.open` return null on
+ * success too, which would make the blocked-popup branch below fire every time
+ * and bounce the portal into the same tab. The null return is reserved for
+ * "a blocker refused us", and then a same-tab load beats a dead click.
+ */
+function openPortalInNewTab(url: string) {
+  const tab = window.open(url, '_blank')
+  if (tab) {
+    tab.opener = null
+    return
+  }
+  window.location.assign(url)
+}
+
 export default function Navbar({ onOpenAuth }: NavbarProps) {
   const navigate = useNavigate()
   const location = useLocation()
-  const isTourDetailPage = location.pathname.startsWith('/tour')
+  // '/tour/<id>[/<slug>]' only — '/tours' (All Tours) starts with '/tour' too
+  // but has its own 1400px content column, so it must not inherit the
+  // tour-detail navbar column (1520px) and end up misaligned.
+  const isTourDetailPage = location.pathname.startsWith('/tour/')
   const [user, setUser] = useState<AuthUser | null>(getStoredAuthUser)
   const [searchBarSticky, setSearchBarSticky] = useState(false)
   // The tinted "over the hero" navbar is only for the homepage at the very top
@@ -77,6 +101,9 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
   }
   const [signingOut, setSigningOut] = useState(false)
   const [langCurrencyOpen, setLangCurrencyOpen] = useState(false)
+  // Which tab the shared picker opens on — the globe defaults to language, the
+  // mobile menu rows pick their own.
+  const [pickerTab, setPickerTab] = useState<'language' | 'currency'>('language')
   const dropdownRef = useRef<HTMLDivElement>(null)
   const { t } = useTranslation()
   const { currency } = useCurrency()
@@ -271,19 +298,26 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
 
   // Navbar "List an Experience" CTA (desktop).
   //
-  // Approved suppliers go straight into the supplier platform via SSO;
-  // everyone else (signed out, no application yet, or under review) lands on
-  // the "Join as a Supplier" page, which renders either the application form
+  // Approved suppliers go straight into the supplier platform via SSO, in a new
+  // tab; everyone else (signed out, no application yet, or under review) lands
+  // on the "Join as a Supplier" page, which renders either the application form
   // or the current application status.
   const handleListExperience = useCallback(async () => {
     if (isApproved) {
+      // Resolved from the profile we already hold, so this settles in a
+      // microtask and the click's user activation is still live by the time
+      // openPortalInNewTab runs — which is what stops a popup blocker from
+      // swallowing the click before the fallback can notice.
       const portalUrl = await getSupplierPortalUrl(supplierProfile)
       if (portalUrl) {
-        window.location.assign(portalUrl)
+        openPortalInNewTab(portalUrl)
         return
       }
     }
-    navigate('/supplier/register')
+    // Send the CTA to the public marketing page (navbar visible, no form).
+    // Applying is a deliberate second step from there: its CTAs go to
+    // /supplier/register, the focused application page (navbar stays visible).
+    navigate('/supplier/list-experience')
   }, [isApproved, supplierProfile, navigate])
 
   // Warm the supplier application chunk so the CTA opens instantly — fired on
@@ -462,7 +496,7 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
       <div className="nav-left">
         <div className="nav-logo">
           <a href="/" onClick={(e) => { e.preventDefault(); navigate('/') }}>
-            <img src={logoSrc} alt="Expedition-GO" className="nav-logo-img" />
+            <img src={logoSrc} alt="Expedition-Go Tours" className="nav-logo-img" />
           </a>
         </div>
       </div>
@@ -599,7 +633,19 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
                         >
                           {suggestion.kind === 'tour' && suggestion.image ? (
                             <div className="search-suggestion-thumb">
-                              <img src={suggestion.image} alt="" loading="lazy" />
+                              {/* The search payload carries the full-size photo. Without
+                                  a CDN transform a 40px thumb downloads the whole
+                                  original (up to ~370KB); this requests an 84×84 crop. */}
+                              <OptimizedImage
+                                src={suggestion.image}
+                                alt=""
+                                width={42}
+                                height={42}
+                                fit="fill"
+                                gravity="auto"
+                                sizes="42px"
+                                loading="eager"
+                              />
                             </div>
                           ) : (
                             <div className="search-suggestion-icon-wrap">
@@ -633,12 +679,17 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
       <div className="nav-right">
         <a href="#" className="nav-list-experience" onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleListExperience() }} onPointerEnter={prefetchSupplierRoutes} onFocus={prefetchSupplierRoutes}>
           <span className="nav-list-experience-icon">
-            <Megaphone size={15} strokeWidth={2.1} />
+            {/* Approved suppliers open their own portal, not the marketing page —
+                the icon switches with the label instead of reusing the
+                "List an Experience" megaphone. */}
+            {isApproved
+              ? <LayoutDashboard size={15} strokeWidth={2.1} />
+              : <Megaphone size={15} strokeWidth={2.1} />}
           </span>
           <span className="nav-list-experience-label">{isApproved ? t('nav.supplierDashboard') : t('nav.listAnExperience', 'List an Experience')}</span>
         </a>
 
-        <div className="nav-icon-item nav-globe-trigger" onClick={() => setLangCurrencyOpen(true)}>
+        <div className="nav-icon-item nav-globe-trigger" onClick={() => { setPickerTab('language'); setLangCurrencyOpen(true) }}>
           <Globe size={20} />
           <span className="nav-icon-label">{i18n.language.substring(0, 2).toUpperCase()} | {currency.code}</span>
         </div>
@@ -874,11 +925,28 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
               <Bell size={18} />
               {t('nav.updates', 'Updates')}
             </div>
-            <div className="nav-mobile-link" onClick={() => setSubDrawerTab('language')}>
+            {/* Both rows open the same centred picker as the desktop globe.
+                They used to open MobileSubDrawer, a second full-screen
+                implementation of the same two lists. */}
+            <div
+              className="nav-mobile-link"
+              onClick={() => {
+                setMobileMenuOpen(false)
+                setPickerTab('language')
+                setLangCurrencyOpen(true)
+              }}
+            >
               <Globe size={18} />
               {t('nav.language')}
             </div>
-            <div className="nav-mobile-link" onClick={() => setSubDrawerTab('currency')}>
+            <div
+              className="nav-mobile-link"
+              onClick={() => {
+                setMobileMenuOpen(false)
+                setPickerTab('currency')
+                setLangCurrencyOpen(true)
+              }}
+            >
               <DollarSign size={18} />
               {t('nav.currency')}
             </div>
@@ -901,7 +969,9 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
 
             <a href="#" className="nav-mobile-list-experience" onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleMobileListExperience() }} onPointerEnter={prefetchSupplierRoutes} onFocus={prefetchSupplierRoutes}>
               <span className="nav-mobile-list-experience-icon">
-                <Megaphone size={19} strokeWidth={2} />
+                {isApproved
+                  ? <LayoutDashboard size={19} strokeWidth={2} />
+                  : <Megaphone size={19} strokeWidth={2} />}
               </span>
               <span className="nav-mobile-list-experience-text">
                 <span className="nav-mobile-list-experience-title">{isApproved ? t('nav.supplierDashboard') : t('nav.listAnExperience', 'List an Experience')}</span>
@@ -909,6 +979,28 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
               </span>
               <ChevronRight size={18} className="nav-mobile-list-experience-chevron" />
             </a>
+
+            {/* Mirrors the desktop avatar-dropdown item. The dropdown lives in
+                .nav-icons, which is hidden below 1024px, so without this row a
+                phone user with an active region search had no way back to the
+                unpersonalised homepage. */}
+            {hasActiveSearch && (
+              <div
+                className="nav-mobile-link"
+                onClick={() => {
+                  resetLocation()
+                  clearContinuePlanning()
+                  setMobileMenuOpen(false)
+                  navigate('/')
+                }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                  <path d="M3 3v5h5" />
+                </svg>
+                {t('nav.resetToDefault', { defaultValue: 'Reset to default' })}
+              </div>
+            )}
 
             <div className="nav-mobile-divider" />
             {user && (
@@ -939,7 +1031,9 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
       </AnimatePresence>
 
       <AnimatePresence>
-        {langCurrencyOpen && <LanguageCurrencyModal onClose={() => setLangCurrencyOpen(false)} />}
+        {langCurrencyOpen && (
+          <LanguageCurrencyModal initialTab={pickerTab} onClose={() => setLangCurrencyOpen(false)} />
+        )}
       </AnimatePresence>
 
       <MobileSubDrawer

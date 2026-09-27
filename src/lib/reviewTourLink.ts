@@ -61,6 +61,12 @@ export function buildTourLink(destination: string | null): string {
 export interface MatchableTour {
   title: string
   location?: string | null
+  /**
+   * Operator of the tour. Title matching itself ignores it, but scraped
+   * TripAdvisor / GetYourGuide reviews are only ever attributed to the supplier
+   * whose listings were scraped — see `isScrapedReviewSupplier`.
+   */
+  supplierName?: string | null
 }
 
 /**
@@ -179,7 +185,7 @@ function aliasSimilarity(normalizedReview: string, tour: MatchableTour): number 
  * Map an external review's platform title ("the various titles" scraped from
  * TripAdvisor / GetYourGuide) to the single best-matching tour. Returns null
  * when nothing clears the threshold (e.g. business-level Google rows titled
- * "Expedition-Go Tours LTD").
+ * "Travio Ghana LTD").
  *
  * Order of preference: exact normalized title, token overlap, then the
  * attraction-keyword fallback.

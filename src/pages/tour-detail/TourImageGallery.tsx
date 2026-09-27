@@ -18,6 +18,18 @@ interface TourImageGalleryProps {
 
 type Size = { w: number; h: number }
 
+/**
+ * The mosaic height follows the booking card, which settles in small steps
+ * while the pricing state changes. Snapping the measured tile height to 40px
+ * buckets keeps the Cloudinary transform URL stable across those steps
+ * (e.g. 469–496px all crop at 480), so a few pixels of movement never
+ * re-downloads every photo; `object-fit: cover` absorbs the difference.
+ */
+const TILE_HEIGHT_BUCKET = 40
+function snapTileHeight(height: number): number {
+  return Math.max(TILE_HEIGHT_BUCKET, Math.round(height / TILE_HEIGHT_BUCKET) * TILE_HEIGHT_BUCKET)
+}
+
 interface Column {
   key: string
   grow: number
@@ -27,20 +39,21 @@ interface Column {
 }
 
 /**
- * GetYourGuide's desktop mosaic geometry (`@media (min-width:768px)`):
- * left 20% / centre 54% / right column takes the remainder.
+ * Desktop mosaic geometry (mockup): the cover photo takes the large hero tile
+ * on the left (~2/3 of the width) and a right column takes the remainder with
+ * the next photos stacked as equal tiles. 4px gaps, 12px outer radius.
  */
-const LEFT_COLUMN = { grow: 0, shrink: 0, basis: '20%' }
-const CENTER_COLUMN = { grow: 0, shrink: 0, basis: '54%' }
-const RIGHT_COLUMN = { grow: 1, shrink: 1, basis: '0%' }
+const HERO_COLUMN = { grow: 0, shrink: 0, basis: '68%' }
+const STACK_COLUMN = { grow: 1, shrink: 1, basis: '0%' }
 
 /**
- * Same proportions as GetYourGuide, degraded gracefully for short galleries:
- *   4+ → left 20% / centre 54% / right column (two stacked tiles)
- *   3  → left 20% / centre 54% / right (one full-height tile)
+ * Same proportions at every count, degraded gracefully for short galleries:
+ *   4+ → hero (cover) + right column with three stacked tiles (any extra
+ *        photos stay in the lightbox, reachable via "View all N photos")
+ *   3  → hero (cover) + right column with two stacked tiles
  *   2  → two half-width tiles
  *   1  → one full-width tile
- * The cover photo (index 0) always takes the large centre tile.
+ * The cover photo (index 0) always takes the hero tile.
  */
 function buildColumns(count: number): Column[] {
   if (count <= 0) return []
@@ -53,15 +66,13 @@ function buildColumns(count: number): Column[] {
   }
   if (count === 3) {
     return [
-      { key: 'left', ...LEFT_COLUMN, indexes: [1] },
-      { key: 'center', ...CENTER_COLUMN, indexes: [0] },
-      { key: 'right', ...RIGHT_COLUMN, indexes: [2] },
+      { key: 'hero', ...HERO_COLUMN, indexes: [0] },
+      { key: 'stack', ...STACK_COLUMN, indexes: [1, 2] },
     ]
   }
   return [
-    { key: 'left', ...LEFT_COLUMN, indexes: [1] },
-    { key: 'center', ...CENTER_COLUMN, indexes: [0] },
-    { key: 'right', ...RIGHT_COLUMN, indexes: [2, 3] },
+    { key: 'hero', ...HERO_COLUMN, indexes: [0] },
+    { key: 'stack', ...STACK_COLUMN, indexes: [1, 2, 3] },
   ]
 }
 
@@ -91,7 +102,7 @@ export default function TourImageGallery({ images, title, fallbackImage, onBack,
       const rect = el.getBoundingClientRect()
       const w = Math.round(rect.width)
       const h = Math.round(rect.height)
-      if (w > 0 && h > 0) next[index] = { w, h }
+      if (w > 0 && h > 0) next[index] = { w, h: snapTileHeight(h) }
     }
     setTileSizes((prev) => {
       const same =
@@ -279,10 +290,9 @@ export default function TourImageGallery({ images, title, fallbackImage, onBack,
           )}
         </div>
 
-        {/* Back button overlaid on the hero. Desktop (≥1025px) gets one in the
-            breadcrumb strip instead; below that the breadcrumb is hidden, so
-            this is the only back affordance until the sticky bar slides in —
-            at which point `hideBack` retires it so two never show at once. */}
+        {/* The page's primary back affordance: a bare left arrow on a round
+            white button, top-left of the gallery. Once the sticky title/tabs
+            slide in, `hideBack` retires it so two backs never show at once. */}
         {onBack && !hideBack && (
           <button
             type="button"
@@ -294,7 +304,8 @@ export default function TourImageGallery({ images, title, fallbackImage, onBack,
           </button>
         )}
 
-        {/* GetYourGuide "Show all photos" — absolute, 24px inset */}
+        {/* "View all photos" — bottom-right of the gallery (above the mobile
+            pagination dots). */}
         {images.length > 0 && (
           <button
             type="button"

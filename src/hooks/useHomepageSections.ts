@@ -166,7 +166,7 @@ export function useHomepage({ enabled = true } = {}) {
         topRated: applyOffersById(await enrichTourBadgeFields(data.topRated), byId),
         sellOut: applyOffersById(await enrichTourBadgeFields(data.sellOut), byId),
         trending: applyOffersById(await enrichTourBadgeFields(data.trending), byId),
-        new: applyOffersById(await enrichTourBadgeFields(data.new), byId),
+        new: applyOffersById(await enrichTourBadgeFields(newRowsOf(data)), byId),
         offers: await enrichTourBadgeFields(data.offers),
       }
     },
@@ -176,6 +176,16 @@ export function useHomepage({ enabled = true } = {}) {
 }
 
 // â”€â”€â”€ Fetcher â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+/**
+ * The unified homepage payload names this slice `newExperiences` while the
+ * client type (and every section) calls it `new` — normalise both spellings so
+ * a scoped section can render the rows the API actually sent instead of always
+ * falling back to its own global request.
+ */
+function newRowsOf(data: HomepageData & { newExperiences?: HomepageTour[] }): HomepageTour[] {
+  return data.newExperiences ?? data.new ?? []
+}
 
 async function fetchHomepageSection<T>(path: string): Promise<T> {
   const res = await fetchWithAuth(`/homepage${path}`)
@@ -360,7 +370,7 @@ export function useAttractionTours(attractionName: string | null, limit = 12) {
 }
 
 /**
- * Mood Keywords â€” dynamic keywords for "What do you want to explore?"
+ * Mood Keywords â€” dynamic keywords for "What do you want to do?"
  */
 export function useMoodKeywords(limit = 8, enabled = true) {
   return useQuery({
@@ -460,6 +470,7 @@ export function mapToTourCard(t: HomepageTour): TourCardData {
     id: t.id,
     title: t.title,
     slug: t.slug,
+    supplierName: t.supplier?.name ?? null,
     category: t.category || '',
     duration: durationStr,
     features: t.tags?.join(', ') || '',
@@ -508,7 +519,7 @@ export function useHomepageByCity(city: string | null) {
         topRated: applyOffersById(await enrichTourBadgeFields(data.topRated), byId),
         sellOut: applyOffersById(await enrichTourBadgeFields(data.sellOut), byId),
         trending: applyOffersById(await enrichTourBadgeFields(data.trending), byId),
-        new: applyOffersById(await enrichTourBadgeFields(data.new), byId),
+        new: applyOffersById(await enrichTourBadgeFields(newRowsOf(data)), byId),
         offers: await enrichTourBadgeFields(data.offers),
         city: data.city || city,
       }
@@ -523,6 +534,11 @@ export function useHomepageByCity(city: string | null) {
  * the homepage search-history rails ("Continue your search in X" / "Previously
  * searched in Y"). Only fetches when a city is provided. The backend cache key
  * is anonymous + per-city, so the result is shared across users.
+ *
+ * The API returns the place's own tours plus a nearby rail (`backfill.tours`).
+ * Ignoring the rail left a region with little supply showing one or two cards,
+ * so nearby experiences now continue the rail — local rows first, then the
+ * fill, without repeating a card.
  */
 export function useCityRecommended(city: string | null, limit = 12) {
   return useQuery({
@@ -530,8 +546,13 @@ export function useCityRecommended(city: string | null, limit = 12) {
     queryFn: async () => {
       const params = new URLSearchParams({ limit: String(limit) })
       if (city) params.set('city', city)
-      const data = await fetchHomepageSection<{ tours: HomepageTour[] }>(`/recommended?${params}`)
-      return enrichTourBadgeFields(data.tours)
+      const data = await fetchHomepageSection<{ tours: HomepageTour[]; backfill?: HomepageBackfill | null }>(
+        `/recommended?${params}`
+      )
+      const local = await enrichTourBadgeFields(data.tours ?? [])
+      const localIds = new Set(local.map((t) => t.id))
+      const nearby = (data.backfill?.tours ?? []).filter((t) => !localIds.has(t.id))
+      return enrichTourBadgeFields([...local, ...nearby].slice(0, limit))
     },
     enabled: !!city,
     staleTime: 5 * 60 * 1000,

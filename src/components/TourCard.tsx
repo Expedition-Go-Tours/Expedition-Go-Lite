@@ -13,7 +13,7 @@ import FormattedPrice from './FormattedPrice'
 import { getCategoryMeta } from './categoryMeta'
 import OptimizedImage from '@/components/shared/OptimizedImage'
 import type { SpecialOfferData } from '../hooks/useExpeditionTours'
-import { bestOfferDiscountAmount, hasActiveOffer } from '../hooks/useExpeditionTours'
+import { bestOfferDiscountAmount, filterActiveOffers } from '../hooks/useExpeditionTours'
 import { useCombinedTourStats } from '../hooks/useExternalReviews'
 import { shouldIdlePrefetch } from '../lib/perfProfile'
 
@@ -64,24 +64,35 @@ interface TourCardProps extends Tour {
   bodyOfferBadgesOnMobile?: boolean
   /** Mark the card's first image as the LCP (eager + fetchpriority=high). */
   priority?: boolean
+  /** Override the responsive `sizes` descriptor. The default assumes a ~50vw
+      card; grids with a different column width (e.g. the 4-column search
+      results) pass their own so the browser picks the right srcSet candidate. */
+  sizes?: string
   /** Open the tour in a new tab instead of SPA navigation. Defaults to true —
       every tour click keeps the current page; pass false to opt a surface
       back into same-tab routing. */
   openInNewTab?: boolean
 }
 
-export default function TourCard({ id, title, duration, features, price, rating, reviews, location, image, photos, discount, difficulty, cancellationPolicy, pickupIncluded, accommodationIncluded, meetingMode, category, languages, source, externalUrl, slug, isNew, hideSourceBadge, hideFeatures, imageClean, priceValue, specialOffers, likelyToSellOut, hideOfferBadge, compactDurationOnMobile, bodyOfferBadgesOnMobile, priority, openInNewTab = true }: TourCardProps) {
+export default function TourCard({ id, title, duration, features, price, rating, reviews, location, image, photos, discount, difficulty, cancellationPolicy, pickupIncluded, accommodationIncluded, meetingMode, category, languages, source, externalUrl, slug, supplierName, isNew, hideSourceBadge, hideFeatures, imageClean, priceValue, specialOffers, likelyToSellOut, hideOfferBadge, compactDurationOnMobile, bodyOfferBadgesOnMobile, priority, sizes, openInNewTab = true }: TourCardProps) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist()
   const { isLikelyToSellOut } = useSellOutContext()
   const showSellOutTag = likelyToSellOut || isLikelyToSellOut({ id, title })
-  const item = toWishlistItem({ id, title, duration, features, price, rating: String(rating), reviews, location, image, source, externalUrl, slug } as Tour & { slug?: string })
+  // Snapshot everything the card is showing — highlight line, badges, photos
+  // and promo state — so the wishlist card renders exactly like this one did.
+  const item = toWishlistItem({
+    id, title, duration, features, price, rating: String(rating), reviews, location,
+    image, photos, discount, difficulty, cancellationPolicy, pickupIncluded,
+    accommodationIncluded, meetingMode, category, languages, source, externalUrl,
+    slug, supplierName, priceValue, specialOffers,
+  } as Tour & { slug?: string })
   const inWishlist = isInWishlist(item.id)
   // Headline stats include the scraped TripAdvisor/GetYourGuide reviews matched
   // to this product, so the card agrees with the tour detail page. The stored
   // wishlist item above keeps the raw in-app stats (re-combined on display).
-  const combinedStats = useCombinedTourStats({ title, location, rating, reviewCount: reviews })
+  const combinedStats = useCombinedTourStats({ title, location, supplierName, rating, reviewCount: reviews })
   const displayRating = combinedStats.reviewCount > 0 ? combinedStats.rating.toFixed(1) : (rating || '0')
   const displayReviewCount = combinedStats.reviewCount > 0 ? combinedStats.reviewCount : reviews
   const [isMobile, setIsMobile] = useState(
@@ -143,6 +154,9 @@ export default function TourCard({ id, title, duration, features, price, rating,
     e.stopPropagation()
     if (inWishlist) {
       removeFromWishlist(item.id)
+      // Symmetric with the add toast below: the card leaves the page silently
+      // otherwise, and the wishlist page used to confirm every removal.
+      toast.success(i18n.t('common.removedFromWishlist'))
     } else {
       addToWishlist(item)
       toast.success(i18n.t('common.addedToWishlist'))
@@ -202,15 +216,16 @@ export default function TourCard({ id, title, duration, features, price, rating,
     }
   }
 
+  // Canonical /tour/{id}/{slug} — see lib/tourPath. Static/mock cards have no
+  // id, so they keep the slug-only form the route still resolves.
+  const url = tourPath(id, tourSlug)
+
   const handleCardClick = (event?: React.MouseEvent) => {
     // A horizontal swipe on the image ends with a click — don't navigate.
     if (swipeJustHappened.current) {
       swipeJustHappened.current = false
       return
     }
-    // Canonical /tour/{id}/{slug} — see lib/tourPath. Static/mock cards have no
-    // id, so they keep the slug-only form the route still resolves.
-    const url = tourPath(id, tourSlug)
     // Modifier/middle clicks keep their browser meaning: open a new tab.
     const wantsNewTab = openInNewTab
       || (event != null && (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button === 1))
@@ -221,7 +236,32 @@ export default function TourCard({ id, title, duration, features, price, rating,
     navigate(url)
   }
 
+  // The card body must stay a <div>: it hosts the wishlist/carousel buttons,
+  // and interactive content isn't allowed inside a link. So the *title* carries
+  // the crawlable <a href="/tour/{id}/{slug}"> — one real hyperlink per card,
+  // which is what crawlers follow. Clicks on it stop at the title (otherwise
+  // both this handler and the card's would fire and open two tabs); everything
+  // outside the title keeps the original div behaviour above.
+  const handleTitleClick = (event: React.MouseEvent) => {
+    event.stopPropagation()
+    if (swipeJustHappened.current) {
+      swipeJustHappened.current = false
+      event.preventDefault()
+      return
+    }
+    if (openInNewTab) return // target="_blank" already opens the new tab
+    // Modifier clicks keep the browser's own new-tab behaviour; only a plain
+    // click is re-routed through the SPA so it doesn't reload the app.
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button === 1) return
+    event.preventDefault()
+    navigate(url)
+  }
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    // Key presses raised inside a nested control (the title link, wishlist,
+    // carousel arrows) belong to that control — handling them here as well
+    // would navigate the card on top of the control's own activation.
+    if (e.target !== e.currentTarget) return
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault()
       handleCardClick()
@@ -232,33 +272,51 @@ export default function TourCard({ id, title, duration, features, price, rating,
   // (specialOffers) or a percentage discount label ("-30%") applies, derive
   // the promo price down from it so the card can show `~~$240~~` + `$96`.
   const originalPrice = priceValue ?? parsePrice(price)
+  // Persisted snapshots (e.g. a saved wishlist item) can outlive the offer's
+  // date window, so only offers that are live right now may discount the
+  // price or raise the badge. Live API payloads arrive pre-filtered, so this
+  // changes nothing there.
+  const liveOffers = useMemo(() => filterActiveOffers(specialOffers), [specialOffers])
+  const hasOfferList = Array.isArray(specialOffers) && specialOffers.length > 0
   const promoPrice = useMemo(() => {
     if (!Number.isFinite(originalPrice) || originalPrice <= 0) return null
     // Supplier offers first: exact discount math (percent or fixed amount) so
     // the card matches the booking widget to the cent. The rounded "-30%"
     // label chip is display-only and would drift on fixed-amount offers.
-    if (Array.isArray(specialOffers) && specialOffers.length > 0) {
-      const best = bestOfferDiscountAmount(specialOffers, originalPrice)
+    if (liveOffers.length > 0) {
+      const best = bestOfferDiscountAmount(liveOffers, originalPrice)
       const promo = originalPrice - best
       return best > 0 && promo > 0 && promo < originalPrice ? promo : null
     }
+    // Offers exist but none is live: the offer expired and the "-30%" label
+    // captured alongside it is equally stale — never resurrect a promo from
+    // the label alone.
+    if (hasOfferList) return null
     const pct = discount?.match(/-?\s*(\d+(?:\.\d+)?)\s*%/)
     if (pct) {
       const promo = originalPrice * (1 - parseFloat(pct[1]) / 100)
       return promo > 0 && promo < originalPrice ? promo : null
     }
     return null
-  }, [originalPrice, discount, specialOffers])
+  }, [originalPrice, discount, liveOffers, hasOfferList])
 
   // The "Special Offer" tag renders whenever the tour currently carries a
   // live supplier offer (started, not yet ended).
-  const showOfferBadge = hasActiveOffer(specialOffers)
+  const showOfferBadge = liveOffers.length > 0
+  // A discount label backed by an offer list only shows while its offer is
+  // live; labels on tours with no offer data are trusted as-is.
+  const showDiscountLabel = !!discount && (!hasOfferList || showOfferBadge)
 
   return (
     <div
       className={`tour-card${imageClean ? ' tour-card-clean' : ''}`}
       onClick={handleCardClick}
-      onAuxClick={(e) => { if (e.button === 1) handleCardClick(e) }}
+      onAuxClick={(e) => {
+        // Middle-clicking the title link opens its href natively — don't add a
+        // second window.open on top of it.
+        if ((e.target as HTMLElement).closest?.('a')) return
+        if (e.button === 1) handleCardClick(e)
+      }}
       onKeyDown={handleKeyDown}
       onMouseEnter={warmTourRouteChunk}
       onFocus={warmTourRouteChunk}
@@ -296,7 +354,7 @@ export default function TourCard({ id, title, duration, features, price, rating,
             return (
               <div key={`${src}-${i}`} className={`tour-card-slide${isActive ? ' tour-card-slide-active' : ''}`}>
                 {shouldLoad ? (
-                  <OptimizedImage src={src} alt={title} width={600} height={400} fit="crop" loading={priority && i === 0 ? 'eager' : 'lazy'} priority={priority && i === 0} />
+                  <OptimizedImage src={src} alt={title} width={600} height={400} fit="crop" sizes={sizes} loading={priority && i === 0 ? 'eager' : 'lazy'} priority={priority && i === 0} />
                 ) : null}
               </div>
             )
@@ -370,9 +428,18 @@ export default function TourCard({ id, title, duration, features, price, rating,
             </svg>
             {location}
           </span>
-          {discount && <span className="tour-card-discount">{discount}</span>}
+          {showDiscountLabel && <span className="tour-card-discount">{discount}</span>}
         </div>
-        <h3 className="tour-card-title" title={title}>{title}</h3>
+        <h3 className="tour-card-title" title={title}>
+          <a
+            href={url}
+            target={openInNewTab ? '_blank' : undefined}
+            rel={openInNewTab ? 'noopener' : undefined}
+            onClick={handleTitleClick}
+          >
+            {title}
+          </a>
+        </h3>
         <div className="tour-card-meta">
           {meetingMode === 'meeting_point' ? (
             <span className="tour-card-badge tour-card-badge-meeting">

@@ -190,6 +190,12 @@ export interface TourCardData {
   source: 'expedition-go' | 'travio-africa'
   externalUrl?: string
   slug: string
+  /**
+   * Operator of the tour (API `supplierName`). Scraped TripAdvisor /
+   * GetYourGuide reviews are only attributed to the supplier whose listings
+   * were scraped — see lib/supplierIdentity.
+   */
+  supplierName?: string | null
   languages?: string[]
   difficulty?: string
   cancellationPolicy?: string
@@ -1096,7 +1102,7 @@ function mapToListing(tour: ExpeditionTourRecord['tour']): TourCardData {
   const effectivePrice = extractStartingPriceFromRaw(tour.schedulesAndPricing) ?? tour.startingPrice
   // Cards show only the single Step 1 content language, not every
   // per-option language merged in — see extractContentLanguage().
-  // The curated /expedition/tours select never includes productContent,
+  // The curated /travioghana/tours select never includes productContent,
   // so prefer the already-enriched tour.languages (backfilled from the
   // full /tours listing by enrichExpeditionRecords) and only fall back to
   // reading productContent directly when it's actually present on `tour`.
@@ -1133,6 +1139,7 @@ function mapToListing(tour: ExpeditionTourRecord['tour']): TourCardData {
     source: isExternal ? 'travio-africa' : 'expedition-go',
     externalUrl: isExternal ? (tour.externalUrl || undefined) : undefined,
     slug: tour.slug,
+    supplierName: tour.supplierName ?? null,
     languages: languages.length ? languages : undefined,
     difficulty: extractDifficultyFromTour(tour) || undefined,
     cancellationPolicy: extractCancellationFromTour(tour) || undefined,
@@ -1166,7 +1173,7 @@ export interface ExpeditionToursFilters {
 }
 
 /**
- * The curated /expedition/tours endpoint only selects a handful of
+ * The curated /travioghana/tours endpoint only selects a handful of
  * top-level Tour columns (city, country, category, etc.), which are
  * frequently null — the real values live inside the productContent /
  * categorization / bookingAndTickets JSON blobs, which that endpoint
@@ -1214,7 +1221,7 @@ async function enrichExpeditionRecords(records: ExpeditionTourRecord[]): Promise
       if (extractAccommodationIncluded(t)) accommodationMap.set(t.id, true)
     }
     for (const r of records) {
-      // The curated /expedition/tours records carry a stored startingPrice
+      // The curated /travioghana/tours records carry a stored startingPrice
       // that can be stale/wrong (e.g. a tour's Child price while the adult
       // price is what checkout charges). Always prefer the authoritative
       // schedule-derived price from the full tour listing when known.
@@ -1301,7 +1308,7 @@ export function useExpeditionTours(filters: ExpeditionToursFilters = {}) {
   return useQuery({
     queryKey: ['expedition', 'tours', filters],
     queryFn: async () => {
-      const payload = await expeditionFetchRaw(`/expedition/tours${qs ? `?${qs}` : ''}`)
+      const payload = await expeditionFetchRaw(`/travioghana/tours${qs ? `?${qs}` : ''}`)
       const records: ExpeditionTourRecord[] = payload.data?.tours ?? payload.tours ?? []
       const pagination = payload.pagination ?? null
 
@@ -1317,7 +1324,7 @@ export function useExpeditionTours(filters: ExpeditionToursFilters = {}) {
 
 /**
  * Fetches the ENTIRE active curated catalog by paging through
- * /expedition/tours (limit capped at 50 per request). The curated endpoint
+ * /travioghana/tours (limit capped at 50 per request). The curated endpoint
  * only supports a handful of filters server-side (and has broken pagination
  * counts for price/rating), so the All Tours page pulls the full set once and
  * filters/sorts/paginates locally — this keeps every filter working with
@@ -1370,7 +1377,7 @@ export function useAllExpeditionTours(opts?: { mood?: string; near?: string; pla
       const extra = `${moodParam}${nearParam}${placeParam}${searchParam}${qParam}`
 
       // Fetch first page to get totalPages (and the place-scope metadata)
-      const first = await expeditionFetchRaw(`/expedition/tours?page=1&limit=${CATALOG_PAGE_SIZE}${extra}`)
+      const first = await expeditionFetchRaw(`/travioghana/tours?page=1&limit=${CATALOG_PAGE_SIZE}${extra}`)
       const firstBatch: ExpeditionTourRecord[] = first.data?.tours ?? first.tours ?? []
       records.push(...firstBatch)
       const placeScope: PlaceScope | null = first.data?.placeScope ?? null
@@ -1380,7 +1387,7 @@ export function useAllExpeditionTours(opts?: { mood?: string; near?: string; pla
       if (totalPages > 1 && firstBatch.length > 0) {
         const rest = await Promise.all(
           Array.from({ length: totalPages - 1 }, (_, i) =>
-            expeditionFetchRaw(`/expedition/tours?page=${i + 2}&limit=${CATALOG_PAGE_SIZE}${extra}`)
+            expeditionFetchRaw(`/travioghana/tours?page=${i + 2}&limit=${CATALOG_PAGE_SIZE}${extra}`)
           )
         )
         for (const payload of rest) {
@@ -1424,7 +1431,7 @@ export function useExpeditionFeaturedTours() {
   return useQuery({
     queryKey: ['expedition', 'tours', 'featured'],
     queryFn: async () => {
-      const payload = await expeditionFetchRaw('/expedition/tours/featured')
+      const payload = await expeditionFetchRaw('/travioghana/tours/featured')
       const records: ExpeditionTourRecord[] = payload.data?.tours ?? []
       await enrichExpeditionRecords(records)
       return records.map((r) => mapToListing(r.tour))
@@ -1607,7 +1614,7 @@ export interface TourDetailData extends Omit<TourDetail, 'guide' | 'contact' | '
 /**
  * Fetches a tour directly from the public /tours/:id endpoint (works for
  * any ACTIVE tour, regardless of whether it has been curated onto the
- * Expedition-Go homepage). Used as a fallback so newly created / uncurated
+ * Expedition-Go Tours homepage). Used as a fallback so newly created / uncurated
  * tours found via search can still be opened on the detail page.
  *
  * `bypassCache` skips the browser HTTP cache — the tour detail path
@@ -1763,7 +1770,7 @@ export function useExpeditionTour(slug: string | undefined) {
       let payload: any
       let curatedError: unknown = null
       try {
-        payload = await expeditionFetchRaw(`/expedition/tours/${encodeURIComponent(slug!)}`, true)
+        payload = await expeditionFetchRaw(`/travioghana/tours/${encodeURIComponent(slug!)}`, true)
       } catch (e: any) {
         curatedError = e
       }
@@ -1797,7 +1804,7 @@ export function useExpeditionTour(slug: string | undefined) {
       let groupSizePricing: GroupSizeBand[] = []
       let ticketValidity: string | null = null
 
-      // The curated /expedition/tours/:slug endpoint only returns a handful of
+      // The curated /travioghana/tours/:slug endpoint only returns a handful of
       // top-level fields (its tourData omits the productContent/bookingAndTickets/
       // schedulesAndPricing JSON blobs). The meeting/pickup config and the
       // availability schedule live inside those blobs, so they're resolved from
@@ -2068,6 +2075,7 @@ export function mapRawTourToListing(t: any): TourCardData {
     source: 'expedition-go',
     externalUrl: undefined,
     slug: t.slug,
+    supplierName: t.supplierName ?? t.supplier?.name ?? null,
     specialOffers: mapSpecialOffers(t),
     languages: languages.length ? languages : undefined,
     difficulty: extractDifficultyFromTour(t) || undefined,
@@ -2221,23 +2229,39 @@ export function bestOfferDiscountAmount(offers: SpecialOfferData[], fullPrice: n
 }
 
 /**
- * True when the tour currently carries a live supplier-applied offer: the
- * offer has started (or has no startDate) and hasn't ended yet (offers without
- * an endDate count as always active). Single source of truth for the
- * "Special Offer" badge on tour cards.
+ * True when an offer is live right now: it has started (or has no startDate)
+ * and hasn't ended yet (offers without an endDate count as always active).
+ * Single source of truth for every offer date-window check.
+ */
+export function isOfferActive(offer: SpecialOfferData | null | undefined, now = Date.now()): boolean {
+  if (!offer || typeof offer !== 'object') return false
+  if (offer.startDate && now < new Date(offer.startDate).getTime()) return false
+  if (offer.endDate) {
+    const end = new Date(offer.endDate).getTime()
+    if (!Number.isFinite(end) || end <= now) return false
+  }
+  return true
+}
+
+/**
+ * True when the tour currently carries a live supplier-applied offer.
+ * Single source of truth for the "Special Offer" badge on tour cards.
  */
 export function hasActiveOffer(specialOffers: SpecialOfferData[] | undefined): boolean {
   if (!Array.isArray(specialOffers) || specialOffers.length === 0) return false
   const now = Date.now()
-  return specialOffers.some((offer) => {
-    if (!offer || typeof offer !== 'object') return false
-    if (offer.startDate && now < new Date(offer.startDate).getTime()) return false
-    if (offer.endDate) {
-      const end = new Date(offer.endDate).getTime()
-      if (!Number.isFinite(end) || end <= now) return false
-    }
-    return true
-  })
+  return specialOffers.some((offer) => isOfferActive(offer, now))
+}
+
+/**
+ * The subset of offers that are live right now. Persisted offer snapshots
+ * (e.g. a wishlist item saved while a promo ran) must be re-checked against
+ * their date window before they may discount a price or raise a badge.
+ */
+export function filterActiveOffers(specialOffers: SpecialOfferData[] | undefined): SpecialOfferData[] {
+  if (!Array.isArray(specialOffers) || specialOffers.length === 0) return []
+  const now = Date.now()
+  return specialOffers.filter((offer) => isOfferActive(offer, now))
 }
 
 /**
@@ -2281,6 +2305,36 @@ export function useExpeditionOffers(limit = 12, enabled = true) {
  * siblings. Queries the public /tours listing directly so every active
  * tour can show a "similar experiences" section, not just curated ones.
  */
+/**
+ * Cards the "Similar Experiences" rail keeps: five per desktop view, so the
+ * row scrolls over two screens instead of stopping at one.
+ */
+const SIMILAR_TOURS_LIMIT = 10
+/** Over-fetch so the row still fills after excluding the current tour. */
+const SIMILAR_TOURS_FETCH_LIMIT = 12
+
+/**
+ * Append live suggestions to the curated similar row: deduped by tour id/slug,
+ * in order, capped at `limit`. The curated endpoint caps its own suggestions at
+ * four, so this is what fills the five-per-view desktop layout.
+ */
+export function mergeSimilarTours(
+  primary: TourCardData[],
+  extras: TourCardData[],
+  limit: number,
+): TourCardData[] {
+  const seen = new Set(primary.map((tour) => tour.id || tour.slug))
+  const merged = [...primary]
+  for (const tour of extras) {
+    const key = tour.id || tour.slug
+    if (seen.has(key)) continue
+    seen.add(key)
+    merged.push(tour)
+    if (merged.length >= limit) break
+  }
+  return merged.slice(0, limit)
+}
+
 async function fetchSimilarToursFallback(excludeTourId: string | undefined, category: string | null, city: string | null, country: string | null): Promise<TourCardData[]> {
   const tryFetch = async (params: URLSearchParams) => {
     const payload = await expeditionFetchRaw(`/tours?${params.toString()}`)
@@ -2290,30 +2344,30 @@ async function fetchSimilarToursFallback(excludeTourId: string | undefined, cate
 
   // 1) Same category first (closest match to the curated endpoint's intent)
   if (category) {
-    const params = new URLSearchParams({ category, limit: '8' })
+    const params = new URLSearchParams({ category, limit: String(SIMILAR_TOURS_FETCH_LIMIT) })
     const results = await tryFetch(params)
-    if (results.length > 0) return results.slice(0, 4).map(mapRawTourToListing)
+    if (results.length > 0) return results.slice(0, SIMILAR_TOURS_LIMIT).map(mapRawTourToListing)
   }
 
   // 2) Fall back to same city/country
   if (city || country) {
-    const params = new URLSearchParams({ limit: '8' })
+    const params = new URLSearchParams({ limit: String(SIMILAR_TOURS_FETCH_LIMIT) })
     if (city) params.set('city', city)
     if (country) params.set('country', country)
     const results = await tryFetch(params)
-    if (results.length > 0) return results.slice(0, 4).map(mapRawTourToListing)
+    if (results.length > 0) return results.slice(0, SIMILAR_TOURS_LIMIT).map(mapRawTourToListing)
   }
 
   // 3) Last resort: just show other active tours
-  const params = new URLSearchParams({ limit: '8', sortBy: 'popularity' })
+  const params = new URLSearchParams({ limit: String(SIMILAR_TOURS_FETCH_LIMIT), sortBy: 'popularity' })
   const results = await tryFetch(params)
-  return results.slice(0, 4).map(mapRawTourToListing)
+  return results.slice(0, SIMILAR_TOURS_LIMIT).map(mapRawTourToListing)
 }
 
 /**
  * Powers the homepage "Recommended" section.
  *
- * The curated /expedition/tours endpoint only returns tours an admin has
+ * The curated /travioghana/tours endpoint only returns tours an admin has
  * manually added to the ExpeditionTour table, so brand-new tours never
  * show up here until someone curates them — even though they're fully
  * ACTIVE and bookable. To fix that, this merges the curated list with the
@@ -2328,7 +2382,7 @@ export function useRecommendedTours(limit: number = 12, enabled = true) {
     enabled,
     queryFn: async (): Promise<TourCardData[]> => {
       const [curatedResult, newestResult] = await Promise.allSettled([
-        expeditionFetchRaw(`/expedition/tours?limit=${limit}`),
+        expeditionFetchRaw(`/travioghana/tours?limit=${limit}`),
         expeditionFetchRaw(`/tours?limit=${limit}&sortBy=newest&sortOrder=desc`),
       ])
 
@@ -2398,7 +2452,7 @@ export function useSimilarTours(slug: string | undefined) {
     queryFn: async () => {
       let payload: any
       try {
-        payload = await expeditionFetchRaw(`/expedition/tours/${encodeURIComponent(slug!)}/similar`)
+        payload = await expeditionFetchRaw(`/travioghana/tours/${encodeURIComponent(slug!)}/similar`)
       } catch {
         // Tour isn't curated onto the homepage — resolve its category/location
         // from the public tour endpoint and fall back to a live query.
@@ -2512,7 +2566,25 @@ export function useSimilarTours(slug: string | undefined) {
         }
       }
 
-      return records.map((r) => mapToListing(r.tour))
+      const mapped = records.map((r) => mapToListing(r.tour))
+      if (mapped.length >= SIMILAR_TOURS_LIMIT) return mapped.slice(0, SIMILAR_TOURS_LIMIT)
+
+      // The curated endpoint caps its suggestions at four, so top the row up
+      // with the live suggestions to fill the five-per-view desktop layout.
+      // A failed top-up still returns the curated row rather than erroring.
+      try {
+        const rawTour = await fetchRawTourBySlugOrId(slug!)
+        if (!rawTour) return mapped
+        const extras = await fetchSimilarToursFallback(
+          rawTour.id,
+          rawTour.category || null,
+          rawTour.city || null,
+          rawTour.country || null,
+        )
+        return mergeSimilarTours(mapped, extras, SIMILAR_TOURS_LIMIT)
+      } catch {
+        return mapped
+      }
     },
   })
 }
