@@ -1,8 +1,16 @@
 import { useTranslation } from 'react-i18next'
+import { motion } from 'framer-motion'
+import { FileText } from 'lucide-react'
 import Footer from '../components/Footer'
 import SEO, { buildBreadcrumbSchema } from '../components/SEO'
 import BackToHelpCentre from '../components/support/BackToHelpCentre'
+import { stagger, staggerItem } from '../components/support/motion'
 import './SupportPages.css'
+// The centred hero (.sh-hero-inner / .sh-title / .sh-sub / .sh-eyebrow) lives in
+// SupportHub.css — the same classes /faq and /help-centre use, so the three
+// support pages read as one family. Its only global rule is scoped to
+// .sh-mobile-contact-bar, which this page does not render.
+import './SupportHub.css'
 
 export default function RefundPolicyPage() {
   const { t } = useTranslation()
@@ -10,21 +18,33 @@ export default function RefundPolicyPage() {
   return (
     <div className="support-page">
       <SEO
-        title="Refund & Cancellation Policy - Expedition-Go Tours Ghana"
+        title="Refund Policy"
         description="Learn about Expedition-Go Tours refund and cancellation policy. Find out how to cancel your Ghana tour booking and what refunds you're eligible for."
         keywords="Expedition-Go Tours refund, cancellation policy Ghana, tour cancellation, booking refund Ghana"
-        robots="noindex, follow"
         jsonLd={buildBreadcrumbSchema([
-          { name: 'Home', url: 'https://expeditiongotours.com/' },
-          { name: 'Refund Policy', url: 'https://expeditiongotours.com/refund-policy' },
+          { name: 'Home', url: 'https://www.expeditiongotours.com/' },
+          { name: 'Refund Policy', url: 'https://www.expeditiongotours.com/refund-policy' },
         ])}
       />
-      <div className="support-hero">
-        <div className="support-hero-content">
-          <h1 className="support-title">{t('footer.refundPolicy')}</h1>
-          <p className="support-subtitle">{t('support.refundPolicySubtitle')}</p>
-        </div>
-      </div>
+      <header className="support-hero">
+        <motion.div
+          className="sh-hero-inner"
+          initial="hidden"
+          animate="visible"
+          variants={stagger}
+        >
+          <motion.div className="sh-eyebrow" variants={staggerItem}>
+            <FileText size={14} aria-hidden="true" />
+            <span>{t('supportHub.eyebrow')}</span>
+          </motion.div>
+          <motion.h1 className="sh-title" id="refund-policy-title" variants={staggerItem}>
+            {t('footer.refundPolicy')}
+          </motion.h1>
+          <motion.p className="sh-sub" variants={staggerItem}>
+            {t('support.refundPolicySubtitle')}
+          </motion.p>
+        </motion.div>
+      </header>
 
       <div className="support-container">
         <div className="support-article">
@@ -70,13 +90,14 @@ export default function RefundPolicyPage() {
             <li>Travio Africa</li>
           </ul>
           <p>
-            Travio Ghana and Travio Africa are registered trading names of Expedition-Go Tours Ltd and are
-            not separate legal entities.
+            Expedition-Go Tours, Travio Ghana and Travio Africa are registered trading names of
+            Expedition-Go Tours Ltd and are not separate legal entities.
           </p>
           <p>
-            This policy applies to <strong>expeditiongotours.com</strong>, <strong>travioghana.com</strong>,{' '}
-            <strong>travioafrica.com</strong>, their subdomains and any booking tools operated by
-            Expedition-Go Tours Ltd (together, the <strong>"Platform"</strong>).
+            This policy applies to <strong>travioghana.com</strong>,{' '}
+            <strong>expeditiongotours.com</strong>, <strong>travioafrica.com</strong>, their subdomains
+            and any booking tools operated by Expedition-Go Tours Ltd (together, the{' '}
+            <strong>"Platform"</strong>).
           </p>
           <p>It should be read together with:</p>
           <ul>
@@ -145,7 +166,7 @@ export default function RefundPolicyPage() {
             Some experiences may have a different cancellation deadline or may be non-refundable because they
             involve costs committed in advance. Any experience labelled <strong>"All Sales Final"</strong>,{' '}
             <strong>"Non-refundable"</strong> or materially similar wording cannot be changed or cancelled for
-            a refund after booking, except where mandatory law requires otherwise or where Expedition-Go
+            a refund after booking, except where mandatory law requires otherwise or where Expedition-Go Tours
             Tours or the Supplier cancels the experience. Examples may include:
           </p>
           <ul>
