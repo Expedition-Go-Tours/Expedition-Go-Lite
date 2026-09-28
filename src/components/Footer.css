@@ -435,31 +435,32 @@ body:has(.supplier-page) .footer-container {
 .footer-bottom {
   position: relative;
   overflow: hidden;
-  min-height: 248px;
+  /* The wordmark is absolutely positioned so it can sit centred under the legal
+     row at every width, which means the band has to reserve space for it by
+     hand. A padding does that in one line at every breakpoint: the legal row
+     wraps to 1, 2 or 3 lines, the band grows with it, and the wordmark always
+     lands in the 40px gutter below. A min-height could not do this without
+     guessing the tallest row. */
+  padding-bottom: 40px;
   border-top: 1px solid rgba(255, 255, 255, 0.14);
 }
 
+/* The wordmark sits at the same 12px as the legal row above it, so the band
+   reads as one unit rather than as a giant word behind a caption. */
 .footer-watermark {
   position: absolute;
   left: 50%;
-  bottom: -0.38em;
+  bottom: 14px;
   transform: translateX(-50%);
   font-family: var(--font-body);
-  /* Only a first-paint fallback: the fitter in Footer.tsx binary-searches the
-     real size to the band's width and writes it inline, which wins over this.
-     Kept deliberately small so the pre-hydration frame never overflows. */
-  font-size: 60px;
-  font-weight: 900;
+  font-size: 12px;
+  font-weight: 700;
   line-height: 1;
-  letter-spacing: -0.09em;
+  letter-spacing: 0.02em;
   white-space: nowrap;
   user-select: none;
   pointer-events: none;
-  /* Faded light-lime: brightest at the top, dissolving into the green. */
-  background: linear-gradient(180deg, rgba(217, 240, 178, 0.22), rgba(217, 240, 178, 0.02) 78%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: rgba(255, 255, 255, 0.45);
 }
 
 .footer-container.footer-bottom-inner {
@@ -643,11 +644,6 @@ body:has(.supplier-page) .footer-container {
     width: auto;
   }
 
-  .footer-bottom {
-    /* The 3-row legal grid needs room above the watermark band. */
-    min-height: 240px;
-  }
-
   .footer-container.footer-bottom-inner {
     display: block;
     padding-top: 27px;
@@ -659,9 +655,9 @@ body:has(.supplier-page) .footer-container {
   }
 
   .footer-watermark {
-    /* Lift it off the band edge so the full word reads instead of bleeding.
-       The size still comes from the fitter's inline style, not from here. */
-    bottom: 10px;
+    /* Same 12px as the legal row; the band's padding-bottom reserves the
+       gutter it sits in. */
+    bottom: 14px;
   }
 }
 
