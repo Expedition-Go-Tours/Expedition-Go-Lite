@@ -363,57 +363,15 @@ export function requiredSupplierDocuments(
   return kind === 'business' ? [ID_DOCUMENT, BUSINESS_CERTIFICATE_DOCUMENT] : [ID_DOCUMENT]
 }
 
-export interface LaterDocument {
-  name: string
-  detail: string
-}
-
 /**
- * Documents ExpeditionGo may ask for before a listing (or service) goes live —
- * ported from the prototype's `updateVerificationRequirements()`. Returns an
- * empty list when nothing extra applies ("No extra documents right now").
+ * Upload button label for a document type. The "later" list and any server-led
+ * up-front set are driven by the backend's requirements endpoint, whose types
+ * map to these labels (identity types always read "Upload your ID").
  */
-export function laterDocumentsFor(choiceId: string | null | undefined, services: string[]): LaterDocument[] {
-  const option = supplierTypeOption(choiceId)
-  const kind: SupplierKind = option?.kind ?? 'individual'
-  const label = option?.label ?? ''
-  const hasTours = hasToursService(services)
-  const hasTransport = hasTransportService(services)
-  const isIndividual = kind === 'individual'
-  const isIndependentDriver = label === 'Independent Driver'
-  const isTransportCompany = label === 'Transport Company'
-  const isRegisteredCompany = label === 'Registered Company'
-
-  const docs: LaterDocument[] = []
-  const add = (name: string, detail: string) => docs.push({ name, detail })
-
-  if (isIndividual && hasTours && !isIndependentDriver) {
-    add('Ghana Tourism Authority licence', 'May be requested before applicable tours or experiences go live.')
-  }
-
-  if (!isIndividual && hasTours) {
-    add('Ghana Tourism Authority licence', 'May be required before applicable tour listings go live.')
-    add('Public liability / activity insurance', 'May be required for applicable tours or activities before publishing.')
-  }
-
-  if (isIndependentDriver) {
-    add("Driver's licence", 'Required before transport services or vehicle-based tours become bookable.')
-    add('Vehicle registration', 'Required for the vehicle used to fulfil bookings.')
-    add('Vehicle insurance', 'Required before the vehicle becomes active on ExpeditionGo.')
-    add('Roadworthiness', 'Required where applicable before the vehicle becomes active.')
-  } else if (isTransportCompany) {
-    add("Driver's licence", 'Add driver documents when assigning drivers to ExpeditionGo bookings.')
-    add('Vehicle registration', 'Add registration documents for vehicles used on ExpeditionGo.')
-    add('Vehicle insurance', 'Required for vehicles used to fulfil bookings.')
-    add('Roadworthiness', 'Required where applicable for active vehicles.')
-  } else if (isRegisteredCompany && hasTransport) {
-    add('Vehicle registration', 'May be requested before Airport Transfer or Private Transport listings go live.')
-    add('Vehicle insurance', 'May be requested before the vehicle is used for Travio bookings.')
-  } else if (hasTransport) {
-    add('Vehicle / driver documents', 'ExpeditionGo may request the relevant transport documents before the service goes live.')
-  }
-
-  return docs
+export function uploadLabelFor(type: string): string {
+  if (type === 'GHANA_CARD' || type === 'NATIONAL_ID') return 'Upload your ID'
+  if (type === 'BUSINESS_CERTIFICATE') return 'Upload business certificate'
+  return 'Upload document'
 }
 
 // ── Small helpers ─────────────────────────────────────────────────────────
@@ -625,6 +583,12 @@ export function buildSupplierPayload(form: SupplierApplicationForm): FormData {
   const payload = new FormData()
 
   payload.append('supplierType', option?.supplierType ?? 'TOUR_COMPANY')
+
+  // The six-way choice is more specific than the enum (a registered company and
+  // a sole proprietor are both TOUR_COMPANY). The backend stores it inside
+  // businessInfo (a Json column) so it can re-derive the exact "later"
+  // requirements for the dashboard without guessing from businessType alone.
+  payload.append('supplierChoice', form.supplierChoice)
 
   const fullName =
     [account.firstName, account.lastName].filter(Boolean).join(' ').trim() ||

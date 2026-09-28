@@ -6,7 +6,6 @@ import {
   hasToursService,
   hasTransportService,
   isValidEmail,
-  laterDocumentsFor,
   normalizeWebsite,
   primaryDocumentType,
   requiredSupplierDocuments,
@@ -21,6 +20,7 @@ import {
   STEP_PAYOUT,
   supplierTypeOption,
   SUPPLIER_TYPE_OPTIONS,
+  uploadLabelFor,
   validateSupplierStep,
   yearsInBusinessFrom,
 } from './supplierRegistration'
@@ -162,38 +162,24 @@ describe('required + later documents', () => {
     })
   })
 
-  it('lists the documents ExpeditionGo may ask for later', () => {
-    // Individual guide selling tours → GTA licence only.
-    expect(laterDocumentsFor('individual_guide', ['tours']).map((doc) => doc.name)).toEqual([
-      'Ghana Tourism Authority licence',
+  it('has no local "later" list — the backend is the only source for it', () => {
+    // The signup wizard used to carry a hand-written copy of the later
+    // documents. That copy is gone: GET /suppliers/requirements now single-
+    // sources the list, so what the wizard promises and the dashboard asks for
+    // can never drift. The only local rule left is the up-front enforced set
+    // (used as a fallback while the fetch is loading), pinned below.
+    expect(requiredSupplierDocuments('transport_company').map((doc) => doc.type)).toEqual([
+      'GHANA_CARD',
+      'BUSINESS_CERTIFICATE',
     ])
-    // Independent driver → the vehicle set, regardless of services.
-    expect(laterDocumentsFor('independent_driver', []).map((doc) => doc.name)).toEqual([
-      "Driver's licence",
-      'Vehicle registration',
-      'Vehicle insurance',
-      'Roadworthiness',
-    ])
-    // Transport company → the vehicle set (certificate is required up front now).
-    expect(laterDocumentsFor('transport_company', ['airport_transfers']).map((doc) => doc.name)).toEqual([
-      "Driver's licence",
-      'Vehicle registration',
-      'Vehicle insurance',
-      'Roadworthiness',
-    ])
-    // Registered company with transfers → vehicle registration/insurance.
-    expect(laterDocumentsFor('registered_company', ['airport_transfers']).map((doc) => doc.name)).toEqual([
-      'Vehicle registration',
-      'Vehicle insurance',
-    ])
-    // Registered company selling tours only → GTA licence + liability insurance.
-    expect(laterDocumentsFor('registered_company', ['tours']).map((doc) => doc.name)).toEqual([
-      'Ghana Tourism Authority licence',
-      'Public liability / activity insurance',
-    ])
-    // Nothing further to ask for yet.
-    expect(laterDocumentsFor('sole_proprietor', [])).toEqual([])
-    expect(laterDocumentsFor('experience_host', [])).toEqual([])
+    expect(requiredSupplierDocuments('individual_guide').map((doc) => doc.type)).toEqual(['GHANA_CARD'])
+  })
+
+  it('maps server-driven document types to upload button labels', () => {
+    expect(uploadLabelFor('GHANA_CARD')).toBe('Upload your ID')
+    expect(uploadLabelFor('NATIONAL_ID')).toBe('Upload your ID')
+    expect(uploadLabelFor('BUSINESS_CERTIFICATE')).toBe('Upload business certificate')
+    expect(uploadLabelFor('PASSENGER_TRANSPORT_LICENCE')).toBe('Upload document')
   })
 })
 
