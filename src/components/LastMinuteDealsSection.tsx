@@ -10,7 +10,7 @@ import './LastMinuteDealsSection.css'
 const CARD_WIDTH = 295
 const GAP = 16
 
-function mapOfferToCardProps(t: HomepageOfferTour): TourCardData {
+export function mapOfferToCardProps(t: HomepageOfferTour): TourCardData {
   const durationStr = t.durationMinutes
     ? t.durationMinutes >= 1440
       ? `${Math.round(t.durationMinutes / 1440)} days`
@@ -28,7 +28,13 @@ function mapOfferToCardProps(t: HomepageOfferTour): TourCardData {
   }
 
   return {
-    id: t.offerId,
+    // The tour's own id, never the offer's. A card links to /tour/{idOrSlug},
+    // which the API resolves against *tours*; an offer id is not a tour, so
+    // every card here returned 404 "Tour not found". Confirmed live against
+    // the offers payload: offerId cmt8txcri0465646pa9y6d76n 404s on
+    // /api/tours, /api/expedition/tours and /api/travioghana/tours, while the
+    // t.id on the same row (cmt8hjkii00bo646phdiznmrr) resolves.
+    id: t.id,
     title: t.title,
     slug: t.slug,
     category: t.category || '',

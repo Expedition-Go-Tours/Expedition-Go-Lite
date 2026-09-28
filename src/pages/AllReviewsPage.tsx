@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, X, Star, ArrowLeft } from 'lucide-react'
 import ExternalReviewCard from '../components/ExternalReviewCard'
 import StarRating from '../components/StarRating'
 import { useAllExternalReviews, useExternalReviewStats } from '../hooks/useExternalReviews'
+import Footer from '../components/Footer'
 import './AllReviewsPage.css'
 
 const PAGE_SIZE = 20
@@ -429,6 +430,9 @@ export default function AllReviewsPage() {
           </>
         )}
       </AnimatePresence>
+
+      {/* Without this, /reviews had no internal links out of it at all. */}
+      <Footer />
     </div>
   )
 }
