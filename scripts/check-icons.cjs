@@ -17,7 +17,7 @@
  */
 const { readFileSync, existsSync, readdirSync, statSync } = require('node:fs')
 const { join, resolve } = require('node:path')
-const { ICON_LINKS, ICON_FILES, MANIFEST_HREF } = require('./icon-links.cjs')
+const { ICON_LINKS, ICON_FILES, ICON_VERSION, MANIFEST_HREF } = require('./icon-links.cjs')
 
 const ROOT = resolve(__dirname, '..')
 const PUBLIC = join(ROOT, 'public')
@@ -66,6 +66,12 @@ function checkHtml(file, html) {
 }
 
 function checkIco(file) {
+  // Guarded so a missing file is reported as one collected failure rather than
+  // thrown, which is what every other check in this file already does.
+  if (!existsSync(file)) {
+    fail(`${file} is missing`)
+    return 0
+  }
   const buffer = readFileSync(file)
   if (buffer.length < 6 || buffer.readUInt16LE(0) !== 0 || buffer.readUInt16LE(2) !== 1) {
     fail(`${file} is not a real ICO container (it is probably a renamed PNG)`)
@@ -98,6 +104,10 @@ function checkIco(file) {
 
 /** Alpha detection without a decoder: a PNG with a colour type that carries alpha. */
 function pngHasAlpha(file) {
+  if (!existsSync(file)) {
+    fail(`${file} is missing`)
+    return null
+  }
   const buffer = readFileSync(file)
   const signature = buffer.subarray(0, 8).toString('hex')
   if (signature !== '89504e470d0a1a0a') return null
@@ -130,17 +140,24 @@ function main() {
   pass(`site.webmanifest: ${manifest.icons.length} icons, purposes ${[...purposes].join(' + ')}`)
 
   for (const name of ICON_FILES) {
-    const versioned = join(PUBLIC, 'icons', 'v2', name)
+    const versioned = join(PUBLIC, 'icons', ICON_VERSION, name)
     const legacy = join(PUBLIC, name)
-    if (!existsSync(versioned)) fail(`public/icons/v2/${name} is missing`)
+    if (!existsSync(versioned)) fail(`public/icons/${ICON_VERSION}/${name} is missing`)
     if (!existsSync(legacy)) fail(`public/${name} is missing (legacy probes would 404)`)
   }
-  pass(`all ${ICON_FILES.length} files present in both public/icons/v2/ and public/`)
+  pass(`all ${ICON_FILES.length} files present in both public/icons/${ICON_VERSION}/ and public/`)
 
   checkIco(join(PUBLIC, 'favicon.ico'))
-  checkIco(join(PUBLIC, 'icons', 'v2', 'favicon.ico'))
+  checkIco(join(PUBLIC, 'icons', ICON_VERSION, 'favicon.ico'))
 
-  for (const file of ['public/apple-touch-icon.png', 'public/icons/v2/apple-touch-icon.png']) {
+  for (const file of [
+    'public/apple-touch-icon.png',
+    `public/icons/${ICON_VERSION}/apple-touch-icon.png`,
+  ]) {
+    // The ICON_FILES loop above already reports a missing file by name; skipping
+    // here keeps one problem from being announced twice with a misleading second
+    // message.
+    if (!existsSync(join(ROOT, file))) continue
     const alpha = pngHasAlpha(join(ROOT, file))
     if (alpha === null) fail(`${file} is not a PNG`)
     else if (alpha) fail(`${file} has an alpha channel; iOS would composite it against black`)
@@ -148,11 +165,17 @@ function main() {
   }
 
   // Staleness hint only: checkout order makes mtimes unreliable, so this warns.
-  const source = join(ROOT, 'src/assets/lite-logo-1.png')
-  const newest = join(PUBLIC, 'icons', 'v2', 'favicon-64.png')
-  if (existsSync(source) && statSync(source).mtimeMs > statSync(newest).mtimeMs) {
-    console.log('\n  warn the badge source is newer than the generated icons')
-    console.log('       run: npm run generate-favicons')
+  // Compared against the newest file in the versioned set rather than one named
+  // path, so it keeps working when ICON_VERSION moves and the old directory goes.
+  const source = join(ROOT, 'src/assets/favicon-source.webp')
+  const generated = ICON_FILES.map((name) => join(PUBLIC, 'icons', ICON_VERSION, name))
+    .filter((file) => existsSync(file))
+  if (existsSync(source) && generated.length) {
+    const newest = Math.max(...generated.map((file) => statSync(file).mtimeMs))
+    if (statSync(source).mtimeMs > newest) {
+      console.log('\n  warn the badge source is newer than the generated icons')
+      console.log('       run: npm run generate-favicons')
+    }
   }
 
   console.log(`\n${notes.join('\n')}`)

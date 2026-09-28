@@ -12,7 +12,7 @@
  * ICON_VERSION is what ships a new mark instantly; the matching artwork also
  * sits at the legacy root paths for probes and old references.
  */
-const ICON_VERSION = 'v2'
+const ICON_VERSION = 'v3'
 
 const MANIFEST_HREF = '/site.webmanifest'
 
