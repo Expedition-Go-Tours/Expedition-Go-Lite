@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
@@ -212,6 +212,47 @@ export default function Footer() {
   const currentLang = LANGUAGES.find((lang) => lang.code === langCode)
   const currentCurrency = availableCurrencies.find((c) => c.code === currency.code)
   const year = new Date().getFullYear()
+  const watermarkRef = useRef<HTMLDivElement>(null)
+
+  /* The oversized word in the bottom band is fitted to the band's width by
+     binary search rather than sized with a clamp: "Expedition-Go Tours" is
+     roughly 1.6x the width of the "travio ghana" this rule was tuned for, so
+     any fixed size either overflows the viewport or wastes the band. 14
+     halvings land within a fraction of a pixel of the widest size that still
+     fits. Re-runs on resize (the band is full-bleed) and whenever the copy
+     changes. */
+  useEffect(() => {
+    const box = watermarkRef.current
+    if (!box) return
+    const band = box.parentElement
+    if (!band) return
+
+    const fit = () => {
+      // Measure against the band, not the box: the watermark is absolutely
+      // positioned, so its own width is just the text and every size "fits".
+      const target = band.clientWidth
+      if (!target) return
+      let low = 16
+      let high = 400
+      for (let i = 0; i < 14; i++) {
+        const size = (low + high) / 2
+        box.style.fontSize = `${size}px`
+        if (box.getBoundingClientRect().width > target) high = size
+        else low = size
+      }
+      box.style.fontSize = `${low}px`
+    }
+
+    if (typeof ResizeObserver === 'undefined') {
+      fit()
+      window.addEventListener('resize', fit)
+      return () => window.removeEventListener('resize', fit)
+    }
+    const observer = new ResizeObserver(fit)
+    observer.observe(band)
+    fit()
+    return () => observer.disconnect()
+  }, [])
 
   const navGroups: { key: string; title: string; links: { to: string; label: string }[] }[] = [
     {
@@ -378,9 +419,9 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* Bottom band: wordmark + legal line, both at the legal row's 12px */}
+      {/* Bottom band: oversized faded wordmark + legal line */}
       <div className="footer-bottom">
-        <div className="footer-watermark" aria-hidden="true">
+        <div className="footer-watermark" ref={watermarkRef} aria-hidden="true">
           Expedition-Go Tours
         </div>
         <div className="footer-container footer-bottom-inner">
