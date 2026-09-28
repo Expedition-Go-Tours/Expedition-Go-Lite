@@ -94,7 +94,7 @@ export default function TopAttractionsNearbySection({ preloaded, title, location
   // This section never asks for the device location itself — proximity uses the
   // remembered/IP city (see getCachedLocation in lib/analytics), so no
   // permission prompt can appear here. Turning location on is a deliberate
-  // choice made through DeviceLocationContext.
+  // choice made through lib/locationSharing.ts.
 
   const updateArrows = useCallback(() => {
     const el = scrollRef.current

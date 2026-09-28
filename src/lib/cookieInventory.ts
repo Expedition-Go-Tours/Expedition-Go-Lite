@@ -197,9 +197,9 @@ export const COOKIE_INVENTORY: readonly CookieEntry[] = [
     kind: 'storage',
   },
   {
-    name: 'expedition_go_device_location',
+    name: 'eg_location_sharing',
     provider: US,
-    purposeKey: 'approximateLocation',
+    purposeKey: 'locationSharing',
     category: 'functional',
     durationKey: 'persistent',
     kind: 'storage',
@@ -258,7 +258,7 @@ export const FUNCTIONAL_STORAGE_KEYS: readonly string[] = [
   'expedition_go_wishlist_pending',
   'expedition_go_continue_planning',
   'eg_user_location',
-  'expedition_go_device_location',
+  'eg_location_sharing',
   'expedition.googleOnetap.dismissedSession',
   'expedition.googleOnetap.lastShownDay',
 ]

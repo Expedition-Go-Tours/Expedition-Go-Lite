@@ -12,6 +12,7 @@ import {
 import logoSrc from '../assets/expo_trans.png'
 import Footer from '../components/Footer'
 import StarRating from '../components/StarRating'
+import MeetingDirections from '../components/booking/MeetingDirections'
 import StepBadge from '../components/booking/StepBadge'
 import { FieldLabel, TextInput, SelectInput } from '../components/booking/FormFields'
 import ChangeBookingModal from '../components/booking/ChangeBookingModal'
@@ -56,7 +57,7 @@ import {
 import { cancellationStatus } from '../lib/cancellationLabel'
 import { reverseGeocode } from '../lib/locations'
 import { SUPPORT_PHONE, SUPPORT_PHONE_DIGITS } from '../lib/support'
-import { useDeviceLocation } from '../context/DeviceLocationContext'
+import { getGeolocationPermission, isLocationSharingEnabled, requestCurrentCoordinates } from '../lib/locationSharing'
 import EnableLocationButton from '../components/shared/EnableLocationButton'
 
 /* --- Tour data from location state --- */
@@ -265,21 +266,18 @@ function referenceStartLabel(value?: string): string {
 // Drop-off is appended when the supplier configured one.
 // `embedded` renders it as a sub-section (no outer card border/background) so
 // it can sit inside the tour summary card without a nested box.
-function MeetingPickupCard({ tour, embedded = false, onOpenMap, showMapLink = true, showDirections = false, capturedLocation, isCapturingLocation }: {
+function MeetingPickupCard({ tour, embedded = false, onOpenMap, showMapLink = true, showDirections = false, onLocationResolved }: {
   tour: typeof FALLBACK_TOUR
   embedded?: boolean
   /** Opens the map modal (a pin per pickup spot). */
   onOpenMap?: () => void
   /** Whether the "Select on Map" link is shown (hidden in the collapsed summary). */
   showMapLink?: boolean
-  /** Whether the Google/Apple Maps directions links (meeting-point tours) are shown. */
+  /** Whether the location-gated Google/Apple Maps directions are shown. */
   showDirections?: boolean
-  /** User's captured location address for meeting point tours. */
-  capturedLocation?: string
-  /** Whether location is still being captured. */
-  isCapturingLocation?: boolean
+  /** Reports the traveller's opted-in location once resolved (fills travellers.location). */
+  onLocationResolved?: (location: { lat: number; lng: number; address?: string }) => void
 }) {
-  const { t } = useTranslation()
   const mode = tour.meetingMode
 
   // Destination for the meeting-point directions links — only when the
@@ -292,12 +290,6 @@ function MeetingPickupCard({ tour, embedded = false, onOpenMap, showMapLink = tr
       : null
   }, [tour.meetingPointLat, tour.meetingPointLng, tour.meetingPoint, tour.meetingPointAddress])
 
-  // The directions links route from the traveller's CURRENT location to the
-  // meeting point. Device location is opt-in (see DeviceLocationContext): the
-  // browser prompt is never raised just by opening this page — the links only
-  // appear once the traveller has turned location on themselves.
-  const { status: locationStatus, coords: deviceCoords } = useDeviceLocation()
-  const locating = locationStatus === 'requesting'
 
   const arrivalLabel = () => {
     if (mode !== 'meeting_point') return ''
@@ -358,53 +350,10 @@ function MeetingPickupCard({ tour, embedded = false, onOpenMap, showMapLink = tr
               </div>
             )}
             {showDirections && meetingPointDest && (
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 pl-[22px] text-xs">
-                <span className="font-semibold text-slate-600">Directions:</span>
-                {locationStatus === 'granted' && deviceCoords ? (
-                  <>
-                    <a
-                      href={googleMapsDirectionsUrl(deviceCoords, { lat: meetingPointDest.lat, lng: meetingPointDest.lng }, 'drive')}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 font-semibold text-emerald-700 underline underline-offset-2 transition-colors hover:text-emerald-900"
-                    >
-                      Open in Google Maps <ExternalLink size={11} />
-                    </a>
-                    <span className="text-slate-300">·</span>
-                    <a
-                      href={appleMapsDirectionsUrl(deviceCoords, { lat: meetingPointDest.lat, lng: meetingPointDest.lng })}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 font-semibold text-emerald-700 underline underline-offset-2 transition-colors hover:text-emerald-900"
-                    >
-                      Apple Maps <ExternalLink size={11} />
-                    </a>
-                    <span className="text-slate-400">from your current location</span>
-                  </>
-                ) : locating ? (
-                  <span className="inline-flex items-center gap-1 font-medium text-slate-500">
-                    <Loader2 size={11} className="animate-spin" />
-                    {t('location.detecting')}
-                  </span>
-                ) : (
-                  <EnableLocationButton label={t('location.enableForDirections')} />
-                )}
-              </div>
+              <MeetingDirections destination={meetingPointDest} onLocationResolved={onLocationResolved} />
             )}
             {tour.meetingPointDescription && (
               <p className="pl-[22px] leading-relaxed text-slate-500">{tour.meetingPointDescription}</p>
-            )}
-            {isCapturingLocation && (
-              <p className="flex items-center gap-2 pl-[22px] text-sm text-slate-500">
-                <Loader2 size={13} className="animate-spin" />
-                Detecting your location…
-              </p>
-            )}
-            {capturedLocation && !isCapturingLocation && (
-              <p className="flex items-center gap-2 pl-[22px] text-sm text-slate-600">
-                <MapPin className="size-3.5 shrink-0 text-emerald-600" />
-                Your location: {capturedLocation}
-              </p>
             )}
             </div>
         )}
@@ -681,7 +630,7 @@ function ContactDetailsStep({
 function ActivityDetailsStep({
   tour, onNext, step, onNavigate, hasError, disabled,
   contact, onContactChange, showPickupLocation, locationValid,
-  isCapturingLocation,
+    onLocationResolved,
   options, optionValue, onOptionChange, optionQuoting, optionError,
   staticInfo = false,
 }: {
@@ -695,7 +644,8 @@ function ActivityDetailsStep({
   onContactChange: (key: string, value: string | boolean | number | null) => void
   showPickupLocation: boolean
   locationValid: boolean
-  isCapturingLocation: boolean
+    /** Meeting-point tours: reports the traveller's opted-in location once resolved. */
+    onLocationResolved?: (location: { lat: number; lng: number; address?: string }) => void
   /** Multi-option tours: sellable (non-private) options for the GYG-style
       "Choose your option" picker shown at the top of step 1. */
   options?: TourOption[]
@@ -711,7 +661,6 @@ function ActivityDetailsStep({
   const isCompleted = step > 1
   const { t } = useTranslation()
   // Opt-in device location — used to gate the directions links below.
-  const { status: locationStatus, coords: deviceCoords } = useDeviceLocation()
   const [touched, setTouched] = useState<Record<string, boolean>>({})
 
   // Zone-aware pickup feedback — mirrors the backend's geoUtils verdict.
@@ -809,8 +758,7 @@ function ActivityDetailsStep({
         embedded
         onOpenMap={handleOpenMap}
         showDirections
-        capturedLocation={contact.location}
-        isCapturingLocation={isCapturingLocation}
+          onLocationResolved={onLocationResolved}
       />
     </div>
   )
@@ -1103,34 +1051,28 @@ function ActivityDetailsStep({
                     <span className="font-semibold text-slate-800">Traveler's pickup location:</span>{' '}
                     <span>{contact.pickupArea || contact.location}</span>
                   </p>
-                  {contact.pickupLat != null && contact.pickupLng != null && (
-                    <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
-                      <span className="font-semibold text-slate-600">Directions:</span>
-                      {locationStatus === 'granted' && deviceCoords ? (
-                        <>
-                          <a
-                            href={googleMapsDirectionsUrl(deviceCoords, { lat: contact.pickupLat, lng: contact.pickupLng }, 'drive')}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 font-semibold text-emerald-700 underline underline-offset-2 transition-colors hover:text-emerald-900"
-                          >
-                            Open in Google Maps <ExternalLink size={11} />
-                          </a>
-                          <span className="text-slate-300">·</span>
-                          <a
-                            href={appleMapsDirectionsUrl(deviceCoords, { lat: contact.pickupLat, lng: contact.pickupLng })}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 font-semibold text-emerald-700 underline underline-offset-2 transition-colors hover:text-emerald-900"
-                          >
-                            Apple Maps <ExternalLink size={11} />
-                          </a>
-                        </>
-                      ) : (
-                        <EnableLocationButton label={t('location.enableForDirections')} />
-                      )}
-                    </div>
-                  )}
+                    {contact.pickupLat != null && contact.pickupLng != null && (
+                      <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+                        <span className="font-semibold text-slate-600">Directions:</span>
+                        <a
+                          href={googleMapsDirectionsUrl(null, { lat: contact.pickupLat, lng: contact.pickupLng }, 'drive')}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 font-semibold text-emerald-700 underline underline-offset-2 transition-colors hover:text-emerald-900"
+                        >
+                          Open in Google Maps <ExternalLink size={11} />
+                        </a>
+                        <span className="text-slate-300">·</span>
+                        <a
+                          href={appleMapsDirectionsUrl(null, { lat: contact.pickupLat, lng: contact.pickupLng })}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 font-semibold text-emerald-700 underline underline-offset-2 transition-colors hover:text-emerald-900"
+                        >
+                          Apple Maps <ExternalLink size={11} />
+                        </a>
+                      </p>
+                    )}
                 </div>
               </div>
             )}
@@ -1954,9 +1896,7 @@ export default function BookingPage() {
   const [isExpired, setIsExpired] = useState(false)
   const [showExpiredModal, setShowExpiredModal] = useState(false)
   const [showSignInPrompt, setShowSignInPrompt] = useState(false)
-  const [isCapturingLocation, setIsCapturingLocation] = useState(false)
-  // Opt-in device location (never requested on its own — see DeviceLocationContext).
-  const { status: deviceLocationStatus, coords: deviceLocationCoords } = useDeviceLocation()
+  // Opt-in device location (never requested on its own — see lib/locationSharing.ts).
   const lastActivityAt = useRef(0)
 
   // Refresh / direct-URL / partial-stub arrival: once the by-URL-id fetch
@@ -2162,42 +2102,49 @@ export default function BookingPage() {
     trackActivity()
     setContact((prev) => ({ ...prev, [key]: value }))
   }
+  // The traveller turned location on from the meeting-point directions control:
+  // reuse the resolved position for travellers.location unless the form already
+  // has a location.
+  const handleMeetingLocationResolved = useCallback((loc: { lat: number; lng: number; address?: string }) => {
+    setContact((prev) => (
+      prev.location.trim()
+        ? prev
+        : { ...prev, location: loc.address || `${loc.lat}, ${loc.lng}`, pickupLat: loc.lat, pickupLng: loc.lng }
+    ))
+  }, [])
   const handlePaymentChange = (key: string, value: string) => {
     trackActivity()
     setPayment((prev) => ({ ...prev, [key]: value }))
   }
 
-  // Fill the traveller's location for meeting-point tours with the device
-  // coordinates — but only after the visitor has turned location on themselves
-  // (the "Use my current location" button in step 1, or the directions
-  // control). Nothing is requested when the page simply opens.
+  // Meeting-point tours: quietly reuse a location the traveller has already
+  // opted into (preference on AND the browser already granted access) so the
+  // backend still receives travellers.location. This never prompts — visitors
+  // who haven't opted in are asked only from the directions control on step 1.
   useEffect(() => {
     if (tour.meetingMode !== 'meeting_point' || contact.location) return
-    if (deviceLocationStatus !== 'granted' || !deviceLocationCoords) return
 
     let active = true
-    const { lat, lng } = deviceLocationCoords
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setIsCapturingLocation(true)
-
-    reverseGeocode(lat, lng).then((result) => {
+    void (async () => {
+      if (!isLocationSharingEnabled()) return
+      const permission = await getGeolocationPermission()
+      if (permission !== 'granted' || !active) return
+      const result = await requestCurrentCoordinates({ timeout: 8000, maximumAge: 300000 })
+      if (!active || !result.ok) return
+      const { lat, lng } = result.coords
+      const geo = await reverseGeocode(lat, lng).catch(() => null)
       if (!active) return
-      const address = result?.formatted || `${lat}, ${lng}`
-      handleContactChange('location', address)
-      handleContactChange('pickupLat', lat)
-      handleContactChange('pickupLng', lng)
-      setIsCapturingLocation(false)
-    }).catch(() => {
-      if (!active) return
-      handleContactChange('location', `${lat}, ${lng}`)
-      handleContactChange('pickupLat', lat)
-      handleContactChange('pickupLng', lng)
-      setIsCapturingLocation(false)
-    })
+      const address = geo?.formatted || `${lat}, ${lng}`
+      setContact((prev) => (
+        prev.location.trim()
+          ? prev
+          : { ...prev, location: address, pickupLat: lat, pickupLng: lng }
+      ))
+    })()
 
     return () => { active = false }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tour.meetingMode, deviceLocationStatus, deviceLocationCoords, contact.location])
+  }, [tour.meetingMode])
 
   const scrollToStep = (n: number) => {
     // Wait for the step-content swap (exit ~0.1s) to settle before scrolling,
@@ -2599,7 +2546,7 @@ export default function BookingPage() {
                   onContactChange={handleContactChange}
                   showPickupLocation={showPickupLocation}
                   locationValid={locationValid}
-                  isCapturingLocation={isCapturingLocation}
+                    onLocationResolved={handleMeetingLocationResolved}
                   options={hasMultipleOptions ? selectableOptions : undefined}
                   optionValue={selectedOptionId}
                   onOptionChange={handleOptionChange}

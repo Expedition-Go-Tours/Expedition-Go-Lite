@@ -1,6 +1,6 @@
 import { Loader2, MapPin, RotateCw } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { useDeviceLocation } from '../../context/DeviceLocationContext'
+import { useLocationSharing } from '../../hooks/useLocationSharing'
 
 interface EnableLocationButtonProps {
   /** Button copy for the initial state, e.g. "Turn on location to get directions". */
@@ -23,9 +23,9 @@ export default function EnableLocationButton({
   className = '',
 }: EnableLocationButtonProps) {
   const { t } = useTranslation()
-  const { status, enable } = useDeviceLocation()
+  const { status, enable } = useLocationSharing()
 
-  if (status === 'granted') return null
+  if (status === 'ready') return null
 
   if (status === 'requesting') {
     return (

@@ -12,7 +12,7 @@ import TravelTimeChip from './TravelTimeChip'
 import { toNumber } from '@/lib/mapUtils'
 import { appleMapsDirectionsUrl, googleMapsDirectionsUrl } from '@/lib/geoapifyRouting'
 import { useTranslation } from 'react-i18next'
-import { useDeviceLocation } from '@/context/DeviceLocationContext'
+import { useLocationSharing } from '@/hooks/useLocationSharing'
 import EnableLocationButton from '@/components/shared/EnableLocationButton'
 
 const compactTime = (t?: string): string => (t ? t.replace('-', '–') : '')
@@ -89,7 +89,7 @@ export default function PickupLocationSection({
   const { t } = useTranslation()
   // Opt-in device location — gates the directions links below so they only
   // appear once the traveller has turned location on themselves.
-  const { status: locationStatus, coords: deviceCoords } = useDeviceLocation()
+  const { status: locationStatus, coords: deviceCoords } = useLocationSharing()
   // ── Mode detection ──
   // Stabilised with useMemo so the fallback `[]` never creates a new array
   // identity on every render (which would churn the memos/effect below).
@@ -380,7 +380,7 @@ export default function PickupLocationSection({
             {lat != null && lng != null && (
               <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
                 <span className="font-semibold text-emerald-700">Directions:</span>
-                {locationStatus === 'granted' && deviceCoords ? (
+                {locationStatus === 'ready' && deviceCoords ? (
                   <>
                     <a
                       href={googleMapsDirectionsUrl(deviceCoords, { lat, lng }, 'drive')}
@@ -558,7 +558,7 @@ export default function PickupLocationSection({
                       {contact.pickupLat != null && contact.pickupLng != null && (
                         <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
                           <span className="font-semibold text-emerald-700">Directions:</span>
-                          {locationStatus === 'granted' && deviceCoords ? (
+                          {locationStatus === 'ready' && deviceCoords ? (
                             <>
                               <a
                                 href={googleMapsDirectionsUrl(deviceCoords, { lat: contact.pickupLat, lng: contact.pickupLng }, 'drive')}

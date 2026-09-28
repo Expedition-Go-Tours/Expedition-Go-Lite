@@ -184,40 +184,6 @@ export function getCachedLocation(): Promise<UserLocation | null> {
   return fetchIPLocation()
 }
 
-export type DeviceLocationResult =
-  | { ok: true; location: UserLocation }
-  | { ok: false; reason: 'denied' | 'unavailable' | 'error' }
-
-/**
- * Ask the browser for the device location. Only ever call this from a user
- * gesture (a click) — that is what makes the permission prompt deliberate.
- * Returns a result instead of throwing so callers can distinguish a blocked
- * permission from a transient failure.
- */
-export function requestDeviceLocation(): Promise<DeviceLocationResult> {
-  if (typeof navigator === 'undefined' || !navigator.geolocation) {
-    return Promise.resolve({ ok: false, reason: 'unavailable' })
-  }
-
-  return new Promise((resolve) => {
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const location: UserLocation = {
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-          timestamp: Date.now(),
-        }
-        storeLocation(location.lat, location.lng)
-        trackLocationShared(location.lat, location.lng)
-        resolve({ ok: true, location })
-      },
-      (err) => {
-        resolve({ ok: false, reason: err?.code === 1 ? 'denied' : 'error' })
-      },
-      { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 },
-    )
-  })
-}
 
 /** Forget the remembered coordinates (used when the visitor turns location off). */
 export function clearStoredLocation(): void {
