@@ -214,24 +214,35 @@ export default function Footer() {
   const year = new Date().getFullYear()
   const watermarkRef = useRef<HTMLDivElement>(null)
 
-  /* The oversized word in the bottom band is fitted to the band's width by
-     binary search rather than sized with a clamp: "Expedition-Go Tours" is
-     roughly 1.6x the width of the "travio ghana" this rule was tuned for, so
-     any fixed size either overflows the viewport or wastes the band. 14
-     halvings land within a fraction of a pixel of the widest size that still
-     fits. Re-runs on resize (the band is full-bleed) and whenever the copy
-     changes. */
+  /* The oversized word in the bottom band is fitted by binary search rather than
+     sized with a clamp: "Expedition-Go Tours" is roughly 1.6x the width of the
+     "travio ghana" this rule was tuned for, so any fixed size either overflows
+     the viewport or wastes the band. 14 halvings land within a fraction of a
+     pixel of the widest size that still fits. Re-runs on resize (the band is
+     full-bleed) and whenever the copy changes.
+
+     It is fitted to the CONTENT column, not the band, so the word keeps the
+     same left/right gutter as the legal links above it. That gutter is not a
+     constant: `.footer-container` uses 32px, but ~10 page-scoped rules
+     (.page-support-*, body:has(.tour-detail-page), the ≤768px phone rule…)
+     override it to 16/20/24/40px or to a centering max(). Reading it off the
+     live element is the only way to stay aligned on all of them, so the target
+     is the legal row's content box — measured, never hardcoded. */
   useEffect(() => {
     const box = watermarkRef.current
     if (!box) return
     const band = box.parentElement
-    if (!band) return
+    const legal = band?.querySelector('.footer-bottom-inner')
+    if (!band || !legal) return
 
     const fit = () => {
-      // Measure against the band, not the box: the watermark is absolutely
-      // positioned, so its own width is just the text and every size "fits".
-      const target = band.clientWidth
-      if (!target) return
+      // The legal row's content box: its border box minus the container's
+      // padding, which is the visible gutter the word has to stop short of.
+      const style = getComputedStyle(legal)
+      const row = legal.getBoundingClientRect()
+      const target = row.width - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight)
+      if (!(target > 0)) return
+
       let low = 16
       let high = 400
       for (let i = 0; i < 14; i++) {
