@@ -7,34 +7,55 @@
    are dropped (this app renders a global Navbar and Footer), and its runtime
    script — the `.reveal` IntersectionObserver and the clone of the impact
    track's photo set — is reimplemented below. The gallery marquee doubles up
-   its photo set in the markup instead of cloning it in JS. See
-   src/styles/FoundationPage.css for the CSS notes.
+   its photo set in the markup instead of cloning it in JS.
+
+   The photographs are local optimized AVIFs (src/assets/foundation/) generated
+   by scripts/generate-foundation-images.cjs; the template hot-linked Wikimedia
+   thumbnails that took seconds each to arrive. See src/styles/FoundationPage.css
+   for the CSS notes.
    ========================================================================== */
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type ImgHTMLAttributes } from 'react'
 import { Link } from 'react-router-dom'
 import Footer from '../components/Footer'
 import SEO, { buildBreadcrumbSchema, buildOrganizationSchema } from '../components/SEO'
+import schoolChildren from '../assets/foundation/school-children.avif'
+import treePlanting9 from '../assets/foundation/tree-planting-9.avif'
+import communityCleanup from '../assets/foundation/community-cleanup.avif'
+import marketWomen from '../assets/foundation/market-women.avif'
+import villageMeeting from '../assets/foundation/village-meeting.avif'
+import teacherReading from '../assets/foundation/teacher-reading.avif'
+import studentsReading from '../assets/foundation/students-reading.avif'
+import waliMeeting from '../assets/foundation/wali-meeting.avif'
+import cleanup9 from '../assets/foundation/cleanup-9.avif'
+import schoolgirl from '../assets/foundation/schoolgirl.avif'
+import treePlanting from '../assets/foundation/tree-planting.avif'
+import youngWomen from '../assets/foundation/young-women.avif'
+import cleanup4 from '../assets/foundation/cleanup-4.avif'
 import '@/styles/FoundationPage.css'
-
-const WIKIMEDIA = 'https://commons.wikimedia.org/wiki/Special:FilePath/'
 
 const CONTACT = '/contact-us'
 
 /** Hero gallery: two columns, each its own scrolling strip of three photos. */
 const GALLERY_LANE_1 = [
   {
-    file: 'Ghana%20school%20children%20%288203372110%29.jpg?width=1100',
+    src: schoolChildren,
+    width: 640,
+    height: 424,
     alt: 'School children in an English class in Accra',
     label: 'Learning',
   },
   {
-    file: 'Tree%20planting%20in%20Ghana%209.jpg?width=1100',
+    src: treePlanting9,
+    width: 640,
+    height: 427,
     alt: 'Tree planting activity in Ghana',
     label: 'Growing',
   },
   {
-    file: 'Community%20clean-up.jpg?width=1100',
+    src: communityCleanup,
+    width: 640,
+    height: 853,
     alt: 'Community clean-up in Winneba, Ghana',
     label: 'Community action',
   },
@@ -42,17 +63,23 @@ const GALLERY_LANE_1 = [
 
 const GALLERY_LANE_2 = [
   {
-    file: 'Market%20women%20in%20Ghana.jpg?width=1100',
+    src: marketWomen,
+    width: 560,
+    height: 373,
     alt: 'Market women in Ghana',
     label: 'Livelihoods',
   },
   {
-    file: 'A%20village%20community%20development%20meeting%20in%20northern%20Ghana.jpg?width=1100',
+    src: villageMeeting,
+    width: 560,
+    height: 315,
     alt: 'Community development meeting in northern Ghana',
     label: 'Local voices',
   },
   {
-    file: 'A%20teacher%20assisting%20his%20student%20to%20read.jpg?width=1100',
+    src: teacherReading,
+    width: 560,
+    height: 747,
     alt: 'A teacher helping a student read in Northern Ghana',
     label: 'Education',
   },
@@ -155,7 +182,9 @@ const FOCUS_AREAS = [
 
 const HELP_CARDS = [
   {
-    file: 'Students%20reading%20in%20a%20classroom.jpg?width=1100',
+    src: studentsReading,
+    width: 1280,
+    height: 853,
     alt: 'Students reading in a classroom in Ghana',
     tag: 'For individuals',
     title: 'Share your situation.',
@@ -163,7 +192,9 @@ const HELP_CARDS = [
     cta: 'Request help →',
   },
   {
-    file: 'Wali_physical_meeting.jpg?width=1100',
+    src: waliMeeting,
+    width: 1280,
+    height: 960,
     alt: 'Community group meeting in Wa, Ghana',
     tag: 'For communities',
     title: 'Bring a local need forward.',
@@ -174,22 +205,30 @@ const HELP_CARDS = [
 
 const IMPACT_SHOTS = [
   {
-    file: 'Cleanup%20exercise%20in%20Ghana%209.jpg?width=1100',
+    src: cleanup9,
+    width: 800,
+    height: 600,
     alt: 'Volunteers cleaning a street in Accra',
     caption: 'Local action',
   },
   {
-    file: 'Schoolgirl%20Ghana.jpg?width=1100',
+    src: schoolgirl,
+    width: 800,
+    height: 1198,
     alt: 'Schoolgirl photographed in northern Ghana',
     caption: 'Education & opportunity',
   },
   {
-    file: 'Ghana%20tree%20planting.jpg?width=1100',
+    src: treePlanting,
+    width: 800,
+    height: 1067,
     alt: 'Tree planting initiative in Ghana',
     caption: 'Looking after our future',
   },
   {
-    file: 'Ghana%20young%20women%20%287250530402%29.jpg?width=1100',
+    src: youngWomen,
+    width: 800,
+    height: 1200,
     alt: 'Young women at a community health event in Ghana',
     caption: 'People working together',
   },
@@ -201,22 +240,54 @@ const VOLUNTEER_POINTS = [
   'Help meaningful projects move forward',
 ]
 
+/**
+ * Local AVIF photos start transparent and fade in once decoded, so they never
+ * flash half-drawn over the placeholder while the hero strips are moving.
+ */
+function FadeImage({ onLoad, ...props }: ImgHTMLAttributes<HTMLImageElement>) {
+  const ref = useRef<HTMLImageElement>(null)
+  const [loaded, setLoaded] = useState(false)
+
+  // Cached images can already be complete before onLoad is attached.
+  useLayoutEffect(() => {
+    if (ref.current?.complete) setLoaded(true)
+  }, [])
+
+  return (
+    <img
+      {...props}
+      ref={ref}
+      className={[loaded ? 'is-loaded' : '', props.className].filter(Boolean).join(' ') || undefined}
+      onLoad={(event) => {
+        onLoad?.(event)
+        setLoaded(true)
+      }}
+    />
+  )
+}
+
 /** The hero's moving strip. The set is rendered twice so fnd-up/-down loop. */
 function GalleryLane({
   images,
   eager,
+  priorityFirst = false,
 }: {
   images: typeof GALLERY_LANE_1
   eager: boolean
+  priorityFirst?: boolean
 }) {
   const set = (duplicate: boolean) => (
     <div className="set" {...(duplicate ? { 'aria-hidden': 'true' } : {})}>
-      {images.map((img) => (
+      {images.map((img, index) => (
         <figure className="photo" key={`${duplicate ? 'dup-' : ''}${img.label}`}>
-          <img
-            src={`${WIKIMEDIA}${img.file}`}
+          <FadeImage
+            src={img.src}
+            width={img.width}
+            height={img.height}
             alt={duplicate ? '' : img.alt}
             loading={eager && !duplicate ? 'eager' : 'lazy'}
+            decoding="async"
+            fetchPriority={priorityFirst && !duplicate && index === 0 ? 'high' : undefined}
           />
           <span>{img.label}</span>
         </figure>
@@ -239,10 +310,13 @@ function ImpactSet({ duplicate }: { duplicate: boolean }) {
     <div className="impact-set" {...(duplicate ? { 'aria-hidden': 'true' } : {})}>
       {IMPACT_SHOTS.map((shot) => (
         <figure className="impact-shot" key={`${duplicate ? 'dup-' : ''}${shot.caption}`}>
-          <img
-            src={`${WIKIMEDIA}${shot.file}`}
+          <FadeImage
+            src={shot.src}
+            width={shot.width}
+            height={shot.height}
             alt={duplicate ? '' : shot.alt}
             loading="lazy"
+            decoding="async"
           />
           <figcaption>{shot.caption}</figcaption>
         </figure>
@@ -329,7 +403,7 @@ export default function FoundationPage() {
           </div>
 
           <div className="gallery" aria-label="Moving gallery of real photographs from Ghana">
-            <GalleryLane images={GALLERY_LANE_1} eager />
+            <GalleryLane images={GALLERY_LANE_1} eager priorityFirst />
             <GalleryLane images={GALLERY_LANE_2} eager />
             <div className="gallery-badge">
               <i />
@@ -455,7 +529,14 @@ export default function FoundationPage() {
             <div className="help-grid">
               {HELP_CARDS.map((card) => (
                 <article className="help-card reveal" key={card.tag}>
-                  <img src={`${WIKIMEDIA}${card.file}`} alt={card.alt} />
+                  <FadeImage
+                    src={card.src}
+                    width={card.width}
+                    height={card.height}
+                    alt={card.alt}
+                    loading="lazy"
+                    decoding="async"
+                  />
                   <div className="help-copy">
                     <span className="help-tag">{card.tag}</span>
                     <h3>{card.title}</h3>
@@ -492,9 +573,13 @@ export default function FoundationPage() {
         <section className="volunteer" id="get-involved">
           <div className="container volunteer-shell reveal">
             <div className="volunteer-photo">
-              <img
-                src={`${WIKIMEDIA}Cleanup%20exercise%20in%20Ghana%204.jpg?width=1100`}
+              <FadeImage
+                src={cleanup4}
+                width={1280}
+                height={960}
                 alt="Volunteers taking part in a clean-up in Accra"
+                loading="lazy"
+                decoding="async"
               />
             </div>
             <div className="volunteer-copy">

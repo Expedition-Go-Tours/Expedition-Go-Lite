@@ -31,8 +31,8 @@
 /* Pages whose content column differs from the homepage grid: the footer
    follows that page's own column — the same math as the matching navbar
    rules in Navbar.css — so its edges line up with the content above it.
-   Pages without a rule (All Stories, Content Creators, supplier landing…)
-   keep the homepage column their navbar uses. */
+   Pages without a rule (All Stories, supplier landing…) keep the homepage
+   column their navbar uses. */
 .page-support-1180 .footer-container {
   max-width: none;
   padding-inline: max(20px, calc((100% - 1180px) / 2));
@@ -41,11 +41,6 @@
 .page-support-1200 .footer-container {
   max-width: none;
   padding-inline: max(20px, calc((100% - 1200px) / 2));
-}
-
-.page-support-1280 .footer-container {
-  max-width: none;
-  padding-inline: max(24px, calc((100% - 1280px) / 2));
 }
 
 .page-hotel .footer-container,
@@ -60,9 +55,123 @@
   padding-inline: max(40px, calc((100% - 1400px) / 2 + 40px));
 }
 
+/* All Tours (/tours): the content column is `.all-tours-container` — max-width
+   1400px with 40px gutters (24px at ≤1024px, 16px at ≤768px). Match the footer
+   to the same edges so it lines up with the listing above; the navbar already
+   does (Navbar.css carries the same three breakpoints). The ≤768px override is
+   required — without it the base rule's 40px floor would outrank the phone
+   gutter the rest of the page uses. */
+.page-all-tours .footer-container {
+  max-width: none;
+  padding-inline: max(40px, calc((100% - 1400px) / 2 + 40px));
+}
+
+@media (max-width: 1024px) {
+  .page-all-tours .footer-container {
+    padding-inline: 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  .page-all-tours .footer-container {
+    padding-inline: 16px;
+  }
+}
+
 .page-confirmation .footer-container {
   max-width: none;
   padding-inline: max(32px, calc((100% - 1280px) / 2 + 32px));
+}
+
+/* Stories listing (/stories): `.all-stories-container` — 1200px + 32px
+   gutters (16px at ≤640px). */
+.page-stories .footer-container {
+  max-width: none;
+  padding-inline: max(32px, calc((100% - 1200px) / 2 + 32px));
+}
+
+@media (max-width: 640px) {
+  .page-stories .footer-container {
+    padding-inline: 16px;
+  }
+}
+
+/* Reviews listing (/reviews): `.all-reviews-container` — 1539px + its own
+   32px gutters (24px at ≤1024px, 16px at ≤768px). */
+.page-reviews .footer-container {
+  max-width: none;
+  padding-inline: max(32px, calc((100% - 1539px) / 2 + 32px));
+}
+
+@media (max-width: 1024px) {
+  .page-reviews .footer-container {
+    padding-inline: 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  .page-reviews .footer-container {
+    padding-inline: 16px;
+  }
+}
+
+/* Transport (/transport): `.transport-container` — 1140px + 32px gutters
+   (20px at ≤640px). Same column as the matching navbar rule. */
+.page-transport .footer-container {
+  max-width: none;
+  padding-inline: max(32px, calc((100% - 1140px) / 2 + 32px));
+}
+
+@media (max-width: 640px) {
+  .page-transport .footer-container {
+    padding-inline: 20px;
+  }
+}
+
+/* Partner application (/partners/:type/apply): `.partner-apply-container` —
+   1100px + 16px gutters (12px at ≤768px). */
+.page-partner-apply .footer-container {
+  max-width: none;
+  padding-inline: max(16px, calc((100% - 1100px) / 2 + 16px));
+}
+
+@media (max-width: 768px) {
+  .page-partner-apply .footer-container {
+    padding-inline: 12px;
+  }
+}
+
+/* Review form (/review/:tourTitle): `.review-container` — 1280px + 16/24/32px
+   gutters at <640/640–1023/≥1024. */
+.page-review .footer-container {
+  max-width: none;
+  padding-inline: 16px;
+}
+
+@media (min-width: 640px) {
+  .page-review .footer-container {
+    padding-inline: 24px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .page-review .footer-container {
+    padding-inline: max(32px, calc((100% - 1280px) / 2 + 32px));
+  }
+}
+
+/* Phones: where a 1200px-family page's own column is tighter than the
+   `max(20px, …)` floor above, the footer follows the page's gutter. */
+@media (max-width: 560px) {
+  .page-about .footer-container,
+  .page-blog .footer-container,
+  .page-cookies .footer-container {
+    padding-inline: 14px;
+  }
+
+  .page-foundation .footer-container {
+    padding-inline: 16px;
+  }
 }
 
 /* List an Experience and the supplier application (/supplier/list-experience,
@@ -118,7 +227,7 @@ body:has(.supplier-page) .footer-container {
   }
 }
 
-@media (max-width: 980px) {
+@media (max-width: 640px) {
   .page-confirmation .footer-container {
     padding-inline: 16px;
   }

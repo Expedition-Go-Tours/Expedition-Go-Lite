@@ -12,8 +12,11 @@
  *      renamed (the file this replaced was byte-identical to favicon-32x32.png)
  *   4. the legacy root paths exist for every versioned file, so probes and old
  *      references never 404 after a rebrand
- *   5. apple-touch-icon.png is opaque, because iOS composites transparency
- *      against black and the artwork must not gain black corners
+ *   5. apple-touch-icon.png and maskable-512x512.png are opaque, because iOS
+ *      composites transparency against black and Android's maskable icon must
+ *      reach the tile edges
+ *   6. the tab icons keep their transparent corners (the badge is trimmed to
+ *      its circle), so a regenerate can never quietly ship white squares again
  */
 const { readFileSync, existsSync, readdirSync, statSync } = require('node:fs')
 const { join, resolve } = require('node:path')
@@ -153,6 +156,8 @@ function main() {
   for (const file of [
     'public/apple-touch-icon.png',
     `public/icons/${ICON_VERSION}/apple-touch-icon.png`,
+    'public/maskable-512x512.png',
+    `public/icons/${ICON_VERSION}/maskable-512x512.png`,
   ]) {
     // The ICON_FILES loop above already reports a missing file by name; skipping
     // here keeps one problem from being announced twice with a misleading second
@@ -160,8 +165,33 @@ function main() {
     if (!existsSync(join(ROOT, file))) continue
     const alpha = pngHasAlpha(join(ROOT, file))
     if (alpha === null) fail(`${file} is not a PNG`)
-    else if (alpha) fail(`${file} has an alpha channel; iOS would composite it against black`)
+    else if (alpha) fail(`${file} has an alpha channel; this icon must stay opaque`)
     else pass(`${file}: opaque`)
+  }
+
+  // The tab icons must keep their transparent corners: the badge is trimmed to
+  // its circle, and a regenerate that flattens the set onto white again would
+  // regress every browser tab to a white square.
+  const ROUND_ICONS = [
+    'favicon-16x16.png',
+    'favicon-32x32.png',
+    'favicon-48x48.png',
+    'favicon-64.png',
+    'android-chrome-192x192.png',
+    'android-chrome-512x512.png',
+  ]
+  const flattened = []
+  for (const name of ROUND_ICONS) {
+    for (const dir of ['public', join('public', 'icons', ICON_VERSION)]) {
+      const file = join(ROOT, dir, name)
+      if (!existsSync(file)) continue // already reported by the ICON_FILES loop
+      if (pngHasAlpha(file) !== true) flattened.push(`${dir}/${name}`)
+    }
+  }
+  if (flattened.length) {
+    fail(`tab icons lost their transparent corners: ${flattened.join(', ')}`)
+  } else {
+    pass(`all ${ROUND_ICONS.length * 2} tab icons have transparent corners`)
   }
 
   // Staleness hint only: checkout order makes mtimes unreliable, so this warns.

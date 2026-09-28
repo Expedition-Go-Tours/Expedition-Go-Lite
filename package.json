@@ -14,7 +14,9 @@
     "test:watch": "vitest",
     "preview": "vite preview",
     "perf:mobile": "node scripts/perf/audit-mobile.mjs",
+    "audit:alignment": "node scripts/audit/check-chrome-alignment.mjs",
     "generate-favicons": "node generate-favicons.cjs",
+    "generate-foundation-images": "node scripts/generate-foundation-images.cjs",
     "extract": "i18next-parser"
   },
   "dependencies": {

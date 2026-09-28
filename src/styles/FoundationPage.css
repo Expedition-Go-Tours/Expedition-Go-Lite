@@ -329,3 +329,42 @@ html:has(.fnd-page){scroll-behavior:smooth}
 .fnd-page .container {
   max-width: none;
 }
+
+/* ── Local AVIF photos ────────────────────────────────────────────────
+   The page's photographs are local optimized AVIFs (see
+   src/assets/foundation/) that load in milliseconds; they fade in on decode
+   so they never flash half-drawn over the placeholder. The React <FadeImage>
+   toggles .is-loaded. */
+.fnd-page .photo img,
+.fnd-page .help-card img,
+.fnd-page .impact-shot img,
+.fnd-page .volunteer-photo img {
+  opacity: 0;
+  transition: opacity .5s ease, transform .7s cubic-bezier(.2,.8,.2,1);
+}
+.fnd-page .photo img.is-loaded,
+.fnd-page .help-card img.is-loaded,
+.fnd-page .impact-shot img.is-loaded,
+.fnd-page .volunteer-photo img.is-loaded {
+  opacity: 1;
+}
+
+/* Placeholders behind the fade (photo/impact already have one). */
+.fnd-page .help-card {
+  background: #0a3022;
+}
+.fnd-page .volunteer-photo {
+  background: #dbe8df;
+}
+
+/* The rules above re-declare `transition`, so re-assert the page's
+   reduced-motion choice last: no fade, photo visible as soon as decoded. */
+@media (prefers-reduced-motion: reduce) {
+  .fnd-page .photo img,
+  .fnd-page .help-card img,
+  .fnd-page .impact-shot img,
+  .fnd-page .volunteer-photo img {
+    opacity: 1;
+    transition: none;
+  }
+}

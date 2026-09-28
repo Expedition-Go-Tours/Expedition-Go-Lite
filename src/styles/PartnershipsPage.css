@@ -40,9 +40,25 @@
   animation: ptn-routeRail 42s linear infinite;
   will-change: transform;
 }
+/* Re-assert the shorthand, not just `animation-play-state`: the ported base
+   stylesheet still contains `.route-rail:hover{animation:none}` at a higher
+   specificity than the rule above, so without the shorthand the keyframe is
+   cancelled on hover and the rail snaps back to its untranslated start (then
+   restarts from 0 on mouse-leave). Re-declaring the animation keeps the
+   keyframe alive so play-state can actually pause it in place. */
 .ptn-page .route-rail:hover,
 .ptn-page .route-rail:focus-within {
+  animation: ptn-routeRail 42s linear infinite;
   animation-play-state: paused;
+}
+/* The ported base stylesheet also intended a slower loop on phones; that
+   declaration loses to the shorthand above, so restore it here. */
+@media (max-width: 650px) {
+  .ptn-page .route-rail,
+  .ptn-page .route-rail:hover,
+  .ptn-page .route-rail:focus-within {
+    animation-duration: 48s;
+  }
 }
 .ptn-page .route-set {
   display: flex;
@@ -53,6 +69,26 @@
   pointer-events: none;
 }
 
+/* Rail photos fade in once decoded instead of popping in at full contrast
+   mid-scroll. The React card toggles .is-loaded on load (and immediately on
+   cache hits). */
+.ptn-page .route-card img {
+  opacity: 0;
+  transition: transform .8s cubic-bezier(.2,.8,.2,1), filter .4s, opacity .5s ease;
+}
+.ptn-page .route-card img.is-loaded {
+  opacity: 1;
+}
+
+/* Keep the route-network band on the page's 1200px column like every other
+   section (the ported rule still sizes it to the template's 1280px --max).
+   Scoped above 650px so the phone layout keeps its own gutters. */
+@media (min-width: 651px) {
+  .ptn-page .route-network {
+    width: min(calc(100% - 40px), 1200px);
+  }
+}
+
 /* Anchor jumps (#routes, #join) land below the app's fixed navbar. */
 .ptn-page section[id] {
   scroll-margin-top: 90px;
@@ -60,7 +96,9 @@
 
 @media (prefers-reduced-motion: reduce) {
   /* The template turns the rail into a swipeable row for reduced motion. */
-  .ptn-page .route-rail {
+  .ptn-page .route-rail,
+  .ptn-page .route-rail:hover,
+  .ptn-page .route-rail:focus-within {
     animation: none;
   }
   .ptn-page .route-set[aria-hidden='true'] {

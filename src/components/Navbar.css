@@ -1515,20 +1515,16 @@ body:has(.story-detail) .navbar-compact-search {
    so phones and tablets stay aligned too. */
 
 /* 1180px column + 20px gutters — .sh-main / .support-container
-   (Help Centre, Contact Us, FAQ, Careers, Refund Policy, Foundation) */
+   (Help Centre, Contact Us, FAQ, Careers, Refund Policy) */
 .page-support-1180 .navbar {
   padding-left: max(20px, calc((100% - 1180px) / 2));
   padding-right: max(20px, calc((100% - 1180px) / 2));
 }
 
-/* 1280px column + 24px gutters — .pp-container (Partnerships) */
-.page-support-1280 .navbar {
-  padding-left: max(24px, calc((100% - 1280px) / 2));
-  padding-right: max(24px, calc((100% - 1280px) / 2));
-}
-
 /* 1200px column + 20px gutters — .leg-wrap (Terms, Privacy, Supplier Terms),
-   .cp-wrap (Cookies Policy), .about-container, .blog-container */
+   .cp-wrap (Cookies Policy), .about-container, .blog-container, the
+   Partnerships page's shared .wrap column, the Foundation page's .container
+   and the Content Creators / partner landing .wrap column */
 .page-support-1200 .navbar {
   padding-left: max(20px, calc((100% - 1200px) / 2));
   padding-right: max(20px, calc((100% - 1200px) / 2));
@@ -1554,12 +1550,119 @@ body:has(.story-detail) .navbar-compact-search {
   }
 }
 
-/* Booking confirmation: content column is max-width 1280px with 32px gutters.
-   Align the navbar items on its inner content edges on desktop only. */
-@media (min-width: 1025px) {
+/* Booking confirmation: content column is `.confirmation-print-area` —
+   max-width 1280px with 32px gutters (16px at ≤640px). */
+.page-confirmation .navbar {
+  padding-left: max(32px, calc((100% - 1280px) / 2 + 32px));
+  padding-right: max(32px, calc((100% - 1280px) / 2 + 32px));
+}
+
+@media (max-width: 640px) {
   .page-confirmation .navbar {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
+
+/* Stories listing (/stories): `.all-stories-container` — max-width 1200px with
+   32px gutters (16px at ≤640px). The detail page keeps the homepage grid: its
+   article is a narrow centred column. */
+.page-stories .navbar {
+  padding-left: max(32px, calc((100% - 1200px) / 2 + 32px));
+  padding-right: max(32px, calc((100% - 1200px) / 2 + 32px));
+}
+
+@media (max-width: 640px) {
+  .page-stories .navbar {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
+
+/* Reviews listing (/reviews): `.all-reviews-container` — max-width 1539px with
+   32px gutters of its own (24px at ≤1024px, 16px at ≤768px). */
+.page-reviews .navbar {
+  padding-left: max(32px, calc((100% - 1539px) / 2 + 32px));
+  padding-right: max(32px, calc((100% - 1539px) / 2 + 32px));
+}
+
+@media (max-width: 1024px) {
+  .page-reviews .navbar {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  .page-reviews .navbar {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
+
+/* Transport (/transport): content column is `.transport-container` — max-width
+   1140px with 32px gutters (20px at ≤640px). */
+.page-transport .navbar {
+  padding-left: max(32px, calc((100% - 1140px) / 2 + 32px));
+  padding-right: max(32px, calc((100% - 1140px) / 2 + 32px));
+}
+
+@media (max-width: 640px) {
+  .page-transport .navbar {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+}
+
+/* Partner application (/partners/:type/apply): content column is
+   `.partner-apply-container` — max-width 1100px with 16px gutters
+   (12px at ≤768px). */
+.page-partner-apply .navbar {
+  padding-left: max(16px, calc((100% - 1100px) / 2 + 16px));
+  padding-right: max(16px, calc((100% - 1100px) / 2 + 16px));
+}
+
+@media (max-width: 768px) {
+  .page-partner-apply .navbar {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+}
+
+/* Review form (/review/:tourTitle): content column is `.review-container` —
+   max-width 1280px with 16/24/32px gutters at <640/640–1023/≥1024. */
+.page-review .navbar {
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+@media (min-width: 640px) {
+  .page-review .navbar {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .page-review .navbar {
     padding-left: max(32px, calc((100% - 1280px) / 2 + 32px));
     padding-right: max(32px, calc((100% - 1280px) / 2 + 32px));
+  }
+}
+
+/* Phones: where a 1200px-family page's own column is tighter than the
+   `max(20px, …)` floor above, the navbar follows the page's gutter. */
+@media (max-width: 560px) {
+  .page-about .navbar,
+  .page-blog .navbar,
+  .page-cookies .navbar {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .page-foundation .navbar {
+    padding-left: 16px;
+    padding-right: 16px;
   }
 }
 

@@ -8,20 +8,21 @@
  * so this script and that check are two halves of one contract: whatever this
  * writes is exactly what the check demands.
  *
- * SOURCE is a monochrome circular seal (a laurel wreath around a two-letter
- * monogram) drawn in near-black on an opaque white field. Two consequences
- * drive the whole file:
+ * SOURCE is the Expedition-Go Tours badge: a circular seal on an opaque white
+ * square canvas, with a white margin around the circle. Two things follow:
  *
- *   1. It has no alpha channel and must not be given one. A transparent
- *      background on a BLACK mark makes the favicon invisible on a dark tab
- *      strip, which is the one place a favicon is actually seen. Every PNG here
- *      is therefore flattened onto white and written without alpha. This is also
- *      what scripts/check-icons.cjs requires of apple-touch-icon.png, because
- *      iOS composites transparency against black.
- *   2. The seal is drawn edge to edge, so it can fill a square tile, but a
- *      masked Android icon can crop to well under the full width. The maskable
- *      variant is therefore inset to the 80% safe circle instead of scaled like
- *      the rest.
+ *   1. The margin is not part of the mark, so every output trims it away (the
+ *      circle is 441px of the 474px source) to fill the tile. The tile icons
+ *      (tab favicons, android-chrome) are then cut to the circle with a
+ *      transparent outside, so a tab strip shows the round badge instead of a
+ *      white square. Cutting the corners is safe here because the seal has an
+ *      opaque white interior — only an outline-only mark would vanish on a dark
+ *      tab strip. apple-touch-icon.png and maskable-512x512.png stay flattened
+ *      onto white: iOS composites transparency against black and applies its
+ *      own mask, and Android's maskable icon must reach the tile edges.
+ *   2. A masked Android icon can crop to well under the full width (the safe
+ *      circle is ~80%), so the maskable variant is inset to that circle instead
+ *      of scaled to the tile like the rest.
  *
  * The ICO is assembled by hand. sharp cannot write one, and an .ico whose
  * single entry is a renamed PNG is the exact failure check-icons.cjs is built to
@@ -37,16 +38,18 @@ const PUBLIC = join(ROOT, 'public')
 const VERSIONED = join(PUBLIC, 'icons', ICON_VERSION)
 const SOURCE = join(ROOT, 'src/assets/favicon-source.webp')
 
-/** Page icons: the seal fills the tile, on white. */
-const FILL = [
+/** Tab/app icons: trimmed to the badge circle, corners cut transparent. */
+const ROUND = [
   { name: 'favicon-16x16.png', size: 16 },
   { name: 'favicon-32x32.png', size: 32 },
   { name: 'favicon-48x48.png', size: 48 },
   { name: 'favicon-64.png', size: 64 },
-  { name: 'apple-touch-icon.png', size: 180 },
   { name: 'android-chrome-192x192.png', size: 192 },
   { name: 'android-chrome-512x512.png', size: 512 },
 ]
+
+/** Icons that must stay opaque, on the white field (see the file header). */
+const OPAQUE = [{ name: 'apple-touch-icon.png', size: 180 }]
 
 /**
  * Maskable icons: the mark is inset so it survives a circular crop. The web
@@ -70,6 +73,19 @@ function seal(size) {
     .removeAlpha()
 }
 
+/** The seal trimmed to its circle at `size`x`size`, corners cut transparent. */
+async function round(size) {
+  const circle = await sharp(SOURCE)
+    .trim({ threshold: 12 })
+    .resize(size, size, { fit: 'cover' })
+    .png()
+    .toBuffer()
+  const mask = Buffer.from(
+    `<svg width="${size}" height="${size}"><circle cx="${size / 2}" cy="${size / 2}" r="${size / 2}" fill="#fff"/></svg>`,
+  )
+  return sharp(circle).composite([{ input: mask, blend: 'dest-in' }])
+}
+
 /** The seal inset to the safe circle, centred on an opaque white field. */
 async function maskable(size) {
   const inner = Math.round(size * SAFE_ZONE)
@@ -82,6 +98,10 @@ async function maskable(size) {
     create: { width: size, height: size, channels: 3, background: WHITE },
   })
     .composite([{ input: mark, top: offset, left: offset }])
+    // The composite promotes the pipeline to RGBA even though every pixel here
+    // is opaque; the alpha channel has to go back off so check-icons.cjs can
+    // tell this file apart from the transparent-corner set.
+    .removeAlpha()
     .png()
     .toBuffer()
 }
@@ -129,7 +149,11 @@ async function main() {
     written.push({ name, bytes: buffer.length })
   }
 
-  for (const { name, size } of FILL) {
+  for (const { name, size } of ROUND) {
+    await write(name, await round(size).then((img) => img.png({ compressionLevel: 9 }).toBuffer()))
+  }
+
+  for (const { name, size } of OPAQUE) {
     await write(name, await seal(size).png({ compressionLevel: 9 }).toBuffer())
   }
 
@@ -139,7 +163,7 @@ async function main() {
 
   const icoEntries = []
   for (const size of ICO_SIZES) {
-    icoEntries.push({ size, data: await seal(size).png({ compressionLevel: 9 }).toBuffer() })
+    icoEntries.push({ size, data: await round(size).then((img) => img.png({ compressionLevel: 9 }).toBuffer()) })
   }
   await write('favicon.ico', buildIco(icoEntries))
 

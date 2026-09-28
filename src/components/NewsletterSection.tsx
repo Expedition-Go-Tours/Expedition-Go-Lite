@@ -1,5 +1,4 @@
 import { useState, type FormEvent } from 'react'
-import { motion, useReducedMotion } from 'framer-motion'
 import { Mail } from 'lucide-react'
 import { useComingSoon } from '../hooks/useComingSoon'
 import newsletterImg from '../assets/newsletter-square.jpg'
@@ -8,7 +7,6 @@ import './NewsletterSection.css'
 export default function NewsletterSection() {
   const [email, setEmail] = useState('')
   const comingSoon = useComingSoon()
-  const reduce = useReducedMotion()
 
   // The mailing-list API is not wired up yet: the button is marked
   // "coming soon" and submission is deliberately a no-op.
@@ -20,28 +18,16 @@ export default function NewsletterSection() {
     <section className="newsletter-section">
       <div className="newsletter-container">
         <div className="newsletter-card">
-          <motion.div
-            className="newsletter-image-wrap"
-            initial={reduce ? undefined : { opacity: 0, x: -30 }}
-            whileInView={reduce ? undefined : { opacity: 1, x: 0 }}
-            viewport={{ once: true, margin: '-60px' }}
-            transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
-          >
+          <div className="newsletter-image-wrap">
             <img
               src={newsletterImg}
               alt="Aerial view of Black Star Square and Independence Arch in Accra"
               className="newsletter-image"
               loading="lazy"
             />
-          </motion.div>
+          </div>
 
-          <motion.div
-            className="newsletter-content"
-            initial={reduce ? undefined : { opacity: 0, x: 30 }}
-            whileInView={reduce ? undefined : { opacity: 1, x: 0 }}
-            viewport={{ once: true, margin: '-60px' }}
-            transition={{ duration: 0.6, delay: 0.15, ease: [0.25, 0.46, 0.45, 0.94] }}
-          >
+          <div className="newsletter-content">
             <h2 className="newsletter-title">
               Never Miss a Deal or Destination
             </h2>
@@ -71,7 +57,7 @@ export default function NewsletterSection() {
                 </button>
               </div>
             </form>
-          </motion.div>
+          </div>
         </div>
       </div>
     </section>

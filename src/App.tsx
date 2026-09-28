@@ -245,25 +245,39 @@ function AppContent() {
       ['/hotels', 'page-hotel'],
       ['/travel-agents', 'page-travel-agents'],
       ['/transport-providers', 'page-transport-providers'],
+      // `/transport` must come after `/transport-providers`: the first prefix
+      // that matches wins, and the two pages use different content columns.
+      ['/transport', 'page-transport'],
       // The `page-support-*` classes set the navbar's column alignment to the
       // content width those routes use (see Navbar.css).
-      ['/foundation', 'page-foundation page-support-1180'],
+      ['/foundation', 'page-foundation page-support-1200'],
       ['/blog', 'page-blog page-support-1200'],
       ['/about-us', 'page-about page-support-1200'],
-      ['/content-creators', 'page-content-creators'],
+      ['/content-creators', 'page-content-creators page-support-1200'],
       ['/help-centre', 'page-support page-support-1180'],
       ['/contact-us', 'page-support page-support-1180'],
       ['/faq', 'page-support page-support-1180'],
       ['/careers', 'page-support page-support-1180'],
-      ['/partnerships', 'page-support page-support-1280'],
+      ['/partnerships', 'page-support page-support-1200'],
       ['/supplier-terms', 'page-support page-support-1200'],
       ['/terms-and-conditions', 'page-support page-support-1200'],
       ['/privacy-policy', 'page-support page-support-1200'],
-      ['/refund-policy', 'page-support page-support-1180'],
-      ['/cookies-policy', 'page-support page-support-1200'],
+      ['/refund-policy', 'page-support page-support-1200'],
+      ['/cookies-policy', 'page-support page-support-1200 page-cookies'],
+      // `/stories/:slug` is a narrow centred article (no column to align the
+      // chrome to), so only the listing gets the column class. The empty value
+      // clears the page-* classes the previous route may have left behind.
+      ['/stories/', ''],
+      ['/stories', 'page-stories'],
+      ['/reviews', 'page-reviews'],
       ['/tours', 'page-all-tours'],
       ['/search', 'page-search'],
       ['/booking/confirmation', 'page-confirmation'],
+      // Partner application (`/partners/:type/apply`) — its own 1100px column.
+      ['/partners/', 'page-partner-apply'],
+      // Review form (`/review/:tourTitle`) — `/review/` (trailing slash) so the
+      // `/reviews` listing keeps the homepage grid it is designed against.
+      ['/review/', 'page-review'],
     ]
     const match = classMap.find(([prefix]) => path.startsWith(prefix))
     const classes = (match?.[1] ?? '').split(' ').filter(Boolean)

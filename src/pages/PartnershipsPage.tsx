@@ -9,7 +9,7 @@
    the effects below. See src/styles/PartnershipsPage.css for the CSS notes.
    ========================================================================== */
 
-import { useEffect, useRef, useState, Fragment, type CSSProperties } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, Fragment, type CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 import Footer from '../components/Footer'
 import SEO, { buildBreadcrumbSchema, buildOrganizationSchema } from '../components/SEO'
@@ -168,6 +168,60 @@ function TickerLine() {
   )
 }
 
+type RouteCardData = (typeof ROUTE_CARDS)[number]
+
+/**
+ * One rail card. The photo starts transparent and fades in once the browser
+ * has decoded it: the rail scrolls from the first frame, so a lazy image
+ * otherwise pops in at full contrast while it is already moving across the
+ * viewport. The first cards load eagerly because they are visible immediately;
+ * the rest stay lazy. The duplicate, decorative set shares their URLs, so its
+ * copies resolve from cache.
+ */
+function RouteCard({ card, index, duplicate }: { card: RouteCardData; index: number; duplicate: boolean }) {
+  const imgRef = useRef<HTMLImageElement>(null)
+  const [imgLoaded, setImgLoaded] = useState(false)
+
+  // Cached images can already be complete before onLoad is attached; check on
+  // mount so they do not stay invisible.
+  useLayoutEffect(() => {
+    if (imgRef.current?.complete) setImgLoaded(true)
+  }, [])
+
+  return (
+    <article className="route-card" style={{ '--i': index } as CSSProperties}>
+      <img
+        ref={imgRef}
+        className={imgLoaded ? 'is-loaded' : undefined}
+        src={`${WIKIMEDIA}${card.file}`}
+        alt={card.alt}
+        loading={index < 4 ? 'eager' : 'lazy'}
+        decoding="async"
+        onLoad={() => setImgLoaded(true)}
+      />
+      <Link
+        className="card-photo-link"
+        to={card.to}
+        aria-label={`Explore ${card.label}`}
+        tabIndex={duplicate ? -1 : undefined}
+      />
+      <div className="route-card-inner">
+        <div className="route-no">
+          <span>{card.label}</span>
+          <b>{card.no}</b>
+        </div>
+        <div className="route-bottom">
+          <h3>{card.h3}</h3>
+          <p>Explore the programme and see how to join.</p>
+          <Link to={card.to} tabIndex={duplicate ? -1 : undefined}>
+            {card.cta} <LinkIcon />
+          </Link>
+        </div>
+      </div>
+    </article>
+  )
+}
+
 export default function PartnershipsPage() {
   const pageRef = useRef<HTMLDivElement>(null)
   const progressRef = useRef<HTMLDivElement>(null)
@@ -254,28 +308,7 @@ export default function PartnershipsPage() {
   const routeSet = (duplicate: boolean) => (
     <div className="route-set" {...(duplicate ? { 'aria-hidden': 'true' } : {})}>
       {ROUTE_CARDS.map((card, i) => (
-        <article className="route-card" style={{ '--i': i } as CSSProperties} key={`${card.no}-${card.label}`}>
-          <img src={`${WIKIMEDIA}${card.file}`} alt={card.alt} loading="lazy" />
-          <Link
-            className="card-photo-link"
-            to={card.to}
-            aria-label={`Explore ${card.label}`}
-            tabIndex={duplicate ? -1 : undefined}
-          />
-          <div className="route-card-inner">
-            <div className="route-no">
-              <span>{card.label}</span>
-              <b>{card.no}</b>
-            </div>
-            <div className="route-bottom">
-              <h3>{card.h3}</h3>
-              <p>Explore the programme and see how to join.</p>
-              <Link to={card.to} tabIndex={duplicate ? -1 : undefined}>
-                {card.cta} <LinkIcon />
-              </Link>
-            </div>
-          </div>
-        </article>
+        <RouteCard card={card} index={i} duplicate={duplicate} key={`${card.no}-${card.label}`} />
       ))}
     </div>
   )
@@ -330,7 +363,11 @@ export default function PartnershipsPage() {
               <path d="M90 450c100-195 238-292 415-285 92 4 161 37 207 97" />
             </svg>
             <div className="hero-shot">
-              <img src={`${WIKIMEDIA}Elmina_Castle_-_Ghana.jpg?width=1400`} alt="Elmina Castle on the Ghana coast" />
+              <img
+                src={`${WIKIMEDIA}Elmina_Castle_-_Ghana.jpg?width=1400`}
+                alt="Elmina Castle on the Ghana coast"
+                decoding="async"
+              />
               <div className="shot-label">
                 <div>
                   <span>Expedition-Go Tours partner network</span>
@@ -525,6 +562,7 @@ export default function PartnershipsPage() {
                   src="/partnerships/material.jpg"
                   alt="Two people smiling and greeting one another with a fist bump"
                   loading="lazy"
+                  decoding="async"
                 />
                 <div className="process-caption">
                   <small>From conversation to collaboration</small>

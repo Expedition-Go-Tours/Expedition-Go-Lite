@@ -16,8 +16,10 @@ interface LegalPageShellProps {
   updated: string
   summary: { icon: string; text: string }[]
   toc: TOCItem[]
-  /** The active tab on the policy-tab bar. */
-  activeTab: 'supplier-terms' | 'terms' | 'privacy' | 'cookies'
+  /** The active tab on the policy-tab bar. Omitted when the page is not one of
+      the four policy tabs (e.g. Refund Policy): the rail still renders, with
+      nothing highlighted. */
+  activeTab?: 'supplier-terms' | 'terms' | 'privacy' | 'cookies'
   children: ReactNode
 }
 

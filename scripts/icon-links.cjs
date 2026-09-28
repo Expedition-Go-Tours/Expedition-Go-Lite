@@ -5,14 +5,14 @@
  * pages import this module, and scripts/check-icons.cjs fails the build if the
  * two ever disagree or if a referenced file is missing.
  *
- * The paths are versioned (`/icons/v2/`) on purpose. Browsers keep favicons in
+ * The paths are versioned (`/icons/v<N>/`) on purpose. Browsers keep favicons in
  * their own stores — Safari's icon database, Chrome's favicon service,
  * Firefox's favicons.sqlite — keyed by icon URL rather than by Cache-Control,
  * so a URL that has never existed cannot be served from a stale entry. Bumping
  * ICON_VERSION is what ships a new mark instantly; the matching artwork also
  * sits at the legacy root paths for probes and old references.
  */
-const ICON_VERSION = 'v3'
+const ICON_VERSION = 'v5'
 
 const MANIFEST_HREF = '/site.webmanifest'
 

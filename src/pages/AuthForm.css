@@ -176,7 +176,9 @@ html:has(.auth-page) {
 }
 
 /* Only the form column scrolls, and only when the content genuinely cannot
-   fit (short desktop windows + sign-up). The trust bar stays pinned below. */
+   fit (short desktop windows + sign-up). The trust bar stays pinned below.
+   Its scrollbar is hidden: the column still scrolls by wheel, trackpad and
+   touch, but the grey rail never draws over the panel's edge. */
 .auth-page .content {
   flex: 1 1 auto;
   width: min(100%, 466px);
@@ -184,21 +186,14 @@ html:has(.auth-page) {
   margin: 0 auto;
   overflow-y: auto;
   overscroll-behavior: contain;
-  scrollbar-width: thin;
-  scrollbar-color: #c8d0dd transparent;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .auth-page .content::-webkit-scrollbar {
-  width: 6px;
-}
-
-.auth-page .content::-webkit-scrollbar-thumb {
-  border-radius: 3px;
-  background: #c8d0dd;
-}
-
-.auth-page .content::-webkit-scrollbar-track {
-  background: transparent;
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .auth-page .brand {

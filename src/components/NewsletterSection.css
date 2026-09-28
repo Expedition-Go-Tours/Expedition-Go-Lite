@@ -219,8 +219,6 @@
 
 /* --- Reduced motion --- */
 @media (prefers-reduced-motion: reduce) {
-  .newsletter-image-wrap,
-  .newsletter-content,
   .newsletter-input-wrap,
   .newsletter-btn {
     transition: none;
