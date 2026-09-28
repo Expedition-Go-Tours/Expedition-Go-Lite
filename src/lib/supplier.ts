@@ -4,6 +4,7 @@
  * Endpoints (all Bearer-auth protected, provided by Expedition-Go Tours-Backend):
  *   POST /suppliers/apply              — submit a supplier application (multipart)
  *   GET  /suppliers/application/status — poll the current user's application status
+ *   GET  /suppliers/requirements       — verification matrix for a proposed choice
  */
 import { apiFetch, apiUploadWithProgress } from './api'
 import { getStoredAuthTokens } from './auth'
@@ -80,35 +81,6 @@ export function supplierTypeLabel(type?: string | null): string {
   return found?.label ?? type ?? '—'
 }
 
-/** Document types a supplier must provide, based on their category and country. */
-export function documentRequirementsFor(supplierType: string, country: string): string[] {
-  const isGhana = country === 'GH'
-  const identity = isGhana ? 'GHANA_CARD' : 'NATIONAL_ID'
-  const reqs: string[] = [identity, 'PROOF_OF_ADDRESS', 'PROFILE_PHOTO']
-  switch (supplierType) {
-    case 'TOUR_GUIDE':
-      reqs.push('TOUR_GUIDE_LICENCE')
-      reqs.push('DRIVERS_LICENCE')
-      break
-    case 'TOUR_COMPANY':
-    case 'ACCOMMODATION_PROVIDER':
-      reqs.push('BUSINESS_CERTIFICATE')
-      if (isGhana) reqs.push('GTA_CERTIFICATE')
-      break
-    case 'TRANSPORTATION_PROVIDER':
-      reqs.push('BUSINESS_CERTIFICATE')
-      reqs.push('PASSENGER_TRANSPORT_LICENCE')
-      if (isGhana) reqs.push('GTA_CERTIFICATE')
-      break
-    case 'VEHICLE_OPERATOR':
-      reqs.push('PASSENGER_TRANSPORT_LICENCE')
-      break
-    default:
-      break
-  }
-  return reqs
-}
-
 /** Document types that must be attached to each listed vehicle. */
 export const VEHICLE_DOC_TYPES: { type: string; label: string }[] = [
   { type: 'VEHICLE_REGISTRATION', label: 'Vehicle registration' },
@@ -156,6 +128,64 @@ export async function getSupplierApplicationStatus(): Promise<SupplierProfile | 
   } catch (err: unknown) {
     if ((err as { status?: number })?.status === 404) return null
     throw err
+  }
+}
+
+/**
+ * One document in the per-operator requirements matrix, as computed by the
+ * backend (GET /suppliers/requirements). The label and detail strings ARE the
+ * copy the wizard and the supplier dashboard both render — there is no
+ * storefront-side copy anymore, which is what keeps them identical.
+ */
+export interface RequirementDocument {
+  type: string
+  label: string
+  detail: string
+  required: boolean
+  timing: 'upfront' | 'later' | 'per_vehicle' | 'per_guide'
+  ownerType: 'SUPPLIER' | 'VEHICLE' | 'GUIDE'
+  enforced: boolean
+}
+
+export interface SupplierRequirements {
+  supplierType: string
+  supplierChoice: string | null
+  supplierChoiceLabel: string | null
+  // The 30-day window for the non-required documents, counted from when the
+  // account goes live. Served by the backend so the signup promise and the
+  // dashboard countdown can never drift apart.
+  documentationGraceDays: number
+  documents: RequirementDocument[]
+  vehicleDocuments: RequirementDocument[]
+  guideDocuments: RequirementDocument[]
+  vehicles: 'required' | 'optional' | 'hidden'
+  guides: 'required' | 'optional' | 'hidden'
+}
+
+/**
+ * Fetch the verification matrix for a PROPOSED supplier choice + services.
+ *
+ * This is the single source of the wizard's "later" list (and the up-front set
+ * while it is loading): it calls the backend's requirements endpoint rather
+ * than keeping a local copy, so what an applicant is told at signup is exactly
+ * what the dashboard will later ask for. Returns null on any failure so the
+ * form can degrade (the up-front docs are also enforced server-side, and the
+ * local kind-based fallback matches them exactly).
+ */
+export async function fetchSupplierRequirements(
+  params: { supplierChoice?: string | null; services?: string[] }
+): Promise<SupplierRequirements | null> {
+  try {
+    const query = new URLSearchParams()
+    if (params.supplierChoice) query.set('supplierChoice', params.supplierChoice)
+    ;(params.services ?? []).forEach((service) => query.append('services', service))
+    return (
+      (await apiFetch<{ requirements: SupplierRequirements }>(
+        `/suppliers/requirements?${query.toString()}`
+      ))?.requirements ?? null
+    )
+  } catch {
+    return null
   }
 }
 

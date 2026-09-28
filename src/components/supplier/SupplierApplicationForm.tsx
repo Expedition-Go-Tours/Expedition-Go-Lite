@@ -40,7 +40,14 @@ import type { LucideIcon } from 'lucide-react'
 
 import { useAuthUser } from '@/hooks/useAuthUser'
 import { getAuthUserId, refreshStoredUserFromBackend, registerWithEmail, setAccountPassword } from '@/lib/auth'
-import { applyAsSupplier, getSupplierApplicationStatus, MAX_SUPPLIER_APPLICATION_FILES, MAX_SUPPLIER_DOCUMENT_BYTES } from '@/lib/supplier'
+import {
+  applyAsSupplier,
+  fetchSupplierRequirements,
+  getSupplierApplicationStatus,
+  MAX_SUPPLIER_APPLICATION_FILES,
+  MAX_SUPPLIER_DOCUMENT_BYTES,
+  type SupplierRequirements,
+} from '@/lib/supplier'
 import { COUNTRY_CODES, DEFAULT_COUNTRY_CODE, isValidPhoneInput } from '@/lib/phone'
 import { SelectInput, TextInput } from '@/components/booking/FormFields'
 import SocialLinksManager from './SocialLinksManager'
@@ -59,7 +66,6 @@ import {
   buildSupplierPayload,
   GHANA_REGIONS,
   ID_TYPE_OPTIONS,
-  laterDocumentsFor,
   MOMO_NETWORKS,
   PAYOUT_CURRENCIES,
   PAYOUT_METHODS,
@@ -78,6 +84,7 @@ import {
   supplierTypeOption,
   SUPPLIER_TYPE_OPTIONS,
   SERVICE_OPTIONS,
+  uploadLabelFor,
   validateSupplierStep,
 } from '@/lib/supplierRegistration'
 
@@ -304,6 +311,22 @@ export function SupplierApplicationForm({ onSubmitted, onOpenAuth }: SupplierApp
 
   const [laterDocsOpen, setLaterDocsOpen] = useState(false)
 
+  // The verification requirements come from the backend (GET /suppliers/requirements)
+  // so the wizard shows exactly what the dashboard will later ask for. Null while
+  // loading (or when the request failed) — the up-front set then falls back to the
+  // local kind-based rule, which is identical to the backend's enforced set.
+  const [serverRequirements, setServerRequirements] = useState<SupplierRequirements | null>(null)
+  const [requirementsFailed, setRequirementsFailed] = useState(false)
+
+  // Reset the served requirements whenever the applicant changes what the fetch
+  // is keyed on (supplier type or services). Done at the event site rather than
+  // inside the requirements effect, which must never set state synchronously.
+  // While the refetch is in flight the wizard shows the loading/fallback states.
+  const resetServerRequirements = () => {
+    setServerRequirements(null)
+    setRequirementsFailed(false)
+  }
+
   // Document upload: `preparing` covers the client-side read/decode of the
   // chosen file, `uploadPercent` the real multipart upload on submit. Business
   // types upload two documents, so the transient state is keyed by document type.
@@ -339,6 +362,35 @@ export function SupplierApplicationForm({ onSubmitted, onOpenAuth }: SupplierApp
     },
     []
   )
+
+  // ── Server-driven verification requirements ───────────────────────────────
+  // The "later, if needed" list (and the up-front set while it loads) comes
+  // from GET /suppliers/requirements, keyed on the choice + services the
+  // applicant has picked — so what they read here is exactly what the dashboard
+  // will later ask for. Refetches whenever either changes.
+
+  useEffect(() => {
+    if (!form.supplierChoice) return
+    let cancelled = false
+    // The previous result is reset by the handlers that change the choice or
+    // services (selectSupplierType / toggleService), so the effect itself never
+    // sets state synchronously — the loading state shows while the fetch runs.
+    fetchSupplierRequirements({
+      supplierChoice: form.supplierChoice,
+      services: form.services,
+    })
+      .then((requirements) => {
+        if (cancelled) return
+        if (requirements) setServerRequirements(requirements)
+        else setRequirementsFailed(true)
+      })
+      .catch(() => {
+        if (!cancelled) setRequirementsFailed(true)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [form.supplierChoice, form.services])
 
   // ── Draft lifecycle ─────────────────────────────────────────────────────
 
@@ -573,6 +625,7 @@ export function SupplierApplicationForm({ onSubmitted, onOpenAuth }: SupplierApp
     if (form.supplierChoice === id) return
     // The up-front document no longer depends on the type, so an uploaded ID is
     // kept when the applicant switches between supplier types.
+    resetServerRequirements()
     setForm((prev) => ({ ...prev, supplierChoice: id }))
   }
 
@@ -580,6 +633,7 @@ export function SupplierApplicationForm({ onSubmitted, onOpenAuth }: SupplierApp
 
   const toggleService = (id: string) => {
     clearFieldError('services')
+    resetServerRequirements()
     setForm((prev) => ({
       ...prev,
       services: prev.services.includes(id)
@@ -877,7 +931,18 @@ export function SupplierApplicationForm({ onSubmitted, onOpenAuth }: SupplierApp
 
   const selectedOption = supplierTypeOption(form.supplierChoice)
   const isIndividual = selectedOption?.kind === 'individual'
-  const requiredDocs = requiredSupplierDocuments(form.supplierChoice)
+  // Up-front set: the server's when loaded (which documents to call "required
+  // now" comes from the backend), else the local kind-based rule — identical
+  // to the backend's enforced set, and stable if the requirements request fails.
+  const serverUpfront = serverRequirements?.documents.filter((doc) => doc.timing === 'upfront') ?? null
+  const requiredDocs = serverUpfront
+    ? serverUpfront.map((doc) => ({
+        type: doc.type,
+        title: doc.label,
+        description: doc.detail,
+        uploadLabel: uploadLabelFor(doc.type),
+      }))
+    : requiredSupplierDocuments(form.supplierChoice)
   const requiredDocCount = requiredDocs.length
   const uploadedRequiredCount = requiredDocs.filter((requirement) =>
     form.verificationDocuments.some(
@@ -887,7 +952,11 @@ export function SupplierApplicationForm({ onSubmitted, onOpenAuth }: SupplierApp
   const quickVerifyTitle =
     requiredDocCount === 1 ? '1 document required' : `${requiredDocCount} documents required`
   const quickVerifySubtitle = "That's all we need from you for now."
-  const laterDocs = laterDocumentsFor(form.supplierChoice, form.services)
+  // "Later" list: server-only. `null` means still loading / unavailable. The
+  // grace period for it also comes from the server so the promise made here and
+  // the countdown shown on the dashboard are the same 30 days.
+  const laterDocs = serverRequirements?.documents.filter((doc) => doc.timing === 'later') ?? null
+  const documentationGraceDays = serverRequirements?.documentationGraceDays ?? 30
   const serviceSummary = serviceLabels(form.services)
   const payoutMethodLabel = PAYOUT_METHODS.find((method) => method.id === form.payout.method)?.label ?? ''
   const payoutScheduleLabel =
@@ -1633,8 +1702,9 @@ export function SupplierApplicationForm({ onSubmitted, onOpenAuth }: SupplierApp
           <div>
             <strong>That&rsquo;s all we need for now.</strong>
             <p>
-              You&rsquo;re ready to continue. Start creating your listings now, and we&rsquo;ll guide
-              you through any additional verification only when it becomes relevant.
+              You&rsquo;re ready to continue. Only your ID (and business certificate, if you&rsquo;re
+              a business) was required to go live — everything else is due within{' '}
+              {documentationGraceDays} days of your account going live, from your supplier dashboard.
             </p>
           </div>
         </div>
@@ -1648,8 +1718,10 @@ export function SupplierApplicationForm({ onSubmitted, onOpenAuth }: SupplierApp
             onClick={() => setLaterDocsOpen((open) => !open)}
           >
             <div>
-              <span className="stage-eyebrow">LATER, IF NEEDED</span>
-              <strong>Documents we may ask for before a listing goes live</strong>
+              <span className="stage-eyebrow">WITHIN 30 DAYS</span>
+              <strong>
+                Documents to provide within {documentationGraceDays} days of your account going live
+              </strong>
               <small>Based on your supplier type and the services you selected.</small>
             </div>
             <ChevronDown className="later-chevron" size={18} aria-hidden="true" />
@@ -1657,12 +1729,26 @@ export function SupplierApplicationForm({ onSubmitted, onOpenAuth }: SupplierApp
 
           <div className={`later-documents-body${laterDocsOpen ? ' open' : ''}`} id="laterDocumentsBody">
             <div className="later-documents-list" id="laterDocumentsList">
-              {laterDocs.length > 0 ? (
+              {laterDocs === null ? (
+                <div className="later-document-item" aria-busy="true">
+                  <div className="later-dot">
+                    <LoaderCircle className="doc-spinner" size={13} strokeWidth={2.4} aria-hidden="true" />
+                  </div>
+                  <div>
+                    <strong>{requirementsFailed ? "We couldn't load your list" : 'Checking what applies to you…'}</strong>
+                    <span>
+                      {requirementsFailed
+                        ? "Only your ID is required to register — additional documents are handled from your supplier dashboard after your account goes live."
+                        : 'This list is based on your supplier type and the services you selected.'}
+                    </span>
+                  </div>
+                </div>
+              ) : laterDocs.length > 0 ? (
                 laterDocs.map((doc, index) => (
-                  <div className="later-document-item" key={doc.name}>
+                  <div className="later-document-item" key={doc.label}>
                     <div className="later-dot">{index + 1}</div>
                     <div>
-                      <strong>{doc.name}</strong>
+                      <strong>{doc.label}</strong>
                       <span>{doc.detail}</span>
                     </div>
                   </div>
@@ -1675,8 +1761,8 @@ export function SupplierApplicationForm({ onSubmitted, onOpenAuth }: SupplierApp
                   <div>
                     <strong>No extra documents right now</strong>
                     <span>
-                      If a future listing needs additional verification, ExpeditionGo will ask you at
-                      that point.
+                      Your account will still be able to go live with just your ID — if anything is
+                      needed later, it&rsquo;s handled from your supplier dashboard.
                     </span>
                   </div>
                 </div>
@@ -1685,8 +1771,9 @@ export function SupplierApplicationForm({ onSubmitted, onOpenAuth }: SupplierApp
             <div className="later-documents-note">
               <Info size={16} strokeWidth={1.9} aria-hidden="true" />
               <span>
-                You do not need to upload these during registration. ExpeditionGo will only ask when
-                they are relevant to the service you are about to publish or operate.
+                You don&rsquo;t need these to register — only your ID (and, if you&rsquo;re a
+                business, your registration certificate) is required. Once your account is active you
+                have {documentationGraceDays} days to provide the rest from your supplier dashboard.
               </span>
             </div>
           </div>
