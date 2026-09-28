@@ -1,947 +1,727 @@
 /* ============================================================================
-   FOOTER — "Expedition-Go Tours" cream-on-forest redesign
+   FOOTER — "Expedition-Go Tours" light-on-green design
    ----------------------------------------------------------------------------
-   Ported from the reviewed static mock (travio_ghana_ota_footer). That mock was
-   a standalone page, so its page-level CSS had to be re-homed rather than
-   copied verbatim:
-
-   - the `:root` palette and `body` type become a `.footer` block;
-   - `html{scroll-behavior}` is dropped, being a document concern;
-   - `.wrap` is renamed `.footer-wrap` because `styles/partner-pages.css`
-     already defines a global `.wrap`;
-   - the mock hung its `.motion` class off `<html>`; here it is
-     `.footer-motion`, added by the component only when IntersectionObserver
-     exists, so a render without JS leaves the reveal content visible.
-
-   Every selector below is scoped under `.footer`, and that is load-bearing
-   rather than tidiness. The mock balanced a bare `a{color:inherit}` reset
-   (0,0,1) against its own class rules (0,1,0) and relied on class rules
-   winning. Scoping only that reset lifts it to `.footer a` (0,1,1) and
-   inverts the relationship: `.feature-button` inherited `color:#fff` from
-   its dark-green `.feature` parent and rendered white text on a white button.
-   The full prefix puts the design's own rules at 0,2,0, back above the reset.
-
-   Three deliberate departures from the mock, each to keep something working:
-
-   - `.navigation` is six columns, not five, so the partner sign-up pages the
-     old footer carried are not dropped. Three columns step in at 1060px.
-   - the `.pay` chips hold the app's real payment marks as images rather than
-     the CSS approximations the mock drew — it defined the chips but never used
-     them.
-   - language and currency open the app's modal, not a native <select>, so
-     `.select-trigger` shares the mock's control declarations with
-     `.select select`.
-
-   The mock's body face (Inter) maps to the app's --font-body (DM Sans). The
-   hero keeps the mock's Georgia serif: that serif/sans contrast is the design.
+   Layout mirrors the reviewed mock (brand row → 4 link columns → payments /
+   socials → oversized watermark + legal row), rendered on the site's dark
+   green footer so the white chips and the faded wordmark pop on it.
+   The content column is the homepage grid: 1539px (295×5 + 16×4) with 32px
+   gutters (16px on phones), so the footer edges line up with the navbar and
+   every section above it.
    ========================================================================== */
 
 .footer {
-  --ink:#162c24;
-  --muted:#65746b;
-  --green:#064a34;
-  --green-2:#0d6948;
-  --cream:#f8faf7;
-  --line:#dfe8e0;
-  --accent:#d9f0b2;
-  --ease:cubic-bezier(.22,1,.36,1);
-}
-.footer,.footer * {
-  box-sizing:border-box;
-}
-.footer {
-  margin:0;
-  background:var(--cream);
-  color:var(--ink);
-  font:15px/1.5 var(--font-body);
-}
-.footer a {
-  color:inherit;
-  text-decoration:none;
-}
-.footer button,.footer select {
-  font:inherit;
-}
-.footer button {
-  cursor:pointer;
-}
-.footer a:focus-visible,.footer button:focus-visible,.footer select:focus-visible,.footer summary:focus-visible {
-  outline:3px solid #b6d869;
-  outline-offset:4px;
-}
-.footer-wrap {
-  width:min(100% - 72px,1360px);
-  margin-inline:auto;
-}
-.footer {
-  position:relative;
-  overflow:hidden;
-  padding-top:34px;
-  background:var(--cream);
-}
-.footer .feature {
-  position:relative;
-  isolation:isolate;
-  overflow:hidden;
-  min-height:292px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:34px;
-  padding:51px clamp(32px,5vw,78px);
-  border-radius:24px;
-  background:linear-gradient(115deg,#043b2d,#075a3d 70%,#126b4a);
-  color:#fff;
-  box-shadow:0 16px 48px rgba(10,65,40,.12);
-}
-.footer .feature:before,.footer .feature:after {
-  content:"";
-  position:absolute;
-  z-index:-1;
-  pointer-events:none;
-  border:1px solid rgba(210,251,213,.14);
-  border-radius:50%;
-  aspect-ratio:1;
-  transition:transform 1.2s var(--ease);
-}
-.footer .feature:before {
-  width:610px;
-  right:-110px;
-  top:-396px;
-  box-shadow:0 0 0 82px rgba(232,255,235,.025),0 0 0 166px rgba(232,255,235,.018);
-}
-.footer .feature:after {
-  width:330px;
-  right:108px;
-  bottom:-293px;
-  opacity:.7;
-}
-.footer .feature:hover:before {
-  transform:translate(-22px,25px) scale(1.06);
-}
-.footer .feature:hover:after {
-  transform:translate(11px,-16px);
-}
-.footer .feature-content {
-  position:relative;
-  z-index:1;
-  max-width:760px;
-}
-.footer .kicker {
-  display:inline-flex;
-  align-items:center;
-  gap:10px;
-  margin:0 0 17px;
-  color:#d8efba;
-  font-size:11px;
-  font-weight:800;
-  letter-spacing:.18em;
-  text-transform:uppercase;
-}
-.footer .kicker:before {
-  content:"";
-  width:8px;
-  height:8px;
-  border-radius:50%;
-  background:#edcb69;
-  box-shadow:0 0 0 5px rgba(237,203,105,.13);
-}
-.footer .feature h2 {
-  margin:0;
-  font:600 clamp(36px,4.1vw,61px)/1.07 Georgia,serif;
-  letter-spacing:-.045em;
-  text-wrap:balance;
-}
-.footer .feature h2 em {
-  font-style:normal;
-  color:#d7efb2;
-}
-.footer .feature p:last-child {
-  margin:17px 0 0;
-  color:#d1e6da;
-  font-size:16px;
-  line-height:1.6;
-}
-.footer .feature-actions {
-  position:relative;
-  z-index:1;
-  display:flex;
-  flex-direction:column;
-  align-items:flex-start;
-  gap:17px;
-  flex:none;
-}
-.footer .feature-button {
-  display:inline-flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:30px;
-  min-width:207px;
-  min-height:54px;
-  padding:0 17px 0 21px;
-  border-radius:11px;
-  background:#fff;
-  color:var(--green);
-  font-weight:750;
-  box-shadow:0 8px 24px rgba(0,0,0,.11);
-  transition:transform .35s var(--ease),box-shadow .35s var(--ease),background .35s;
-}
-.footer .feature-button:hover {
-  transform:translateY(-4px);
-  background:#f2f8e9;
-  box-shadow:0 17px 32px rgba(0,0,0,.18);
-  text-decoration:none;
-}
-.footer .feature-button .round-arrow {
-  display:grid;
-  place-items:center;
-  width:29px;
-  height:29px;
-  border-radius:50%;
-  background:#e4f1d9;
-  transition:transform .35s var(--ease),background .35s;
-}
-.footer .feature-button:hover .round-arrow {
-  transform:translateX(3px);
-  background:#d5ebc4;
-}
-.footer .round-arrow svg {
-  width:16px;
-  height:16px;
-}
-.footer .feature-secondary {
-  color:#e9f6ec;
-  font-weight:650;
-  font-size:13px;
-  border-bottom:1px solid rgba(233,246,236,.43);
-  padding-bottom:3px;
-  transition:border-color .25s,color .25s;
-}
-.footer .feature-secondary:hover {
-  color:#fff;
-  border-color:#fff;
-  text-decoration:none;
-}
-.footer .topline {
-  display:flex;
-  justify-content:space-between;
-  align-items:flex-start;
-  gap:40px;
-  padding:71px 0 48px;
-  border-bottom:1px solid var(--line);
-}
-.footer .brand {
-  display:flex;
-  align-items:center;
-  gap:11px;
-  color:var(--green);
-}
-.footer .brand-mark {
-  display:grid;
-  place-items:center;
-  position:relative;
-  width:46px;
-  height:46px;
-  flex:none;
-  border-radius:13px;
-  background:var(--green);
-  color:#fff;
-  font-size:26px;
-  font-weight:800;
-  letter-spacing:-.1em;
-}
-.footer .brand-mark span {
-  position:absolute;
-  right:5px;
-  top:3px;
-  color:#d9f0b2;
-  font-size:14px;
-  letter-spacing:0;
-}
-.footer .brand-name {
-  display:flex;
-  flex-direction:column;
-  font-weight:850;
-  font-size:24px;
-  line-height:.95;
-  letter-spacing:-.055em;
-}
-.footer .brand-name small {
-  padding-left:3px;
-  margin-top:10px;
-  font-size:9px;
-  letter-spacing:.30em;
-}
-.footer .brand-block p {
-  max-width:360px;
-  margin:23px 0 0;
-  color:var(--muted);
-  line-height:1.65;
-}
-.footer .controls {
-  display:flex;
-  align-items:flex-end;
-  gap:15px;
-  padding-top:2px;
-}
-.footer .control label {
-  display:block;
-  margin:0 0 9px;
-  color:#6a7d70;
-  font-size:11px;
-  font-weight:800;
-  letter-spacing:.09em;
-  text-transform:uppercase;
-}
-.footer .select {
-  position:relative;
-}
-.footer .select select,.footer .select-trigger {
-  appearance:none;
-  min-width:192px;
-  height:48px;
-  padding:0 42px 0 15px;
-  border:1px solid #d8e4db;
-  border-radius:10px;
-  background:#fff;
-  color:#20382c;
-  font-size:14px;
-  font-weight:650;
-  cursor:pointer;
-  transition:border-color .25s,box-shadow .25s;
-}
-.footer .select select:hover {
-  border-color:#8fbda0;
-  box-shadow:0 5px 14px rgba(20,72,46,.05);
-}
-.footer .select:after {
-  content:"";
-  position:absolute;
-  right:17px;
-  top:19px;
-  width:8px;
-  height:8px;
-  border-right:1.6px solid #718474;
-  border-bottom:1.6px solid #718474;
-  transform:rotate(45deg);
-  pointer-events:none;
-}
-.footer .navigation {
-  display:grid;
-  grid-template-columns:repeat(6,minmax(0,1fr));
-  gap:32px;
-  padding:48px 0 64px;
-}
-.footer .nav-group h3 {
-  margin:0 0 21px;
-  color:var(--ink);
-  font-size:13px;
-  font-weight:800;
-  letter-spacing:.012em;
-}
-.footer .nav-group ul {
-  list-style:none;
-  display:grid;
-  gap:14px;
-  margin:0;
-  padding:0;
-}
-.footer .nav-group a {
-  position:relative;
-  display:inline-block;
-  color:#586b60;
-  font-size:14px;
-  transition:color .24s var(--ease),transform .3s var(--ease);
-}
-.footer .nav-group a:after {
-  content:"";
-  position:absolute;
-  left:0;
-  right:0;
-  bottom:-3px;
-  height:1px;
-  background:var(--green-2);
-  transform:scaleX(0);
-  transform-origin:left;
-  transition:transform .32s var(--ease);
-}
-.footer .nav-group a:hover {
-  color:var(--green);
-  transform:translateX(3px);
-  text-decoration:none;
-}
-.footer .nav-group a:hover:after {
-  transform:scaleX(1);
-}
-.footer .nav-group .strong-link {
-  color:var(--green);
-  font-weight:720;
-}
-.footer .nav-group .strong-link svg {
-  width:14px;
-  height:14px;
-  vertical-align:-2px;
-  margin-left:3px;
-  transition:transform .3s var(--ease);
-}
-.footer .nav-group .strong-link:hover svg {
-  transform:translate(3px,-3px);
-}
-.footer .meta {
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:32px;
-  padding:29px 0 34px;
-  border-top:1px solid var(--line);
-}
-.footer .meta-title {
-  display:block;
-  margin-bottom:12px;
-  color:#66766b;
-  font-size:11px;
-  font-weight:800;
-  letter-spacing:.09em;
-  text-transform:uppercase;
-}
-.footer .meta-copy {
-  margin:0;
-  color:#52675a;
-  font-size:14px;
-}
-.footer .payments {
-  display:flex;
-  flex-wrap:wrap;
-  align-items:center;
-  gap:7px;
-}
-.footer .pay {
-  display:inline-grid;
-  place-items:center;
-  min-width:58px;
-  height:34px;
-  padding:0 8px;
-  border:1px solid #dce6df;
-  border-radius:7px;
-  background:#fff;
-  color:#243a30;
-  font-size:11px;
-  font-weight:800;
-  box-shadow:0 1px 3px rgba(32,55,38,.03);
-  transition:transform .28s var(--ease),box-shadow .28s var(--ease);
-}
-.footer .pay:hover {
-  transform:translateY(-3px);
-  box-shadow:0 7px 13px rgba(32,55,38,.09);
-}
-.footer .pay.mc {
-  display:flex;
-  justify-content:center;
-  min-width:50px;
-}
-.footer .mc i {
-  width:17px;
-  height:17px;
-  border-radius:50%;
-  background:#e84236;
-}
-.footer .mc i+i {
-  margin-left:-7px;
-  background:#f4aa24;
-  mix-blend-mode:multiply;
-}
-.footer .pay.visa {
-  color:#15498d;
-  font-size:15px;
-  font-style:italic;
-}
-.footer .pay.amex {
-  background:#2679b8;
-  color:#fff;
-}
-.footer .pay.paypal {
-  color:#0b5591;
-  font-style:italic;
-}
-.footer .pay.gpay b {
-  margin-right:2px;
-  color:#4386f4;
-  font-size:17px;
-}
-.footer .socials {
-  display:flex;
-  gap:9px;
-}
-.footer .social {
-  display:grid;
-  place-items:center;
-  width:38px;
-  height:38px;
-  border:1px solid #dbe7dd;
-  border-radius:50%;
-  background:#fff;
-  color:#284a36;
-  transition:transform .32s var(--ease),color .25s,background .25s,box-shadow .32s var(--ease);
-}
-.footer .social:hover {
-  transform:translateY(-4px) rotate(-4deg);
-  background:var(--green);
-  color:#fff;
-  box-shadow:0 8px 18px rgba(13,87,52,.2);
-}
-.footer .social svg {
-  width:17px;
-  height:17px;
-  fill:currentColor;
-}
-.footer .bottom {
-  position:relative;
-  overflow:hidden;
-  min-height:248px;
-  border-top:1px solid var(--line);
-  background:#f3f6f3;
-}
-.footer .bottom-word {
-  position:absolute;
-  left:50%;
-  bottom:-.38em;
-  width:min(100% - 72px,1360px);
-  transform:translateX(-50%);
-  color:#e4ebe5;
-  font-family:var(--font-body);
-  font-size:clamp(38px,8.1vw,164px);
-  font-weight:900;
-  line-height:1;
-  letter-spacing:-.09em;
-  white-space:nowrap;
-  user-select:none;
-  pointer-events:none;
-}
-.footer .bottom-word span {
-  display:inline-block;
-}
-.footer .bottom-inner {
-  position:relative;
-  z-index:1;
-  display:flex;
-  align-items:flex-start;
-  justify-content:space-between;
-  gap:30px;
-  padding-top:35px;
-  color:#607267;
-  font-size:12px;
-}
-.footer .bottom-inner p {
-  margin:0;
-}
-.footer .bottom-inner strong {
-  color:#314b3a;
-}
-.footer .legal-links {
-  display:flex;
-  flex-wrap:wrap;
-  justify-content:flex-end;
-  gap:8px 22px;
-}
-.footer .legal-links a,.footer .legal-links button {
-  color:#52675a;
-  font-size:12px;
-}
-.footer .legal-links a:hover,.footer .legal-links button:hover {
-  color:var(--green);
-  text-decoration:underline;
-}
-.footer .legal-links button {
-  padding:0;
-  border:0;
-  background:none;
-  cursor:pointer;
-}
-.footer .reveal {
-  opacity:1;
-  transform:none;
-}
-.footer-motion .reveal {
-  opacity:0;
-  transform:translateY(24px);
-  transition:opacity .78s var(--ease),transform .78s var(--ease);
-  transition-delay:var(--delay,0ms);
-}
-.footer-motion .reveal.in-view {
-  opacity:1;
-  transform:none;
-}
-@media(max-width:1060px) {
-  .footer .feature {
-    min-height:270px;
-  }
-  .footer .feature h2 {
-    font-size:clamp(34px,4.3vw,50px);
-  }
-  .footer .navigation {
-    grid-template-columns:repeat(3,minmax(0,1fr));
-    gap:44px 20px;
-  }
-  .footer .topline {
-    padding-top:56px;
-  }
-  .footer .controls {
-    gap:8px;
-  }
-  .footer .select select,.footer .select-trigger {
-    min-width:160px;
+  /* Shared by the nav grid and the socials block below it, so the
+     "Follow the journey" title lines up with the last nav column. */
+  --footer-col-gap: 36px;
+  position: relative;
+  overflow: hidden; /* clips the oversized watermark at the page edge */
+  padding-top: 34px;
+  background: #075634;
+  color: rgba(255, 255, 255, 0.72);
+  font-family: var(--font-body);
+}
+
+.footer-container {
+  width: 100%;
+  max-width: calc(295px * 5 + 16px * 4 + 64px); /* 1539px column + 2×32px */
+  margin-inline: auto;
+  padding: 0 32px;
+}
+
+/* Pages whose content column differs from the homepage grid: the footer
+   follows that page's own column — the same math as the matching navbar
+   rules in Navbar.css — so its edges line up with the content above it.
+   Pages without a rule (All Stories, Content Creators, supplier landing…)
+   keep the homepage column their navbar uses. */
+.page-support-1180 .footer-container {
+  max-width: none;
+  padding-inline: max(20px, calc((100% - 1180px) / 2));
+}
+
+.page-support-1200 .footer-container {
+  max-width: none;
+  padding-inline: max(20px, calc((100% - 1200px) / 2));
+}
+
+.page-support-1280 .footer-container {
+  max-width: none;
+  padding-inline: max(24px, calc((100% - 1280px) / 2));
+}
+
+.page-hotel .footer-container,
+.page-travel-agents .footer-container,
+.page-transport-providers .footer-container {
+  max-width: none;
+  padding-inline: max(20px, calc((100% - 1200px) / 2));
+}
+
+.page-search .footer-container {
+  max-width: none;
+  padding-inline: max(40px, calc((100% - 1400px) / 2 + 40px));
+}
+
+.page-confirmation .footer-container {
+  max-width: none;
+  padding-inline: max(32px, calc((100% - 1280px) / 2 + 32px));
+}
+
+/* List an Experience and the supplier application (/supplier/list-experience,
+   /supplier/register): the content column is `.wrap` — min(1200px, 100% - 40px)
+   — the same column the navbar already matches via `body:has(.le-page)`, so the
+   footer follows it too. */
+body:has(.le-page) .footer-container {
+  max-width: none;
+  padding-inline: max(20px, calc((100% - 1200px) / 2));
+}
+
+/* Supplier profile (/supplier/:name): match the footer column to
+   `.supplier-page-main` (max-width 1280px, gutters 20/24/32px) so the footer
+   content lines up with the profile and the navbar above it. `%` rather than
+   `vw` keeps it exact when a classic scrollbar is present, same as the navbar. */
+body:has(.supplier-page) .footer-container {
+  max-width: none;
+  padding-inline: 20px;
+}
+
+@media (min-width: 640px) {
+  body:has(.supplier-page) .footer-container {
+    padding-inline: 24px;
   }
 }
-@media(max-width:760px) {
-  .footer-wrap {
-    width:min(100% - 36px,1360px);
+
+@media (min-width: 1024px) {
+  body:has(.supplier-page) .footer-container {
+    padding-inline: max(32px, calc((100% - 1280px) / 2 + 32px));
   }
+}
+
+/* Tour detail: `.tour-detail-container` is 1520px including 32px gutters
+   (24px at 640–1023px; below 640 the base 16px already matches). */
+@media (min-width: 1024px) {
+  body:has(.tour-detail-page) .footer-container {
+    max-width: none;
+    padding-inline: max(32px, calc((100% - 1520px) / 2 + 32px));
+  }
+}
+
+@media (min-width: 640px) and (max-width: 1023px) {
+  body:has(.tour-detail-page) .footer-container {
+    max-width: none;
+    padding-inline: 24px;
+  }
+}
+
+/* Phones where the page's own gutter is tighter than the formula's floor. */
+@media (max-width: 600px) {
+  .page-search .footer-container {
+    padding-inline: 16px;
+  }
+}
+
+@media (max-width: 980px) {
+  .page-confirmation .footer-container {
+    padding-inline: 16px;
+  }
+}
+
+/* ===== Brand + language / currency ======================================= */
+
+.footer-topline {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 40px;
+  padding: 71px 0 48px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.footer-brand-block {
+  min-width: 0;
+}
+
+.footer-brand {
+  display: flex;
+  align-items: center;
+  width: fit-content;
+  color: #fff;
+  text-decoration: none;
+}
+
+/* The navbar wordmark is dark green + gold on a transparent background; the
+   footer's dark green would swallow the "Travio" half, so the footer sets it
+   on the same white chip the payment marks use. */
+.footer-brand-plate {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 16px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.16);
+}
+
+.footer-brand-logo {
+  /* Sized by the MARK, not by the image box — same trap the navbar documents
+     on .nav-logo-img, but with nowhere for the padding to hide.
+
+     src/assets/expo_trans.png is 300x200 whose wordmark occupies only rows
+     65-139: a 294x75 mark, i.e. 37.5% of the box, with 65px of transparent
+     padding above and 60px below. The navbar gets away with a 3x box because
+     its bar is a fixed 64px and the padding just hangs outside it. The footer's
+     chip is content-sized, so a plain `height` both shrinks the mark and pads
+     the chip: `height: 34px` painted a ~50x12 logo inside a 52px white block.
+
+     So: inflate the box to --mark-h * 2.667 (200/75), then cancel the padding
+     with negative margins of --mark-h * 0.867 (65/75) and * 0.8 (60/75). The
+     mark lands flush in the chip and the chip is as tall as the mark plus its
+     padding. Only change --mark-h. */
+  --mark-h: 36px;
+  display: block;
+  width: auto;
+  height: calc(var(--mark-h) * 2.6667);
+  margin-top: calc(var(--mark-h) * -0.8667);
+  margin-bottom: calc(var(--mark-h) * -0.8);
+}
+
+.footer-brand-copy {
+  max-width: 360px;
+  margin: 23px 0 0;
+  font-size: 15px;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.footer-controls {
+  display: flex;
+  align-items: flex-end;
+  gap: 15px;
+  padding-top: 2px;
+}
+
+.footer-control {
+  min-width: 0;
+}
+
+.footer-control-label {
+  display: block;
+  margin: 0 0 9px;
+  font-family: var(--font-heading);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.footer-select {
+  position: relative;
+}
+
+.footer-select-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 192px;
+  height: 48px;
+  padding: 0 15px;
+  border: 1px solid #d8e4db;
+  border-radius: 10px;
+  background: #fff;
+  color: #20382c;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 650;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.25s, box-shadow 0.25s;
+}
+
+.footer-select-trigger:hover {
+  border-color: #8fbda0;
+  box-shadow: 0 5px 14px rgba(0, 0, 0, 0.18);
+}
+
+.footer-select-value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.footer-select-chevron {
+  flex-shrink: 0;
+  color: #718474;
+}
+
+/* ===== Link columns ====================================================== */
+
+.footer-nav {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--footer-col-gap);
+  padding: 48px 0 64px;
+}
+
+.footer-nav-title {
+  margin: 0 0 21px;
+  font-family: var(--font-heading);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.012em;
+  color: #fff;
+}
+
+.footer-nav-group ul {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.footer-nav-link {
+  position: relative;
+  display: inline-block;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.72);
+  text-decoration: none;
+  transition: color 0.24s cubic-bezier(0.22, 1, 0.36, 1), transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.footer-nav-link::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -3px;
+  height: 1px;
+  background: #d9f0b2;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.footer-nav-link:hover {
+  color: #d9f0b2;
+  transform: translateX(3px);
+}
+
+.footer-nav-link:hover::after {
+  transform: scaleX(1);
+}
+
+/* ===== Payments + socials ================================================ */
+
+.footer-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  padding: 29px 0 34px;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+/* The socials block mirrors the width of the last nav column so both its
+   title ("Follow the journey") and its icon row sit directly under "Work
+   with Us"; the row wraps when the column is narrower than the chips. */
+.footer-meta-socials {
+  width: calc((100% - 3 * var(--footer-col-gap)) / 4);
+}
+
+.footer-meta-title {
+  display: block;
+  margin-bottom: 12px;
+  font-family: var(--font-heading);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.footer-payments {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+}
+
+/* White chips hold the real brand marks — the same contrast trick the old
+   footer's payment icons used against the green. */
+.footer-pay {
+  display: inline-grid;
+  place-items: center;
+  min-width: 58px;
+  height: 40px;
+  padding: 0 10px;
+  border: 1px solid #dce6df;
+  border-radius: 7px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.16);
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.footer-pay:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 7px 13px rgba(0, 0, 0, 0.28);
+}
+
+.footer-pay img {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: 26px;
+  object-fit: contain;
+}
+
+/* Per-brand optical sizing. The source marks are square canvases with lots of
+   transparent padding (Visa's wordmark is only a third of its canvas height),
+   so each image is sized to the mark's actual ink rather than the canvas. */
+.footer-pay--visa img { height: 42px; }
+.footer-pay--mastercard img { height: 30px; }
+.footer-pay--amex img { height: 30px; }
+.footer-pay--paypal img { height: 24px; }
+.footer-pay--gpay img { height: 32px; }
+.footer-pay--apple img { height: 32px; }
+
+.footer-socials {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.footer-social {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.footer-social:hover {
+  transform: translateY(-4px) rotate(-4deg);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.25);
+}
+
+/* Each network keeps its own brand chip with the glyph on top in white; the
+   Tripadvisor owl is a full-color bitmap, so its chip stays white. */
+.footer-social--instagram { background: #e4405f; }
+.footer-social--facebook { background: #1877f2; }
+.footer-social--tiktok { background: #000; }
+.footer-social--youtube { background: #ff0000; }
+.footer-social--tripadvisor { background: #fff; }
+
+.footer-social--tripadvisor img {
+  display: block;
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+.footer-social svg {
+  width: 17px;
+  height: 17px;
+  fill: currentColor;
+}
+
+/* ===== Bottom: faded wordmark + legal line =============================== */
+
+.footer-bottom {
+  position: relative;
+  overflow: hidden;
+  min-height: 248px;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.footer-watermark {
+  position: absolute;
+  left: 50%;
+  bottom: -0.38em;
+  transform: translateX(-50%);
+  font-family: var(--font-body);
+  /* Only a first-paint fallback: the fitter in Footer.tsx binary-searches the
+     real size to the band's width and writes it inline, which wins over this.
+     Kept deliberately small so the pre-hydration frame never overflows. */
+  font-size: 60px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.09em;
+  white-space: nowrap;
+  user-select: none;
+  pointer-events: none;
+  /* Faded light-lime: brightest at the top, dissolving into the green. */
+  background: linear-gradient(180deg, rgba(217, 240, 178, 0.22), rgba(217, 240, 178, 0.02) 78%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.footer-container.footer-bottom-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 30px;
+  padding-top: 35px;
+  padding-bottom: 24px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.footer-copyright {
+  margin: 0;
+}
+
+.footer-copyright strong {
+  color: #fff;
+}
+
+.footer-legal-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px 22px;
+}
+
+.footer-legal-link {
+  font-family: inherit;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.72);
+  text-decoration: none;
+  transition: color 0.25s;
+}
+
+.footer-legal-link:hover {
+  color: #d9f0b2;
+  text-decoration: underline;
+}
+
+/* "Cookie Settings" is a button (it opens the consent panel rather than
+   navigating), so strip the browser chrome and match the links beside it. */
+.footer-legal-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+/* ===== Focus ============================================================= */
+
+.footer a:focus-visible,
+.footer button:focus-visible {
+  outline: 3px solid #b6d869;
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+/* ===== Responsive ======================================================== */
+
+@media (max-width: 1060px) {
+  .footer-topline {
+    padding-top: 56px;
+  }
+
+  .footer-controls {
+    gap: 8px;
+  }
+
+  .footer-select-trigger {
+    min-width: 160px;
+  }
+
   .footer {
-    padding-top:18px;
-  }
-  .footer .feature {
-    display:block;
-    min-height:0;
-    padding:36px 26px;
-    border-radius:18px;
-  }
-  .footer .feature h2 {
-    max-width:530px;
-    font-size:clamp(35px,8vw,51px);
-  }
-  .footer .feature p:last-child {
-    font-size:14px;
-  }
-  .footer .feature-actions {
-    flex-direction:row;
-    align-items:center;
-    flex-wrap:wrap;
-    margin-top:24px;
-  }
-  .footer .topline {
-    display:block;
-    padding:46px 0 34px;
-  }
-  .footer .brand-block p {
-    margin-top:18px;
-  }
-  .footer .controls {
-    margin-top:28px;
-    align-items:stretch;
-  }
-  .footer .control {
-    min-width:0;
-    flex:1;
-  }
-  .footer .select select,.footer .select-trigger {
-    min-width:0;
-    width:100%;
-  }
-  .footer .navigation {
-    grid-template-columns:repeat(2,minmax(0,1fr));
-    gap:38px 20px;
-    padding:38px 0 45px;
-  }
-  .footer .meta {
-    align-items:flex-start;
-    flex-direction:column;
-    gap:25px;
-  }
-  .footer .bottom {
-    min-height:220px;
-  }
-  .footer .bottom-inner {
-    display:block;
-    padding-top:27px;
-  }
-  .footer .legal-links {
-    justify-content:flex-start;
-    margin-top:15px;
-  }
-  .footer .bottom-word {
-    width:min(100% - 36px,1360px);
-    bottom:-.24em;
+    --footer-col-gap: 20px;
   }
 }
-@media(max-width:440px) {
-  .footer .feature-actions {
-    display:block;
-  }
-  .footer .feature-secondary {
-    display:inline-block;
-    margin-top:17px;
-  }
-  .footer .feature-button {
-    min-width:210px;
-  }
-  .footer .controls {
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:9px;
-  }
-  .footer .select select,.footer .select-trigger {
-    height:46px;
-    padding-left:10px;
-    font-size:12px;
-  }
-  .footer .navigation {
-    gap:31px 18px;
-  }
-  .footer .nav-group h3 {
-    margin-bottom:15px;
-  }
-  .footer .nav-group ul {
-    gap:11px;
-  }
-  .footer .nav-group a {
-    font-size:13px;
-  }
-  .footer .bottom-word {
-    bottom:-.24em;
-  }
-}
-@media(max-width:600px) {
+
+@media (max-width: 768px) {
   .footer {
-    padding-top:12px;
+    padding-top: 18px;
   }
-  .footer-wrap {
-    width:min(100% - 32px,1360px);
+
+  .footer-container {
+    padding-left: 16px;
+    padding-right: 16px;
   }
-  .footer .feature {
-    padding:32px 24px 34px;
-    border-radius:18px;
+
+  .footer-topline {
+    display: block;
+    padding: 46px 0 34px;
   }
-  .footer .feature h2 {
-    font-size:clamp(34px,9vw,48px);
+
+  .footer-brand-copy {
+    margin-top: 18px;
   }
-  .footer .feature p:last-child {
-    max-width:34ch;
-    line-height:1.55;
+
+  .footer-controls {
+    align-items: stretch;
+    margin-top: 28px;
   }
-  .footer .feature-actions {
-    display:flex;
-    align-items:stretch;
-    gap:14px;
-    margin-top:26px;
+
+  .footer-control {
+    flex: 1;
+    min-width: 0;
   }
-  .footer .feature-button {
-    width:100%;
-    min-width:0;
+
+  .footer-select-trigger {
+    min-width: 0;
+    width: 100%;
   }
-  .footer .feature-secondary {
-    align-self:flex-start;
-    margin:0 0 0 2px;
+
+  .footer-nav {
+    /* Phones: one column of accordion rows instead of the 4-up grid. */
+    grid-template-columns: 1fr;
+    gap: 0;
+    padding: 26px 0 32px;
   }
-  .footer .topline {
-    padding:42px 0 32px;
+
+  .footer-nav-group {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.14);
   }
-  .footer .brand-name {
-    font-size:clamp(20px,5.7vw,25px);
+
+  /* The meta row below already has its own top border. */
+  .footer-nav-group:last-child {
+    border-bottom: 0;
   }
-  .footer .brand-block p {
-    max-width:36ch;
-    margin-top:16px;
+
+  .footer-nav-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    width: 100%;
+    padding: 16px 0;
+    border: 0;
+    background: none;
+    color: #fff;
+    text-align: left;
+    cursor: pointer;
   }
-  .footer .controls {
-    display:grid;
-    grid-template-columns:repeat(2,minmax(0,1fr));
-    gap:12px;
-    margin-top:25px;
+
+  .footer-nav-head .footer-nav-title {
+    margin: 0;
   }
-  .footer .control {
-    min-width:0;
+
+  .footer-nav-chevron {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    color: rgba(255, 255, 255, 0.7);
+    transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
   }
-  .footer .select select,.footer .select-trigger {
-    width:100%;
-    min-width:0;
-    padding-left:12px;
-    padding-right:28px;
-    text-overflow:ellipsis;
+
+  .footer-nav-head[aria-expanded='true'] .footer-nav-chevron {
+    transform: rotate(180deg);
   }
-  .footer .select:after {
-    right:12px;
+
+  .footer-nav-panel {
+    overflow: hidden;
   }
-  .footer .navigation {
-    grid-template-columns:repeat(2,minmax(0,1fr));
-    column-gap:20px;
-    row-gap:34px;
-    padding:36px 0 40px;
+
+  .footer-nav-panel ul {
+    padding-bottom: 18px;
   }
-  .footer .nav-group h3 {
-    margin-bottom:14px;
+
+  .footer-meta {
+    /* Stacked: let the blocks fill the row so the payments grid can spread
+       (their contents are still left-aligned). */
+    align-items: stretch;
+    flex-direction: column;
+    gap: 25px;
   }
-  .footer .nav-group ul {
-    gap:12px;
+
+  /* Stacked, so the column-width mirror no longer applies. */
+  .footer-meta-socials {
+    width: auto;
   }
-  .footer .nav-group a {
-    font-size:13px;
-    line-height:1.45;
+
+  .footer-bottom {
+    /* The 3-row legal grid needs room above the watermark band. */
+    min-height: 240px;
   }
-  .footer .meta {
-    padding:27px 0 30px;
-    gap:22px;
+
+  .footer-container.footer-bottom-inner {
+    display: block;
+    padding-top: 27px;
   }
-  .footer .meta-copy {
-    line-height:1.5;
+
+  .footer-legal-links {
+    justify-content: flex-start;
+    margin-top: 15px;
   }
-  .footer .social {
-    width:42px;
-    height:42px;
-  }
-  .footer .bottom {
-    min-height:238px;
-  }
-  .footer .bottom-inner {
-    padding-top:25px;
-    line-height:1.5;
-  }
-  .footer .legal-links {
-    gap:10px 17px;
-    margin-top:16px;
-  }
-  .footer .legal-links a,.footer .legal-links button {
-    font-size:12px;
-  }
-  .footer .bottom-word {
-    width:min(100% - 32px,1360px);
-    bottom:-.20em;
-  }
-}
-@media(max-width:360px) {
-  .footer .feature {
-    padding:28px 20px;
-  }
-  .footer .controls {
-    grid-template-columns:1fr;
-  }
-  .footer .navigation {
-    column-gap:14px;
-  }
-  .footer .bottom {
-    min-height:260px;
-  }
-}
-@media(prefers-reduced-motion:reduce) {
-  .footer html {
-    scroll-behavior:auto;
-  }
-  .footer-motion .reveal {
-    opacity:1;
-    transform:none;
-    transition:none;
-  }
-  .footer .feature:before,.footer .feature:after,.footer .feature-button,.footer .round-arrow,.footer .nav-group a,.footer .nav-group a:after,.footer .social,.footer .pay {
-    transition:none!important;
+
+  .footer-watermark {
+    /* Lift it off the band edge so the full word reads instead of bleeding.
+       The size still comes from the fitter's inline style, not from here. */
+    bottom: 10px;
   }
 }
 
-
-/* ── app integration ─────────────────────────────────────────────────────────
-   The mock shipped a native <select> for language and currency; the app opens a
-   modal instead. The trigger is a button wearing the mock's control chrome
-   (height, border, radius, type) with the mock's own ::after chevron, and every
-   .select select declaration above is grouped onto it by the build. */
-.footer .select-trigger {
-  display:flex;
-  align-items:center;
-  gap:8px;
-  width:100%;
-  text-align:left
-}
-
-.footer .select-flag {
-  flex:none;
-  font-size:15px;
-  line-height:1
-}
-
-/* The real wordmark, not the mock's typographic "E→" tile.
-   src/assets/expo_trans.png is a 300x200 raster whose wordmark occupies rows
-   65-139 — 75px of a 200px box, with 65px of transparent padding above and 60
-   below. So `height` sizes the box, not the mark: 101px yields a 38px-tall
-   mark, and the negative margins pull that padding back out of the flow so the
-   row reserves only what is actually visible. Same trap as .nav-logo-img in
-   Navbar.css, cropped the same way. */
-.footer .brand-logo {
-  display:block;
-  width:auto;
-  height:101px;
-  margin:-33px 0 -30px
-}
-
-/* Real payment marks as images, inside the mock's chip. The mock defined these
-   chips — and drew approximations of the marks in CSS (.mc i, italic .visa) —
-   but never used them in its markup. */
-.footer .pay img {
-  display:block;
-  width:auto;
-  max-width:100%;
-  height:26px;
-  object-fit:contain
-}
-
-/* The six marks are square canvases carrying very different amounts of
-   transparent padding: PayPal fills its box top to bottom, Visa fills barely a
-   third of its height. One height for all would render Visa as a sliver beside a
-   full-height PayPal, so each gets its own — the same per-mark heights the
-   previous footer used, which land the *visible* mark at roughly 13-20px. The
-   boxes are taller than the 34px chip for Visa and Apple, but only across
-   transparent rows, so nothing is painted over the chip border. */
-.footer .pay.visa img {
-  height:42px
-}
-
-.footer .pay.mc img {
-  height:30px
-}
-
-.footer .pay.amex img {
-  height:30px
-}
-
-.footer .pay.paypal img {
-  height:24px
-}
-
-.footer .pay.gpay img {
-  height:32px
-}
-
-.footer .pay.apple img {
-  height:32px
-}
-
-/* Two of the mock's chip rules exist to serve marks it drew itself, and would
-   fight the real assets: .pay.amex paints a solid blue background, and .pay.mc
-   swaps the shared grid for a narrower flex box. */
-.footer .pay.amex {
-  background:#fff
-}
-
-.footer .pay.mc {
-  display:inline-grid;
-  min-width:58px
-}
-
-/* Four of the five socials are a single <path> scaled by .social svg, but
-   Tripadvisor ships as the full-colour owl bitmap and needs the same box. */
-.footer .social img {
-  display:block;
-  width:19px;
-  height:19px;
-  object-fit:contain
-}
-
-/* .meta held two blocks in the mock; it holds three here (location, payments,
-   socials), so the single row has to be allowed to wrap before it overflows.
-   The mock's own rule at 760px stacks them outright. */
-@media(max-width:1060px) {
-  .footer .meta {
-    flex-wrap:wrap;
-    row-gap:26px
+@media (max-width: 480px) {
+  /* Six pills + gaps don't fit one row on phones; fixed 76px columns give a
+     tight 3 × 2 grid whose 8px gaps sit on the content's left edge, in line
+     with the section title and the socials below. */
+  .footer-payments {
+    display: grid;
+    grid-template-columns: repeat(3, 76px);
+    justify-content: start;
+    gap: 8px;
   }
 
-  .footer .meta > :last-child {
-    margin-left:auto
+  .footer-pay {
+    width: 100%;
+  }
+
+  .footer-pay--visa img { height: 50px; }
+  .footer-pay--mastercard img { height: 36px; }
+  .footer-pay--amex img { height: 36px; }
+  .footer-pay--paypal img { height: 30px; }
+  .footer-pay--gpay img { height: 38px; }
+  .footer-pay--apple img { height: 38px; }
+}
+
+/* Below ~563px the five legal links no longer fit on one row and used to wrap
+   into staggered columns; a two-column grid keeps them aligned on phones. */
+@media (max-width: 560px) {
+  .footer-legal-links {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    justify-content: start;
+    gap: 10px 16px;
+  }
+}
+
+@media (max-width: 440px) {
+  .footer-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 9px;
+  }
+
+  .footer-select-trigger {
+    height: 46px;
+    padding-left: 10px;
+    padding-right: 10px;
+    font-size: 12px;
+  }
+
+  .footer-nav-title {
+    margin-bottom: 15px;
+  }
+
+  .footer-nav-group ul {
+    gap: 11px;
+  }
+
+  .footer-nav-link {
+    font-size: 13px;
   }
 }

@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { AnimatePresence } from 'framer-motion'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import { ChevronDown } from 'lucide-react'
 import { useCurrency, availableCurrencies } from '../contexts/CurrencyContext'
 import { useCookieConsent } from '../context/CookieConsentContext'
 import { prefetchRouteChunk } from '../lib/prefetchRouteChunks'
@@ -13,12 +14,9 @@ import applePaySrc from '../assets/images/apple.png'
 import googlePaySrc from '../assets/images/gpay.png'
 import mastercardSrc from '../assets/images/master.png'
 import paypalSrc from '../assets/images/papy.png'
-import logoSrc from '../assets/expo_trans.png'
+import travioLogoSrc from '../assets/expo_trans.png'
 import tripadvisorOwlSrc from '../assets/tripadvisor-owl.png'
 
-const SITE_NAME = 'Expedition-Go Tours'
-
-/** Language names are shown in their own language, as the modal does. */
 const LANGUAGES = [
   { code: 'en', flag: '🇬🇧', label: 'English (US)' },
   { code: 'es', flag: '🇪🇸', label: 'Español' },
@@ -28,7 +26,7 @@ const LANGUAGES = [
 ]
 
 const PAYMENTS = [
-  { key: 'mc', src: mastercardSrc, alt: 'Mastercard' },
+  { key: 'mastercard', src: mastercardSrc, alt: 'Mastercard' },
   { key: 'visa', src: visaSrc, alt: 'Visa' },
   { key: 'amex', src: americanexpressSrc, alt: 'American Express' },
   { key: 'paypal', src: paypalSrc, alt: 'PayPal' },
@@ -79,88 +77,14 @@ const SOCIALS: SocialItem[] = [
   },
 ]
 
-type NavLink = { to: string; labelKey: string; strong?: boolean }
-type NavGroup = { key: string; titleKey: string; links: NavLink[] }
-
 /**
- * Six columns, not the mock's five: the old footer carried a "Work with Us"
- * group of five partner sign-up pages and dropping those would remove the only
- * route to them from anywhere on the site. The mock also listed "Airport
- * transfers" twice and effectively repeated Contact Us and Partnerships under
- * softer labels, so those are de-duplicated here rather than shipped as-is.
- *
- * Two targets differ from the mock: it linked /airport-transfer, which has no
- * route, so transfers point at /transport; and the four destination links
- * point at /tours because there are no per-destination pages to point at yet.
+ * Footer link: same-tab SPA navigation (never a new tab — social links below
+ * stay external), with the destination chunk warmed on hover/focus so the
+ * route transition doesn't flash the Suspense fallback.
  */
-const NAV_GROUPS: NavGroup[] = [
-  {
-    key: 'explore',
-    titleKey: 'footer.explore',
-    links: [
-      { to: '/', labelKey: 'footer.home' },
-      { to: '/tours', labelKey: 'footer.exploreTours' },
-      { to: '/blog', labelKey: 'footer.travelInspiration' },
-    ],
-  },
-  {
-    key: 'support',
-    titleKey: 'footer.support',
-    links: [
-      { to: '/help-centre', labelKey: 'footer.helpCentre' },
-      { to: '/contact-us', labelKey: 'footer.contactUs' },
-      { to: '/faq', labelKey: 'footer.faq' },
-      { to: '/refund-policy', labelKey: 'footer.refundPolicy' },
-    ],
-  },
-  {
-    key: 'company',
-    titleKey: 'footer.company',
-    links: [
-      { to: '/about-us', labelKey: 'footer.aboutUs' },
-      { to: '/careers', labelKey: 'footer.careers' },
-      { to: '/partnerships', labelKey: 'footer.partnerships' },
-      { to: '/foundation', labelKey: 'footer.ourFoundation' },
-      { to: '/supplier-terms', labelKey: 'footer.supplierTerms' },
-    ],
-  },
-  {
-    key: 'plan',
-    titleKey: 'footer.planWithUs',
-    links: [
-      { to: '/contact-us', labelKey: 'footer.enquireAboutTour', strong: true },
-      { to: '/tours', labelKey: 'footer.privateTours' },
-      { to: '/transport', labelKey: 'footer.airportTransfers' },
-    ],
-  },
-  {
-    key: 'discover',
-    titleKey: 'footer.discoverGhana',
-    links: [
-      { to: '/tours', labelKey: 'footer.accra' },
-      { to: '/tours', labelKey: 'footer.capeCoast' },
-      { to: '/tours', labelKey: 'footer.kumasi' },
-      { to: '/tours', labelKey: 'footer.voltaRegion' },
-    ],
-  },
-  {
-    key: 'work',
-    titleKey: 'footer.supplierZone',
-    links: [
-      { to: '/supplier/list-experience', labelKey: 'footer.asSupplier' },
-      { to: '/content-creators', labelKey: 'footer.asContentCreator' },
-      { to: '/travel-agents', labelKey: 'footer.asTravelAgentReseller' },
-      { to: '/transport-providers', labelKey: 'footer.asTransportProvider' },
-      { to: '/hotels', labelKey: 'footer.asAccommodationProvider' },
-    ],
-  },
-]
-
-/** Route chunk warmed on hover/focus so the transition doesn't flash the
-    Suspense fallback. Social links below stay external and never use this. */
 function FooterLink({
   to,
-  className,
+  className = 'footer-nav-link',
   children,
 }: {
   to: string
@@ -176,272 +100,309 @@ function FooterLink({
     >
       {children}
     </Link>
-  );
+  )
 }
 
-/**
- * Translation options for this footer, which needs one extra binding that the
- * rest of the app does not.
- *
- * `useTranslation` binds `languageChanged` on the i18next *instance* and nothing
- * on its resource *store*. But `src/i18n/config.ts` deliberately keeps
- * non-English bundles out of the entry chunk: it switches language first, then
- * attaches the bundle asynchronously with `addResourceBundle`, which i18next
- * routes to `store.addResourceBundle` and whose `added` event the store emits to
- * itself — the instance only forwards `*` from the backend connector and
- * translator, so `i18n.on('added')` can never fire.
- *
- * React mounts in the gap between the switch and the bundle landing, and this
- * footer renders once and then stays put, so it reads English fallbacks and
- * keeps them: the footer holds the language switcher, yet its own copy would sit
- * in English beside a correctly-labelled trigger. Binding the store's `added`
- * gives it a reason to re-render when the real strings arrive.
- *
- * `bindI18nStore` is honoured at runtime (see useTranslation.js, which calls
- * `i18n.store.on(bindI18nStore, …)`) but is missing from the published
- * `UseTranslationOptions` type, whose own comment notes that further i18next
- * options may work. Hence the cast.
- */
-const FOOTER_I18N = { bindI18nStore: 'added' } as Parameters<
-  typeof useTranslation
->[1]
+/** Phones fold the link columns into accordion rows (matches the breakpoint the
+    rest of the mobile footer uses). */
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches,
+  )
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 768px)')
+    const update = () => setIsMobile(mq.matches)
+    update()
+    mq.addEventListener('change', update)
+    return () => mq.removeEventListener('change', update)
+  }, [])
+
+  return isMobile
+}
+
+interface FooterNavGroupProps {
+  id: string
+  title: string
+  links: { to: string; label: string }[]
+  /** Mobile: collapsible row. Desktop/tablet: always-open column. */
+  isMobile: boolean
+}
+
+function FooterNavGroup({ id, title, links, isMobile }: FooterNavGroupProps) {
+  const [open, setOpen] = useState(false)
+  const reduceMotion = useReducedMotion()
+
+  const list = (
+    <ul>
+      {links.map((link) => (
+        <li key={`${link.to}-${link.label}`}>
+          <FooterLink to={link.to}>{link.label}</FooterLink>
+        </li>
+      ))}
+    </ul>
+  )
+
+  if (!isMobile) {
+    return (
+      <nav className="footer-nav-group" aria-label={title}>
+        <h3 className="footer-nav-title">{title}</h3>
+        {list}
+      </nav>
+    )
+  }
+
+  return (
+    <nav className="footer-nav-group footer-nav-group--accordion" aria-label={title}>
+      <button
+        type="button"
+        className="footer-nav-head"
+        aria-expanded={open}
+        aria-controls={id}
+        onClick={() => setOpen((value) => !value)}
+      >
+        <span className="footer-nav-title">{title}</span>
+        <ChevronDown className="footer-nav-chevron" size={16} strokeWidth={2} aria-hidden="true" />
+      </button>
+      {reduceMotion ? (
+        open ? (
+          <div className="footer-nav-panel" id={id}>
+            {list}
+          </div>
+        ) : null
+      ) : (
+        <AnimatePresence initial={false}>
+          {open && (
+            <motion.div
+              id={id}
+              className="footer-nav-panel"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.28, ease: 'easeInOut' }}
+            >
+              {list}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      )}
+    </nav>
+  )
+}
+
+/* The footer must repaint when the language changes. `src/i18n/config.ts` adds
+   each locale with `addResourceBundle`, which i18next chains onto its *store*,
+   but react-i18next only binds `languageChanged` on the instance and defaults
+   `bindI18nStore` to '' — so the store's `added` event never reaches us and a
+   footer mounted before the bundle loaded keeps rendering the old language.
+   Opting into the store's `added` event fixes it here without touching the
+   shared i18n setup. `bindI18nStore` is honoured at runtime but missing from
+   the published types, hence the cast. */
+const FOOTER_I18N = { bindI18nStore: 'added' } as Parameters<typeof useTranslation>[1]
 
 export default function Footer() {
   const { t, i18n: activeI18n } = useTranslation(undefined, FOOTER_I18N)
   const { currency } = useCurrency()
   const { openPreferences } = useCookieConsent()
   const langCode = (activeI18n.language ?? 'en').substring(0, 2).toLowerCase()
+  // Language/currency are chosen via the same modal the navbar uses; the tab
+  // to open is remembered per button (language vs currency).
+  const [modalTab, setModalTab] = useState<'language' | 'currency' | null>(null)
+  const isMobile = useIsMobile()
   const currentLang = LANGUAGES.find((lang) => lang.code === langCode)
   const currentCurrency = availableCurrencies.find((c) => c.code === currency.code)
   const year = new Date().getFullYear()
+  const watermarkRef = useRef<HTMLDivElement>(null)
 
-  // Language and currency are chosen through the same modal the navbar uses;
-  // which tab to open is remembered per button.
-  const [modalTab, setModalTab] = useState<'language' | 'currency' | null>(null)
-
-  const rootRef = useRef<HTMLElement>(null)
-  const wordRef = useRef<HTMLDivElement>(null)
-
-  /**
-   * Scroll reveal, ported from the mock's inline script. The mock hung its
-   * `.motion` class off <html>; here `.footer-motion` goes on this subtree
-   * directly, and only from an effect that has confirmed both that reduced
-   * motion is not requested and that IntersectionObserver exists — so a render
-   * without JS leaves the content visible rather than stuck at opacity 0.
-   */
+  /* The oversized word in the bottom band is fitted to the band's width by
+     binary search rather than sized with a clamp: "Expedition-Go Tours" is
+     roughly 1.6x the width of the "travio ghana" this rule was tuned for, so
+     any fixed size either overflows the viewport or wastes the band. 14
+     halvings land within a fraction of a pixel of the widest size that still
+     fits. Re-runs on resize (the band is full-bleed) and whenever the copy
+     changes. */
   useEffect(() => {
-    const root = rootRef.current
-    if (!root) return
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-    if (!('IntersectionObserver' in window)) return
-    const targets = root.querySelectorAll('.reveal')
-    if (!targets.length) return
-    root.classList.add('footer-motion')
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (!entry.isIntersecting) continue
-          entry.target.classList.add('in-view')
-          observer.unobserve(entry.target)
-        }
-      },
-      { threshold: 0.06, rootMargin: '0px 0px 70px 0px' },
-    )
-    targets.forEach((el) => observer.observe(el))
-    return () => {
-      observer.disconnect()
-      root.classList.remove('footer-motion')
-    }
-  }, [])
+    const box = watermarkRef.current
+    if (!box) return
+    const band = box.parentElement
+    if (!band) return
 
-  /**
-   * The oversized word in the bottom band is fitted by binary search, as in the
-   * mock: 14 halvings land within a fraction of a pixel of the widest size
-   * whose rendered span still fits the container. Re-runs on resize (via
-   * ResizeObserver) and whenever the text changes.
-   */
-  useEffect(() => {
-    const box = wordRef.current
-    if (!box || !('ResizeObserver' in window)) return
-    const span = box.querySelector('span')
-    if (!span) return
     const fit = () => {
-      const target = box.clientWidth
+      // Measure against the band, not the box: the watermark is absolutely
+      // positioned, so its own width is just the text and every size "fits".
+      const target = band.clientWidth
       if (!target) return
       let low = 16
-      let high = 240
+      let high = 400
       for (let i = 0; i < 14; i++) {
         const size = (low + high) / 2
         box.style.fontSize = `${size}px`
-        if (span.getBoundingClientRect().width > target) high = size
+        if (box.getBoundingClientRect().width > target) high = size
         else low = size
       }
       box.style.fontSize = `${low}px`
     }
+
+    if (typeof ResizeObserver === 'undefined') {
+      fit()
+      window.addEventListener('resize', fit)
+      return () => window.removeEventListener('resize', fit)
+    }
     const observer = new ResizeObserver(fit)
-    observer.observe(box)
+    observer.observe(band)
     fit()
     return () => observer.disconnect()
   }, [])
 
-  const delay = (ms: number) => ({ '--delay': `${ms}ms` }) as CSSProperties
+  const navGroups: { key: string; title: string; links: { to: string; label: string }[] }[] = [
+    {
+      key: 'explore',
+      title: t('footer.explore'),
+      links: [
+        { to: '/', label: t('footer.home') },
+        { to: '/tours', label: t('footer.exploreTours') },
+        { to: '/blog', label: t('footer.travelInspiration') },
+      ],
+    },
+    {
+      key: 'support',
+      title: t('footer.support'),
+      links: [
+        { to: '/help-centre', label: t('footer.helpCentre') },
+        { to: '/contact-us', label: t('footer.contactUs') },
+        { to: '/faq', label: t('footer.faq') },
+      ],
+    },
+    {
+      key: 'company',
+      title: t('footer.company'),
+      links: [
+        { to: '/about-us', label: t('footer.aboutUs') },
+        { to: '/careers', label: t('footer.careers') },
+        { to: '/partnerships', label: t('footer.partnerships') },
+        { to: '/foundation', label: t('footer.ourFoundation') },
+        { to: '/supplier-terms', label: t('footer.supplierTerms') },
+        { to: '/refund-policy', label: t('footer.refundPolicy') },
+      ],
+    },
+    {
+      key: 'work',
+      title: t('footer.supplierZone'),
+      links: [
+        { to: '/supplier/list-experience', label: t('footer.asSupplier') },
+        { to: '/content-creators', label: t('footer.asContentCreator') },
+        { to: '/travel-agents', label: t('footer.asTravelAgentReseller') },
+        { to: '/transport-providers', label: t('footer.asTransportProvider') },
+        { to: '/hotels', label: t('footer.asAccommodationProvider') },
+      ],
+    },
+  ]
 
   return (
-    <footer ref={rootRef} className="footer">
-      {/* Feature banner */}
-      <div className="footer-wrap">
-        <section className="feature reveal" aria-labelledby="footer-feature-title">
-          <div className="feature-content">
-            <p className="kicker">{t('footer.featureKicker')}</p>
-            <h2 id="footer-feature-title">
-              {t('footer.featureTitle')} <em>{t('footer.featureTitleAccent')}</em>
-            </h2>
-            <p>{t('footer.featureBody')}</p>
-          </div>
-          <div className="feature-actions">
-            <FooterLink to="/tours" className="feature-button">
-              {t('footer.featureCta')}
-              <span className="round-arrow" aria-hidden="true">
-                <svg viewBox="0 0 20 20" fill="none">
-                  <path
-                    d="M3 10h13m0 0-5-5m5 5-5 5"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
+    <footer className="footer">
+      <div className="footer-container">
+        {/* Brand + language/currency */}
+        <div className="footer-topline">
+          <div className="footer-brand-block">
+            <FooterLink to="/" className="footer-brand">
+              <span className="footer-brand-plate">
+                <img
+                  className="footer-brand-logo"
+                  src={travioLogoSrc}
+                  alt="Expedition-Go Tours"
+                  /* The file's real intrinsic size, so the reserved
+                     aspect-ratio matches what the CSS then fits. The previous
+                     2076x450 described a 4.6:1 box for a 1.5:1 asset. */
+                  width={300}
+                  height={200}
+                  loading="eager"
+                  decoding="async"
+                />
               </span>
             </FooterLink>
-            <FooterLink to="/contact-us" className="feature-secondary">
-              {t('footer.featureSecondary')} <span aria-hidden="true">↗</span>
-            </FooterLink>
-          </div>
-        </section>
-      </div>
-
-      <div className="footer-wrap">
-        {/* Brand + language/currency */}
-        <div className="topline reveal" style={delay(80)}>
-          <div className="brand-block">
-            <Link to="/" className="brand" aria-label={SITE_NAME}>
-              <img
-                className="brand-logo"
-                src={logoSrc}
-                alt={SITE_NAME}
-                width={300}
-                height={200}
-                loading="lazy"
-                decoding="async"
-              />
-            </Link>
-            <p>{t('footer.brandTagline')}</p>
+            <p className="footer-brand-copy">{t('footer.tagline')}</p>
           </div>
 
-          <div className="controls">
-            <div className="control">
-              <label htmlFor="footer-language">{t('footer.language')}</label>
-              <div className="select">
+          <div className="footer-controls">
+            <div className="footer-control">
+              <span className="footer-control-label" id="footer-language-label">
+                {t('footer.language')}
+              </span>
+              <div className="footer-select">
                 <button
-                  id="footer-language"
                   type="button"
-                  className="select-trigger"
+                  className="footer-select-trigger"
                   onClick={() => setModalTab('language')}
                   aria-haspopup="dialog"
+                  aria-labelledby="footer-language-label footer-language-value"
                 >
-                  {currentLang ? (
-                    <>
-                      <span className="select-flag" aria-hidden="true">
-                        {currentLang.flag}
-                      </span>
-                      {currentLang.label}
-                    </>
-                  ) : (
-                    t('footer.language')
-                  )}
+                  <span className="footer-select-value" id="footer-language-value">
+                    {currentLang ? `${currentLang.flag} ${currentLang.label}` : ''}
+                  </span>
+                  <ChevronDown className="footer-select-chevron" size={14} strokeWidth={2} aria-hidden="true" />
                 </button>
               </div>
             </div>
 
-            <div className="control">
-              <label htmlFor="footer-currency">{t('footer.currency')}</label>
-              <div className="select">
+            <div className="footer-control">
+              <span className="footer-control-label" id="footer-currency-label">
+                {t('footer.currency')}
+              </span>
+              <div className="footer-select">
                 <button
-                  id="footer-currency"
                   type="button"
-                  className="select-trigger"
+                  className="footer-select-trigger"
                   onClick={() => setModalTab('currency')}
                   aria-haspopup="dialog"
+                  aria-labelledby="footer-currency-label footer-currency-value"
                 >
-                  {currentCurrency
-                    ? `${currency.code} · ${currentCurrency.label} (${currency.symbol})`
-                    : currency.code}
+                  <span className="footer-select-value" id="footer-currency-value">
+                    {currentCurrency
+                      ? `${currency.code} · ${currentCurrency.label} (${currency.symbol})`
+                      : currency.code}
+                  </span>
+                  <ChevronDown className="footer-select-chevron" size={14} strokeWidth={2} aria-hidden="true" />
                 </button>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Navigation */}
-        <div className="navigation">
-          {NAV_GROUPS.map((group, index) => (
-            <nav
+        {/* Navigation — accordion rows on phones, always-open columns above */}
+        <div className="footer-nav">
+          {navGroups.map((group) => (
+            <FooterNavGroup
               key={group.key}
-              className="nav-group reveal"
-              style={delay(60 + index * 60)}
-              aria-label={t(group.titleKey)}
-            >
-              <h3>{t(group.titleKey)}</h3>
-              <ul>
-                {group.links.map((link) => (
-                  <li key={`${group.key}-${link.labelKey}`}>
-                    <FooterLink to={link.to} className={link.strong ? 'strong-link' : undefined}>
-                      {link.strong && (
-                        <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                          <path
-                            d="M3 13 13 3M6 3h7v7"
-                            stroke="currentColor"
-                            strokeWidth="1.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                      )}
-                      {t(link.labelKey)}
-                    </FooterLink>
-                  </li>
-                ))}
-              </ul>
-            </nav>
+              id={`footer-nav-${group.key}`}
+              title={group.title}
+              links={group.links}
+              isMobile={isMobile}
+            />
           ))}
         </div>
 
-        {/* Location + payments + socials */}
-        <div className="meta reveal" style={delay(100)}>
+        {/* Payments + socials */}
+        <div className="footer-meta">
           <div>
-            <span className="meta-title">{t('footer.basedInAccra')}</span>
-            <p className="meta-copy">{t('footer.metaCopy')}</p>
-          </div>
-          <div>
-            <span className="meta-title">{t('footer.waysToPay')}</span>
-            <div className="payments">
+            <span className="footer-meta-title">{t('footer.waysToPay')}</span>
+            <div className="footer-payments">
               {PAYMENTS.map((payment) => (
-                <span className={`pay ${payment.key}`} key={payment.key}>
+                <span className={`footer-pay footer-pay--${payment.key}`} key={payment.key}>
                   <img src={payment.src} alt={payment.alt} loading="lazy" decoding="async" />
                 </span>
               ))}
             </div>
           </div>
-          <div>
-            <span className="meta-title">{t('footer.followOurJourney')}</span>
-            <div className="socials">
+          <div className="footer-meta-socials">
+            <span className="footer-meta-title">{t('footer.followJourney')}</span>
+            <div className="footer-socials">
               {SOCIALS.map((social) => (
                 <a
                   key={social.key}
                   href={social.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`social ${social.key}`}
+                  className={`footer-social footer-social--${social.key}`}
                   aria-label={social.label}
                 >
                   {social.img ? (
@@ -459,22 +420,31 @@ export default function Footer() {
       </div>
 
       {/* Bottom band: oversized faded wordmark + legal line */}
-      <div className="bottom">
-        <div ref={wordRef} className="bottom-word" aria-hidden="true">
-          <span>{SITE_NAME}</span>
+      <div className="footer-bottom">
+        <div className="footer-watermark" ref={watermarkRef} aria-hidden="true">
+          Expedition-Go Tours
         </div>
-        <div className="footer-wrap bottom-inner">
-          <p>
-            © {year} <strong>{SITE_NAME} Ltd</strong> · Accra, Ghana
+        <div className="footer-container footer-bottom-inner">
+          <p className="footer-copyright">
+            © {year} <strong>Expedition-Go Tours</strong> {t('footer.copyrightBy')}
           </p>
-          <nav className="legal-links" aria-label={t('footer.legalNav')}>
-            <FooterLink to="/terms-and-conditions">{t('footer.termsConditions')}</FooterLink>
-            <FooterLink to="/privacy-policy">{t('footer.privacyPolicy')}</FooterLink>
-            <FooterLink to="/refund-policy">{t('footer.refundPolicy')}</FooterLink>
-            <FooterLink to="/cookies-policy">{t('footer.cookiesPolicy')}</FooterLink>
+          <nav className="footer-legal-links" aria-label={t('footer.legalNav')}>
+            <FooterLink to="/terms-and-conditions" className="footer-legal-link">
+              {t('footer.termsConditions')}
+            </FooterLink>
+            <FooterLink to="/privacy-policy" className="footer-legal-link">
+              {t('footer.privacyPolicy')}
+            </FooterLink>
+            <FooterLink to="/cookies-policy" className="footer-legal-link">
+              {t('footer.cookiesPolicy')}
+            </FooterLink>
             {/* Reopens the consent panel. The Cookie Policy commits to this
                 being available from the footer at any time. */}
-            <button type="button" onClick={openPreferences}>
+            <button
+              type="button"
+              className="footer-legal-link footer-legal-button"
+              onClick={openPreferences}
+            >
               {t('footer.cookieSettings')}
             </button>
           </nav>
