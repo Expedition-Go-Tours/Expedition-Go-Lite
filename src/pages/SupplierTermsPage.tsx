@@ -24,6 +24,7 @@ const POLICY_TABS = [
   { label: 'Terms & Conditions', to: '/terms-and-conditions' },
   { label: 'Privacy Policy', to: '/privacy-policy' },
   { label: 'Cookies Policy', to: '/cookies-policy' },
+  { label: 'Refund Policy', to: '/refund-policy' },
 ]
 
 const SUMMARY = [

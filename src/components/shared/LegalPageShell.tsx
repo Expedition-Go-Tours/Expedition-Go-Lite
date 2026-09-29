@@ -16,10 +16,9 @@ interface LegalPageShellProps {
   updated: string
   summary: { icon: string; text: string }[]
   toc: TOCItem[]
-  /** The active tab on the policy-tab bar. Omitted when the page is not one of
-      the four policy tabs (e.g. Refund Policy): the rail still renders, with
-      nothing highlighted. */
-  activeTab?: 'supplier-terms' | 'terms' | 'privacy' | 'cookies'
+  /** The active tab on the policy-tab bar. Omitted when a page should render
+      the rail without highlighting any pill. */
+  activeTab?: 'supplier-terms' | 'terms' | 'privacy' | 'cookies' | 'refund'
   children: ReactNode
 }
 
@@ -28,6 +27,7 @@ const POLICY_TABS = [
   { key: 'terms' as const, label: 'Terms & Conditions', to: '/terms-and-conditions' },
   { key: 'privacy' as const, label: 'Privacy Policy', to: '/privacy-policy' },
   { key: 'cookies' as const, label: 'Cookies Policy', to: '/cookies-policy' },
+  { key: 'refund' as const, label: 'Refund Policy', to: '/refund-policy' },
 ]
 
 /**

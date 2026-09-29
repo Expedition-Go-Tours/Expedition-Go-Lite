@@ -175,8 +175,11 @@ type RouteCardData = (typeof ROUTE_CARDS)[number]
  * has decoded it: the rail scrolls from the first frame, so a lazy image
  * otherwise pops in at full contrast while it is already moving across the
  * viewport. The first cards load eagerly because they are visible immediately;
- * the rest stay lazy. The duplicate, decorative set shares their URLs, so its
- * copies resolve from cache.
+ * the rest of the first set stays lazy. The duplicate, decorative set shares
+ * those URLs and loads eagerly anyway: its later cards only reach the screen
+ * in the final stretch of each loop, as the wrap-around content, which leaves
+ * a lazy image no time to load. Eager copies cost no extra network — only 12
+ * unique URLs are ever fetched.
  */
 function RouteCard({ card, index, duplicate }: { card: RouteCardData; index: number; duplicate: boolean }) {
   const imgRef = useRef<HTMLImageElement>(null)
@@ -195,7 +198,8 @@ function RouteCard({ card, index, duplicate }: { card: RouteCardData; index: num
         className={imgLoaded ? 'is-loaded' : undefined}
         src={`${WIKIMEDIA}${card.file}`}
         alt={card.alt}
-        loading={index < 4 ? 'eager' : 'lazy'}
+        loading={duplicate || index < 4 ? 'eager' : 'lazy'}
+        fetchPriority={duplicate ? 'low' : undefined}
         decoding="async"
         onLoad={() => setImgLoaded(true)}
       />

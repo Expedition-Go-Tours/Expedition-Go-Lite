@@ -26,6 +26,8 @@ const SOURCE = path.join(ROOT, 'src', 'components', 'travelStories.json')
 const OUT_DIR = path.join(ROOT, 'public', 'stories')
 const SITE_URL = (process.env.SITE_URL || 'https://www.expeditiongotours.com').replace(/\/+$/, '')
 const SITE_NAME = 'Expedition-Go Tours'
+/** Legal entity for copyright lines — SITE_NAME stays the brand for titles/OG. */
+const LEGAL_NAME = 'Expedition-Go Tours Ltd'
 const YEAR = new Date().getFullYear()
 
 const escapeHtml = (value) => String(value ?? '')
@@ -197,7 +199,7 @@ ${relatedHtml}
       <nav class="wrap" aria-label="Footer">
 ${FOOTER_LINKS.map(([href, label]) => `        <a href="${href}">${escapeHtml(label)}</a>`).join('\n')}
       </nav>
-      <p class="wrap">&copy; ${YEAR} ${escapeHtml(SITE_NAME)}. All rights reserved.</p>
+      <p class="wrap">&copy; ${YEAR} ${escapeHtml(LEGAL_NAME)}. All rights reserved.</p>
     </footer>
   </body>
 </html>
@@ -318,7 +320,7 @@ ${cards}
       <nav class="wrap" aria-label="Footer">
 ${FOOTER_LINKS.map(([href, label]) => `        <a href="${href}">${escapeHtml(label)}</a>`).join('\n')}
       </nav>
-      <p class="wrap">&copy; ${YEAR} ${escapeHtml(SITE_NAME)}. All rights reserved.</p>
+      <p class="wrap">&copy; ${YEAR} ${escapeHtml(LEGAL_NAME)}. All rights reserved.</p>
     </footer>
   </body>
 </html>

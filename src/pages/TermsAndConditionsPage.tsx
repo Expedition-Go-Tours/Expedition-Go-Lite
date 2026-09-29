@@ -41,6 +41,7 @@ const POLICY_TABS = [
   { key: 'terms', label: 'Terms & Conditions', to: '/terms-and-conditions' },
   { key: 'privacy', label: 'Privacy Policy', to: '/privacy-policy' },
   { key: 'cookies', label: 'Cookies Policy', to: '/cookies-policy' },
+  { key: 'refund', label: 'Refund Policy', to: '/refund-policy' },
 ]
 
 export default function TermsAndConditionsPage() {
