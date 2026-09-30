@@ -39,7 +39,7 @@ jobs:
         env:
           # Push the scraped official totals to the backend so homepage ranking
           # counts external reviews. The token lives in repo secrets.
-          EXTERNAL_REVIEWS_SYNC_URL: https://apiv1.travioafrica.com/api/admin/external-reviews/sync
+          EXTERNAL_REVIEWS_SYNC_URL: https://api.expeditiongotours.com/api/admin/external-reviews/sync
           EXTERNAL_REVIEWS_SYNC_TOKEN: ${{ secrets.EXTERNAL_REVIEWS_SYNC_TOKEN }}
           # Optional residential proxy: TripAdvisor 403s datacenter IPs, so its
           # reviews only come back through a proxy. Blank = no proxy.

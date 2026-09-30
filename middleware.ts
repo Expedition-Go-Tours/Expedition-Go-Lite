@@ -44,7 +44,7 @@ export default function middleware(request) {
   // Bot detection: rewrite to prerender endpoint
   if (request.method === 'GET' && isBot(ua) && !shouldSkip(pathname)) {
     const target = `${pathname}${url.search}`
-    const prerenderUrl = `https://apiv1.travioafrica.com/api/prerender?url=${encodeURIComponent(target)}`
+    const prerenderUrl = `https://api.expeditiongotours.com/api/prerender?url=${encodeURIComponent(target)}`
     return new Response(null, {
       status: 200,
       headers: {

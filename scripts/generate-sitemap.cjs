@@ -10,7 +10,7 @@
  * during a build can never wipe the storefront's URL set.
  *
  * Usage:
- *   API_URL=https://apiv1.travioafrica.com node scripts/generate-sitemap.cjs
+ *   API_URL=https://api.expeditiongotours.com node scripts/generate-sitemap.cjs
  */
 
 const fs = require('fs');
@@ -19,7 +19,7 @@ const https = require('https');
 const http = require('http');
 
 const SITE_URL = (process.env.SITE_URL || 'https://www.expeditiongotours.com').replace(/\/+$/, '');
-const API_URL = (process.env.API_URL || process.env.VITE_API_URL || 'https://apiv1.travioafrica.com').replace(/\/+$/, '');
+const API_URL = (process.env.API_URL || process.env.VITE_API_URL || 'https://api.expeditiongotours.com').replace(/\/+$/, '');
 const OUTPUT = path.resolve(__dirname, '../public/sitemap.xml');
 
 function fetchJson(url) {
