@@ -241,7 +241,7 @@
     "ourFoundation": "Our Foundation",
     "accommodationProviders": "Accommodation providers",
     "followJourney": "Follow the journey",
-    "copyrightBy": "All rights reserved · Accra, Ghana",
+    "copyrightBy": "All rights reserved. · Accra, Ghana",
     "legalNav": "Legal"
   },
   "gallery": {
@@ -322,7 +322,8 @@
   },
   "partners": {
     "heading": "Trusted across the world's leading travel platforms",
-    "subtitle": "We partner with the most respected names in travel to bring Ghana to the world."
+    "subtitle": "We partner with the most respected names in travel to bring Ghana to the world.",
+    "profileLabel": "View Expedition-Go Tours on {{platform}}"
   },
   "search": {
     "clearRecent": "Clear recent searches",

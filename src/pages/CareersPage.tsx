@@ -438,7 +438,7 @@ export default function CareersPage() {
               variants={fadeUp}
             >
               <div>
-                <h2>Could your next chapter be with Expedition-Go?</h2>
+                <h2>Could your next chapter be with Expedition-Go Tours?</h2>
                 <p>
                   Introduce yourself and tell us where you believe you could make
                   a difference.

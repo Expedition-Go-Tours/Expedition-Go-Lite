@@ -437,7 +437,7 @@ export default function Footer() {
         </div>
         <div className="footer-container footer-bottom-inner">
           <p className="footer-copyright">
-            © {year} <strong>Expedition-Go Tours Ltd</strong> · {t('footer.copyrightBy')}
+            © 2022–{year} <strong>Expedition-Go Tours Ltd.</strong> {t('footer.copyrightBy')}
           </p>
           <nav className="footer-legal-links" aria-label={t('footer.legalNav')}>
             <FooterLink to="/terms-and-conditions" className="footer-legal-link">

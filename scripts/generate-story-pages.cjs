@@ -199,7 +199,7 @@ ${relatedHtml}
       <nav class="wrap" aria-label="Footer">
 ${FOOTER_LINKS.map(([href, label]) => `        <a href="${href}">${escapeHtml(label)}</a>`).join('\n')}
       </nav>
-      <p class="wrap">&copy; ${YEAR} ${escapeHtml(LEGAL_NAME)}. All rights reserved.</p>
+      <p class="wrap">&copy; 2022–${YEAR} ${escapeHtml(LEGAL_NAME)}. All rights reserved. · Accra, Ghana</p>
     </footer>
   </body>
 </html>
@@ -320,7 +320,7 @@ ${cards}
       <nav class="wrap" aria-label="Footer">
 ${FOOTER_LINKS.map(([href, label]) => `        <a href="${href}">${escapeHtml(label)}</a>`).join('\n')}
       </nav>
-      <p class="wrap">&copy; ${YEAR} ${escapeHtml(LEGAL_NAME)}. All rights reserved.</p>
+      <p class="wrap">&copy; 2022–${YEAR} ${escapeHtml(LEGAL_NAME)}. All rights reserved. · Accra, Ghana</p>
     </footer>
   </body>
 </html>

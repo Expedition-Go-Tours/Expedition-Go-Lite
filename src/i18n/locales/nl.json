@@ -232,7 +232,7 @@
     "ourFoundation": "Onze Stichting",
     "accommodationProviders": "Accommodatieverstrekkers",
     "followJourney": "Volg de reis",
-    "copyrightBy": "Alle rechten voorbehouden · Accra, Ghana",
+    "copyrightBy": "Alle rechten voorbehouden. · Accra, Ghana",
     "legalNav": "Juridisch"
   },
   "gallery": {
@@ -313,7 +313,8 @@
   },
   "partners": {
     "heading": "Vertrouwd over de toonaangevende reisplatforms ter wereld",
-    "subtitle": "Wij werken samen met de meest gerespecteerde namen in reizen om Ghana naar de wereld te brengen."
+    "subtitle": "Wij werken samen met de meest gerespecteerde namen in reizen om Ghana naar de wereld te brengen.",
+    "profileLabel": "Bekijk Expedition-Go Tours op {{platform}}"
   },
   "search": {
     "clearRecent": "Recente zoekopdrachten wissen",

@@ -125,6 +125,18 @@
   display: block;
 }
 
+/* Platform cards that link to our public profile open in a new tab. The
+   anchor wraps the card, so the focus ring follows the card's radius. */
+.partner-logo-link {
+  display: block;
+  border-radius: 12px;
+}
+
+.partner-logo-link:focus-visible {
+  outline: 2px solid #2d6a4f;
+  outline-offset: 3px;
+}
+
 .partner-logo-card--tall {
   padding: 6px 16px;
 }

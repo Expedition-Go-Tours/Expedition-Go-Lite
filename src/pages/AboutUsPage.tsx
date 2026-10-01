@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { MotionConfig, motion, type Variants } from 'framer-motion'
 import {
   ArrowRight,
+  ArrowUpRight,
   BadgeDollarSign,
   Bus,
   Compass,
@@ -27,6 +28,8 @@ import hero3 from '../assets/about/hero-3.webp'
 import hero4 from '../assets/about/hero-4.webp'
 import story1 from '../assets/about/story-1.webp'
 import story3 from '../assets/about/story-3.webp'
+import travioGhanaBadge from '../assets/about/travio-ghana-badge.webp'
+import travioAfricaLockup from '../assets/about/travio-africa-lockup.webp'
 
 /* ------------------------------------------------------------------ */
 /*  Data                                                               */
@@ -421,7 +424,92 @@ export default function AboutUsPage() {
         </motion.div>
 
         {/* ================================================================
-            7. PROMISE — acid shell
+            7. PLATFORMS WE MANAGE — our own booking platforms
+            ================================================================ */}
+        <motion.section
+          className="about-platforms"
+          initial="hidden"
+          whileInView="visible"
+          viewport={revealViewport}
+          variants={stagger}
+          aria-label="Platforms we manage"
+        >
+          <div className="about-container">
+            <motion.div className="about-platforms-head" variants={fadeUp}>
+              <p className="about-label">Platforms we manage</p>
+              <h2 className="about-title">Built and run by our own team.</h2>
+              <p className="about-lead">
+                Beyond Expedition-Go Tours, we design and operate our own booking platforms for
+                travellers exploring Ghana — and soon, more of Africa.
+              </p>
+            </motion.div>
+
+            <div className="about-platform-grid">
+              <motion.a
+                className="about-platform-card"
+                href="https://travioghana.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                variants={cardFade}
+              >
+                <div className="about-platform-media">
+                  <img
+                    src={travioGhanaBadge}
+                    alt="TravioGhana logo"
+                    width={640}
+                    height={640}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </div>
+                <div className="about-platform-body">
+                  <div className="about-platform-title-row">
+                    <h3>TravioGhana</h3>
+                    <span className="about-platform-domain">travioghana.com</span>
+                  </div>
+                  <p className="about-platform-copy">
+                    Our traveller-facing store for booking tours, activities and stays across Ghana,
+                    operated by Expedition-Go Tours Ltd.
+                  </p>
+                  <span className="about-platform-cta">
+                    Visit travioghana.com
+                    <ArrowUpRight size={16} aria-hidden="true" />
+                  </span>
+                </div>
+              </motion.a>
+
+              <motion.div
+                className="about-platform-card about-platform-card--muted"
+                variants={cardFade}
+              >
+                <div className="about-platform-media">
+                  <img
+                    src={travioAfricaLockup}
+                    alt="TravioAfrica logo, by Expedition-Go Tours"
+                    width={860}
+                    height={722}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </div>
+                <div className="about-platform-body">
+                  <div className="about-platform-title-row">
+                    <h3>TravioAfrica</h3>
+                    <span className="about-platform-domain">travioafrica.com</span>
+                  </div>
+                  <p className="about-platform-copy">
+                    Our next platform will bring the same locally-run, curated approach to more of
+                    Africa. It is not live yet — check back soon.
+                  </p>
+                  <span className="about-platform-pill">Coming soon</span>
+                </div>
+              </motion.div>
+            </div>
+          </div>
+        </motion.section>
+
+        {/* ================================================================
+            8. PROMISE — acid shell
             ================================================================ */}
         <motion.section
           className="about-promise"
@@ -453,7 +541,7 @@ export default function AboutUsPage() {
         </motion.section>
 
         {/* ================================================================
-            8. VISIT US — office location on Google Maps
+            9. VISIT US — office location on Google Maps
             ================================================================ */}
         <motion.section
           className="about-visit"
@@ -493,7 +581,7 @@ export default function AboutUsPage() {
         </motion.section>
 
         {/* ================================================================
-            9. CTA
+            10. CTA
             ================================================================ */}
         <motion.section
           className="about-cta"
@@ -506,7 +594,7 @@ export default function AboutUsPage() {
           <div className="about-container">
             <div className="about-cta-inner">
               <div>
-                <h2>Want to know more about Expedition-Go?</h2>
+                <h2>Want to know more about Expedition-Go Tours?</h2>
                 <p>Our team is ready to help you discover Ghana with confidence.</p>
               </div>
               <a href={`mailto:${SUPPORT_EMAIL}`} className="about-cta-btn">
