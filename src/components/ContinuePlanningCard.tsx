@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { tourHref } from '../lib/tourPath'
+import { ensureHandoff, useHandoffHref } from '../lib/ssoHandoff'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { Star, Heart, Car, Compass, Languages as LanguagesIcon, ShieldCheck, Ban, TrendingUp } from 'lucide-react'
@@ -103,12 +104,17 @@ export default function ContinuePlanningCard({
   // while the synthetic hash id is not.
   const slug = item.slug || item.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
   const url = tourHref(item.tourId ?? null, slug)
+  // Upgraded to `#sso=…` once warm, so the crawlable anchor below carries the
+  // session as well as the click handler.
+  const href = useHandoffHref(url)
 
   // Opens in a new tab, matching TourCard (the mobile slide and every other
   // tour surface). The title below is the real crawlable <a>; clicks anywhere
   // else on the card route through here.
   const openTour = () => {
-    window.open(url, '_blank', 'noopener')
+    void ensureHandoff(url).then((destination) => {
+      window.open(destination, '_blank', 'noopener')
+    })
   }
 
   const handleWishlist = (e: React.MouseEvent) => {
@@ -256,7 +262,7 @@ export default function ContinuePlanningCard({
       <div className="cp-card-content">
         <h3 className="cp-card-title">
           <a
-            href={url}
+            href={href}
             target="_blank"
             rel="noopener"
             // The card body's own handler opens a new tab too; stopping

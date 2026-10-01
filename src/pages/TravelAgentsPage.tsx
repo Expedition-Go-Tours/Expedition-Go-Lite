@@ -12,6 +12,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { tourHref } from '../lib/tourPath'
+import { handoffHref, useHandoffHref } from '../lib/ssoHandoff'
 import Footer from '../components/Footer'
 import travioLogoSrc from '../assets/expo_trans.png'
 import '../styles/partner-pages.css'
@@ -129,6 +130,13 @@ export default function TravelAgentsPage() {
   const [activeTab, setActiveTab] = useState<(typeof DASH_TABS)[number]['key']>('overview')
   const [openFaq, setOpenFaq] = useState(0)
   const [clientPrice, setClientPrice] = useState(1000)
+
+  // Warm a handoff ticket for this page's sample tours. Both results are the
+  // hrefs of the two fixed links below; their state change also re-renders the
+  // mapped list, which must read handoffHref() directly — a hook cannot be
+  // called inside a .map().
+  const accraHref = useHandoffHref(tourHref(TOURS.accra.id, TOURS.accra.slug))
+  const capeCoastHref = useHandoffHref(tourHref(TOURS.capeCoast.id, TOURS.capeCoast.slug))
 
   // The template's `.reveal` IntersectionObserver, scoped to this page.
   useEffect(() => {
@@ -385,7 +393,7 @@ export default function TravelAgentsPage() {
                         <div className="dash-card"><span>Potential margin</span><strong>Shown per quote</strong></div>
                       </div>
                       <div className="dash-title">Sample upcoming departures</div>
-                      <a className="dash-row dash-booking" href={tourHref(TOURS.accra)} target="_blank" rel="noopener">
+                      <a className="dash-row dash-booking" href={accraHref} target="_blank" rel="noopener">
                         <img className="dash-thumb" src={TOURS.accra.img} alt={TOURS.accra.short} width={1200} height={800} loading="lazy" decoding="async" />
                         <span>
                           <strong>{TOURS.accra.title}</strong>
@@ -393,7 +401,7 @@ export default function TravelAgentsPage() {
                         </span>
                         <span className="dash-amount">View ↗</span>
                       </a>
-                      <a className="dash-row dash-booking" href={tourHref(TOURS.capeCoast)} target="_blank" rel="noopener">
+                      <a className="dash-row dash-booking" href={capeCoastHref} target="_blank" rel="noopener">
                         <img className="dash-thumb" src={TOURS.capeCoast.img} alt={TOURS.capeCoast.short} width={1200} height={800} loading="lazy" decoding="async" />
                         <span>
                           <strong>{TOURS.capeCoast.title}</strong>
@@ -407,7 +415,7 @@ export default function TravelAgentsPage() {
                       <h3>Explore tours on Expedition-Go Tours</h3>
                       <p className="dash-sub">Real experiences currently listed on the platform.</p>
                       {[TOURS.capeCoast, TOURS.waterfalls, TOURS.accra].map((t) => (
-                        <a className="dash-tour" href={tourHref(t.id, t.slug)} target="_blank" rel="noopener" key={t.id}>
+                        <a className="dash-tour" href={handoffHref(tourHref(t.id, t.slug))} target="_blank" rel="noopener" key={t.id}>
                           <img className="tour-dot" src={t.img} alt="" width={1200} height={800} loading="lazy" decoding="async" />
                           <span>
                             <strong>{t.title}</strong>

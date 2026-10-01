@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, beforeAll, afterEach } from 'vitest'
-import { render, fireEvent, cleanup } from '@testing-library/react'
+import { render, fireEvent, cleanup, waitFor } from '@testing-library/react'
 import type { ComponentProps } from 'react'
 
 vi.mock('../context/WishlistContext', () => ({
@@ -94,38 +94,47 @@ describe('TourCard navigation', () => {
     vi.restoreAllMocks()
   })
 
-  it('opens a new tab by default (homepage, search, related, grid, …)', () => {
+  it('opens a new tab by default (homepage, search, related, grid, …)', async () => {
     const { container } = renderCard()
     fireEvent.click(container.querySelector('.tour-card')!)
 
-    expect(window.open).toHaveBeenCalledWith(`${GHANA}/tour/accra-city-tour`, '_blank', 'noopener')
+    // Navigation now waits on a handoff ticket (resolved immediately when
+    // signed out), so assert after the microtask settles rather than on the
+    // click itself.
+    await waitFor(() =>
+      expect(window.open).toHaveBeenCalledWith(`${GHANA}/tour/accra-city-tour`, '_blank', 'noopener'),
+    )
     expect(assign).not.toHaveBeenCalled()
   })
 
-  it('sends a same-tab surface straight to Travio Ghana in one step', () => {
+  it('sends a same-tab surface straight to Travio Ghana in one step', async () => {
     const { container } = renderCard({ openInNewTab: false })
     fireEvent.click(container.querySelector('.tour-card')!)
 
-    expect(assign).toHaveBeenCalledWith(`${GHANA}/tour/accra-city-tour`)
+    await waitFor(() => expect(assign).toHaveBeenCalledWith(`${GHANA}/tour/accra-city-tour`))
     expect(window.open).not.toHaveBeenCalled()
   })
 
-  it('uses /tour/{id}/{slug} when the tour id is known', () => {
+  it('uses /tour/{id}/{slug} when the tour id is known', async () => {
     const { container } = renderCard({ id: 'cmuefjdhj008gr44h8flybaj7' })
     fireEvent.click(container.querySelector('.tour-card')!)
 
-    expect(window.open).toHaveBeenCalledWith(
-      `${GHANA}/tour/cmuefjdhj008gr44h8flybaj7/accra-city-tour`,
-      '_blank',
-      'noopener',
+    await waitFor(() =>
+      expect(window.open).toHaveBeenCalledWith(
+        `${GHANA}/tour/cmuefjdhj008gr44h8flybaj7/accra-city-tour`,
+        '_blank',
+        'noopener',
+      ),
     )
   })
 
-  it('keeps modifier-click opening a new tab on same-tab cards', () => {
+  it('keeps modifier-click opening a new tab on same-tab cards', async () => {
     const { container } = renderCard({ openInNewTab: false })
     fireEvent.click(container.querySelector('.tour-card')!, { ctrlKey: true })
 
-    expect(window.open).toHaveBeenCalledWith(`${GHANA}/tour/accra-city-tour`, '_blank', 'noopener')
+    await waitFor(() =>
+      expect(window.open).toHaveBeenCalledWith(`${GHANA}/tour/accra-city-tour`, '_blank', 'noopener'),
+    )
     expect(assign).not.toHaveBeenCalled()
   })
 

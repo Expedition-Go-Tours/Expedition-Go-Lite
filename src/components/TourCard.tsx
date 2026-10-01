@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { tourHref } from '../lib/tourPath'
+import { ensureHandoff, useHandoffHref } from '../lib/ssoHandoff'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
 import { Car, Languages as LanguagesIcon, ShieldCheck, Ban, TrendingUp, BedDouble, Compass } from 'lucide-react'
@@ -217,6 +218,19 @@ export default function TourCard({ id, title, duration, features, price, rating,
   // Absolute cross-origin URL — see lib/tourHref. The detail page lives on
   // Travio Ghana, so an internal route would never leave this origin.
   const url = tourHref(id, tourSlug)
+  // Upgrades to `#sso=…` once a handoff ticket is warm, so copy-link and
+  // middle-click carry the session too and not just the plain click path.
+  const href = useHandoffHref(url)
+
+  const openTour = (newTab: boolean) => {
+    // Minting is usually already warm (the hook above), so this is normally
+    // synchronous in practice. It never rejects: a click must not fail because
+    // authentication was slow.
+    void ensureHandoff(url).then((destination) => {
+      if (newTab) window.open(destination, '_blank', 'noopener')
+      else window.location.assign(destination)
+    })
+  }
 
   const handleCardClick = (event?: React.MouseEvent) => {
     // A horizontal swipe on the image ends with a click — don't navigate.
@@ -227,12 +241,8 @@ export default function TourCard({ id, title, duration, features, price, rating,
     // Modifier/middle clicks keep their browser meaning: open a new tab.
     const wantsNewTab = openInNewTab
       || (event != null && (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button === 1))
-    if (wantsNewTab) {
-      window.open(url, '_blank', 'noopener')
-      return
-    }
     // The body is a <div>, not a link, so nothing else would navigate it.
-    window.location.assign(url)
+    openTour(wantsNewTab)
   }
 
   // The card body must stay a <div>: it hosts the wishlist/carousel buttons,
@@ -430,7 +440,7 @@ export default function TourCard({ id, title, duration, features, price, rating,
         </div>
         <h3 className="tour-card-title" title={title}>
           <a
-            href={url}
+            href={href}
             target={openInNewTab ? '_blank' : undefined}
             rel={openInNewTab ? 'noopener' : undefined}
             onClick={handleTitleClick}

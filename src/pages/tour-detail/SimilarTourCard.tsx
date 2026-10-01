@@ -5,6 +5,7 @@ import i18n from '../../i18n/config'
 import { useWishlist, toWishlistItem } from '../../context/WishlistContext'
 import { parsePrice, getTourSlug, type Tour } from '../../components/data'
 import { tourHref } from '../../lib/tourPath'
+import { ensureHandoff } from '../../lib/ssoHandoff'
 import FormattedPrice from '../../components/FormattedPrice'
 import { getCategoryMeta } from '../../components/categoryMeta'
 import './SimilarTourCard.css'
@@ -67,7 +68,9 @@ export default function SimilarTourCard({
 
   // New tab, like every other tour card.
   const handleCardClick = () => {
-    window.open(tourHref(null, tourSlug), '_blank', 'noopener')
+    void ensureHandoff(tourHref(null, tourSlug)).then((destination) => {
+      window.open(destination, '_blank', 'noopener')
+    })
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

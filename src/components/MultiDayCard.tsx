@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import i18n from '../i18n/config'
 import { parsePrice, getTourSlug, type MultiDayTour } from './data'
 import { tourHref } from '../lib/tourPath'
+import { ensureHandoff } from '../lib/ssoHandoff'
 import './MultiDayCard.css'
 import { useWishlist, toWishlistItem } from '../context/WishlistContext'
 import FormattedPrice from './FormattedPrice'
@@ -32,7 +33,9 @@ export default function MultiDayCard({ id, title, days, accommodation, highlight
   // New tab, like every other tour card — the browser list/scroll position
   // on the current page is preserved.
   const handleCardClick = () => {
-    window.open(tourHref(null, tourSlug), '_blank', 'noopener')
+    void ensureHandoff(tourHref(null, tourSlug)).then((destination) => {
+      window.open(destination, '_blank', 'noopener')
+    })
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

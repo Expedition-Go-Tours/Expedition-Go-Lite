@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import type { ContinuePlanningItem } from '../context/ContinuePlanningContext'
 
 /**
@@ -100,7 +100,7 @@ describe('ContinuePlanningSection — card navigation', () => {
 
   const cardTitleLink = () => document.querySelector<HTMLAnchorElement>('.cp-card-title a')!
 
-  it('opens the tour in a new tab with the real id and slug', () => {
+  it('opens the tour in a new tab with the real id and slug', async () => {
     mocks.items = [item({ id: 'tour-a', tourId: 'tour-a', slug: 'alpha-tour' })]
 
     render(<ContinuePlanningSection />)
@@ -113,7 +113,10 @@ describe('ContinuePlanningSection — card navigation', () => {
     expect(anchor.getAttribute('rel')).toBe('noopener')
 
     fireEvent.click(document.querySelector('.cp-card')!)
-    expect(openSpy).toHaveBeenCalledWith(`${GHANA}/tour/tour-a/alpha-tour`, '_blank', 'noopener')
+    // The open waits on a handoff ticket, so settle before asserting.
+    await waitFor(() =>
+      expect(openSpy).toHaveBeenCalledWith(`${GHANA}/tour/tour-a/alpha-tour`, '_blank', 'noopener'),
+    )
   })
 
   it('does not double-open when the title link itself is clicked', () => {
@@ -127,22 +130,26 @@ describe('ContinuePlanningSection — card navigation', () => {
     expect(openSpy).not.toHaveBeenCalled()
   })
 
-  it('falls back to the slug-only URL for legacy items without a real id', () => {
+  it('falls back to the slug-only URL for legacy items without a real id', async () => {
     mocks.items = [item({ id: 'QWxwaGE', slug: 'alpha-tour' })]
 
     render(<ContinuePlanningSection />)
     expect(cardTitleLink().getAttribute('href')).toBe(`${GHANA}/tour/alpha-tour`)
 
     fireEvent.click(document.querySelector('.cp-card')!)
-    expect(openSpy).toHaveBeenCalledWith(`${GHANA}/tour/alpha-tour`, '_blank', 'noopener')
+    await waitFor(() =>
+      expect(openSpy).toHaveBeenCalledWith(`${GHANA}/tour/alpha-tour`, '_blank', 'noopener'),
+    )
   })
 
-  it('slugifies the title when a legacy item has no slug either', () => {
+  it('slugifies the title when a legacy item has no slug either', async () => {
     mocks.items = [item({ id: 'QWxwaGE', title: 'Alpha Tour!' })]
 
     render(<ContinuePlanningSection />)
     fireEvent.click(document.querySelector('.cp-card')!)
 
-    expect(openSpy).toHaveBeenCalledWith(`${GHANA}/tour/alpha-tour`, '_blank', 'noopener')
+    await waitFor(() =>
+      expect(openSpy).toHaveBeenCalledWith(`${GHANA}/tour/alpha-tour`, '_blank', 'noopener'),
+    )
   })
 })
