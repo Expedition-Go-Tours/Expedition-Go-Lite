@@ -17,7 +17,7 @@
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   -ms-overflow-style: none;
-  /* Anchors .breadcrumb-back without joining the centred crumb list. */
+  /* Anchors .breadcrumb-back without joining the crumb list. */
   position: relative;
 }
 
@@ -34,7 +34,7 @@
 .breadcrumb-list {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 8px;
   list-style: none;
   margin: 0;
@@ -71,9 +71,12 @@
   font-weight: 600;
 }
 
-/* Back button — pinned to the strip's left padding so the crumb trail stays
-   optically centred (the list is `justify-content: center`). Desktop only,
-   because the whole strip is desktop only. */
+/* Back button — pinned to the strip's left padding. Breadcrumb.tsx does not
+   render it today; the rule is left with the rest of this block. The crumb
+   list itself is `justify-content: flex-start`, so it starts at the strip's
+   padding edge on the navbar logo's line — see the padding-left override at
+   the bottom of this file. Desktop only, because the whole strip is desktop
+   only. */
 .breadcrumb-back {
   position: absolute;
   left: 16px;
@@ -144,4 +147,21 @@
 
 @media (min-width: 1400px) {
   .breadcrumb-back { left: 60px; }
+}
+
+/* The first crumb starts on the same vertical line as the navbar logo.
+   `.navbar.navbar--tour-detail` (Navbar.css) and `.tour-detail-container`
+   both derive their left edge from a centred 1520px column plus a 32px inner
+   gutter — and this nav is a full-width in-flow block, so it resolves `%` from
+   the same basis they do (viewport minus a classic scrollbar). Repeating the
+   formula rather than the 1024/1400 breakpoints keeps all three in step at
+   every width, including the 1585px/1905px values a scrollbar produces on
+   wide screens.
+
+   Declared last so it wins over the `padding` shorthands above: same
+   specificity, later in source order. */
+@media (min-width: 1025px) {
+  .breadcrumb {
+    padding-left: max(32px, calc((100% - 1520px) / 2 + 32px));
+  }
 }
