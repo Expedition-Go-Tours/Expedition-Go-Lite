@@ -115,7 +115,7 @@ export default function PrivacyPolicyPage() {
 
           <h2 id="3-our-trading-names-and-platforms">3. Our trading names and platforms</h2>
           <p>
-            <strong>Travio Ghana</strong> and <strong>Travio Africa</strong> are registered trading
+            <strong><a href="https://travioghana.com" target="_blank" rel="noopener noreferrer">Travio Ghana</a></strong> and <strong>Travio Africa</strong> are registered trading
             names of Expedition-Go Tours Ltd. They are not separate legal entities.
           </p>
           <p>
@@ -124,7 +124,7 @@ export default function PrivacyPolicyPage() {
           </p>
           <ul>
             <li>Expedition-Go Tours;</li>
-            <li>Travio Ghana; and</li>
+            <li><a href="https://travioghana.com" target="_blank" rel="noopener noreferrer">Travio Ghana</a>; and</li>
             <li>Travio Africa.</li>
           </ul>
           <p>
@@ -134,7 +134,7 @@ export default function PrivacyPolicyPage() {
           </p>
           <p>
             This policy applies to <strong>expeditiongotours.com</strong>,{' '}
-            <strong>travioghana.com</strong>, <strong>travioafrica.com</strong>, their subdomains,
+            <strong><a href="https://travioghana.com" target="_blank" rel="noopener noreferrer">travioghana.com</a></strong>, <strong>travioafrica.com</strong>, their subdomains,
             supplier and administration portals, and associated applications or booking tools
             (together, the <strong>&ldquo;Platform&rdquo;</strong>).
           </p>
@@ -373,11 +373,14 @@ export default function PrivacyPolicyPage() {
             processing that was lawful before withdrawal.
           </p>
 
-          <h2 id="8-information-used-across-expedition-go-tours-travio-ghana-and-travio-africa">8. Information used across Expedition-Go Tours, Travio Ghana and Travio Africa</h2>
+          <h2 id="8-information-used-across-expedition-go-tours-travio-ghana-and-travio-africa">8. Information used across Expedition-Go Tours, <a href="https://travioghana.com" target="_blank" rel="noopener noreferrer">Travio Ghana</a> and Travio Africa</h2>
           <p>
             When you use any of our branded services, you agree that relevant information may be
-            accessed and used within Expedition-Go Tours Ltd across the Expedition-Go Tours,
-            Travio Ghana and Travio Africa platforms and operational teams where necessary to:
+            accessed and used within Expedition-Go Tours Ltd across the Expedition-Go Tours,{' '}
+            <a href="https://travioghana.com" target="_blank" rel="noopener noreferrer">
+              Travio Ghana
+            </a>{' '}
+            and Travio Africa platforms and operational teams where necessary to:
           </p>
           <ul>
             <li>create or synchronise your account;</li>

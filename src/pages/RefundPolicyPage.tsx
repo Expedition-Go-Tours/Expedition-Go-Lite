@@ -96,15 +96,23 @@ export default function RefundPolicyPage() {
         </p>
         <ul>
           <li>Expedition-Go Tours</li>
-          <li>Travio Ghana</li>
+          <li>
+            <a href="https://travioghana.com" target="_blank" rel="noopener noreferrer">
+              Travio Ghana
+            </a>
+          </li>
           <li>Travio Africa</li>
         </ul>
         <p>
-          Expedition-Go Tours, Travio Ghana and Travio Africa are registered trading names of
-          Expedition-Go Tours Ltd and are not separate legal entities.
+          Expedition-Go Tours,{' '}
+          <a href="https://travioghana.com" target="_blank" rel="noopener noreferrer">
+            Travio Ghana
+          </a>{' '}
+          and Travio Africa are registered trading names of Expedition-Go Tours Ltd and are not
+          separate legal entities.
         </p>
         <p>
-          This policy applies to <strong>travioghana.com</strong>,{' '}
+          This policy applies to <strong><a href="https://travioghana.com" target="_blank" rel="noopener noreferrer">travioghana.com</a></strong>,{' '}
           <strong>expeditiongotours.com</strong>, <strong>travioafrica.com</strong>, their subdomains
           and any booking tools operated by Expedition-Go Tours Ltd (together, the{' '}
           <strong>"Platform"</strong>).

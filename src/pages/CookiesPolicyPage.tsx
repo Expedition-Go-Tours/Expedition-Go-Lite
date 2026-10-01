@@ -217,7 +217,7 @@ export default function CookiesPolicyPage() {
             </p>
             <ul>
               <li><strong>expeditiongotours.com</strong>;</li>
-              <li><strong>travioghana.com</strong>;</li>
+              <li><strong><a href="https://travioghana.com" target="_blank" rel="noopener noreferrer">travioghana.com</a></strong>;</li>
               <li><strong>travioafrica.com</strong>;</li>
               <li>their subdomains, supplier and administration portals;</li>
               <li>our booking tools, applications and embedded services; and</li>
@@ -225,7 +225,7 @@ export default function CookiesPolicyPage() {
             </ul>
             <p>Together, these are the <strong>&ldquo;Platform&rdquo;</strong>.</p>
             <p>
-              <strong>Travio Ghana</strong> and <strong>Travio Africa</strong> are registered trading
+              <strong><a href="https://travioghana.com" target="_blank" rel="noopener noreferrer">Travio Ghana</a></strong> and <strong>Travio Africa</strong> are registered trading
               names of Expedition-Go Tours Ltd and are not separate legal entities.
             </p>
             <p>
@@ -267,7 +267,7 @@ export default function CookiesPolicyPage() {
             <p>They may also be:</p>
             <ul>
               <li>
-                <strong>First-party cookies</strong>, set by the Expedition-Go Tours, Travio Ghana or
+                <strong>First-party cookies</strong>, set by the Expedition-Go Tours, <a href="https://travioghana.com" target="_blank" rel="noopener noreferrer">Travio Ghana</a> or
                 Travio Africa domain you are visiting; or
               </li>
               <li>
@@ -342,7 +342,7 @@ export default function CookiesPolicyPage() {
               <li>limit how often an advertisement is shown;</li>
               <li>understand whether a booking followed an advertisement;</li>
               <li>build or use audiences for relevant advertising; and</li>
-              <li>show Expedition-Go Tours, Travio Ghana or Travio Africa promotions on other websites and platforms.</li>
+              <li>show Expedition-Go Tours, <a href="https://travioghana.com" target="_blank" rel="noopener noreferrer">Travio Ghana</a> or Travio Africa promotions on other websites and platforms.</li>
             </ul>
             <p>
               These technologies may recognise your browser or device across services. If you reject
