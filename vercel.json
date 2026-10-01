@@ -1,6 +1,6 @@
 {
   "images": {
-    "sizes": [640, 1080, 1600],
+    "sizes": [320, 640, 1080, 1600],
     "domains": [],
     "localPatterns": [
       { "pathname": "^/assets/.*$", "search": "" }
