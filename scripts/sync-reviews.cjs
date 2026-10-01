@@ -222,14 +222,59 @@ function keepPreviousForListings(newRows, previousRows) {
 }
 
 /** Keep previous per-product totals for products this run did not re-scrape. */
+/**
+ * Keep previous per-product totals for products this run did not re-scrape, and
+ * for products whose header this run FAILED to read.
+ *
+ * The second case is the one that bit us. The product header is scraped from a
+ * platform's own summary badge; when the platform blocks the request, changes
+ * its markup, or renders the badge late, the read returns nulls while the
+ * per-review rows still scrape fine (they come from the review cards, not the
+ * badge). A product re-scraped in that state was previously overwritten with
+ * rating: null / reviewCount: null, silently deleting a good number that the
+ * previous run had — and because `buildProductSchema` only emits
+ * aggregateRating when BOTH values are truthy, the page then published no
+ * review markup at all. Rows kept accumulating (1,125 -> 1,243) while every
+ * TripAdvisor total sat at null, so nothing looked wrong except the SEO.
+ *
+ * A null header means "we did not learn it this run", not "it is zero". Keep
+ * the last known value, and only ever let a fresh non-null value win.
+ */
 function mergeProducts(newProducts, previousProducts) {
-  const seen = new Set(newProducts.map((p) => `${p.source}:${p.id}`))
-  const out = [...newProducts]
+  const previousByKey = new Map(previousProducts.map((p) => [`${p.source}:${p.id}`, p]))
+  const seen = new Set()
+
+  const out = newProducts.map((p) => {
+    const key = `${p.source}:${p.id}`
+    seen.add(key)
+    const previous = previousByKey.get(key)
+    if (!previous) return p
+
+    // Only carry forward the header fields this run could not read. Any field
+    // the new run DID read wins, so a genuine rating correction still lands.
+    const recovered = { ...p }
+    const carried = []
+    for (const field of ['rating', 'reviewCount', 'distribution']) {
+      if (recovered[field] != null) continue
+      if (previous[field] == null) continue
+      recovered[field] = previous[field]
+      carried.push(field)
+    }
+    if (carried.length > 0) {
+      console.log(
+        `    ${key}: header unavailable this run — keeping previous ${carried.join(', ')}`
+      )
+    }
+    return recovered
+  })
+
   for (const p of previousProducts) {
     if (!seen.has(`${p.source}:${p.id}`)) out.push(p)
   }
   return out
 }
+
+const EMPTY_HEADER = { rating: null, reviewCount: null, distribution: null }
 
 /** Read the product header (rating / official review count / distribution). */
 async function readProductHeader(page, source) {
