@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { tourPath } from '../lib/tourPath'
+import { tourHref } from '../lib/tourPath'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { Star, Heart, Car, Compass, Languages as LanguagesIcon, ShieldCheck, Ban, TrendingUp } from 'lucide-react'
@@ -98,11 +98,11 @@ export default function ContinuePlanningCard({
   const displayRating = combinedStats.reviewCount > 0 ? combinedStats.rating.toFixed(1) : String(item.rating)
   const displayReviewCount = combinedStats.reviewCount > 0 ? combinedStats.reviewCount : item.reviewCount
 
-  // Canonical /tour/{id}/{slug}. Legacy items have no real id: the
-  // single-segment /tour/{slug} form is resolved by the API, while the
-  // synthetic hash id is not.
+  // Absolute URL — the detail page is Travio Ghana's. Legacy items have no
+  // real id: the single-segment /tour/{slug} form is resolved by the API,
+  // while the synthetic hash id is not.
   const slug = item.slug || item.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
-  const url = tourPath(item.tourId ?? null, slug)
+  const url = tourHref(item.tourId ?? null, slug)
 
   // Opens in a new tab, matching TourCard (the mobile slide and every other
   // tour surface). The title below is the real crawlable <a>; clicks anywhere

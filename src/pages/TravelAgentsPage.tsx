@@ -11,7 +11,7 @@
    ========================================================================== */
 
 import { useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { tourHref } from '../lib/tourPath'
 import Footer from '../components/Footer'
 import travioLogoSrc from '../assets/expo_trans.png'
 import '../styles/partner-pages.css'
@@ -49,8 +49,6 @@ const TOURS = {
     img: 'https://res.cloudinary.com/dfpagrtoy/image/upload/c_crop,w_1200,h_800,q_auto:good,f_auto/v1787654560/user-photos/cthmqvlp7swcia1wto92.jpg',
   },
 } as const
-
-const tourPath = (t: { id: string; slug: string }) => `/tour/${t.id}/${t.slug}`
 
 const STATS = [
   { count: '01', label: 'Apply for an agent account' },
@@ -387,36 +385,36 @@ export default function TravelAgentsPage() {
                         <div className="dash-card"><span>Potential margin</span><strong>Shown per quote</strong></div>
                       </div>
                       <div className="dash-title">Sample upcoming departures</div>
-                      <Link className="dash-row dash-booking" to={tourPath(TOURS.accra)} target="_blank" rel="noopener">
+                      <a className="dash-row dash-booking" href={tourHref(TOURS.accra)} target="_blank" rel="noopener">
                         <img className="dash-thumb" src={TOURS.accra.img} alt={TOURS.accra.short} width={1200} height={800} loading="lazy" decoding="async" />
                         <span>
                           <strong>{TOURS.accra.title}</strong>
                           <span>Sample booking · 2 guests</span>
                         </span>
                         <span className="dash-amount">View ↗</span>
-                      </Link>
-                      <Link className="dash-row dash-booking" to={tourPath(TOURS.capeCoast)} target="_blank" rel="noopener">
+                      </a>
+                      <a className="dash-row dash-booking" href={tourHref(TOURS.capeCoast)} target="_blank" rel="noopener">
                         <img className="dash-thumb" src={TOURS.capeCoast.img} alt={TOURS.capeCoast.short} width={1200} height={800} loading="lazy" decoding="async" />
                         <span>
                           <strong>{TOURS.capeCoast.title}</strong>
                           <span>Sample booking · 4 guests</span>
                         </span>
                         <span className="dash-amount">View ↗</span>
-                      </Link>
+                      </a>
                     </section>
 
                     <section className={activeTab === 'tours' ? 'dash-panel active' : 'dash-panel'} data-panel="tours">
                       <h3>Explore tours on Expedition-Go Tours</h3>
                       <p className="dash-sub">Real experiences currently listed on the platform.</p>
                       {[TOURS.capeCoast, TOURS.waterfalls, TOURS.accra].map((t) => (
-                        <Link className="dash-tour" to={tourPath(t)} target="_blank" rel="noopener" key={t.id}>
+                        <a className="dash-tour" href={tourHref(t.id, t.slug)} target="_blank" rel="noopener" key={t.id}>
                           <img className="tour-dot" src={t.img} alt="" width={1200} height={800} loading="lazy" decoding="async" />
                           <span>
                             <strong>{t.title}</strong>
                             <small>{t.meta}</small>
                           </span>
                           <b>View ↗</b>
-                        </Link>
+                        </a>
                       ))}
                       <p className="dash-tour-note">
                         Tour titles, photos and links come from Expedition-Go Tours. Booking figures elsewhere in this preview

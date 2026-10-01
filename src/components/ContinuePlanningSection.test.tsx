@@ -10,7 +10,11 @@ import type { ContinuePlanningItem } from '../context/ContinuePlanningContext'
  * /tour/<hash>/<slug> and the detail page answered "Tour not found". Cards must
  * navigate with the real backend id (legacy items fall back to the slug-only
  * URL the API resolves) and open in a new tab, matching TourCard.
+ *
+ * Destinations are absolute: a tour's detail page is Travio Ghana's, so no
+ * card may emit a path this app would have to route internally.
  */
+const GHANA = 'https://www.travioghana.com'
 
 const mocks = vi.hoisted(() => ({
   items: [] as ContinuePlanningItem[],
@@ -104,12 +108,12 @@ describe('ContinuePlanningSection — card navigation', () => {
 
     // The title is a real crawlable link that opens the new tab natively.
     const anchor = cardTitleLink()
-    expect(anchor.getAttribute('href')).toBe('/tour/tour-a/alpha-tour')
+    expect(anchor.getAttribute('href')).toBe(`${GHANA}/tour/tour-a/alpha-tour`)
     expect(anchor.getAttribute('target')).toBe('_blank')
     expect(anchor.getAttribute('rel')).toBe('noopener')
 
     fireEvent.click(document.querySelector('.cp-card')!)
-    expect(openSpy).toHaveBeenCalledWith('/tour/tour-a/alpha-tour', '_blank', 'noopener')
+    expect(openSpy).toHaveBeenCalledWith(`${GHANA}/tour/tour-a/alpha-tour`, '_blank', 'noopener')
   })
 
   it('does not double-open when the title link itself is clicked', () => {
@@ -127,10 +131,10 @@ describe('ContinuePlanningSection — card navigation', () => {
     mocks.items = [item({ id: 'QWxwaGE', slug: 'alpha-tour' })]
 
     render(<ContinuePlanningSection />)
-    expect(cardTitleLink().getAttribute('href')).toBe('/tour/alpha-tour')
+    expect(cardTitleLink().getAttribute('href')).toBe(`${GHANA}/tour/alpha-tour`)
 
     fireEvent.click(document.querySelector('.cp-card')!)
-    expect(openSpy).toHaveBeenCalledWith('/tour/alpha-tour', '_blank', 'noopener')
+    expect(openSpy).toHaveBeenCalledWith(`${GHANA}/tour/alpha-tour`, '_blank', 'noopener')
   })
 
   it('slugifies the title when a legacy item has no slug either', () => {
@@ -139,6 +143,6 @@ describe('ContinuePlanningSection — card navigation', () => {
     render(<ContinuePlanningSection />)
     fireEvent.click(document.querySelector('.cp-card')!)
 
-    expect(openSpy).toHaveBeenCalledWith('/tour/alpha-tour', '_blank', 'noopener')
+    expect(openSpy).toHaveBeenCalledWith(`${GHANA}/tour/alpha-tour`, '_blank', 'noopener')
   })
 })

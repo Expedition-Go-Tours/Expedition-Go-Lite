@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { tourPath } from '../lib/tourPath'
+import { tourHref } from '../lib/tourPath'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
 import { Car, Languages as LanguagesIcon, ShieldCheck, Ban, TrendingUp, BedDouble, Compass } from 'lucide-react'
@@ -76,7 +75,6 @@ interface TourCardProps extends Tour {
 
 export default function TourCard({ id, title, duration, features, price, rating, reviews, location, image, photos, discount, difficulty, cancellationPolicy, pickupIncluded, accommodationIncluded, meetingMode, category, languages, source, externalUrl, slug, supplierName, isNew, hideSourceBadge, hideFeatures, imageClean, priceValue, specialOffers, likelyToSellOut, hideOfferBadge, compactDurationOnMobile, bodyOfferBadgesOnMobile, priority, sizes, openInNewTab = true }: TourCardProps) {
   const { t } = useTranslation()
-  const navigate = useNavigate()
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist()
   const { isLikelyToSellOut } = useSellOutContext()
   const showSellOutTag = likelyToSellOut || isLikelyToSellOut({ id, title })
@@ -216,9 +214,9 @@ export default function TourCard({ id, title, duration, features, price, rating,
     }
   }
 
-  // Canonical /tour/{id}/{slug} — see lib/tourPath. Static/mock cards have no
-  // id, so they keep the slug-only form the route still resolves.
-  const url = tourPath(id, tourSlug)
+  // Absolute cross-origin URL — see lib/tourHref. The detail page lives on
+  // Travio Ghana, so an internal route would never leave this origin.
+  const url = tourHref(id, tourSlug)
 
   const handleCardClick = (event?: React.MouseEvent) => {
     // A horizontal swipe on the image ends with a click — don't navigate.
@@ -233,15 +231,16 @@ export default function TourCard({ id, title, duration, features, price, rating,
       window.open(url, '_blank', 'noopener')
       return
     }
-    navigate(url)
+    // The body is a <div>, not a link, so nothing else would navigate it.
+    window.location.assign(url)
   }
 
   // The card body must stay a <div>: it hosts the wishlist/carousel buttons,
   // and interactive content isn't allowed inside a link. So the *title* carries
-  // the crawlable <a href="/tour/{id}/{slug}"> — one real hyperlink per card,
-  // which is what crawlers follow. Clicks on it stop at the title (otherwise
-  // both this handler and the card's would fire and open two tabs); everything
-  // outside the title keeps the original div behaviour above.
+  // the crawlable <a href="…"> — one real hyperlink per card, which is what
+  // crawlers follow. Clicks on it stop at the title (otherwise both this
+  // handler and the card's would fire and open two tabs); everything outside
+  // the title keeps the original div behaviour above.
   const handleTitleClick = (event: React.MouseEvent) => {
     event.stopPropagation()
     if (swipeJustHappened.current) {
@@ -250,11 +249,10 @@ export default function TourCard({ id, title, duration, features, price, rating,
       return
     }
     if (openInNewTab) return // target="_blank" already opens the new tab
-    // Modifier clicks keep the browser's own new-tab behaviour; only a plain
-    // click is re-routed through the SPA so it doesn't reload the app.
+    // Modifier clicks keep the browser's own new-tab behaviour. A plain click
+    // is deliberately left to the anchor: its href is already the absolute
+    // destination, so intercepting it would only add a second navigation.
     if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button === 1) return
-    event.preventDefault()
-    navigate(url)
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
