@@ -2,12 +2,14 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, waitFor, cleanup } from '@testing-library/react'
 
 const mocks = vi.hoisted(() => ({
-  tokens: { accessToken: 'token-a', refreshToken: 'refresh-a' },
+  hasToken: true as boolean,
   fetchWithAuth: vi.fn(),
 }))
 
 vi.mock('./auth', () => ({
-  getStoredAuthTokens: () => mocks.tokens,
+  getStoredAuthTokens: () => mocks.hasToken
+    ? { accessToken: 'token-a', refreshToken: 'refresh-a' }
+    : { accessToken: null, refreshToken: null },
   getApiBaseUrl: () => 'https://api.example.test/api',
   fetchCurrentUser: vi.fn(),
   adoptSession: vi.fn(),
@@ -37,7 +39,7 @@ function Probe({ href }: { href: string }) {
 describe('ssoHandoff', () => {
   beforeEach(() => {
     resetHandoff()
-    mocks.tokens = { accessToken: 'token-a', refreshToken: 'refresh-a' }
+    mocks.hasToken = true
     mocks.fetchWithAuth.mockReset()
     mocks.fetchWithAuth.mockResolvedValue(ok('ticket-1'))
   })
@@ -99,7 +101,7 @@ describe('ssoHandoff', () => {
     })
 
     it('spends no request when the visitor is signed out', async () => {
-      mocks.tokens = { accessToken: null, refreshToken: null }
+      mocks.hasToken = false
 
       await expect(ensureHandoff(TOUR)).resolves.toBe(TOUR)
       expect(mocks.fetchWithAuth).not.toHaveBeenCalled()
@@ -141,7 +143,7 @@ describe('ssoHandoff', () => {
     })
 
     it('keeps the plain href when signed out', async () => {
-      mocks.tokens = { accessToken: null, refreshToken: null }
+      mocks.hasToken = false
 
       const { container } = render(<Probe href={TOUR} />)
       await waitFor(() => expect(mocks.fetchWithAuth).not.toHaveBeenCalled())

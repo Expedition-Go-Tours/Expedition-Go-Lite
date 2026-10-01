@@ -380,19 +380,16 @@ describe('scraped review supplier scope', () => {
   const entityTour = { title: capeCoastTitle, location: 'Accra, Ghana', supplierName: ENTITY }
 
   /**
-   * The operator's own Cape Coast tour carries both TA and GYG product
-   * entries, but the TA product's reviewCount is currently null (the scrape
-   * that wrote this file was blocked on TripAdvisor's header and the simple
-   * mergeProducts used by this repo does not carry forward the previous
-   * non-null value — TravioGhana-Store's enhanced version does). Only GYG's
-   * official total is therefore counted by aggregateProducts.
+   * Both TA and GYG official product totals are now non-null (the TA header
+   * was restored from TravioGhana-Store's clean copy, and the enhanced
+   * mergeProducts carries them forward when a blocked scrape returns null).
    */
   it("matches the scraped Cape Coast products for the operator's own tour", () => {
     const matched = selectMatchedProducts(scrapedProducts, entityTour)
     expect(matched.length).toBeGreaterThan(0)
     const total = matched.reduce((sum, p) => sum + (Number(p.reviewCount) || 0), 0)
-    // GYG Cape Coast official total; TA excluded by null reviewCount.
-    expect(total).toBe(211)
+    // TA Cape Coast (588) + GYG Cape Coast (211) official totals.
+    expect(total).toBe(799)
   })
 
   it("gives another operator's identically-titled tour nothing", () => {
@@ -423,14 +420,12 @@ describe('scraped headline numbers with the real dataset', () => {
   }
 
   /**
-   * With the TA product's reviewCount null (blocked scrape, simple merge),
-   * only the GYG official total feeds aggregateProducts — 211 + 4 in-app.
-   * The TA header is absent until the enhanced mergeProducts (ported from
-   * TravioGhana-Store) carries it forward on the next successful scrape.
+   * Both TA and GYG official totals feed aggregateProducts — TA 588 + GYG 211
+   * = 799 external, plus 4 in-app.
    */
-  it("counts the operator's own GYG official total (TA header currently absent)", () => {
+  it("keeps the operator's own 799 official reviews on its tour", () => {
     const stats = headline(ENTITY, { rating: 5, reviewCount: 4 })
-    expect(stats.externalCount).toBe(211)
+    expect(stats.externalCount).toBe(799)
     expect(stats.reviewCount).toBe(stats.externalCount + 4)
   })
 
