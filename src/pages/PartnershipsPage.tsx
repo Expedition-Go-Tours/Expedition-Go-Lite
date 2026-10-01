@@ -13,6 +13,8 @@ import { useEffect, useLayoutEffect, useRef, useState, Fragment, type CSSPropert
 import { Link } from 'react-router-dom'
 import Footer from '../components/Footer'
 import SEO, { buildBreadcrumbSchema, buildOrganizationSchema } from '../components/SEO'
+import BundledImage from '@/components/shared/BundledImage'
+import materialImg from '@/assets/partnerships/material.jpg'
 import '@/styles/partner-pages.css'
 import '@/styles/PartnershipsPage.css'
 
@@ -562,9 +564,12 @@ export default function PartnershipsPage() {
             </div>
             <div className="process-grid">
               <div className="process-image" data-reveal>
-                <img
-                  src="/partnerships/material.jpg"
+                <BundledImage
+                  src={materialImg}
                   alt="Two people smiling and greeting one another with a fist bump"
+                  width={1673}
+                  height={940}
+                  sizes="(max-width: 1000px) 86vw, 670px"
                   loading="lazy"
                   decoding="async"
                 />

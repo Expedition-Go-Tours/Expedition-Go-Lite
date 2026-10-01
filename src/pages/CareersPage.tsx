@@ -24,6 +24,10 @@ import {
   stagger,
   staggerItem,
 } from '../components/support/motion'
+import BundledImage from '../components/shared/BundledImage'
+import partners1 from '../assets/partners/partners1.avif'
+import partners3 from '../assets/partners/partners3.avif'
+import partners4 from '../assets/partners/partners4.avif'
 import './SupportPages.css'
 import './CareersPage.css'
 
@@ -95,37 +99,49 @@ const PROMISE_STEPS = [
 
 const GALLERY_IMAGES = [
   {
-    src: 'https://www.expeditiongotours.com/assets/partners1-aplmmi_U.avif',
+    src: partners1,
     alt: 'Expedition-Go colleague welcoming travellers',
     label: 'Operations',
+    width: 645,
+    height: 624,
   },
   {
-    src: 'https://www.expeditiongotours.com/assets/partners3-DhhKYnja.avif',
+    src: partners3,
     alt: 'Expedition-Go colleagues planning together',
     label: 'Technology',
+    width: 841,
+    height: 516,
   },
   {
-    src: 'https://www.expeditiongotours.com/assets/partners4-_-FBo1BJ.avif',
+    src: partners4,
     alt: 'Tourism professionals collaborating',
     label: 'Teamwork',
+    width: 785,
+    height: 624,
   },
 ]
 
 const GALLERY_IMAGES_2 = [
   {
-    src: 'https://www.expeditiongotours.com/assets/partners4-_-FBo1BJ.avif',
+    src: partners4,
     alt: 'Expedition-Go team supporting travel partners',
     label: 'Customer care',
+    width: 785,
+    height: 624,
   },
   {
-    src: 'https://www.expeditiongotours.com/assets/partners1-aplmmi_U.avif',
+    src: partners1,
     alt: 'Welcoming guests to Ghana',
     label: 'On the road',
+    width: 645,
+    height: 624,
   },
   {
-    src: 'https://www.expeditiongotours.com/assets/partners3-DhhKYnja.avif',
+    src: partners3,
     alt: 'Creating travel ideas together',
     label: 'Marketing',
+    width: 841,
+    height: 516,
   },
 ]
 
@@ -136,7 +152,7 @@ function GalleryLane({ images }: { images: typeof GALLERY_IMAGES }) {
         <div className="cr-set">
           {images.map((img) => (
             <figure key={img.label} className="cr-photo">
-              <img src={img.src} alt={img.alt} loading="lazy" />
+              <BundledImage src={img.src} alt={img.alt} width={img.width} height={img.height} sizes="(max-width: 768px) 300px, 280px" loading="lazy" />
               <span>{img.label}</span>
             </figure>
           ))}
@@ -144,7 +160,7 @@ function GalleryLane({ images }: { images: typeof GALLERY_IMAGES }) {
         <div className="cr-set" aria-hidden="true">
           {images.map((img) => (
             <figure key={`dup-${img.label}`} className="cr-photo">
-              <img src={img.src} alt="" loading="lazy" />
+              <BundledImage src={img.src} alt="" width={img.width} height={img.height} sizes="(max-width: 768px) 300px, 280px" loading="lazy" />
               <span>{img.label}</span>
             </figure>
           ))}

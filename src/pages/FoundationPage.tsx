@@ -32,6 +32,7 @@ import schoolgirl from '../assets/foundation/schoolgirl.avif'
 import treePlanting from '../assets/foundation/tree-planting.avif'
 import youngWomen from '../assets/foundation/young-women.avif'
 import cleanup4 from '../assets/foundation/cleanup-4.avif'
+import BundledImage from '@/components/shared/BundledImage'
 import '@/styles/FoundationPage.css'
 
 const CONTACT = '/contact-us'
@@ -243,8 +244,16 @@ const VOLUNTEER_POINTS = [
 /**
  * Local AVIF photos start transparent and fade in once decoded, so they never
  * flash half-drawn over the placeholder while the hero strips are moving.
+ *
+ * Renders through `BundledImage` rather than a bare `<img>` so these strips get
+ * a responsive `srcSet` too — the hero lanes were shipping full 640–1280px AVIF
+ * sources at 1x, and `src` is the only width the browser was ever offered.
  */
-function FadeImage({ onLoad, ...props }: ImgHTMLAttributes<HTMLImageElement>) {
+function FadeImage({
+  onLoad,
+  src,
+  ...props
+}: ImgHTMLAttributes<HTMLImageElement> & { src: string }) {
   const ref = useRef<HTMLImageElement>(null)
   const [loaded, setLoaded] = useState(false)
 
@@ -254,8 +263,9 @@ function FadeImage({ onLoad, ...props }: ImgHTMLAttributes<HTMLImageElement>) {
   }, [])
 
   return (
-    <img
+    <BundledImage
       {...props}
+      src={src}
       ref={ref}
       className={[loaded ? 'is-loaded' : '', props.className].filter(Boolean).join(' ') || undefined}
       onLoad={(event) => {
@@ -284,6 +294,7 @@ function GalleryLane({
             src={img.src}
             width={img.width}
             height={img.height}
+            sizes="(max-width: 768px) 40vw, 300px"
             alt={duplicate ? '' : img.alt}
             loading={eager && !duplicate ? 'eager' : 'lazy'}
             decoding="async"
@@ -314,6 +325,7 @@ function ImpactSet({ duplicate }: { duplicate: boolean }) {
             src={shot.src}
             width={shot.width}
             height={shot.height}
+            sizes="(max-width: 768px) 76vw, 380px"
             alt={duplicate ? '' : shot.alt}
             loading="lazy"
             decoding="async"
@@ -533,6 +545,7 @@ export default function FoundationPage() {
                     src={card.src}
                     width={card.width}
                     height={card.height}
+                    sizes="(max-width: 768px) 100vw, 500px"
                     alt={card.alt}
                     loading="lazy"
                     decoding="async"
@@ -577,6 +590,7 @@ export default function FoundationPage() {
                 src={cleanup4}
                 width={1280}
                 height={960}
+                sizes="(max-width: 768px) 100vw, 500px"
                 alt="Volunteers taking part in a clean-up in Accra"
                 loading="lazy"
                 decoding="async"

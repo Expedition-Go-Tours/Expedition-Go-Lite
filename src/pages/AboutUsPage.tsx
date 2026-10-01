@@ -27,6 +27,7 @@ import hero3 from '../assets/about/hero-3.webp'
 import hero4 from '../assets/about/hero-4.webp'
 import story1 from '../assets/about/story-1.webp'
 import story3 from '../assets/about/story-3.webp'
+import BundledImage from '../components/shared/BundledImage'
 
 /* ------------------------------------------------------------------ */
 /*  Data                                                               */
@@ -236,11 +237,12 @@ export default function AboutUsPage() {
                       >
                         {lane.map((img) => (
                           <figure key={`${set}-${img.label}`} className="about-gallery-photo">
-                            <img
+                            <BundledImage
                               src={img.src}
                               alt=""
                               width={img.width}
                               height={img.height}
+                              sizes="(max-width: 768px) 40vw, 300px"
                               loading={laneIndex === 0 && set === 0 ? 'eager' : 'lazy'}
                               fetchPriority={laneIndex === 0 && set === 0 ? 'high' : undefined}
                               decoding="async"
