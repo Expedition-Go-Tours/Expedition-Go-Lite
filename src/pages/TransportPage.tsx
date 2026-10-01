@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import heroBg from '../assets/images/IMG_3538.webp'
 import Navbar from '../components/Navbar'
+import BundledImage from '../components/shared/BundledImage'
 import Footer from '../components/Footer'
 import { useAuthUser } from '../hooks/useAuthUser'
 import { setAuthReturnTo } from '../lib/auth'
@@ -107,7 +108,15 @@ export default function TransportPage({ onOpenAuth }: TransportPageProps) {
       {/* Hero — full-width image background */}
       <section className="transport-hero">
         <div className="transport-hero-bg">
-          <img src={heroBg} alt="" aria-hidden="true" />
+          <BundledImage
+            src={heroBg}
+            alt=""
+            aria-hidden="true"
+            width={1920}
+            height={1280}
+            sizes="100vw"
+            fetchPriority="high"
+          />
         </div>
         <div className="transport-hero-overlay" />
         <motion.div

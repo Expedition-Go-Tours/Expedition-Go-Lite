@@ -19,6 +19,7 @@ import Footer from '../components/Footer'
 import SEO, { buildBreadcrumbSchema, buildOrganizationSchema } from '../components/SEO'
 import PartnersSection from '../components/PartnersSection'
 import DeferredMap from '../components/support/DeferredMap'
+import BundledImage from '../components/shared/BundledImage'
 import { OFFICE_DIRECTIONS_URL, OFFICE_MAP_EMBED, SUPPORT_EMAIL } from '../lib/support'
 import './AboutUsPage.css'
 
@@ -239,11 +240,12 @@ export default function AboutUsPage() {
                       >
                         {lane.map((img) => (
                           <figure key={`${set}-${img.label}`} className="about-gallery-photo">
-                            <img
+                            <BundledImage
                               src={img.src}
                               alt=""
                               width={img.width}
                               height={img.height}
+                              sizes="(max-width: 768px) 40vw, 300px"
                               loading={laneIndex === 0 && set === 0 ? 'eager' : 'lazy'}
                               fetchPriority={laneIndex === 0 && set === 0 ? 'high' : undefined}
                               decoding="async"
@@ -453,11 +455,12 @@ export default function AboutUsPage() {
                 variants={cardFade}
               >
                 <div className="about-platform-media">
-                  <img
+                  <BundledImage
                     src={travioGhanaBadge}
                     alt="TravioGhana logo"
                     width={640}
                     height={640}
+                    sizes="(max-width: 560px) 172px, 220px"
                     loading="lazy"
                     decoding="async"
                   />
@@ -483,11 +486,12 @@ export default function AboutUsPage() {
                 variants={cardFade}
               >
                 <div className="about-platform-media">
-                  <img
+                  <BundledImage
                     src={travioAfricaLockup}
                     alt="TravioAfrica logo, by Expedition-Go Tours"
                     width={860}
                     height={722}
+                    sizes="(max-width: 560px) 205px, 262px"
                     loading="lazy"
                     decoding="async"
                   />

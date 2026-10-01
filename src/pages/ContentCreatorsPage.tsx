@@ -12,6 +12,7 @@ import content4 from '../assets/content-creators/content4.avif'
 import content5 from '../assets/content-creators/content5.avif'
 import content6 from '../assets/content-creators/content6.avif'
 import content7 from '../assets/content-creators/content7.avif'
+import BundledImage from '../components/shared/BundledImage'
 import SEO from '../components/SEO'
 
 interface ContentCreatorsPageProps {
@@ -19,13 +20,13 @@ interface ContentCreatorsPageProps {
 }
 
 const CREATOR_IMAGES = [
-  { src: content1, label: 'Travel storyteller' },
-  { src: content2, label: 'Community' },
-  { src: content3, label: 'Food & lifestyle' },
-  { src: content4, label: 'Culture & lifestyle' },
-  { src: content5, label: 'Experiences' },
-  { src: content6, label: 'Original content' },
-  { src: content7, label: 'Explore Ghana' },
+  { src: content1, label: 'Travel storyteller', width: 600, height: 750 },
+  { src: content2, label: 'Community', width: 600, height: 400 },
+  { src: content3, label: 'Food & lifestyle', width: 600, height: 400 },
+  { src: content4, label: 'Culture & lifestyle', width: 600, height: 900 },
+  { src: content5, label: 'Experiences', width: 600, height: 900 },
+  { src: content6, label: 'Original content', width: 600, height: 900 },
+  { src: content7, label: 'Explore Ghana', width: 600, height: 1067 },
 ]
 
 const COMMUNITY_POINTS = [
@@ -105,7 +106,7 @@ export default function ContentCreatorsPage({ onOpenAuth }: ContentCreatorsPageP
           <div className="cc-track">
             {[...CREATOR_IMAGES, ...CREATOR_IMAGES].map((img, i) => (
               <figure key={i} className="cc-card">
-                <img src={img.src} alt={img.label} loading="lazy" />
+                <BundledImage src={img.src} alt={img.label} width={img.width} height={img.height} sizes="290px" loading="lazy" />
                 <figcaption>{img.label}</figcaption>
               </figure>
             ))}

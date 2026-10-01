@@ -355,7 +355,7 @@ export default function TravelAgentsPage() {
               <div className="dash-window">
                 <div className="dash-nav">
                   <span className="dash-brand">
-                    <img src={travioLogoSrc} alt="Expedition-Go Tours logo" />
+                    <img src={travioLogoSrc} alt="Expedition-Go Tours logo" width={300} height={200} />
                     <small>Agent desk</small>
                   </span>
                   <span className="dash-user" aria-label="Sample agent profile">AG</span>
@@ -388,7 +388,7 @@ export default function TravelAgentsPage() {
                       </div>
                       <div className="dash-title">Sample upcoming departures</div>
                       <Link className="dash-row dash-booking" to={tourPath(TOURS.accra)} target="_blank" rel="noopener">
-                        <img className="dash-thumb" src={TOURS.accra.img} alt={TOURS.accra.short} />
+                        <img className="dash-thumb" src={TOURS.accra.img} alt={TOURS.accra.short} width={1200} height={800} loading="lazy" decoding="async" />
                         <span>
                           <strong>{TOURS.accra.title}</strong>
                           <span>Sample booking · 2 guests</span>
@@ -396,7 +396,7 @@ export default function TravelAgentsPage() {
                         <span className="dash-amount">View ↗</span>
                       </Link>
                       <Link className="dash-row dash-booking" to={tourPath(TOURS.capeCoast)} target="_blank" rel="noopener">
-                        <img className="dash-thumb" src={TOURS.capeCoast.img} alt={TOURS.capeCoast.short} />
+                        <img className="dash-thumb" src={TOURS.capeCoast.img} alt={TOURS.capeCoast.short} width={1200} height={800} loading="lazy" decoding="async" />
                         <span>
                           <strong>{TOURS.capeCoast.title}</strong>
                           <span>Sample booking · 4 guests</span>
@@ -410,7 +410,7 @@ export default function TravelAgentsPage() {
                       <p className="dash-sub">Real experiences currently listed on the platform.</p>
                       {[TOURS.capeCoast, TOURS.waterfalls, TOURS.accra].map((t) => (
                         <Link className="dash-tour" to={tourPath(t)} target="_blank" rel="noopener" key={t.id}>
-                          <img className="tour-dot" src={t.img} alt="" />
+                          <img className="tour-dot" src={t.img} alt="" width={1200} height={800} loading="lazy" decoding="async" />
                           <span>
                             <strong>{t.title}</strong>
                             <small>{t.meta}</small>
