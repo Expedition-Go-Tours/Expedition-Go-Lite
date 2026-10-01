@@ -133,11 +133,12 @@ export default function TourDetailPage() {
   const { data: reviewsData } = useExpeditionTourReviews(tourId, 1, 10, tour?.id)
   // Platform reviews (TripAdvisor / GetYourGuide / Google) whose scraped tour
   // title maps to this product via matchTourForTitle — shown alongside the
-  // in-app reviews with the same card layouts. The 1.6 MB row dataset is only
-  // fetched once the reviews tab is actually opened.
+  // in-app reviews with the same card layouts. The rows load with the page, not
+  // only when the Reviews tab opens, because the Overview tab's "What travellers
+  // loved" carousel renders from them; the file is fetched once per session and
+  // cached (staleTime: Infinity), so the cost is one request.
   const { reviews: externalMatchedReviews } = useTourExternalReviews(
     tour ? { title: tour.title, location: tour.location, supplierName: tour.supplierName } : null,
-    activeTab === 'reviews',
   )
   // Official product totals (e.g. TripAdvisor "4.9 (595 reviews)") for the
   // matched scraped listings — used for the headline rating/count.
