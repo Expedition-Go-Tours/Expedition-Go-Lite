@@ -19,21 +19,21 @@ const STATIC_EXTS = [
   '.webp', '.ico', '.css', '.js', '.woff', '.woff2', '.ttf', '.eot',
 ]
 
-function isBot(ua) {
+function isBot(ua: string): boolean {
   if (!ua) return false
   const lower = ua.toLowerCase()
   return BOT_AGENTS.some((b) => lower.includes(b))
 }
 
-function shouldSkip(pathname) {
+function shouldSkip(pathname: string): boolean {
   return SKIP_PATHS.some((p) => pathname.startsWith(p))
 }
 
-function isStatic(pathname) {
+function isStatic(pathname: string): boolean {
   return STATIC_EXTS.some((ext) => pathname.endsWith(ext))
 }
 
-export default function middleware(request) {
+export default function middleware(request: Request): Response | undefined {
   const url = new URL(request.url)
   const pathname = url.pathname
   const ua = request.headers.get('user-agent') || ''
@@ -50,6 +50,37 @@ export default function middleware(request) {
 
   // Bot detection: rewrite to prerender endpoint
   if (request.method === 'GET' && isBot(ua) && !shouldSkip(pathname)) {
+    // Stories are client-side data the backend cannot read, so the prerenderer
+    // can only answer them with a hub that links to none of them (detail pages
+    // with 404/noindex). They are rendered to static HTML at build time
+    // (scripts/generate-story-pages.cjs) and served straight from the
+    // filesystem instead: /stories for the hub, /stories/<slug> for the page.
+    // Without this the six story URLs in the sitemap all answered 404 to
+    // crawlers while the files sat deployed and reachable by hand.
+    if (pathname === '/stories' || pathname === '/stories/') {
+      return new Response(null, {
+        status: 200,
+        headers: {
+          'x-middleware-rewrite': '/stories/index.html',
+          'X-Prerender-Bot': 'true',
+        },
+      })
+    }
+    const storySlug = pathname.match(/^\/stories\/([^/]+)\/?$/)?.[1]
+    // Already-suffixed paths (/stories/x.html) must fall through to the
+    // prerenderer, which answers them with a real 404 instead of x.html.html.
+    // The rewrite itself is not re-entered here, so the platform serves the
+    // static file directly.
+    if (storySlug && !storySlug.endsWith('.html')) {
+      return new Response(null, {
+        status: 200,
+        headers: {
+          'x-middleware-rewrite': `/stories/${encodeURIComponent(storySlug)}.html`,
+          'X-Prerender-Bot': 'true',
+        },
+      })
+    }
+
     const target = `${pathname}${url.search}`
     const prerenderUrl = `https://api.expeditiongotours.com/api/prerender?url=${encodeURIComponent(target)}`
     return new Response(null, {
