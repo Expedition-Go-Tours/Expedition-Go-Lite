@@ -24,6 +24,7 @@ const state = vi.hoisted(() => ({
 
 vi.mock('sonner', () => ({ toast: { success: state.success, error: state.error } }))
 vi.mock('react-router-dom', () => ({ useNavigate: () => vi.fn() }))
+vi.mock('../hooks/useTourViewCapture', () => ({ useTourViewCapture: () => vi.fn() }))
 vi.mock('../context/WishlistContext', () => ({
   useWishlist: () => ({
     isInWishlist: () => state.inWishlist,

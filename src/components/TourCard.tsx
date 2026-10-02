@@ -8,6 +8,7 @@ import i18n from '../i18n/config'
 import './TourCard.css'
 import { parsePrice, getTourSlug, type Tour } from './data'
 import { useWishlist, toWishlistItem } from '../context/WishlistContext'
+import { useTourViewCapture } from '../hooks/useTourViewCapture'
 import { useSellOutContext } from '../context/SellOutContext'
 import FormattedPrice from './FormattedPrice'
 import { getCategoryMeta } from './categoryMeta'
@@ -78,15 +79,20 @@ export default function TourCard({ id, title, duration, features, price, rating,
   const { t } = useTranslation()
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist()
   const { isLikelyToSellOut } = useSellOutContext()
+  // Records the click in Continue Planning before the cross-origin hand-off:
+  // the Travio Ghana detail page cannot write this origin's storage.
+  const rememberTour = useTourViewCapture()
   const showSellOutTag = likelyToSellOut || isLikelyToSellOut({ id, title })
   // Snapshot everything the card is showing — highlight line, badges, photos
-  // and promo state — so the wishlist card renders exactly like this one did.
-  const item = toWishlistItem({
+  // and promo state — so the wishlist card and the Continue Planning rail
+  // render exactly like this one did.
+  const snapshot = {
     id, title, duration, features, price, rating: String(rating), reviews, location,
     image, photos, discount, difficulty, cancellationPolicy, pickupIncluded,
     accommodationIncluded, meetingMode, category, languages, source, externalUrl,
     slug, supplierName, priceValue, specialOffers,
-  } as Tour & { slug?: string })
+  } as Tour & { slug?: string }
+  const item = toWishlistItem(snapshot)
   const inWishlist = isInWishlist(item.id)
   // Headline stats include the scraped TripAdvisor/GetYourGuide reviews matched
   // to this product, so the card agrees with the tour detail page. The stored
@@ -238,6 +244,10 @@ export default function TourCard({ id, title, duration, features, price, rating,
       swipeJustHappened.current = false
       return
     }
+    // Record the view in this tab before the hand-off. The detail page is on
+    // Travio Ghana — a different origin — so the visit would otherwise be
+    // invisible here, and closing the new tab immediately must not lose it.
+    rememberTour(snapshot)
     // Modifier/middle clicks keep their browser meaning: open a new tab.
     const wantsNewTab = openInNewTab
       || (event != null && (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button === 1))
@@ -258,11 +268,22 @@ export default function TourCard({ id, title, duration, features, price, rating,
       event.preventDefault()
       return
     }
+    // The title anchor leaves this origin too — record the view here as well,
+    // so a title click is captured exactly like a body click.
+    rememberTour(snapshot)
     if (openInNewTab) return // target="_blank" already opens the new tab
     // Modifier clicks keep the browser's own new-tab behaviour. A plain click
     // is deliberately left to the anchor: its href is already the absolute
     // destination, so intercepting it would only add a second navigation.
     if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button === 1) return
+  }
+
+  // Middle-clicking the title opens its href natively — the browser never
+  // fires `click`, and the card's own onAuxClick deliberately skips links — so
+  // without this the gesture would leave the origin with no captured view.
+  const handleTitleAuxClick = (event: React.MouseEvent) => {
+    if (event.button !== 1) return
+    rememberTour(snapshot)
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -444,6 +465,7 @@ export default function TourCard({ id, title, duration, features, price, rating,
             target={openInNewTab ? '_blank' : undefined}
             rel={openInNewTab ? 'noopener' : undefined}
             onClick={handleTitleClick}
+            onAuxClick={handleTitleAuxClick}
           >
             {title}
           </a>

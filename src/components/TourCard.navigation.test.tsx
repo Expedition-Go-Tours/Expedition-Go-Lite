@@ -2,6 +2,12 @@ import { describe, it, expect, vi, beforeEach, beforeAll, afterEach } from 'vite
 import { render, fireEvent, cleanup, waitFor } from '@testing-library/react'
 import type { ComponentProps } from 'react'
 
+const capture = vi.hoisted(() => ({ rememberTour: vi.fn() }))
+
+vi.mock('../hooks/useTourViewCapture', () => ({
+  useTourViewCapture: () => capture.rememberTour,
+}))
+
 vi.mock('../context/WishlistContext', () => ({
   useWishlist: () => ({
     isInWishlist: () => false,
@@ -78,6 +84,7 @@ describe('TourCard navigation', () => {
 
   beforeEach(() => {
     assign = vi.fn()
+    capture.rememberTour.mockClear()
     // jsdom refuses real navigation; nothing else in TourCard reads
     // window.location. Same pattern as Navbar's supplier hand-off test.
     Object.defineProperty(window, 'location', {
@@ -105,6 +112,44 @@ describe('TourCard navigation', () => {
       expect(window.open).toHaveBeenCalledWith(`${GHANA}/tour/accra-city-tour`, '_blank', 'noopener'),
     )
     expect(assign).not.toHaveBeenCalled()
+  })
+
+  it('records the tour in Continue Planning before the hand-off', async () => {
+    const { container } = renderCard({ id: 'cmuefjdhj008gr44h8flybaj7' })
+    fireEvent.click(container.querySelector('.tour-card')!)
+
+    expect(capture.rememberTour).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'cmuefjdhj008gr44h8flybaj7',
+        slug: 'accra-city-tour',
+        title: 'Accra City Tour',
+        price: '$120',
+      }),
+    )
+    await waitFor(() => expect(window.open).toHaveBeenCalled())
+  })
+
+  it('records the tour when the title link is clicked', () => {
+    const { container } = renderCard()
+    fireEvent.click(container.querySelector('.tour-card-title a')!)
+    expect(capture.rememberTour).toHaveBeenCalledTimes(1)
+  })
+
+  it('records the tour when the title link is middle-clicked', () => {
+    const { container } = renderCard()
+    const anchor = container.querySelector('.tour-card-title a')!
+    fireEvent(anchor, new MouseEvent('auxclick', { bubbles: true, cancelable: true, button: 1 }))
+
+    expect(capture.rememberTour).toHaveBeenCalledTimes(1)
+    // The card body's aux handler skips anchors, so the title's native
+    // anchor navigation is the only thing this gesture triggers.
+    expect(window.open).not.toHaveBeenCalled()
+  })
+
+  it('does not record a wishlist-heart click as a tour view', () => {
+    const { container } = renderCard()
+    fireEvent.click(container.querySelector('.tour-card-wishlist')!)
+    expect(capture.rememberTour).not.toHaveBeenCalled()
   })
 
   it('sends a same-tab surface straight to Travio Ghana in one step', async () => {

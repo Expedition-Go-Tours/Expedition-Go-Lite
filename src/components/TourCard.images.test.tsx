@@ -9,6 +9,7 @@ import type { ComponentProps } from 'react'
  */
 
 vi.mock('react-router-dom', () => ({ useNavigate: () => vi.fn() }))
+vi.mock('../hooks/useTourViewCapture', () => ({ useTourViewCapture: () => vi.fn() }))
 vi.mock('../context/WishlistContext', () => ({
   useWishlist: () => ({ isInWishlist: () => false, addToWishlist: vi.fn(), removeFromWishlist: vi.fn() }),
   toWishlistItem: () => ({ id: 'wishlist-test' }),

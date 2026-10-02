@@ -6,6 +6,7 @@ import { tourHref } from '../lib/tourPath'
 import { ensureHandoff } from '../lib/ssoHandoff'
 import './MultiDayCard.css'
 import { useWishlist, toWishlistItem } from '../context/WishlistContext'
+import { useTourViewCapture } from '../hooks/useTourViewCapture'
 import FormattedPrice from './FormattedPrice'
 import OptimizedImage from '@/components/shared/OptimizedImage'
 
@@ -14,7 +15,10 @@ type MultiDayCardProps = MultiDayTour
 export default function MultiDayCard({ id, title, days, accommodation, highlights, price, rating, reviews, location, image, source, externalUrl }: MultiDayCardProps) {
   const { t } = useTranslation()
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist()
-  const item = toWishlistItem({ id, title, days, accommodation, highlights, price, rating: String(rating), reviews, location, image, source, externalUrl } as unknown as MultiDayTour)
+  const snapshot = { id, title, days, accommodation, highlights, price, rating: String(rating), reviews, location, image, source, externalUrl } as unknown as MultiDayTour
+  const item = toWishlistItem(snapshot)
+  // Records the click in Continue Planning before the cross-origin hand-off.
+  const rememberTour = useTourViewCapture()
   const inWishlist = isInWishlist(item.id)
 
   const handleWishlist = (e: React.MouseEvent) => {
@@ -31,8 +35,10 @@ export default function MultiDayCard({ id, title, days, accommodation, highlight
   const tourSlug = getTourSlug(title)
 
   // New tab, like every other tour card — the browser list/scroll position
-  // on the current page is preserved.
+  // on the current page is preserved. The view is recorded first: the detail
+  // page is on Travio Ghana, so nothing here would see the visit otherwise.
   const handleCardClick = () => {
+    rememberTour(snapshot)
     void ensureHandoff(tourHref(null, tourSlug)).then((destination) => {
       window.open(destination, '_blank', 'noopener')
     })
