@@ -231,3 +231,42 @@ html:has(.ps-page) {
   top: 64px;
 }
 
+/* ------------------------------------------------------------
+   Jump-nav active highlight
+
+   Not part of the prototype: it shipped no `.jump a.active` rule
+   and no scroll-spy, so the nav was inert. Added deliberately.
+
+   A single pill is translated onto the active link rather than
+   transitioning each link's own background, so it slides across
+   the row instead of cross-fading. `position: relative` on .wrap
+   makes it the containing block, and because .wrap scrolls
+   horizontally on narrow screens the pill scrolls with the links.
+   ============================================================ */
+.ps-page .jump .wrap {
+  position: relative;
+}
+.ps-page .jump-pill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-radius: 999px;
+  background: var(--mint);
+  pointer-events: none;
+  opacity: 0;
+  transition: transform 0.34s cubic-bezier(0.4, 0, 0.2, 1),
+    width 0.34s cubic-bezier(0.4, 0, 0.2, 1),
+    height 0.34s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s linear;
+}
+.ps-page .jump-pill[data-visible='true'] {
+  opacity: 1;
+}
+.ps-page .jump a[aria-current='true'] {
+  color: var(--green);
+}
+@media (prefers-reduced-motion: reduce) {
+  .ps-page .jump-pill {
+    transition: opacity 0.2s linear;
+  }
+}
+

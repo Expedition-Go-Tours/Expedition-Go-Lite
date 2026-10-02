@@ -12,9 +12,10 @@
  *      Navbar and Footer (see `body:has(.ps-page)` in Navbar.css/Footer.css);
  *   2. its 9 base64 @font-face blocks — DM Sans and Manrope are already
  *      self-hosted in public/fonts, and the prototype used those same two;
- *   3. its active-section highlight on the jump nav — this prototype has no
- *      `.jump a.active` rule and no scroll-spy in its script, so the nav is
- *      ported exactly as authored rather than "improved" out of step with it;
+ *   3. its active-section highlight on the jump nav — the prototype has no
+ *      `.jump a.active` rule and no scroll-spy in its script, so nothing was
+ *      ported there. A sliding active indicator was later added deliberately
+ *      (see useActiveSection) rather than being recovered from the prototype;
  *   4. absolute <html> state — `.motion` rides on `.ps-page` so the reveal
  *      animation cannot leak onto other routes.
  *
@@ -135,6 +136,82 @@ const FAQ_ITEMS: { question: string; answer: string }[] = [
       'Enter sensitive payment details only in the official payment flow. Never send your full card number, security code, banking password or one-time authentication code to our team by chat or email.',
   },
 ]
+const JUMP_IDS = JUMP_LINKS.map((link) => link.href.slice(1))
+
+type Pill = { x: number; y: number; w: number; h: number; visible: boolean }
+
+/**
+ * Geometry for the sliding highlight under the jump nav.
+ *
+ * One absolutely-positioned element moves to whichever link is active rather
+ * than transitioning a background on each link, so the pill travels between
+ * items instead of blinking. Sizes come from the live layout, so it stays
+ * aligned when the font loads or the window resizes, and `scrollLeft` keeps it
+ * over the right link once the nav scrolls sideways on narrow screens.
+ *
+ * The last known geometry is kept while nothing is active, so the pill can be
+ * hidden and re-shown without sliding back in from the left edge.
+ */
+function useJumpPill(navRef: React.RefObject<HTMLElement | null>, active: string) {
+  const [pill, setPill] = useState<Pill>({ x: 0, y: 0, w: 0, h: 0, visible: false })
+
+  useEffect(() => {
+    const place = () => {
+      const nav = navRef.current
+      const wrap = nav?.querySelector<HTMLElement>('.wrap')
+      if (!nav || !wrap) return
+      const link = active ? nav.querySelector<HTMLElement>(`a[href="#${active}"]`) : null
+      if (!link) {
+        setPill((prev) => (prev.visible ? { ...prev, visible: false } : prev))
+        return
+      }
+      // Bleed the pill past the text so it reads as a chip; the nav's own
+      // padding absorbs the overhang.
+      const bleed = 6
+      const wrapRect = wrap.getBoundingClientRect()
+      const rect = link.getBoundingClientRect()
+      const next: Pill = {
+        x: rect.left - wrapRect.left + wrap.scrollLeft,
+        y: rect.top - wrapRect.top - bleed,
+        w: rect.width,
+        h: rect.height + bleed * 2,
+        visible: true,
+      }
+
+      // On narrow screens the nav scrolls sideways, so the active item — and
+      // the pill sitting on it — can be off-screen. Centre it, but only when
+      // it is genuinely out of view, so the row never drifts under a reader
+      // who is scrolling through the page. The pill needs no adjustment: it is
+      // positioned in content coordinates, so it travels with the scroll.
+      const offsetInView = rect.left - wrapRect.left
+      if (offsetInView < 0 || offsetInView + rect.width > wrap.clientWidth) {
+        const target = wrap.scrollLeft + offsetInView - (wrap.clientWidth - rect.width) / 2
+        const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+        wrap.scrollTo({
+          left: Math.max(0, Math.min(target, wrap.scrollWidth - wrap.clientWidth)),
+          behavior: reduce ? 'auto' : 'smooth',
+        })
+      }
+
+      setPill((prev) =>
+        prev.x === next.x &&
+        prev.y === next.y &&
+        prev.w === next.w &&
+        prev.h === next.h &&
+        prev.visible === next.visible
+          ? prev
+          : next,
+      )
+    }
+
+    place()
+    window.addEventListener('resize', place)
+    return () => window.removeEventListener('resize', place)
+  }, [navRef, active])
+
+  return pill
+}
+
 /**
  * The prototype's reveal script: `.reveal` elements fade/slide in once, but
  * only when motion is allowed — otherwise they must simply be visible.
@@ -163,6 +240,78 @@ function useRevealOnScroll(rootRef: React.RefObject<HTMLElement | null>) {
   }, [rootRef])
 }
 
+/**
+ * How far below the chrome a section's top may sit and still count as active.
+ *
+ * `scroll-margin-top` (120px) and the real chrome height (64px navbar + a 54px
+ * jump nav = 118px) live in different places and drift apart at breakpoints.
+ * Without this slack, clicking a jump link parks its heading a couple of pixels
+ * below the line and the highlight stays on the *previous* section. 32px is far
+ * too small to read as switching early.
+ */
+const ACTIVATION_SLACK = 32
+
+/**
+ * Which jump-nav section is currently in view.
+ *
+ * The active section is the last one whose top has passed the line just under
+ * the sticky chrome (fixed navbar + jump nav), so the highlight changes as the
+ * heading scrolls under the nav rather than when it first appears. Above the
+ * first section — the hero — nothing is active and the pill hides.
+ *
+ * Deliberately measured rather than watched with IntersectionObserver: "the
+ * last section above a line" is a direct computation, and scroll handlers can
+ * skip entries under fast scrolling, which would leave the highlight stranded
+ * on the wrong item.
+ */
+function useActiveSection(ids: string[], navRef: React.RefObject<HTMLElement | null>) {
+  const [active, setActive] = useState('')
+
+  useEffect(() => {
+    let frame = 0
+
+    const measure = () => {
+      frame = 0
+      const nav = navRef.current
+      if (!nav) return
+      const navbar = document.querySelector('.navbar')
+      const line =
+        (navbar?.getBoundingClientRect().bottom ?? 0) + nav.getBoundingClientRect().height + ACTIVATION_SLACK
+
+      // At the very bottom the final section may never reach the line — a short
+      // last section can't scroll up that far — so pin it explicitly.
+      const scrolled = window.scrollY + window.innerHeight
+      if (scrolled >= document.documentElement.scrollHeight - 2) {
+        setActive(ids[ids.length - 1])
+        return
+      }
+
+      let current = ''
+      for (const id of ids) {
+        const el = document.getElementById(id)
+        if (el && el.getBoundingClientRect().top <= line) current = id
+      }
+      setActive(current)
+    }
+
+    const schedule = () => {
+      if (frame) return
+      frame = requestAnimationFrame(measure)
+    }
+
+    measure()
+    window.addEventListener('scroll', schedule, { passive: true })
+    window.addEventListener('resize', schedule)
+    return () => {
+      if (frame) cancelAnimationFrame(frame)
+      window.removeEventListener('scroll', schedule)
+      window.removeEventListener('resize', schedule)
+    }
+  }, [ids, navRef])
+
+  return active
+}
+
 export default function PaymentsSecurityPage() {
   const pageRef = useRef<HTMLElement>(null)
 
@@ -177,6 +326,13 @@ export default function PaymentsSecurityPage() {
   )
 
   const [activeTab, setActiveTab] = useState<TabKey>('cards')
+
+  // Scroll-spy for the jump nav. The prototype had no active state at all, so
+  // this is a deliberate addition: the highlight slides between items as the
+  // reader moves through the page.
+  const jumpNavRef = useRef<HTMLElement>(null)
+  const activeSection = useActiveSection(JUMP_IDS, jumpNavRef)
+  const pill = useJumpPill(jumpNavRef, activeSection)
 
   useRevealOnScroll(pageRef)
 
@@ -334,10 +490,25 @@ export default function PaymentsSecurityPage() {
       </div>
     </div>
   </div>
-  <nav className="jump" aria-label="On this page">
+  <nav className="jump" aria-label="On this page" ref={jumpNavRef}>
     <div className="wrap">
+      <span
+        aria-hidden="true"
+        className="jump-pill"
+        data-visible={pill.visible ? 'true' : 'false'}
+        style={{
+          transform: `translateX(${pill.x}px)`,
+          top: pill.y,
+          width: pill.w,
+          height: pill.h,
+        }}
+      />
       {JUMP_LINKS.map((link) => (
-        <a key={link.href} href={link.href}>
+        <a
+          key={link.href}
+          href={link.href}
+          aria-current={activeSection === link.href.slice(1) ? 'true' : undefined}
+        >
           {link.label}
         </a>
       ))}
@@ -842,7 +1013,7 @@ export default function PaymentsSecurityPage() {
       </div>
     </div>
   </section>
-  <div className="wrap" style={{ paddingTop: '70px' }}>
+  <div className="wrap" style={{ padding: '70px 0' }}>
     <section className="cta">
       <p className="eyebrow">Built in Ghana. Here to help.</p>
       <h2>Explore with clarity.<br />Pay with confidence.</h2>

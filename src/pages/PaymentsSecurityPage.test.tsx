@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, within } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { HelmetProvider } from 'react-helmet-async'
 import PaymentsSecurityPage from './PaymentsSecurityPage'
@@ -23,6 +23,105 @@ function renderPage() {
 
 beforeEach(() => {
   vi.clearAllMocks()
+})
+
+const JUMP_IDS = [
+  'responsibility',
+  'security',
+  'ways-to-pay',
+  'pay-later',
+  'refunds',
+  'stay-safe',
+  'questions',
+]
+
+/**
+ * jsdom performs no layout, so every rect is zero and the scroll-spy would
+ * always fall through to the last section. Hand it the geometry it reads: a
+ * 64px navbar and a 54px jump nav, putting the activation line at 118px.
+ *
+ * `above` lists the sections the reader has scrolled past; they are placed
+ * above that line and the rest below it, exactly as the real page does.
+ */
+function stubScrollLayout(above: string[]) {
+  const rect = (o: Partial<DOMRect>) =>
+    ({ top: 0, left: 0, right: 0, bottom: 0, width: 0, height: 0, x: 0, y: 0, toJSON: () => ({}), ...o }) as DOMRect
+
+  const navbar = document.createElement('div')
+  navbar.className = 'navbar'
+  document.body.appendChild(navbar)
+  vi.spyOn(navbar, 'getBoundingClientRect').mockReturnValue(rect({ bottom: 64, height: 64 }))
+  vi.spyOn(navbar.querySelector('.navbar') ?? navbar, 'getBoundingClientRect')
+
+  const nav = document.querySelector('.jump') as HTMLElement
+  vi.spyOn(nav, 'getBoundingClientRect').mockReturnValue(rect({ top: 64, bottom: 118, height: 54 }))
+
+  for (const id of JUMP_IDS) {
+    const el = document.getElementById(id) as HTMLElement
+    const i = JUMP_IDS.indexOf(id)
+    // Above the line if it, and everything before it, has been scrolled past.
+    const isAbove = above.includes(id) && JUMP_IDS.slice(0, i).every((p) => above.includes(p))
+    const top = isAbove ? -40 * (i + 1) : 600 + i * 40
+    vi.spyOn(el, 'getBoundingClientRect').mockReturnValue(rect({ top, bottom: top + 500, height: 500, y: top }))
+  }
+
+  // Keep the page off its own bottom, where the final section is pinned instead.
+  const scrollHeight = vi.spyOn(document.documentElement, 'scrollHeight', 'get').mockReturnValue(9000)
+  const innerHeight = vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(900)
+
+  return () => {
+    scrollHeight.mockRestore()
+    innerHeight.mockRestore()
+    navbar.remove()
+  }
+}
+
+describe('jump nav scroll-spy', () => {
+  it('marks nothing while the hero is in view, and hides the pill', async () => {
+    const { container } = renderPage()
+    const restore = stubScrollLayout([])
+    try {
+      fireEvent.scroll(window)
+      // The pill follows in the commit after aria-current, so wait on both.
+      await waitFor(() => {
+        expect(container.querySelectorAll('.jump a[aria-current="true"]')).toHaveLength(0)
+        expect((container.querySelector('.jump-pill') as HTMLElement).dataset.visible).toBe('false')
+      })
+    } finally {
+      restore()
+    }
+  })
+
+  it('marks the last section scrolled past, and shows the pill', async () => {
+    const { container } = renderPage()
+    const restore = stubScrollLayout(['responsibility', 'security'])
+    try {
+      fireEvent.scroll(window)
+      await waitFor(() => {
+        const current = container.querySelectorAll('.jump a[aria-current="true"]')
+        expect(current).toHaveLength(1)
+        expect((current[0] as HTMLElement).getAttribute('href')).toBe('#security')
+      })
+      expect((container.querySelector('.jump-pill') as HTMLElement).dataset.visible).toBe('true')
+    } finally {
+      restore()
+    }
+  })
+
+  it('advances the highlight as later sections are reached', async () => {
+    const { container } = renderPage()
+    const restore = stubScrollLayout(['responsibility', 'security', 'ways-to-pay', 'pay-later', 'refunds'])
+    try {
+      fireEvent.scroll(window)
+      await waitFor(() => {
+        const current = container.querySelectorAll('.jump a[aria-current="true"]')
+        expect(current).toHaveLength(1)
+        expect((current[0] as HTMLElement).getAttribute('href')).toBe('#refunds')
+      })
+    } finally {
+      restore()
+    }
+  })
 })
 
 describe('PaymentsSecurityPage', () => {
@@ -50,10 +149,21 @@ describe('PaymentsSecurityPage', () => {
     })
   })
 
-  it('leaves the jump nav without an active state, as the prototype authored it', () => {
-    // The prototype ships no `.jump a.active` rule and no scroll-spy in its
-    // script. Porting an active highlight here would silently diverge from
-    // the reviewed page, so the nav must stay plain anchors.
+  it('keeps the closing CTA clear of the site footer', () => {
+    // The card used to meet the footer with 0px between them, because its
+    // wrapper only had space above it. Asserted on the wrapper's own padding
+    // since nothing in the stylesheet controls the gap.
+    const { container } = renderPage()
+    const wrap = (container.querySelector('.cta') as HTMLElement).parentElement as HTMLElement
+
+    expect(wrap.style.paddingBottom).toBe('70px')
+  })
+
+  it('keeps the jump nav class-free and marks the current section with aria-current', () => {
+    // The prototype ships no `.jump a.active` rule and no scroll-spy, so no
+    // class-based active state is inherited from it. The highlight added later
+    // is expressed with aria-current plus a positioned pill instead, which
+    // assistive tech can announce and which leaves the anchors' markup intact.
     const { container } = renderPage()
     const jump = container.querySelector('.jump') as HTMLElement
 
@@ -61,6 +171,19 @@ describe('PaymentsSecurityPage', () => {
     container.querySelectorAll('.jump a').forEach((a) => {
       expect(a.className).toBe('')
     })
+    const current = Array.from(jump.querySelectorAll('a')).filter(
+      (a) => a.getAttribute('aria-current') === 'true',
+    )
+    expect(current).toHaveLength(1)
+  })
+
+  it('renders a single decorative pill for the highlight to slide along', () => {
+    const { container } = renderPage()
+    const jump = container.querySelector('.jump') as HTMLElement
+
+    expect(jump.querySelectorAll('.jump-pill')).toHaveLength(1)
+    // It duplicates the aria-current signal, so it must not be announced.
+    expect((jump.querySelector('.jump-pill') as HTMLElement).getAttribute('aria-hidden')).toBe('true')
   })
 
   it('shows only the selected payment-method panel', () => {

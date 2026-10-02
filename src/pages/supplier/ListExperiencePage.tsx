@@ -1210,7 +1210,7 @@ export default function ListExperiencePage() {
       </section>
 
       {/* ── Closing CTA ────────────────────────────────────────────── */}
-      <div className="wrap">
+      <div className="wrap" style={{ paddingBottom: 96 }}>
         <section className="cta reveal">
           <div>
             <p className="eyebrow">Be part of what comes next</p>

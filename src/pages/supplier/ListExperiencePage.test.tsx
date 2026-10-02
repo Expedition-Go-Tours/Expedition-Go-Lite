@@ -43,6 +43,16 @@ beforeEach(() => {
 })
 
 describe('ListExperiencePage', () => {
+  it('keeps the closing CTA clear of the site footer', () => {
+    // The footer's full-bleed container used to overlap this card by 15px,
+    // because the wrapper had no space below it. Asserted on the wrapper's own
+    // padding since nothing in the stylesheet controls the gap.
+    const { container } = renderPage()
+    const wrap = (container.querySelector('.cta') as HTMLElement).parentElement as HTMLElement
+
+    expect(wrap.style.paddingBottom).toBe('96px')
+  })
+
   it('renders the Travio Ghana story with the trust layer and footer', () => {
     renderPage()
 
