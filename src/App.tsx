@@ -64,6 +64,7 @@ const HelpCentrePage = lazy(() => import('./pages/HelpCentrePage'))
 const ContactUsPage = lazy(() => import('./pages/ContactUsPage'))
 const RefundPolicyPage = lazy(() => import('./pages/RefundPolicyPage'))
 const FAQPage = lazy(() => import('./pages/FAQPage'))
+const PaymentsSecurityPage = lazy(() => import('./pages/PaymentsSecurityPage'))
 const AboutUsPage = lazy(() => import('./pages/AboutUsPage'))
 const CareersPage = lazy(() => import('./pages/CareersPage'))
 const PartnershipsPage = lazy(() => import('./pages/PartnershipsPage'))
@@ -354,6 +355,7 @@ function AppContent() {
           <Route path="/contact-us" element={<Suspense fallback={<SupportPageSkeleton />}><ContactUsPage /></Suspense>} />
           <Route path="/refund-policy" element={<RefundPolicyPage />} />
           <Route path="/faq" element={<Suspense fallback={<SupportPageSkeleton />}><FAQPage /></Suspense>} />
+          <Route path="/payments-and-security" element={<Suspense fallback={<SupportPageSkeleton />}><PaymentsSecurityPage /></Suspense>} />
           <Route path="/about-us" element={<AboutUsPage />} />
           <Route path="/careers" element={<CareersPage />} />
           <Route path="/partnerships" element={<PartnershipsPage />} />
