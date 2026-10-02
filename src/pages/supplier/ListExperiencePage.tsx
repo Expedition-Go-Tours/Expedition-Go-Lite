@@ -21,7 +21,6 @@
  * portal, exactly as before.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 
 import Footer from '@/components/Footer'
@@ -46,7 +45,22 @@ import imgWaterBoat from '@/assets/supplier/water-boat.avif'
 import '@/styles/partner-pages.css'
 import '@/styles/ListExperience.css'
 
-const REGISTER_PATH = '/supplier/register'
+/**
+ * Every supplier-facing destination on this page lives on TravioGhana, not
+ * here: the portal, the terms, the tours, the contact team, the Foundation and
+ * the Help Centre are all cross-domain links, and the application form now
+ * joins them.
+ *
+ * The "Become a supplier" CTAs are `<a href>` rather than `<button>` +
+ * `navigate()` on purpose. A button is invisible to a crawler — Google only
+ * follows `href`s — so as an outbound link to TravioGhana it carried no signal
+ * at all. As an anchor it is an ordinary link, and the browser's own
+ * middle-click, ⌘-click and "open in new tab" come back for free. The
+ * destination is the store's own register page, which runs the same form and
+ * the same approved-supplier → portal redirect this page's `useSupplierStatus`
+ * guard performs, so existing suppliers still land on their portal.
+ */
+const STORE_REGISTER = 'https://www.travioghana.com/supplier/register'
 const SUPPLIER_PORTAL = 'https://supplier.travioghana.com/'
 const SUPPLIER_TERMS = 'https://www.travioghana.com/supplier-terms'
 const COMPANY_SITE = 'https://www.expeditiongotours.com/'
@@ -472,7 +486,6 @@ function useSectionSpy(rootRef: React.RefObject<HTMLElement | null>) {
 }
 
 export default function ListExperiencePage() {
-  const navigate = useNavigate()
   const pageRef = useRef<HTMLElement>(null)
 
   // Resolved during the first render (before paint) so content is never
@@ -506,10 +519,6 @@ export default function ListExperiencePage() {
       cancelled = true
     }
   }, [profile])
-
-  const handleApplyCta = useCallback(() => {
-    navigate(REGISTER_PATH)
-  }, [navigate])
 
   const booking = useMemo(() => {
     const raw = bookingValue.trim()
@@ -591,12 +600,12 @@ export default function ListExperiencePage() {
               and grow through one connected supplier platform.
             </p>
             <div className="actions">
-              <button type="button" className="btn light" onClick={handleApplyCta}>
+              <a className="btn light" href={STORE_REGISTER}>
                 Become a supplier{' '}
                 <span>
                   <ExternalIcon />
                 </span>
-              </button>
+              </a>
               <a className="textlink" href="#story">
                 Why we created it ↓
               </a>
@@ -814,12 +823,12 @@ export default function ListExperiencePage() {
             depend on demand, listing quality and service delivery.
           </p>
           <div className="actions" style={{ marginTop: 28 }}>
-            <button type="button" className="btn" onClick={handleApplyCta}>
+            <a className="btn" href={STORE_REGISTER}>
               Become a supplier{' '}
               <span>
                 <ExternalIcon />
               </span>
-            </button>
+            </a>
             <a className="textlink" href={SUPPLIER_TERMS} target="_blank" rel="noopener noreferrer">
               Read supplier terms
             </a>
@@ -1222,9 +1231,9 @@ export default function ListExperiencePage() {
             <p>Free to list. Local support. More ways to connect with travellers.</p>
           </div>
           <div className="actions">
-            <button type="button" className="btn" onClick={handleApplyCta}>
+            <a className="btn" href={STORE_REGISTER}>
               Become a supplier <ExternalIcon />
-            </button>
+            </a>
             <a className="textlink" href="https://www.travioghana.com/">
               Explore Travio Ghana <ExternalIcon />
             </a>

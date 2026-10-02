@@ -12,9 +12,7 @@ function renderPage() {
       <MemoryRouter initialEntries={['/payments-and-security']}>
         <Routes>
           <Route path="/payments-and-security" element={<PaymentsSecurityPage />} />
-          <Route path="/tours" element={<div>TOURS_ROUTE</div>} />
           <Route path="/contact-us" element={<div>CONTACT_ROUTE</div>} />
-          <Route path="/refund-policy" element={<div>REFUND_ROUTE</div>} />
         </Routes>
       </MemoryRouter>
     </HelmetProvider>,
@@ -261,35 +259,54 @@ describe('PaymentsSecurityPage', () => {
     })
   })
 
-  it('resolves the prototype’s own pages in-app instead of off-site', () => {
+  it('keeps the support CTAs on this domain and sends the two store actions cross-domain', () => {
     renderPage()
 
-    // The prototype pointed at absolute www.travioghana.com URLs; this app
-    // serves those same pages, so they must not bounce the visitor elsewhere.
-    const internal = screen.getAllByRole('link').filter((a) => (a.getAttribute('href') ?? '').startsWith('/'))
-    const hrefs = internal.map((a) => a.getAttribute('href'))
-    expect(hrefs).toContain('/contact-us')
-    expect(hrefs).toContain('/refund-policy')
-    expect(hrefs).toContain('/tours')
+    // The prototype pointed everything at this app. Two of its actions belong
+    // to the store and now leave for it: the bookable inventory behind
+    // "Explore experiences", and the refund policy of the merchant of record
+    // (the store's Product schema declares hasMerchantReturnPolicy with
+    // merchantReturnDays: 1 — the exact 24h window this page promises).
+    // The three "talk to us" CTAs deliberately stay in-app.
+    const links = screen.getAllByRole('link')
+    const hrefs = links.map((a) => a.getAttribute('href') ?? '')
+
+    expect(hrefs).toContain('https://www.travioghana.com/tours')
+    expect(hrefs).toContain('https://www.travioghana.com/refund-policy')
+
+    const internal = links.filter((a) => (a.getAttribute('href') ?? '').startsWith('/'))
+    expect(internal.length).toBeGreaterThan(0)
+    expect(hrefs.filter((h) => h === '/contact-us')).toHaveLength(3)
     internal.forEach((a) => {
       expect(a.getAttribute('href')).not.toMatch(/travioghana\.com/)
     })
+
+    // Nothing may still point at this app's own tours index or refund policy.
+    expect(hrefs).not.toContain('/tours')
+    expect(hrefs).not.toContain('/refund-policy')
   })
 
-  it('sends the closing CTA to the tours index in-app', async () => {
+  it('points the closing CTA at the store’s tours index, not an in-app route', () => {
     const { container } = renderPage()
 
     const cta = container.querySelector('.cta') as HTMLElement
-    fireEvent.click(within(cta).getByRole('link', { name: /Explore experiences/i }))
-    expect(await screen.findByText('TOURS_ROUTE')).toBeInTheDocument()
+    const link = within(cta).getByRole('link', { name: /Explore experiences/i })
+    expect(link).toHaveAttribute('href', 'https://www.travioghana.com/tours')
   })
 
   it('opens Stripe documentation externally and safely', () => {
     renderPage()
 
+    // Scoped to Stripe on purpose. The store links are also absolute, but they
+    // are deliberate same-tab navigation — a visitor reading a trust page
+    // should be able to go to the store and come back — so they must not be
+    // folded into the new-tab rule that only Stripe citations need.
     const external = screen
       .getAllByRole('link')
-      .filter((a) => (a.getAttribute('href') ?? '').startsWith('http'))
+      .filter((a) => {
+        const href = a.getAttribute('href') ?? ''
+        return href.startsWith('https://docs.stripe.com') || href.startsWith('https://support.stripe.com') || href.startsWith('https://stripe.com/')
+      })
     expect(external.length).toBeGreaterThan(10)
 
     external.forEach((a) => {
@@ -298,6 +315,20 @@ describe('PaymentsSecurityPage', () => {
       expect(rel, `missing noopener on ${a.getAttribute('href')}`).toContain('noopener')
     })
     expect(external.some((a) => (a.getAttribute('href') ?? '').includes('docs.stripe.com'))).toBe(true)
+  })
+
+  it('leaves the cross-domain store links in the same tab', () => {
+    renderPage()
+
+    // Same-tab is the whole point: the visitor reads this page on Expedition,
+    // steps across to TravioGhana, and can hit Back. A new tab would strand
+    // them on an empty one.
+    screen
+      .getAllByRole('link')
+      .filter((a) => (a.getAttribute('href') ?? '').includes('travioghana.com'))
+      .forEach((a) => {
+        expect(a).not.toHaveAttribute('target')
+      })
   })
 
   it('publishes the title, description and FAQ structured data', () => {

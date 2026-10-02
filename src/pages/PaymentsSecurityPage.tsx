@@ -59,6 +59,25 @@ import stripe from '@/assets/payments/stripe.svg'
 import visa from '@/assets/payments/visa.svg'
 import visaLogo from '@/assets/payments/visa-logo.svg'
 
+/**
+ * Two of this page's actions belong to the store rather than to this site, so
+ * they leave for TravioGhana instead of routing internally.
+ *
+ * "Explore experiences" is where the bookable inventory lives, and "Read our
+ * refund policy" has to point at the policy of the merchant of record: the
+ * store's Product schema declares `hasMerchantReturnPolicy` with
+ * `merchantReturnDays: 1`, and that 24-hour window is exactly what this page
+ * describes. Sending the visitor to this site's own refund policy would state
+ * the promise and then link somewhere other than the terms it is promised
+ * under.
+ *
+ * The three "speak to the team" CTAs stay on this domain deliberately —
+ * keeping a visitor who only wants help on the brand they are reading is worth
+ * more than a cross-domain hop to an equivalent support page.
+ */
+const STORE_TOURS = 'https://www.travioghana.com/tours'
+const STORE_REFUND_POLICY = 'https://www.travioghana.com/refund-policy'
+
 /** The prototype's four payment-method families, in the order it showed them. */
 const TABS = [
   { key: 'cards', label: 'Cards' },
@@ -910,8 +929,8 @@ export default function PaymentsSecurityPage() {
         </div>
         <div className="actions">
           <Link className="btn" to="/contact-us">Contact booking support</Link>
-          <Link className="source-link" to="/refund-policy">Read our refund policy <svg viewBox="0 0 24 24" aria-hidden="true" className="icon">
-            <path d="M14 5h5v5M10 14 19 5M19 13v5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5" /></svg></Link>
+          <a className="source-link" href={STORE_REFUND_POLICY}>Read our refund policy <svg viewBox="0 0 24 24" aria-hidden="true" className="icon">
+            <path d="M14 5h5v5M10 14 19 5M19 13v5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5" /></svg></a>
         </div>
       </div>
       <div className="refund-box">
@@ -1019,8 +1038,8 @@ export default function PaymentsSecurityPage() {
       <h2>Explore with clarity.<br />Pay with confidence.</h2>
       <p>Discover local experiences, review the terms and choose the payment option that works for you.</p>
       <div className="actions">
-        <Link className="btn light" to="/tours">Explore experiences <svg viewBox="0 0 24 24" aria-hidden="true" className="icon">
-          <path d="M14 5h5v5M10 14 19 5M19 13v5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5" /></svg></Link>
+        <a className="btn light" href={STORE_TOURS}>Explore experiences <svg viewBox="0 0 24 24" aria-hidden="true" className="icon">
+          <path d="M14 5h5v5M10 14 19 5M19 13v5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5" /></svg></a>
         <Link className="btn outline" to="/contact-us">Speak with our team</Link>
       </div>
     </section>

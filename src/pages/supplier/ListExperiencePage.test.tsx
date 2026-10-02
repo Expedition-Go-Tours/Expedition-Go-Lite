@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, within } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { HelmetProvider } from 'react-helmet-async'
@@ -29,7 +29,6 @@ function renderPage() {
         <MemoryRouter initialEntries={['/supplier/list-experience']}>
           <Routes>
             <Route path="/supplier/list-experience" element={<ListExperiencePage />} />
-            <Route path="/supplier/register" element={<div>REGISTER_ROUTE</div>} />
           </Routes>
         </MemoryRouter>
       </QueryClientProvider>
@@ -90,20 +89,25 @@ describe('ListExperiencePage', () => {
     })
   })
 
-  it('routes the hero CTA to the registration page', async () => {
-    const { container } = renderPage()
+  it('sends every "Become a supplier" CTA to Travio Ghana’s register page', () => {
+    // These are anchors, not buttons, on purpose. Google only follows `href`s,
+    // so a `<button>` + `navigate()` produced no outbound signal to the store
+    // at all. Assert the real destination on all three, in page order.
+    renderPage()
 
-    const hero = container.querySelector('.hero') as HTMLElement
-    fireEvent.click(within(hero).getByRole('button', { name: /Become a supplier/i }))
-    expect(await screen.findByText('REGISTER_ROUTE')).toBeInTheDocument()
+    const links = screen.getAllByRole('link', { name: /Become a supplier/i })
+    expect(links).toHaveLength(3)
+    links.forEach((link) => {
+      expect(link).toHaveAttribute('href', 'https://www.travioghana.com/supplier/register')
+    })
   })
 
-  it('routes the closing CTA to the registration page', async () => {
+  it('no longer offers an in-app registration route from this page', () => {
+    // The destination moved cross-domain, so nothing here should route within
+    // the app any more — a leftover internal link would be a silent dead end.
     const { container } = renderPage()
 
-    const cta = container.querySelector('.cta') as HTMLElement
-    fireEvent.click(within(cta).getByRole('button', { name: /Become a supplier/i }))
-    expect(await screen.findByText('REGISTER_ROUTE')).toBeInTheDocument()
+    expect(container.querySelector('a[href="/supplier/register"]')).toBeNull()
   })
 
   it('numbers the supplier FAQ and lists all twelve questions', () => {
