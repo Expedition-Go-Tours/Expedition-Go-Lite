@@ -49,6 +49,8 @@ export interface HomepageTour {
   category: string | null
   city: string | null
   country: string | null
+  /** Admin region — present on every section since they share mapTourCard. */
+  region?: string | null
   averageRating: number | null
   reviewCount: number
   totalBookings: number
@@ -479,6 +481,7 @@ export function mapToTourCard(t: HomepageTour): TourCardData {
     rating: t.averageRating != null ? String(t.averageRating) : '',
     reviews: t.reviewCount || 0,
     location,
+    region: t.region ?? null,
     image: t.coverPhoto || t.photos?.[0] || '',
     photos: t.photos,
     source: 'expedition-go',

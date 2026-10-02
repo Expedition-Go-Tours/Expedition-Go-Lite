@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import type { SearchSuggestion } from '../hooks/useSearchAutocomplete'
 import { tourHref } from '../lib/tourPath'
 import { ensureHandoff } from '../lib/ssoHandoff'
+import { stampRegionOnCurrentUrl } from '../lib/tourRegionHandoff'
+import { useOptionalLocationSearch } from '../context/LocationSearchContext'
 import './SearchContextChip.css'
 
 interface SearchContextChipProps {
@@ -12,6 +14,7 @@ interface SearchContextChipProps {
 
 export default function SearchContextChip({ suggestion, onDismiss }: SearchContextChipProps) {
   const navigate = useNavigate()
+  const locationSearch = useOptionalLocationSearch()
 
   const handleClick = () => {
     if (!suggestion) return
@@ -22,6 +25,13 @@ export default function SearchContextChip({ suggestion, onDismiss }: SearchConte
     } else if (suggestion.kind === 'region') {
       navigate(`/tours?place=${encodeURIComponent(suggestion.name)}`)
     } else if (suggestion.kind === 'tour' && suggestion.slug) {
+      // Same as every other search surface: scope the homepage to the tour's
+      // region. Both channels are needed because this leaves the origin and
+      // consent-gated storage is in-memory for anyone who declined cookies.
+      if (suggestion.region) {
+        locationSearch?.setLocation(suggestion.region)
+        stampRegionOnCurrentUrl(suggestion.region)
+      }
       void ensureHandoff(tourHref(suggestion.tourId, suggestion.slug)).then((destination) =>
         window.location.assign(destination),
       )

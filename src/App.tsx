@@ -30,6 +30,7 @@ import CookieBanner from './components/consent/CookieBanner'
 import CookiePreferences from './components/consent/CookiePreferences'
 import GoogleOneTapPrompt from './components/GoogleOneTapPrompt'
 import { subscribeToAuthState, handleGoogleCallback, getAuthReturnTo, clearAuthReturnTo } from './lib/auth'
+import { consumeRegionFromUrl } from './lib/tourRegionHandoff'
 import { AuthProvider } from './context/AuthContext'
 import { startSessionWatchdog, stopSessionWatchdog } from './auth/sessionManager'
 import { trackPageView } from './lib/analytics'
@@ -189,7 +190,15 @@ function AppContent() {
 
   useEffect(() => {
     const unsub = subscribeToAuthState(() => {})
-    return () => { unsub.then((fn) => fn()) }   
+    return () => { unsub.then((fn) => fn()) }
+  }, [])
+
+  // Returning from a tour click on Travio Ghana: the tour's region rides home
+  // in this page's URL fragment. LocationSearchProvider has already applied it
+  // (its initial state reads the fragment, so the first paint is scoped); this
+  // only strips the one-shot parameter back off the URL.
+  useEffect(() => {
+    consumeRegionFromUrl()
   }, [])
 
   // Mount the session watchdog — runs for the lifetime of the app.

@@ -9,6 +9,15 @@ export interface Tour {
   rating: string
   reviews: number
   location: string
+  /**
+   * Admin region the tour sits in (API `region`, e.g. "Central Region").
+   * Distinct from `location`, a display string of city + country — Tour.city is
+   * often a district or village, so neither field derives the other.
+   *
+   * Clicking a tour records it so the homepage scopes itself to the region the
+   * visitor came from, the same way a search-suggestion click already does.
+   */
+  region?: string | null
   image: string
   /** Additional tour photos — drives the image carousel on the tour card. */
   photos?: string[]

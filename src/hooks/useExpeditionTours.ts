@@ -184,6 +184,8 @@ export interface TourCardData {
   rating: string
   reviews: number
   location: string
+  /** Admin region (API `region`) — scopes the homepage after a tour click. */
+  region?: string | null
   image: string
   /** All tour photos (the card's image carousel). */
   photos?: string[]
@@ -2098,6 +2100,8 @@ export interface TourBadgeFields {
   pickupIncluded?: boolean
   meetingMode?: 'meeting_point' | 'pickup' | 'none'
   accommodationIncluded?: boolean
+  /** Admin region, backfilled alongside the badges (see extractBadgeFieldMaps). */
+  region?: string | null
 }
 
 interface BadgeFieldMaps {
@@ -2106,6 +2110,7 @@ interface BadgeFieldMaps {
   pickup: Map<string, boolean | undefined>
   meetingMode: Map<string, 'meeting_point' | 'pickup' | 'none'>
   accommodation: Map<string, boolean>
+  region: Map<string, string>
 }
 
 let badgeMapsCache: { promise: Promise<BadgeFieldMaps>; expiresAt: number } | null = null
@@ -2147,6 +2152,7 @@ function extractBadgeFieldMaps(allTours: any[]): BadgeFieldMaps {
     pickup: new Map(),
     meetingMode: new Map(),
     accommodation: new Map(),
+    region: new Map(),
   }
   for (const t of allTours) {
     const bt = parseJsonMaybe(t.bookingAndTickets)
@@ -2161,6 +2167,12 @@ function extractBadgeFieldMaps(allTours: any[]): BadgeFieldMaps {
     const meetingMode = t.meetingMode ?? extractMeetingInfo(t).meetingMode
     if (meetingMode) maps.meetingMode.set(t.id, meetingMode)
     if (t.accommodationIncluded === true || extractAccommodationIncluded(t)) maps.accommodation.set(t.id, true)
+    // Region scopes the homepage after a tour click. Homepage cards normally
+    // carry it now, but this backfill also covers rows served from the
+    // homepage Redis cache written before the field existed, and any section
+    // whose mapper doesn't project it.
+    const region = typeof t.region === 'string' ? t.region.trim() : ''
+    if (region) maps.region.set(t.id, region)
   }
   return maps
 }
@@ -2187,8 +2199,9 @@ export async function enrichTourBadgeFields<T extends { id: string } & TourBadge
     const pickup = maps.pickup.get(tour.id)
     const meetingMode = maps.meetingMode.get(tour.id)
     const accommodation = maps.accommodation.get(tour.id)
+    const region = maps.region.get(tour.id)
     if (
-      !languages?.length && !cancellation && pickup == null && !meetingMode && !accommodation
+      !languages?.length && !cancellation && pickup == null && !meetingMode && !accommodation && !region
     ) {
       return tour
     }
@@ -2198,6 +2211,8 @@ export async function enrichTourBadgeFields<T extends { id: string } & TourBadge
     if (tour.pickupIncluded == null && pickup != null) enriched.pickupIncluded = pickup
     if (tour.meetingMode == null && meetingMode) enriched.meetingMode = meetingMode
     if (tour.accommodationIncluded == null && accommodation) enriched.accommodationIncluded = accommodation
+    // Never clobber a region the card already carries.
+    if (!tour.region && region) enriched.region = region
     return enriched as T
   })
 }

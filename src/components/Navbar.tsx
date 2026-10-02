@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { tourHref } from '../lib/tourPath'
 import { ensureHandoff } from '../lib/ssoHandoff'
+import { stampRegionOnCurrentUrl } from '../lib/tourRegionHandoff'
 import { AnimatePresence, motion, type Variants } from 'framer-motion'
 import { toast } from 'sonner'
 import { Globe, Megaphone, LayoutDashboard, ChevronRight, LogIn, LogOut, DollarSign, Bell, Settings } from 'lucide-react'
@@ -235,6 +236,10 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
     } else if (suggestion.kind === 'tour' && suggestion.slug) {
       addSearch({ id: suggestion.tourId, slug: suggestion.slug, title: suggestion.name, type: 'tour', image: suggestion.image, city: suggestion.city, region: suggestion.region })
       if (suggestion.region) setLocation(suggestion.region)
+      // This leaves the origin, so the region also rides in the URL fragment —
+      // consent-gated storage is in-memory only for visitors who declined the
+      // banner, and that doesn't survive the trip to Travio Ghana.
+      if (suggestion.region) stampRegionOnCurrentUrl(suggestion.region)
       void ensureHandoff(tourHref(suggestion.tourId, suggestion.slug)).then((destination) =>
         window.location.assign(destination),
       )
@@ -257,6 +262,8 @@ export default function Navbar({ onOpenAuth }: NavbarProps) {
       // same). Navigating to '/' threw the user out of the listing they were on.
       navigate(`/tours?place=${encodeURIComponent(item.title)}`)
     } else if (item.type === 'tour' && item.slug) {
+      // Cross-origin: carry the region in the fragment too (see above).
+      if (region) stampRegionOnCurrentUrl(region)
       void ensureHandoff(tourHref(item.id, item.slug)).then((destination) =>
         window.location.assign(destination),
       )

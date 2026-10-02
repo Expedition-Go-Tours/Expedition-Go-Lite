@@ -3,6 +3,7 @@ import { AnimatePresence, MotionConfig, motion, type Variants } from 'framer-mot
 import { useNavigate } from 'react-router-dom'
 import { tourHref } from '../lib/tourPath'
 import { ensureHandoff } from '../lib/ssoHandoff'
+import { stampRegionOnCurrentUrl } from '../lib/tourRegionHandoff'
 import { useTranslation } from 'react-i18next'
 import { useSearchAutocomplete, type SearchSuggestion } from '../hooks/useSearchAutocomplete'
 import { useRecentSearches, type RecentSearch } from '../hooks/useRecentSearches'
@@ -64,6 +65,9 @@ export default function SearchBar() {
     if (suggestion.kind === 'tour' && suggestion.slug) {
       addSearch({ id: suggestion.tourId, slug: suggestion.slug, title: suggestion.name, type: 'tour', image: suggestion.image, city: suggestion.city, region: suggestion.region })
       if (suggestion.region) setLocation(suggestion.region)
+      // Leaving the origin — also carry the region in the URL fragment, since
+      // consent-gated storage is in-memory only without functional consent.
+      if (suggestion.region) stampRegionOnCurrentUrl(suggestion.region)
       void ensureHandoff(tourHref(suggestion.tourId, suggestion.slug)).then((destination) =>
         window.location.assign(destination),
       )
@@ -119,6 +123,8 @@ export default function SearchBar() {
       setIsPersonalizing(true)
       navigate(`/tours?place=${encodeURIComponent(item.title)}`)
     } else if (item.type === 'tour' && item.slug) {
+      // Cross-origin: carry the region in the fragment too (see above).
+      if (region) stampRegionOnCurrentUrl(region)
       void ensureHandoff(tourHref(item.id, item.slug)).then((destination) =>
         window.location.assign(destination),
       )

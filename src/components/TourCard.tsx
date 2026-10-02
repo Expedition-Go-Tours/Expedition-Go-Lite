@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { tourHref } from '../lib/tourPath'
 import { ensureHandoff, useHandoffHref } from '../lib/ssoHandoff'
+import { stampRegionOnCurrentUrl } from '../lib/tourRegionHandoff'
+import { useOptionalLocationSearch } from '../context/LocationSearchContext'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
 import { Car, Languages as LanguagesIcon, ShieldCheck, Ban, TrendingUp, BedDouble, Compass } from 'lucide-react'
@@ -75,7 +77,7 @@ interface TourCardProps extends Tour {
   openInNewTab?: boolean
 }
 
-export default function TourCard({ id, title, duration, features, price, rating, reviews, location, image, photos, discount, difficulty, cancellationPolicy, pickupIncluded, accommodationIncluded, meetingMode, category, languages, source, externalUrl, slug, supplierName, isNew, hideSourceBadge, hideFeatures, imageClean, priceValue, specialOffers, likelyToSellOut, hideOfferBadge, compactDurationOnMobile, bodyOfferBadgesOnMobile, priority, sizes, openInNewTab = true }: TourCardProps) {
+export default function TourCard({ id, title, duration, features, price, rating, reviews, location, region, image, photos, discount, difficulty, cancellationPolicy, pickupIncluded, accommodationIncluded, meetingMode, category, languages, source, externalUrl, slug, supplierName, isNew, hideSourceBadge, hideFeatures, imageClean, priceValue, specialOffers, likelyToSellOut, hideOfferBadge, compactDurationOnMobile, bodyOfferBadgesOnMobile, priority, sizes, openInNewTab = true }: TourCardProps) {
   const { t } = useTranslation()
   const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist()
   const { isLikelyToSellOut } = useSellOutContext()
@@ -228,7 +230,32 @@ export default function TourCard({ id, title, duration, features, price, rating,
   // middle-click carry the session too and not just the plain click path.
   const href = useHandoffHref(url)
 
+  // Scope the homepage to the region the visitor just left for, matching what
+  // a search-suggestion click already does (Navbar sets the same value).
+  // Optional because the card renders outside the provider in some trees.
+  const locationSearch = useOptionalLocationSearch()
+
+  /**
+   * Must run before the page unloads, so click handlers call it synchronously
+   * rather than inside the async handoff `.then()`.
+   *
+   * `stampUrl` is only for same-tab navigation: opening a new tab leaves this
+   * page — and its in-memory storage — alive, so there is nothing to carry
+   * across. A same-tab trip to Travio Ghana destroys it.
+   */
+  const rememberRegion = (stampUrl: boolean) => {
+    if (typeof region !== 'string') return
+    const trimmed = region.trim()
+    if (!trimmed) return
+    // Consent-gated storage: persists when the visitor accepted functional
+    // cookies, and is an in-memory no-op otherwise.
+    locationSearch?.setLocation(trimmed)
+    // The URL fragment covers the no-consent case without touching storage.
+    if (stampUrl) stampRegionOnCurrentUrl(trimmed)
+  }
+
   const openTour = (newTab: boolean) => {
+    rememberRegion(!newTab)
     // Minting is usually already warm (the hook above), so this is normally
     // synchronous in practice. It never rejects: a click must not fail because
     // authentication was slow.
@@ -276,6 +303,9 @@ export default function TourCard({ id, title, duration, features, price, rating,
     // is deliberately left to the anchor: its href is already the absolute
     // destination, so intercepting it would only add a second navigation.
     if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button === 1) return
+    // Plain click: the anchor navigates on its own, so record the region here —
+    // this path never reaches openTour().
+    rememberRegion(true)
   }
 
   // Middle-clicking the title opens its href natively — the browser never
