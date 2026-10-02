@@ -1,6 +1,18 @@
-import { describe, it, expect } from 'vitest'
-import { toWishlistItem, mergeWishlistItem, type WishlistItem } from './WishlistContext'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { render, act } from '@testing-library/react'
+import { useEffect } from 'react'
+import {
+  toWishlistItem,
+  mergeWishlistItem,
+  WishlistProvider,
+  useWishlist,
+  WISHLIST_STORAGE_KEY,
+  type WishlistItem,
+} from './WishlistContext'
 import type { SpecialOfferData } from '../hooks/useExpeditionTours'
+import { resetPendingWrites } from '../lib/consentGatedStorage'
+import { GRANTED_STATE, clearConsent, writeConsent } from '../lib/cookieConsent'
+import { FakeBroadcastChannel } from '../test/fakeBroadcastChannel'
 
 /**
  * The wishlist item is the snapshot the wishlist page renders from, so it must
@@ -172,5 +184,149 @@ describe('mergeWishlistItem', () => {
 
     expect(mergeWishlistItem({ ...server, photos: [] }, local).photos).toEqual(['https://example.com/a.jpg'])
     expect(mergeWishlistItem(server)).toEqual(server)
+  })
+})
+
+/**
+ * Cross-tab sync regression tests.
+ *
+ * A heart tapped on a tour opened in a new tab (or the wishlist page opened in
+ * one) must show on the tab the visitor returns to. Adoption is state-only:
+ * the tab that made the change already pushed/queued the backend op, so
+ * receiving tabs must never fire a second request.
+ */
+
+let wishlistApi: ReturnType<typeof useWishlist> | null = null
+
+function CaptureWishlist() {
+  const value = useWishlist()
+  useEffect(() => {
+    wishlistApi = value
+  }, [value])
+  return null
+}
+
+function setupWishlist() {
+  render(
+    <WishlistProvider>
+      <CaptureWishlist />
+    </WishlistProvider>,
+  )
+}
+
+const storedWishlistItem = (over: Partial<WishlistItem> = {}): WishlistItem => ({
+  id: 'tour-x',
+  tourId: 'tour-x',
+  slug: 'x-tour',
+  title: 'Alpha Tour',
+  location: 'Accra, Ghana',
+  price: 100,
+  duration: '1 Day',
+  imageUrl: '',
+  rating: 4.7,
+  reviewCount: 12,
+  addedDate: new Date(0).toISOString(),
+  ...over,
+})
+
+describe('WishlistProvider — cross-tab sync', () => {
+  beforeEach(() => {
+    clearConsent()
+    window.localStorage.clear()
+    window.sessionStorage.clear()
+    resetPendingWrites()
+    FakeBroadcastChannel.reset()
+    vi.stubGlobal('BroadcastChannel', FakeBroadcastChannel)
+    wishlistApi = null
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  const storedItem = storedWishlistItem()
+
+  it('adopts a list another tab persisted (storage event)', () => {
+    writeConsent(GRANTED_STATE, 'accept-all')
+    setupWishlist()
+
+    const payload = JSON.stringify([storedItem])
+    window.localStorage.setItem(WISHLIST_STORAGE_KEY, payload)
+    act(() => {
+      window.dispatchEvent(new StorageEvent('storage', { key: WISHLIST_STORAGE_KEY, newValue: payload }))
+    })
+
+    expect(wishlistApi!.wishlist.map((i) => i.id)).toEqual(['tour-x'])
+  })
+
+  it('adopts a channel message without consent and without a backend call', () => {
+    const fetchSpy = vi.fn()
+    vi.stubGlobal('fetch', fetchSpy)
+    setupWishlist()
+
+    act(() => {
+      FakeBroadcastChannel.last()!.emit(JSON.stringify([storedItem]))
+    })
+
+    expect(wishlistApi!.wishlist.map((i) => i.id)).toEqual(['tour-x'])
+    // Nothing persisted (no functional consent) and no duplicate sync op.
+    expect(window.localStorage.getItem(WISHLIST_STORAGE_KEY)).toBeNull()
+    expect(fetchSpy).not.toHaveBeenCalled()
+  })
+
+  it('re-reads storage when the tab regains focus (missed event)', () => {
+    writeConsent(GRANTED_STATE, 'accept-all')
+    setupWishlist()
+    expect(wishlistApi!.wishlist).toHaveLength(0)
+
+    window.localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify([storedItem]))
+    act(() => {
+      window.dispatchEvent(new Event('focus'))
+    })
+
+    expect(wishlistApi!.wishlist.map((i) => i.id)).toEqual(['tour-x'])
+  })
+
+  it('does not echo an adopted list back into storage', () => {
+    writeConsent(GRANTED_STATE, 'accept-all')
+    setupWishlist()
+
+    const payload = JSON.stringify([storedItem])
+    window.localStorage.setItem(WISHLIST_STORAGE_KEY, payload)
+    const setItem = vi.spyOn(Storage.prototype, 'setItem')
+
+    act(() => {
+      window.dispatchEvent(new StorageEvent('storage', { key: WISHLIST_STORAGE_KEY, newValue: payload }))
+    })
+
+    expect(wishlistApi!.wishlist).toHaveLength(1)
+    expect(setItem).not.toHaveBeenCalled()
+  })
+
+  it('never broadcasts the mount-time list and announces local additions', () => {
+    setupWishlist()
+    expect(FakeBroadcastChannel.last()!.posted).toEqual([])
+
+    act(() => {
+      wishlistApi!.addToWishlist(storedWishlistItem({ id: 'tour-a', tourId: 'tour-a', slug: 'a-tour' }))
+    })
+
+    const posted = FakeBroadcastChannel.last()!.posted
+    expect(posted).toHaveLength(1)
+    expect(posted[0]).toContain('tour-a')
+  })
+
+  it('ignores malformed payloads instead of wiping the list', () => {
+    writeConsent(GRANTED_STATE, 'accept-all')
+    window.localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify([storedItem]))
+    setupWishlist()
+    expect(wishlistApi!.wishlist).toHaveLength(1)
+
+    act(() => {
+      window.dispatchEvent(new StorageEvent('storage', { key: WISHLIST_STORAGE_KEY, newValue: 'not json' }))
+    })
+
+    expect(wishlistApi!.wishlist).toHaveLength(1)
   })
 })

@@ -5,6 +5,7 @@ import { getStoredAuthUser, getAuthUserId, subscribeToAuthState } from '../lib/a
 import { fetchWithAuth } from '../lib/api'
 import { mapRawTourToListing, type SpecialOfferData } from '../hooks/useExpeditionTours'
 import { readGated, writeGated } from '../lib/consentGatedStorage'
+import { subscribeCrossTabSync, parseSerializedList, type CrossTabSyncHandle } from '../lib/crossTabSync'
 
 export interface WishlistItem {
   id: string
@@ -132,8 +133,11 @@ export function toWishlistItem(tour: WishlistSource): WishlistItem {
   }
 }
 
-const STORAGE_KEY = 'expedition_go_wishlist'
+export const WISHLIST_STORAGE_KEY = 'expedition_go_wishlist'
+const STORAGE_KEY = WISHLIST_STORAGE_KEY
 const PENDING_KEY = 'expedition_go_wishlist_pending'
+/** BroadcastChannel name: same-session sync, including before consent. */
+const SYNC_CHANNEL = 'expedition-go-wishlist'
 
 function loadLocalWishlist(): WishlistItem[] {
   try {
@@ -315,10 +319,54 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
   const isLoggedInRef = useRef(!!getAuthUserId(getStoredAuthUser()))
   const userIdRef = useRef<string | null>(getAuthUserId(getStoredAuthUser()))
   const mergedForUserRef = useRef<string | null>(null)
+  const syncRef = useRef<CrossTabSyncHandle | null>(null)
+  // Serialized value most recently announced to (or loaded from) other tabs.
+  // Stays null until the first commit so the mount-time list is never
+  // broadcast — a freshly opened tab must not overwrite what the others have.
+  const lastBroadcastRef = useRef<string | null>(null)
+
+  const adoptStored = useCallback((raw: string | null) => {
+    const parsed = parseSerializedList<WishlistItem>(raw)
+    if (!parsed) return // malformed / not a list — ignore rather than wipe
+    setWishlist(prev => (JSON.stringify(prev) === JSON.stringify(parsed) ? prev : parsed))
+  }, [])
+
+  // Cross-tab sync: a heart tapped on a tour opened in a new tab must show on
+  // the page the visitor returns to. The tab that changed the list already
+  // pushed (or queued) the backend op, so adoption is state-only — never a
+  // second backend call. The channel keeps pre-consent sessions in sync (no
+  // storage yet); storage events cover persisted writes; focus/visibility
+  // re-reads are the backstop for events missed while a tab was suspended.
+  useEffect(() => {
+    const sync = subscribeCrossTabSync({
+      storageKey: STORAGE_KEY,
+      channelName: SYNC_CHANNEL,
+      read: () => readGated(STORAGE_KEY),
+      onRemote: adoptStored,
+    })
+    syncRef.current = sync
+    return () => {
+      sync.unsubscribe()
+      syncRef.current = null
+    }
+  }, [adoptStored])
 
   useEffect(() => {
     wishlistRef.current = wishlist
-    saveLocalWishlist(wishlist)
+    const serialized = JSON.stringify(wishlist)
+    // Skip the write when storage already holds this list: adopting another
+    // tab's update would otherwise echo back, and the tabs would fire storage
+    // events at each other in a loop.
+    if (readGated(STORAGE_KEY) !== serialized) saveLocalWishlist(wishlist)
+
+    if (lastBroadcastRef.current === null) {
+      lastBroadcastRef.current = serialized
+      return
+    }
+    if (lastBroadcastRef.current !== serialized) {
+      lastBroadcastRef.current = serialized
+      syncRef.current?.post(serialized)
+    }
   }, [wishlist])
 
   /**

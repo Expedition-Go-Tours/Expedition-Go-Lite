@@ -1,13 +1,16 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { render, act } from '@testing-library/react'
 import { useEffect } from 'react'
 import {
   ContinuePlanningProvider,
+  CONTINUE_PLANNING_STORAGE_KEY,
   useContinuePlanning,
   toContinuePlanningItem,
   type ContinuePlanningItem,
 } from './ContinuePlanningContext'
 import { resetPendingWrites } from '../lib/consentGatedStorage'
+import { GRANTED_STATE, clearConsent, writeConsent } from '../lib/cookieConsent'
+import { FakeBroadcastChannel } from '../test/fakeBroadcastChannel'
 
 /**
  * Continue Planning identity regression tests.
@@ -143,5 +146,131 @@ describe('ContinuePlanningProvider — de-duplication', () => {
 
     expect(api!.continuePlanning).toHaveLength(2)
     expect(api!.continuePlanning.map((i) => i.tourId)).toEqual(['tour-a', 'tour-b'])
+  })
+})
+
+describe('ContinuePlanningProvider — cross-tab sync', () => {
+  beforeEach(() => {
+    clearConsent()
+    window.localStorage.clear()
+    window.sessionStorage.clear()
+    resetPendingWrites()
+    FakeBroadcastChannel.reset()
+    vi.stubGlobal('BroadcastChannel', FakeBroadcastChannel)
+    api = null
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  const storedItem = base({ id: 'tour-x', tourId: 'tour-x', slug: 'x-tour' })
+
+  it('adopts a list another tab persisted (storage event)', () => {
+    writeConsent(GRANTED_STATE, 'accept-all')
+    setup()
+
+    const payload = JSON.stringify([storedItem])
+    window.localStorage.setItem(CONTINUE_PLANNING_STORAGE_KEY, payload)
+    act(() => {
+      window.dispatchEvent(
+        new StorageEvent('storage', { key: CONTINUE_PLANNING_STORAGE_KEY, newValue: payload }),
+      )
+    })
+
+    expect(api!.continuePlanning.map((i) => i.id)).toEqual(['tour-x'])
+  })
+
+  it('empties the list when another tab clears the key', () => {
+    writeConsent(GRANTED_STATE, 'accept-all')
+    window.localStorage.setItem(CONTINUE_PLANNING_STORAGE_KEY, JSON.stringify([storedItem]))
+    setup()
+    expect(api!.continuePlanning).toHaveLength(1)
+
+    window.localStorage.removeItem(CONTINUE_PLANNING_STORAGE_KEY)
+    act(() => {
+      window.dispatchEvent(
+        new StorageEvent('storage', { key: CONTINUE_PLANNING_STORAGE_KEY, newValue: null }),
+      )
+    })
+
+    expect(api!.continuePlanning).toHaveLength(0)
+  })
+
+  it('re-reads storage when the tab regains focus (missed event)', () => {
+    writeConsent(GRANTED_STATE, 'accept-all')
+    setup()
+    expect(api!.continuePlanning).toHaveLength(0)
+
+    window.localStorage.setItem(CONTINUE_PLANNING_STORAGE_KEY, JSON.stringify([storedItem]))
+    act(() => {
+      window.dispatchEvent(new Event('focus'))
+    })
+
+    expect(api!.continuePlanning.map((i) => i.id)).toEqual(['tour-x'])
+  })
+
+  it('adopts a channel message without functional consent (nothing persisted)', () => {
+    setup()
+    expect(api!.continuePlanning).toHaveLength(0)
+
+    act(() => {
+      FakeBroadcastChannel.last()!.emit(JSON.stringify([storedItem]))
+    })
+
+    expect(api!.continuePlanning.map((i) => i.id)).toEqual(['tour-x'])
+    expect(window.localStorage.getItem(CONTINUE_PLANNING_STORAGE_KEY)).toBeNull()
+  })
+
+  it('does not echo an adopted list back into storage', () => {
+    writeConsent(GRANTED_STATE, 'accept-all')
+    setup()
+
+    const payload = JSON.stringify([storedItem])
+    window.localStorage.setItem(CONTINUE_PLANNING_STORAGE_KEY, payload)
+    const setItem = vi.spyOn(Storage.prototype, 'setItem')
+
+    act(() => {
+      window.dispatchEvent(
+        new StorageEvent('storage', { key: CONTINUE_PLANNING_STORAGE_KEY, newValue: payload }),
+      )
+    })
+
+    expect(api!.continuePlanning).toHaveLength(1)
+    expect(setItem).not.toHaveBeenCalled()
+  })
+
+  it('never broadcasts the mount-time list and announces local additions', () => {
+    writeConsent(GRANTED_STATE, 'accept-all')
+    window.localStorage.setItem(CONTINUE_PLANNING_STORAGE_KEY, JSON.stringify([storedItem]))
+    setup()
+
+    // Loading from storage is not a change the visitor made — a freshly
+    // opened tab must not overwrite what the other tabs already have.
+    expect(FakeBroadcastChannel.last()!.posted).toEqual([])
+
+    act(() => {
+      api!.addToContinuePlanning(base({ id: 'tour-a', tourId: 'tour-a', slug: 'a-tour' }))
+    })
+
+    const posted = FakeBroadcastChannel.last()!.posted
+    expect(posted).toHaveLength(1)
+    expect(posted[0]).toContain('tour-a')
+  })
+
+  it('ignores malformed storage payloads instead of wiping the list', () => {
+    writeConsent(GRANTED_STATE, 'accept-all')
+    window.localStorage.setItem(CONTINUE_PLANNING_STORAGE_KEY, JSON.stringify([storedItem]))
+    setup()
+    expect(api!.continuePlanning).toHaveLength(1)
+
+    act(() => {
+      window.dispatchEvent(
+        new StorageEvent('storage', { key: CONTINUE_PLANNING_STORAGE_KEY, newValue: 'not json' }),
+      )
+    })
+
+    expect(api!.continuePlanning).toHaveLength(1)
   })
 })

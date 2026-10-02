@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback, useRef, ty
 import type { Tour, MultiDayTour } from '../components/data'
 import type { SpecialOfferData } from '../hooks/useExpeditionTours'
 import { readGated, writeGated, removeGated } from '../lib/consentGatedStorage'
+import { subscribeCrossTabSync, parseSerializedList, type CrossTabSyncHandle } from '../lib/crossTabSync'
 
 export interface ContinuePlanningItem {
   id: string
@@ -96,7 +97,10 @@ export function toContinuePlanningItem(tour: Tour | (MultiDayTour & { days?: str
   }
 }
 
-const STORAGE_KEY = 'expedition_go_continue_planning'
+export const CONTINUE_PLANNING_STORAGE_KEY = 'expedition_go_continue_planning'
+const STORAGE_KEY = CONTINUE_PLANNING_STORAGE_KEY
+/** BroadcastChannel name: same-session sync, including before consent. */
+const SYNC_CHANNEL = 'expedition-go-continue-planning'
 const MAX_ITEMS = 12
 
 /**
@@ -122,10 +126,53 @@ function loadStorage(): ContinuePlanningItem[] {
 export function ContinuePlanningProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<ContinuePlanningItem[]>(loadStorage)
   const itemsRef = useRef(items)
+  const syncRef = useRef<CrossTabSyncHandle | null>(null)
+  // Serialized value most recently announced to (or loaded from) other tabs.
+  // Stays null until the first commit so the mount-time list is never
+  // broadcast — a freshly opened tab must not overwrite what the others have.
+  const lastBroadcastRef = useRef<string | null>(null)
+
+  const adoptStored = useCallback((raw: string | null) => {
+    const parsed = parseSerializedList<ContinuePlanningItem>(raw)
+    if (!parsed) return // malformed / not a list — ignore rather than wipe
+    setItems(prev => (JSON.stringify(prev) === JSON.stringify(parsed) ? prev : parsed))
+  }, [])
+
+  // Cross-tab sync: tour cards open the detail page in a new tab, so the tab
+  // that records the view is usually not the one the visitor returns to. The
+  // channel keeps pre-consent sessions in sync (no storage yet), storage
+  // events cover persisted writes, and focus/visibility re-reads are the
+  // backstop for anything missed while the tab was suspended.
+  useEffect(() => {
+    const sync = subscribeCrossTabSync({
+      storageKey: STORAGE_KEY,
+      channelName: SYNC_CHANNEL,
+      read: () => readGated(STORAGE_KEY),
+      onRemote: adoptStored,
+    })
+    syncRef.current = sync
+    return () => {
+      sync.unsubscribe()
+      syncRef.current = null
+    }
+  }, [adoptStored])
 
   useEffect(() => {
     itemsRef.current = items
-    writeGated(STORAGE_KEY, JSON.stringify(items))
+    const serialized = JSON.stringify(items)
+    // Skip the write when storage already holds this list: adopting another
+    // tab's update would otherwise echo back, and the tabs would fire storage
+    // events at each other in a loop.
+    if (readGated(STORAGE_KEY) !== serialized) writeGated(STORAGE_KEY, serialized)
+
+    if (lastBroadcastRef.current === null) {
+      lastBroadcastRef.current = serialized
+      return
+    }
+    if (lastBroadcastRef.current !== serialized) {
+      lastBroadcastRef.current = serialized
+      syncRef.current?.post(serialized)
+    }
   }, [items])
 
   const addToContinuePlanning = useCallback((item: ContinuePlanningItem) => {
