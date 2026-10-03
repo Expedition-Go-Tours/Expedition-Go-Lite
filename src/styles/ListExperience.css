@@ -590,3 +590,95 @@ html{scroll-padding-top:85px}
   top: 64px;
 }
 
+/* ------------------------------------------------------------
+   Local origin strip (🇬🇭 "Travio Ghana. Built here. Understood
+   here.") — mobile layout.
+
+   The strip is `display:flex` with `flex-wrap: wrap` from 700px down,
+   but `.local-origin > div` carried `min-width: 0` (set unconditionally
+   above, and again in two mobile blocks). `min-width: 0` lets flexbox
+   shrink the text column to nothing rather than wrapping the next item,
+   so wrap never happened: measured on the live site, the column was
+   19px wide at 320px and 49px at 390px against a paragraph needing 88px.
+   The paragraph then wrapped into ~30 lines, taking the strip to 587px
+   tall, and the text overflowed its box (clipped by `.le-page`'s
+   `overflow-x: clip`).
+
+   Two changes, both scoped to the widths that wrap:
+
+   1. Give the link its own full-width line. `flex-basis: 100%` means the
+      flag and the text keep the whole first row, so the column resolves
+      to the full width available instead of the 19px remainder. The
+      former `margin-left` becomes padding, because a `width: 100%` box
+      plus a left margin would run 46px past the container and be clipped
+      — `border-box` (global, src/index.css) keeps the indent inside.
+
+   2. Make the link a usable touch target. It rendered 175x17px with
+      11px text at every breakpoint; it is now a full-width row at a
+      44px minimum with 13px text, which is what a phone link needs to
+      be tappable.
+
+   The indent mirrors the old margins (46 / 41 / 0) so the link stays
+   aligned under the paragraph, past the flag.
+   ============================================================ */
+@media (max-width: 1080px) {
+  /* Touch devices reach this strip too: the link rendered 17px tall with
+     11px text. Widening the hit area does not disturb the row — the text
+     column beside it is already ~73px tall, and `align-items: center` on
+     the strip keeps it centred. `justify-content` preserves the base rule's
+     `text-align: right` now that the link is a flex container. */
+  .le-page .local-origin a {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    justify-content: flex-end;
+    font-size: 13px;
+    line-height: 1.4;
+  }
+}
+@media (max-width: 700px) {
+  .le-page .local-origin {
+    align-items: center;
+  }
+  .le-page .local-origin > div {
+    /* Keep `flex-basis: 0` (what `flex: 1` already gave it): a content-sized
+       basis makes the paragraph's max-content width fail to fit beside the
+       flag and push it onto its own line. The crush was caused by
+       `min-width: 0` alone, so that is the only half that changes — with the
+       automatic minimum restored the column stops at its longest word
+       instead of collapsing to 19px, and the link drops to its own line. */
+    flex: 1 1 0;
+    min-width: auto;
+  }
+  .le-page .local-origin a {
+    flex: 0 0 100%;
+    width: 100%;
+    margin-left: 0;
+    padding: 13px 0 13px 46px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 7px;
+    font-size: 13px;
+    line-height: 1.4;
+    text-align: left;
+    white-space: normal;
+  }
+  .le-page .local-origin p {
+    font-size: 13px;
+    line-height: 1.6;
+  }
+}
+@media (max-width: 560px) {
+  .le-page .local-origin a {
+    padding-left: 42px;
+  }
+}
+@media (max-width: 350px) {
+  .le-page .local-origin a {
+    padding-left: 0;
+  }
+}
+
