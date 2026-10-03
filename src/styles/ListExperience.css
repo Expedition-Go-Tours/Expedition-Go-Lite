@@ -604,7 +604,8 @@ html{scroll-padding-top:85px}
    tall, and the text overflowed its box (clipped by `.le-page`'s
    `overflow-x: clip`).
 
-   Two changes, both scoped to the widths that wrap:
+   Three changes: the first two at the widths that wrap, the third at every
+   touch width:
 
    1. Give the link its own full-width line. `flex-basis: 100%` means the
       flag and the text keep the whole first row, so the column resolves
@@ -618,10 +619,29 @@ html{scroll-padding-top:85px}
       44px minimum with 13px text, which is what a phone link needs to
       be tappable.
 
+   3. Put the flag on the line it introduces. The base rule centred it
+      against the whole text block, which includes the paragraph, so on a
+      phone it dropped 39-49px below the first line.
+
    The indent mirrors the old margins (46 / 41 / 0) so the link stays
    aligned under the paragraph, past the flag.
    ============================================================ */
 @media (max-width: 1080px) {
+  /* The flag belongs to the line it introduces. The base rule centres it
+     against the whole text block, and that block includes the paragraph — so
+     on a phone, where the prose runs to five lines, the 26px flag settled
+     39-49px below the first line and sat beside the prose instead of beside
+     the heading that follows it (measured: flag top 400 vs first line top
+     351 at 320px; +11px at 768px). `align-self` rather than a container-wide
+     `flex-start`, because the container's centring is what keeps the link
+     optically centred in its own row. `line-height: 1` tightens the box from
+     the inherited 1.65 to the glyph itself, otherwise a start-aligned box
+     still leaves the emoji floating inside a 43px line box. */
+  .le-page .ghana-flag {
+    align-self: flex-start;
+    line-height: 1;
+    margin-top: 3px;
+  }
   /* Touch devices reach this strip too: the link rendered 17px tall with
      11px text. Widening the hit area does not disturb the row — the text
      column beside it is already ~73px tall, and `align-items: center` on
@@ -638,9 +658,6 @@ html{scroll-padding-top:85px}
   }
 }
 @media (max-width: 700px) {
-  .le-page .local-origin {
-    align-items: center;
-  }
   .le-page .local-origin > div {
     /* Keep `flex-basis: 0` (what `flex: 1` already gave it): a content-sized
        basis makes the paragraph's max-content width fail to fit beside the
