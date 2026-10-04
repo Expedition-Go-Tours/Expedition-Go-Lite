@@ -19,6 +19,11 @@ const STATIC_EXTS = [
   '.webp', '.ico', '.css', '.js', '.woff', '.woff2', '.ttf', '.eot',
 ]
 
+// Generated from the same React components and data visitors see.
+const PUBLIC_HTML_PAGES = new Set([
+  '/careers', '/contact-us', '/cookies-policy', '/privacy-policy', '/supplier-terms', '/reviews',
+])
+
 function isBot(ua: string): boolean {
   if (!ua) return false
   const lower = ua.toLowerCase()
@@ -50,6 +55,16 @@ export default function middleware(request: Request): Response | undefined {
 
   // Bot detection: rewrite to prerender endpoint
   if (request.method === 'GET' && isBot(ua) && !shouldSkip(pathname)) {
+    const publicPath = pathname.replace(/\/$/, '')
+    if (PUBLIC_HTML_PAGES.has(publicPath)) {
+      return new Response(null, {
+        status: 200,
+        headers: {
+          'x-middleware-rewrite': `/__seo${publicPath}.html`,
+          'X-Prerender-Bot': 'true',
+        },
+      })
+    }
     // Stories are client-side data the backend cannot read, so the prerenderer
     // can only answer them with a hub that links to none of them (detail pages
     // with 404/noindex). They are rendered to static HTML at build time
