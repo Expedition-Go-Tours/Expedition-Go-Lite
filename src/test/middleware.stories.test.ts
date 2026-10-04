@@ -30,7 +30,8 @@ describe('middleware — story pages reach the static files, not the prerenderer
       '/refund-policy', '/terms-and-conditions', '/content-creators', '/partnerships']) {
       const target = rewriteTo(middleware(req(path, inspectionTool)))
       expect(target).toBe(rewriteTo(middleware(req(path, CRAWLER))))
-      expect(target).toContain('/api/prerender')
+      if (path === '/privacy-policy') expect(target).toBe('/__seo/privacy-policy.html')
+      else expect(target).toContain('/api/prerender')
     }
     expect(rewriteTo(middleware(req('/stories', inspectionTool)))).toBe('/stories/index.html')
     expect(rewriteTo(middleware(req('/booking', inspectionTool)))).toBe(
