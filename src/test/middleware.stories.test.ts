@@ -24,6 +24,20 @@ const req = (path: string, userAgent: string) =>
 const rewriteTo = (res: Response | undefined | void) => res?.headers.get('x-middleware-rewrite') ?? null
 
 describe('middleware — story pages reach the static files, not the prerenderer', () => {
+  it('gives Search Console the same prerendered public pages as Googlebot', () => {
+    const inspectionTool = 'Mozilla/5.0 (compatible; Google-InspectionTool/1.0;)'
+    for (const path of ['/privacy-policy', '/travel-agents', '/transport-providers',
+      '/refund-policy', '/terms-and-conditions', '/content-creators', '/partnerships']) {
+      const target = rewriteTo(middleware(req(path, inspectionTool)))
+      expect(target).toBe(rewriteTo(middleware(req(path, CRAWLER))))
+      expect(target).toContain('/api/prerender')
+    }
+    expect(rewriteTo(middleware(req('/stories', inspectionTool)))).toBe('/stories/index.html')
+    expect(rewriteTo(middleware(req('/booking', inspectionTool)))).toBe(
+      'https://www.expeditiongotours.com/index.html',
+    )
+  })
+
   it('sends a crawler to the generated story page', () => {
     expect(rewriteTo(middleware(req('/stories/a-food-lovers-guide-to-accra', CRAWLER)))).toBe(
       '/stories/a-food-lovers-guide-to-accra.html',

@@ -109,7 +109,6 @@ export default function CookiesPolicyPage() {
         title="Cookies Policy - Expedition-Go Tours Ghana"
         description="Learn how Expedition-Go Tours uses cookies on our booking platform. Manage your cookie preferences and understand what data we collect."
         keywords="Expedition-Go Tours cookies, cookie policy, website cookies, tracking cookies Ghana"
-        robots="noindex, follow"
         jsonLd={buildBreadcrumbSchema([
           { name: 'Home', url: 'https://expeditiongotours.com/' },
           { name: 'Cookies Policy', url: 'https://expeditiongotours.com/cookies-policy' },
