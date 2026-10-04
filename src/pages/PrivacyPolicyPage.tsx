@@ -45,7 +45,6 @@ export default function PrivacyPolicyPage() {
         title="Privacy Policy - Expedition-Go Tours Ghana"
         description="Expedition-Go Tours respects your privacy. Learn how we collect, use, and protect your personal data when you book tours and experiences through our platform."
         keywords="Expedition-Go Tours privacy, data protection Ghana, travel privacy policy, personal data policy"
-        robots="noindex, follow"
         jsonLd={buildBreadcrumbSchema([
           { name: 'Home', url: 'https://expeditiongotours.com/' },
           { name: 'Privacy Policy', url: 'https://expeditiongotours.com/privacy-policy' },
