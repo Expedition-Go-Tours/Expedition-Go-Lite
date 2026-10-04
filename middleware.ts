@@ -1,7 +1,7 @@
 export const config = { runtime: 'nodejs' }
 
 const BOT_AGENTS = [
-  'googlebot', 'bingbot', 'slurp', 'duckduckbot', 'baiduspider',
+  'googlebot', 'google-inspectiontool', 'bingbot', 'slurp', 'duckduckbot', 'baiduspider',
   'yandexbot', 'sogou', 'facebot', 'facebookexternalhit', 'twitterbot',
   'linkedinbot', 'slackbot', 'whatsapp', 'telegrambot', 'applebot',
   'discordbot', 'pinterest', 'redditbot', 'quora', 'viber', 'skype',
