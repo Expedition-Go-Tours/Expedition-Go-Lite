@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { matchTourForTitle, type MatchableTour } from '../lib/reviewTourLink'
+import { sameTourTitle, type MatchableTour } from '../lib/reviewTourLink'
+import { listingTourTitle } from '../lib/reviewTourIdentity'
 import { isScrapedReviewSupplier } from '../lib/supplierIdentity'
 
 export interface ExternalReview {
@@ -286,18 +287,32 @@ function sortReviews(reviews: ExternalReview[]): ExternalReview[] {
 /**
  * Scraped products matched to a tour.
  *
- * Returns nothing for any tour not operated by the scraped supplier — that is
- * what stops one operator's TripAdvisor / GetYourGuide totals appearing on
- * another operator's identically-titled tour. Fails closed when the supplier is
- * unknown, and title matching itself stays unchanged.
+ * Two gates, both of which fail closed.
+ *
+ * The supplier gate is unchanged: it is what stops one operator's TripAdvisor /
+ * GetYourGuide totals appearing on another operator's identically-titled tour,
+ * and it returns nothing when the supplier is unknown.
+ *
+ * The second gate replaces title *similarity* with tour *identity* —
+ * `matchTourForTitle(product.tourTitle, [tour])`, which asked how much the two
+ * titles overlapped while holding a candidate list of exactly one. With one
+ * candidate, "the best match" is any score above zero, so a listing attached to
+ * every tour it resembled: `Transport form Accra to Cape Coast` claimed both
+ * Cape Coast listings and published 4.8 / 799, `Waterfalls Massage With Aburi
+ * Gardens & Cocoa Farm Activity` claimed three, and six of the twelve homepage
+ * ratings belonged to tours that never sold the listing. A product now belongs
+ * to the tour its listing *is*, and to no other — exact identity, or nothing.
+ *
+ * Failing closed is the whole point: a listing whose wording does not match one
+ * of our tours shows no rating rather than somebody else's.
  */
-export function selectMatchedProducts<T extends { tourTitle: string }>(
+export function selectMatchedProducts<T extends { tourTitle: string; id?: string | null }>(
   products: T[],
   tour: MatchableTour | null | undefined,
 ): T[] {
   if (!tour?.title) return []
   if (!isScrapedReviewSupplier(tour.supplierName)) return []
-  return products.filter((product) => matchTourForTitle(product.tourTitle, [tour]) !== null)
+  return products.filter((product) => sameTourTitle(listingTourTitle(product), tour.title))
 }
 
 /** Scraped products (with official totals) + review rows matched to a tour. */
@@ -317,8 +332,12 @@ export function getMatchedTourReviews(
   const rows = data.reviews.filter((review) => {
     if (!isVisibleExternalReview(review)) return false
     if (review.productId) return productIds.has(review.productId)
-    // Legacy rows without a productId fall back to per-title matching.
-    return matchTourForTitle(review.tourTitle, [tour]) !== null
+    // Legacy rows without a productId have no listing to look up, so the only
+    // thing left to compare is the title itself — and it has to *be* the tour,
+    // not merely resemble it, or the same row would surface on every tour with a
+    // similar name. The only such rows are the 44 business-level Google reviews
+    // titled "Expedition-Go Tours LTD", which match no tour under either rule.
+    return sameTourTitle(review.tourTitle, tour.title)
   })
 
   const matched: MatchedTourReviews = { index, products, rows: sortReviews(rows) }
@@ -576,6 +595,60 @@ export interface CombinedStatsTour extends MatchableTour {
 }
 
 /**
+ * The combined headline numbers for a tour, given the already-loaded stats
+ * payload.
+ *
+ * Split out of `useCombinedTourStats` so a test can compute the exact figures
+ * the cards render without mounting a hook: the matching rules are the whole
+ * subject under test there, and a helper that only ever ran behind a query would
+ * have to be re-implemented by the assertion instead of being the thing asserted.
+ * One body, two callers — the hook and the identity test — so the numbers a test
+ * pins are the numbers the card shows.
+ */
+export function combinedStatsFor(
+  tour:
+    | {
+        title?: string | null
+        location?: string | null
+        supplierName?: string | null
+        rating?: number | string | null
+        reviewCount?: number | null
+      }
+    | null
+    | undefined,
+  data: ExternalReviewStatsData | undefined,
+): CombinedReviewStats {
+  const title = tour?.title
+  const location = tour?.location
+  const supplierName = tour?.supplierName
+  const rating = tour?.rating
+  const reviewCount = tour?.reviewCount
+
+  if (!data || !title) return combineReviewStats({ rating, reviewCount }, [])
+  // Scraped social proof is scoped to the scraped operator's own tours;
+  // everyone else shows their in-app numbers only.
+  if (!isScrapedReviewSupplier(supplierName)) {
+    return combineReviewStats({ rating, reviewCount }, [])
+  }
+  const matched = selectMatchedProducts(data.products, { title, location, supplierName })
+  const aggregate = aggregateProducts(matched)
+  if (aggregate) return combineReviewStats({ rating, reviewCount }, [], aggregate)
+
+  // No official totals on any matched product: count the pre-aggregated
+  // visible counted rows instead of downloading the raw dataset.
+  let count = 0
+  let sum = 0
+  for (const product of matched) {
+    const entry = data.productAggregates[product.id]
+    if (!entry) continue
+    count += entry.count
+    sum += entry.sum
+  }
+  const fallback = count > 0 ? { rating: roundOne(sum / count), reviewCount: count } : null
+  return combineReviewStats({ rating, reviewCount }, [], fallback)
+}
+
+/**
  * Combined rating/count for a tour — in-app reviews plus every scraped
  * TripAdvisor/GetYourGuide product matched to it. Used everywhere a tour's
  * review stats are displayed (detail page and cards) so the headline numbers
@@ -589,30 +662,10 @@ export function useCombinedTourStats(tour: CombinedStatsTour | null | undefined)
   const rating = tour?.rating
   const reviewCount = tour?.reviewCount
 
-  return useMemo(() => {
-    if (!data || !title) return combineReviewStats({ rating, reviewCount }, [])
-    // Scraped social proof is scoped to the scraped operator's own tours;
-    // everyone else shows their in-app numbers only.
-    if (!isScrapedReviewSupplier(supplierName)) {
-      return combineReviewStats({ rating, reviewCount }, [])
-    }
-    const matched = selectMatchedProducts(data.products, { title, location, supplierName })
-    const aggregate = aggregateProducts(matched)
-    if (aggregate) return combineReviewStats({ rating, reviewCount }, [], aggregate)
-
-    // No official totals on any matched product: count the pre-aggregated
-    // visible counted rows instead of downloading the raw dataset.
-    let count = 0
-    let sum = 0
-    for (const product of matched) {
-      const entry = data.productAggregates[product.id]
-      if (!entry) continue
-      count += entry.count
-      sum += entry.sum
-    }
-    const fallback = count > 0 ? { rating: roundOne(sum / count), reviewCount: count } : null
-    return combineReviewStats({ rating, reviewCount }, [], fallback)
-  }, [data, title, location, supplierName, rating, reviewCount])
+  return useMemo(
+    () => combinedStatsFor({ title, location, supplierName, rating, reviewCount }, data),
+    [data, title, location, supplierName, rating, reviewCount],
+  )
 }
 
 // ─── Supplier-level reviews ──────────────────────────────────────────────────
@@ -679,11 +732,13 @@ export function selectSupplierReviewData(
     : localSummary
 
   const productIds = new Set(products.map((product) => product.id))
-  const reviews = data.featuredReviews.filter(
-    (review) =>
-      (review.productId != null && productIds.has(review.productId)) ||
-      matchTourForTitle(review.tourTitle, tours) !== null,
-  )
+  const reviews = data.featuredReviews.filter((review) => {
+    // A row that names its listing is decided by the listing: whether that tour
+    // owns it. Falling through to a title match would let a row back in on
+    // resemblance after the product gates had already ruled it out.
+    if (review.productId != null) return productIds.has(review.productId)
+    return tours.some((tour) => sameTourTitle(review.tourTitle, tour.title))
+  })
 
   return { summary, reviews }
 }
