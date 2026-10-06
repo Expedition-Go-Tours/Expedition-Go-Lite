@@ -2,6 +2,7 @@ import { Helmet } from 'react-helmet-async'
 import { useLocation } from 'react-router-dom'
 
 const SITE_NAME = 'Expedition-Go Tours'
+const HOMEPAGE_TITLE = 'Ghana Tours & Activities | Discover Experiences | Book & Explore'
 const DEFAULT_TITLE = 'Ghana Tours & Experiences | Book Authentic African Adventures'
 const DEFAULT_DESCRIPTION = 'Discover authentic Ghana tours and experiences. Book cultural tours, wildlife safaris, food tours, and adventure activities across Accra, Cape Coast, Volta Region, and more. Free cancellation, best prices guaranteed.'
 // Canonical host. MUST match the domain the site actually serves (the other
@@ -52,7 +53,9 @@ export default function SEO({
 }: SEOProps) {
   const location = useLocation()
 
-  const fullTitle = title ? `${title} | ${SITE_NAME}` : `${DEFAULT_TITLE} | ${SITE_NAME}`
+  const isDefaultHomepage = location.pathname === '/' && !title
+  const pageTitle = isDefaultHomepage ? HOMEPAGE_TITLE : title || DEFAULT_TITLE
+  const fullTitle = isDefaultHomepage ? pageTitle : `${pageTitle} | ${SITE_NAME}`
   // `place` is the only query parameter that names a real page: /tours?place=Accra
   // is its own destination and its own sitemap entry, and the prerendered copy
   // self-canonicalises to it. Every other parameter (filters, sort, tracking) is
@@ -76,7 +79,7 @@ export default function SEO({
 
       {/* Open Graph */}
       <meta property="og:type" content={type} />
-      <meta property="og:title" content={title || DEFAULT_TITLE} />
+      <meta property="og:title" content={pageTitle} />
       <meta property="og:description" content={description} />
       <meta property="og:image" content={ogImage} />
       <meta property="og:url" content={currentUrl} />
@@ -85,7 +88,7 @@ export default function SEO({
 
       {/* Twitter Card */}
       <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content={title || DEFAULT_TITLE} />
+      <meta name="twitter:title" content={pageTitle} />
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={ogImage} />
 
