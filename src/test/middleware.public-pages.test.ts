@@ -10,20 +10,20 @@ describe('complete public-page crawler rendering', () => {
   beforeAll(() => {
     execFileSync(process.execPath, ['scripts/generate-public-pages.mjs'], { stdio: 'pipe' })
   }, 30000)
-  it('serves generated full content to both Googlebot and Search Console', () => {
+  it('serves generated full content to both Googlebot and Search Console', async () => {
     for (const slug of pages) {
       for (const agent of ['Googlebot', 'Google-InspectionTool']) {
         for (const suffix of ['', '/', '?utm_source=test']) {
-          const response = middleware(new Request(`https://www.expeditiongotours.com/${slug}${suffix}`, { headers: { 'user-agent': agent } }))
+          const response = await middleware(new Request(`https://www.expeditiongotours.com/${slug}${suffix}`, { headers: { 'user-agent': agent } }))
           expect(response?.headers.get('x-middleware-rewrite')).toBe(`/__seo/${slug}.html`)
         }
       }
     }
   })
 
-  it('keeps visitor routes on the interactive app', () => {
+  it('keeps visitor routes on the interactive app', async () => {
     for (const slug of pages) {
-      const response = middleware(new Request(`https://www.expeditiongotours.com/${slug}`, { headers: { 'user-agent': 'Mozilla/5.0 Chrome/131.0' } }))
+      const response = await middleware(new Request(`https://www.expeditiongotours.com/${slug}`, { headers: { 'user-agent': 'Mozilla/5.0 Chrome/131.0' } }))
       expect(response?.headers.get('x-middleware-rewrite')).toBe('https://www.expeditiongotours.com/index.html')
     }
   })

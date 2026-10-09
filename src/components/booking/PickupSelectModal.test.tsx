@@ -3,6 +3,8 @@ import { render, screen, fireEvent, act } from '@testing-library/react'
 import PickupSelectModal from './PickupSelectModal'
 import { useLocationAutocomplete } from '@/hooks/useLocationAutocomplete'
 import type { LocationResult } from '@/hooks/useLocationAutocomplete'
+import { reverseGeocode } from '@/lib/locations'
+import { searchGhanaLocations } from '@/lib/serpApiMapsSearch'
 
 vi.mock('@/hooks/useLocationAutocomplete', () => ({
   useLocationAutocomplete: vi.fn(() => ({
@@ -13,6 +15,14 @@ vi.mock('@/hooks/useLocationAutocomplete', () => ({
     loading: false,
     error: null,
   })),
+}))
+
+vi.mock('@/lib/locations', () => ({
+  reverseGeocode: vi.fn(),
+}))
+
+vi.mock('@/lib/serpApiMapsSearch', () => ({
+  searchGhanaLocations: vi.fn(),
 }))
 
 // Capture the props handed to LocationMap so tests can fire the map's
@@ -28,6 +38,8 @@ vi.mock('./LocationMap', () => ({
 }))
 
 const mockAutocomplete = vi.mocked(useLocationAutocomplete)
+const mockReverseGeocode = vi.mocked(reverseGeocode)
+const mockSearchGhana = vi.mocked(searchGhanaLocations)
 
 const searchResult: LocationResult = {
   formatted: 'Accra Mall, Spintex Road, Accra, Ghana',
@@ -91,6 +103,8 @@ beforeEach(() => {
     loading: false,
     error: null,
   })
+  mockReverseGeocode.mockResolvedValue(null)
+  mockSearchGhana.mockResolvedValue({ status: 'empty', results: [] })
 })
 
 describe('PickupSelectModal search', () => {
@@ -432,5 +446,197 @@ describe('PickupSelectModal search', () => {
     fireEvent.click(screen.getByText('Osu'))
     expect(screen.queryByRole('link', { name: /Open in Google Maps/ })).not.toBeInTheDocument()
     expect(mapProps.current.route).toBeUndefined()
+  })
+
+  it('places a pin from a pasted Google Maps link and commits its coordinates', async () => {
+    mockReverseGeocode.mockResolvedValueOnce(null)
+    const onContactChange = vi.fn()
+    render(<PickupSelectModal {...baseProps} onContactChange={onContactChange} />)
+    const input = screen.getByPlaceholderText('Search for your address…')
+
+    fireEvent.change(input, { target: { value: 'Kaneshie Market' } })
+    fireEvent.click(screen.getByText(/Paste a Google Maps link/))
+
+    const textarea = screen.getByLabelText('Google Maps link')
+    fireEvent.change(textarea, {
+      target: { value: 'https://www.google.com/maps/place/Kaneshie+Market/@5.5735,-0.2456,17z' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: /Place Pin/ }))
+
+    // The pin lands in the left-panel "Your location" row with its coordinates.
+    await screen.findByText('Your location')
+    expect(screen.getAllByText('5.57350, -0.24560').length).toBeGreaterThanOrEqual(1)
+    expect(screen.queryByLabelText('Google Maps link')).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /Select/ }))
+    expect(onContactChange).toHaveBeenCalledWith('location', 'Kaneshie Market')
+    expect(onContactChange).toHaveBeenCalledWith('pickupLat', 5.5735)
+    expect(onContactChange).toHaveBeenCalledWith('pickupLng', -0.2456)
+  })
+
+  it('uses the reverse-geocoded address as the label for a pasted link', async () => {
+    mockReverseGeocode.mockResolvedValueOnce({
+      formatted: 'Kaneshie Market Road, Accra, Ghana',
+      latitude: 5.5735,
+      longitude: -0.2456,
+      city: 'Accra',
+      country: 'Ghana',
+      region: 'Greater Accra Region',
+    })
+    const onContactChange = vi.fn()
+    render(<PickupSelectModal {...baseProps} onContactChange={onContactChange} />)
+    const input = screen.getByPlaceholderText('Search for your address…')
+
+    fireEvent.change(input, { target: { value: 'Kaneshie Market' } })
+    fireEvent.click(screen.getByText(/Paste a Google Maps link/))
+    fireEvent.change(screen.getByLabelText('Google Maps link'), { target: { value: '5.5735, -0.2456' } })
+    fireEvent.click(screen.getByRole('button', { name: /Place Pin/ }))
+
+    await screen.findByText('Your location')
+    fireEvent.click(screen.getByRole('button', { name: /Select/ }))
+    expect(onContactChange).toHaveBeenCalledWith('location', 'Kaneshie Market Road, Accra, Ghana')
+    expect(onContactChange).toHaveBeenCalledWith('pickupLat', 5.5735)
+    expect(onContactChange).toHaveBeenCalledWith('pickupLng', -0.2456)
+  })
+
+  it('offers a Google Maps search when autocomplete finds nothing and commits the place', async () => {
+    mockAutocomplete.mockReturnValue({
+      search: vi.fn(),
+      retry: vi.fn(),
+      clear: vi.fn(),
+      results: [],
+      loading: false,
+      error: null,
+    })
+    mockSearchGhana.mockResolvedValueOnce({
+      status: 'ok',
+      results: [
+        {
+          title: 'Kaneshie Market',
+          address: 'Kaneshie, Accra, Ghana',
+          lat: 5.5735,
+          lng: -0.2456,
+          placeId: 'ChIJkaneshie',
+        },
+      ],
+    })
+    const onContactChange = vi.fn()
+    render(
+      <PickupSelectModal
+        {...baseProps}
+        points={[{ ...zonePoint }]}
+        onContactChange={onContactChange}
+      />,
+    )
+    const input = screen.getByPlaceholderText('Search for your address…')
+
+    fireEvent.change(input, { target: { value: 'Kaneshie Market' } })
+    fireEvent.click(screen.getByText(/Search Google Maps/))
+
+    // The zone's coordinates bias the Google search (tour-area origin).
+    expect(mockSearchGhana).toHaveBeenCalledWith('Kaneshie Market', { lat: 5.56, lng: -0.185 })
+
+    fireEvent.click(await screen.findByText('Kaneshie Market'))
+    await screen.findByText('Your location')
+
+    fireEvent.click(screen.getByRole('button', { name: /Select/ }))
+    expect(onContactChange).toHaveBeenCalledWith('location', 'Kaneshie Market')
+    expect(onContactChange).toHaveBeenCalledWith('pickupLat', 5.5735)
+    expect(onContactChange).toHaveBeenCalledWith('pickupLng', -0.2456)
+  })
+
+  it('does not offer the Google Maps search when a suggestion matches what was typed', () => {
+    render(<PickupSelectModal {...baseProps} />)
+    fireEvent.change(screen.getByPlaceholderText('Search for your address…'), { target: { value: 'Accra Mall' } })
+
+    expect(screen.getByText('Accra Mall, Spintex Road, Accra, Ghana')).toBeInTheDocument()
+    expect(screen.queryByText(/Search Google Maps/)).not.toBeInTheDocument()
+  })
+
+  it('offers the Google Maps search when suggestions do not match what was typed', async () => {
+    mockSearchGhana.mockResolvedValueOnce({
+      status: 'ok',
+      results: [
+        {
+          title: 'Kaneshie Market Complex',
+          address: 'Mantse Akramah St, Accra',
+          lat: 5.5667389,
+          lng: -0.236487,
+          placeId: 'ChIJ1',
+        },
+      ],
+    })
+    const onContactChange = vi.fn()
+    render(<PickupSelectModal {...baseProps} onContactChange={onContactChange} />)
+    const input = screen.getByPlaceholderText('Search for your address…')
+
+    fireEvent.change(input, { target: { value: 'Kaneshie Market' } })
+
+    // The irrelevant suggestion is still shown — with the Google row under it.
+    expect(screen.getByText('Accra Mall, Spintex Road, Accra, Ghana')).toBeInTheDocument()
+    fireEvent.click(screen.getByText(/Search Google Maps/))
+
+    fireEvent.click(await screen.findByText('Kaneshie Market Complex'))
+    await screen.findByText('Your location')
+
+    fireEvent.click(screen.getByRole('button', { name: /Select/ }))
+    expect(onContactChange).toHaveBeenCalledWith('location', 'Kaneshie Market Complex')
+    expect(onContactChange).toHaveBeenCalledWith('pickupLat', 5.5667389)
+    expect(onContactChange).toHaveBeenCalledWith('pickupLng', -0.236487)
+  })
+
+  it('filters out foreign suggestions so Google Maps can resolve a brand (Four Points case)', async () => {
+    mockAutocomplete.mockReturnValue({
+      search: vi.fn(),
+      retry: vi.fn(),
+      clear: vi.fn(),
+      results: [
+        {
+          ...searchResult,
+          formatted:
+            'Four Points by Sheraton Lagos, 9/10 Prince Alabe Abiodun Oniru Road, Lagos, Nigeria',
+          latitude: 6.4281,
+          longitude: 3.4219,
+          city: 'Lagos',
+          region: 'Lagos',
+          country: 'Nigeria',
+          countryCode: 'ng',
+        },
+      ],
+      loading: false,
+      error: null,
+    })
+    mockSearchGhana.mockResolvedValueOnce({
+      status: 'ok',
+      results: [
+        {
+          title: 'Four Points by Sheraton Accra Airport Hotel',
+          address: 'Plot 75A, First Senchi St, Accra',
+          lat: 5.6131635,
+          lng: -0.1766859,
+          placeId: 'ChIJ2',
+        },
+      ],
+    })
+    const onContactChange = vi.fn()
+    render(<PickupSelectModal {...baseProps} onContactChange={onContactChange} />)
+    const input = screen.getByPlaceholderText('Search for your address…')
+
+    fireEvent.change(input, { target: { value: 'Four Points by Sheraton' } })
+
+    // The foreign-only suggestion is filtered out entirely…
+    expect(screen.queryByText(/Four Points by Sheraton Lagos/)).not.toBeInTheDocument()
+    // …so the Google Maps fallback is offered and resolves the Accra hotel.
+    fireEvent.click(screen.getByText(/Search Google Maps/))
+    fireEvent.click(await screen.findByText('Four Points by Sheraton Accra Airport Hotel'))
+    await screen.findByText('Your location')
+
+    fireEvent.click(screen.getByRole('button', { name: /Select/ }))
+    expect(onContactChange).toHaveBeenCalledWith(
+      'location',
+      'Four Points by Sheraton Accra Airport Hotel',
+    )
+    expect(onContactChange).toHaveBeenCalledWith('pickupLat', 5.6131635)
+    expect(onContactChange).toHaveBeenCalledWith('pickupLng', -0.1766859)
   })
 })
