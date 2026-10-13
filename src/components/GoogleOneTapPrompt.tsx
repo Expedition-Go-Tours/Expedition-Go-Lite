@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
+import OneTapErrorBoundary from './OneTapErrorBoundary'
 import { useAuthUser } from '../hooks/useAuthUser'
 import {
   signInWithGoogleOneTap,
@@ -95,24 +96,26 @@ export default function GoogleOneTapPrompt() {
   if (user || !googleOneTapSupported() || !armed) return null
 
   return (
-    <Suspense fallback={null}>
-      <GoogleOneTapLazy
-        clientId={getGoogleClientId()}
-        onSuccess={async (credential) => {
-          markHomeOneTapShown()
-          if (!credential) return
-          try {
-            await signInWithGoogleOneTap(credential)
-            toast.success('Signed in successfully')
-          } catch (err: unknown) {
-            toast.error(err instanceof Error ? err.message : 'Google sign in failed')
-          }
-        }}
-        onError={() => {
-          // Covers the visitor dismissing the prompt — don't re-ask this session.
-          markHomeOneTapShown()
-        }}
-      />
-    </Suspense>
+    <OneTapErrorBoundary resetKey={user}>
+      <Suspense fallback={null}>
+        <GoogleOneTapLazy
+          clientId={getGoogleClientId()}
+          onSuccess={async (credential) => {
+            markHomeOneTapShown()
+            if (!credential) return
+            try {
+              await signInWithGoogleOneTap(credential)
+              toast.success('Signed in successfully')
+            } catch (err: unknown) {
+              toast.error(err instanceof Error ? err.message : 'Google sign in failed')
+            }
+          }}
+          onError={() => {
+            // Covers the visitor dismissing the prompt — don't re-ask this session.
+            markHomeOneTapShown()
+          }}
+        />
+      </Suspense>
+    </OneTapErrorBoundary>
   )
 }

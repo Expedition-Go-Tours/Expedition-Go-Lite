@@ -138,6 +138,13 @@ export default defineConfig({
     // package un-bundled keeps that URL pointing at the real worker file.
     // mapbox-gl's ESM build does the same with its `worker.js` chunk.
     exclude: ['maplibre-gl', 'mapbox-gl'],
+    // @react-oauth/google is only reachable through the Google One Tap
+    // prompt's dynamic import, which arms ~3s after first paint — late enough
+    // that a cold dev optimizer discovers it mid-session, re-bundles the deps
+    // and force-reloads the page, aborting the in-flight import ("Failed to
+    // fetch dynamically imported module"). Pre-bundling it at server start
+    // removes that race in dev.
+    include: ['@react-oauth/google'],
   },
   build: {
     rollupOptions: {
