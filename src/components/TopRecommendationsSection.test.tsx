@@ -1,7 +1,8 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, within } from '@testing-library/react'
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import TopRecommendationsSection from './TopRecommendationsSection'
+import TopRecommendationsGrid, { type TopRecItem } from './TopRecommendationsGrid'
 import { useTourDescriptionsByIds } from '../hooks/useTourDescriptions'
 import type { HomepageTour } from '../hooks/useHomepageSections'
 
@@ -86,12 +87,12 @@ describe('TopRecommendationsSection', () => {
     ).toBeInTheDocument()
   })
 
-  it('links "View All" to the dedicated top recommendations page', () => {
+  it('links "View All" to the All Tours Top Recommendations filter view', () => {
     renderSection({ preloaded: [tour('abc', 'Cape Coast Castle')] })
 
     expect(screen.getByRole('link', { name: 'View All' })).toHaveAttribute(
       'href',
-      '/top-recommendations',
+      '/tours?section=Top Recommendations',
     )
   })
 
@@ -185,5 +186,131 @@ describe('TopRecommendationsSection', () => {
   it('shows the ten-row skeleton while loading', () => {
     const { container } = renderSection({ isLoading: true })
     expect(container.querySelectorAll('.top-rec-item--skeleton')).toHaveLength(10)
+  })
+})
+
+/**
+ * Touch layouts (≤1023px): the "See more" toggle is hidden, so the clamped
+ * description itself becomes the affordance and opens the whole text in a
+ * dialog. jsdom has no matchMedia — mock it to the compact branch (the same
+ * approach TourCard/Wishlist tests use).
+ */
+describe('TopRecommendationsSection — tap-to-read on touch layouts', () => {
+  const originalMatchMedia = window.matchMedia
+
+  beforeEach(() => {
+    window.matchMedia = ((query: string) => ({
+      matches: query.includes('1023'),
+      media: query,
+      onchange: null,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      addListener: () => {},
+      removeListener: () => {},
+      dispatchEvent: () => false,
+    })) as unknown as typeof window.matchMedia
+  })
+
+  afterEach(() => {
+    window.matchMedia = originalMatchMedia
+  })
+
+  it('opens the whole description in a dialog when the clamped text is tapped', async () => {
+    setDescriptions([['r0', `${PARA_ONE}\n${PARA_TWO}`]])
+    renderSection({ preloaded: [tour('r0', 'Waterfalls Day Tour')] })
+
+    // Compact: the text itself is the affordance — no See more toggle.
+    expect(screen.queryByRole('button', { name: 'See more' })).not.toBeInTheDocument()
+    const textButton = screen.getByRole('button', { name: new RegExp(PARA_ONE.slice(0, 30)) })
+
+    fireEvent.click(textButton)
+
+    const dialog = screen.getByRole('dialog')
+    expect(dialog).toHaveAttribute('aria-modal', 'true')
+    expect(within(dialog).getByText(PARA_ONE, { exact: true })).toBeInTheDocument()
+    expect(within(dialog).getByText(PARA_TWO, { exact: true })).toBeInTheDocument()
+
+    // Escape closes it — the exit transition plays before the dialog unmounts.
+    fireEvent.keyDown(document, { key: 'Escape' })
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+
+    // Re-open and close via the ✕ button; same animated exit.
+    fireEvent.click(textButton)
+    fireEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Close' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+  })
+
+  it('keeps short descriptions as plain, inert text', () => {
+    setDescriptions([['r0', 'A short blurb that fits without clamping.']])
+    renderSection({ preloaded: [tour('r0', 'Short Tour')] })
+
+    expect(screen.getByText('A short blurb that fits without clamping.')).toBeInTheDocument()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button')).not.toBeInTheDocument()
+  })
+})
+
+/**
+ * The view-all page's "cards" layout (All Tours → Top Recommendations): the
+ * desktop "See more" toggle opens the description dialog instead of expanding
+ * the card in place. jsdom has no matchMedia here, so the desktop branch is
+ * the default — the same branch the toggle only renders in.
+ */
+describe('TopRecommendationsGrid — view-all cards layout', () => {
+  const item: TopRecItem = {
+    id: 'r0',
+    title: 'Waterfalls Day Tour',
+    slug: 'r0',
+    image: 'https://img/r0.jpg',
+    region: null,
+  }
+
+  function renderCards() {
+    return render(
+      <TopRecommendationsGrid
+        layout="cards"
+        items={[item]}
+        descriptions={new Map([['r0', `${PARA_ONE}\n${PARA_TWO}`]])}
+      />,
+    )
+  }
+
+  it('opens the full description in a dialog from See more — never expanding in place', async () => {
+    renderCards()
+
+    const card = screen.getByRole('article')
+    const toggle = screen.getByRole('button', { name: 'See more' })
+    // A dialog trigger, not an inline disclosure.
+    expect(toggle).toHaveAttribute('aria-haspopup', 'dialog')
+    expect(toggle).not.toHaveAttribute('aria-expanded')
+
+    fireEvent.click(toggle)
+
+    const dialog = screen.getByRole('dialog')
+    expect(dialog).toHaveAttribute('aria-modal', 'true')
+    expect(within(dialog).getByText(PARA_ONE, { exact: true })).toBeInTheDocument()
+    expect(within(dialog).getByText(PARA_TWO, { exact: true })).toBeInTheDocument()
+
+    // The card itself stays collapsed: no full-row expansion, no See less.
+    expect(card).not.toHaveClass('top-rec-item--expanded')
+    expect(screen.queryByRole('button', { name: 'See less' })).not.toBeInTheDocument()
+
+    // The ✕ plays the closing transition before the dialog unmounts.
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Close' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+  })
+
+  it('closes the dialog on backdrop click and on Escape', async () => {
+    renderCards()
+    const toggle = screen.getByRole('button', { name: 'See more' })
+
+    // Backdrop: the overlay is the panel's parent.
+    fireEvent.click(toggle)
+    fireEvent.click(screen.getByRole('dialog').parentElement as HTMLElement)
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+
+    fireEvent.click(toggle)
+    fireEvent.keyDown(document, { key: 'Escape' })
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
   })
 })

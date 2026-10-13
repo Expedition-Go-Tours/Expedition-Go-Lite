@@ -55,28 +55,8 @@
   padding-inline: max(40px, calc((100% - 1400px) / 2 + 40px));
 }
 
-/* All Tours (/tours): the content column is `.all-tours-container` — max-width
-   1400px with 40px gutters (24px at ≤1024px, 16px at ≤768px). Match the footer
-   to the same edges so it lines up with the listing above; the navbar already
-   does (Navbar.css carries the same three breakpoints). The ≤768px override is
-   required — without it the base rule's 40px floor would outrank the phone
-   gutter the rest of the page uses. */
-.page-all-tours .footer-container {
-  max-width: none;
-  padding-inline: max(40px, calc((100% - 1400px) / 2 + 40px));
-}
-
-@media (max-width: 1024px) {
-  .page-all-tours .footer-container {
-    padding-inline: 24px;
-  }
-}
-
-@media (max-width: 768px) {
-  .page-all-tours .footer-container {
-    padding-inline: 16px;
-  }
-}
+/* All Tours (/tours) uses the default homepage column now (see
+   AllToursPage.css), so the footer needs no page-family rule for it. */
 
 .page-confirmation .footer-container {
   max-width: none;

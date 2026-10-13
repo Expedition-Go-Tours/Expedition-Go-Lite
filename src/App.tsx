@@ -82,7 +82,6 @@ const HotelsProviderPage = lazy(() => import('./pages/HotelsProviderPage'))
 const TransportPage = lazy(() => import('./pages/TransportPage'))
 const TransportProviderPage = lazy(() => import('./pages/TransportProviderPage'))
 const BlogPage = lazy(() => import('./pages/BlogPage'))
-const TopRecommendationsPage = lazy(() => import('./pages/TopRecommendationsPage'))
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'))
 
 // Below-fold homepage sections (lazy loaded, mounted on scroll)
@@ -299,7 +298,6 @@ function AppContent() {
       ['/stories', 'page-stories'],
       ['/reviews', 'page-reviews'],
       ['/tours', 'page-all-tours'],
-      ['/top-recommendations', 'page-top-recommendations'],
       ['/search', 'page-search'],
       ['/booking/confirmation', 'page-confirmation'],
       // Partner application (`/partners/:type/apply`) — its own 1100px column.
@@ -371,11 +369,12 @@ function AppContent() {
           <Route path="/tours" element={
             <AllToursPage />
           } />
-          {/* "View all" for the homepage's top recommendations section — the
-              same ten editorial cards the section shows, on their own page. */}
-          <Route path="/top-recommendations" element={
-            <TopRecommendationsPage />
-          } />
+          {/* The old dedicated view-all page: the top recommendations are now
+              a section filter on All Tours, so deep links forward there. */}
+          <Route
+            path="/top-recommendations"
+            element={<Navigate to="/tours?section=Top Recommendations" replace />}
+          />
           <Route path="/search" element={
             <SearchResultsPage />
           } />
