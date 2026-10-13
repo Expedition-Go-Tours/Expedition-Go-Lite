@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, within } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import TopRecommendationsSection from './TopRecommendationsSection'
 import { useTourDescriptionsByIds } from '../hooks/useTourDescriptions'
 import type { HomepageTour } from '../hooks/useHomepageSections'
@@ -55,7 +56,12 @@ function setDescriptions(entries: [string, string][]) {
 }
 
 function renderSection(props: Parameters<typeof TopRecommendationsSection>[0]) {
-  return render(<TopRecommendationsSection {...props} />)
+  // The heading's "View All" is a router <Link>, so the section needs a router.
+  return render(
+    <MemoryRouter>
+      <TopRecommendationsSection {...props} />
+    </MemoryRouter>,
+  )
 }
 
 beforeEach(() => {
@@ -80,13 +86,23 @@ describe('TopRecommendationsSection', () => {
     ).toBeInTheDocument()
   })
 
+  it('links "View All" to the dedicated top recommendations page', () => {
+    renderSection({ preloaded: [tour('abc', 'Cape Coast Castle')] })
+
+    expect(screen.getByRole('link', { name: 'View All' })).toHaveAttribute(
+      'href',
+      '/top-recommendations',
+    )
+  })
+
   it('sends the title and the image to the tour detail page in a new tab', () => {
     const { container } = renderSection({ preloaded: [tour('abc', 'Cape Coast Castle')] })
 
     // Both the cover image and the title open the same canonical, cross-origin
     // tour page — this app is the browse layer, the detail page is Travio
-    // Ghana's, so an internal route must never be produced.
-    const links = screen.getAllByRole('link')
+    // Ghana's, so an internal route must never be produced. Scoped to the
+    // card: the heading's "View All" is a link too.
+    const links = within(screen.getByRole('article')).getAllByRole('link')
     expect(links).toHaveLength(2)
     for (const link of links) {
       expect(link).toHaveAttribute('href', `${GHANA}/tour/abc/abc`)
