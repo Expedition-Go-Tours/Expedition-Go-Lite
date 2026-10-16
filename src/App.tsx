@@ -139,7 +139,7 @@ function HomePage() {
         title={hasActiveSearch ? `Tours in ${currentLocation} | Ghana Tours & Experiences` : undefined}
         description={hasActiveSearch
           ? `Discover the best tours and experiences in ${currentLocation}, Ghana. Book cultural tours, food tours, wildlife safaris, and adventure activities. Free cancellation, best prices guaranteed.`
-          : 'Discover authentic Ghana tours and experiences. Book cultural tours, wildlife safaris, food tours, and adventure activities across Accra, Cape Coast, Volta Region, and more. 50+ experiences, free cancellation, best prices guaranteed.'
+          : 'Discover, compare and book Ghana tours, activities and experiences from trusted local providers. Find your next adventure with Expedition-Go Tours.'
         }
         keywords={hasActiveSearch
           ? `${currentLocation} tours, things to do in ${currentLocation}, ${currentLocation} Ghana, Ghana tours, book tours in ${currentLocation}`
