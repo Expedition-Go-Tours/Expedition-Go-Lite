@@ -41,7 +41,12 @@ export async function renderPages(reviewData: unknown, reviewStats: unknown) {
     const content = body.replace(/<title[\s\S]*?<\/title>|<meta\b[^>]*>|<link\b[^>]*>|<script\b[^>]*>[\s\S]*?<\/script>/g, '')
       .replace(/<svg\b[\s\S]*?<\/svg>/g, '').replace(/<img\b[^>]*>/g, '')
       .replace(/ style="[^"]*"/g, '') // Motion's initial opacity must not hide static content.
-    const fallback = slug === 'reviews' ? `<title>Reviews &amp; Testimonials | Expedition-Go Tours</title><meta name="description" content="Read traveller reviews of Expedition-Go Tours experiences in Ghana."><link rel="canonical" href="${SITE_URL}/reviews"><meta name="robots" content="index, follow">` : ''
+    // The reviews page renders the real app component, which carries its own
+    // <SEO> block — those tags land in `metadata` above. The hardcoded fallback
+    // is only for a page that emitted no canonical of its own, otherwise the
+    // head would carry two canonical/robots tags.
+    const hasCanonical = metadata.some((tag) => tag.includes('rel="canonical"'))
+    const fallback = slug === 'reviews' && !hasCanonical ? `<title>Reviews &amp; Testimonials | Expedition-Go Tours</title><meta name="description" content="Read traveller reviews of Expedition-Go Tours experiences in Ghana."><link rel="canonical" href="${SITE_URL}/reviews"><meta name="robots" content="index, follow">` : ''
     output[slug] = '<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">' + fallback + metadata.join('') + '</head><body>' + content + '</body></html>'
     client.clear()
   }
