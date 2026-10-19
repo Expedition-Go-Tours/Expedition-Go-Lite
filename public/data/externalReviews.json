@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-10-18T10:28:20.238Z",
+  "generatedAt": "2026-10-19T12:06:54.829Z",
   "stats": {
-    "totalReviews": 1202,
+    "totalReviews": 1203,
     "averageRating": 4.9,
     "platforms": [
       {
         "source": "GETYOURGUIDE",
-        "reviewCount": 314,
+        "reviewCount": 315,
         "averageRating": 4.8
       },
       {
@@ -5401,6 +5401,25 @@
       "tourLink": "https://www.getyourguide.com/accra-l506/boti-falls-umbrella-rock-aburi-gardens-cocoa-farm-tour-t866545/",
       "coverPhoto": null,
       "originalDate": "2024-12-24T00:00:00.000Z",
+      "productId": "getyourguide-boti-falls-umbrella-rock-aburi-gardens-cocoa-farm-tour-t866545",
+      "productRating": 4.5,
+      "productReviewCount": 128
+    },
+    {
+      "id": "gyg_bfd7d3977eb1",
+      "source": "GETYOURGUIDE",
+      "reviewerName": "Sandra – United Kingdom",
+      "reviewerAvatar": null,
+      "rating": 4,
+      "title": null,
+      "text": "The trip was both interesting and enjoyable. Although we were in a lot of traffic and was told the AC didn't work whilst the vehicle was stationary.",
+      "textTruncated": "The trip was both interesting and enjoyable. Although we were in a lot of traffic and was told the AC didn't work whilst the vehicle was stationary.",
+      "tourTitle": "Boti Falls, Umbrella Rock, Aburi Gardens & Cocoa Farm Tour",
+      "tourThumbnail": null,
+      "tourUrl": "https://www.getyourguide.com/accra-l506/boti-falls-umbrella-rock-aburi-gardens-cocoa-farm-tour-t866545/",
+      "tourLink": "https://www.getyourguide.com/accra-l506/boti-falls-umbrella-rock-aburi-gardens-cocoa-farm-tour-t866545/",
+      "coverPhoto": null,
+      "originalDate": "2026-10-19T00:00:00.000Z",
       "productId": "getyourguide-boti-falls-umbrella-rock-aburi-gardens-cocoa-farm-tour-t866545",
       "productRating": 4.5,
       "productReviewCount": 128
