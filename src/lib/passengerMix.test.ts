@@ -67,3 +67,15 @@ describe('resolveBookableBounds', () => {
     expect(resolveBookableBounds({ isPerGroup: false, groupBandMin: 1, groupBandMax: 50, minParticipants: 12, maxParticipants: 8 })).toEqual({ min: 8, max: 8 })
   })
 })
+
+describe('validatePassengerMix — per-booking wording', () => {
+  it('phrases the party minimum as per booking', () => {
+    const issues = validatePassengerMix([cat('Adult')], { adult: 1 }, { min: 3, max: 10 })
+    expect(issues.find((i) => i.type === 'min')?.message).toBe('Minimum of 3 travelers per booking')
+  })
+
+  it('phrases the party maximum as per booking', () => {
+    const issues = validatePassengerMix([cat('Adult')], { adult: 6 }, { min: 1, max: 5 })
+    expect(issues.find((i) => i.type === 'max')?.message).toBe('Maximum of 5 travelers per booking')
+  })
+})

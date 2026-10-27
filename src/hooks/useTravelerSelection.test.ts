@@ -175,3 +175,63 @@ describe('useTravelerSelection', () => {
     expect(result.current.travelerOptions[0].age).toBe('18-59 years · Group of 2-4')
   })
 })
+
+describe('useTravelerSelection — per-date minimum', () => {
+  const baseTour = {
+    pricingModel: 'perPerson' as const,
+    travelerPricing: [
+      { label: 'Child', price: 200, minAge: 0, maxAge: 17 },
+      { label: 'Adult', price: 300, minAge: 18, maxAge: 59 },
+      { label: 'Senior', price: 350, minAge: 60, maxAge: 99 },
+    ],
+    maxParticipants: 10,
+    price: 300,
+  }
+
+  it('seeds the party at the date minimum when it is higher than the tour minimum', () => {
+    const { result } = renderHook(() =>
+      useTravelerSelection({ ...baseTour, minParticipants: 1 }, { minParticipantsOverride: 4 }))
+    expect(result.current.bookableBounds.min).toBe(4)
+    expect(result.current.totalTravelers).toBe(4)
+    expect(result.current.mixIssues).toEqual([])
+  })
+
+  it('never lowers the tour minimum for a date', () => {
+    const { result } = renderHook(() =>
+      useTravelerSelection({ ...baseTour, minParticipants: 3 }, { minParticipantsOverride: 1 }))
+    expect(result.current.bookableBounds.min).toBe(3)
+  })
+
+  it('never auto-bumps the party when a higher date minimum arrives after mount', () => {
+    const tour = { ...baseTour, minParticipants: 1 }
+    const { result, rerender } = renderHook(
+      ({ override }: { override: number | null }) =>
+        useTravelerSelection(tour, { minParticipantsOverride: override }),
+      { initialProps: { override: null as number | null } },
+    )
+    expect(result.current.totalTravelers).toBe(2)
+
+    rerender({ override: 5 })
+
+    expect(result.current.totalTravelers).toBe(2)
+    expect(result.current.bookableBounds.min).toBe(5)
+    expect(result.current.mixIssues.some((issue) => issue.type === 'min')).toBe(true)
+  })
+
+  it('keeps the + stepper usable when a higher date minimum arrives after mount', () => {
+    const tour = { ...baseTour, minParticipants: 1 }
+    const { result, rerender } = renderHook(
+      ({ override }: { override: number | null }) =>
+        useTravelerSelection(tour, { minParticipantsOverride: override }),
+      { initialProps: { override: null as number | null } },
+    )
+    rerender({ override: 4 })
+    expect(result.current.canIncrementCount('adult')).toBe(true)
+    act(() => {
+      result.current.increment('adult')
+      result.current.increment('adult')
+    })
+    expect(result.current.totalTravelers).toBe(4)
+    expect(result.current.mixIssues).toEqual([])
+  })
+})

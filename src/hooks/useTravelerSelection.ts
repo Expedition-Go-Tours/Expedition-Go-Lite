@@ -39,6 +39,10 @@ export interface TravelerSelectionOptions {
   initialCounts?: Record<string, number>
   /** Seed headcount for per-group pricing. */
   initialHeadcount?: number
+  /** Date-specific party minimum (already resolved server-side as
+      max(tour minimum, date override)). Never auto-bumps the party — it only
+      raises the stepper floor and the validation bound. */
+  minParticipantsOverride?: number | null
 }
 
 /** Seed the per-category counts: the first adult-like category defaults to at
@@ -94,15 +98,24 @@ export function useTravelerSelection(tour: TravelerSelectionTour, options?: Trav
   // supplier's capacity bounds (minParticipants/maxParticipants) combined with
   // the pricing model's own constraints — the steppers can never select a
   // party size outside it (see lib/passengerMix.ts#resolveBookableBounds).
+  // A selected date can raise the tour minimum; the backend already resolved
+  // `minParticipantsOverride` to max(tour minimum, date override).
+  const effectiveMinParticipants = useMemo(() => {
+    const base = tour.minParticipants ?? null
+    const dateMin = options?.minParticipantsOverride ?? null
+    if (base == null && dateMin == null) return null
+    return Math.max(base ?? 0, dateMin ?? 0)
+  }, [tour.minParticipants, options?.minParticipantsOverride])
+
   const bookableBounds = useMemo(
     () => resolveBookableBounds({
       isPerGroup,
       groupBandMin: groupMinHeadcount,
       groupBandMax: groupMaxHeadcount,
-      minParticipants: tour.minParticipants ?? null,
+      minParticipants: effectiveMinParticipants,
       maxParticipants: tour.maxParticipants ?? null,
     }),
-    [isPerGroup, groupMinHeadcount, groupMaxHeadcount, tour.minParticipants, tour.maxParticipants],
+    [isPerGroup, groupMinHeadcount, groupMaxHeadcount, effectiveMinParticipants, tour.maxParticipants],
   )
 
   // Seed the per-category counts / group headcount once. The caller's initial
@@ -208,8 +221,8 @@ export function useTravelerSelection(tour: TravelerSelectionTour, options?: Trav
   // steppers are disabled so a party can never be configured that checkout
   // would reject.
   const mixBounds = useMemo(
-    () => ({ min: tour.minParticipants ?? null, max: tour.maxParticipants ?? null }),
-    [tour.minParticipants, tour.maxParticipants],
+    () => ({ min: effectiveMinParticipants, max: tour.maxParticipants ?? null }),
+    [effectiveMinParticipants, tour.maxParticipants],
   )
   const mixIssues = useMemo(
     () => (isPerGroup ? [] : validatePassengerMix(travelerGroups, categoryCounts, mixBounds)),
@@ -221,9 +234,12 @@ export function useTravelerSelection(tour: TravelerSelectionTour, options?: Trav
     if (category?.notAllowed) return false
     if (mixBounds.max != null && totalTravelers >= mixBounds.max) return false
     if (category?.needsAdult && !mixIssues.some((i) => i.type === 'needsAdult')) return false
-    // Simulate the addition and check the rules still pass.
+    // Simulate the addition and check the rules still pass. A remaining
+    // below-minimum issue must NOT block the "+" stepper: adding travelers is
+    // the only way out of it. Without this, a date that raises the party floor
+    // above the current selection leaves every stepper disabled (dead end).
     const next = { ...categoryCounts, [key]: (categoryCounts[key] ?? 0) + 1 }
-    return validatePassengerMix(travelerGroups, next, mixBounds).length === 0
+    return validatePassengerMix(travelerGroups, next, mixBounds).every((issue) => issue.type === 'min')
   }
 
   /** Whether the "+" stepper for a category is enabled (respects the supplier's
