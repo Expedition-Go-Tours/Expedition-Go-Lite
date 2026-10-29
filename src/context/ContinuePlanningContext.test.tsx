@@ -89,6 +89,22 @@ describe('toContinuePlanningItem', () => {
     expect(item.id).toBe(legacyHash('Alpha Tour', 'Accra, Ghana'))
     expect(item.tourId).toBeUndefined()
   })
+
+  it('preserves the supplier used for scraped review matching', () => {
+    const item = toContinuePlanningItem({
+      id: 'tour-a',
+      title: 'Alpha Tour',
+      location: 'Accra, Ghana',
+      image: '',
+      price: '$120',
+      rating: '4.7',
+      reviews: 12,
+      duration: '1 Day',
+      supplierName: 'Expedition-Go Tours LTD',
+    } as never)
+
+    expect(item.supplierName).toBe('Expedition-Go Tours LTD')
+  })
 })
 
 describe('ContinuePlanningProvider — de-duplication', () => {
@@ -272,5 +288,23 @@ describe('ContinuePlanningProvider — cross-tab sync', () => {
     })
 
     expect(api!.continuePlanning).toHaveLength(1)
+  })
+
+  it('patches an item in place without changing its position', () => {
+    setup()
+
+    act(() => {
+      api!.addToContinuePlanning(base({ id: 'tour-a', slug: 'alpha-tour', tourId: 'tour-a' }))
+    })
+    act(() => {
+      api!.addToContinuePlanning(base({ id: 'tour-b', slug: 'beta-tour', tourId: 'tour-b' }))
+    })
+
+    act(() => {
+      api!.updateContinuePlanningItem('tour-a', { supplierName: 'Expedition-Go Tours LTD' })
+    })
+
+    expect(api!.continuePlanning.map((i) => i.tourId)).toEqual(['tour-b', 'tour-a'])
+    expect(api!.continuePlanning[1].supplierName).toBe('Expedition-Go Tours LTD')
   })
 })
