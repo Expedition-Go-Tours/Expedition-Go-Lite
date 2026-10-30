@@ -1529,7 +1529,7 @@ function BookingSidebar({
                 setPromoCode(e.target.value.toUpperCase())
               }}
               placeholder="Enter promo code"
-              className="flex-1 rounded-xl border border-slate-200/60 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+              className="min-w-0 flex-1 rounded-xl border border-slate-200/60 bg-white px-4 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
             />
             <button
               onClick={onApplyPromo}
@@ -2518,7 +2518,7 @@ export default function BookingPage() {
               <HoldTimer onExpire={handleExpire} lastActivityAt={lastActivityAt} isExpired={isExpired} />
             </div>
 
-            <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
+            <div className="grid gap-8 md:grid-cols-[1fr_380px]">
               <div className="min-w-0 space-y-6">
                 {/* On mobile the tour card leads, then the form follows. */}
                 <div className="lg:hidden">
@@ -2588,7 +2588,7 @@ export default function BookingPage() {
                 />
               </div>
 
-              <aside className="lg:sticky lg:top-28 lg:self-start">
+              <aside className="min-w-0 md:sticky md:top-28 md:self-start">
                 <div className="space-y-4">
                   <div className="hidden lg:block">
                     <HoldTimer onExpire={handleExpire} lastActivityAt={lastActivityAt} isExpired={isExpired} />
