@@ -2,7 +2,7 @@ import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import TopRecommendationsSection from './TopRecommendationsSection'
-import TopRecommendationsGrid from './TopRecommendationsGrid'
+import TopRecommendationsGrid, { type TopRecItem } from './TopRecommendationsGrid'
 import { useTourDescriptionsByIds } from '../hooks/useTourDescriptions'
 import type { HomepageTour } from '../hooks/useHomepageSections'
 
