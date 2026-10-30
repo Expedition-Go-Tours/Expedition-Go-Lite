@@ -19,6 +19,28 @@ const STATIC_EXTS = [
   '.webp', '.ico', '.css', '.js', '.woff', '.woff2', '.ttf', '.eot',
 ]
 
+// The API prerender can lag behind the client-rendered homepage SEO settings.
+const CRAWLER_HOME_TITLE = 'Ghana Tours & Activities | Discover Experiences | Book & Explore'
+const CRAWLER_HOME_DESCRIPTION = 'Discover, compare and book Ghana tours, activities and experiences from trusted local providers. Find your next adventure with Expedition-Go Tours.'
+
+function synchronizeHomepageHead(html: string): string {
+  const escape = (value: string) => value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')
+  let result = html.replace(/<title\b[^>]*>[\s\S]*?<\/title>/i, '<title>' + escape(CRAWLER_HOME_TITLE) + '</title>')
+  const tags: Array<[string, string, string]> = [
+    ['name', 'description', CRAWLER_HOME_DESCRIPTION],
+    ['property', 'og:title', CRAWLER_HOME_TITLE],
+    ['property', 'og:description', CRAWLER_HOME_DESCRIPTION],
+    ['name', 'twitter:title', CRAWLER_HOME_TITLE],
+    ['name', 'twitter:description', CRAWLER_HOME_DESCRIPTION],
+  ]
+  for (const [attribute, key, value] of tags) {
+    const pattern = new RegExp('<meta\\b(?=[^>]*\\b' + attribute + '=["\\x27]' + key + '["\\x27])[^>]*>', 'i')
+    const replacement = '<meta ' + attribute + '="' + key + '" content="' + escape(value) + '">'
+    result = pattern.test(result) ? result.replace(pattern, replacement) : result.replace(/<\/head>/i, replacement + '\n</head>')
+  }
+  return result
+}
+
 // Generated from the same React components and data visitors see.
 const PUBLIC_HTML_PAGES = new Set([
   '/careers', '/contact-us', '/cookies-policy', '/privacy-policy', '/supplier-terms', '/reviews',
@@ -331,6 +353,27 @@ export default async function middleware(request: Request): Promise<Response | u
 
     const target = `${pathname}${url.search}`
     const prerenderUrl = `https://api.expeditiongotours.com/api/prerender?url=${encodeURIComponent(target)}`
+    if (pathname === '/') {
+      // Keep the backend's crawlable HTML and align only the homepage head.
+      try {
+        const upstream = await fetch(prerenderUrl, { signal: AbortSignal.timeout(6000) })
+        if (upstream.ok && (upstream.headers.get('content-type') || '').includes('text/html')) {
+          const html = await upstream.text()
+          if (/<head\b/i.test(html) && /<\/head>/i.test(html)) {
+            return new Response(synchronizeHomepageHead(html), {
+              status: 200,
+              headers: {
+                'content-type': 'text/html; charset=utf-8',
+                'x-prerender-bot': 'true',
+                'cache-control': 'public, s-maxage=300',
+              },
+            })
+          }
+        }
+      } catch {
+        // Preserve the existing prerender rewrite on any upstream error.
+      }
+    }
     return new Response(null, {
       status: 200,
       headers: {
