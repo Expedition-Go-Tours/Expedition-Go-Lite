@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import SectionHeading from './SectionHeading'
-import TopRecommendationsGrid, {
+import TopRecommendationsSlider from './TopRecommendationsSlider'
+import {
   dedupeTours,
   toTopRecItem,
   TOP_RECOMMENDATION_COUNT,
@@ -69,25 +69,17 @@ export default function TopRecommendationsSection({
     items.length > 0,
   )
 
-  if (items.length === 0) {
-    if (!isLoading) return null
-    return (
-      <section className="top-recs" aria-label={t('sections.topRecommendations')}>
-        <div className="top-recs-container">
-          <TopRecommendationsGrid items={items} descriptions={descriptions} isLoading />
-        </div>
-      </section>
-    )
-  }
+  if (items.length === 0 && !isLoading) return null
 
   return (
     <section className="top-recs" aria-label={title || t('sections.topRecommendations')}>
       <div className="top-recs-container">
-        <SectionHeading
+        <TopRecommendationsSlider
+          items={items}
+          descriptions={descriptions}
           title={title || t('sections.topRecommendations')}
-          viewAllLink="/tours?section=Top Recommendations"
+          isLoading={isLoading && items.length === 0}
         />
-        <TopRecommendationsGrid items={items} descriptions={descriptions} />
       </div>
     </section>
   )

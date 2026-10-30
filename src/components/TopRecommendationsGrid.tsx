@@ -22,6 +22,8 @@ export interface TopRecItem {
   image: string
   /** Admin region — scopes the homepage when the row is clicked. */
   region: string | null
+  /** Product type ("Tour" / "Activity" / "Transport") for the card tag. */
+  category?: string | null
 }
 
 /** Map a ranked homepage row to the card's display fields. */
@@ -32,6 +34,7 @@ export function toTopRecItem(tour: HomepageTour): TopRecItem {
     slug: tour.slug,
     image: tour.coverPhoto || tour.photos?.[0] || '',
     region: tour.region ?? null,
+    category: tour.category,
   }
 }
 
