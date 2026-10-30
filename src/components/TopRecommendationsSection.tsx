@@ -25,21 +25,18 @@ interface Props {
 }
 
 /**
- * "Our top recommendations for things to do in Ghana" — the bottom-of-page
- * editorial section: ten tours, five rows of two. The rows come from the
- * homepage's already-fetched ranked slices — the backend "recommended"
- * ranking first (quality + bookings), then the nearby rail, momentum and
- * quality slices if it ships fewer than ten. Descriptions are fetched per id
- * from the tour detail endpoint (see useTourDescriptionsByIds); a tour whose
- * description is unavailable still renders, just without an excerpt.
+ * "Our top recommendations in Ghana" — the homepage rail:
+ * ten tours in a paged slider (five per view on wide screens). The rows come
+ * from the homepage's already-fetched ranked slices — the backend
+ * "recommended" ranking first (quality + bookings), then the nearby rail,
+ * momentum and quality slices if it ships fewer than ten. Descriptions are
+ * fetched per id from the tour detail endpoint (useTourDescriptionsByIds);
+ * a tour whose description is unavailable still renders, just without an
+ * excerpt.
  *
- * The cards are the shared TopRecommendationsGrid, so this section and the
- * All Tours "Top Recommendations" filter view (which shows the same tours)
- * can never drift apart. "View all" opens that filtered listing, where the
- * section renders as a highlighted chip among the regular filters.
- *
- * Mounted right after the newsletter so it is the last editorial surface
- * before the footer, matching the Travio Ghana storefront.
+ * The All Tours "Top Recommendations" view keeps its own grid
+ * (TopRecommendationsGrid, cards layout) over the same tours; "View all"
+ * opens that filtered listing.
  */
 export default function TopRecommendationsSection({
   preloaded,
