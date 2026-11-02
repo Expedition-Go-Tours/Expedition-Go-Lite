@@ -9,7 +9,7 @@ import TourCard from '../components/TourCard'
 import ContinuePlanningCard, { type ContinuePlanningCardItem } from '../components/ContinuePlanningCard'
 import { useSellOutContext } from '../context/SellOutContext'
 import { useHomepageOffers } from '../hooks/useHomepageSections'
-import type { SpecialOfferData } from '../hooks/useExpeditionTours'
+import { useAllExpeditionTours, type SpecialOfferData, type TourCardData } from '../hooks/useExpeditionTours'
 import './Wishlist.css'
 import { safeLazy } from '../lib/safeLazy'
 
@@ -136,6 +136,36 @@ export default function Wishlist() {
     return map
   }, [offerTours])
 
+  // Older saved items (and server copies that don't project the supplier)
+  // have no supplierName, so the combined review stats cannot match the
+  // scraped operator and the card falls back to the stored reviewCount of 0.
+  // Fetch the catalogue once to fill that missing identity/stat data.
+  const needsStatsHydration = useMemo(
+    () => wishlistItems.some((item) => Boolean(item.tourId) && !item.supplierName),
+    [wishlistItems],
+  )
+  const { data: catalogue } = useAllExpeditionTours({ enabled: needsStatsHydration })
+  const liveToursById = useMemo(() => {
+    const map = new Map<string, TourCardData>()
+    for (const tour of catalogue?.tours ?? []) map.set(tour.id, tour)
+    return map
+  }, [catalogue])
+
+  const hydrateItem = (item: WishlistItem): WishlistItem => {
+    const live = item.tourId ? liveToursById.get(item.tourId) : undefined
+    if (!live) return item
+    const liveRating = Number(live.rating) || 0
+    return {
+      ...item,
+      supplierName: item.supplierName ?? live.supplierName ?? undefined,
+      rating: item.rating || liveRating,
+      reviewCount: item.reviewCount || live.reviews || 0,
+      title: item.title || live.title,
+      location: item.location || live.location,
+      slug: item.slug ?? live.slug,
+    }
+  }
+
   return (
     <div className="wishlist-container">
       {wishlistItems.length === 0 ? (
@@ -215,29 +245,32 @@ export default function Wishlist() {
 
           <div className="wishlist-grid">
             <AnimatePresence>
-              {wishlistItems.map((item) => (
-                <motion.div
-                  key={item.id}
-                  layout
-                  initial={{ opacity: 0, scale: 0.96 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.2 } }}
-                  transition={{ duration: 0.3 }}
-                >
-                  {isMobile ? (
-                    <ContinuePlanningCard
-                      item={toPlanningCardItem(item, item.tourId ? offersById.get(item.tourId) : undefined)}
-                      likelyToSellOut={isLikelyToSellOut({ id: item.tourId || item.id, title: item.title })}
-                    />
-                  ) : (
-                    <TourCard
-                      {...toCardProps(item, item.tourId ? offersById.get(item.tourId) : undefined)}
-                      imageClean
-                      sizes={CARD_SIZES}
-                    />
-                  )}
-                </motion.div>
-              ))}
+              {wishlistItems.map((savedItem) => {
+                const item = hydrateItem(savedItem)
+                return (
+                  <motion.div
+                    key={item.id}
+                    layout
+                    initial={{ opacity: 0, scale: 0.96 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.2 } }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    {isMobile ? (
+                      <ContinuePlanningCard
+                        item={toPlanningCardItem(item, item.tourId ? offersById.get(item.tourId) : undefined)}
+                        likelyToSellOut={isLikelyToSellOut({ id: item.tourId || item.id, title: item.title })}
+                      />
+                    ) : (
+                      <TourCard
+                        {...toCardProps(item, item.tourId ? offersById.get(item.tourId) : undefined)}
+                        imageClean
+                        sizes={CARD_SIZES}
+                      />
+                    )}
+                  </motion.div>
+                )
+              })}
             </AnimatePresence>
           </div>
         </>

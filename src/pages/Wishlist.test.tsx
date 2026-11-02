@@ -13,6 +13,15 @@ import type { SpecialOfferData } from '../hooks/useExpeditionTours'
 const state = vi.hoisted(() => ({
   items: [] as WishlistItem[],
   liveOffers: [] as { id: string; specialOffers: SpecialOfferData[] }[],
+  catalogue: [] as Array<{
+    id: string
+    title: string
+    location: string
+    rating: string
+    reviews: number
+    supplierName: string | null
+    slug: string
+  }>,
   removeFromWishlist: vi.fn(),
   addToWishlist: vi.fn(),
 }))
@@ -37,13 +46,31 @@ vi.mock('../context/SellOutContext', () => ({
 }))
 
 vi.mock('../hooks/useExternalReviews', () => ({
-  useCombinedTourStats: () => ({ rating: 5, reviewCount: 12, externalCount: 0 }),
+  useCombinedTourStats: (
+    tour: { supplierName?: string | null; rating?: number; reviewCount?: number } | null | undefined,
+  ) => (
+    tour?.supplierName
+      ? { rating: 4.8, reviewCount: 807, externalCount: 807 }
+      : { rating: Number(tour?.rating) || 0, reviewCount: Number(tour?.reviewCount) || 0, externalCount: 0 }
+  ),
 }))
 
 // The live offers refresh — tests drive it through state.liveOffers.
 vi.mock('../hooks/useHomepageSections', () => ({
   useHomepageOffers: () => ({ data: state.liveOffers }),
 }))
+
+// Catalogue hydration for legacy saved items.
+vi.mock('../hooks/useExpeditionTours', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../hooks/useExpeditionTours')>()
+  return {
+    ...actual,
+    useAllExpeditionTours: () => ({
+      data: { tours: state.catalogue, placeScope: null },
+      isLoading: false,
+    }),
+  }
+})
 
 vi.mock('../components/FormattedPrice', () => ({
   // Renders the numeric USD value the card received, which is what proves the
@@ -95,6 +122,7 @@ const savedTour = (over: Partial<WishlistItem> = {}): WishlistItem => ({
   imageUrl: 'https://res.cloudinary.com/demo/image/upload/v1/tour/accra.jpg',
   rating: 4.8,
   reviewCount: 42,
+  supplierName: 'Expedition-Go Tours LTD',
   addedDate: '2026-01-01T00:00:00.000Z',
   ...over,
 })
@@ -127,6 +155,7 @@ describe('Wishlist page', () => {
     cleanup()
     state.items = []
     state.liveOffers = []
+    state.catalogue = []
     state.removeFromWishlist.mockReset()
     state.addToWishlist.mockReset()
   })
@@ -146,6 +175,26 @@ describe('Wishlist page', () => {
     expect(screen.getByText('Cape Coast, Ghana')).toBeInTheDocument()
     // both prices reached the card as numbers
     expect([...screen.getAllByTestId('price')].map((el) => el.textContent)).toEqual(['120', '75'])
+  })
+
+  it('hydrates a legacy saved tour so the wishlist shows the homepage review count', () => {
+    state.items = [savedTour({ supplierName: undefined, rating: 0, reviewCount: 0 })]
+    state.catalogue = [
+      {
+        id: 'tour-1',
+        title: 'Accra City Tour',
+        location: 'Accra, Ghana',
+        rating: '4.8',
+        reviews: 807,
+        supplierName: 'Expedition-Go Tours LTD',
+        slug: 'accra-city-tour',
+      },
+    ]
+
+    render(<Wishlist />)
+
+    expect(screen.getByText('(807)')).toBeInTheDocument()
+    expect(screen.getByText('4.8')).toBeInTheDocument()
   })
 
   it('shows no Book now button — the card links to the tour instead', () => {
@@ -241,10 +290,11 @@ describe('Wishlist page', () => {
  */
 describe('Wishlist page — mobile horizontal cards', () => {
   beforeEach(() => {
-    // Sibling describe: replicate the shared state reset so no live offer or
-    // saved item leaks in from an earlier test.
+    // Sibling describe: replicate the shared state reset so no live offer,
+    // catalogue row or saved item leaks in from an earlier test.
     state.items = []
     state.liveOffers = []
+    state.catalogue = []
     state.removeFromWishlist.mockReset()
     state.addToWishlist.mockReset()
     setMobileViewport(true)

@@ -3,13 +3,22 @@ import { render, screen, fireEvent, cleanup } from '@testing-library/react'
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key: string) =>
-      ({
+    t: (key: string, fallback?: string, options?: { count?: number }) => {
+      const translations: Record<string, string> = {
         'sections.reviews': 'Reviews',
         'tourDetail.destination': 'Destination',
         'tourDetail.destinationHost': 'Experience Host',
         'tourDetail.defaultLocation': 'Ghana',
-      })[key] ?? key,
+        'tourDetail.verifiedReviews': 'Verified',
+        'tourDetail.verifiedCount': '{{count}} verified reviews',
+        'tourDetail.popular': 'Popular',
+        'tourDetail.bookedRecently': 'Booked {{count}} times this week',
+      }
+      const template = translations[key] ?? (typeof fallback === 'string' ? fallback : key)
+      return options?.count != null
+        ? template.replace('{{count}}', options.count.toLocaleString())
+        : template
+    },
   }),
 }))
 
@@ -61,6 +70,27 @@ describe('TourHeader info card', () => {
     renderHeader()
 
     expect(screen.queryByText('Experience Host')).toBeNull()
+  })
+
+  it('shows the Popular cue from recent bookings', () => {
+    renderHeader({ bookingsLast7Days: 4 })
+
+    expect(screen.getByText('Popular')).toBeInTheDocument()
+    expect(screen.getByText('Booked 4 times this week')).toBeInTheDocument()
+  })
+
+  it('shows the Verified cue from verified reviews', () => {
+    renderHeader({ verifiedReviewCount: 12 })
+
+    expect(screen.getByText('Verified')).toBeInTheDocument()
+    expect(screen.getByText('12 verified reviews')).toBeInTheDocument()
+  })
+
+  it('omits both trust cues when the backend returns no sample', () => {
+    renderHeader({ verifiedReviewCount: null, bookingsLast7Days: null })
+
+    expect(screen.queryByText('Verified')).toBeNull()
+    expect(screen.queryByText('Popular')).toBeNull()
   })
 
   it('fires onReviewsClick from the reviews value', () => {

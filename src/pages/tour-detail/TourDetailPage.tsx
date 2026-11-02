@@ -42,6 +42,7 @@ import BookingWidget from './BookingWidget'
 import RelatedTours from './RelatedTours'
 import StickyNavHeader from './StickyNavHeader'
 import { useBackNavigation } from '../../hooks/useBackNavigation'
+import { useTourTrust } from '../../hooks/useTourTrust'
 
 import TourDetailTabs from './TourDetailTabs'
 import OverviewSection from './OverviewSection'
@@ -429,6 +430,10 @@ export default function TourDetailPage() {
   }, [tourId])
 
   const isExternal = tour?.bookingFlow === 'EXTERNAL'
+  // Trust facts: verified reviews + last-7-day bookings. Resolved by id or
+  // slug and deliberately non-blocking — a failed fetch just leaves the header
+  // without those two cues.
+  const { data: tourTrust } = useTourTrust(tourId || tour?.id)
   const selectedTourTitle = tour?.title || ''
   // Local (in-app) stats, kept separate so wishlist/continue-planning storage
   // stays canonical — cards re-combine on display, so storing combined values
@@ -1198,6 +1203,8 @@ export default function TourDetailPage() {
                 title={selectedTourTitle}
                 rating={selectedTourRating}
                 reviewCount={selectedTourReviews}
+                verifiedReviewCount={tourTrust?.verifiedReviewCount ?? null}
+                bookingsLast7Days={tourTrust?.bookingsLast7Days ?? null}
                 location={tour.location}
                 supplierName={tour.supplierName}
                 onReviewsClick={handleReviewsTab}
