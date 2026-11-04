@@ -1,7 +1,15 @@
 {
+  "id": "/",
   "name": "Expedition-Go Tours",
   "short_name": "Expedition-Go",
   "description": "Explore Tourism in Ghana",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "theme_color": "#ffffff",
+  "background_color": "#ffffff",
+  "categories": ["travel", "shopping"],
+  "lang": "en",
   "icons": [
     {
       "src": "/android-chrome-192x192.png",
@@ -21,8 +29,5 @@
       "type": "image/png",
       "purpose": "maskable"
     }
-  ],
-  "theme_color": "#ffffff",
-  "background_color": "#ffffff",
-  "display": "standalone"
+  ]
 }
