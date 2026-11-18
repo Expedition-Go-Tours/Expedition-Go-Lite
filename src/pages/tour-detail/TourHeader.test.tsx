@@ -13,10 +13,13 @@ vi.mock('react-i18next', () => ({
         'tourDetail.verifiedCount': '{{count}} verified reviews',
         'tourDetail.popular': 'Popular',
         'tourDetail.bookedRecently': 'Booked {{count}} times this week',
+        'tourDetail.newListing': 'New',
+        'tourDetail.operatorReviewCount': '{{count, number}} reviews',
+        'tourDetail.operatorReviewSources': 'on TripAdvisor, GetYourGuide & Google',
       }
       const template = translations[key] ?? (typeof fallback === 'string' ? fallback : key)
       return options?.count != null
-        ? template.replace('{{count}}', options.count.toLocaleString())
+        ? template.replace(/\{\{count(?:, number)?\}\}/, options.count.toLocaleString())
         : template
     },
   }),
@@ -57,6 +60,32 @@ describe('TourHeader info card', () => {
     expect(screen.getByRole('button')).toHaveTextContent('12 reviews')
   })
 
+  it('shows "New" when the tour has no rating and no reviews', () => {
+    renderHeader({ rating: 0, reviewCount: 0 })
+
+    expect(screen.getByRole('button')).toHaveTextContent('New')
+  })
+
+  it('uses one column per cell so a no-booking tour keeps three strips', () => {
+    const { container } = renderHeader({
+      location: 'Accra, Ghana',
+      supplierName: 'Expedition-Go Tours LTD',
+    })
+
+    expect(container.querySelector('.tour-header-info-row')).toHaveClass('tour-header-info-row-3')
+  })
+
+  it('counts the extra trust cues in the row class', () => {
+    const { container } = renderHeader({
+      location: 'Accra, Ghana',
+      supplierName: 'Expedition-Go Tours LTD',
+      verifiedReviewCount: 3,
+      bookingsLast7Days: 2,
+    })
+
+    expect(container.querySelector('.tour-header-info-row')).toHaveClass('tour-header-info-row-5')
+  })
+
   it('shows the destination and the Experience Host', () => {
     renderHeader({ location: 'Cape Coast, Ghana', supplierName: 'Expedition-Go Tours LTD' })
 
@@ -91,6 +120,36 @@ describe('TourHeader info card', () => {
 
     expect(screen.queryByText('Verified')).toBeNull()
     expect(screen.queryByText('Popular')).toBeNull()
+  })
+
+  it('shows the operator proof under the Experience Host for a new tour', () => {
+    const onOperatorReviewsClick = vi.fn()
+    renderHeader({
+      rating: 0,
+      reviewCount: 0,
+      location: 'Accra, Ghana',
+      supplierName: 'Expedition-Go Tours LTD',
+      operatorProof: { rating: 4.9, reviewCount: 1204 },
+      onOperatorReviewsClick,
+    })
+
+    expect(screen.getByText('1,204 reviews')).toBeInTheDocument()
+    expect(screen.getByText('on TripAdvisor, GetYourGuide & Google')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByText('1,204 reviews'))
+    expect(onOperatorReviewsClick).toHaveBeenCalledTimes(1)
+  })
+
+  it('keeps the operator proof off once the tour has its own reviews', () => {
+    renderHeader({
+      rating: 0,
+      reviewCount: 12,
+      location: 'Accra, Ghana',
+      supplierName: 'Expedition-Go Tours LTD',
+      operatorProof: { rating: 4.9, reviewCount: 1204 },
+    })
+
+    expect(screen.queryByText('on TripAdvisor, GetYourGuide & Google')).toBeNull()
   })
 
   it('fires onReviewsClick from the reviews value', () => {

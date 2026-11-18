@@ -8,6 +8,7 @@ import {
   scaleDistribution,
   selectFeaturedTourReviews,
   selectMatchedProducts,
+  selectOperatorProof,
   selectSupplierReviewData,
   type ExternalReview,
   type ExternalReviewProduct,
@@ -569,6 +570,46 @@ describe('selectSupplierReviewData', () => {
       summary: { rating: null, count: 0, distribution: null },
       reviews: [],
     })
+  })
+})
+
+describe('selectOperatorProof', () => {
+  const supplier = 'Expedition-Go Tours LTD'
+  const stats = { totalReviews: 1204, averageRating: 4.9, platforms: [] }
+
+  it('shows the operator total for a new tour that has a scraped listing', () => {
+    expect(
+      selectOperatorProof(
+        { title: 'Waterfalls Massage With Aburi Gardens & Cocoa Farm Activity', supplierName: supplier },
+        0,
+        stats,
+        true,
+      ),
+    ).toEqual({ rating: 4.9, reviewCount: 1204 })
+  })
+
+  it('stays hidden once the tour has its own reviews', () => {
+    expect(selectOperatorProof({ title: 'Some Tour', supplierName: supplier }, 3, stats, true)).toBeNull()
+  })
+
+  it('fails closed without a matched listing, another supplier, or usable stats', () => {
+    expect(selectOperatorProof({ title: 'Some Tour', supplierName: supplier }, 0, stats, false)).toBeNull()
+    expect(selectOperatorProof({ title: 'Some Tour', supplierName: 'Kadelo Travels' }, 0, stats, true)).toBeNull()
+    expect(selectOperatorProof({ title: 'Some Tour', supplierName: supplier }, 0, undefined, true)).toBeNull()
+    expect(
+      selectOperatorProof({ title: 'Some Tour', supplierName: supplier }, 0, { ...stats, totalReviews: 0 }, true),
+    ).toBeNull()
+  })
+
+  it('keeps the count when the platform average is unavailable', () => {
+    expect(
+      selectOperatorProof(
+        { title: 'Some Tour', supplierName: supplier },
+        0,
+        { ...stats, averageRating: null },
+        true,
+      ),
+    ).toEqual({ rating: null, reviewCount: 1204 })
   })
 })
 

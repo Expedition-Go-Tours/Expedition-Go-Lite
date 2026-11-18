@@ -20,6 +20,8 @@ import {
   useTourExternalReviews,
   useTourExternalProducts,
   useTourExternalFeaturedReviews,
+  useExternalReviewStats,
+  selectOperatorProof,
   combineReviewStats,
   aggregateProducts,
   aggregateResolvedDistribution,
@@ -174,6 +176,10 @@ export default function TourDetailPage() {
   const { products: externalMatchedProducts } = useTourExternalProducts(
     tour ? { title: tour.title, location: tour.location, supplierName: tour.supplierName } : null,
   )
+  // Operator-wide scraped totals (TripAdvisor + GetYourGuide). Used only as
+  // proof under the Experience Host when this tour is a known listing but has
+  // no countable reviews yet; it never replaces tour-level numbers.
+  const { data: externalReviewStats } = useExternalReviewStats()
   // Featured scraped rows for the Overview carousel, served from the slim
   // stats file — the full 1.6 MB row dataset stays gated behind the Reviews
   // tab (see `useTourExternalReviews` above).
@@ -442,6 +448,22 @@ export default function TourDetailPage() {
   const localTourReviews = tour?.reviewCount || 0
   const selectedTourRating = combinedTourStats.rating
   const selectedTourReviews = combinedTourStats.reviewCount
+  const operatorProof = useMemo(
+    () =>
+      selectOperatorProof(
+        { title: selectedTourTitle, supplierName: tour?.supplierName },
+        selectedTourReviews,
+        externalReviewStats,
+        externalMatchedProducts.length > 0,
+      ),
+    [
+      selectedTourTitle,
+      tour?.supplierName,
+      selectedTourReviews,
+      externalReviewStats,
+      externalMatchedProducts.length,
+    ],
+  )
   // The URL param may be an id, a slug, or /{id}/{slug} — the id is the
   // identity and the slug decorative, so a stale-slug link still resolves.
   // Links that want the readable form use the fetched tour's own slug.
@@ -1205,6 +1227,8 @@ export default function TourDetailPage() {
                 reviewCount={selectedTourReviews}
                 verifiedReviewCount={tourTrust?.verifiedReviewCount ?? null}
                 bookingsLast7Days={tourTrust?.bookingsLast7Days ?? null}
+                operatorProof={operatorProof}
+                onOperatorReviewsClick={() => navigate('/reviews')}
                 location={tour.location}
                 supplierName={tour.supplierName}
                 onReviewsClick={handleReviewsTab}
@@ -1360,6 +1384,8 @@ export default function TourDetailPage() {
                         starFilter={reviewStarFilter}
                         onStarFilterChange={setReviewStarFilter}
                         supplierName={supplierData?.name || ''}
+                        operatorProof={operatorProof}
+                        onOperatorReviewsClick={() => navigate('/reviews')}
                         photosOnly={reviewPhotosOnly}
                         photoCount={photoReviewCount}
                         onPhotosOnlyChange={setReviewPhotosOnly}

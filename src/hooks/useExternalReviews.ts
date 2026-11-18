@@ -633,6 +633,35 @@ export function combineReviewStats(
   return { rating, reviewCount: count, externalCount }
 }
 
+/** Operator-level scraped proof shown on tours that are new to this site. */
+export interface OperatorProof {
+  rating: number | null
+  reviewCount: number
+}
+
+/**
+ * The "new here, trusted elsewhere" proof shown under the Experience Host and
+ * in the empty Reviews tab.
+ *
+ * It only applies when this tour is a known scraped listing but has no
+ * countable reviews yet: the count is the operator's whole scraped total, so
+ * it must never stand in for a tour-level rating. Fails closed for every
+ * supplier except the one whose listings were scraped.
+ */
+export function selectOperatorProof(
+  tour: { title?: string | null; supplierName?: string | null } | null | undefined,
+  reviewCount: number,
+  stats: ExternalReviewStats | null | undefined,
+  hasMatchedProducts: boolean,
+): OperatorProof | null {
+  if (!tour?.title || reviewCount > 0 || !isScrapedReviewSupplier(tour.supplierName) || !hasMatchedProducts) {
+    return null
+  }
+  const total = Number(stats?.totalReviews)
+  if (!stats || !Number.isFinite(total) || total <= 0) return null
+  return { rating: stats.averageRating ?? null, reviewCount: total }
+}
+
 /** Tour fields the combined stats helper needs. */
 export interface CombinedStatsTour extends MatchableTour {
   rating?: number | string | null

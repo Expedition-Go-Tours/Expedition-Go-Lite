@@ -5,6 +5,7 @@ import { X, ChevronLeft, ChevronRight, Camera } from 'lucide-react'
 import './ReviewsSection.css'
 import OptimizedImage from '@/components/shared/OptimizedImage'
 import StarRating from '@/components/StarRating'
+import type { OperatorProof } from '../../hooks/useExternalReviews'
 
 interface Review {
   id: string
@@ -42,6 +43,9 @@ interface ReviewsSectionProps {
   starFilter: number | null
   onStarFilterChange: (stars: number | null) => void
   supplierName?: string
+  /** Operator-wide scraped totals, shown when this tour has no reviews yet. */
+  operatorProof?: OperatorProof | null
+  onOperatorReviewsClick?: () => void
   photosOnly?: boolean
   photoCount?: number
   onPhotosOnlyChange?: (value: boolean) => void
@@ -78,6 +82,8 @@ export default function ReviewsSection({
   starFilter,
   onStarFilterChange,
   supplierName,
+  operatorProof = null,
+  onOperatorReviewsClick,
   photosOnly = false,
   photoCount = 0,
   onPhotosOnlyChange,
@@ -139,218 +145,262 @@ export default function ReviewsSection({
           </button>
         </div>
 
-        <div className="reviews-layout">
-          <div className="reviews-main">
-            <div className="reviews-rating-summary">
-              <div className="reviews-rating-score">
-                <p className="reviews-rating-number">{rating.toFixed(1)}</p>
-                <div className="reviews-rating-stars">
-                  <StarRating
-                    value={rating}
-                    size={24}
-                    gap={4}
-                    filledColor="#16a34a"
-                    emptyColor="#e5e7eb"
-                  />
-                </div>
-                <p className="reviews-rating-label">{t('reviews.basedOn', { count: reviewCount })}</p>
-              </div>
-              <div className="reviews-rating-breakdown">
-                {reviewBreakdown.map((item) => {
-                  const isActive = starFilter === item.stars
-                  return (
-                    <button
-                      key={item.label}
-                      type="button"
-                      onClick={() => onStarFilterChange(isActive ? null : item.stars)}
-                      className={`reviews-breakdown-row ${isActive ? 'active' : ''}`}
-                      aria-label={`Filter reviews by ${item.label}`}
-                      aria-pressed={isActive}
-                    >
-                      <span className="reviews-breakdown-label">{item.label}</span>
-                      <span className="reviews-breakdown-bar">
-                        <span
-                          className="reviews-breakdown-bar-fill"
-                          style={{ width: `${item.percentage}%` }}
-                        />
-                      </span>
-                      <span className="reviews-breakdown-count">{item.count}</span>
-                    </button>
-                  )
-                })}
-              </div>
+        {reviewCount === 0 ? (
+          <div className="reviews-empty">
+            <div className="reviews-empty-stars" aria-hidden="true">
+              <StarRating
+                value={0}
+                size={22}
+                gap={4}
+                filledColor="#16a34a"
+                emptyColor="#e5e7eb"
+              />
             </div>
-
-            {/* Quick filters */}
-            {(starFilter !== null || activePhotos) && (
-              <div className="reviews-toolbar">
-                <button
-                  type="button"
-                  onClick={() => {
-                    onStarFilterChange(null)
-                    onPhotosOnlyChange?.(false)
-                  }}
-                  className={`reviews-filter-chip${!photosOnly && starFilter === null ? ' reviews-filter-chip-active' : ''}`}
-                >
-                  {t('reviews.allPhotos', 'All')}
-                </button>
-                {activePhotos && (
+            <h3 className="reviews-empty-title">
+              {t('reviews.noReviewsTitle', 'No reviews yet')}
+            </h3>
+            <p className="reviews-empty-text">
+              {t(
+                'reviews.noReviewsText',
+                'This experience is new on TravioGhana. Reviews appear here as soon as travellers write them.',
+              )}
+            </p>
+            {operatorProof && operatorProof.reviewCount > 0 && (
+              <p className="reviews-empty-proof">
+                {supplierName || t('tourDetail.destinationHost')}
+                {operatorProof.rating ? ` · ${operatorProof.rating.toFixed(1)}` : ''}
+                {' · '}
+                {t(
+                  'tourDetail.operatorReviews',
+                  '{{count}} reviews on TripAdvisor, GetYourGuide & Google',
+                  { count: operatorProof.reviewCount },
+                )}
+                {onOperatorReviewsClick && (
                   <button
                     type="button"
-                    onClick={() => onPhotosOnlyChange?.(!photosOnly)}
-                    className={`reviews-filter-chip${photosOnly ? ' reviews-filter-chip-active' : ''}`}
+                    onClick={onOperatorReviewsClick}
+                    className="reviews-empty-proof-link"
                   >
-                    {t('reviews.withPhotos', 'With photos')}
-                    {photoCount > 0 && <span className="reviews-filter-chip-count">{photoCount}</span>}
+                    {t('reviews.readThem', 'Read them')}
                   </button>
                 )}
-                {starFilter !== null && (
-                  <button
-                    type="button"
-                    onClick={() => onStarFilterChange(null)}
-                    className="reviews-clear-filter"
-                  >
-                    {t('reviews.clearStarFilter')}
-                  </button>
-                )}
-              </div>
-            )}
-
-            {/* Review Cards */}
-            {reviews.length > 0 && (
-              <div className="reviews-cards">
-                {reviews.map((review) => {
-                  const isExpanded = expandedReviews.has(review.id)
-                  const hasPhotos = (review.photos?.length ?? 0) > 0
-                  return (
-                    <article key={review.id} className="review-card">
-                      <div className="review-card-stars">
-                        <StarRating
-                          value={review.rating}
-                          size={16}
-                          gap={2}
-                          filledColor="#16a34a"
-                          emptyColor="#e2e8f0"
-                        />
-                      </div>
-
-                      <div className="review-card-head">
-                        {review.avatar ? (
-                          <img
-                            src={review.avatar}
-                            alt=""
-                            className="review-avatar review-avatar-img"
-                            loading="lazy"
-                          />
-                        ) : (
-                          <span className="review-avatar review-avatar-initials" aria-hidden="true">
-                            {initialsOf(review.name)}
-                          </span>
-                        )}
-                        <div className="review-card-head-text">
-                          <p className="review-card-author">{review.name}</p>
-                          <p className="review-card-date">
-                            {review.date}
-                            {review.bookingId && (
-                              <span className="review-verified"> · {t('reviews.verifiedBooking', 'Verified booking')}</span>
-                            )}
-                          </p>
-                        </div>
-                      </div>
-
-                      {review.title && <p className="review-card-title">{review.title}</p>}
-                      <div className={`review-card-text-wrap${isExpanded ? ' expanded' : ' collapsed'}`}>
-                        <p className={`review-card-text${isExpanded ? '' : ' truncated'}`}>{review.text}</p>
-                      </div>
-                      {review.text.length > 150 && (
-                        <button
-                          type="button"
-                          onClick={() => toggleExpand(review.id)}
-                          className="review-card-toggle"
-                        >
-                          {isExpanded ? t('tourDetail.seeLess') : t('tourDetail.seeMore')}
-                        </button>
-                      )}
-
-                      {(review.valueForMoneyRating || review.guideRating || review.meetingRating) && (
-                        <div className="review-card-subratings">
-                          {review.valueForMoneyRating != null && review.valueForMoneyRating > 0 && (
-                            <span className="review-subrating-chip">{t('reviews.value')}: {review.valueForMoneyRating}/5</span>
-                          )}
-                          {review.guideRating != null && review.guideRating > 0 && (
-                            <span className="review-subrating-chip">{t('reviews.guide')}: {review.guideRating}/5</span>
-                          )}
-                          {review.meetingRating != null && review.meetingRating > 0 && (
-                            <span className="review-subrating-chip">{t('reviews.meeting')}: {review.meetingRating}/5</span>
-                          )}
-                        </div>
-                      )}
-                      {(review.travelMonth || (review.companions && review.companions.length > 0)) && (
-                        <div className="review-card-tags">
-                          {review.travelMonth && <span className="review-tag">{review.travelMonth}</span>}
-                          {review.companions?.map((c) => (
-                            <span key={c} className="review-tag">{c}</span>
-                          ))}
-                        </div>
-                      )}
-
-                      {hasPhotos && (
-                        <div className="review-card-photos" role="group" aria-label="Review photos">
-                          {(review.photos as string[]).slice(0, VISIBLE_THUMBS).map((url, i) => (
-                            <button
-                              key={i}
-                              type="button"
-                              onClick={() => openGallery(review.photos as string[], i)}
-                              className="review-photo-btn"
-                              aria-label={`Open review photo ${i + 1}`}
-                            >
-                              <OptimizedImage src={url} alt="" className="review-card-photo" width={220} />
-                            </button>
-                          ))}
-                          {(review.photos as string[]).length > VISIBLE_THUMBS && (
-                            <button
-                              type="button"
-                              onClick={() => openGallery(review.photos as string[], VISIBLE_THUMBS)}
-                              className="review-photo-btn review-photo-more"
-                              aria-label="View all review photos"
-                            >
-                              <Camera size={16} />
-                              +{(review.photos as string[]).length - VISIBLE_THUMBS}
-                            </button>
-                          )}
-                        </div>
-                      )}
-
-                      {review.supplierResponse && (
-                        <div className="review-card-response">
-                          <p className="review-card-response-title">
-                            {t('reviews.responseFromSupplier', 'Response from supplier')}
-                            {supplierName ? ` · ${supplierName}` : ''}
-                          </p>
-                          {review.supplierResponseAt && (
-                            <p className="review-card-response-date">{formatDate(review.supplierResponseAt)}</p>
-                          )}
-                          <p className="review-card-response-text">{review.supplierResponse}</p>
-                        </div>
-                      )}
-                    </article>
-                  )
-                })}
-              </div>
-            )}
-
-            {hasMore && !starFilter && !photosOnly && (
-              <button
-                type="button"
-                onClick={onLoadMore}
-                disabled={loadingMore}
-                className="reviews-load-more"
-              >
-                {loadingMore ? t('common.loading') : t('reviews.loadMore')}
-              </button>
+              </p>
             )}
           </div>
-        </div>
+        ) : (
+          <div className="reviews-layout">
+            <div className="reviews-main">
+              <div className="reviews-rating-summary">
+                <div className="reviews-rating-score">
+                  <p className="reviews-rating-number">{rating.toFixed(1)}</p>
+                  <div className="reviews-rating-stars">
+                    <StarRating
+                      value={rating}
+                      size={24}
+                      gap={4}
+                      filledColor="#16a34a"
+                      emptyColor="#e5e7eb"
+                    />
+                  </div>
+                  <p className="reviews-rating-label">{t('reviews.basedOn', { count: reviewCount })}</p>
+                </div>
+                <div className="reviews-rating-breakdown">
+                  {reviewBreakdown.map((item) => {
+                    const isActive = starFilter === item.stars
+                    return (
+                      <button
+                        key={item.label}
+                        type="button"
+                        onClick={() => onStarFilterChange(isActive ? null : item.stars)}
+                        className={`reviews-breakdown-row ${isActive ? 'active' : ''}`}
+                        aria-label={`Filter reviews by ${item.label}`}
+                        aria-pressed={isActive}
+                      >
+                        <span className="reviews-breakdown-label">{item.label}</span>
+                        <span className="reviews-breakdown-bar">
+                          <span
+                            className="reviews-breakdown-bar-fill"
+                            style={{ width: `${item.percentage}%` }}
+                          />
+                        </span>
+                        <span className="reviews-breakdown-count">{item.count}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Quick filters */}
+              {(starFilter !== null || activePhotos) && (
+                <div className="reviews-toolbar">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onStarFilterChange(null)
+                      onPhotosOnlyChange?.(false)
+                    }}
+                    className={`reviews-filter-chip${!photosOnly && starFilter === null ? ' reviews-filter-chip-active' : ''}`}
+                  >
+                    {t('reviews.allPhotos', 'All')}
+                  </button>
+                  {activePhotos && (
+                    <button
+                      type="button"
+                      onClick={() => onPhotosOnlyChange?.(!photosOnly)}
+                      className={`reviews-filter-chip${photosOnly ? ' reviews-filter-chip-active' : ''}`}
+                    >
+                      {t('reviews.withPhotos', 'With photos')}
+                      {photoCount > 0 && <span className="reviews-filter-chip-count">{photoCount}</span>}
+                    </button>
+                  )}
+                  {starFilter !== null && (
+                    <button
+                      type="button"
+                      onClick={() => onStarFilterChange(null)}
+                      className="reviews-clear-filter"
+                    >
+                      {t('reviews.clearStarFilter')}
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* Review Cards */}
+              {reviews.length > 0 && (
+                <div className="reviews-cards">
+                  {reviews.map((review) => {
+                    const isExpanded = expandedReviews.has(review.id)
+                    const hasPhotos = (review.photos?.length ?? 0) > 0
+                    return (
+                      <article key={review.id} className="review-card">
+                        <div className="review-card-stars">
+                          <StarRating
+                            value={review.rating}
+                            size={16}
+                            gap={2}
+                            filledColor="#16a34a"
+                            emptyColor="#e2e8f0"
+                          />
+                        </div>
+
+                        <div className="review-card-head">
+                          {review.avatar ? (
+                            <img
+                              src={review.avatar}
+                              alt=""
+                              className="review-avatar review-avatar-img"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <span className="review-avatar review-avatar-initials" aria-hidden="true">
+                              {initialsOf(review.name)}
+                            </span>
+                          )}
+                          <div className="review-card-head-text">
+                            <p className="review-card-author">{review.name}</p>
+                            <p className="review-card-date">
+                              {review.date}
+                              {review.bookingId && (
+                                <span className="review-verified"> · {t('reviews.verifiedBooking', 'Verified booking')}</span>
+                              )}
+                            </p>
+                          </div>
+                        </div>
+
+                        {review.title && <p className="review-card-title">{review.title}</p>}
+                        <div className={`review-card-text-wrap${isExpanded ? ' expanded' : ' collapsed'}`}>
+                          <p className={`review-card-text${isExpanded ? '' : ' truncated'}`}>{review.text}</p>
+                        </div>
+                        {review.text.length > 150 && (
+                          <button
+                            type="button"
+                            onClick={() => toggleExpand(review.id)}
+                            className="review-card-toggle"
+                          >
+                            {isExpanded ? t('tourDetail.seeLess') : t('tourDetail.seeMore')}
+                          </button>
+                        )}
+
+                        {(review.valueForMoneyRating || review.guideRating || review.meetingRating) && (
+                          <div className="review-card-subratings">
+                            {review.valueForMoneyRating != null && review.valueForMoneyRating > 0 && (
+                              <span className="review-subrating-chip">{t('reviews.value')}: {review.valueForMoneyRating}/5</span>
+                            )}
+                            {review.guideRating != null && review.guideRating > 0 && (
+                              <span className="review-subrating-chip">{t('reviews.guide')}: {review.guideRating}/5</span>
+                            )}
+                            {review.meetingRating != null && review.meetingRating > 0 && (
+                              <span className="review-subrating-chip">{t('reviews.meeting')}: {review.meetingRating}/5</span>
+                            )}
+                          </div>
+                        )}
+                        {(review.travelMonth || (review.companions && review.companions.length > 0)) && (
+                          <div className="review-card-tags">
+                            {review.travelMonth && <span className="review-tag">{review.travelMonth}</span>}
+                            {review.companions?.map((c) => (
+                              <span key={c} className="review-tag">{c}</span>
+                            ))}
+                          </div>
+                        )}
+
+                        {hasPhotos && (
+                          <div className="review-card-photos" role="group" aria-label="Review photos">
+                            {(review.photos as string[]).slice(0, VISIBLE_THUMBS).map((url, i) => (
+                              <button
+                                key={i}
+                                type="button"
+                                onClick={() => openGallery(review.photos as string[], i)}
+                                className="review-photo-btn"
+                                aria-label={`Open review photo ${i + 1}`}
+                              >
+                                <OptimizedImage src={url} alt="" className="review-card-photo" width={220} />
+                              </button>
+                            ))}
+                            {(review.photos as string[]).length > VISIBLE_THUMBS && (
+                              <button
+                                type="button"
+                                onClick={() => openGallery(review.photos as string[], VISIBLE_THUMBS)}
+                                className="review-photo-btn review-photo-more"
+                                aria-label="View all review photos"
+                              >
+                                <Camera size={16} />
+                                +{(review.photos as string[]).length - VISIBLE_THUMBS}
+                              </button>
+                            )}
+                          </div>
+                        )}
+
+                        {review.supplierResponse && (
+                          <div className="review-card-response">
+                            <p className="review-card-response-title">
+                              {t('reviews.responseFromSupplier', 'Response from supplier')}
+                              {supplierName ? ` · ${supplierName}` : ''}
+                            </p>
+                            {review.supplierResponseAt && (
+                              <p className="review-card-response-date">{formatDate(review.supplierResponseAt)}</p>
+                            )}
+                            <p className="review-card-response-text">{review.supplierResponse}</p>
+                          </div>
+                        )}
+                      </article>
+                    )
+                  })}
+                </div>
+              )}
+
+              {hasMore && !starFilter && !photosOnly && (
+                <button
+                  type="button"
+                  onClick={onLoadMore}
+                  disabled={loadingMore}
+                  className="reviews-load-more"
+                >
+                  {loadingMore ? t('common.loading') : t('reviews.loadMore')}
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </section>
 
       {/* Fullscreen photo lightbox */}
