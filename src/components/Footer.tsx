@@ -6,6 +6,7 @@ import { ChevronDown } from 'lucide-react'
 import { useCurrency, availableCurrencies } from '../contexts/CurrencyContext'
 import { useCookieConsent } from '../context/CookieConsentContext'
 import { prefetchRouteChunk } from '../lib/prefetchRouteChunks'
+import { resolveLanguage } from '../i18n/languages'
 import LanguageCurrencyModal from './LanguageCurrencyModal'
 import './Footer.css'
 import visaSrc from '../assets/icons/visa.svg'
@@ -15,14 +16,6 @@ import googlePaySrc from '../assets/images/gpay.png'
 import mastercardSrc from '../assets/images/master.png'
 import paypalSrc from '../assets/images/papy.png'
 import tripadvisorOwlSrc from '../assets/tripadvisor-owl.png'
-
-const LANGUAGES = [
-  { code: 'en', flag: '🇬🇧', label: 'English (US)' },
-  { code: 'es', flag: '🇪🇸', label: 'Español' },
-  { code: 'fr', flag: '🇫🇷', label: 'Français' },
-  { code: 'de', flag: '🇩🇪', label: 'Deutsch' },
-  { code: 'nl', flag: '🇳🇱', label: 'Nederlands' },
-]
 
 const PAYMENTS = [
   { key: 'mastercard', src: mastercardSrc, alt: 'Mastercard' },
@@ -203,12 +196,11 @@ export default function Footer() {
   const { t, i18n: activeI18n } = useTranslation(undefined, FOOTER_I18N)
   const { currency } = useCurrency()
   const { openPreferences } = useCookieConsent()
-  const langCode = (activeI18n.language ?? 'en').substring(0, 2).toLowerCase()
   // Language/currency are chosen via the same modal the navbar uses; the tab
   // to open is remembered per button (language vs currency).
   const [modalTab, setModalTab] = useState<'language' | 'currency' | null>(null)
   const isMobile = useIsMobile()
-  const currentLang = LANGUAGES.find((lang) => lang.code === langCode)
+  const currentLang = resolveLanguage(activeI18n.language)
   const currentCurrency = availableCurrencies.find((c) => c.code === currency.code)
   const year = new Date().getFullYear()
   const watermarkRef = useRef<HTMLDivElement>(null)
@@ -301,9 +293,6 @@ export default function Footer() {
       title: t('footer.supplierZone'),
       links: [
         { to: '/supplier/list-experience', label: t('footer.asSupplier') },
-        { to: '/content-creators', label: t('footer.asContentCreator') },
-        { to: '/travel-agents', label: t('footer.asTravelAgentReseller') },
-        { to: '/transport-providers', label: t('footer.asTransportProvider') },
         { to: '/hotels', label: t('footer.asAccommodationProvider') },
       ],
     },
@@ -352,7 +341,11 @@ export default function Footer() {
                   aria-haspopup="dialog"
                   aria-labelledby="footer-language-label footer-language-value"
                 >
-                  <span className="footer-select-value" id="footer-language-value">
+                  <span
+                    className="footer-select-value"
+                    id="footer-language-value"
+                    title={currentLang?.label}
+                  >
                     {currentLang ? `${currentLang.flag} ${currentLang.label}` : ''}
                   </span>
                   <ChevronDown className="footer-select-chevron" size={14} strokeWidth={2} aria-hidden="true" />

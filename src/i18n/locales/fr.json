@@ -17,7 +17,7 @@
     "confirmPassword": "Confirmer le mot de passe",
     "confirmPasswordPlaceholder": "Confirmez votre mot de passe",
     "connecting": "Connexion…",
-    "createAccountAria": "Créer un compte Expedition-Go Tours",
+    "createAccountAria": "Créer un compte Travio Ghana",
     "createAnAccount": "Créer un compte",
     "createPasswordPlaceholder": "Créez un mot de passe",
     "createYourAccount": "Créez votre compte",
@@ -36,26 +36,28 @@
     "scene": {
       "aria": "Explorez le Ghana — des expériences inoubliables",
       "eyebrow": "Explorez le Ghana",
-      "subtitle": "Des monuments historiques aux plages magnifiques, en passant par une culture vibrante et des aventures locales — découvrez un Ghana plus authentique avec Expedition-Go Tours.",
+      "subtitle": "Des monuments historiques aux plages magnifiques, en passant par une culture vibrante et des aventures locales — découvrez un Ghana plus authentique avec Travio Ghana.",
       "title": "Des expériences inoubliables vous attendent"
     },
     "showPassword": "Afficher le mot de passe",
-    "signInAria": "Se connecter à Expedition-Go Tours",
+    "signInAria": "Se connecter à Travio Ghana",
     "signInFailed": "La connexion a échoué. Veuillez réessayer.",
     "signedIn": "Connexion réussie",
     "signedUpSuccess": "Compte créé avec succès",
     "signinSubtitle": "Connectez-vous pour continuer à découvrir le Ghana.",
     "signingIn": "Connexion…",
-    "signupSubtitle": "Rejoignez Expedition-Go Tours pour découvrir et réserver des expériences inoubliables.",
+    "signupSubtitle": "Rejoignez Travio Ghana pour découvrir et réserver des expériences inoubliables.",
     "trust": {
-      "aria": "Pourquoi réserver avec Expedition-Go Tours",
+      "aria": "Pourquoi réserver avec Travio Ghana",
       "localText": "Des conseils authentiques de Ghanéens",
       "localTitle": "Experts locaux",
       "secureText": "Vos données sont en sécurité avec nous",
       "secureTitle": "Réservation sécurisée",
       "verifiedText": "Sélectionnées et vérifiées",
       "verifiedTitle": "Expériences vérifiées"
-    }
+    },
+    "newToTravioGhana": "Nouveau sur Travio Ghana ?",
+    "verifyEmailSent": "Vérifiez votre boîte de réception pour vérifier votre e-mail"
   },
   "booking": {
     "promoCode": "Code Promo",
@@ -138,7 +140,20 @@
     "traveler_one": "voyageur",
     "traveler_other": "voyageurs",
     "total_one": "Total ({{count}} voyageur)",
-    "total_other": "Total ({{count}} voyageurs)"
+    "total_other": "Total ({{count}} voyageurs)",
+    "bookingsCloseAt": "Clôture des réservations {{time}}",
+    "bookingsClosed": "Réservations fermées",
+    "deadlineSubtext": "L’opérateur touristique cessera bientôt d’accepter les réservations pour votre date.",
+    "hoursLeftToBook": "{{hours}} heures restantes pour réserver",
+    "optionFrom": "depuis",
+    "optionPrivate": "Privé",
+    "optionValidDays": "Valide {{value}} {{unit}} depuis la réservation",
+    "refundWindowEndingSoon": "La fenêtre de remboursement pour cette tournée va bientôt prendre fin.",
+    "selectOption": "Choisissez votre option",
+    "total_many": "Total ({{count}} voyageurs)",
+    "travelersCount_many": "{{count}} voyageurs",
+    "travelersCount_one": "{{count}} voyageur",
+    "travelersCount_other": "{{count}} voyageurs"
   },
   "card": {
     "likelyToSellOut": "Risque de rupture",
@@ -208,7 +223,7 @@
     "company": "Entreprise",
     "connectWithUs": "Connectez-vous avec nous",
     "contactUs": "Contactez-Nous",
-    "copyright": "2022 -2026 All rights reserved | Expedition-Go Tours LTD | Accra-Ghana",
+    "copyright": "2022 -2026 All rights reserved | Travio Ghana LTD | Accra-Ghana",
     "faq": "FAQ",
     "helpCentre": "Centre d'Aide",
     "home": "Accueil",
@@ -232,7 +247,7 @@
     "supplierDashboard": "Tableau de Bord Fournisseur",
     "supplierTerms": "Conditions Fournisseur",
     "asContentCreator": "Créateurs de Contenu",
-    "asSupplier": "Publiez sur TravioGhana",
+    "asSupplier": "Listez votre Expérience",
     "asAccommodationProvider": "Hébergements",
     "asTravelAgentReseller": "Agents de Voyage",
     "asTransportProvider": "Partenaires de Transport",
@@ -245,7 +260,13 @@
     "accommodationProviders": "Fournisseurs d'hébergement",
     "followJourney": "Suivez le voyage",
     "copyrightBy": "Tous droits réservés. · Accra, Ghana",
-    "legalNav": "Mentions légales"
+    "legalNav": "Mentions légales",
+    "appStore": "App Store",
+    "copyrightLine": "© {{year}} <brand>TravioGhana</brand>. Tous droits réservés. · Une société <company>Expedition-Go Tours</company> · Accra, Ghana.",
+    "downloadOn": "Téléchargez sur le",
+    "getItOn": "ALLEZ-Y",
+    "googlePlay": "Google Play",
+    "mobileComingSoon": "Bientôt disponible sur mobile"
   },
   "gallery": {
     "tourImage": "Image du circuit {{number}}",
@@ -267,14 +288,14 @@
     "destination": "Destination",
     "destinationPlaceholder": "Où allez-vous ?",
     "search": "Rechercher",
-    "subtitle": "Découvrez des circuits et expériences extraordinaires dans le monde entier",
+    "subtitle": "Découvrez des circuits et expériences extraordinaires dans le monde entier",
     "title": "Réservez des Expériences Inoubliables au Ghana"
   },
   "languages": {
-    "en": "English",
-    "es": "Español",
+    "en": "English (United States)",
+    "es": "Español (España)",
     "fr": "Français",
-    "de": "Deutsch",
+    "de": "Deutsch (Deutschland)",
     "nl": "Nederlands"
   },
   "location": {
@@ -312,7 +333,9 @@
     "signOut": "Déconnexion",
     "wishlist": "Favoris",
     "accountSettings": "Parametres du compte",
-    "resetToDefault": "Rétablir les valeurs par défaut"
+    "resetToDefault": "Rétablir les valeurs par défaut",
+    "noLanguagesFound": "Aucune langue trouvée",
+    "searchLanguages": "Rechercher des langues"
   },
   "newsletter": {
     "description": "Abonnez-vous pour recevoir des offres exclusives et de l'inspiration voyage",
@@ -334,7 +357,15 @@
     "recentSearches": "Recherches récentes",
     "removeRecent": "Supprimer des recherches récentes",
     "tour": "Circuit",
-    "toursAndExperiences": "Circuits et Expériences"
+    "toursAndExperiences": "Circuits et Expériences",
+    "bestMatches": "Meilleurs matchs",
+    "placesToSee": "Lieux à voir",
+    "resultsFor": "Résultats pour",
+    "resultsIn": "Expériences à {{location}}",
+    "thingsToDo": "Choses à faire",
+    "title": "Rechercher des visites",
+    "toursFound": "trouvé",
+    "toursVisiting": "Visites visitées {{attraction}}"
   },
   "notFound": {
     "title": "Page introuvable",
@@ -361,10 +392,16 @@
     "travelStories": "Histoires et Actualités de Voyage",
     "viewAll": "Voir Tout",
     "toursIn": "Circuits à {{location}}",
-    "whatTravellersAreSaying": "Ce que disent les voyageurs"
+    "whatTravellersAreSaying": "Ce que disent les voyageurs",
+    "continueSearchIn": "Poursuivez votre recherche dans {{location}}",
+    "earlierDestinationSearch": "Votre recherche de destination précédente.",
+    "pickUpWhereYouLeftOff": "Reprends là où tu t’es arrêté.",
+    "previouslySearchedIn": "Précédemment recherché dans {{location}}",
+    "recentlySearched": "Recherches récentes",
+    "toursInRegion": "Visites dans {{region}}"
   },
   "splash": {
-    "alt": "Expedition-Go Tours Limited",
+    "alt": "Travio Ghana Limited",
     "fallback": "EG",
     "tagline": "Votre Porte d'Entrée vers l'Afrique",
     "word1": "EXPEDITION-GO",
@@ -379,14 +416,14 @@
     "aboutThisSupplier": "À propos de ce fournisseur",
     "viewMore": "Voir plus",
     "toursBySupplier": "Circuits de ce fournisseur",
-    "termsSubtitle": "Les conditions qui régissent la vente de vos circuits et expériences sur Expedition-Go Tours.",
+    "termsSubtitle": "Les conditions qui régissent la vente de vos circuits et expériences sur Travio Ghana.",
     "activitiesHeading": "Activités de ce prestataire",
     "activitiesSubtitle": "Découvrez les expériences populaires de {{name}}.",
     "bookingSupport": "Assistance réservation",
-    "bookingSupportDesc": "Géré en toute sécurité via Expedition-Go Tours",
+    "bookingSupportDesc": "Géré en toute sécurité via Travio Ghana",
     "messageError": "Impossible d'ouvrir la messagerie. Veuillez réessayer.",
     "messageProvider": "Contacter le prestataire",
-    "messageProviderHint": "Discutez en toute sécurité sur Expedition-Go Tours",
+    "messageProviderHint": "Discutez en toute sécurité sur Travio Ghana",
     "nextPhotos": "Photos suivantes",
     "openPhoto": "Ouvrir la photo {{index}} sur {{total}}",
     "previousPhotos": "Photos précédentes",
@@ -434,13 +471,16 @@
     "trustPendingDesc": "Documents en cours d'examen",
     "trustRating": "{{rating}}/5",
     "trustRatingDesc": "Note moyenne des voyageurs",
-    "trustToursDesc": "Expériences sur Expedition-Go Tours",
+    "trustToursDesc": "Expériences sur Travio Ghana",
     "trustTypeDesc": "Catégorie d'activité",
     "trustVerified": "Fournisseur vérifié",
     "trustVerifiedDesc": "Documents examinés et approuvés",
     "unknownName": "Opérateur de circuits",
     "viewAllTours": "Voir les {{count}} circuits",
-    "website": "Site web"
+    "website": "Site web",
+    "providerReviews_many": "{{count}} Avis sur les fournisseurs",
+    "reviewCount_many": "{{count}} avis",
+    "tours_many": "{{count}} Tours"
   },
   "supportChat": {
     "adminSupport": "Support Administratif",
@@ -468,7 +508,7 @@
     "openChat": "Ouvrir le chat",
     "typeMessage": "Tapez un message...",
     "welcomeText": "Nous sommes là pour vous aider. Choisissez une option ci-dessous ou envoyez-nous un message.",
-    "welcomeTitle": "Bonjour ! Bienvenue chez Expedition-Go Tours",
+    "welcomeTitle": "Bonjour ! Bienvenue chez Travio Ghana",
     "typicalReply": "Répond généralement en quelques minutes",
     "myChats": "Mes discussions",
     "expeditionSupport": "Support Travio",
@@ -571,7 +611,16 @@
     "starsOutOf5": "{{count}} sur 5 étoiles",
     "reviewBy": "Avis de {{name}}",
     "closeReview": "Fermer l'avis",
-    "starsCount": "{{count}} étoiles"
+    "starsCount": "{{count}} étoiles",
+    "allPhotos": "Toutes les photos",
+    "noReviewsText": "Cette expérience est nouvelle sur TravioGhana. Les avis apparaissent ici dès que les voyageurs les écrivent.",
+    "noReviewsTitle": "Pas encore d’avis",
+    "readThem": "Lisez-les",
+    "totalCount_many": "{{count}} avis",
+    "totalCount_one": "{{count}} avis",
+    "totalCount_other": "{{count}} avis",
+    "verifiedBooking": "Réservation vérifiée",
+    "withPhotos": "Avec des photos"
   },
   "tourDetail": {
     "aboutTour": "À Propos de Ce Circuit",
@@ -712,7 +761,12 @@
     "freeCancellationBadge": "Annulation gratuite",
     "nonRefundableBadge": "Non remboursable",
     "meetingPointBadge": "Point de rendez-vous",
-    "pickupIncludedBadge": "Prise en charge incluse"
+    "pickupIncludedBadge": "Prise en charge incluse",
+    "instantConfirmation": "Confirmation instantanée",
+    "manualConfirmation": "Confirmation manuelle",
+    "operatorReviewCount": "{{count, number}} avis",
+    "operatorReviewSources": "sur TripAdvisor, GetYourGuide et Google",
+    "sampleReviews": "Avis d'échantillon"
   },
   "tourInfo": {
     "title": "Informations sur le Circuit",
@@ -795,7 +849,11 @@
     "pickupPendingHint": "L'opérateur touristique vous contactera pour confirmer votre point de prise en charge exact et l'heure.",
     "pickupAdd": "Ajouter un point de prise en charge",
     "pickupUpdate": "Modifier la prise en charge",
-    "pickupTime": "Prise en charge à {{time}}"
+    "pickupTime": "Prise en charge à {{time}}",
+    "guestCreateAccount": "Créer un compte",
+    "guestSaveBody": "Créez un compte avec {{email}} pour gérer cette réservation, gardez vos bons d’achat au même endroit et réservez plus rapidement la prochaine fois.",
+    "guestSaveTitle": "Enregistrez cette réservation sur un compte",
+    "guestSignIn": "Connectez-vous"
   },
   "support": {
     "helpCentreSubtitle": "Comment pouvons-nous vous aider aujourd'hui ?",
@@ -820,7 +878,7 @@
     "searchPlaceholder": "Rechercher dans l'aide et la FAQ",
     "searchNoResults": "Aucun résultat pour \"{{query}}\". Essayez d'autres mots ou contactez-nous.",
     "whatWeDoTitle": "Ce que nous faisons",
-    "whatWeDoText": "Expedition-Go Tours est une plateforme basée au Ghana qui propose des circuits et expériences sélectionnés — circuits culturels, safaris, excursions à la journée et aventures de plusieurs jours — avec des opérateurs locaux et une équipe d'assistance facile à joindre.",
+    "whatWeDoText": "Travio Ghana est une plateforme basée au Ghana qui propose des circuits et expériences sélectionnés — circuits culturels, safaris, excursions à la journée et aventures de plusieurs jours — avec des opérateurs locaux et une équipe d'assistance facile à joindre. Elle est exploitée par sa société mère, <company>Expedition-Go Tours</company>.",
     "trust1": "Expériences locales sélectionnées",
     "trust2": "Annulation gratuite sur la plupart des circuits",
     "trust3": "Prise en charge partout au Ghana",
@@ -832,42 +890,42 @@
     "topicOffersDesc": "Codes promo, offres spéciales et changements de prix.",
     "partnerTitle": "Partenaires et fournisseurs",
     "topicPartnerDesc": "Assistance pour fournisseurs, hôtels, transport et partenaires.",
-    "topicAboutTitle": "À propos d'Expedition-Go Tours",
-    "topicAboutDesc": "Qui nous sommes et ce que fait Expedition-Go Tours.",
+    "topicAboutTitle": "À propos d'Travio Ghana",
+    "topicAboutDesc": "Qui nous sommes et ce que fait Travio Ghana.",
     "viewAnswers": "Voir les réponses",
     "popularTitle": "Questions fréquentes",
     "seeAllFaqs": "Voir toutes les questions",
     "hoursNote": "Tous les horaires sont en GMT."
   },
   "company": {
-    "aboutUsSubtitle": "Découvrez qui nous sommes et ce qui anime Expedition-Go Tours.",
+    "aboutUsSubtitle": "Découvrez qui nous sommes et ce qui anime Travio Ghana.",
     "careersSubtitle": "Rejoignez notre équipe et aidez les voyageurs à découvrir le monde.",
-    "partnershipsSubtitle": "Développez votre activité grâce aux partenariats Expedition-Go Tours.",
+    "partnershipsSubtitle": "Développez votre activité grâce aux partenariats Travio Ghana.",
     "contentCreatorsSubtitle": "Transformez votre contenu voyage en revenus.",
-    "termsSubtitle": "Les conditions qui régissent votre utilisation d'Expedition-Go Tours.",
+    "termsSubtitle": "Les conditions qui régissent votre utilisation d'Travio Ghana.",
     "privacySubtitle": "Comment nous collectons, utilisons et protégeons vos informations.",
     "cookiesSubtitle": "Comment nous utilisons les cookies et comment vous pouvez les contrôler."
   },
   "foundation": {
-    "pageTitle": "Fondation Expedition-Go Tours | Faire la Différence par le Voyage",
-    "heroLabel": "Fondation Expedition-Go Tours",
+    "pageTitle": "Fondation Travio Ghana | Faire la Différence par le Voyage",
+    "heroLabel": "Fondation Travio Ghana",
     "heroTitle": "Chaque voyage peut faire la différence.",
     "missionTitle": "Faire la différence par le voyage",
-    "missionText1": "Chez Expedition-Go Tours, nous croyons que le tourisme ne devrait pas seulement créer des expériences mémorables. Il devrait également avoir un impact positif sur les communautés et les destinations que nous servons.",
-    "missionText2": "C'est pourquoi nous consacrons <strong>2 % de chaque revenu de réservation</strong> généré via la plateforme Expedition-Go Tours à la Fondation Expedition-Go Tours. Grâce à cette contribution, nous soutenons des individus, des communautés locales et des projets communautaires qui ont besoin d'un coup de main.",
-    "missionHighlight": "Qu'il s'agisse de soutenir une famille dans le besoin, de contribuer à une initiative communautaire locale, de financer un projet important ou de promouvoir le développement durable, chaque réservation avec Expedition-Go Tours nous aide à redonner.",
-    "missionCta": "Quand vous voyagez avec Expedition-Go Tours, vous ne réservez pas seulement un voyage. Vous aidez à en créer un meilleur pour quelqu'un d'autre.",
+    "missionText1": "Chez Travio Ghana, nous croyons que le tourisme ne devrait pas seulement créer des expériences mémorables. Il devrait également avoir un impact positif sur les communautés et les destinations que nous servons.",
+    "missionText2": "C'est pourquoi nous consacrons <strong>2 % de chaque revenu de réservation</strong> généré via la plateforme Travio Ghana à la Fondation Travio Ghana. Grâce à cette contribution, nous soutenons des individus, des communautés locales et des projets communautaires qui ont besoin d'un coup de main.",
+    "missionHighlight": "Qu'il s'agisse de soutenir une famille dans le besoin, de contribuer à une initiative communautaire locale, de financer un projet important ou de promouvoir le développement durable, chaque réservation avec Travio Ghana nous aide à redonner.",
+    "missionCta": "Quand vous voyagez avec Travio Ghana, vous ne réservez pas seulement un voyage. Vous aidez à en créer un meilleur pour quelqu'un d'autre.",
     "howWeHelp": "Comment nous aidons",
     "focusAreas": "Nos domaines d'intervention",
     "area1Title": "Soutien Individual",
     "area1Subtitle": "Aider les personnes quand elles en ont le plus besoin.",
-    "area1Desc": "Un espace pour les personnes qui pourraient avoir besoin de soutien ou d'assistance. Les gens peuvent partager leur situation avec nous et nous dire comment Expedition-Go Tours pourrait les aider.",
+    "area1Desc": "Un espace pour les personnes qui pourraient avoir besoin de soutien ou d'assistance. Les gens peuvent partager leur situation avec nous et nous dire comment Travio Ghana pourrait les aider.",
     "area2Title": "Soutien Communautaire",
     "area2Subtitle": "Soutenir les communautés et les initiatives locales.",
     "area2Desc": "Nous travaillons avec les communautés, les leaders locaux, les écoles, les organisations et les groupes pour identifier les besoins et soutenir les initiatives qui améliorent la vie des gens et créent des opportunités.",
     "area3Title": "Projets Communautaires",
     "area3Subtitle": "Transformer les idées en actions significatives.",
-    "area3Desc": "Découvrez les projets et initiatives soutenus par Expedition-Go Tours, notamment l'éducation, la conservation de l'environnement, le développement local et autres programmes communautaires.",
+    "area3Desc": "Découvrez les projets et initiatives soutenus par Travio Ghana, notamment l'éducation, la conservation de l'environnement, le développement local et autres programmes communautaires.",
     "area4Title": "Devenez Partenaire",
     "area4Subtitle": "Ensemble, nous pouvons avoir un impact plus grand.",
     "area4Desc": "Nous accueillons des partenariats avec des organisations caritatives, des ONG, des entreprises, des organisations communautaires et des individus qui partagent notre vision d'utiliser le tourisme comme un levier de bien.",
@@ -876,7 +934,7 @@
     "helpIntro": "Que vous soyez un individu dans le besoin ou une communauté cherchant du soutien, nous sommes là pour aider. Contactez-nous et faites-nous savoir comment nous pouvons faire la différence.",
     "forIndividuals": "Pour les Individus",
     "individualSubtitle": "Un soutien personnel quand vous en avez le plus besoin.",
-    "individualDesc": "Si vous ou quelqu'un que vous connaissez avez besoin de soutien, nous sommes là pour écouter. Partagez votre situation avec nous et faites-nous savoir comment Expedition-Go Tours pourrait vous aider.",
+    "individualDesc": "Si vous ou quelqu'un que vous connaissez avez besoin de soutien, nous sommes là pour écouter. Partagez votre situation avec nous et faites-nous savoir comment Travio Ghana pourrait vous aider.",
     "requestHelpBtn": "Demander de l'Aide",
     "forCommunities": "Pour les Communautés",
     "communitySubtitle": "Permettre aux communautés de prospérer.",
@@ -891,10 +949,10 @@
     "getInvolved": "S'impliquer",
     "volunteerTitle": "Devenez Bénévole",
     "volunteerSubtitle": "Donnez de votre temps. Faites la différence.",
-    "volunteerDesc": "Découvrez les opportunités de faire du bénévolat en mettant votre temps, vos compétences et votre expérience au service des initiatives et projets communautaires d'Expedition-Go Tours. Votre contribution, aussi petite soit-elle, peut créer un changement durable dans la vie de quelqu'un.",
+    "volunteerDesc": "Découvrez les opportunités de faire du bénévolat en mettant votre temps, vos compétences et votre expérience au service des initiatives et projets communautaires d'Travio Ghana. Votre contribution, aussi petite soit-elle, peut créer un changement durable dans la vie de quelqu'un.",
     "volunteerBtn": "S'impliquer",
     "ctaTitle": "Prêt à faire la différence ?",
-    "ctaText": "Chaque réservation avec Expedition-Go Tours aide à soutenir les communautés et à créer un changement positif.",
+    "ctaText": "Chaque réservation avec Travio Ghana aide à soutenir les communautés et à créer un changement positif.",
     "ctaGetInvolved": "S'impliquer",
     "ctaLearnMore": "En Savoir Plus",
     "prevImage": "Image précédente",
@@ -902,7 +960,7 @@
     "goToSlide": "Aller à la diapositive {{number}}"
   },
   "blog": {
-    "pageTitle": "Blog | Expedition-Go Tours",
+    "pageTitle": "Blog",
     "heroKicker": "Planifiez le Ghana en toute confiance",
     "heroTitle": "Des idées de voyage qui",
     "heroTitleAccent": "vous emmènent plus loin.",
@@ -959,7 +1017,9 @@
     "categoryCulture": "Culture",
     "categoryFood": "Gastronomie",
     "categoryAdventure": "Aventure",
-    "categoryHeritage": "Patrimoine"
+    "categoryHeritage": "Patrimoine",
+    "guidesCount_many": "{{count}} disponibles",
+    "heroStories_many": "{{count}} histoires à explorer"
   },
   "about": {
     "pageTitle": "À propos",
@@ -967,7 +1027,7 @@
     "heroTitle": "Voyagez. Découvrez. Connectez-vous.",
     "storyLabel": "Notre Histoire",
     "storyTitle": "Tout a commencé par une idée simple",
-    "storyText1": "Expedition-Go Tours a été construit sur une idée simple : faciliter pour les voyageurs la découverte et la réservation d'expériences authentiques au Ghana, tout en offrant aux opérateurs locaux la plateforme qu'ils méritent.",
+    "storyText1": "Travio Ghana a été construit sur une idée simple : faciliter pour les voyageurs la découverte et la réservation d'expériences authentiques au Ghana, tout en offrant aux opérateurs locaux la plateforme qu'ils méritent.",
     "storyText2": "Chaque expérience sur notre plateforme est examinée et sélectionnée par notre équipe pour répondre aux normes de qualité, de sécurité et d'authenticité — pour que les voyageurs puissent réserver en toute confiance.",
     "calloutHeading": "Nous connectons les voyageurs à des expériences soigneusement sélectionnées à travers le Ghana, des circuits culturels aux activités d'aventure.",
     "calloutBody": "Notre mission est de rendre la découverte de ces moments facile — que vous soyez un visiteur de première fois ou un voyageur expérimenté à la recherche de quelque chose de nouveau.",
@@ -985,7 +1045,7 @@
     "valuesLabel": "Ce que nous défendons",
     "valuesTitle": "Nos valeurs",
     "value1Title": "Expériences soigneusement sélectionnées",
-    "value1Text": "Chaque circuit sur Expedition-Go Tours est examiné et sélectionné pour répondre à nos normes de qualité, de sécurité et d'authenticité.",
+    "value1Text": "Chaque circuit sur Travio Ghana est examiné et sélectionné pour répondre à nos normes de qualité, de sécurité et d'authenticité.",
     "value2Title": "Experts locaux",
     "value2Text": "Nous travaillons directement avec des opérateurs et guides locaux qui connaissent le mieux leurs destinations.",
     "value3Title": "La sécurité d'abord",
@@ -1005,9 +1065,9 @@
     "nextImage": "Image suivante"
   },
   "careers": {
-    "pageTitle": "Carrières | Expedition-Go Tours",
+    "pageTitle": "Carrières | Travio Ghana",
     "whyTitle": "Pourquoi nous rejoindre",
-    "whyText1": "Expedition-Go Tours est une petite équipe ambitieuse qui travaille à transformer la façon dont les gens découvrent et réservent des expériences de voyage au Ghana.",
+    "whyText1": "Travio Ghana est une petite équipe ambitieuse qui travaille à transformer la façon dont les gens découvrent et réservent des expériences de voyage au Ghana.",
     "whyText2": "Nous n'affichons pas actuellement de postes ouverts, mais nous sommes toujours intéressés par les profils talentueux qui partagent notre passion pour le voyage et la technologie.",
     "departmentsTitle": "Où vous pourriez vous intégrer",
     "applyTitle": "Comment postuler",
@@ -1020,11 +1080,11 @@
     "dept3Title": "Support Client",
     "dept3Text": "Soyez la voix chaleureuse sur laquelle les voyageurs comptent quand ils ont besoin d'aide avant, pendant ou après leur voyage.",
     "dept4Title": "Marketing",
-    "dept4Text": "Racontez l'histoire d'Expedition-Go Tours et aidez-nous à atteindre les voyageurs du monde entier."
+    "dept4Text": "Racontez l'histoire d'Travio Ghana et aidez-nous à atteindre les voyageurs du monde entier."
   },
   "partnerships": {
     "pageTitle": "Partenariats",
-    "eyebrow": "Travailler avec Expedition-Go Tours",
+    "eyebrow": "Travailler avec Travio Ghana",
     "galleryLabel": "Des moments avec nos partenaires",
     "talkText": "Parlez-nous de votre activité et du partenariat qui vous intéresse — notre équipe vous répondra.",
     "pauseSlideshow": "Mettre le diaporama en pause",
@@ -1041,11 +1101,11 @@
     "nextImage": "Image suivante",
     "goToSlide": "Aller à la diapositive {{number}}",
     "type1Title": "Opérateurs touristiques et fournisseurs",
-    "type1Text": "Publiez vos expériences sur Expedition-Go Tours et touchez des voyageurs prêts à réserver. Commencez par créer un compte fournisseur.",
+    "type1Text": "Publiez vos expériences sur Travio Ghana et touchez des voyageurs prêts à réserver. Commencez par créer un compte fournisseur.",
     "type2Title": "Hôtels et hébergements",
     "type2Text": "Offrez à vos clients des expériences exclusives et gagnez grâce à chaque réservation réussie.",
     "type3Title": "Agents de voyage et revendeurs",
-    "type3Text": "Revendez les expériences Expedition-Go Tours à vos clients avec des conditions de partenariat simples et transparentes.",
+    "type3Text": "Revendez les expériences Travio Ghana à vos clients avec des conditions de partenariat simples et transparentes.",
     "type4Title": "Créateurs de contenu et influenceurs",
     "type4Text": "Collaborez avec nous pour créer du contenu voyage inspirant et gagnez grâce à votre audience.",
     "heroPill": "Des partenariats partout au Ghana",
@@ -1057,7 +1117,7 @@
     "heroCtaSecondary": "Trouver votre parcours de partenariat",
     "heroMicro": "Conçu pour l'expertise locale, une portée plus large et une croissance durable.",
     "heroBadge": "5 façons de s'associer",
-    "heroShotLabel": "Réseau de partenaires Expedition-Go Tours",
+    "heroShotLabel": "Réseau de partenaires Travio Ghana",
     "heroShotTitle": "Les meilleurs voyages se construisent ensemble.",
     "heroShotPlace": "Accra · Ghana",
     "heroCardLabel": "Croissance connectée",
@@ -1086,7 +1146,7 @@
     "benefit4Text": "Travaillez avec une équipe centrée sur le Ghana, attachée aux opportunités locales et à une collaboration durable.",
     "routesEyebrow": "Avec qui nous travaillons",
     "routesTitle": "Trouvez votre place.",
-    "routesIntro": "Quelle que soit la partie du voyage que vous améliorez, il y a une place pour vous dans le réseau Expedition-Go Tours.",
+    "routesIntro": "Quelle que soit la partie du voyage que vous améliorez, il y a une place pour vous dans le réseau Travio Ghana.",
     "routesNote": "Les cartes se mettent en pause quand vous les survolez.",
     "routesSummaryTitle": "Des rôles différents. Une expérience de voyage plus forte.",
     "routesTag1": "Toucher",
@@ -1111,7 +1171,7 @@
     "closingEyebrow": "Votre parcours commence ici",
     "closingTitle": "Rendons le Ghana plus facile à vivre.",
     "closingText": "Apportez votre expertise, votre service ou votre audience. Nous explorerons comment en faire un voyage plus fort pour les voyageurs.",
-    "closingCta": "Devenir partenaire d'Expedition-Go Tours",
+    "closingCta": "Devenir partenaire d'Travio Ghana",
     "type1CardTitle": "Mettez vos expériences devant des voyageurs prêts à réserver.",
     "type2CardTitle": "Donnez à chaque client plus de raisons d'explorer le Ghana.",
     "type3CardTitle": "Ajoutez des expériences ghanéennes réservables à chaque itinéraire.",
@@ -1121,7 +1181,7 @@
     "type5Text": "Partenaires avec nous pour offrir des solutions de transport fluides aux voyageurs dans toutes les destinations."
   },
   "help": {
-    "pageTitle": "Centre d'Aide | Expedition-Go Tours",
+    "pageTitle": "Centre d'Aide | Travio Ghana",
     "visitUs": "Rendez-nous Visite",
     "officeLabel": "Notre Bureau",
     "companyName": "Expedition-Go Tours Ltd",
@@ -1138,7 +1198,7 @@
     "contactDesc": "Contactez notre équipe par e-mail ou chat en direct pendant les heures de support."
   },
   "contact": {
-    "pageTitle": "Contactez-Nous | Expedition-Go Tours",
+    "pageTitle": "Contactez-Nous | Travio Ghana",
     "emailLabel": "Email",
     "emailNote": "Nous répondons généralement dans un jour ouvrable.",
     "phoneLabel": "Téléphone",
@@ -1187,7 +1247,7 @@
     }
   },
   "faq": {
-    "pageTitle": "FAQ | Expedition-Go Tours",
+    "pageTitle": "FAQ | Travio Ghana",
     "catBooking": "Réservation & Paiement",
     "catCancellation": "Annulation & Remboursements",
     "catPickup": "Prise en charge & Points de Rendez-vous",
@@ -1224,13 +1284,16 @@
     "q14": "Comment contacter le support ?",
     "a14": "Vous pouvez nous joindre par email, téléphone, WhatsApp ou chat en direct. Consultez notre page Contactez-nous pour tous les détails.",
     "q15": "Quelles sont vos heures de support ?",
-    "a15": "Notre équipe de support est disponible du lundi au samedi de 8h00 à 22h00, et le dimanche de 8h00 à 17h00 (GMT)."
+    "a15": "Notre équipe de support est disponible du lundi au samedi de 8h00 à 22h00, et le dimanche de 8h00 à 17h00 (GMT).",
+    "aboutKicker": "Qui sommes-nous",
+    "aboutText": "TravioGhana est une plateforme de voyage basée au Ghana proposant des circuits sélectionnés, des expériences culturelles, des safaris et des excursions à la journée. Elle est exploitée par sa société mère, <company>Expedition-Go Tours Ltd</company>, un opérateur enregistré auprès de l'Autorité du tourisme du Ghana et basé à Accra.",
+    "aboutTitle": "À propos de TravioGhana"
   },
   "contentCreators": {
-    "pageTitle": "Créateurs de Contenu | Expedition-Go Tours",
-    "heroTitle": "Monétisez votre contenu voyage avec Expedition-Go Tours",
+    "pageTitle": "Créateurs de Contenu | Travio Ghana",
+    "heroTitle": "Monétisez votre contenu voyage avec Travio Ghana",
     "growTitle": "Développez votre présence sur les réseaux sociaux en rejoignant notre communauté voyage",
-    "growItem1": "Candidaturez pour des expériences Expedition-Go Tours sponsorisées",
+    "growItem1": "Candidaturez pour des expériences Travio Ghana sponsorisées",
     "growItem2": "Participez à des ateliers, événements de réseautage et concours",
     "makeTitle": "Gagnez de l'argent via votre site web ou blog",
     "feature1": "Gagnez une commission minimale de 8 %, payée mensuellement",
@@ -1242,14 +1305,14 @@
     "step2": "Créez des intégrations et gagnez des commissions",
     "step3": "Rejoignez notre communauté voyage et postulez pour des expériences gratuites",
     "partnerTitle": "Devenez partenaire",
-    "partnerDesc": "Inscrivez-vous pour devenir partenaire d'Expedition-Go Tours et développez et monétisez vos plateformes.",
+    "partnerDesc": "Inscrivez-vous pour devenir partenaire d'Travio Ghana et développez et monétisez vos plateformes.",
     "helpTitle": "Besoin d'aide ?",
     "helpDesc": "Consultez notre Centre de Ressources Partenaires ou contactez notre équipe de support si vous avez besoin d'aide supplémentaire.",
     "helpBtn": "Visiter le Centre d'Aide",
     "signupBtn": "S'inscrire"
   },
   "hotels": {
-    "pageTitle": "Hôtels & Hébergements | Expedition-Go Tours",
+    "pageTitle": "Hôtels & Hébergements | Travio Ghana",
     "heroTitle": "Connectez vos clients à des expériences incroyables",
     "heroDesc": "Aidez vos clients à planifier chaque étape de leur voyage avec des circuits et activités sélectionnées qu'ils peuvent réserver directement via votre plateforme.",
     "heroBtn": "Inscrivez-vous gratuitement",
@@ -1258,8 +1321,8 @@
     "stat3Label": "Voyageurs servis chaque année",
     "intTitle": "Générez des revenus grâce à une intégration fluide",
     "intDesc": "Nous rendons l'intégration facile avec des API flexibles et des widgets prêts à l'emploi qui s'intègrent à votre flux de paiement existant.",
-    "whyTitle": "Pourquoi devenir partenaire d'Expedition-Go Tours",
-    "aboutTitle": "À propos du Programme Partenaires Expedition-Go Tours",
+    "whyTitle": "Pourquoi devenir partenaire d'Travio Ghana",
+    "aboutTitle": "À propos du Programme Partenaires Travio Ghana",
     "contactText": "Pour toute demande, contactez info@expeditiongotours.com",
     "contactBtn": "Contactez-Nous",
     "ctaTitle": "Prêt à développer votre activité ?",
@@ -1267,24 +1330,24 @@
     "ctaBtn": "Commencer"
   },
   "travelAgents": {
-    "pageTitle": "Agents de Voyage | Expedition-Go Tours",
+    "pageTitle": "Agents de Voyage | Travio Ghana",
     "heroTitle": "Économisez plus de 10 heures par semaine avec la réservation intelligente d'expériences",
     "heroDesc": "Commencez à monétiser votre expertise en offrant des circuits et activités sélectionnés à vos clients.",
     "heroBtn": "S'inscrire",
     "trustedTitle": "Une plateforme reconnue et de confiance pour la réservation d'expériences.",
-    "whyTitle": "Pourquoi rejoindre Expedition-Go Tours",
+    "whyTitle": "Pourquoi rejoindre Travio Ghana",
     "gettingStarted": "Commencer est facile",
     "makeFirstBooking": "Effectuez votre première réservation en moins de 30 minutes",
     "questionsTitle": "Vos questions, nos réponses",
     "resourceTitle": "Centre de ressources",
     "resourceDesc": "Recherchez dans notre base de connaissances pour trouver des réponses aux questions fréquentes.",
     "resourceBtn": "Visiter le centre d'aide",
-    "ctaTitle": "Inscrivez-vous pour devenir partenaire d'Expedition-Go Tours",
+    "ctaTitle": "Inscrivez-vous pour devenir partenaire d'Travio Ghana",
     "ctaDesc": "Développez et monétisez votre expertise",
     "ctaBtn": "S'inscrire"
   },
   "transport": {
-    "pageTitle": "Prestataires de Transport | Expedition-Go Tours",
+    "pageTitle": "Prestataires de Transport | Travio Ghana",
     "heroTitle": "Partenaires avec nous et développez votre activité de transport",
     "heroDesc": "Connectez-vous avec des opérateurs touristiques et des voyageurs qui ont besoin de transport fiable, sûr et confortable à travers le Ghana.",
     "heroBtn": "Inscrivez-vous gratuitement",
@@ -1293,8 +1356,8 @@
     "stat3Label": "Réservations mensuelles",
     "startTitle": "Comment commencer",
     "startDesc": "Nous facilitons le processus pour les prestataires de transport afin qu'ils puissent référencer leur flotte et commencer à recevoir des réservations.",
-    "whyTitle": "Pourquoi devenir partenaire d'Expedition-Go Tours",
-    "aboutTitle": "À propos du Programme Partenaires Expedition-Go Tours",
+    "whyTitle": "Pourquoi devenir partenaire d'Travio Ghana",
+    "aboutTitle": "À propos du Programme Partenaires Travio Ghana",
     "contactText": "Pour toute demande, contactez info@expeditiongotours.com",
     "contactBtn": "Contactez-Nous",
     "ctaTitle": "Prêt à développer votre activité de transport ?",
@@ -1303,11 +1366,11 @@
     "goToStep": "Aller à l'étape {{number}}"
   },
   "supplierTerms": {
-    "pageTitle": "Conditions Fournisseur | Expedition-Go Tours",
+    "pageTitle": "Conditions Fournisseur | Travio Ghana",
     "readyTitle": "Prêt à commencer à vendre ?",
     "listBtn": "Publiez vos circuits",
     "s1Title": "1. Introduction",
-    "s1Text": "Ces Conditions Fournisseur s'appliquent aux opérateurs touristiques, prestataires d'activités et guides indépendants qui publient leurs expériences sur la plateforme Expedition-Go Tours.",
+    "s1Text": "Ces Conditions Fournisseur s'appliquent aux opérateurs touristiques, prestataires d'activités et guides indépendants qui publient leurs expériences sur la plateforme Travio Ghana.",
     "s2Title": "2. Inscription et approbation",
     "s2Text1": "Chaque demande de fournisseur est examinée par notre équipe avant sa mise en ligne. Nous nous réservons le droit de rejeter les candidatures qui ne répondent pas à nos normes de qualité ou de sécurité.",
     "s2Text2": "Certaines activités ne sont pas autorisées sur la plateforme. Veuillez consulter nos directives de plateforme pour la liste complète des activités restreintes.",
@@ -1330,7 +1393,7 @@
     "s10Text": "Nous pouvons mettre à jour ces Conditions Fournisseur de temps à autre. L'utilisation continue de la plateforme vaut acceptation des conditions mises à jour."
   },
   "allTours": {
-    "pageTitle": "Tous les Circuits | Expedition-Go Tours",
+    "pageTitle": "Tous les Circuits | Travio Ghana",
     "loading": "Chargement des circuits...",
     "tourFound": "{{count}} circuit trouvé",
     "toursFound": "{{count}} circuits trouvés",
@@ -1370,7 +1433,11 @@
     "sectionSellOut": "Risque de Rupture",
     "sectionSpecial": "Offres Spéciales",
     "sectionAttractions": "Top des Attractions à Proximité",
-    "sectionNew": "Nouvelles Expériences"
+    "sectionNew": "Nouvelles Expériences",
+    "back": "Retour",
+    "nearLocation": "{{title}} près de {{location}}",
+    "regionFallbackNotice": "Nous n’avons pas encore de visites à {{location}}, mais voici des expériences à travers {{region}}.",
+    "sortClosest": "Le plus proche"
   },
   "cookies": {
     "banner": {
@@ -1439,7 +1506,8 @@
         "onetapDismissal": "Mémorise que vous avez fermé l'invite de connexion Google",
         "maps": "Affiche les cartes des points de prise en charge et des lieux de rendez-vous",
         "analyticsEvents": "Mesure les pages vues, les recherches et les clics pour améliorer le site",
-        "locationSharing": "Mémorise que vous avez activé le partage de localisation, pour que les itinéraires partent de votre position actuelle"
+        "locationSharing": "Mémorise que vous avez activé le partage de localisation, pour que les itinéraires partent de votre position actuelle",
+        "googleAnalytics": "Mesure les pages vues, les recherches et les clics avec Google Analytics pour améliorer le site"
       },
       "durations": {
         "session": "Session",
@@ -1455,7 +1523,8 @@
         "untilSignOut": "Jusqu'à la déconnexion",
         "untilBookingCompletes": "Jusqu'à la finalisation de la réservation",
         "entries2": "2 entrées",
-        "entries5": "5 entrées"
+        "entries5": "5 entrées",
+        "days730": "2 ans"
       }
     }
   },
@@ -1518,5 +1587,24 @@
     "couldNotUpdateDefault": "Impossible de mettre a jour la carte par defaut",
     "couldNotRemoveCard": "Impossible de supprimer la carte",
     "tryAgain": "Reessayer"
+  },
+  "empty": {
+    "alsoLikeTitle": "Vous pourriez aussi aimer",
+    "body": "Nous n’avons pas encore d’expériences pour {{location}} — mais il y a beaucoup à découvrir. Découvrez ces destinations proches et les circuits soigneusement sélectionnés que nous pensons que vous allez adorer.",
+    "bodyAttraction": "Nous n’avons pas encore d’expériences pour {{attraction}} — mais il y a beaucoup à découvrir.",
+    "browseAll": "Parcourir toutes les expériences",
+    "browseAttraction": "Parcourez les expériences dans {{attraction}}",
+    "browseRegion": "Parcourez les expériences dans {{region}}",
+    "clearFilters": "Effacer les filtres",
+    "experiencesCount_many": "{{count}} expériences",
+    "experiencesCount_one": "{{count}} expérience",
+    "experiencesCount_other": "{{count}} expériences",
+    "exploreNearby": "Explorez à proximité",
+    "loading": "Trouver de belles expériences pour vous...",
+    "nearbyTitle": "Tout près",
+    "recommendedTitle": "Recommandé pour vous",
+    "specialOffersTitle": "Offres spéciales",
+    "thisPlace": "Cette destination",
+    "title": "Nous n’en sommes pas encore tout à fait là"
   }
 }

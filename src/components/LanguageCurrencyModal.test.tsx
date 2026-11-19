@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, cleanup } from '@testing-library/react'
+import { render, screen, fireEvent, cleanup, within } from '@testing-library/react'
 import LanguageCurrencyModal from './LanguageCurrencyModal'
 import i18n from '../i18n/config'
 
@@ -70,13 +70,22 @@ describe('LanguageCurrencyModal', () => {
     trigger.remove()
   })
 
+  it('lists the full catalogue with the current language first', () => {
+    render(<LanguageCurrencyModal onClose={() => {}} initialTab="language" />)
+
+    const options = within(screen.getByTestId('language-grid')).getAllByRole('button')
+
+    expect(options).toHaveLength(41)
+    expect(options[0]).toHaveTextContent('English (United States)')
+    expect(options[0]).toHaveAttribute('aria-pressed', 'true')
+  })
+
   it('applies the chosen language and closes', () => {
     const onClose = vi.fn()
     const changeLanguage = vi.spyOn(i18n, 'changeLanguage').mockResolvedValue(undefined as never)
     render(<LanguageCurrencyModal onClose={onClose} initialTab="language" />)
 
-    // real i18n is initialised in the test setup, so these are the English labels
-    fireEvent.click(screen.getByText('Español'))
+    fireEvent.click(screen.getByText('Español (España)'))
 
     expect(changeLanguage).toHaveBeenCalledWith('es')
     expect(onClose).toHaveBeenCalled()
@@ -98,7 +107,7 @@ describe('LanguageCurrencyModal', () => {
 
     // opens on language by default
     expect(screen.getByRole('dialog')).toHaveAttribute('aria-label', 'Language')
-    expect(screen.getByText('English')).toBeInTheDocument()
+    expect(screen.getByText('English (United States)')).toBeInTheDocument()
 
     fireEvent.click(screen.getByText('Currency'))
 

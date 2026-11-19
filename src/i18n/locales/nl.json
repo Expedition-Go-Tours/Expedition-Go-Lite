@@ -17,7 +17,7 @@
     "confirmPassword": "Wachtwoord bevestigen",
     "confirmPasswordPlaceholder": "Bevestig je wachtwoord",
     "connecting": "Verbinden…",
-    "createAccountAria": "Een Expedition-Go Tours-account aanmaken",
+    "createAccountAria": "Een Travio Ghana-account aanmaken",
     "createAnAccount": "Account aanmaken",
     "createPasswordPlaceholder": "Maak een wachtwoord",
     "createYourAccount": "Maak je account aan",
@@ -36,26 +36,28 @@
     "scene": {
       "aria": "Ontdek Ghana — onvergetelijke ervaringen",
       "eyebrow": "Ontdek Ghana",
-      "subtitle": "Van historische bezienswaardigheden tot prachtige stranden, levendige cultuur en lokale avonturen — ontdek een authentieker Ghana met Expedition-Go Tours.",
+      "subtitle": "Van historische bezienswaardigheden tot prachtige stranden, levendige cultuur en lokale avonturen — ontdek een authentieker Ghana met Travio Ghana.",
       "title": "Onvergetelijke ervaringen wachten op je"
     },
     "showPassword": "Wachtwoord tonen",
-    "signInAria": "Inloggen bij Expedition-Go Tours",
+    "signInAria": "Inloggen bij Travio Ghana",
     "signInFailed": "Inloggen mislukt. Probeer het opnieuw.",
     "signedIn": "Succesvol ingelogd",
     "signedUpSuccess": "Account succesvol aangemaakt",
     "signinSubtitle": "Log in en blijf Ghana ontdekken.",
     "signingIn": "Inloggen…",
-    "signupSubtitle": "Sluit je aan bij Expedition-Go Tours en ontdek en boek onvergetelijke ervaringen.",
+    "signupSubtitle": "Sluit je aan bij Travio Ghana en ontdek en boek onvergetelijke ervaringen.",
     "trust": {
-      "aria": "Waarom boeken bij Expedition-Go Tours",
+      "aria": "Waarom boeken bij Travio Ghana",
       "localText": "Authentieke inzichten van Ghanezen",
       "localTitle": "Lokale experts",
       "secureText": "Je gegevens zijn veilig bij ons",
       "secureTitle": "Veilig boeken",
       "verifiedText": "Met de hand geselecteerd en vertrouwd",
       "verifiedTitle": "Geverifieerde ervaringen"
-    }
+    },
+    "newToTravioGhana": "Nieuw bij Travio Ghana?",
+    "verifyEmailSent": "Controleer je inbox om je e-mail te verifiëren"
   },
   "booking": {
     "promoCode": "Promotiecode",
@@ -138,7 +140,18 @@
     "traveler_one": "reiziger",
     "traveler_other": "reizigers",
     "total_one": "Totaal ({{count}} reiziger)",
-    "total_other": "Totaal ({{count}} reizigers)"
+    "total_other": "Totaal ({{count}} reizigers)",
+    "bookingsCloseAt": "Boekingen sluiten {{time}}",
+    "bookingsClosed": "Boekingen gesloten",
+    "deadlineSubtext": "De touroperator zal binnenkort geen boekingen meer accepteren voor jouw date.",
+    "hoursLeftToBook": "{{hours}} Nog uren te boeken",
+    "optionFrom": "van",
+    "optionPrivate": "Privé",
+    "optionValidDays": "Geldig {{value}} {{unit}} vanaf boeking",
+    "refundWindowEndingSoon": "De terugbetalingstermijn voor deze tour loopt binnenkort af.",
+    "selectOption": "Kies je optie",
+    "travelersCount_one": "{{count}} reiziger",
+    "travelersCount_other": "{{count}} reizigers"
   },
   "card": {
     "likelyToSellOut": "Waarschijnlijk uitverkocht",
@@ -208,7 +221,7 @@
     "company": "Bedrijf",
     "connectWithUs": "Maak verbinding met ons",
     "contactUs": "Neem Contact Op",
-    "copyright": "2022 -2026 All rights reserved | Expedition-Go Tours LTD | Accra-Ghana",
+    "copyright": "2022 -2026 All rights reserved | Travio Ghana LTD | Accra-Ghana",
     "faq": "FAQ",
     "helpCentre": "Helpcentrum",
     "home": "Home",
@@ -232,7 +245,7 @@
     "supplierDashboard": "Leveranciersdashboard",
     "supplierTerms": "Leveranciersvoorwaarden",
     "asContentCreator": "Content Creators",
-    "asSupplier": "Plaats op TravioGhana",
+    "asSupplier": "Verken je Ervaring",
     "asAccommodationProvider": "Hotels & Verblijven",
     "asTravelAgentReseller": "Reisbureaus",
     "asTransportProvider": "Transportpartners",
@@ -245,7 +258,13 @@
     "accommodationProviders": "Accommodatieverstrekkers",
     "followJourney": "Volg de reis",
     "copyrightBy": "Alle rechten voorbehouden. · Accra, Ghana",
-    "legalNav": "Juridisch"
+    "legalNav": "Juridisch",
+    "appStore": "App Store",
+    "copyrightLine": "© {{year}} <brand>TravioGhana</brand>. Alle rechten voorbehouden. · Een bedrijf van <company>Expedition-Go Tours</company> · Accra, Ghana.",
+    "downloadOn": "Download op de",
+    "getItOn": "GA ERAAN",
+    "googlePlay": "Google Play",
+    "mobileComingSoon": "Binnenkort beschikbaar voor mobiel"
   },
   "gallery": {
     "tourImage": "Tour afbeelding {{number}}",
@@ -267,14 +286,14 @@
     "destination": "Bestemming",
     "destinationPlaceholder": "Waar ga je naartoe?",
     "search": "Zoeken",
-    "subtitle": "Ontdek buitengewone tours en ervaringen wereldwijd",
+    "subtitle": "Ontdek buitengewone tours en ervaringen wereldwijd",
     "title": "Ontdek het Buitengewone"
   },
   "languages": {
-    "en": "English",
-    "es": "Español",
+    "en": "English (United States)",
+    "es": "Español (España)",
     "fr": "Français",
-    "de": "Deutsch",
+    "de": "Deutsch (Deutschland)",
     "nl": "Nederlands"
   },
   "location": {
@@ -312,7 +331,9 @@
     "signOut": "Uitloggen",
     "wishlist": "Verlanglijst",
     "accountSettings": "Accountinstellingen",
-    "resetToDefault": "Terugzetten naar standaard"
+    "resetToDefault": "Terugzetten naar standaard",
+    "noLanguagesFound": "Geen talen gevonden",
+    "searchLanguages": "Talen zoeken"
   },
   "newsletter": {
     "description": "Abonneer je voor exclusieve aanbiedingen en reisinspiratie",
@@ -334,7 +355,15 @@
     "recentSearches": "Recente zoekopdrachten",
     "removeRecent": "Verwijderen uit recente zoekopdrachten",
     "tour": "Tour",
-    "toursAndExperiences": "Tours en Ervaringen"
+    "toursAndExperiences": "Tours en Ervaringen",
+    "bestMatches": "Beste matches",
+    "placesToSee": "Bezienswaardigheden",
+    "resultsFor": "Resultaten voor",
+    "resultsIn": "Ervaringen in {{location}}",
+    "thingsToDo": "Dingen te doen",
+    "title": "Zoeken naar rondleidingen",
+    "toursFound": "gevonden",
+    "toursVisiting": "Tours op bezoek {{attraction}}"
   },
   "notFound": {
     "title": "Pagina niet gevonden",
@@ -361,10 +390,16 @@
     "travelStories": "Reisverhalen en Nieuws",
     "viewAll": "Alles Bekijken",
     "toursIn": "Rondleidingen in {{location}}",
-    "whatTravellersAreSaying": "Wat reizigers zeggen"
+    "whatTravellersAreSaying": "Wat reizigers zeggen",
+    "continueSearchIn": "Ga verder met je zoektocht in {{location}}",
+    "earlierDestinationSearch": "Je eerdere zoektocht naar bestemming.",
+    "pickUpWhereYouLeftOff": "Pak de draad op waar je gebleven was.",
+    "previouslySearchedIn": "Eerder gezocht in {{location}}",
+    "recentlySearched": "Recent gezocht",
+    "toursInRegion": "Rondleidingen in {{region}}"
   },
   "splash": {
-    "alt": "Expedition-Go Tours Limited",
+    "alt": "Travio Ghana Limited",
     "fallback": "EG",
     "tagline": "Jouw Poort naar Afrika",
     "word1": "EXPEDITION-GO",
@@ -379,14 +414,14 @@
     "aboutThisSupplier": "Over deze aanbieder",
     "viewMore": "Bekijk meer",
     "toursBySupplier": "Tours van deze aanbieder",
-    "termsSubtitle": "De voorwaarden voor het verkopen van je tours en ervaringen op Expedition-Go Tours.",
+    "termsSubtitle": "De voorwaarden voor het verkopen van je tours en ervaringen op Travio Ghana.",
     "activitiesHeading": "Activiteiten van deze aanbieder",
     "activitiesSubtitle": "Bekijk populaire ervaringen van {{name}}.",
     "bookingSupport": "Boekingsondersteuning",
-    "bookingSupportDesc": "Veilig geregeld via Expedition-Go Tours",
+    "bookingSupportDesc": "Veilig geregeld via Travio Ghana",
     "messageError": "Kan chat niet openen. Probeer het opnieuw.",
     "messageProvider": "Bericht naar aanbieder",
-    "messageProviderHint": "Chat veilig op Expedition-Go Tours",
+    "messageProviderHint": "Chat veilig op Travio Ghana",
     "nextPhotos": "Volgende foto's",
     "openPhoto": "Foto {{index}} van {{total}} openen",
     "previousPhotos": "Vorige foto's",
@@ -434,7 +469,7 @@
     "trustPendingDesc": "Documenten worden beoordeeld",
     "trustRating": "{{rating}}/5",
     "trustRatingDesc": "Gemiddelde reizigersbeoordeling",
-    "trustToursDesc": "Ervaringen op Expedition-Go Tours",
+    "trustToursDesc": "Ervaringen op Travio Ghana",
     "trustTypeDesc": "Bedrijfscategorie",
     "trustVerified": "Geverifieerde aanbieder",
     "trustVerifiedDesc": "Documenten beoordeeld en goedgekeurd",
@@ -462,7 +497,7 @@
     "openChat": "Open chat",
     "typeMessage": "Typ een bericht...",
     "welcomeText": "We zijn hier om te helpen. Kies een optie hieronder of stuur ons een bericht.",
-    "welcomeTitle": "Hallo! Welkom bij Expedition-Go Tours",
+    "welcomeTitle": "Hallo! Welkom bij Travio Ghana",
     "typicalReply": "Reageert meestal binnen enkele minuten",
     "myChats": "Mijn chats",
     "expeditionSupport": "Travio Support",
@@ -481,7 +516,13 @@
     "noConversations": "Nog geen gesprekken",
     "noConversationsSub": "Chat met een aanbieder vanaf een tourpagina of met ons supportteam",
     "noConversationSelected": "Selecteer een gesprek",
-    "noConversationSelectedSub": "Kies links een gesprek om te beginnen met chatten"
+    "noConversationSelectedSub": "Kies links een gesprek om te beginnen met chatten",
+    "back": "Terug",
+    "customerSupport": "Klantenservice",
+    "deleteForMe": "Verwijder voor mij",
+    "deleteForMeConfirm": "Dit bericht wordt alleen voor jou verwijderd. De andere persoon zal het nog steeds zien.",
+    "deleteForMeTitle": "Bericht verwijderen?",
+    "typicallyMinutes": "We reageren meestal binnen een paar minuten."
   },
   "reviews": {
     "excellent": "Uitstekend",
@@ -565,7 +606,15 @@
     "starsOutOf5": "{{count}} van 5 sterren",
     "reviewBy": "Beoordeling van {{name}}",
     "closeReview": "Beoordeling sluiten",
-    "starsCount": "{{count}} sterren"
+    "starsCount": "{{count}} sterren",
+    "allPhotos": "Alle foto's",
+    "noReviewsText": "Deze ervaring is nieuw op TravioGhana. Recensies verschijnen hier zodra reizigers ze schrijven.",
+    "noReviewsTitle": "Nog geen recensies",
+    "readThem": "Lees ze",
+    "totalCount_one": "{{count}} review",
+    "totalCount_other": "{{count}} reviews",
+    "verifiedBooking": "Geverifieerde boeking",
+    "withPhotos": "Met foto's"
   },
   "tourDetail": {
     "aboutTour": "Over Deze Tour",
@@ -706,7 +755,12 @@
     "freeCancellationBadge": "Gratis annuleren",
     "nonRefundableBadge": "Niet terugbetaalbaar",
     "meetingPointBadge": "Ontmoetingspunt",
-    "pickupIncludedBadge": "Ophalen inbegrepen"
+    "pickupIncludedBadge": "Ophalen inbegrepen",
+    "instantConfirmation": "Directe bevestiging",
+    "manualConfirmation": "Handmatige bevestiging",
+    "operatorReviewCount": "{{count, number}} beoordelingen",
+    "operatorReviewSources": "op TripAdvisor, GetYourGuide & Google",
+    "sampleReviews": "Voorbeeldbeoordelingen"
   },
   "tourInfo": {
     "title": "Tourinformatie",
@@ -789,7 +843,11 @@
     "pickupPendingHint": "De touraanbieder neemt contact met je op om je exacte ophaalpunt en -tijd te bevestigen.",
     "pickupAdd": "Ophaallocatie toevoegen",
     "pickupUpdate": "Ophalen bijwerken",
-    "pickupTime": "Ophalen {{time}}"
+    "pickupTime": "Ophalen {{time}}",
+    "guestCreateAccount": "Account aanmaken",
+    "guestSaveBody": "Maak een account aan met {{email}} om deze boeking te beheren, bewaar je vouchers op één plek en boek de volgende keer sneller.",
+    "guestSaveTitle": "Sla deze boeking op in een account",
+    "guestSignIn": "Aanmeld je"
   },
   "support": {
     "helpCentreSubtitle": "Hoe kunnen we je vandaag helpen?",
@@ -814,7 +872,7 @@
     "searchPlaceholder": "Zoek in helpartikelen en veelgestelde vragen",
     "searchNoResults": "Geen resultaten voor \"{{query}}\". Probeer andere woorden of neem contact op.",
     "whatWeDoTitle": "Wat we doen",
-    "whatWeDoText": "Expedition-Go Tours is een in Ghana gevestigd platform voor geselecteerde tours en ervaringen — culturele tours, safari's, dagtochten en meerdaagse avonturen — met lokale aanbieders en een supportteam dat goed bereikbaar is.",
+    "whatWeDoText": "Travio Ghana is een in Ghana gevestigd platform voor geselecteerde tours en ervaringen — culturele tours, safari's, dagtochten en meerdaagse avonturen — met lokale aanbieders en een supportteam dat goed bereikbaar is. Het wordt geëxploiteerd door moederbedrijf <company>Expedition-Go Tours</company>.",
     "trust1": "Geselecteerde lokale ervaringen",
     "trust2": "Gratis annuleren bij de meeste tours",
     "trust3": "Ophalen door heel Ghana",
@@ -826,42 +884,42 @@
     "topicOffersDesc": "Kortingscodes, speciale aanbiedingen en prijswijzigingen.",
     "partnerTitle": "Partners en leveranciers",
     "topicPartnerDesc": "Ondersteuning voor leveranciers, hotels, vervoer en partners.",
-    "topicAboutTitle": "Over Expedition-Go Tours",
-    "topicAboutDesc": "Wie we zijn en wat Expedition-Go Tours doet.",
+    "topicAboutTitle": "Over Travio Ghana",
+    "topicAboutDesc": "Wie we zijn en wat Travio Ghana doet.",
     "viewAnswers": "Bekijk antwoorden",
     "popularTitle": "Populaire vragen",
     "seeAllFaqs": "Bekijk alle FAQ's",
     "hoursNote": "Alle tijden in GMT."
   },
   "company": {
-    "aboutUsSubtitle": "Ontdek wie we zijn en wat Expedition-Go Tours drijft.",
+    "aboutUsSubtitle": "Ontdek wie we zijn en wat Travio Ghana drijft.",
     "careersSubtitle": "Word lid van ons team en help reizigers de wereld te ervaren.",
-    "partnershipsSubtitle": "Laat je bedrijf groeien met Expedition-Go Tours-partnerschappen.",
+    "partnershipsSubtitle": "Laat je bedrijf groeien met Travio Ghana-partnerschappen.",
     "contentCreatorsSubtitle": "Verdien geld met je reiscontent.",
-    "termsSubtitle": "De voorwaarden die gelden voor je gebruik van Expedition-Go Tours.",
+    "termsSubtitle": "De voorwaarden die gelden voor je gebruik van Travio Ghana.",
     "privacySubtitle": "Hoe we je gegevens verzamelen, gebruiken en beschermen.",
     "cookiesSubtitle": "Hoe we cookies gebruiken en hoe je ze kunt beheren."
   },
   "foundation": {
-    "pageTitle": "Expedition-Go Tours Stichting | Het Verschil Maken Door te Reizen",
-    "heroLabel": "Expedition-Go Tours Stichting",
+    "pageTitle": "Travio Ghana Stichting | Het Verschil Maken Door te Reizen",
+    "heroLabel": "Travio Ghana Stichting",
     "heroTitle": "Elke reis kan een verschil maken.",
     "missionTitle": "Het verschil maken door te reizen",
-    "missionText1": "Bij Expedition-Go Tours geloven we dat toerisme niet alleen onvergetelijke ervaringen moet creëren. Het moet ook een positieve impact hebben op de gemeenschappen en bestemmingen die we bedienen.",
-    "missionText2": "Daarom doneren we <strong>2% van elke boekingsomzet</strong> die via het Expedition-Go Tours-platform wordt gegenereerd aan de Expedition-Go Tours Stichting. Via deze bijdrage ondersteunen we individuen, lokale gemeenschappen en gemeenschapsprojecten die een helpende hand nodig hebben.",
-    "missionHighlight": "Of het nu gaat om het helpen van een gezin in nood, het ondersteunen van een lokale gemeenschapsinitiatief, het financieren van een belangrijk project of het ondersteunen van duurzame ontwikkeling — elke boeking bij Expedition-Go Tours helpt ons iets terug te geven.",
-    "missionCta": "Wanneer je reist met Expedition-Go Tours, boek je niet alleen een reis. Je helpt een betere te creëren voor iemand anders.",
+    "missionText1": "Bij Travio Ghana geloven we dat toerisme niet alleen onvergetelijke ervaringen moet creëren. Het moet ook een positieve impact hebben op de gemeenschappen en bestemmingen die we bedienen.",
+    "missionText2": "Daarom doneren we <strong>2% van elke boekingsomzet</strong> die via het Travio Ghana-platform wordt gegenereerd aan de Travio Ghana Stichting. Via deze bijdrage ondersteunen we individuen, lokale gemeenschappen en gemeenschapsprojecten die een helpende hand nodig hebben.",
+    "missionHighlight": "Of het nu gaat om het helpen van een gezin in nood, het ondersteunen van een lokale gemeenschapsinitiatief, het financieren van een belangrijk project of het ondersteunen van duurzame ontwikkeling — elke boeking bij Travio Ghana helpt ons iets terug te geven.",
+    "missionCta": "Wanneer je reist met Travio Ghana, boek je niet alleen een reis. Je helpt een betere te creëren voor iemand anders.",
     "howWeHelp": "Hoe we helpen",
     "focusAreas": "Onze focusgebieden",
     "area1Title": "Individuele Ondersteuning",
     "area1Subtitle": "Mensen helpen wanneer ze het het meest nodig hebben.",
-    "area1Desc": "Een ruimte voor mensen die ondersteuning of hulp nodig kunnen hebben. Mensen kunnen hun situatie met ons delen en ons vertellen hoe Expedition-Go Tours kan helpen.",
+    "area1Desc": "Een ruimte voor mensen die ondersteuning of hulp nodig kunnen hebben. Mensen kunnen hun situatie met ons delen en ons vertellen hoe Travio Ghana kan helpen.",
     "area2Title": "Gemeenschappelijke Ondersteuning",
     "area2Subtitle": "Gemeenschappen en lokale initiatieven ondersteunen.",
     "area2Desc": "We werken samen met gemeenschappen, lokale leiders, scholen, organisaties en groepen om behoeften te identificeren en initiatieven te ondersteunen die het leven van mensen verbeteren en kansen creëren.",
     "area3Title": "Gemeenschapsprojecten",
     "area3Subtitle": "Ideeën omzetten in betekenisvolle actie.",
-    "area3Desc": "Ontdek de projecten en initiatieven die worden ondersteund door Expedition-Go Tours, waaronder onderwijs, milieubescherming, lokale ontwikkeling en andere gemeenschapsgerichte programma's.",
+    "area3Desc": "Ontdek de projecten en initiatieven die worden ondersteund door Travio Ghana, waaronder onderwijs, milieubescherming, lokale ontwikkeling en andere gemeenschapsgerichte programma's.",
     "area4Title": "Word Onze Partner",
     "area4Subtitle": "Samen kunnen we een groter verschil maken.",
     "area4Desc": "We verwelkomen partnerschappen met liefdadigheidsorganisaties, NGO's, bedrijven, gemeenschapsorganisaties en individuen die onze visie delen om toerisme in te zetten als kracht voor het goede.",
@@ -870,7 +928,7 @@
     "helpIntro": "Of je nu een individu bent dat hulp nodig heeft of een gemeenschap die ondersteuning zoekt — we zijn er om te helpen. Neem contact op en laat ons weten hoe we een verschil kunnen maken.",
     "forIndividuals": "Voor Individuen",
     "individualSubtitle": "Persoonlijke ondersteuning wanneer je het het meest nodig hebt.",
-    "individualDesc": "Als jij of iemand die je kent ondersteuning nodig heeft, zijn we er om te luisteren. Deel je situatie met ons en laat ons weten hoe Expedition-Go Tours kan helpen.",
+    "individualDesc": "Als jij of iemand die je kent ondersteuning nodig heeft, zijn we er om te luisteren. Deel je situatie met ons en laat ons weten hoe Travio Ghana kan helpen.",
     "requestHelpBtn": "Hulp Aanvragen",
     "forCommunities": "Voor Gemeenschappen",
     "communitySubtitle": "Gemeenschappen versterken om te gedijen.",
@@ -885,10 +943,10 @@
     "getInvolved": "Doe Mee",
     "volunteerTitle": "Word Vrijwilliger Bij Ons",
     "volunteerSubtitle": "Geef je tijd. Maak een verschil.",
-    "volunteerDesc": "Ontdek mogelijkheden om je tijd, vaardigheden en ervaring in te zetten als vrijwilliger via de gemeenschapsinitiatieven en -projecten van Expedition-Go Tours. Jouw bijdrage, hoe klein ook, kan een blijvende verandering teweegbrengen in iemands leven.",
+    "volunteerDesc": "Ontdek mogelijkheden om je tijd, vaardigheden en ervaring in te zetten als vrijwilliger via de gemeenschapsinitiatieven en -projecten van Travio Ghana. Jouw bijdrage, hoe klein ook, kan een blijvende verandering teweegbrengen in iemands leven.",
     "volunteerBtn": "Doe Mee",
     "ctaTitle": "Klaar om een verschil te maken?",
-    "ctaText": "Elke boeking bij Expedition-Go Tours helpt gemeenschappen te ondersteunen en positieve verandering teweeg te brengen.",
+    "ctaText": "Elke boeking bij Travio Ghana helpt gemeenschappen te ondersteunen en positieve verandering teweeg te brengen.",
     "ctaGetInvolved": "Doe Mee",
     "ctaLearnMore": "Meer Te Weten Komen",
     "prevImage": "Vorige afbeelding",
@@ -896,7 +954,7 @@
     "goToSlide": "Ga naar dia {{number}}"
   },
   "blog": {
-    "pageTitle": "Blog | Expedition-Go Tours",
+    "pageTitle": "Blog",
     "heroKicker": "Plan Ghana met vertrouwen",
     "heroTitle": "Reisideeën die je",
     "heroTitleAccent": "verder brengen.",
@@ -961,7 +1019,7 @@
     "heroTitle": "Reis. Ontdek. Verbind.",
     "storyLabel": "Ons Verhaal",
     "storyTitle": "Het begon met een eenvoudig idee",
-    "storyText1": "Expedition-Go Tours is gebouwd op een eenvoudig idee: het reizigers makkelijker maken om authentieke ervaringen in Ghana te ontdekken en te boeken, terwijl we lokale operators de platform geven die ze verdienen.",
+    "storyText1": "Travio Ghana is gebouwd op een eenvoudig idee: het reizigers makkelijker maken om authentieke ervaringen in Ghana te ontdekken en te boeken, terwijl we lokale operators de platform geven die ze verdienen.",
     "storyText2": "Elke ervaring op ons platform wordt beoordeeld en samengesteld door ons team om te voldoen aan kwaliteits-, veiligheids- en authenticiteitsnormen — zodat reizigers met vertrouwen kunnen boeken.",
     "calloutHeading": "We verbinden reizigers met met zorg geselecteerde ervaringen in heel Ghana, van culturele tours tot avontuurlijke activiteiten.",
     "calloutBody": "Onze missie is om die momenten moeiteloos ontdekbaar te maken — of je nu een eerste bezoeker bent of een doorgewinterde reiziger die iets nieuws zoekt.",
@@ -979,7 +1037,7 @@
     "valuesLabel": "Waar we voor staan",
     "valuesTitle": "Onze waarden",
     "value1Title": "Met zorg geselecteerde ervaringen",
-    "value1Text": "Elke tour op Expedition-Go Tours wordt beoordeeld en samengesteld om te voldoen aan onze kwaliteits-, veiligheids- en authenticiteitsnormen.",
+    "value1Text": "Elke tour op Travio Ghana wordt beoordeeld en samengesteld om te voldoen aan onze kwaliteits-, veiligheids- en authenticiteitsnormen.",
     "value2Title": "Lokale experts",
     "value2Text": "We werken rechtstreeks samen met lokale operators en gidsen die hun bestemmingen het beste kennen.",
     "value3Title": "Veiligheid voorop",
@@ -999,9 +1057,9 @@
     "nextImage": "Volgende afbeelding"
   },
   "careers": {
-    "pageTitle": "Carrières | Expedition-Go Tours",
+    "pageTitle": "Carrières | Travio Ghana",
     "whyTitle": "Waarom bij ons werken",
-    "whyText1": "Expedition-Go Tours is een klein, ambitieus team dat werkt aan het transformeren van de manier waarop mensen reiservaringen in Ghana ontdekken en boeken.",
+    "whyText1": "Travio Ghana is een klein, ambitieus team dat werkt aan het transformeren van de manier waarop mensen reiservaringen in Ghana ontdekken en boeken.",
     "whyText2": "We lijsten momenteel geen openstaande vacatures, maar we zijn altijd geïnteresseerd om van getalenteerde mensen te horen die onze passie voor reizen en technologie delen.",
     "departmentsTitle": "Waar je zou kunnen passen",
     "applyTitle": "Hoe solliciteer je",
@@ -1014,11 +1072,11 @@
     "dept3Title": "Klantenservice",
     "dept3Text": "Wees de vriendelijke stem waar reizigers op vertrouwen wanneer ze hulp nodig hebben voor, tijdens of na hun reis.",
     "dept4Title": "Marketing",
-    "dept4Text": "Vertel het Expedition-Go Tours verhaal en help ons reizigers over de hele wereld te bereiken."
+    "dept4Text": "Vertel het Travio Ghana verhaal en help ons reizigers over de hele wereld te bereiken."
   },
   "partnerships": {
     "pageTitle": "Partnerschappen",
-    "eyebrow": "Samenwerken met Expedition-Go Tours",
+    "eyebrow": "Samenwerken met Travio Ghana",
     "galleryLabel": "Momenten met onze partners",
     "talkText": "Vertel ons over je bedrijf en de samenwerking die je zoekt — ons team neemt contact met je op.",
     "pauseSlideshow": "Diavoorstelling pauzeren",
@@ -1035,11 +1093,11 @@
     "nextImage": "Volgende afbeelding",
     "goToSlide": "Ga naar dia {{number}}",
     "type1Title": "Touroperators & leveranciers",
-    "type1Text": "Lijst je ervaringen op Expedition-Go Tours en bereik reizigers die klaar zijn om te boeken. Begin met het aanmaken van een leveranciersaccount.",
+    "type1Text": "Lijst je ervaringen op Travio Ghana en bereik reizigers die klaar zijn om te boeken. Begin met het aanmaken van een leveranciersaccount.",
     "type2Title": "Hotels & accommodaties",
     "type2Text": "Bied je gasten exclusieve ervaringen en verdien met elke succesvolle boeking.",
     "type3Title": "Reisbureaus & wederverkopers",
-    "type3Text": "Verkoop Expedition-Go Tours ervaringen aan je klanten met eenvoudige, transparante partnerschapsvoorwaarden.",
+    "type3Text": "Verkoop Travio Ghana ervaringen aan je klanten met eenvoudige, transparante partnerschapsvoorwaarden.",
     "type4Title": "Content creators & influencers",
     "type4Text": "Werk met ons samen om inspirerende reiscontent te maken en te verdienen via je publiek.",
     "heroPill": "Partnerschappen in heel Ghana",
@@ -1051,7 +1109,7 @@
     "heroCtaSecondary": "Vind jouw partnerschapsroute",
     "heroMicro": "Gebouwd op lokale expertise, breder bereik en groei op lange termijn.",
     "heroBadge": "5 manieren om partner te worden",
-    "heroShotLabel": "Expedition-Go Tours partnernetwerk",
+    "heroShotLabel": "Travio Ghana partnernetwerk",
     "heroShotTitle": "Betere reizen bouw je samen.",
     "heroShotPlace": "Accra · Ghana",
     "heroCardLabel": "Verbonden groei",
@@ -1080,7 +1138,7 @@
     "benefit4Text": "Werk samen met een team dat zich richt op Ghana en waarde hecht aan lokale kansen en duurzame samenwerking.",
     "routesEyebrow": "Met wie we samenwerken",
     "routesTitle": "Vind waar jij past.",
-    "routesIntro": "Welk deel van de reis je ook beter maakt, er is een plek voor jou in het Expedition-Go Tours-netwerk.",
+    "routesIntro": "Welk deel van de reis je ook beter maakt, er is een plek voor jou in het Travio Ghana-netwerk.",
     "routesNote": "De kaarten pauzeren wanneer je eroverheen zweeft.",
     "routesSummaryTitle": "Verschillende rollen. Eén sterkere reiservaring.",
     "routesTag1": "Bereik",
@@ -1105,7 +1163,7 @@
     "closingEyebrow": "Jouw route begint hier",
     "closingTitle": "Laten we Ghana makkelijker te beleven maken.",
     "closingText": "Breng je expertise, dienst of publiek. We onderzoeken hoe we daar een sterkere reis van kunnen maken.",
-    "closingCta": "Partner worden van Expedition-Go Tours",
+    "closingCta": "Partner worden van Travio Ghana",
     "type1CardTitle": "Zet je ervaringen voor reizigers die klaar zijn om te boeken.",
     "type2CardTitle": "Geef elke gast meer redenen om Ghana te ontdekken.",
     "type3CardTitle": "Voeg boekbare Ghana-ervaringen toe aan elk reisplan.",
@@ -1115,7 +1173,7 @@
     "type5Text": "Word partner van ons om naadloze vervoersoplossingen aan te bieden voor reizigers in alle bestemmingen."
   },
   "help": {
-    "pageTitle": "Helpcentrum | Expedition-Go Tours",
+    "pageTitle": "Helpcentrum | Travio Ghana",
     "visitUs": "Bezoek Ons",
     "officeLabel": "Ons Kantoor",
     "companyName": "Expedition-Go Tours Ltd",
@@ -1132,7 +1190,7 @@
     "contactDesc": "Neem contact op met ons team via e-mail of live chat tijdens de ondersteuningstijden."
   },
   "contact": {
-    "pageTitle": "Neem Contact Op | Expedition-Go Tours",
+    "pageTitle": "Neem Contact Op | Travio Ghana",
     "emailLabel": "E-mail",
     "emailNote": "We reageren meestal binnen één werkdag.",
     "phoneLabel": "Telefoon",
@@ -1181,7 +1239,7 @@
     }
   },
   "faq": {
-    "pageTitle": "FAQ | Expedition-Go Tours",
+    "pageTitle": "FAQ | Travio Ghana",
     "catBooking": "Boeken & Betalen",
     "catCancellation": "Annulering & Terugbetalingen",
     "catPickup": "Ophalen & Ontmoetingspunten",
@@ -1218,13 +1276,16 @@
     "q14": "Hoe neem ik contact op met de ondersteuning?",
     "a14": "Je kunt ons bereiken via e-mail, telefoon, WhatsApp of live chat. Bezoek onze Contact-pagina voor alle details.",
     "q15": "Wat zijn jullie ondersteuningstijden?",
-    "a15": "Ons ondersteuningsteam is beschikbaar van maandag tot zaterdag, 8:00 tot 22:00 uur, en zondag 8:00 tot 17:00 uur (GMT)."
+    "a15": "Ons ondersteuningsteam is beschikbaar van maandag tot zaterdag, 8:00 tot 22:00 uur, en zondag 8:00 tot 17:00 uur (GMT).",
+    "aboutKicker": "Wie we zijn",
+    "aboutText": "TravioGhana is een in Ghana gevestigd reisplatform voor geselecteerde tours, culturele ervaringen, safari's en dagtochten. Het wordt geëxploiteerd door moederbedrijf <company>Expedition-Go Tours Ltd</company>, een bij de Ghana Tourism Authority geregistreerde operator gevestigd in Accra.",
+    "aboutTitle": "Over TravioGhana"
   },
   "contentCreators": {
-    "pageTitle": "Content Creators | Expedition-Go Tours",
-    "heroTitle": "Verdien geld met je reiscontent via Expedition-Go Tours",
+    "pageTitle": "Content Creators | Travio Ghana",
+    "heroTitle": "Verdien geld met je reiscontent via Travio Ghana",
     "growTitle": "Groei je aanwezigheid op sociale media door lid te worden van onze reiscommunity",
-    "growItem1": "Solliciteer voor gesponsorde Expedition-Go Tours ervaringen",
+    "growItem1": "Solliciteer voor gesponsorde Travio Ghana ervaringen",
     "growItem2": "Doe mee aan workshops, netwerkevenementen en winacties",
     "makeTitle": "Verdien geld via je website of blog",
     "feature1": "Verdien een minimale commissie van 8%, maandelijks uitbetaald",
@@ -1236,14 +1297,14 @@
     "step2": "Maak integraties & verdien commissies",
     "step3": "Word lid van onze reiscommunity & solliciteer voor gratis ervaringen",
     "partnerTitle": "Word een partner",
-    "partnerDesc": "Meld je aan om partner te worden van Expedition-Go Tours en vergroot en monetariseer je platforms.",
+    "partnerDesc": "Meld je aan om partner te worden van Travio Ghana en vergroot en monetariseer je platforms.",
     "helpTitle": "Hulp nodig?",
     "helpDesc": "Bekijk ons Partner Resource Center of neem contact op met ons ondersteuningsteam als je verdere hulp nodig hebt.",
     "helpBtn": "Bezoek het Helpcentrum",
     "signupBtn": "Aanmelden"
   },
   "hotels": {
-    "pageTitle": "Hotels & Accommodaties | Expedition-Go Tours",
+    "pageTitle": "Hotels & Accommodaties | Travio Ghana",
     "heroTitle": "Verbind je klanten met ongelooflijke ervaringen",
     "heroDesc": "Help je klanten bij het plannen van elke stap van hun reis met samengestelde tours en activiteiten die ze direct via je platform kunnen boeken.",
     "heroBtn": "Meld je gratis aan",
@@ -1252,8 +1313,8 @@
     "stat3Label": "Jaarlijks bediende reizigers",
     "intTitle": "Genereer inkomsten via naadloze integratie",
     "intDesc": "We maken integratie eenvoudig met flexibele API's en kant-en-klare widgets die passen in je bestaande checkout-proces.",
-    "whyTitle": "Waarom partner worden met Expedition-Go Tours",
-    "aboutTitle": "Over het Expedition-Go Tours Partnerprogramma",
+    "whyTitle": "Waarom partner worden met Travio Ghana",
+    "aboutTitle": "Over het Travio Ghana Partnerprogramma",
     "contactText": "Voor vragen, neem contact op met info@expeditiongotours.com",
     "contactBtn": "Neem contact op",
     "ctaTitle": "Klaar om je bedrijf te laten groeien?",
@@ -1261,24 +1322,24 @@
     "ctaBtn": "Aan de slag"
   },
   "travelAgents": {
-    "pageTitle": "Reisbureaus | Expedition-Go Tours",
+    "pageTitle": "Reisbureaus | Travio Ghana",
     "heroTitle": "Bespaar tot 10+ uur per week met slimme ervaringsboeking",
     "heroDesc": "Begin met het monetariseren van je expertise door samengestelde tours en activiteiten aan je klanten aan te bieden.",
     "heroBtn": "Aanmelden",
     "trustedTitle": "Een vertrouwd, wereldwijd erkend platform voor ervaringsboekingen.",
-    "whyTitle": "Waarom lid worden van Expedition-Go Tours",
+    "whyTitle": "Waarom lid worden van Travio Ghana",
     "gettingStarted": "Aan de slag is eenvoudig",
     "makeFirstBooking": "Maak je eerste boeking in minder dan 30 minuten",
     "questionsTitle": "Je vragen beantwoord",
     "resourceTitle": "Resourcecentrum",
     "resourceDesc": "Doorzoek onze kennisbank voor antwoorden op veelgestelde vragen.",
     "resourceBtn": "Bezoek het helpcentrum",
-    "ctaTitle": "Meld je aan om partner te worden van Expedition-Go Tours",
+    "ctaTitle": "Meld je aan om partner te worden van Travio Ghana",
     "ctaDesc": "Groei en monetariseer je expertise",
     "ctaBtn": "Aanmelden"
   },
   "transport": {
-    "pageTitle": "Vervoersaanbieders | Expedition-Go Tours",
+    "pageTitle": "Vervoersaanbieders | Travio Ghana",
     "heroTitle": "Word partner en laat je vervoersbedrijf groeien",
     "heroDesc": "Verbind je met touraanbieders en reizigers die betrouwbaar, veilig en comfortabel vervoer nodig hebben in heel Ghana.",
     "heroBtn": "Meld je gratis aan",
@@ -1287,8 +1348,8 @@
     "stat3Label": "Maandelijkse boekingen",
     "startTitle": "Hoe begin je",
     "startDesc": "We maken het eenvoudig voor vervoersaanbieders om hun wagenpark te lijsten en boekingen te ontvangen.",
-    "whyTitle": "Waarom partner worden met Expedition-Go Tours",
-    "aboutTitle": "Over het Expedition-Go Tours Partnerprogramma",
+    "whyTitle": "Waarom partner worden met Travio Ghana",
+    "aboutTitle": "Over het Travio Ghana Partnerprogramma",
     "contactText": "Voor vragen, neem contact op met info@expeditiongotours.com",
     "contactBtn": "Neem contact op",
     "ctaTitle": "Klaar om je vervoersbedrijf te laten groeien?",
@@ -1297,11 +1358,11 @@
     "goToStep": "Ga naar stap {{number}}"
   },
   "supplierTerms": {
-    "pageTitle": "Leveranciersvoorwaarden | Expedition-Go Tours",
+    "pageTitle": "Leveranciersvoorwaarden | Travio Ghana",
     "readyTitle": "Klaar om te beginnen met verkopen?",
     "listBtn": "Tours aanbieden",
     "s1Title": "1. Inleiding",
-    "s1Text": "Deze Leveranciersvoorwaarden zijn van toepassing op touraanbieders, activiteitenaanbieders en onafhankelijke gidsen die hun ervaringen aanbieden op het Expedition-Go Tours-platform.",
+    "s1Text": "Deze Leveranciersvoorwaarden zijn van toepassing op touraanbieders, activiteitenaanbieders en onafhankelijke gidsen die hun ervaringen aanbieden op het Travio Ghana-platform.",
     "s2Title": "2. Registratie en goedkeuring",
     "s2Text1": "Elke leveranciersaanvraag wordt door ons team beoordeeld voordat deze live gaat. We behouden ons het recht voor om aanvragen te weigeren die niet aan onze kwaliteits- of veiligheidsnormen voldoen.",
     "s2Text2": "Bepaalde activiteiten zijn niet toegestaan op het platform. Raadpleeg onze platformrichtlijnen voor de volledige lijst van beperkte activiteiten.",
@@ -1324,7 +1385,7 @@
     "s10Text": "We kunnen deze Leveranciersvoorwaarden van tijd tot tijd bijwerken. Voortgezet gebruik van het platform vormt aanvaarding van de bijgewerkte voorwaarden."
   },
   "allTours": {
-    "pageTitle": "Alle Tours | Expedition-Go Tours",
+    "pageTitle": "Alle Tours | Travio Ghana",
     "loading": "Tours laden...",
     "tourFound": "{{count}} tour gevonden",
     "toursFound": "{{count}} tours gevonden",
@@ -1364,7 +1425,11 @@
     "sectionSellOut": "Waarschijnlijk Uitverkocht",
     "sectionSpecial": "Speciale Aanbiedingen",
     "sectionAttractions": "Top Attracties in de Buurt",
-    "sectionNew": "Nieuwe Ervaringen"
+    "sectionNew": "Nieuwe Ervaringen",
+    "back": "Terug",
+    "nearLocation": "{{title}} in de buurt {{location}}",
+    "regionFallbackNotice": "We hebben nog geen rondleidingen in {{location}}, maar hier zijn ervaringen over {{region}}.",
+    "sortClosest": "Dichtstbijzijnde"
   },
   "cookies": {
     "banner": {
@@ -1433,7 +1498,8 @@
         "onetapDismissal": "Onthoudt dat u de Google-inlogprompt hebt gesloten",
         "maps": "Toont kaarten voor ophaalpunten en ontmoetingslocaties",
         "analyticsEvents": "Meet bekeken pagina's, zoekopdrachten en kliks om de site te verbeteren",
-        "locationSharing": "Onthoudt dat u locatie delen hebt ingeschakeld, zodat routebeschrijvingen vanaf uw huidige locatie starten"
+        "locationSharing": "Onthoudt dat u locatie delen hebt ingeschakeld, zodat routebeschrijvingen vanaf uw huidige locatie starten",
+        "googleAnalytics": "Meet bekeken pagina's, zoekopdrachten en kliks met Google Analytics om de site te verbeteren"
       },
       "durations": {
         "session": "Sessie",
@@ -1449,7 +1515,8 @@
         "untilSignOut": "Tot u uitlogt",
         "untilBookingCompletes": "Tot de boeking is afgerond",
         "entries2": "2 items",
-        "entries5": "5 items"
+        "entries5": "5 items",
+        "days730": "2 jaar"
       }
     }
   },
@@ -1512,5 +1579,23 @@
     "couldNotUpdateDefault": "Kan standaard niet bijwerken",
     "couldNotRemoveCard": "Kan kaart niet verwijderen",
     "tryAgain": "Opnieuw proberen"
+  },
+  "empty": {
+    "alsoLikeTitle": "Misschien vind je het ook leuk",
+    "body": "We hebben nog geen ervaringen voor {{location}} — maar er is genoeg te ontdekken. Bekijk deze nabijgelegen bestemmingen en zorgvuldig geselecteerde tours waarvan we denken dat je ze geweldig zult vinden.",
+    "bodyAttraction": "We hebben nog geen ervaringen voor {{attraction}} — maar er valt genoeg te ontdekken.",
+    "browseAll": "Alle ervaringen doorbladeren",
+    "browseAttraction": "Ervaringen bekijken in {{attraction}}",
+    "browseRegion": "Ervaringen bekijken in {{region}}",
+    "clearFilters": "Filters vrijmaken",
+    "experiencesCount_one": "{{count}} ervaring",
+    "experiencesCount_other": "{{count}} ervaringen",
+    "exploreNearby": "Ontdek de omgeving",
+    "loading": "Geweldige ervaringen voor je vinden...",
+    "nearbyTitle": "Dichtbij",
+    "recommendedTitle": "Aanbevolen voor jou",
+    "specialOffersTitle": "Speciale aanbiedingen",
+    "thisPlace": "deze bestemming",
+    "title": "We zijn er nog niet helemaal"
   }
 }
