@@ -979,6 +979,7 @@
     "guidesCount_one": "{{count}} gids beschikbaar",
     "guidesCount_other": "{{count}} gidsen beschikbaar",
     "emptyText": "Geen gidsen gevonden voor deze zoekopdracht. Probeer een ander onderwerp.",
+    "loading": "Verhalen laden…",
     "interestKicker": "Plan op interesse",
     "interestTitle": "Wat voor Ghanareis plan je?",
     "interestIntro": "Ga direct naar de verhalen die passen bij hoe jij wilt reizen.",

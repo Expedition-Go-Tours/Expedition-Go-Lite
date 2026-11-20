@@ -979,6 +979,7 @@
     "guidesCount_one": "{{count}} Guide verfügbar",
     "guidesCount_other": "{{count}} Guides verfügbar",
     "emptyText": "Keine Guides passen zu dieser Suche. Versuche ein anderes Thema.",
+    "loading": "Geschichten werden geladen…",
     "interestKicker": "Nach Interesse planen",
     "interestTitle": "Was für eine Ghana-Reise planst du?",
     "interestIntro": "Springe direkt zu den Geschichten, die zu deiner Art zu reisen passen.",

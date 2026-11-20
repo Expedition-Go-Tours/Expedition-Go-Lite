@@ -19,8 +19,7 @@ import {
   Waves,
   type LucideIcon,
 } from 'lucide-react'
-import { travelStories, storySlug } from '../components/data'
-import type { TravelStory } from '../components/data'
+import { useBlogCards, type BlogCard } from '../lib/blogArticles'
 import Footer from '../components/Footer'
 import SEO, { buildBreadcrumbSchema, buildItemListSchema } from '../components/SEO'
 import OptimizedImage from '@/components/shared/OptimizedImage'
@@ -62,27 +61,17 @@ const EXPERIENCES = [
   { titleKey: 'blog.exp3Title', descKey: 'blog.exp3Desc' },
 ]
 
-function storyCategories(story: TravelStory): StoryCategory[] {
-  return (story.categories ?? []).filter((key): key is StoryCategory =>
-    CATEGORY_KEYS.includes(key as CategoryKey) && key !== 'all'
-  )
-}
-
-function storyLink(story: TravelStory) {
-  return `/stories/${storySlug(story.title)}`
-}
-
-function StoryMeta({ story }: { story: TravelStory }) {
+function StoryMeta({ card }: { card: BlogCard }) {
   const { t } = useTranslation()
   return (
     <>
       <span>
         <User size={12} aria-hidden="true" />
-        {story.author}
+        {card.author}
       </span>
       <span>
         <Clock size={12} aria-hidden="true" />
-        {t('blog.readTime', { count: story.readTime ?? 4 })}
+        {t('blog.readTime', { count: card.readTime })}
       </span>
     </>
   )
@@ -96,29 +85,37 @@ export default function BlogPage() {
   const [email, setEmail] = useState('')
   const comingSoon = useComingSoon()
 
+  // Admin-published articles are the only source. Until they arrive (or if the
+  // fetch fails) the hub shows its empty state rather than placeholder cards.
+  const { cards, loading } = useBlogCards()
+
   const filteredStories = useMemo(() => {
     const query = searchQuery.trim().toLowerCase()
-    return travelStories.filter((story) => {
+    return cards.filter((card) => {
       const matchesCategory =
-        activeCategory === 'all' || storyCategories(story).includes(activeCategory)
+        activeCategory === 'all' || card.categories.includes(activeCategory)
       if (!matchesCategory) return false
       if (!query) return true
       return (
-        story.title.toLowerCase().includes(query) ||
-        story.excerpt.toLowerCase().includes(query) ||
-        story.author.toLowerCase().includes(query)
+        card.title.toLowerCase().includes(query) ||
+        card.excerpt.toLowerCase().includes(query) ||
+        card.author.toLowerCase().includes(query)
       )
     })
-  }, [searchQuery, activeCategory])
+  }, [cards, searchQuery, activeCategory])
 
   const isFiltering = activeCategory !== 'all' || searchQuery.trim().length > 0
-  const featured = travelStories[0]
-  const sideStories = travelStories.slice(1, 3)
+  const featured = cards[0]
+  const sideStories = cards.slice(1, 3)
   const gridStories = isFiltering ? filteredStories : filteredStories.slice(1)
 
-  const heroPrimary = travelStories[0]
+  const heroPrimary = cards[0]
   const heroSecondary =
-    travelStories.find((story) => storyCategories(story).includes('food')) ?? travelStories[2]
+    cards.find((card) => card.categories.includes('food')) ?? cards[2] ?? cards[0]
+
+  /** Chip label: the admin's category name, else the translated filter label. */
+  const tagLabel = (card: BlogCard) =>
+    card.categoryLabel ?? t(CATEGORY_LABELS[card.categories[0] ?? 'culture'])
 
   const scrollToGuides = () => {
     document.getElementById('allGuides')?.scrollIntoView({
@@ -163,10 +160,10 @@ export default function BlogPage() {
               { name: 'Blog', url: 'https://www.expeditiongotours.com/blog' },
             ]),
             buildItemListSchema(
-              travelStories.map((story) => ({
-                name: story.title,
-                url: `https://www.expeditiongotours.com${storyLink(story)}`,
-                image: story.image,
+              cards.map((card) => ({
+                name: card.title,
+                url: `https://www.expeditiongotours.com${card.href}`,
+                image: card.image,
               }))
             ),
           ]}
@@ -214,7 +211,7 @@ export default function BlogPage() {
               <motion.ul className="blog-hero-meta" variants={staggerItem}>
                 <li>
                   <BookOpen size={15} aria-hidden="true" />
-                  {t('blog.heroStories', { count: travelStories.length })}
+                  {t('blog.heroStories', { count: cards.length })}
                 </li>
                 <li>
                   <Sparkles size={15} aria-hidden="true" />
@@ -224,12 +221,16 @@ export default function BlogPage() {
             </motion.div>
 
             <div className="blog-hero-side" aria-hidden="true">
-              <div className="blog-hero-card blog-hero-card--one">
-                <OptimizedImage src={heroPrimary.image} alt="" width={800} priority />
-              </div>
-              <div className="blog-hero-card blog-hero-card--two">
-                <OptimizedImage src={heroSecondary.image} alt="" width={600} />
-              </div>
+              {heroPrimary && (
+                <div className="blog-hero-card blog-hero-card--one">
+                  <OptimizedImage src={heroPrimary.image} alt="" width={800} priority />
+                </div>
+              )}
+              {heroSecondary && (
+                <div className="blog-hero-card blog-hero-card--two">
+                  <OptimizedImage src={heroSecondary.image} alt="" width={600} />
+                </div>
+              )}
               <span className="blog-hero-badge">
                 <Sparkles size={14} aria-hidden="true" />
                 {t('blog.heroBadgeLabel')}
@@ -283,15 +284,15 @@ export default function BlogPage() {
                 variants={stagger}
               >
                 <motion.div className="blog-feature-wrap" variants={staggerItem}>
-                  <Link to={storyLink(featured)} className="blog-feature">
+                  <Link to={featured.href} className="blog-feature">
                     <OptimizedImage src={featured.image} alt={featured.title} width={1200} />
                     <div className="blog-feature-body">
                       <span className="blog-feature-tag">
-                        {t('blog.featured')} · {t(CATEGORY_LABELS[storyCategories(featured)[0] ?? 'culture'])}
+                        {t('blog.featured')} · {tagLabel(featured)}
                       </span>
                       <h3 className="blog-feature-title">{featured.title}</h3>
                       <div className="blog-feature-meta">
-                        <StoryMeta story={featured} />
+                        <StoryMeta card={featured} />
                       </div>
                       <span className="blog-feature-read">
                         {t('blog.readGuide')}
@@ -303,11 +304,11 @@ export default function BlogPage() {
 
                 <div className="blog-side">
                   {sideStories.map((story) => {
-                    const [primaryCategory = 'culture'] = storyCategories(story)
+                    const [primaryCategory = 'culture'] = story.categories
                     const Icon = CATEGORY_ICONS[primaryCategory]
                     return (
-                      <motion.div key={story.title} className="blog-side-item" variants={staggerItem}>
-                        <Link to={storyLink(story)} className="blog-side-card">
+                      <motion.div key={story.slug} className="blog-side-item" variants={staggerItem}>
+                        <Link to={story.href} className="blog-side-card">
                           <div>
                             <span className="blog-side-icon" aria-hidden="true">
                               <Icon size={22} />
@@ -317,7 +318,7 @@ export default function BlogPage() {
                           </div>
                           <div className="blog-side-foot">
                             <span>
-                              {t(CATEGORY_LABELS[primaryCategory])} · {t('blog.readTime', { count: story.readTime ?? 4 })}
+                              {tagLabel(story)} · {t('blog.readTime', { count: story.readTime })}
                             </span>
                             <span className="blog-side-arrow" aria-hidden="true">
                               <ArrowUpRight size={16} />
@@ -362,17 +363,16 @@ export default function BlogPage() {
                 variants={stagger}
               >
                 {gridStories.map((story) => {
-                  const [primaryCategory = 'culture'] = storyCategories(story)
                   return (
-                    <motion.article key={story.title} className="blog-card-wrap" variants={staggerItem}>
-                      <Link to={storyLink(story)} className="blog-card">
+                    <motion.article key={story.slug} className="blog-card-wrap" variants={staggerItem}>
+                      <Link to={story.href} className="blog-card">
                         <div className="blog-card-media">
                           <OptimizedImage src={story.image} alt={story.title} width={600} />
-                          <span className="blog-card-tag">{t(CATEGORY_LABELS[primaryCategory])}</span>
+                          <span className="blog-card-tag">{tagLabel(story)}</span>
                         </div>
                         <div className="blog-card-body">
                           <div className="blog-card-meta">
-                            <StoryMeta story={story} />
+                            <StoryMeta card={story} />
                           </div>
                           <h3>{story.title}</h3>
                           <p>{story.excerpt}</p>
@@ -388,7 +388,14 @@ export default function BlogPage() {
               </motion.div>
             )}
 
-            {filteredStories.length === 0 && (
+            {loading && (
+              <div className="blog-empty" role="status">
+                <Compass size={26} aria-hidden="true" />
+                <p>{t('blog.loading')}</p>
+              </div>
+            )}
+
+            {!loading && filteredStories.length === 0 && (
               <div className="blog-empty" role="status">
                 <Compass size={26} aria-hidden="true" />
                 <p>{t('blog.emptyText')}</p>

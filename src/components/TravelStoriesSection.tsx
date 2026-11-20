@@ -2,18 +2,17 @@ import { useRef, useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import SectionHeading from './SectionHeading'
-import { travelStories, storySlug } from './data'
-import type { TravelStory } from './data'
+import { useBlogCards, type BlogCard } from '../lib/blogArticles'
 import './TravelStoriesSection.css'
 import OptimizedImage from '@/components/shared/OptimizedImage'
 
 const CARD_WIDTH = 295
 const GAP = 16
 
-function StoryCard({ story, t }: { story: TravelStory; t: (key: string) => string }) {
+function StoryCard({ story, t }: { story: BlogCard; t: (key: string) => string }) {
   return (
     <div className="story-card-wrap">
-      <Link to={`/stories/${storySlug(story.title)}`} className="story-card">
+      <Link to={story.href} className="story-card">
         <div className="story-card-image">
           <OptimizedImage src={story.image} alt={story.title} width={600} />
         </div>
@@ -33,6 +32,9 @@ function StoryCard({ story, t }: { story: TravelStory; t: (key: string) => strin
 
 export default function TravelStoriesSection() {
   const { t } = useTranslation()
+  // Same admin-published feed as the blog hub — this strip used to show the
+  // static stories JSON, so new articles never reached the home page.
+  const { cards, loading } = useBlogCards()
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(true)
@@ -73,6 +75,8 @@ export default function TravelStoriesSection() {
     return () => el.removeEventListener('scroll', onScroll)
   }, [updateArrows])
 
+  if (!loading && cards.length === 0) return null
+
   return (
     <section className="stories-section">
       <div className="stories-container">
@@ -87,8 +91,8 @@ export default function TravelStoriesSection() {
           />
           <div className="stories-clip">
             <div className="stories-carousel" ref={scrollRef}>
-                {travelStories.map((story, i) => (
-                  <StoryCard key={`${story.title}-${i}`} story={story} t={t} />
+                {cards.map((story) => (
+                  <StoryCard key={story.slug} story={story} t={t} />
                 ))}
             </div>
           </div>

@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react'
-import { travelStories, storySlug } from '../components/data'
+import { useBlogCards } from '../lib/blogArticles'
 
 export interface StorySuggestion {
   id: string
@@ -9,8 +9,14 @@ export interface StorySuggestion {
   slug: string
 }
 
+/**
+ * Search suggestions come from the same admin-published articles the lists
+ * show. They used to come from the static stories JSON, so a published
+ * article could never be found and a retired one kept appearing.
+ */
 export function useStorySearchAutocomplete(inputValue: string) {
   const [debounced, setDebounced] = useState('')
+  const { cards } = useBlogCards()
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(inputValue), 200)
@@ -24,17 +30,17 @@ export function useStorySearchAutocomplete(inputValue: string) {
     const lq = q.toLowerCase()
     const results: StorySuggestion[] = []
 
-    for (const story of travelStories) {
+    for (const card of cards) {
       const match =
-        story.title.toLowerCase().includes(lq) ||
-        story.author.toLowerCase().includes(lq)
+        card.title.toLowerCase().includes(lq) ||
+        card.author.toLowerCase().includes(lq)
       if (!match) continue
       results.push({
-        id: `story-${story.title}`,
-        title: story.title,
-        subtitle: story.author,
-        image: story.image,
-        slug: storySlug(story.title),
+        id: `article-${card.id}`,
+        title: card.title,
+        subtitle: card.author,
+        image: card.image,
+        slug: card.slug,
       })
     }
 
@@ -46,7 +52,7 @@ export function useStorySearchAutocomplete(inputValue: string) {
     })
 
     return results.slice(0, 5)
-  }, [debounced])
+  }, [cards, debounced])
 
   return suggestions
 }

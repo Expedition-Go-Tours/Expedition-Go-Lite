@@ -1,18 +1,17 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { Search } from 'lucide-react'
-import { travelStories, storySlug } from '../components/data'
-import type { TravelStory } from '../components/data'
+import { useBlogCards, type BlogCard } from '../lib/blogArticles'
 import { useStorySearchAutocomplete } from '../hooks/useStorySearchAutocomplete'
 import type { StorySuggestion } from '../hooks/useStorySearchAutocomplete'
 import Footer from '../components/Footer'
 import './AllStoriesPage.css'
 import OptimizedImage from '@/components/shared/OptimizedImage'
 
-function StoryCard({ story }: { story: TravelStory }) {
+function StoryCard({ story }: { story: BlogCard }) {
   return (
     <div className="story-card-wrap">
-      <Link to={`/stories/${storySlug(story.title)}`} className="story-card">
+      <Link to={story.href} className="story-card">
         <div className="story-card-image">
           <OptimizedImage src={story.image} alt={story.title} width={600} />
         </div>
@@ -39,17 +38,18 @@ export default function AllStoriesPage() {
 
   const suggestions = useStorySearchAutocomplete(searchQuery)
   const showDropdown = isFocused && suggestions.length > 0 && searchQuery.trim().length >= 2
+  const { cards, loading } = useBlogCards()
 
   const filteredStories = useMemo(() => {
     const q = searchQuery.trim().toLowerCase()
-    if (!q) return travelStories
-    return travelStories.filter(
+    if (!q) return cards
+    return cards.filter(
       (s) =>
         s.title.toLowerCase().includes(q) ||
         s.excerpt.toLowerCase().includes(q) ||
         s.author.toLowerCase().includes(q)
     )
-  }, [searchQuery])
+  }, [cards, searchQuery])
 
   const navigateToSuggestion = useCallback(
     (suggestion: StorySuggestion) => {
@@ -153,11 +153,16 @@ export default function AllStoriesPage() {
       </div>
       <div className="all-stories-container">
         <div className="all-stories-grid">
-          {filteredStories.map((story, i) => (
-            <StoryCard key={`${story.title}-${i}`} story={story} />
+          {filteredStories.map((story) => (
+            <StoryCard key={story.slug} story={story} />
           ))}
         </div>
-        {filteredStories.length === 0 && (
+        {loading && (
+          <div className="all-stories-empty">
+            <p>Loading stories…</p>
+          </div>
+        )}
+        {!loading && filteredStories.length === 0 && (
           <div className="all-stories-empty">
             <p>No stories match your search. Try a different keyword.</p>
           </div>

@@ -4,6 +4,14 @@ import { motion, AnimatePresence, useScroll, useSpring } from 'framer-motion'
 import { ArrowLeft, Calendar, Clock, Share2, ChevronRight, Sparkles } from 'lucide-react'
 import { travelStories, storySlug } from '../components/data'
 import type { TravelStory } from '../components/data'
+import {
+  BLOG_PLACEHOLDER_IMAGE,
+  fetchArticleBySlug,
+  fetchRelatedArticles,
+  type BlogArticleDetail,
+} from '../lib/blogApi'
+import { articleToCard, type BlogCard } from '../lib/blogArticles'
+import ArticleBody from '../components/blog/ArticleBody'
 import Footer from '../components/Footer'
 import SEO, { buildArticleSchema, buildBreadcrumbSchema } from '../components/SEO'
 import './StoryDetailPage.css'
@@ -78,8 +86,43 @@ function StoryDetailPage() {
   const navigate = useNavigate()
   const [copied, setCopied] = useState(false)
 
-  const story = useMemo(
-    () => travelStories.find((s) => storySlug(s.title) === slug),
+  // Live article first: the admin's published content is the source of truth.
+  // The static stories remain as a fallback for their own legacy URLs.
+  const [article, setArticle] = useState<BlogArticleDetail | null>(null)
+  const [missingSlug, setMissingSlug] = useState<string | null>(null)
+  const [liveRelated, setLiveRelated] = useState<BlogCard[]>([])
+
+  useEffect(() => {
+    let cancelled = false
+
+    fetchArticleBySlug(slug ?? '')
+      .then((next) => {
+        if (cancelled) return
+        setArticle(next)
+        setMissingSlug(null)
+        setLiveRelated([])
+        fetchRelatedArticles(next.id)
+          .then((rows) => {
+            if (!cancelled) setLiveRelated(rows.map(articleToCard))
+          })
+          .catch(() => {
+            /* related stories are optional */
+          })
+      })
+      .catch(() => {
+        if (!cancelled) setMissingSlug(slug ?? null)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [slug])
+
+  // A response for a previous slug must not be rendered as this one.
+  const liveArticle = article && article.slug === slug ? article : null
+
+  const staticStory = useMemo(
+    () => travelStories.find((s) => s.slug === slug || storySlug(s.title) === slug),
     [slug]
   )
 
@@ -90,25 +133,54 @@ function StoryDetailPage() {
     window.scrollTo(0, 0)
   }, [slug])
 
-  const content = useMemo(() => (story ? buildContent(story) : null), [story])
+  const liveCard = useMemo(() => (liveArticle ? articleToCard(liveArticle) : null), [liveArticle])
+  const content = useMemo(
+    () => (liveArticle ? null : staticStory ? buildContent(staticStory) : null),
+    [liveArticle, staticStory]
+  )
+
+  const title = liveCard?.title ?? staticStory?.title ?? ''
+  const excerpt = liveCard?.excerpt ?? staticStory?.excerpt ?? ''
+  const heroImage = liveCard?.image ?? staticStory?.image ?? BLOG_PLACEHOLDER_IMAGE
+  const author = liveCard?.author ?? staticStory?.author ?? 'Expedition-Go Tours'
+  const displayDate = liveCard?.date ?? staticStory?.date ?? ''
+  const publishedISO = liveCard?.dateISO ?? staticStory?.dateISO ?? ''
+  const categoryLabel = liveArticle?.category?.name ?? content?.category ?? 'Travel Guide'
 
   const readTime = useMemo(() => {
-    if (!content || !story) return 3
+    if (liveArticle) return liveArticle.readTime ?? 4
+    if (!content || !staticStory) return 3
     const words =
-      story.excerpt.split(/\s+/).length +
+      staticStory.excerpt.split(/\s+/).length +
       content.sections.reduce((n, s) => n + s.body.split(/\s+/).length, 0)
     return Math.max(2, Math.round(words / 200))
-  }, [content, story])
+  }, [liveArticle, content, staticStory])
 
-  const related = useMemo(
-    () => travelStories.filter((s) => storySlug(s.title) !== slug).slice(0, 3),
-    [slug]
-  )
+  const relatedCards = useMemo<BlogCard[]>(() => {
+    if (liveRelated.length > 0) return liveRelated.slice(0, 3)
+    if (liveArticle) return []
+    return travelStories
+      .filter((s) => storySlug(s.title) !== slug && s.slug !== slug)
+      .slice(0, 3)
+      .map((s) => ({
+        id: s.slug,
+        slug: s.slug,
+        title: s.title,
+        excerpt: s.excerpt,
+        image: s.image,
+        author: s.author,
+        date: s.date,
+        dateISO: s.dateISO ?? '',
+        categories: [],
+        readTime: s.readTime ?? 4,
+        href: `/stories/${s.slug}`,
+      }))
+  }, [liveArticle, liveRelated, slug])
 
   const handleShare = async () => {
     try {
       if (navigator.share) {
-        await navigator.share({ title: story?.title, url: window.location.href })
+        await navigator.share({ title, url: window.location.href })
       } else {
         await navigator.clipboard?.writeText(window.location.href)
         setCopied(true)
@@ -119,7 +191,22 @@ function StoryDetailPage() {
     }
   }
 
-  if (!story || !content) {
+  // Only the live article that failed AND no matching legacy story is a 404.
+  const storyLoading = !liveArticle && !staticStory && missingSlug !== slug
+
+  if (storyLoading) {
+    return (
+      <div className="story-detail">
+        <div className="story-notfound" role="status">
+          <Sparkles size={40} />
+          <h1>Loading story…</h1>
+        </div>
+        <Footer />
+      </div>
+    )
+  }
+
+  if (!title || (!liveArticle && !content)) {
     return (
       <div className="story-detail">
         <div className="story-notfound">
@@ -138,25 +225,28 @@ function StoryDetailPage() {
   return (
     <div className="story-detail">
       <SEO
-        title={story.title}
-        description={`${story.title} - ${content.category} travel story from Ghana. Discover authentic experiences, local insights, and travel tips for your Ghana adventure.`}
-        keywords={`${story.title}, Ghana travel story, ${content.category.toLowerCase()} Ghana, Ghana travel guide, things to do in Ghana, Ghana experiences`}
-        image={story.image}
+        title={liveArticle?.metaTitle || title}
+        description={
+          liveArticle?.metaDescription
+          || `${title} - ${categoryLabel} travel story from Ghana. Discover authentic experiences, local insights, and travel tips for your Ghana adventure.`
+        }
+        keywords={`${title}, Ghana travel story, ${categoryLabel.toLowerCase()} Ghana, Ghana travel guide, things to do in Ghana, Ghana experiences`}
+        image={heroImage}
         type="article"
-        publishedTime={story.date}
+        publishedTime={publishedISO}
         jsonLd={[
           buildArticleSchema({
-            title: story.title,
-            description: `${story.title} - ${content.category} travel story from Ghana.`,
-            image: story.image,
-            url: `https://www.expeditiongotours.com/stories/${storySlug(story.title)}`,
-            publishedTime: story.date || new Date().toISOString(),
-            author: 'Expedition-Go Tours',
+            title,
+            description: excerpt || `${title} - ${categoryLabel} travel story from Ghana.`,
+            image: heroImage,
+            url: `https://www.expeditiongotours.com/stories/${slug}`,
+            publishedTime: publishedISO || new Date().toISOString(),
+            author,
           }),
           buildBreadcrumbSchema([
             { name: 'Home', url: 'https://www.expeditiongotours.com/' },
             { name: 'Stories', url: 'https://www.expeditiongotours.com/stories' },
-            { name: story.title, url: `https://www.expeditiongotours.com/stories/${storySlug(story.title)}` },
+            { name: title, url: `https://www.expeditiongotours.com/stories/${slug}` },
           ]),
         ]}
       />
@@ -175,7 +265,7 @@ function StoryDetailPage() {
       {/* Hero */}
       <header className="story-hero">
         <div className="story-hero-bg">
-          <OptimizedImage src={story.image} alt={story.title} width={1200} />
+          <OptimizedImage src={heroImage} alt={title} width={1200} />
           <div className="story-hero-scrim" />
           <div className="story-hero-glow story-hero-glow-1" />
           <div className="story-hero-glow story-hero-glow-2" />
@@ -207,14 +297,14 @@ function StoryDetailPage() {
               className="story-chip"
               variants={{ hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0 } }}
             >
-              {content.category}
+              {categoryLabel}
             </motion.span>
 
             <motion.h1
               className="story-hero-title"
               variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
             >
-              {story.title}
+              {title}
             </motion.h1>
 
             <motion.div
@@ -222,13 +312,13 @@ function StoryDetailPage() {
               variants={{ hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0 } }}
             >
               <span className="story-author">
-                <span className="story-author-avatar">{initials(story.author)}</span>
-                {story.author}
+                <span className="story-author-avatar">{initials(author)}</span>
+                {author}
               </span>
               <span className="story-meta-dot" />
               <span className="story-meta-item">
                 <Calendar size={14} />
-                {story.date}
+                {displayDate}
               </span>
               <span className="story-meta-dot" />
               <span className="story-meta-item">
@@ -250,48 +340,61 @@ function StoryDetailPage() {
             viewport={{ once: true, margin: '-60px' }}
             transition={{ duration: 0.5 }}
           >
-            {story.excerpt}
+            {excerpt}
           </motion.p>
 
-          {content.sections.map((section, i) => (
-            <motion.section
-              key={section.heading}
-              className="story-section"
-              initial={{ opacity: 0, y: 24 }}
+          {liveArticle ? (
+            // The admin's TipTap/Portable Text body, rendered as published.
+            <motion.div
+              className="story-live-body article-body"
+              initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-80px' }}
+              viewport={{ once: true, margin: '-60px' }}
               transition={{ duration: 0.5 }}
             >
-              <h2 className="story-section-heading">{section.heading}</h2>
-              <p className="story-section-body">{section.body}</p>
+              <ArticleBody value={liveArticle.body} />
+            </motion.div>
+          ) : (
+            content?.sections.map((section, i) => (
+              <motion.section
+                key={section.heading}
+                className="story-section"
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-80px' }}
+                transition={{ duration: 0.5 }}
+              >
+                <h2 className="story-section-heading">{section.heading}</h2>
+                <p className="story-section-body">{section.body}</p>
 
-              {/* Insert highlights card after the first section */}
-              {i === 0 && (
-                <div className="story-highlights">
-                  <div className="story-highlights-glow" />
-                  <h3 className="story-highlights-title">
-                    Highlights
-                  </h3>
-                  <ul>
-                    {content.highlights.map((h) => (
-                      <li key={h}>
-                        <ChevronRight size={15} />
-                        <span>{h}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+                {/* Insert highlights card after the first section */}
+                {i === 0 && (
+                  <div className="story-highlights">
+                    <div className="story-highlights-glow" />
+                    <h3 className="story-highlights-title">
+                      Highlights
+                    </h3>
+                    <ul>
+                      {content.highlights.map((h) => (
+                        <li key={h}>
+                          <ChevronRight size={15} />
+                          <span>{h}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
 
-              {/* Insert pull quote after the second section */}
-              {i === 1 && (
-                <blockquote className="story-quote">
-                  <span className="story-quote-mark">&ldquo;</span>
-                  <p>{content.quote}</p>
-                </blockquote>
-              )}
-            </motion.section>
-          ))}
+                {/* Insert pull quote after the second section */}
+                {i === 1 && (
+                  <blockquote className="story-quote">
+                    <span className="story-quote-mark">&ldquo;</span>
+                    <p>{content.quote}</p>
+                  </blockquote>
+                )}
+              </motion.section>
+            ))
+          )}
 
           {/* Author card */}
           <motion.div
@@ -301,10 +404,10 @@ function StoryDetailPage() {
             viewport={{ once: true, margin: '-60px' }}
             transition={{ duration: 0.5 }}
           >
-            <div className="story-authorcard-avatar">{initials(story.author)}</div>
+            <div className="story-authorcard-avatar">{initials(author)}</div>
             <div className="story-authorcard-info">
               <span className="story-authorcard-label">Written by</span>
-              <span className="story-authorcard-name">{story.author}</span>
+              <span className="story-authorcard-name">{author}</span>
               <p className="story-authorcard-bio">
                 Sharing the places, people and flavors that make every journey with
                 Expedition-Go unforgettable.
@@ -319,32 +422,34 @@ function StoryDetailPage() {
       </main>
 
       {/* Related stories */}
-      <section className="story-related">
-        <div className="story-related-inner">
-          <h2 className="story-related-title">More travel stories</h2>
-          <div className="story-related-grid">
-            {related.map((r) => (
-              <Link
-                key={r.title}
-                to={`/stories/${storySlug(r.title)}`}
-                className="story-related-card"
-              >
-                <div className="story-related-image">
-                  <OptimizedImage src={r.image} alt={r.title} width={400} />
-                  <div className="story-related-scrim" />
-                </div>
-                <div className="story-related-body">
-                  <span className="story-related-date">{r.date}</span>
-                  <h3 className="story-related-heading">{r.title}</h3>
-                  <span className="story-related-link">
-                    Read story <ChevronRight size={14} />
-                  </span>
-                </div>
-              </Link>
-            ))}
+      {relatedCards.length > 0 && (
+        <section className="story-related">
+          <div className="story-related-inner">
+            <h2 className="story-related-title">More travel stories</h2>
+            <div className="story-related-grid">
+              {relatedCards.map((card) => (
+                <Link
+                  key={card.slug}
+                  to={card.href}
+                  className="story-related-card"
+                >
+                  <div className="story-related-image">
+                    <OptimizedImage src={card.image} alt={card.title} width={400} />
+                    <div className="story-related-scrim" />
+                  </div>
+                  <div className="story-related-body">
+                    <span className="story-related-date">{card.date}</span>
+                    <h3 className="story-related-heading">{card.title}</h3>
+                    <span className="story-related-link">
+                      Read story <ChevronRight size={14} />
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
         </motion.div>
       </AnimatePresence>
 

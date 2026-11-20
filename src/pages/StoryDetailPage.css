@@ -550,6 +550,118 @@
   box-shadow: 0 10px 30px rgba(34, 197, 94, 0.4);
 }
 
+/* ---------------- Admin article body ---------------- */
+/* TipTap emits real headings/lists/quotes; this stylesheet is not Tailwind, so
+   the browser defaults still apply, but explicit rules keep the article in the
+   page's own voice and match the admin editor's sizes. */
+.article-body {
+  margin-top: 32px;
+  font-size: 16.5px;
+  line-height: 1.8;
+  color: var(--sd-muted);
+}
+
+.article-body > :first-child {
+  margin-top: 0;
+}
+
+.article-body p {
+  margin: 0 0 1.1em;
+}
+
+.article-body h1,
+.article-body h2,
+.article-body h3,
+.article-body h4,
+.article-body h5,
+.article-body h6 {
+  font-family: var(--font-heading, 'Manrope', sans-serif);
+  font-weight: 700;
+  line-height: 1.28;
+  color: var(--sd-text);
+  margin: 1.6em 0 0.6em;
+}
+
+.article-body h1 { font-size: clamp(26px, 3.4vw, 34px); }
+.article-body h2 { font-size: clamp(23px, 3vw, 29px); }
+.article-body h3 { font-size: clamp(20px, 2.4vw, 24px); }
+.article-body h4,
+.article-body h5,
+.article-body h6 { font-size: 18px; }
+
+.article-body ul,
+.article-body ol {
+  margin: 0 0 1.1em;
+  padding-left: 1.4em;
+}
+
+.article-body ul { list-style: disc; }
+.article-body ol { list-style: decimal; }
+.article-body li { margin-bottom: 0.5em; }
+.article-body li::marker { color: var(--sd-green); }
+
+.article-body blockquote {
+  margin: 1.6em 0;
+  padding: 0.4em 0 0.4em 1.1em;
+  border-left: 3px solid var(--sd-green);
+  color: var(--sd-muted);
+  font-style: italic;
+}
+
+.article-body a {
+  color: var(--sd-green-deep, #0f7a2e);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.article-body strong,
+.article-body b {
+  font-weight: 700;
+  color: var(--sd-text);
+}
+
+.article-body pre {
+  margin: 1.6em 0;
+  padding: 1em 1.2em;
+  background: #0d1420;
+  color: #e6edf3;
+  border-radius: 10px;
+  overflow-x: auto;
+  font-size: 0.9rem;
+}
+
+.article-body code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.9em;
+  background: rgba(15, 23, 42, 0.06);
+  padding: 0.15em 0.4em;
+  border-radius: 5px;
+}
+
+.article-body pre code {
+  background: none;
+  padding: 0;
+}
+
+.article-body hr {
+  margin: 2em auto;
+  max-width: 240px;
+  border: 0;
+  border-top: 1px solid rgba(15, 23, 42, 0.12);
+}
+
+.article-body figure {
+  margin: 1.8em 0;
+}
+
+.article-body img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 12px;
+  display: block;
+  margin: 0 auto;
+}
+
 /* ---------------- Responsive ---------------- */
 @media (max-width: 860px) {
   .story-related-grid { grid-template-columns: 1fr; }

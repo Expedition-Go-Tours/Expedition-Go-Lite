@@ -985,6 +985,7 @@
     "guidesCount_one": "{{count}} guía disponible",
     "guidesCount_other": "{{count}} guías disponibles",
     "emptyText": "Ninguna guía coincide con esa búsqueda. Prueba otro tema.",
+    "loading": "Cargando historias…",
     "interestKicker": "Planifica por interés",
     "interestTitle": "¿Qué tipo de viaje a Ghana estás planeando?",
     "interestIntro": "Ve directo a las historias que encajan con tu forma de viajar.",
