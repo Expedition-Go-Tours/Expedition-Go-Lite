@@ -1212,6 +1212,9 @@ export default function TourDetailPage() {
                 fallbackImage={mergedImages[0]}
                 onBack={handleBack}
                 hideBack={showStickyTitle || tabsStuck}
+                isSaved={isFavorited}
+                onToggleSave={() => handleWishlistToggle()}
+                onShare={handleShare}
               />
             </div>
 
