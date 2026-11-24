@@ -36,6 +36,7 @@ import { AuthProvider } from './context/AuthContext'
 import { startSessionWatchdog, stopSessionWatchdog } from './auth/sessionManager'
 import { trackPageView } from './lib/analytics'
 import LenisProvider from './lib/LenisProvider'
+import { useScrollRestoration } from './lib/useScrollRestoration'
 import { useHomepage, useHomepageByCity } from './hooks/useHomepageSections'
 
 // Route-level code splitting
@@ -250,15 +251,13 @@ function AppContent() {
   const handleGoHome = () => setCurrentPage('home')
   const location = useLocation()
 
-  // Land at the top of the page on every route change (e.g. clicking a supplier
-  // link deep in a tour page shouldn't drop you mid-way down the next page).
+  // Back/Forward returns the reader to the offset they left; a forward
+  // navigation still lands at the top. The hook also sets the manual
+  // `history.scrollRestoration` flag, because the browser's own pre-hydration
+  // jump races ours. Lenis is mounted app-wide, so the shared helper drives it
+  // too — a bare window.scrollTo is dropped mid-glide.
+  useScrollRestoration()
   useEffect(() => {
-    if ('scrollRestoration' in window.history) {
-      window.history.scrollRestoration = 'manual'
-    }
-  }, [])
-  useEffect(() => {
-    window.scrollTo(0, 0)
     trackPageView(location.pathname + location.search)
   }, [location.pathname, location.search])
 
