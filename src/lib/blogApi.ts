@@ -54,6 +54,20 @@ export interface BlogArticleSummary {
   createdAt: string
 }
 
+export interface BlogRelatedTour {
+  id: string
+  title: string
+  slug: string
+  coverPhoto: string | null
+  category: string | null
+  city: string | null
+  country: string | null
+  startingPrice: number | null
+  currency: string | null
+  averageRating: number | null
+  reviewCount: number
+}
+
 /** Detail-shape article (`transformArticleDetail` + SEO fields). */
 export interface BlogArticleDetail extends BlogArticleSummary {
   body: unknown
@@ -61,6 +75,7 @@ export interface BlogArticleDetail extends BlogArticleSummary {
   metaTitle: string | null
   metaDescription: string | null
   canonicalUrl: string | null
+  relatedTours?: BlogRelatedTour[]
 }
 
 interface ListEnvelope {

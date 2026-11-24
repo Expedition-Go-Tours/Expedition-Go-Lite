@@ -1,7 +1,6 @@
-import { useMemo, useEffect, useState } from 'react'
+import { type MouseEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { motion, AnimatePresence, useScroll, useSpring } from 'framer-motion'
-import { ArrowLeft, Calendar, Clock, Share2, ChevronRight, Sparkles } from 'lucide-react'
+import { Calendar, ChevronRight, Clock, Share2, Sparkles, Star } from 'lucide-react'
 import { travelStories, storySlug } from '../components/data'
 import type { TravelStory } from '../components/data'
 import {
@@ -11,11 +10,13 @@ import {
   type BlogArticleDetail,
 } from '../lib/blogApi'
 import { articleToCard, type BlogCard } from '../lib/blogArticles'
+import { extractArticleHeadings, headingId } from '../lib/articleHeadings'
+import { tourHref } from '../lib/tourPath'
 import ArticleBody from '../components/blog/ArticleBody'
 import Footer from '../components/Footer'
-import SEO, { buildArticleSchema, buildBreadcrumbSchema } from '../components/SEO'
-import './StoryDetailPage.css'
+import SEO, { buildArticleSchema, buildBreadcrumbSchema, SITE_URL } from '../components/SEO'
 import OptimizedImage from '@/components/shared/OptimizedImage'
+import './StoryDetailPage.css'
 
 interface Section {
   heading: string
@@ -91,6 +92,7 @@ function StoryDetailPage() {
   const [article, setArticle] = useState<BlogArticleDetail | null>(null)
   const [missingSlug, setMissingSlug] = useState<string | null>(null)
   const [liveRelated, setLiveRelated] = useState<BlogCard[]>([])
+  const proseRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -125,9 +127,6 @@ function StoryDetailPage() {
     () => travelStories.find((s) => s.slug === slug || storySlug(s.title) === slug),
     [slug]
   )
-
-  const { scrollYProgress } = useScroll()
-  const progress = useSpring(scrollYProgress, { stiffness: 120, damping: 30, mass: 0.3 })
 
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -177,6 +176,29 @@ function StoryDetailPage() {
       }))
   }, [liveArticle, liveRelated, slug])
 
+  const relatedTours = useMemo(() => (liveArticle?.relatedTours ?? []).slice(0, 3), [liveArticle])
+
+  // Admin bodies and the generated static-story sections both expose their H2s
+  // in this order, so the TOC and the DOM ids stay in step without extra state.
+  const headings = useMemo(() => {
+    if (liveArticle) return extractArticleHeadings(liveArticle.body)
+    if (content) {
+      return content.sections.map((section, index) => ({
+        id: headingId(section.heading, index),
+        text: section.heading,
+      }))
+    }
+    return []
+  }, [liveArticle, content])
+
+  useEffect(() => {
+    const root = proseRef.current
+    if (!root) return
+    root.querySelectorAll('h2').forEach((heading, index) => {
+      heading.id = headings[index]?.id || headingId(heading.textContent || '', index)
+    })
+  }, [headings])
+
   const handleShare = async () => {
     try {
       if (navigator.share) {
@@ -191,15 +213,23 @@ function StoryDetailPage() {
     }
   }
 
+  const jumpToHeading = (event: MouseEvent<HTMLAnchorElement>, id: string) => {
+    const heading = document.getElementById(id)
+    if (!heading) return
+    event.preventDefault()
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    heading.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' })
+  }
+
   // Only the live article that failed AND no matching legacy story is a 404.
   const storyLoading = !liveArticle && !staticStory && missingSlug !== slug
 
   if (storyLoading) {
     return (
-      <div className="story-detail">
+      <div className="story-detail explorer-article">
         <div className="story-notfound" role="status">
-          <Sparkles size={40} />
-          <h1>Loading story…</h1>
+          <div className="article-loading" aria-hidden="true" />
+          <p>Loading story&hellip;</p>
         </div>
         <Footer />
       </div>
@@ -208,22 +238,31 @@ function StoryDetailPage() {
 
   if (!title || (!liveArticle && !content)) {
     return (
-      <div className="story-detail">
+      <div className="story-detail explorer-article">
+        <SEO
+          title="Story not found"
+          description="Travel stories and guides from Expedition-Go Tours."
+          robots="noindex, follow"
+        />
         <div className="story-notfound">
           <Sparkles size={40} />
           <h1>Story not found</h1>
           <p>The story you&apos;re looking for doesn&apos;t exist or has moved.</p>
-          <button className="story-notfound-btn" onClick={() => navigate('/stories')}>
-            Browse all stories
-          </button>
+          <div className="story-notfound-actions">
+            <button className="story-notfound-btn" onClick={() => navigate('/stories')}>
+              Browse all stories
+            </button>
+          </div>
         </div>
         <Footer />
       </div>
     )
   }
 
+  const canonical = liveArticle ? `${SITE_URL}/stories/${liveArticle.slug}` : undefined
+
   return (
-    <div className="story-detail">
+    <div className="story-detail explorer-article">
       <SEO
         title={liveArticle?.metaTitle || title}
         description={
@@ -234,214 +273,219 @@ function StoryDetailPage() {
         image={heroImage}
         type="article"
         publishedTime={publishedISO}
+        author={author}
+        canonical={canonical}
         jsonLd={[
           buildArticleSchema({
             title,
             description: excerpt || `${title} - ${categoryLabel} travel story from Ghana.`,
             image: heroImage,
-            url: `https://www.expeditiongotours.com/stories/${slug}`,
+            url: `${SITE_URL}/stories/${slug}`,
             publishedTime: publishedISO || new Date().toISOString(),
             author,
           }),
           buildBreadcrumbSchema([
-            { name: 'Home', url: 'https://www.expeditiongotours.com/' },
-            { name: 'Stories', url: 'https://www.expeditiongotours.com/stories' },
-            { name: title, url: `https://www.expeditiongotours.com/stories/${slug}` },
+            { name: 'Home', url: `${SITE_URL}/` },
+            { name: 'Stories', url: `${SITE_URL}/stories` },
+            { name: title, url: `${SITE_URL}/stories/${slug}` },
           ]),
         ]}
       />
-      {/* Reading progress bar */}
-      <motion.div className="story-progress" style={{ scaleX: progress }} />
 
+      <nav className="explorer-breadcrumbs" aria-label="Breadcrumb">
+        <Link to="/">Home</Link>
+        <ChevronRight size={14} aria-hidden="true" />
+        <Link to="/stories">Stories</Link>
+        <ChevronRight size={14} aria-hidden="true" />
+        <span aria-current="page">{categoryLabel}</span>
+      </nav>
 
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={slug}
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -14 }}
-          transition={{ duration: 0.3, ease: 'easeInOut' }}
-        >
-      {/* Hero */}
-      <header className="story-hero">
-        <div className="story-hero-bg">
-          <OptimizedImage src={heroImage} alt={title} width={1200} />
-          <div className="story-hero-scrim" />
-          <div className="story-hero-glow story-hero-glow-1" />
-          <div className="story-hero-glow story-hero-glow-2" />
-          <div className="story-hero-grid" />
-        </div>
-
-        <div className="story-hero-inner">
-          <motion.button
-            className="story-back"
-            onClick={() => navigate(-1)}
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.4 }}
-          >
-            <ArrowLeft size={18} />
-            <span>Back</span>
-          </motion.button>
-
-          <motion.div
-            className="story-hero-content"
-            initial="hidden"
-            animate="visible"
-            variants={{
-              hidden: {},
-              visible: { transition: { staggerChildren: 0.1, delayChildren: 0.1 } },
-            }}
-          >
-            <motion.span
-              className="story-chip"
-              variants={{ hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0 } }}
-            >
-              {categoryLabel}
-            </motion.span>
-
-            <motion.h1
-              className="story-hero-title"
-              variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
-            >
-              {title}
-            </motion.h1>
-
-            <motion.div
-              className="story-hero-meta"
-              variants={{ hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0 } }}
-            >
-              <span className="story-author">
-                <span className="story-author-avatar">{initials(author)}</span>
-                {author}
-              </span>
-              <span className="story-meta-dot" />
-              <span className="story-meta-item">
-                <Calendar size={14} />
+      <header className="explorer-header">
+        <span className="explorer-kicker">{categoryLabel}</span>
+        <h1 className="explorer-title">{title}</h1>
+        <p className="explorer-subtitle">{excerpt}</p>
+        <div className="explorer-byline">
+          <span>By {author}</span>
+          <span className="explorer-byline-dot" aria-hidden="true" />
+          {displayDate && (
+            <>
+              <span className="explorer-byline-date">
+                <Calendar size={14} aria-hidden="true" />
                 {displayDate}
               </span>
-              <span className="story-meta-dot" />
-              <span className="story-meta-item">
-                <Clock size={14} />
-                {readTime} min read
-              </span>
-            </motion.div>
-          </motion.div>
+              <span className="explorer-byline-dot" aria-hidden="true" />
+            </>
+          )}
+          <span>
+            <Clock size={14} aria-hidden="true" />
+            {readTime} min read
+          </span>
         </div>
       </header>
 
-      {/* Article */}
-      <main className="story-body">
-        <article className="story-article">
-          <motion.p
-            className="story-lead"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-60px' }}
-            transition={{ duration: 0.5 }}
-          >
-            {excerpt}
-          </motion.p>
+      <div className="explorer-hero">
+        <OptimizedImage
+          src={heroImage}
+          alt={title}
+          width={1256}
+          height={707}
+          priority
+          sizes="(max-width: 768px) 100vw, (max-width: 1400px) calc(100vw - 72px), 1256px"
+        />
+      </div>
 
-          {liveArticle ? (
-            // The admin's TipTap/Portable Text body, rendered as published.
-            <motion.div
-              className="story-live-body article-body"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-60px' }}
-              transition={{ duration: 0.5 }}
-            >
+      <main className="explorer-layout">
+        <article className="explorer-article">
+          <div className="article-body explorer-prose" ref={proseRef}>
+            {liveArticle ? (
               <ArticleBody value={liveArticle.body} />
-            </motion.div>
-          ) : (
-            content?.sections.map((section, i) => (
-              <motion.section
-                key={section.heading}
-                className="story-section"
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-80px' }}
-                transition={{ duration: 0.5 }}
-              >
-                <h2 className="story-section-heading">{section.heading}</h2>
-                <p className="story-section-body">{section.body}</p>
+            ) : (
+              content?.sections.map((section, i) => (
+                <section key={section.heading} className="story-section">
+                  <h2 className="story-section-heading">{section.heading}</h2>
+                  <p className="story-section-body">{section.body}</p>
+                  {i === 0 && (
+                    <div className="story-highlights">
+                      <h3>Highlights</h3>
+                      <ul>
+                        {content.highlights.map((h) => (
+                          <li key={h}>
+                            <ChevronRight size={15} aria-hidden="true" />
+                            <span>{h}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {i === 1 && (
+                    <blockquote className="story-quote">
+                      <p>{content.quote}</p>
+                    </blockquote>
+                  )}
+                </section>
+              ))
+            )}
+          </div>
 
-                {/* Insert highlights card after the first section */}
-                {i === 0 && (
-                  <div className="story-highlights">
-                    <div className="story-highlights-glow" />
-                    <h3 className="story-highlights-title">
-                      Highlights
-                    </h3>
-                    <ul>
-                      {content.highlights.map((h) => (
-                        <li key={h}>
-                          <ChevronRight size={15} />
-                          <span>{h}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {/* Insert pull quote after the second section */}
-                {i === 1 && (
-                  <blockquote className="story-quote">
-                    <span className="story-quote-mark">&ldquo;</span>
-                    <p>{content.quote}</p>
-                  </blockquote>
-                )}
-              </motion.section>
-            ))
+          {liveArticle && liveArticle.tags.length > 0 && (
+            <div className="explorer-tags" aria-label="Topics">
+              {liveArticle.tags.map((tag) => (
+                <span key={tag.id} className="explorer-tag">
+                  #{tag.name}
+                </span>
+              ))}
+            </div>
           )}
 
-          {/* Author card */}
-          <motion.div
-            className="story-authorcard"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: '-60px' }}
-            transition={{ duration: 0.5 }}
-          >
-            <div className="story-authorcard-avatar">{initials(author)}</div>
-            <div className="story-authorcard-info">
-              <span className="story-authorcard-label">Written by</span>
-              <span className="story-authorcard-name">{author}</span>
-              <p className="story-authorcard-bio">
+          {relatedTours.length > 0 && (
+            <section className="explorer-tours" aria-label="Related experiences">
+              <h2>Related experiences</h2>
+              <div className="explorer-tours-grid">
+                {relatedTours.map((tour) => (
+                  <a key={tour.id} href={tourHref(tour.id, tour.slug)} className="explorer-tour">
+                    <div className="explorer-tour-media">
+                      <OptimizedImage
+                        src={tour.coverPhoto || BLOG_PLACEHOLDER_IMAGE}
+                        alt={tour.title}
+                        width={400}
+                        sizes="(max-width: 768px) 50vw, 254px"
+                      />
+                    </div>
+                    <span className="explorer-tour-title">{tour.title}</span>
+                    <span className="explorer-tour-meta">
+                      {[tour.city, tour.country].filter(Boolean).join(', ') || 'Ghana'}
+                    </span>
+                    {typeof tour.averageRating === 'number' && (
+                      <span className="explorer-tour-rating">
+                        <Star size={13} fill="currentColor" aria-hidden="true" />
+                        {tour.averageRating.toFixed(1)}
+                        {tour.reviewCount > 0 && ` (${tour.reviewCount})`}
+                      </span>
+                    )}
+                    {tour.startingPrice != null && (
+                      <span className="explorer-tour-price">
+                        From {tour.currency || 'GHS'} {tour.startingPrice.toLocaleString()}
+                      </span>
+                    )}
+                  </a>
+                ))}
+              </div>
+            </section>
+          )}
+
+          <div className="explorer-author">
+            <div className="explorer-author-avatar" aria-hidden="true">{initials(author)}</div>
+            <div className="explorer-author-info">
+              <span className="explorer-author-label">Written by</span>
+              <span className="explorer-author-name">{author}</span>
+              <p className="explorer-author-bio">
                 Sharing the places, people and flavors that make every journey with
                 Expedition-Go unforgettable.
               </p>
             </div>
-            <button className="story-share" onClick={handleShare}>
-              <Share2 size={16} />
-              {copied ? 'Link copied' : 'Share'}
+            <button className="explorer-share" onClick={handleShare}>
+              <Share2 size={16} aria-hidden="true" />
+              {copied ? 'Link copied' : 'Share this story'}
             </button>
-          </motion.div>
+          </div>
         </article>
+
+        <aside className="explorer-rail" aria-label="On this page">
+          {headings.length > 0 && (
+            <nav className="explorer-toc" aria-label="In this article">
+              <h2 className="explorer-toc-title">In this article:</h2>
+              <ol>
+                {headings.map((heading) => (
+                  <li key={heading.id}>
+                    <a href={`#${heading.id}`} onClick={(event) => jumpToHeading(event, heading.id)}>
+                      {heading.text}
+                    </a>
+                  </li>
+                ))}
+              </ol>
+            </nav>
+          )}
+
+          {relatedCards.length > 0 && (
+            <div className="explorer-more">
+              <h2>More travel stories</h2>
+              {relatedCards.map((card) => (
+                <Link key={card.id} to={card.href} className="explorer-more-card">
+                  <div className="explorer-more-media">
+                    <OptimizedImage src={card.image} alt="" width={100} sizes="100px" />
+                  </div>
+                  <div className="explorer-more-copy">
+                    {card.date && <span className="explorer-more-date">{card.date}</span>}
+                    <span className="explorer-more-title">{card.title}</span>
+                    <span className="explorer-more-author">by {card.author}</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </aside>
       </main>
 
-      {/* Related stories */}
       {relatedCards.length > 0 && (
-        <section className="story-related">
-          <div className="story-related-inner">
-            <h2 className="story-related-title">More travel stories</h2>
-            <div className="story-related-grid">
+        <section className="explorer-related">
+          <div className="explorer-related-inner">
+            <h2>More travel stories</h2>
+            <div className="explorer-related-grid">
               {relatedCards.map((card) => (
-                <Link
-                  key={card.slug}
-                  to={card.href}
-                  className="story-related-card"
-                >
-                  <div className="story-related-image">
-                    <OptimizedImage src={card.image} alt={card.title} width={400} />
-                    <div className="story-related-scrim" />
+                <Link key={card.id} to={card.href} className="explorer-related-card">
+                  <div className="explorer-related-media">
+                    <OptimizedImage
+                      src={card.image}
+                      alt={card.title}
+                      width={400}
+                      sizes="(max-width: 768px) 100vw, 400px"
+                    />
                   </div>
-                  <div className="story-related-body">
-                    <span className="story-related-date">{card.date}</span>
-                    <h3 className="story-related-heading">{card.title}</h3>
-                    <span className="story-related-link">
-                      Read story <ChevronRight size={14} />
+                  <div className="explorer-related-copy">
+                    {card.date && <span className="explorer-related-date">{card.date}</span>}
+                    <h3>{card.title}</h3>
+                    <span className="explorer-related-link">
+                      Read story <ChevronRight size={14} aria-hidden="true" />
                     </span>
                   </div>
                 </Link>
@@ -450,8 +494,6 @@ function StoryDetailPage() {
           </div>
         </section>
       )}
-        </motion.div>
-      </AnimatePresence>
 
       <Footer />
     </div>
